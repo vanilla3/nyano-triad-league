@@ -1,5 +1,5 @@
-import crypto from "node:crypto";
 import type { BoardCell, BoardState, CardData, Direction, Edges, MatchResult, PlayerIndex, TranscriptV1, Turn } from "./types.js";
+import { hashTranscriptV1, validateTranscriptV1 } from "./transcript.js";
 
 /**
  * Core engine (Layer 1): triad compare + janken tie-break + chain flips.
@@ -41,31 +41,7 @@ export function jankenOutcome(attacker: 0 | 1 | 2, defender: 0 | 1 | 2): 1 | 0 |
   return -1;
 }
 
-function validateTranscriptBasic(t: TranscriptV1): void {
-  const { header, turns } = t;
-
-  if (header.version !== 1) throw new Error(`unsupported transcript version: ${header.version}`);
-  if (header.deckA.length !== 5 || header.deckB.length !== 5) throw new Error("deck must be length 5");
-  if (turns.length !== 9) throw new Error("turns must be length 9");
-
-  const cellSet = new Set<number>();
-  for (const turn of turns) {
-    if (!Number.isInteger(turn.cell) || turn.cell < 0 || turn.cell > 8) throw new Error("invalid cell");
-    if (!Number.isInteger(turn.cardIndex) || turn.cardIndex < 0 || turn.cardIndex > 4) throw new Error("invalid cardIndex");
-    if (cellSet.has(turn.cell)) throw new Error("duplicate cell in turns");
-    cellSet.add(turn.cell);
-  }
-}
-
-function hashTranscriptCanonical(t: TranscriptV1): `0x${string}` {
-  // NOTE: This is a *placeholder* canonicalization for dev.
-  // For production:
-  // - Use exact field ordering and fixed-width encodings (or EIP-712 hash).
-  // - Keep in sync with Solidity.
-  const json = JSON.stringify(t, (_k, v) => (typeof v === "bigint" ? v.toString() : v));
-  const h = crypto.createHash("sha256").update(json).digest("hex");
-  return (`0x${h}` as const);
-}
+// Transcript validation & hashing are centralized in ./transcript.ts
 
 function getTurnPlayer(firstPlayer: PlayerIndex, turnIndex: number): PlayerIndex {
   return ((firstPlayer + (turnIndex % 2)) % 2) as PlayerIndex;
@@ -130,7 +106,7 @@ function applyChainFlips(board: BoardState, startIdx: number): void {
 }
 
 export function simulateMatchV1(t: TranscriptV1, cardsByTokenId: Map<bigint, CardData>): MatchResult {
-  validateTranscriptBasic(t);
+  validateTranscriptV1(t);
 
   const board: BoardState = Array.from({ length: 9 }, () => null);
 
@@ -188,7 +164,7 @@ export function simulateMatchV1(t: TranscriptV1, cardsByTokenId: Map<bigint, Car
     }
   }
 
-  const matchId = hashTranscriptCanonical(t);
+  const matchId = hashTranscriptV1(t);
 
   return {
     winner,

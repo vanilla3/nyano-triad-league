@@ -6,19 +6,23 @@
 ---
 
 ## Done（完了）
-- [ ] （ここにコミット単位で追記）
+- [x] 初期リポジトリ雛形（docs / CI / triad-engine スキャフォールド）
+- [x] リポジトリ構成の正規化：`packages/triad-engine` をルート直下ワークスペースに配置（重複スターター削除）
+- [x] Transcript v1 の `matchId` を `keccak256(abi.encode(...))` に統一（TS参照実装）
 
 ## Doing（着手中）
-- [ ] （いま触っているタスク）
+- [ ] （いま触っているタスクがあればここに）
 
 ## Next（次にやる）
 ### 0. 仕様固定（ブレると後で地獄になるもの）
-- [ ] 対戦トランスクリプト仕様を確定（versioning/拡張フィールド設計）
-- [ ] ルールセット（シーズン）を data-driven config で表現する方針を確定
+- [x] 対戦トランスクリプト：matchId（keccak + abi.encode）と optional u8 正規化（255）を確定
+- [ ] 対戦トランスクリプト：署名方式（EIP-712）と turnsPacked 案の最終決定（Solidity実装と合わせる）
+- [x] ルールセット（シーズン）を data-driven config で表現する方針を確定（docs/02_protocol）
+- [ ] ルールセット config の “参照実装（TSで読み込んで適用）” を作る
 
 ### 1. エンジン（TypeScript）— 参照実装
-- [ ] Core（Layer1）：Triad比較、じゃんけん決着、連鎖、勝敗判定（決定論）
-- [ ] テストベクタ（ゴールデンテスト）：同入力→同出力を保証
+- [x] Core（Layer1）：Triad比較、じゃんけん決着、連鎖、勝敗判定（決定論）
+- [ ] テストベクタ（ゴールデンテスト）：同入力→同出力を保証（リプレイ例を docs に保存）
 - [ ] Tactics（Layer2）を “ルールとしてON/OFF可能” に枠だけ用意
   - [ ] 警戒マーク
   - [ ] コンボボーナス

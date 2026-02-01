@@ -99,6 +99,30 @@
 - `matchId = keccak256( abi.encode(header, turns) )`  
 - コントラクトは `matchId` を保存して二重提出を防ぐ（replay防止）
 
+### 6.1 ABIエンコード（v1の正規順序）
+
+実装差分を防ぐため、v1の `matchId` は **以下の型と順序**で `abi.encode` した bytes を keccak256 します。
+
+**Types**
+
+1. `uint16` version
+2. `bytes32` rulesetId
+3. `uint32` seasonId
+4. `address` playerA
+5. `address` playerB
+6. `uint256[5]` deckA
+7. `uint256[5]` deckB
+8. `uint8` firstPlayer
+9. `uint64` deadline
+10. `bytes32` salt
+11. `uint8[9]` cell
+12. `uint8[9]` cardIndex
+13. `uint8[9]` warningMarkCell（none = 255）
+14. `uint8[9]` earthBoostEdge（none = 255）
+15. `uint8[9]` reserved（推奨：常に0）
+
+> 重要：`warningMarkCell` / `earthBoostEdge` の未使用時は **255** を入れて正規化すること（undefined/null の表現揺れを許さない）。
+
 ---
 
 ## 7. バージョニング戦略
