@@ -99,29 +99,33 @@
 - `matchId = keccak256( abi.encode(header, turns) )`  
 - コントラクトは `matchId` を保存して二重提出を防ぐ（replay防止）
 
-### 6.1 ABIエンコード（v1の正規順序）
+### 6.1 参照実装（TS）の固定ABIエンコード（v1）
 
-実装差分を防ぐため、v1の `matchId` は **以下の型と順序**で `abi.encode` した bytes を keccak256 します。
+JSONのような曖昧なシリアライズを避けるため、v1では **固定ABIエンコード** を採用します。
 
-**Types**
+```text
+keccak256( abi.encode(
+  uint16 version,
+  bytes32 rulesetId,
+  uint32 seasonId,
+  address playerA,
+  address playerB,
+  uint256[5] deckA,
+  uint256[5] deckB,
+  uint8 firstPlayer,
+  uint64 deadline,
+  bytes32 salt,
+  uint8[9] cells,
+  uint8[9] cardIndexes,
+  uint8[9] warningMarkCells,
+  uint8[9] earthBoostEdges,
+  uint8[9] reserved
+))
+```
 
-1. `uint16` version
-2. `bytes32` rulesetId
-3. `uint32` seasonId
-4. `address` playerA
-5. `address` playerB
-6. `uint256[5]` deckA
-7. `uint256[5]` deckB
-8. `uint8` firstPlayer
-9. `uint64` deadline
-10. `bytes32` salt
-11. `uint8[9]` cell
-12. `uint8[9]` cardIndex
-13. `uint8[9]` warningMarkCell（none = 255）
-14. `uint8[9]` earthBoostEdge（none = 255）
-15. `uint8[9]` reserved（推奨：常に0）
-
-> 重要：`warningMarkCell` / `earthBoostEdge` の未使用時は **255** を入れて正規化すること（undefined/null の表現揺れを許さない）。
+正規化ルール：
+- `warningMarkCell` / `earthBoostEdge` / `reserved` が未使用の場合は **255（=none）** を入れる
+- 未使用フィールドは ruleset が **無視** する（ただしmatchId計算には含める）
 
 ---
 

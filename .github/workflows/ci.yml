@@ -17,7 +17,7 @@ jobs:
         with:
           node-version: "20"
           cache: "pnpm"
-      # 初期段階は lockfile をコミットしていない可能性があるため、frozen は使わない。
-      # lockfile を導入したら --frozen-lockfile に戻す。
+      - run: # NOTE: 初期段階では lockfile が存在しない可能性があるため frozen を外す。
+      # lockfile（pnpm-lock.yaml）をコミットしたら --frozen-lockfile に戻す。
       - run: pnpm install
       - run: pnpm -C packages/triad-engine test

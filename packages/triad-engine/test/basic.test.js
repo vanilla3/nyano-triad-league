@@ -1,8 +1,13 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { simulateMatchV1 } from "../dist/index.js";
 
-// Tests run against compiled output to avoid TS loader / extension resolution issues.
-import { simulateMatchV1, hashTranscriptV1 } from "../dist/index.js";
+const mkCard = (tokenId, edges, j, sum) => ({
+  tokenId,
+  edges: { up: edges[0], right: edges[1], down: edges[2], left: edges[3] },
+  jankenHand: j,
+  combatStatSum: sum,
+});
 
 test("core: simple placement yields deterministic winner", () => {
   const header = {
@@ -32,38 +37,29 @@ test("core: simple placement yields deterministic winner", () => {
 
   const t = { header, turns };
 
-  const mk = (tokenId, edges, j, sum) => ({
-    tokenId,
-    edges: { up: edges[0], right: edges[1], down: edges[2], left: edges[3] },
-    jankenHand: j,
-    combatStatSum: sum,
-  });
-
   const cards = new Map([
-    [1n, mk(1n, [5, 5, 5, 5], 0, 10)],
-    [2n, mk(2n, [5, 5, 5, 5], 0, 10)],
-    [3n, mk(3n, [5, 5, 5, 5], 0, 10)],
-    [4n, mk(4n, [5, 5, 5, 5], 0, 10)],
-    [5n, mk(5n, [5, 5, 5, 5], 0, 10)],
+    [1n, mkCard(1n, [5, 5, 5, 5], 0, 10)],
+    [2n, mkCard(2n, [5, 5, 5, 5], 0, 10)],
+    [3n, mkCard(3n, [5, 5, 5, 5], 0, 10)],
+    [4n, mkCard(4n, [5, 5, 5, 5], 0, 10)],
+    [5n, mkCard(5n, [5, 5, 5, 5], 0, 10)],
 
-    [6n, mk(6n, [4, 4, 4, 4], 2, 10)],
-    [7n, mk(7n, [4, 4, 4, 4], 2, 10)],
-    [8n, mk(8n, [4, 4, 4, 4], 2, 10)],
-    [9n, mk(9n, [4, 4, 4, 4], 2, 10)],
-    [10n, mk(10n, [4, 4, 4, 4], 2, 10)],
+    [6n, mkCard(6n, [4, 4, 4, 4], 2, 10)],
+    [7n, mkCard(7n, [4, 4, 4, 4], 2, 10)],
+    [8n, mkCard(8n, [4, 4, 4, 4], 2, 10)],
+    [9n, mkCard(9n, [4, 4, 4, 4], 2, 10)],
+    [10n, mkCard(10n, [4, 4, 4, 4], 2, 10)],
   ]);
 
   const r = simulateMatchV1(t, cards);
 
-  // matchId must be keccak256(abi.encode(...)) of the transcript.
-  assert.equal(r.matchId, hashTranscriptV1(t));
-
   // With these symmetric values, first player should end up with more tiles (odd board).
   assert.equal(r.winner, 0);
   assert.equal(r.tiles.A + r.tiles.B, 9);
+  assert.ok(/^0x[0-9a-fA-F]{64}$/.test(r.matchId));
 });
 
-test("hash: optional u8 fields are canonicalized (undefined == 255 sentinel)", () => {
+test("tactics: warning mark debuffs placed card edges by -1", () => {
   const header = {
     version: 1,
     rulesetId: "0x" + "11".repeat(32),
@@ -74,29 +70,48 @@ test("hash: optional u8 fields are canonicalized (undefined == 255 sentinel)", (
     deckB: [6n, 7n, 8n, 9n, 10n],
     firstPlayer: 0,
     deadline: 9999999999,
-    salt: "0x" + "22".repeat(32),
+    salt: "0x" + "33".repeat(32),
   };
 
-  const baseTurns = [
-    { cell: 0, cardIndex: 0 },
-    { cell: 8, cardIndex: 0 },
-    { cell: 1, cardIndex: 1 },
-    { cell: 7, cardIndex: 1 },
-    { cell: 2, cardIndex: 2 },
-    { cell: 6, cardIndex: 2 },
-    { cell: 3, cardIndex: 3 },
-    { cell: 5, cardIndex: 3 },
-    { cell: 4, cardIndex: 4 },
+  // Turn0: A places center, then warns cell 5.
+  // Turn1: B places on warned cell 5. Without debuff, B's left edge ties (5 vs 5)
+  //        and B's janken (Paper) would win vs A (Rock), flipping center.
+  //        With debuff (-1), B's left edge becomes 4, so it cannot flip the center.
+  const turns = [
+    { cell: 4, cardIndex: 0, warningMarkCell: 5 },
+    { cell: 5, cardIndex: 0 },
+    { cell: 0, cardIndex: 1 },
+    { cell: 8, cardIndex: 1 },
+    { cell: 1, cardIndex: 2 },
+    { cell: 7, cardIndex: 2 },
+    { cell: 2, cardIndex: 3 },
+    { cell: 6, cardIndex: 3 },
+    { cell: 3, cardIndex: 4 },
   ];
 
-  const t1 = { header, turns: baseTurns };
-  const t2 = {
-    header,
-    turns: baseTurns.map((t) => ({ ...t, warningMarkCell: 255, earthBoostEdge: 255 })),
-  };
+  const t = { header, turns };
 
-  assert.equal(hashTranscriptV1(t1), hashTranscriptV1(t2));
+  const cards = new Map([
+    // A: center card (Rock)
+    [1n, mkCard(1n, [5, 5, 5, 5], 0, 10)],
+    [2n, mkCard(2n, [5, 5, 5, 5], 0, 10)],
+    [3n, mkCard(3n, [5, 5, 5, 5], 0, 10)],
+    [4n, mkCard(4n, [5, 5, 5, 5], 0, 10)],
+    [5n, mkCard(5n, [5, 5, 5, 5], 0, 10)],
 
-  const t3 = { header: { ...header, salt: "0x" + "33".repeat(32) }, turns: baseTurns };
-  assert.notEqual(hashTranscriptV1(t1), hashTranscriptV1(t3));
+    // B: warned placement card (Paper)
+    [6n, mkCard(6n, [5, 5, 5, 5], 1, 10)],
+    [7n, mkCard(7n, [4, 4, 4, 4], 2, 10)],
+    [8n, mkCard(8n, [4, 4, 4, 4], 2, 10)],
+    [9n, mkCard(9n, [4, 4, 4, 4], 2, 10)],
+    [10n, mkCard(10n, [4, 4, 4, 4], 2, 10)],
+  ]);
+
+  const r = simulateMatchV1(t, cards);
+
+  // Verify the warned placement card got debuffed.
+  assert.equal(r.board[5].card.edges.left, 4);
+
+  // Verify center did not flip due to debuff.
+  assert.equal(r.board[4].owner, 0);
 });

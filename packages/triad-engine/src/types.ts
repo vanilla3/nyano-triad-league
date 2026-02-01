@@ -3,10 +3,10 @@ export type PlayerIndex = 0 | 1;
 export type Direction = "up" | "right" | "down" | "left";
 
 export interface Edges {
-  up: number;   // 0..9
-  right: number;// 0..9
-  down: number; // 0..9
-  left: number; // 0..9
+  up: number;   // 0..10 (Nyano triad 1..10 をそのまま入れてOK)
+  right: number;// 0..10
+  down: number; // 0..10
+  left: number; // 0..10
 }
 
 export interface CardData {
