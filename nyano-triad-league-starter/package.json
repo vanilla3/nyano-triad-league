@@ -1,0 +1,11 @@
+{
+  "name": "nyano-triad-league",
+  "private": true,
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "build": "npm -w @nyano/triad-engine run build",
+    "test": "npm -w @nyano/triad-engine run test"
+  }
+}

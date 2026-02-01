@@ -1,0 +1,16 @@
+{
+  "name": "@nyano/triad-engine",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "test": "node --test",
+    "lint": "echo \"(add lint later)\""
+  },
+  "devDependencies": {
+    "typescript": "^5.5.0"
+  }
+}

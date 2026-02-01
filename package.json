@@ -1,0 +1,14 @@
+{
+  "name": "nyano-triad-league",
+  "private": true,
+  "packageManager": "pnpm@9.0.0",
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "scripts": {
+    "test": "pnpm -C packages/triad-engine test",
+    "lint": "echo \"TODO: add lint\"",
+    "fmt": "echo \"TODO: add formatter\""
+  }
+}
