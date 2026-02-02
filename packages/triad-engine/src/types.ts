@@ -151,6 +151,7 @@ export interface MatchResult {
   board: BoardState;
   turns: TurnSummary[];
   matchId: `0x${string}`; // keccak256 of canonical transcript (off-chain)
+  formations: { A: FormationId[]; B: FormationId[] };
 }
 
 
@@ -230,6 +231,46 @@ export interface TraitEffectsConfigV1 {
   earth: { enabled: boolean; boost: number; oppositePenalty: number; requireChoice: boolean };
 }
 
+
+export type FormationId = "five_elements_harmony" | "eclipse";
+
+export interface FiveElementsHarmonyConfigV1 {
+  enabled: boolean;
+  /**
+   * Scale factor applied to combo bonus triadPlus values (momentum/domination).
+   * Example: base momentum +1 with scale=2 => +2.
+   *
+   * Season rules can amplify this (Design v2 Season 3: "五行調和ボーナス3倍").
+   */
+  comboBonusScale: number; // default 2
+  /**
+   * Required elements (TraitType) for the formation.
+   * v1 default: flame/aqua/earth/wind/thunder.
+   */
+  requiredElements: Array<"flame" | "aqua" | "earth" | "wind" | "thunder">;
+}
+
+export interface EclipseConfigV1 {
+  enabled: boolean;
+  /**
+   * If true, Light cards also ignore warning mark penalty when this formation is active.
+   * Shadow already ignores by its own trait effect.
+   */
+  lightAlsoIgnoresWarningMark: boolean;
+  /**
+   * If true, Shadow cards count as "Light sources" for the Light adjacency aura
+   * (i.e., adjacent ally cards get +1).
+   */
+  shadowCountsAsLightSource: boolean;
+}
+
+export interface FormationBonusesConfigV1 {
+  enabled: boolean;
+  fiveElementsHarmony: FiveElementsHarmonyConfigV1;
+  eclipse: EclipseConfigV1;
+}
+
+
 export interface SynergyConfigV1 {
   /**
    * Optional: Nyano on-chain trait -> game TraitType mapping.
@@ -237,6 +278,7 @@ export interface SynergyConfigV1 {
    */
   traitDerivation?: NyanoTraitDerivationConfigV1;
   traitEffects: TraitEffectsConfigV1;
+  formationBonuses: FormationBonusesConfigV1;
 }
 
 export interface RulesetConfigV1 {

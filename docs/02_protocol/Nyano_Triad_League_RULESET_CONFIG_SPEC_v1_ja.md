@@ -126,7 +126,34 @@ traitEffects: {
 
 - `enabled=false` の場合：全Trait効果を無効（CardData.trait はあっても無視）。
 
-### 4.3 TraitType一覧と効果（v1）
+
+### 4.3 formationBonuses（フォーメーションボーナス）
+
+Design v2.0 の「2.3.3 フォーメーションボーナス」に対応する、デッキ構築の組み合わせボーナスです。
+
+```ts
+formationBonuses: {
+  enabled: boolean;
+
+  fiveElementsHarmony: {
+    enabled: boolean;
+    comboBonusScale: number;
+    requiredElements: Array<"flame"|"aqua"|"earth"|"wind"|"thunder">;
+  };
+
+  eclipse: {
+    enabled: boolean;
+    lightAlsoIgnoresWarningMark: boolean;
+    shadowCountsAsLightSource: boolean;
+  };
+}
+```
+
+- `enabled=false` の場合：フォーメーションボーナスを全て無効。
+- フォーメーションはトランスクリプトに書かず、**デッキのTraitType** と ruleset から派生して決定する。
+- 詳細仕様：`Nyano_Triad_League_FORMATION_BONUS_SPEC_v1_ja.md`
+
+### 4.4 TraitType一覧と効果（v1）
 
 | Trait | 効果（決定論） | 備考 |
 |---|---|---|
@@ -195,4 +222,30 @@ traitEffects: {
 
 - TS：この shape をそのまま読み込み、`simulateMatchV1(..., ruleset)` に渡して検証する。
 - Solidity：対応するサブセットのみ on-chain config として保持し、決済できる ruleset を段階的に増やす。
+
+
+
+---
+
+## 6. formationBonuses JSON例（追記）
+
+```json
+{
+  "synergy": {
+    "formationBonuses": {
+      "enabled": true,
+      "fiveElementsHarmony": {
+        "enabled": true,
+        "comboBonusScale": 2,
+        "requiredElements": ["flame", "aqua", "earth", "wind", "thunder"]
+      },
+      "eclipse": {
+        "enabled": true,
+        "lightAlsoIgnoresWarningMark": true,
+        "shadowCountsAsLightSource": true
+      }
+    }
+  }
+}
+```
 

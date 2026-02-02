@@ -127,3 +127,35 @@
 - `pnpm -C packages/triad-engine test`
 - `pnpm -C packages/triad-engine build`
 - `docs/02_protocol/*` / `docs/99_dev/*` の差分確認
+
+## 2026-02-02 — commit-0007
+
+### Why
+- Design v2.0 の「フォーメーションボーナス（2.3.3）」は、デッキ構築を“強カードの寄せ集め”から脱却させる中核なので、早めに参照実装へ落としたかった。
+- また Season 3 の例（五行調和ボーナス3倍 / Light+Shadow=日食）にあるように、シーズン環境（Layer4）が **倍率・追加効果** として上書きできる土台が必要だった。
+- “運営がいなくても盛り上がる”には、第三者がリプレイや環境分析を作れるよう、どのformationが有効だったかを結果に含めておくのが重要。
+
+### What
+- `RulesetConfigV1.synergy.formationBonuses` を追加（data-driven）。
+- v1の最小セットとして、2つのformationを実装：
+  - **五行調和（Five Elements Harmony）**：
+    - 条件：Flame/Aqua/Earth/Wind/Thunder がデッキに揃う
+    - 効果：comboBonus（Momentum/Domination）の triadPlus を `comboBonusScale` 倍
+  - **日食（Eclipse）**：
+    - 条件：Light と Shadow がデッキに揃う
+    - 効果（rulesetでON/OFF可能）：
+      - Lightが警戒マークの -1 を無効化
+      - Shadowを Light光源として扱い、Light aura を発生させる
+- `MatchResult.formations` を追加し、UI/解析が “運営なし” でも作りやすい形にした。
+- 仕様追加：
+  - `Nyano_Triad_League_FORMATION_BONUS_SPEC_v1_ja.md`
+- 既存仕様追従：
+  - ruleset spec / transcript spec を formation 仕様に追従させた。
+- テスト追加：
+  - 五行調和による comboBonus 倍率適用が次ターンに反映されること
+  - 日食により Light が警戒マークを踏んでも triad が下がらないこと
+
+### Verify
+- `pnpm -C packages/triad-engine test`
+- `pnpm -C packages/triad-engine build`
+- 仕様差分：`docs/02_protocol/*` / `docs/99_dev/*` の更新確認

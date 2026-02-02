@@ -40,7 +40,13 @@
   - 仕様：`Nyano_Triad_League_TRAIT_DERIVATION_SPEC_v1_ja.md`
   - TS参照実装：`deriveTraitTypeFromNyanoTraitV1(...)` / `makeCardDataFromNyano(...)`
 
-> 注意：トランスクリプト自体は traitType を持ちません。  
+> 注意：トランスクリプト自体は traitType を持ちません。
+
+同様に、**フォーメーションボーナス**もトランスクリプトに書きません。  
+フォーメーションは「デッキのTraitType（導出済み）」と `rulesetConfig.synergy.formationBonuses` から派生して決定します。  
+（仕様：`Nyano_Triad_League_FORMATION_BONUS_SPEC_v1_ja.md`）
+
+  
 > 「どの導出規則を使うか」は rulesetId で固定されるべきであり、後から解釈が変わらないようにします。
 
 ### 3.1 MatchHeader（固定部）

@@ -22,11 +22,17 @@
 
 ---
 
+- ✅ Commit0007: Formation bonuses（Layer3拡張）v1 実装 + 仕様追加
+  - 五行調和（Five Elements Harmony）：comboBonus の triadPlus を倍率適用
+  - 日食（Eclipse）：Light+Shadow のクロス（Lightが警戒無効／ShadowがLight光源）
+  - MatchResult に `formations` を追加（UI/解析が “運営なし” でも作りやすい）
+  - `FORMATION_BONUS_SPEC` 追加、ruleset/transcript 追従
+
 ## 🚧 Doing (now)
 
-- 🔧 Formation bonuses（Layer3拡張）の v1 仕様案と実装
-  - 例：3枚同Trait / 5枚全Trait異なる / 2+2+1 など
-  - まずは「勝ち筋が増えるが複雑すぎない」最小セットで
+- 🔧 ruleset canonicalization（JSON→canonical bytes）と `rulesetId` 生成の参照実装
+  - まずは TS の `canonicalizeRulesetV1(config) -> bytes` を実装
+  - 同じルール＝同じrulesetId を保証（コミュニティ提案が衝突しない）
 
 ## 🧩 Next (high priority)
 
@@ -37,7 +43,6 @@
 - [ ] 「Wind（先攻/後攻選択）」の公平な表現（commit-reveal / seed / 両者合意など）
 
 ### B. ゲームの“面白さ”を積み増す（ただし決定論で）
-- [ ] Formation bonuses（3枚同Trait、全Trait異なる等）のv1仕様案と実装
 - [ ] メタ（Layer4）の小さな可変（例：corner boost / center locked / chain cap）を1つ追加
 
 ### C. 自走するコミュニティ設計（運営が消えても回る）
@@ -52,4 +57,3 @@
 - [ ] ERC-6551（Nyanoトークン境界のアカウント）を使った「チーム/ギルド」
 - [ ] NFTステーキングで Season Pass / ルール投票権 / 参加枠（sybil対策）を提供する設計
 - [ ] 互換性：過去のOasysエコシステムからの資産移行方針（必要なら）
-

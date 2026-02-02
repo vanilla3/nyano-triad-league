@@ -13,6 +13,7 @@ import type {
   TranscriptV1,
   TurnSummary,
   TraitType,
+  FormationId,
 } from "./types.js";
 
 /**
@@ -75,6 +76,19 @@ export const DEFAULT_RULESET_CONFIG_V1: RulesetConfigV1 = {
       thunder: { enabled: true, adjacentEnemyAllTriadDelta: -1 },
       wind: { enabled: true },
       earth: { enabled: true, boost: 2, oppositePenalty: -1, requireChoice: true },
+    },
+    formationBonuses: {
+      enabled: true,
+      fiveElementsHarmony: {
+        enabled: true,
+        comboBonusScale: 2,
+        requiredElements: ["flame", "aqua", "earth", "wind", "thunder"],
+      },
+      eclipse: {
+        enabled: true,
+        lightAlsoIgnoresWarningMark: true,
+        shadowCountsAsLightSource: true,
+      },
     },
   },
 };
@@ -281,6 +295,57 @@ export function simulateMatchV1(
   const clampEdge = (v: number): number => Math.max(edgeMin, Math.min(EDGE_MAX, v));
 
   const getTrait = (card: CardData): TraitType => card.trait ?? "none";
+
+  // -----------------------------
+  // Layer3: Formation bonuses (deck composition)
+  // -----------------------------
+  const fb = rules.synergy.formationBonuses;
+  const formationsByPlayer: [FormationId[], FormationId[]] = [[], []];
+  const fiveElementsScale: [number, number] = [1, 1];
+  const eclipseLightIgnoresWarning: [boolean, boolean] = [false, false];
+  const eclipseShadowAsLight: [boolean, boolean] = [false, false];
+
+  const deckTraits: [TraitType[], TraitType[]] = [[], []];
+  for (const p of [0, 1] as PlayerIndex[]) {
+    const deck = p === 0 ? t.header.deckA : t.header.deckB;
+    for (const tokenId of deck) {
+      const c = cardsByTokenId.get(tokenId);
+      if (!c) throw new Error(`missing CardData for tokenId=${tokenId}`);
+      deckTraits[p].push(getTrait(c));
+    }
+  }
+
+  const hasAllTraits = (traits: TraitType[], required: TraitType[]): boolean => required.every((x) => traits.includes(x));
+
+  if (fb.enabled) {
+    // 五行調和 (Five Elements Harmony)
+    if (fb.fiveElementsHarmony.enabled) {
+      const req = fb.fiveElementsHarmony.requiredElements as unknown as TraitType[];
+      const scale = fb.fiveElementsHarmony.comboBonusScale;
+      if (!Number.isInteger(scale) || scale < 1) throw new Error("invalid fiveElementsHarmony.comboBonusScale");
+      for (const p of [0, 1] as PlayerIndex[]) {
+        if (hasAllTraits(deckTraits[p], req)) {
+          formationsByPlayer[p].push("five_elements_harmony");
+          fiveElementsScale[p] = scale;
+        }
+      }
+    }
+
+    // 日食 (Eclipse): Light + Shadow
+    if (fb.eclipse.enabled) {
+      for (const p of [0, 1] as PlayerIndex[]) {
+        const hasLight = deckTraits[p].includes("light");
+        const hasShadow = deckTraits[p].includes("shadow");
+        if (hasLight && hasShadow) {
+          formationsByPlayer[p].push("eclipse");
+          eclipseLightIgnoresWarning[p] = fb.eclipse.lightAlsoIgnoresWarningMark;
+          eclipseShadowAsLight[p] = fb.eclipse.shadowCountsAsLightSource;
+        }
+      }
+    }
+  }
+
+
   const te = rules.synergy.traitEffects;
   const traitEffectsEnabled = te.enabled;
 
@@ -348,6 +413,7 @@ export function simulateMatchV1(
       if (!c) continue;
       if (c.owner !== owner) continue;
       if (cardHasTrait(c.card, "light")) count += 1;
+      else if (eclipseShadowAsLight[owner] && cardHasTrait(c.card, "shadow")) count += 1;
     }
     return count;
   };
@@ -567,7 +633,7 @@ export function simulateMatchV1(
       warningTriggered = triggered !== null;
     }
 
-    const shadowIgnoresWarning = cardHasTrait(baseCard, "shadow");
+    const shadowIgnoresWarning = cardHasTrait(baseCard, "shadow") || (eclipseLightIgnoresWarning[p] && cardHasTrait(baseCard, "light"));
 
     const warningPenalty =
       warningTriggered && !applied.ignoreWarningMark && !shadowIgnoresWarning ? rules.tactics.warningMark.penaltyAllTriad : 0;
@@ -610,10 +676,10 @@ export function simulateMatchV1(
         pendingBonus[p] = { triadPlus: 0, ignoreWarningMark: true };
       } else if (comboCount === cb.dominationAt) {
         comboEffect = "domination";
-        pendingBonus[p] = { triadPlus: cb.dominationTriadPlus, ignoreWarningMark: false };
+        pendingBonus[p] = { triadPlus: cb.dominationTriadPlus * fiveElementsScale[p], ignoreWarningMark: false };
       } else if (comboCount === cb.momentumAt) {
         comboEffect = "momentum";
-        pendingBonus[p] = { triadPlus: cb.momentumTriadPlus, ignoreWarningMark: false };
+        pendingBonus[p] = { triadPlus: cb.momentumTriadPlus * fiveElementsScale[p], ignoreWarningMark: false };
       }
     }
 
@@ -691,5 +757,6 @@ export function simulateMatchV1(
     board,
     turns: turnSummaries,
     matchId,
+    formations: { A: formationsByPlayer[0], B: formationsByPlayer[1] },
   };
 }
