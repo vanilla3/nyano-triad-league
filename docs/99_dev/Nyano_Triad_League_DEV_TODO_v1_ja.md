@@ -28,18 +28,23 @@
   - MatchResult に `formations` を追加（UI/解析が “運営なし” でも作りやすい）
   - `FORMATION_BONUS_SPEC` 追加、ruleset/transcript 追従
 
+
+- ✅ Commit0008: rulesetId 参照実装（固定ABIエンコード）+ RULESET_ID_SPEC + テストベクタ
+  - 無効化セクションを正規化（同挙動でIDが分裂しない）
+  - 五行調和の requiredElements を集合扱い（順序を無視）
+  - `computeRulesetIdV1(ruleset)` を追加（TS参照実装）
 ## 🚧 Doing (now)
 
-- 🔧 ruleset canonicalization（JSON→canonical bytes）と `rulesetId` 生成の参照実装
-  - まずは TS の `canonicalizeRulesetV1(config) -> bytes` を実装
-  - 同じルール＝同じrulesetId を保証（コミュニティ提案が衝突しない）
+- 🔧 Solidity側：Transcript検証（v1 ABI-encode hash）の最小実装（foundry/hardhatは後で選定）
+  - `matchId` の計算と二重提出防止（replay防止）
+  - `rulesetId` を受け取り、RulesetRegistry（後続）と接続できる形にする
 
 ## 🧩 Next (high priority)
 
 
 ### A. ルール・プロトコルの安定化
-- [ ] ruleset canonicalization（JSON→canonical bytes）と `rulesetId` 生成の参照実装
 - [ ] 公式戦向け：Solidity側のTranscript検証（v1 ABI-encode hash）
+- [ ] RulesetRegistry（permissionless）最小実装：rulesetId -> config hash / metadata を登録できる
 - [ ] 「Wind（先攻/後攻選択）」の公平な表現（commit-reveal / seed / 両者合意など）
 
 ### B. ゲームの“面白さ”を積み増す（ただし決定論で）

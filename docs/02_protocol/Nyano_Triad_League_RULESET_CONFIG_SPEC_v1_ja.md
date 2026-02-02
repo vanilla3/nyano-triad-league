@@ -9,10 +9,15 @@
 ---
 
 ## 1. Ruleset ID
-- `rulesetId = keccak256(configCanonicalBytes)`
-- “同じルール = 同じID” を保証するため、canonical化（キー順、数値型、enum表記）を必須とする。
+
+v1では **固定ABIエンコード** により rulesetId を定義する（Solidity互換）。
+
+- 定義：`rulesetId = keccak256( abi.encode(RulesetConfigV1Canonical) )`
+- 仕様の詳細（canonicalization / enum code / ABI順序）は以下に集約：
+  - `Nyano_Triad_League_RULESET_ID_SPEC_v1_ja.md`
 
 ---
+
 
 ## 2. RulesetConfigV1（TS参照実装の shape）
 

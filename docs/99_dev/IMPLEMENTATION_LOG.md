@@ -159,3 +159,28 @@
 - `pnpm -C packages/triad-engine test`
 - `pnpm -C packages/triad-engine build`
 - 仕様差分：`docs/02_protocol/*` / `docs/99_dev/*` の更新確認
+
+## 2026-02-02 — commit-0008
+
+### Why
+- “運営がいなくても回る”ためには、コミュニティが提案する ruleset が **衝突せずに識別**できる必要がある。
+- JSONのような曖昧なシリアライズだと、言語差（キー順・数値表記・Unicode等）で **同じルールなのにIDが分裂** しやすい。
+- 将来オンチェーンに RulesetRegistry を置く場合も、Solidity側で同じIDを計算できる形（= fixed ABI encoding）が望ましい。
+
+### What
+- `computeRulesetIdV1(ruleset)` を追加（TS参照実装）。
+  - `rulesetId = keccak256(abi.encode(RulesetConfigV1Canonical))` を固定。
+  - 無効化セクション（enabled=false）は **ゼロ化して正規化**（同じ挙動でIDが分裂しない）。
+  - 五行調和の `requiredElements` は集合として扱い、**順序を無視**（code昇順にソート）。
+- 仕様追加：
+  - `Nyano_Triad_League_RULESET_ID_SPEC_v1_ja.md`
+  - RULESET_CONFIG_SPEC / TRANSCRIPT_SPEC を参照追記
+- テスト追加：
+  - default rulesetId の test vector を固定
+  - 無効化セクションの正規化が効いていること
+  - requiredElements の順序がIDに影響しないこと
+
+### Verify
+- `pnpm -C packages/triad-engine test`
+- `pnpm -C packages/triad-engine build`
+- 仕様差分：`docs/02_protocol/*` / `docs/99_dev/*` の更新確認
