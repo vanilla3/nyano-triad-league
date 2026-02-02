@@ -1,52 +1,55 @@
 # Nyano Triad League — 開発TODO（v1）
 
-> ルール：毎コミットで「Done / Doing / Next / Blockers」を更新する  
-> 目的：実装の迷子を防ぎ、第三者レビューを容易にする
+このファイルは「今なにを作っているか」「次になにを作るか」を、コミュニティと共有するための実装TODOです。
 
 ---
 
-## Done（完了）
-- [x] 初期リポジトリ土台（docs / templates / CI / workspace）
-- [x] `packages/triad-engine` を正規位置へ移設（starter同梱を解消）
-- [x] TS参照実装（Layer1/Core）：Triad比較、じゃんけん決着、連鎖、勝敗判定（決定論）
-- [x] Transcript v1：matchId を **keccak256(固定ABIエンコード)** で計算（仕様にも明記）
-- [x] Layer2/Tactics：**警戒マーク**（最大3回、1ターン、踏んだカードTriad-1）をTSエンジンに実装
-- [x] ゴールデンテスト追加：警戒マークが盤面支配に影響するケース
-- [x] CI：lockfile未コミット段階を想定し `pnpm install --frozen-lockfile` を一時的に解除
+## ✅ Done
 
-## Doing（着手中）
-- [ ]（なし）
+- ✅ Commit0001: 初期セットアップ（docs雛形、triad-engine skeleton）
+- ✅ Commit0002: トランスクリプトv1（EIP-712 / matchId方針）+ ruleset config spec（概念）
+- ✅ Commit0003: オートノミー視点（運営不在でも回る仕組み）のロードマップ草案 + ERC-6551 / staking検討メモ
+- ✅ Commit0004: triad-engine Layer2（warning mark / combo bonus / second-player balance）実装 + ゴールデンテスト
+- ✅ Commit0005: triad-engine Layer3（Trait効果 v1）実装 + 仕様更新
+- ✅ Commit0006: Nyano Peace オンチェーン Trait → ゲーム内 TraitType の導出（v1）
+  - `synergy.traitDerivation` を ruleset に追加
+  - TSヘルパ（`makeCardDataFromNyano` / `deriveTraitTypeFromNyanoTraitV1`）
+  - `TRAIT_DERIVATION_SPEC` 追加
 
-## Next（次にやる）
-### 0. 仕様固定（ブレると後で地獄になるもの）
-- [ ] 警戒マークの「Triad下限（0 or 1）」を仕様として明文化（現状は 0..10 にクランプ）
-- [ ] combo bonus の仕様確定（加点方式 / 表示 / 連鎖との関係）
+  - Shadow / Forest / Earth / Thunder / Light
+  - Cosmic / Metal / Flame / Aqua / Wind
+  - `TRAIT_EFFECTS_SPEC` 追加、既存仕様（ruleset/transcript）を実装に追従
 
-### 1. エンジン（TypeScript）— 参照実装
-- [ ] Tactics（Layer2）：コンボボーナス（rulesetでON/OFF可能）
-- [ ] Synergy（Layer3）：Trait効果の導入（まずは代表5種から）
-  - [ ] Flame / Aqua / Thunder / Wind / Earth
-- [ ] Earth の「配置時選択（earthBoostEdge）」を transcript によって決定論で表現
-- [ ] 追加ゴールデンテスト：
-  - [ ] 同値じゃんけんが勝敗を分ける
-  - [ ] 連鎖が発生する
-  - [ ] コンボボーナスが勝敗を変える
-  - [ ] Earth選択が勝敗を変える
+---
 
-### 2. Solidity（公式戦決済）
-- [ ] Nyano Peace 読み取りinterface（ownerOf / getTriad / getJankenHand / getTrait / getCombatStats）
-- [ ] TriadEngine（pure library）実装（TS参照と一致させる）
-- [ ] Match settlement（署名検証＋所有権検証＋結果再計算＋イベント）
+## 🚧 Doing (now)
 
-### 3. Frontend（まずは“遊べる”まで）
-- [ ] 3×3盤面UI（配置→結果計算→リプレイ）
-- [ ] デッキビルダー（フィルタ：Triad/じゃんけん/rarity/trait）
+- 🔧 Formation bonuses（Layer3拡張）の v1 仕様案と実装
+  - 例：3枚同Trait / 5枚全Trait異なる / 2+2+1 など
+  - まずは「勝ち筋が増えるが複雑すぎない」最小セットで
 
-### 4. 自律化（運営ゼロでも回る仕込み）
-- [ ] Events を indexer-friendly に（matchId / replayHash / rulesetId など）
-- [ ] Ruleset Registry（permissionless）草案 → 実装順の確定
+## 🧩 Next (high priority)
 
-## Blockers（阻害要因）
-- [ ] Nyano Peace の「Trait」解釈（ゲーム用Traitをどのオンチェーン属性から導出するか）
-- [ ] 公式戦で on-chain に載せる範囲（Coreのみ→拡張ルールも含めるか）
-- [ ] lockfile（pnpm-lock.yaml）をいつコミットするか（CIをfrozenへ戻すタイミング）
+
+### A. ルール・プロトコルの安定化
+- [ ] ruleset canonicalization（JSON→canonical bytes）と `rulesetId` 生成の参照実装
+- [ ] 公式戦向け：Solidity側のTranscript検証（v1 ABI-encode hash）
+- [ ] 「Wind（先攻/後攻選択）」の公平な表現（commit-reveal / seed / 両者合意など）
+
+### B. ゲームの“面白さ”を積み増す（ただし決定論で）
+- [ ] Formation bonuses（3枚同Trait、全Trait異なる等）のv1仕様案と実装
+- [ ] メタ（Layer4）の小さな可変（例：corner boost / center locked / chain cap）を1つ追加
+
+### C. 自走するコミュニティ設計（運営が消えても回る）
+- [ ] 「シーズンの議会」：ruleset proposal / vote / adopt の最小プロトコル
+- [ ] ラダー（ランキング）を“許可不要”で第三者が運用できるフォーマット
+  - 例：イベントログ＋署名検証＋ランキング算出の決定論
+
+---
+
+## 🔬 Research / Optional
+
+- [ ] ERC-6551（Nyanoトークン境界のアカウント）を使った「チーム/ギルド」
+- [ ] NFTステーキングで Season Pass / ルール投票権 / 参加枠（sybil対策）を提供する設計
+- [ ] 互換性：過去のOasysエコシステムからの資産移行方針（必要なら）
+
