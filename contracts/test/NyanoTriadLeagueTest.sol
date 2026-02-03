@@ -147,7 +147,42 @@ contract NyanoTriadLeagueTest {
         require(!ok, "expected revert (ruleset engine mismatch)");
     }
 
-    // ---- helpers ----
+        function test_submitMatch_auto_routes_v1() public {
+        TranscriptV1.Data memory t = _makeTranscriptV1();
+
+        bytes32 digest = keccak256(abi.encodePacked("\x19\x01", league.domainSeparator(), TranscriptV1.structHash(t)));
+        bytes memory sigA = _sig(PK_A, digest);
+        bytes memory sigB = _sig(PK_B, digest);
+
+        league.submitMatch(t, sigA, sigB);
+
+        bytes32 matchId = TranscriptV1.matchId(t);
+        require(league.submitted(matchId), "submitted=false");
+
+        (address winner, uint8 tilesA, uint8 tilesB, , ) = league.settlements(matchId);
+        require(winner == playerA, "winner should be A (5-4)");
+        require(tilesA == 5 && tilesB == 4, "tiles mismatch");
+    }
+
+    function test_submitMatch_auto_routes_v2() public {
+        _configureTokensForShadowVector(true);
+
+        TranscriptV1.Data memory t = _makeTranscriptV2();
+
+        bytes32 digest = keccak256(abi.encodePacked("\x19\x01", league.domainSeparator(), TranscriptV1.structHash(t)));
+        bytes memory sigA = _sig(PK_A, digest);
+        bytes memory sigB = _sig(PK_B, digest);
+
+        league.submitMatch(t, sigA, sigB);
+
+        bytes32 matchId = TranscriptV1.matchId(t);
+        (address winner, uint8 tilesA, uint8 tilesB, , ) = league.settlements(matchId);
+
+        require(winner == playerB, "winner should be B (shadow ignores warning mark)");
+        require(tilesA == 4 && tilesB == 5, "tiles mismatch");
+    }
+
+// ---- helpers ----
 
     function _configureTokensForShadowVector(bool shadowToken6) private {
         // Matches test-vectors/core_tactics_shadow_v2.json

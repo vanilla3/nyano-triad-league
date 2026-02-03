@@ -64,7 +64,21 @@ contract NyanoTriadLeague is EIP712Domain {
     function _name() internal pure override returns (string memory) { return _NAME; }
     function _version() internal pure override returns (string memory) { return _VERSION; }
 
-    /// @notice Submit an official match transcript using TriadEngineV1.
+        /// @notice Submit an official match transcript using the engine declared in the RulesetRegistry.
+    /// @dev If rulesetRegistry is unset (address(0)), defaults to engine v1.
+    function submitMatch(TranscriptV1.Data calldata t, bytes calldata sigA, bytes calldata sigB) external {
+        uint8 engineId = 1;
+
+        if (address(rulesetRegistry) != address(0)) {
+            // if registry is configured, pick the engineId on-chain (and let _submit re-check active/match).
+            engineId = rulesetRegistry.engineOf(t.rulesetId);
+            if (engineId == 0) engineId = 1; // back-compat default
+        }
+
+        _submit(t, sigA, sigB, engineId);
+    }
+
+/// @notice Submit an official match transcript using TriadEngineV1.
     function submitMatchV1(TranscriptV1.Data calldata t, bytes calldata sigA, bytes calldata sigB) external {
         _submit(t, sigA, sigB, 1);
     }

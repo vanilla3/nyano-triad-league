@@ -36,3 +36,8 @@
 ## イベント（概要）
 - `MatchSubmitted(matchId, rulesetId, submitter, playerA, playerB)`
 - `MatchSettled(matchId, rulesetId, winner, tilesA, tilesB)`
+
+
+## 提出入口（推奨）
+- `submitMatch`：RulesetRegistry の engineId を参照して自動で v1/v2 を選択する。
+- `submitMatchV1/V2`：明示したい場合の入口（engine mismatch は revert）。

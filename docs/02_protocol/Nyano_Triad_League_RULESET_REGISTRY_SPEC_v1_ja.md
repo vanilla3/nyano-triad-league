@@ -31,3 +31,10 @@
 - League 側は `submitMatchV1/V2` の入り口ごとに
   `rulesetRegistry.engineOf(rulesetId) == 期待engineId` を検証する（registry が設定されている場合）
 - これにより「プレイヤーが署名した rulesetId を、第三者が違うエンジンで決済してしまう」事故を抑止できる
+
+
+---
+
+## 付録：公式 rulesetId / configHash の生成
+- `node scripts/print_official_onchain_rulesets.mjs` で、オンチェーン決済に対応する公式 ruleset の package を出力できる。
+- 詳細：`Nyano_Triad_League_RULESET_PACKAGE_SPEC_v1_ja.md`
