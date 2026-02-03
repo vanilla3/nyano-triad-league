@@ -404,4 +404,42 @@ contract CoreTacticsVectorsV1Test {
         require(r.tieScoreB == 5, "tieScoreB mismatch");
     }
 
+
+    function test_vector_fever_ignores_warning_mark_on_next_card_allows_flip() public {
+        MockNyanoPeace nyano = new MockNyanoPeace();
+        TriadEngineV1Harness h = new TriadEngineV1Harness();
+
+        _setToken(nyano, 1, 1, 1, 1, 1, 0, 1);
+        _setToken(nyano, 2, 1, 1, 1, 5, 0, 1);
+        _setToken(nyano, 3, 1, 2, 1, 1, 0, 1);
+        _setToken(nyano, 4, 5, 5, 5, 5, 0, 1);
+        _setToken(nyano, 5, 1, 1, 5, 1, 1, 1);
+        _setToken(nyano, 6, 1, 3, 1, 3, 0, 1);
+        _setToken(nyano, 7, 1, 1, 1, 1, 0, 1);
+        _setToken(nyano, 8, 5, 1, 1, 1, 1, 1);
+        _setToken(nyano, 9, 1, 5, 1, 1, 0, 1);
+        _setToken(nyano, 10, 1, 1, 1, 1, 0, 1);
+
+        TranscriptV1.Data memory tr = _buildTranscript(
+            1,
+            0,
+            0x1111111111111111111111111111111111111111111111111111111111111111,
+            address(uint160(uint256(0x00aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa))),
+            address(uint160(uint256(0x00bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb))),
+            [uint256(1), 2, 3, 4, 5],
+            [uint256(6), 7, 8, 9, 10],
+            hex"100021316252437384",
+            hex"ffffffffffffff08ff",
+            hex"ffffffffffffffffff",
+            9999999999
+        );
+
+        TriadEngineV1.Result memory r = h.resolve(nyano, tr);
+        _expectWinner(address(uint160(uint256(0x00aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa))), r.winner);
+        require(r.tilesA == 8, "tilesA mismatch");
+        require(r.tilesB == 1, "tilesB mismatch");
+        require(r.tieScoreA == 8, "tieScoreA mismatch");
+        require(r.tieScoreB == 1, "tieScoreB mismatch");
+    }
+
 }

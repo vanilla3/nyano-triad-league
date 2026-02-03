@@ -1,7 +1,7 @@
 {
   "schema": "nyano-triad-league.test-vectors.core_tactics_v1",
   "version": 1,
-  "notes": "Canonical test vectors for the on-chain settlement subset (Core + Tactics). Expanded with B win / chain flip / janken / domination / fever.",
+  "notes": "Canonical test vectors for the on-chain settlement subset (Core + Tactics). Expanded with B win / chain flip / janken / domination / fever. Added fever-next-turn ignore warning mark case.",
   "cases": [
     {
       "name": "ties_do_not_flip_even_if_power_diff",
@@ -1252,6 +1252,145 @@
         "tilesB": 5,
         "tieScoreA": 4,
         "tieScoreB": 5
+      }
+    },
+    {
+      "name": "fever_ignores_warning_mark_on_next_card_allows_flip",
+      "transcript": {
+        "version": 1,
+        "seasonId": 0,
+        "rulesetId": "0x1111111111111111111111111111111111111111111111111111111111111111",
+        "playerA": "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "playerB": "0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "deckA": [
+          1,
+          2,
+          3,
+          4,
+          5
+        ],
+        "deckB": [
+          6,
+          7,
+          8,
+          9,
+          10
+        ],
+        "firstPlayer": 0,
+        "deadline": 9999999999,
+        "salt": "0x2222222222222222222222222222222222222222222222222222222222222222",
+        "movesHex": "100021316252437384",
+        "warningMarksHex": "ffffffffffffff08ff",
+        "earthBoostEdgesHex": "ffffffffffffffffff"
+      },
+      "tokens": {
+        "1": {
+          "triad": {
+            "up": 1,
+            "right": 1,
+            "left": 1,
+            "down": 1
+          },
+          "hand": 0,
+          "power": 1
+        },
+        "2": {
+          "triad": {
+            "up": 1,
+            "right": 1,
+            "left": 1,
+            "down": 5
+          },
+          "hand": 0,
+          "power": 1
+        },
+        "3": {
+          "triad": {
+            "up": 1,
+            "right": 2,
+            "left": 1,
+            "down": 1
+          },
+          "hand": 0,
+          "power": 1
+        },
+        "4": {
+          "triad": {
+            "up": 5,
+            "right": 5,
+            "left": 5,
+            "down": 5
+          },
+          "hand": 0,
+          "power": 1
+        },
+        "5": {
+          "triad": {
+            "up": 1,
+            "right": 1,
+            "left": 5,
+            "down": 1
+          },
+          "hand": 1,
+          "power": 1
+        },
+        "6": {
+          "triad": {
+            "up": 1,
+            "right": 3,
+            "left": 1,
+            "down": 3
+          },
+          "hand": 0,
+          "power": 1
+        },
+        "7": {
+          "triad": {
+            "up": 1,
+            "right": 1,
+            "left": 1,
+            "down": 1
+          },
+          "hand": 0,
+          "power": 1
+        },
+        "8": {
+          "triad": {
+            "up": 5,
+            "right": 1,
+            "left": 1,
+            "down": 1
+          },
+          "hand": 1,
+          "power": 1
+        },
+        "9": {
+          "triad": {
+            "up": 1,
+            "right": 5,
+            "left": 1,
+            "down": 1
+          },
+          "hand": 0,
+          "power": 1
+        },
+        "10": {
+          "triad": {
+            "up": 1,
+            "right": 1,
+            "left": 1,
+            "down": 1
+          },
+          "hand": 0,
+          "power": 1
+        }
+      },
+      "expected": {
+        "winner": "A",
+        "tilesA": 8,
+        "tilesB": 1,
+        "tieScoreA": 8,
+        "tieScoreB": 1
       }
     }
   ]

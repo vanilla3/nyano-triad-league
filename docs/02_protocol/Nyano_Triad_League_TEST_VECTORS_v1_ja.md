@@ -88,3 +88,6 @@ EIP-55 checksum を要求してコンパイルエラーになります。
 - 警戒マーク使用回数上限（各プレイヤー最大3回）
   - TS: `packages/triad-engine/test/warning_mark_limit.test.js`
   - Solidity: `contracts/test/WarningMarkLimitTest.sol`
+
+- `fever_ignores_warning_mark_on_next_card_allows_flip`
+  - fever（comboCount>=5）で次手が警戒マークを無視することを固定（無視できないと最終タイル数がズレる）
