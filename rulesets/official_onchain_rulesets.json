@@ -1,0 +1,22 @@
+{
+  "notes": [
+    "On-chain settlement is currently supported only for the official fixed configs below.",
+    "configHash == rulesetId for v1 (ABI encoded canonical config hashed with keccak256)."
+  ],
+  "rulesets": [
+    {
+      "name": "onchain_core_tactics_v1",
+      "engineId": 1,
+      "rulesetId": "0x8727d4a006b5ca9a9dae4d5c6e0b6eb5a6b759a52ae356d0712b01dade04cb08",
+      "configHash": "0x8727d4a006b5ca9a9dae4d5c6e0b6eb5a6b759a52ae356d0712b01dade04cb08",
+      "uri": "(set your spec uri; e.g. ipfs://...)"
+    },
+    {
+      "name": "onchain_core_tactics_shadow_v2",
+      "engineId": 2,
+      "rulesetId": "0x5ef04aa625b7f3c1528f4a2ff660471e0bf8eb04d61bfb02b095d100d29fe2f5",
+      "configHash": "0x5ef04aa625b7f3c1528f4a2ff660471e0bf8eb04d61bfb02b095d100d29fe2f5",
+      "uri": "(set your spec uri; e.g. ipfs://...)"
+    }
+  ]
+}

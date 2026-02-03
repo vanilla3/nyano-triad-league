@@ -16,9 +16,9 @@ RulesetRegistry に登録するために最低限必要な情報をまとめた 
 - `configHash`: `bytes32`（ルール定義のハッシュ）
 - `uri`: 仕様書（IPFS/HTTPS）
 
-> **現状 v1** では `configHash == rulesetId` になります。  
+> **現状 v1/v2（公式固定 config）** では `configHash == rulesetId` になります。  
 > 理由：`rulesetId = keccak256(abi.encode(RulesetConfigV1Canonical))` のため。  
-> ただし将来、rulesetId が “ゲーム挙動だけのID” に縮退した場合に備え、フィールドは残します。
+> 将来の拡張に備え、フィールドは残します。
 
 ---
 
@@ -34,24 +34,34 @@ RulesetRegistry に登録するために最低限必要な情報をまとめた 
 
 ---
 
-## 3. 公式 rulesetId / configHash の生成手順
+## 3. 公式 ruleset package（レポ内に同梱）
 
-### 3.1 準備（triad-engine を build）
+レポジトリ直下の `rulesets/official_onchain_rulesets.json` が、
+オンチェーン決済に対応する公式 ruleset 一覧（スナップショット）です。
+
+- triad-engine の `computeRulesetIdV1(...)` と一致することを **テストで固定**しています
+- もし公式 config を変更した場合は、この JSON も再生成して更新してください
+
+---
+
+## 4. 公式 rulesetId / configHash の再生成手順
+
+### 4.1 準備（triad-engine を build）
 ```bash
 pnpm -C packages/triad-engine build
 ```
 
-### 3.2 公式 ruleset package を出力
+### 4.2 公式 ruleset package を安定出力（推奨）
 ```bash
 node scripts/print_official_onchain_rulesets.mjs --out rulesets/official_onchain_rulesets.json
 ```
 
-出力 JSON には v1/v2 の `rulesetId`, `engineId`, `configHash` が含まれます。  
-`uri` はコミュニティで合意した仕様書 URL（IPFS推奨）に差し替えてください。
+> `--out` を指定した場合、デフォルトで **タイムスタンプを含めない（安定出力）** になります。  
+> タイムスタンプも欲しい場合は `--with-timestamp` を使います。
 
 ---
 
-## 4. RulesetRegistry への登録例（cast）
+## 5. RulesetRegistry への登録例（cast）
 
 `rulesets/official_onchain_rulesets.json` の値を使います。
 
@@ -64,7 +74,7 @@ cast send <RULESET_REGISTRY_ADDRESS> \
 
 ---
 
-## 5. League への提出（推奨）
+## 6. League への提出（推奨）
 
 RulesetRegistry が設定されている League では、次が推奨です。
 
@@ -73,7 +83,7 @@ RulesetRegistry が設定されている League では、次が推奨です。
 
 ---
 
-## 6. セキュリティ要点
+## 7. セキュリティ要点
 
 - rulesetId に対して engineId を on-chain に固定しないと、第三者が “別エンジンでの不正決済” を試みられます。
 - そのため、RulesetRegistry の `engineId` と League の submit 入口を必ず整合させます。

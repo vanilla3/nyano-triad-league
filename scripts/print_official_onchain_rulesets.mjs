@@ -6,8 +6,11 @@
  *   pnpm -C packages/triad-engine build
  *   node scripts/print_official_onchain_rulesets.mjs
  *
- * Optional:
- *   node scripts/print_official_onchain_rulesets.mjs --out rulesets/offical_onchain_rulesets.json
+ * Write stable JSON (no timestamp) to a file:
+ *   node scripts/print_official_onchain_rulesets.mjs --out rulesets/official_onchain_rulesets.json
+ *
+ * Include timestamp even when writing:
+ *   node scripts/print_official_onchain_rulesets.mjs --out rulesets/official_onchain_rulesets.json --with-timestamp
  */
 import fs from "node:fs";
 import path from "node:path";
@@ -15,11 +18,16 @@ import process from "node:process";
 import { fileURLToPath } from "node:url";
 
 function parseArgs(argv) {
-  const out = { out: null, pretty: true };
+  const out = { out: null, pretty: true, withTimestamp: null };
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
     if (a === "--out") out.out = argv[++i];
     if (a === "--compact") out.pretty = false;
+
+    // Timestamp policy:
+    // - default: stdout -> include timestamp, file -> omit timestamp (stable)
+    if (a === "--with-timestamp") out.withTimestamp = true;
+    if (a === "--no-timestamp" || a === "--stable") out.withTimestamp = false;
   }
   return out;
 }
@@ -60,10 +68,12 @@ if (!ONCHAIN_CORE_TACTICS_RULESET_CONFIG_V1 || !ONCHAIN_CORE_TACTICS_SHADOW_RULE
 const v1RulesetId = computeRulesetIdV1(ONCHAIN_CORE_TACTICS_RULESET_CONFIG_V1);
 const v2RulesetId = computeRulesetIdV1(ONCHAIN_CORE_TACTICS_SHADOW_RULESET_CONFIG_V2);
 
-// v1 registry configHash is keccak256(abi.encode(canonicalRulesetConfig)) which equals rulesetId by definition.
-// Keep configHash field for forward compatibility (future IDs may be derived differently).
+// Timestamp defaults: stable when writing to file, timestamp when printing to stdout.
+let includeTimestamp = args.out ? false : true;
+if (args.withTimestamp !== null) includeTimestamp = args.withTimestamp;
+
 const outObj = {
-  generatedAt: new Date().toISOString(),
+  ...(includeTimestamp ? { generatedAt: new Date().toISOString() } : {}),
   notes: [
     "On-chain settlement is currently supported only for the official fixed configs below.",
     "configHash == rulesetId for v1 (ABI encoded canonical config hashed with keccak256).",
@@ -86,13 +96,13 @@ const outObj = {
   ],
 };
 
-const json = args.pretty ? JSON.stringify(outObj, null, 2) : JSON.stringify(outObj);
+const jsonText = args.pretty ? JSON.stringify(outObj, null, 2) : JSON.stringify(outObj);
 
 if (args.out) {
   const outPath = path.resolve(repoRoot, args.out);
   fs.mkdirSync(path.dirname(outPath), { recursive: true });
-  fs.writeFileSync(outPath, json + "\n", "utf8");
+  fs.writeFileSync(outPath, jsonText + "\n", "utf8");
   console.log(`wrote: ${path.relative(repoRoot, outPath)}`);
 } else {
-  console.log(json);
+  console.log(jsonText);
 }
