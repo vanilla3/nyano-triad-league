@@ -27,12 +27,12 @@ contract TranscriptV1Test {
         TranscriptV1.validate(t);
     }
 
-    function test_validate_ok() public {
+    function test_validate_ok() public pure {
         TranscriptV1.Data memory t = _makeValid();
         TranscriptV1.validate(t);
     }
 
-    function test_validate_reverts_on_bad_moves_len() public {
+    function test_validate_reverts_on_bad_moves_len() public view {
         TranscriptV1.Data memory t = _makeValid();
         t.moves = hex"0001020304050607"; // 8 bytes
 
@@ -45,7 +45,7 @@ contract TranscriptV1Test {
         require(!ok, "expected revert");
     }
 
-    function test_matchId_changes_when_one_field_changes() public {
+    function test_matchId_changes_when_one_field_changes() public pure {
         TranscriptV1.Data memory a = _makeValid();
         TranscriptV1.Data memory b = _makeValid();
         b.rulesetId = bytes32(uint256(124));

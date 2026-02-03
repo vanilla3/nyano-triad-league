@@ -6,6 +6,7 @@ test = "test"
 solc_version = "0.8.20"
 optimizer = true
 optimizer_runs = 200
-via_ir = false
 
-# Keep it simple for now (no external deps).
+# Fix: TriadEngineV1.resolve still hits "stack too deep" on legacy pipeline.
+# Enable IR pipeline with optimizer (solc recommendation).
+via_ir = true

@@ -17,7 +17,14 @@ jobs:
         with:
           node-version: "20"
           cache: "pnpm"
-      - run: # NOTE: 初期段階では lockfile が存在しない可能性があるため frozen を外す。
-      # lockfile（pnpm-lock.yaml）をコミットしたら --frozen-lockfile に戻す。
-      - run: pnpm install
+      - run: pnpm install --frozen-lockfile
       - run: pnpm -C packages/triad-engine test
+
+  contracts:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: stable
+      - run: cd contracts && forge test
