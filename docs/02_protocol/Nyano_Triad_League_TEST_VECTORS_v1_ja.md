@@ -19,6 +19,21 @@ TS側の互換設定は以下を使用します：
 - 生成スクリプト：`scripts/generate_core_tactics_vectors_v1.mjs`
 - TSテスト：`packages/triad-engine/test/core_tactics_vectors.test.js`
 
+## 現在のケース一覧（Core + Tactics）
+- `ties_do_not_flip_even_if_power_diff`
+  - Triad が同値 & じゃんけんも同値 → **反転しない**（power は tie-break に使わない）
+- `warning_mark_prevents_flip_no_other_flips`
+  - 警戒マーク（-1 デバフ）により、反転が 1 回防がれる
+- `single_flip_edge_advantage`
+  - Triad edge の単純な大小で 1 回だけ反転する
+- `single_flip_gives_B_win`
+  - **B が 1 反転で 5-4 を作り勝利**（A 先手でも勝てるパターンを保証）
+- `chain_flip_two_tiles`
+  - 反転したカードがさらに反転を連鎖させる **チェーン反転（flipCount=2）** を保証  
+  - 併せて comboCount=3（Momentum）の発火が再現される（※ bonus の効果そのものは別テストで検証）
+- `janken_breaks_edge_tie_flips`
+  - Triad が同値のとき、じゃんけんで勝てば **反転する**（Rock/Paper/Scissors の順序）
+
 ## ベクタ形式（JSON）
 各 `case` は次を含みます：
 
@@ -48,3 +63,15 @@ TS側の互換設定は以下を使用します：
 ## 注意点
 - オンチェーン互換（Core + Tactics）では、**“Triad が同値かつ じゃんけんも同値” の場合は反転しません。**
 - `earthBoostEdges` は v1 では未対応のため、必ず `255` にしてください。
+- 3x3 / 9ターン固定のため、現行ルールでは **完全な引き分け（tilesA==tilesB）は発生しません**（将来拡張時は別途扱います）。
+
+## Solidity 0.8.20 の address checksum について
+Solidity 0.8.20 以降では、`0xaaaaaaaa...` のような 20-byte hex literal を address として扱うとき、
+EIP-55 checksum を要求してコンパイルエラーになります。
+
+このリポジトリでは **生成スクリプト側で数値リテラルとして埋め込み → cast** することで回避しています：
+
+- `0xaaaaaaaa...` → `address(uint160(uint256(0x00aaaaaaaa...)))`
+
+これにより、JSONベクタ内の `playerA/playerB` は小文字のままでも運用できます。
+

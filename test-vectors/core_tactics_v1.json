@@ -1,7 +1,7 @@
 {
   "schema": "nyano-triad-league.test-vectors.core_tactics_v1",
   "version": 1,
-  "notes": "Canonical test vectors for the on-chain settlement subset (Core + Tactics).",
+  "notes": "Canonical test vectors for the on-chain settlement subset (Core + Tactics). Expanded with B win / chain flip / janken.",
   "cases": [
     {
       "name": "ties_do_not_flip_even_if_power_diff",
@@ -418,6 +418,423 @@
         "tilesB": 3,
         "tieScoreA": 60,
         "tieScoreB": 30
+      }
+    },
+    {
+      "name": "single_flip_gives_B_win",
+      "transcript": {
+        "version": 1,
+        "seasonId": 0,
+        "rulesetId": "0x1111111111111111111111111111111111111111111111111111111111111111",
+        "playerA": "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "playerB": "0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "deckA": [
+          1,
+          2,
+          3,
+          4,
+          5
+        ],
+        "deckB": [
+          6,
+          7,
+          8,
+          9,
+          10
+        ],
+        "firstPlayer": 0,
+        "deadline": 9999999999,
+        "salt": "0x5555555555555555555555555555555555555555555555555555555555555555",
+        "movesHex": "401001213252637384",
+        "warningMarksHex": "ffffffffffffffffff",
+        "earthBoostEdgesHex": "ffffffffffffffffff"
+      },
+      "tokens": {
+        "1": {
+          "triad": {
+            "up": 5,
+            "right": 5,
+            "left": 5,
+            "down": 5
+          },
+          "hand": 0,
+          "power": 10
+        },
+        "2": {
+          "triad": {
+            "up": 5,
+            "right": 5,
+            "left": 5,
+            "down": 5
+          },
+          "hand": 0,
+          "power": 10
+        },
+        "3": {
+          "triad": {
+            "up": 5,
+            "right": 5,
+            "left": 5,
+            "down": 5
+          },
+          "hand": 0,
+          "power": 10
+        },
+        "4": {
+          "triad": {
+            "up": 5,
+            "right": 5,
+            "left": 5,
+            "down": 5
+          },
+          "hand": 0,
+          "power": 10
+        },
+        "5": {
+          "triad": {
+            "up": 5,
+            "right": 5,
+            "left": 5,
+            "down": 5
+          },
+          "hand": 0,
+          "power": 10
+        },
+        "6": {
+          "triad": {
+            "up": 5,
+            "right": 5,
+            "left": 5,
+            "down": 6
+          },
+          "hand": 0,
+          "power": 1
+        },
+        "7": {
+          "triad": {
+            "up": 5,
+            "right": 5,
+            "left": 5,
+            "down": 5
+          },
+          "hand": 0,
+          "power": 1
+        },
+        "8": {
+          "triad": {
+            "up": 5,
+            "right": 5,
+            "left": 5,
+            "down": 5
+          },
+          "hand": 0,
+          "power": 1
+        },
+        "9": {
+          "triad": {
+            "up": 5,
+            "right": 5,
+            "left": 5,
+            "down": 5
+          },
+          "hand": 0,
+          "power": 1
+        },
+        "10": {
+          "triad": {
+            "up": 5,
+            "right": 5,
+            "left": 5,
+            "down": 5
+          },
+          "hand": 0,
+          "power": 1
+        }
+      },
+      "expected": {
+        "winner": "B",
+        "tilesA": 4,
+        "tilesB": 5,
+        "tieScoreA": 40,
+        "tieScoreB": 14
+      }
+    },
+    {
+      "name": "chain_flip_two_tiles",
+      "transcript": {
+        "version": 1,
+        "seasonId": 0,
+        "rulesetId": "0x1111111111111111111111111111111111111111111111111111111111111111",
+        "playerA": "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "playerB": "0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "deckA": [
+          1,
+          2,
+          3,
+          4,
+          5
+        ],
+        "deckB": [
+          6,
+          7,
+          8,
+          9,
+          10
+        ],
+        "firstPlayer": 0,
+        "deadline": 9999999999,
+        "salt": "0x6666666666666666666666666666666666666666666666666666666666666666",
+        "movesHex": "800021114232536374",
+        "warningMarksHex": "ffffffffffffffffff",
+        "earthBoostEdgesHex": "ffffffffffffffffff"
+      },
+      "tokens": {
+        "1": {
+          "triad": {
+            "up": 5,
+            "right": 5,
+            "left": 5,
+            "down": 5
+          },
+          "hand": 0,
+          "power": 1
+        },
+        "2": {
+          "triad": {
+            "up": 5,
+            "right": 5,
+            "left": 5,
+            "down": 5
+          },
+          "hand": 0,
+          "power": 1
+        },
+        "3": {
+          "triad": {
+            "up": 6,
+            "right": 5,
+            "left": 5,
+            "down": 5
+          },
+          "hand": 0,
+          "power": 1
+        },
+        "4": {
+          "triad": {
+            "up": 5,
+            "right": 5,
+            "left": 5,
+            "down": 5
+          },
+          "hand": 0,
+          "power": 1
+        },
+        "5": {
+          "triad": {
+            "up": 5,
+            "right": 5,
+            "left": 5,
+            "down": 5
+          },
+          "hand": 0,
+          "power": 1
+        },
+        "6": {
+          "triad": {
+            "up": 5,
+            "right": 5,
+            "left": 5,
+            "down": 5
+          },
+          "hand": 0,
+          "power": 1
+        },
+        "7": {
+          "triad": {
+            "up": 5,
+            "right": 5,
+            "left": 6,
+            "down": 5
+          },
+          "hand": 0,
+          "power": 1
+        },
+        "8": {
+          "triad": {
+            "up": 5,
+            "right": 5,
+            "left": 5,
+            "down": 5
+          },
+          "hand": 0,
+          "power": 1
+        },
+        "9": {
+          "triad": {
+            "up": 5,
+            "right": 5,
+            "left": 5,
+            "down": 5
+          },
+          "hand": 0,
+          "power": 1
+        },
+        "10": {
+          "triad": {
+            "up": 5,
+            "right": 5,
+            "left": 5,
+            "down": 5
+          },
+          "hand": 0,
+          "power": 1
+        }
+      },
+      "expected": {
+        "winner": "A",
+        "tilesA": 7,
+        "tilesB": 2,
+        "tieScoreA": 7,
+        "tieScoreB": 2
+      }
+    },
+    {
+      "name": "janken_breaks_edge_tie_flips",
+      "transcript": {
+        "version": 1,
+        "seasonId": 0,
+        "rulesetId": "0x1111111111111111111111111111111111111111111111111111111111111111",
+        "playerA": "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "playerB": "0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "deckA": [
+          1,
+          2,
+          3,
+          4,
+          5
+        ],
+        "deckB": [
+          6,
+          7,
+          8,
+          9,
+          10
+        ],
+        "firstPlayer": 0,
+        "deadline": 9999999999,
+        "salt": "0x7777777777777777777777777777777777777777777777777777777777777777",
+        "movesHex": "801001213242536374",
+        "warningMarksHex": "ffffffffffffffffff",
+        "earthBoostEdgesHex": "ffffffffffffffffff"
+      },
+      "tokens": {
+        "1": {
+          "triad": {
+            "up": 5,
+            "right": 5,
+            "left": 5,
+            "down": 5
+          },
+          "hand": 0,
+          "power": 1
+        },
+        "2": {
+          "triad": {
+            "up": 5,
+            "right": 5,
+            "left": 5,
+            "down": 5
+          },
+          "hand": 1,
+          "power": 1
+        },
+        "3": {
+          "triad": {
+            "up": 5,
+            "right": 5,
+            "left": 5,
+            "down": 5
+          },
+          "hand": 0,
+          "power": 1
+        },
+        "4": {
+          "triad": {
+            "up": 5,
+            "right": 5,
+            "left": 5,
+            "down": 5
+          },
+          "hand": 0,
+          "power": 1
+        },
+        "5": {
+          "triad": {
+            "up": 5,
+            "right": 5,
+            "left": 5,
+            "down": 5
+          },
+          "hand": 0,
+          "power": 1
+        },
+        "6": {
+          "triad": {
+            "up": 5,
+            "right": 5,
+            "left": 5,
+            "down": 5
+          },
+          "hand": 0,
+          "power": 1
+        },
+        "7": {
+          "triad": {
+            "up": 5,
+            "right": 5,
+            "left": 5,
+            "down": 5
+          },
+          "hand": 0,
+          "power": 1
+        },
+        "8": {
+          "triad": {
+            "up": 5,
+            "right": 5,
+            "left": 5,
+            "down": 5
+          },
+          "hand": 0,
+          "power": 1
+        },
+        "9": {
+          "triad": {
+            "up": 5,
+            "right": 5,
+            "left": 5,
+            "down": 5
+          },
+          "hand": 0,
+          "power": 1
+        },
+        "10": {
+          "triad": {
+            "up": 5,
+            "right": 5,
+            "left": 5,
+            "down": 5
+          },
+          "hand": 0,
+          "power": 1
+        }
+      },
+      "expected": {
+        "winner": "A",
+        "tilesA": 6,
+        "tilesB": 3,
+        "tieScoreA": 6,
+        "tieScoreB": 3
       }
     }
   ]
