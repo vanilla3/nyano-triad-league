@@ -9,7 +9,7 @@ Nyano Peace NFTのオンチェーン属性（Triad / じゃんけん / CombatSta
 ## Repository layout (initial)
 - `packages/triad-engine/` : 対戦ルールの純粋関数エンジン（TS）
 - `contracts/` : 公式戦の決済（予定：TriadEngine + League）
-- `apps/web/` : フロント（予定）
+- `apps/web/` : フロント（Playground + Replay UI）
 - `docs/` : 仕様、プロトコル、運用設計
 
 ## Docs

@@ -8,6 +8,7 @@ import type {
   Direction,
   Edges,
   MatchResult,
+  MatchResultWithHistory,
   PlayerIndex,
   RulesetConfigV1,
   TranscriptV1,
@@ -32,6 +33,23 @@ import type {
 const BOARD_SIZE = 3;
 const NONE_U8 = 255;
 const EDGE_MAX = 10;
+
+
+type SimulateMatchOptions = { boardHistory?: BoardState[] };
+
+function cloneBoardState(board: BoardState): BoardState {
+  return board.map((cell) => {
+    if (!cell) return null;
+    return {
+      owner: cell.owner,
+      card: {
+        ...cell.card,
+        edges: { ...cell.card.edges },
+      },
+      state: { ...cell.state },
+    };
+  });
+}
 
 /**
  * Engine-side ruleset config (subset of the full Ruleset concept).
@@ -327,7 +345,8 @@ function isCornerCell(cell: number): boolean {
 export function simulateMatchV1(
   t: TranscriptV1,
   cardsByTokenId: Map<bigint, CardData>,
-  ruleset: RulesetConfigV1 = DEFAULT_RULESET_CONFIG_V1
+  ruleset: RulesetConfigV1 = DEFAULT_RULESET_CONFIG_V1,
+  options?: SimulateMatchOptions
 ): MatchResult {
   validateTranscriptBasic(t);
 
@@ -336,6 +355,7 @@ export function simulateMatchV1(
   validateTranscriptForRuleset(t, rules);
 
   const board: BoardState = Array.from({ length: 9 }, () => null);
+  if (options?.boardHistory) options.boardHistory.push(cloneBoardState(board));
 
   // Layer 2 (TACTICS): Warning marks (警戒マーク)
   const warningMarks: WarningMark[] = [];
@@ -794,6 +814,8 @@ export function simulateMatchV1(
       warningTriggered,
       warningPlaced,
     });
+
+    if (options?.boardHistory) options.boardHistory.push(cloneBoardState(board));
   }
 
   // Count tiles
@@ -838,4 +860,14 @@ export function simulateMatchV1(
     matchId,
     formations: { A: formationsByPlayer[0], B: formationsByPlayer[1] },
   };
+}
+
+export function simulateMatchV1WithHistory(
+  t: TranscriptV1,
+  cardsByTokenId: Map<bigint, CardData>,
+  ruleset: RulesetConfigV1 = DEFAULT_RULESET_CONFIG_V1
+): MatchResultWithHistory {
+  const boardHistory: BoardState[] = [];
+  const result = simulateMatchV1(t, cardsByTokenId, ruleset, { boardHistory });
+  return { ...result, boardHistory };
 }

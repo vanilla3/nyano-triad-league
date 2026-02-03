@@ -159,6 +159,9 @@ export interface MatchResult {
 // Ruleset config (engine-side subset)
 // -----------------------------
 
+export type MatchResultWithHistory = MatchResult & { boardHistory: BoardState[] };
+
+
 export interface WarningMarkConfigV1 {
   enabled: boolean;
   /**
