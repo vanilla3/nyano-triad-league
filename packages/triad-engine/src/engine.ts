@@ -93,6 +93,26 @@ export const DEFAULT_RULESET_CONFIG_V1: RulesetConfigV1 = {
   },
 };
 
+ /**
+  * On-chain settlement compatibility ruleset (Core + Tactics only).
+  *
+  * Matches `contracts/src/lib/TriadEngineV1.sol`:
+  * - Synergy disabled (Trait effects, formation bonuses)
+  * - Second player balance disabled (on-chain engine currently fixes first player = playerA)
+  */
+export const ONCHAIN_CORE_TACTICS_RULESET_CONFIG_V1: RulesetConfigV1 = {
+  ...DEFAULT_RULESET_CONFIG_V1,
+  tactics: {
+    ...DEFAULT_RULESET_CONFIG_V1.tactics,
+    secondPlayerBalance: { enabled: false, firstMoveTriadPlus: 0 },
+  },
+  synergy: {
+    ...DEFAULT_RULESET_CONFIG_V1.synergy,
+    traitEffects: { ...DEFAULT_RULESET_CONFIG_V1.synergy.traitEffects, enabled: false },
+    formationBonuses: { ...DEFAULT_RULESET_CONFIG_V1.synergy.formationBonuses, enabled: false },
+  },
+};
+
 interface WarningMark {
   cell: number; // 0..8
   owner: PlayerIndex;

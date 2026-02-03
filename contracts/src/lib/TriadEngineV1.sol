@@ -8,7 +8,7 @@ import "./TranscriptV1.sol";
 /// @dev Supports ONLY the "Core + Tactics" subset (for now):
 ///      - Triad edge comparisons
 ///      - Janken tie-breaker (Paper>Rock>Scissors>Paper)
-///      - CombatStats tie-break (atk+matk+agi) when janken ties
+///      - No power tie-break on exact ties (same hand)
 ///      - Combo (momentum/domination/fever) as next-card bonuses
 ///      - Warning mark debuff (-1 all edges) for one opponent turn (max 3 uses each)
 ///
@@ -133,7 +133,7 @@ library TriadEngineV1 {
                 if (c >= 3) {
                     uint8 n = uint8(c - 3);
                     if (board[n].owner != EMPTY && board[n].owner != oc) {
-                        if (_wins(board[c].up, board[n].down, board[c].hand, board[n].hand, board[c].power, board[n].power)) {
+                        if (_wins(board[c].up, board[n].down, board[c].hand, board[n].hand)) {
                             board[n].owner = oc;
                             queue[qt++] = n;
                             flipCount++;
@@ -144,7 +144,7 @@ library TriadEngineV1 {
                 if (c <= 5) {
                     uint8 n = uint8(c + 3);
                     if (board[n].owner != EMPTY && board[n].owner != oc) {
-                        if (_wins(board[c].down, board[n].up, board[c].hand, board[n].hand, board[c].power, board[n].power)) {
+                        if (_wins(board[c].down, board[n].up, board[c].hand, board[n].hand)) {
                             board[n].owner = oc;
                             queue[qt++] = n;
                             flipCount++;
@@ -155,7 +155,7 @@ library TriadEngineV1 {
                 if ((c % 3) != 0) {
                     uint8 n = uint8(c - 1);
                     if (board[n].owner != EMPTY && board[n].owner != oc) {
-                        if (_wins(board[c].left, board[n].right, board[c].hand, board[n].hand, board[c].power, board[n].power)) {
+                        if (_wins(board[c].left, board[n].right, board[c].hand, board[n].hand)) {
                             board[n].owner = oc;
                             queue[qt++] = n;
                             flipCount++;
@@ -166,7 +166,7 @@ library TriadEngineV1 {
                 if ((c % 3) != 2) {
                     uint8 n = uint8(c + 1);
                     if (board[n].owner != EMPTY && board[n].owner != oc) {
-                        if (_wins(board[c].right, board[n].left, board[c].hand, board[n].hand, board[c].power, board[n].power)) {
+                        if (_wins(board[c].right, board[n].left, board[c].hand, board[n].hand)) {
                             board[n].owner = oc;
                             queue[qt++] = n;
                             flipCount++;
@@ -248,7 +248,7 @@ library TriadEngineV1 {
         return x == 0 ? 0 : uint8(x - 1);
     }
 
-    function _wins(uint8 aEdge, uint8 bEdge, uint8 aHand, uint8 bHand, uint32 aPower, uint32 bPower)
+    function _wins(uint8 aEdge, uint8 bEdge, uint8 aHand, uint8 bHand)
         private
         pure
         returns (bool)
@@ -260,8 +260,8 @@ library TriadEngineV1 {
         if (_jankenWins(aHand, bHand)) return true;
         if (_jankenWins(bHand, aHand)) return false;
 
-        // same hand -> power tie-break
-        return aPower > bPower;
+        // same hand -> cannot win (no flip)
+        return false;
     }
 
     function _jankenWins(uint8 a, uint8 b) private pure returns (bool) {

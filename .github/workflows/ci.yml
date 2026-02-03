@@ -17,8 +17,19 @@ jobs:
         with:
           node-version: "20"
           cache: "pnpm"
-      - run: pnpm install --frozen-lockfile
+      - run: |
+          if [ -f pnpm-lock.yaml ]; then
+            pnpm install --frozen-lockfile
+          else
+            pnpm install
+          fi
       - run: pnpm -C packages/triad-engine test
+
+      - name: Generate solidity test vectors (should be clean)
+        run: |
+          node scripts/generate_core_tactics_vectors_v1.mjs
+          git diff --exit-code
+
 
   contracts:
     runs-on: ubuntu-latest

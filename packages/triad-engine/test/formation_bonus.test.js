@@ -29,7 +29,7 @@ test("formation: five elements harmony scales combo bonus triadPlus", () => {
     { cell: 8, cardIndex: 0 },
     { cell: 1, cardIndex: 1 },
     { cell: 7, cardIndex: 1 },
-    { cell: 2, cardIndex: 2 },
+    { cell: 2, cardIndex: 2, earthBoostEdge: 1 }, // Earth requires a boost edge choice
     { cell: 6, cardIndex: 2 },
     { cell: 3, cardIndex: 3 },
     { cell: 5, cardIndex: 3 },
@@ -97,7 +97,7 @@ test("formation: eclipse lets Light ignore warning mark penalty", () => {
     { cell: 1, cardIndex: 0, warningMarkCell: 4 }, // B places mark on center
     { cell: 4, cardIndex: 1 }, // A steps on marked cell with Light
     { cell: 8, cardIndex: 1 },
-    { cell: 2, cardIndex: 2 },
+    { cell: 2, cardIndex: 2, earthBoostEdge: 1 }, // Earth requires a boost edge choice
     { cell: 7, cardIndex: 2 },
     { cell: 3, cardIndex: 3 },
     { cell: 6, cardIndex: 3 },
