@@ -33,6 +33,10 @@ TS側の互換設定は以下を使用します：
   - 併せて comboCount=3（Momentum）の発火が再現される（※ bonus の効果そのものは別テストで検証）
 - `janken_breaks_edge_tie_flips`
   - Triad が同値のとき、じゃんけんで勝てば **反転する**（Rock/Paper/Scissors の順序）
+- `domination_flips_three_next_bonus_plus2`
+  - 1手で 3 反転（comboCount=4）→ **Domination** が発火し、次のカードに `triadPlus=+2` が付与される
+- `fever_flips_four_final_turn`
+  - 1手で 4 反転（comboCount=5）→ **Fever** が発火する（3x3/9手では最終手で起こりやすく、次手ボーナスは将来拡張用）
 
 ## ベクタ形式（JSON）
 各 `case` は次を含みます：
