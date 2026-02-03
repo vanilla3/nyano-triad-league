@@ -114,6 +114,48 @@ export const ONCHAIN_CORE_TACTICS_RULESET_CONFIG_V1: RulesetConfigV1 = {
   },
 };
 
+
+/**
+ * On-chain settlement engine v2 (Core + Tactics + Shadow).
+ *
+ * Incremental, migration-friendly step:
+ * - Keep Core+Tactics semantics identical to v1.
+ * - Add ONLY one Synergy behavior: Shadow cards ignore warning mark penalty.
+ * - Still assumes firstPlayer=playerA and earthBoostEdges are unsupported.
+ */
+export const ONCHAIN_CORE_TACTICS_SHADOW_RULESET_CONFIG_V2: RulesetConfigV1 = {
+  onchainSettlementCompat: true,
+  ...DEFAULT_RULESET_CONFIG_V1,
+  tactics: {
+    ...DEFAULT_RULESET_CONFIG_V1.tactics,
+    secondPlayerBalance: { enabled: false, firstMoveTriadPlus: 0 },
+  },
+  synergy: {
+    ...DEFAULT_RULESET_CONFIG_V1.synergy,
+
+    // v2 migration step: enable ONLY Shadow (ignore warning mark).
+    // Other Synergy behaviors remain off to preserve on-chain subset parity.
+    traitEffects: {
+      ...DEFAULT_RULESET_CONFIG_V1.synergy.traitEffects,
+      enabled: true,
+
+      cosmic: { ...DEFAULT_RULESET_CONFIG_V1.synergy.traitEffects.cosmic, enabled: false },
+      light: { ...DEFAULT_RULESET_CONFIG_V1.synergy.traitEffects.light, enabled: false },
+      shadow: { ...DEFAULT_RULESET_CONFIG_V1.synergy.traitEffects.shadow, enabled: true },
+      forest: { ...DEFAULT_RULESET_CONFIG_V1.synergy.traitEffects.forest, enabled: false },
+      metal: { ...DEFAULT_RULESET_CONFIG_V1.synergy.traitEffects.metal, enabled: false },
+      flame: { ...DEFAULT_RULESET_CONFIG_V1.synergy.traitEffects.flame, enabled: false },
+      aqua: { ...DEFAULT_RULESET_CONFIG_V1.synergy.traitEffects.aqua, enabled: false },
+      thunder: { ...DEFAULT_RULESET_CONFIG_V1.synergy.traitEffects.thunder, enabled: false },
+      wind: { ...DEFAULT_RULESET_CONFIG_V1.synergy.traitEffects.wind, enabled: false },
+      earth: { ...DEFAULT_RULESET_CONFIG_V1.synergy.traitEffects.earth, enabled: false },
+    },
+
+    formationBonuses: { ...DEFAULT_RULESET_CONFIG_V1.synergy.formationBonuses, enabled: false },
+  },
+};
+
+
 interface WarningMark {
   cell: number; // 0..8
   owner: PlayerIndex;

@@ -8,16 +8,38 @@
 - 「どの入力で、どういう結果になるべきか」を **外部レビューしやすい形（JSON）** で公開する
 
 ## 対象ルールセット
-現行のオンチェーン settlement は **Core + Tactics** のみ対応です。  
+オンチェーン settlement engine は、互換性を壊さず段階的に拡張するために **複数バージョン**を併走させます。
+
+### v1: Core + Tactics
+現行のオンチェーン settlement（`TriadEngineV1`）は **Core + Tactics** のみ対応です。  
 TS側の互換設定は以下を使用します：
 
 - `ONCHAIN_CORE_TACTICS_RULESET_CONFIG_V1`
+
+### v2: Core + Tactics + Shadow（警戒マーク無効）
+v2（`TriadEngineV2`）は、Synergy をいきなり全部オンチェーン化せず、**Shadow のみ**を追加する “小さな一歩” です。
+
+- Shadow trait のカードは **警戒マークの -1 デバフを受けない**
+- それ以外の Synergy（Cosmic corner boost / Formation bonus など）は **まだ無効**
+- TS側の互換設定は以下を使用します：
+
+- `ONCHAIN_CORE_TACTICS_SHADOW_RULESET_CONFIG_V2`
 
 ## ファイル構成
 - 共有ベクタ（正）：`test-vectors/core_tactics_v1.json`
 - Solidity テスト（生成物）：`contracts/test/generated/CoreTacticsVectorsV1Test.sol`
 - 生成スクリプト：`scripts/generate_core_tactics_vectors_v1.mjs`
 - TSテスト：`packages/triad-engine/test/core_tactics_vectors.test.js`
+
+
+### v2: Core + Tactics + Shadow（共有ベクタ）
+- 共有ベクタ（正）：`test-vectors/core_tactics_shadow_v2.json`
+- Solidity テスト（生成物）：`contracts/test/generated/CoreTacticsShadowV2Test.sol`
+- 生成スクリプト：`scripts/generate_core_tactics_shadow_v2.mjs`
+- TSテスト：`packages/triad-engine/test/core_tactics_shadow_v2_vectors.test.js`
+
+v2 ベクタは **token の trait（classId/seasonId/rarity）** を含みます。  
+これは `TriadEngineV2` が `INyanoPeace.getTrait()` を参照して Shadow 判定を行うためです。
 
 ## 現在のケース一覧（Core + Tactics）
 - `ties_do_not_flip_even_if_power_diff`
