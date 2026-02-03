@@ -285,5 +285,14 @@ export interface RulesetConfigV1 {
   version: 1;
   tactics: TacticsConfigV1;
   synergy: SynergyConfigV1;
+
+  /**
+   * Engine-only flag:
+   * - When true, enforce transcript constraints that match the current on-chain settlement engine.
+   * - Not included in rulesetId canonicalization.
+   */
+  onchainSettlementCompat?: boolean;
+
   // Future: meta layers
 }
+

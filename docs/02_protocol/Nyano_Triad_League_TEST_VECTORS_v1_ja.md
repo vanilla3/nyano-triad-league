@@ -91,3 +91,7 @@ EIP-55 checksum を要求してコンパイルエラーになります。
 
 - `fever_ignores_warning_mark_on_next_card_allows_flip`
   - fever（comboCount>=5）で次手が警戒マークを無視することを固定（無視できないと最終タイル数がズレる）
+- earthBoostEdges（v1 core+tactics は未対応のため、全 turn で NONE=255 必須）
+  - TS: `packages/triad-engine/test/earth_boost_edges_invalid.test.js`
+  - Solidity: `contracts/test/EarthBoostEdgesInvalidTest.sol`
+

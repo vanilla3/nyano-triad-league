@@ -101,6 +101,7 @@ export const DEFAULT_RULESET_CONFIG_V1: RulesetConfigV1 = {
   * - Second player balance disabled (on-chain engine currently fixes first player = playerA)
   */
 export const ONCHAIN_CORE_TACTICS_RULESET_CONFIG_V1: RulesetConfigV1 = {
+  onchainSettlementCompat: true,
   ...DEFAULT_RULESET_CONFIG_V1,
   tactics: {
     ...DEFAULT_RULESET_CONFIG_V1.tactics,
@@ -206,6 +207,21 @@ function validateTranscriptBasic(t: TranscriptV1): void {
   }
 }
 
+
+function validateTranscriptForRuleset(t: TranscriptV1, ruleset: RulesetConfigV1): void {
+  if (!ruleset.onchainSettlementCompat) return;
+
+  // On-chain v1 settlement currently assumes:
+  // - first player is always playerA
+  // - earthBoostEdges are not supported (must be NONE=255 on every turn)
+  if (t.header.firstPlayer !== 0) throw new Error("on-chain subset requires firstPlayer=playerA");
+
+  for (let i = 0; i < t.turns.length; i++) {
+    const e = t.turns[i].earthBoostEdge ?? NONE_U8;
+    if (e !== NONE_U8) throw new Error("on-chain subset does not support earthBoostEdge");
+  }
+}
+
 function hashTranscriptCanonical(t: TranscriptV1): `0x${string}` {
   // Solidity-compatible keccak256 over a fixed ABI encoding.
   // This avoids JSON canonicalization pitfalls and keeps official settlement verifiable.
@@ -275,6 +291,7 @@ export function simulateMatchV1(
 
   if (ruleset.version !== 1) throw new Error(`unsupported ruleset version: ${ruleset.version}`);
   const rules = ruleset;
+  validateTranscriptForRuleset(t, rules);
 
   const board: BoardState = Array.from({ length: 9 }, () => null);
 
