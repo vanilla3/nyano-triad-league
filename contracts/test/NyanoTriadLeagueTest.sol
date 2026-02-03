@@ -11,7 +11,7 @@ interface Vm {
     function sign(uint256 privateKey, bytes32 digest) external returns (uint8 v, bytes32 r, bytes32 s);
 }
 
-/// @notice Foundry tests for NyanoTriadLeague v1 (core+tactics settlement).
+/// @notice Foundry tests for NyanoTriadLeague (v1 + v2 engines).
 contract NyanoTriadLeagueTest {
     Vm private constant vm = Vm(address(uint160(uint256(keccak256("hevm cheat code")))));
 
@@ -25,7 +25,8 @@ contract NyanoTriadLeagueTest {
     RulesetRegistry private registry;
     NyanoTriadLeague private league;
 
-    bytes32 private constant RULESET_ID = bytes32(uint256(1));
+    bytes32 private constant RULESET_ID_V1 = bytes32(uint256(1));
+    bytes32 private constant RULESET_ID_V2 = 0x2222222222222222222222222222222222222222222222222222222222222222;
 
     function setUp() public {
         playerA = vm.addr(PK_A);
@@ -33,11 +34,12 @@ contract NyanoTriadLeagueTest {
 
         nyano = new MockNyanoPeace();
 
-        // mint 10 tokens with identical attributes to avoid flips (A should win 5-4 by placement count)
+        // mint 10 tokens
         for (uint256 tokenId = 1; tokenId <= 10; tokenId++) {
             address owner = tokenId <= 5 ? playerA : playerB;
             nyano.mintTo(owner, tokenId);
 
+            // default attributes (v1 test expects no flips: A wins 5-4 by placement count)
             nyano.setTriad(tokenId, 1, 1, 1, 1);
             nyano.setJankenHand(tokenId, 0); // Rock
             nyano.setCombatStats(tokenId, 1, 1, 1, 1, 1, 1); // power=atk+matk+agi=3
@@ -50,17 +52,18 @@ contract NyanoTriadLeagueTest {
         nyano.setJankenHand(999, 0);
         nyano.setCombatStats(999, 1, 1, 1, 1, 1, 1);
         nyano.setTrait(999, 1, 1, 1);
+
         registry = new RulesetRegistry(address(nyano));
-        registry.register(RULESET_ID, bytes32(0), "ipfs://ruleset");
+        registry.register(RULESET_ID_V1, bytes32(0), 1, "ipfs://ruleset-v1");
+        registry.register(RULESET_ID_V2, bytes32(0), 2, "ipfs://ruleset-v2");
 
         league = new NyanoTriadLeague(address(nyano), address(registry));
     }
 
     function test_submitMatchV1_settles_and_records() public {
-        TranscriptV1.Data memory t = _makeTranscript();
+        TranscriptV1.Data memory t = _makeTranscriptV1();
 
         bytes32 digest = keccak256(abi.encodePacked("\x19\x01", league.domainSeparator(), TranscriptV1.structHash(t)));
-
         bytes memory sigA = _sig(PK_A, digest);
         bytes memory sigB = _sig(PK_B, digest);
 
@@ -75,7 +78,7 @@ contract NyanoTriadLeagueTest {
     }
 
     function test_submitMatchV1_reverts_on_replay() public {
-        TranscriptV1.Data memory t = _makeTranscript();
+        TranscriptV1.Data memory t = _makeTranscriptV1();
         bytes32 digest = keccak256(abi.encodePacked("\x19\x01", league.domainSeparator(), TranscriptV1.structHash(t)));
         bytes memory sigA = _sig(PK_A, digest);
         bytes memory sigB = _sig(PK_B, digest);
@@ -92,9 +95,9 @@ contract NyanoTriadLeagueTest {
     }
 
     function test_submitMatchV1_reverts_when_ruleset_inactive() public {
-        registry.setActive(RULESET_ID, false);
+        registry.setActive(RULESET_ID_V1, false);
 
-        TranscriptV1.Data memory t = _makeTranscript();
+        TranscriptV1.Data memory t = _makeTranscriptV1();
         bytes32 digest = keccak256(abi.encodePacked("\x19\x01", league.domainSeparator(), TranscriptV1.structHash(t)));
         bytes memory sigA = _sig(PK_A, digest);
         bytes memory sigB = _sig(PK_B, digest);
@@ -108,12 +111,85 @@ contract NyanoTriadLeagueTest {
         require(!ok, "expected revert when inactive ruleset");
     }
 
+    function test_submitMatchV2_settles_shadow_case() public {
+        _configureTokensForShadowVector(true);
+
+        TranscriptV1.Data memory t = _makeTranscriptV2();
+
+        bytes32 digest = keccak256(abi.encodePacked("\x19\x01", league.domainSeparator(), TranscriptV1.structHash(t)));
+        bytes memory sigA = _sig(PK_A, digest);
+        bytes memory sigB = _sig(PK_B, digest);
+
+        league.submitMatchV2(t, sigA, sigB);
+
+        bytes32 matchId = TranscriptV1.matchId(t);
+        (address winner, uint8 tilesA, uint8 tilesB, , ) = league.settlements(matchId);
+
+        require(winner == playerB, "winner should be B (shadow ignores warning mark)");
+        require(tilesA == 4 && tilesB == 5, "tiles mismatch");
+    }
+
+    function test_submitMatchV1_reverts_on_engine_mismatch_for_v2_ruleset() public {
+        _configureTokensForShadowVector(true);
+
+        TranscriptV1.Data memory t = _makeTranscriptV2();
+
+        bytes32 digest = keccak256(abi.encodePacked("\x19\x01", league.domainSeparator(), TranscriptV1.structHash(t)));
+        bytes memory sigA = _sig(PK_A, digest);
+        bytes memory sigB = _sig(PK_B, digest);
+
+        bool ok;
+        try league.submitMatchV1(t, sigA, sigB) {
+            ok = true;
+        } catch {
+            ok = false;
+        }
+        require(!ok, "expected revert (ruleset engine mismatch)");
+    }
+
     // ---- helpers ----
 
-    function _makeTranscript() private view returns (TranscriptV1.Data memory t) {
+    function _configureTokensForShadowVector(bool shadowToken6) private {
+        // Matches test-vectors/core_tactics_shadow_v2.json
+        // Token 1: edges 5/5/5/5, hand=Rock(0), power=10
+        nyano.setTriad(1, 5, 5, 5, 5);
+        nyano.setJankenHand(1, 0);
+        nyano.setCombatStats(1, 1, 10, 0, 1, 1, 0);
+        nyano.setTrait(1, 1, 1, 1);
+
+        // Tokens 2-5: edges 4/4/4/4, hand=Rock(0), power=10
+        for (uint256 tid = 2; tid <= 5; tid++) {
+            nyano.setTriad(tid, 4, 4, 4, 4);
+            nyano.setJankenHand(tid, 0);
+            nyano.setCombatStats(tid, 1, 10, 0, 1, 1, 0);
+            nyano.setTrait(tid, 1, 1, 1);
+        }
+
+        // Token 6: edges 5/5/5/5, hand=Paper(1), power=10
+        nyano.setTriad(6, 5, 5, 5, 5);
+        nyano.setJankenHand(6, 1);
+        nyano.setCombatStats(6, 1, 10, 0, 1, 1, 0);
+
+        if (shadowToken6) {
+            // rarity=3 uses classTrait; classId=5 => shadow
+            nyano.setTrait(6, 5, 1, 3);
+        } else {
+            nyano.setTrait(6, 1, 1, 1);
+        }
+
+        // Tokens 7-10: edges 4/4/4/4, hand=Rock(0), power=10
+        for (uint256 tid = 7; tid <= 10; tid++) {
+            nyano.setTriad(tid, 4, 4, 4, 4);
+            nyano.setJankenHand(tid, 0);
+            nyano.setCombatStats(tid, 1, 10, 0, 1, 1, 0);
+            nyano.setTrait(tid, 1, 1, 1);
+        }
+    }
+
+    function _makeTranscriptV1() private view returns (TranscriptV1.Data memory t) {
         t.version = 1;
         t.seasonId = 1;
-        t.rulesetId = RULESET_ID;
+        t.rulesetId = RULESET_ID_V1;
         t.playerA = playerA;
         t.playerB = playerB;
 
@@ -124,6 +200,25 @@ contract NyanoTriadLeagueTest {
         t.moves = hex"001021314252637384";
         t.warningMarks = hex"ffffffffffffffffff";     // 9 bytes of NONE
         t.earthBoostEdges = hex"ffffffffffffffffff";  // 9 bytes of NONE
+
+        t.reserved = bytes32(0);
+        t.deadline = uint64(block.timestamp + 3600);
+    }
+
+    function _makeTranscriptV2() private view returns (TranscriptV1.Data memory t) {
+        t.version = 1;
+        t.seasonId = 0;
+        t.rulesetId = RULESET_ID_V2;
+        t.playerA = playerA;
+        t.playerB = playerB;
+
+        t.deckA = [uint256(1),2,3,4,5];
+        t.deckB = [uint256(6),7,8,9,10];
+
+        // Vector: shadow_ignores_warning_mark_allows_flip
+        t.moves = hex"405001811272236334";
+        t.warningMarks = hex"05ffffffffffffffff";
+        t.earthBoostEdges = hex"ffffffffffffffffff";
 
         t.reserved = bytes32(0);
         t.deadline = uint64(block.timestamp + 3600);

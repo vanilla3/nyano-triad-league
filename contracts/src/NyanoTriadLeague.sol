@@ -7,10 +7,17 @@ import "./lib/ECDSA.sol";
 import "./lib/EIP712Domain.sol";
 import "./lib/TranscriptV1.sol";
 import "./lib/TriadEngineV1.sol";
+import "./lib/TriadEngineV2.sol";
 
-/// @notice ETH-only official match submission contract (v1).
-/// @dev This version settles matches with the on-chain Core+Tactics engine (TriadEngineV1).
-///      Synergy/Formation/Season modules are not supported yet.
+/// @notice ETH-only official match submission contract.
+/// @dev Settles matches on-chain with deterministic engines:
+///      - submitMatchV1 -> TriadEngineV1 (Core + Tactics)
+///      - submitMatchV2 -> TriadEngineV2 (Core + Tactics + Shadow ignores warning mark)
+///
+/// SECURITY NOTE:
+/// - The RulesetRegistry stores `engineId` per rulesetId.
+/// - Each submit function enforces (if registry is configured) that the ruleset's engineId matches.
+///   This prevents settling a signed match with the wrong engine.
 contract NyanoTriadLeague is EIP712Domain {
     using ECDSA for bytes32;
 
@@ -57,15 +64,21 @@ contract NyanoTriadLeague is EIP712Domain {
     function _name() internal pure override returns (string memory) { return _NAME; }
     function _version() internal pure override returns (string memory) { return _VERSION; }
 
-    /// @notice Submit an official match transcript. Verifies signatures + ownership, settles result, stores it, emits events.
+    /// @notice Submit an official match transcript using TriadEngineV1.
     function submitMatchV1(TranscriptV1.Data calldata t, bytes calldata sigA, bytes calldata sigB) external {
+        _submit(t, sigA, sigB, 1);
+    }
+
+    /// @notice Submit an official match transcript using TriadEngineV2.
+    function submitMatchV2(TranscriptV1.Data calldata t, bytes calldata sigA, bytes calldata sigB) external {
+        _submit(t, sigA, sigB, 2);
+    }
+
+    function _submit(TranscriptV1.Data calldata t, bytes calldata sigA, bytes calldata sigB, uint8 engineId) private {
         TranscriptV1.validate(t);
         require(block.timestamp <= t.deadline, "expired");
 
-        // Optional ruleset gating (active rulesets only)
-        if (address(rulesetRegistry) != address(0)) {
-            require(rulesetRegistry.isActive(t.rulesetId), "ruleset inactive");
-        }
+        _requireRulesetActiveAndEngine(t.rulesetId, engineId);
 
         // prevent duplicates
         bytes32 matchId_ = TranscriptV1.matchId(t);
@@ -87,20 +100,54 @@ contract NyanoTriadLeague is EIP712Domain {
         _requireUnique(t.deckA);
         _requireUnique(t.deckB);
 
-        // settle with on-chain engine (Core + Tactics only)
-        TriadEngineV1.Result memory res = TriadEngineV1.resolve(nyano, t);
+        // settle with selected engine
+        address winner;
+        uint8 tilesA;
+        uint8 tilesB;
+        uint64 tieScoreA;
+        uint64 tieScoreB;
+
+        if (engineId == 1) {
+            TriadEngineV1.Result memory res1 = TriadEngineV1.resolve(nyano, t);
+            winner = res1.winner;
+            tilesA = res1.tilesA;
+            tilesB = res1.tilesB;
+            tieScoreA = res1.tieScoreA;
+            tieScoreB = res1.tieScoreB;
+        } else if (engineId == 2) {
+            TriadEngineV2.Result memory res2 = TriadEngineV2.resolve(nyano, t);
+            winner = res2.winner;
+            tilesA = res2.tilesA;
+            tilesB = res2.tilesB;
+            tieScoreA = res2.tieScoreA;
+            tieScoreB = res2.tieScoreB;
+        } else {
+            revert("unsupported engine");
+        }
 
         submitted[matchId_] = true;
         settlements[matchId_] = Settlement({
-            winner: res.winner,
-            tilesA: res.tilesA,
-            tilesB: res.tilesB,
-            tieScoreA: res.tieScoreA,
-            tieScoreB: res.tieScoreB
+            winner: winner,
+            tilesA: tilesA,
+            tilesB: tilesB,
+            tieScoreA: tieScoreA,
+            tieScoreB: tieScoreB
         });
 
         emit MatchSubmitted(matchId_, t.rulesetId, msg.sender, t.playerA, t.playerB);
-        emit MatchSettled(matchId_, t.rulesetId, res.winner, res.tilesA, res.tilesB);
+        emit MatchSettled(matchId_, t.rulesetId, winner, tilesA, tilesB);
+    }
+
+    function _requireRulesetActiveAndEngine(bytes32 rulesetId, uint8 expectedEngineId) private view {
+        if (address(rulesetRegistry) == address(0)) return;
+
+        require(rulesetRegistry.isActive(rulesetId), "ruleset inactive");
+
+        uint8 actual = rulesetRegistry.engineOf(rulesetId);
+        // Back-compat: treat 0 as v1 (older registry versions / unset info).
+        if (actual == 0) actual = 1;
+
+        require(actual == expectedEngineId, "ruleset engine mismatch");
     }
 
     function _requireDeckOwnership(address player, uint256[5] calldata deck) private view {
