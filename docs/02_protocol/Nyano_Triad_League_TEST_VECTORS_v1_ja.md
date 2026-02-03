@@ -79,3 +79,11 @@ EIP-55 checksum を要求してコンパイルエラーになります。
 
 これにより、JSONベクタ内の `playerA/playerB` は小文字のままでも運用できます。
 
+## ベクタ外の不変条件テスト
+共有ベクタは「正常系（settlement が成立する入力）」に寄せています。  
+一方で、**上限超過・形式違反など “revert/throw を期待する系”** はベクタに混ぜると運用が煩雑になるため、別テストとして保持します。
+
+- 警戒マーク使用回数上限（各プレイヤー最大3回）
+  - TS: `packages/triad-engine/test/warning_mark_limit.test.js`
+  - Solidity: `contracts/test/WarningMarkLimitTest.sol`
+
