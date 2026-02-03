@@ -37,6 +37,8 @@ TS側の互換設定は以下を使用します：
   - 1手で 3 反転（comboCount=4）→ **Domination** が発火し、次のカードに `triadPlus=+2` が付与される
 - `fever_flips_four_final_turn`
   - 1手で 4 反転（comboCount=5）→ **Fever** が発火する（3x3/9手では最終手で起こりやすく、次手ボーナスは将来拡張用）
+- `warning_mark_expires_if_not_stepped_allows_flip`
+  - 警戒マークを **踏まなかった場合でも 1ターンで失効**する（残り続けない）ことを勝敗反転で固定
 
 ## ベクタ形式（JSON）
 各 `case` は次を含みます：
@@ -86,4 +88,3 @@ EIP-55 checksum を要求してコンパイルエラーになります。
 - 警戒マーク使用回数上限（各プレイヤー最大3回）
   - TS: `packages/triad-engine/test/warning_mark_limit.test.js`
   - Solidity: `contracts/test/WarningMarkLimitTest.sol`
-
