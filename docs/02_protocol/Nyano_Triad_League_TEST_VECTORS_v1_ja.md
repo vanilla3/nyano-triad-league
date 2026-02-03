@@ -94,4 +94,5 @@ EIP-55 checksum を要求してコンパイルエラーになります。
 - earthBoostEdges（v1 core+tactics は未対応のため、全 turn で NONE=255 必須）
   - TS: `packages/triad-engine/test/earth_boost_edges_invalid.test.js`
   - Solidity: `contracts/test/EarthBoostEdgesInvalidTest.sol`
-
+- firstPlayer（on-chain subset は playerA が先手固定のため firstPlayer=0 必須）
+  - TS: `packages/triad-engine/test/first_player_invalid_onchain_subset.test.js`
