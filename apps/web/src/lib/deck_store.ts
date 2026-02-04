@@ -61,6 +61,10 @@ export function listDecks(): DeckV1[] {
   return loadAll();
 }
 
+export function getDeck(id: string): DeckV1 | null {
+  return loadAll().find((d) => d.id === id) ?? null;
+}
+
 export function upsertDeck(input: { id?: string; name: string; tokenIds: bigint[] }): DeckV1 {
   const decks = loadAll();
 

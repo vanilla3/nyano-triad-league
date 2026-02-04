@@ -1,4 +1,5 @@
 import React from "react";
+import { Link } from "react-router-dom";
 import type { CardData } from "@nyano/triad-engine";
 import { fetchNyanoCards } from "@/lib/nyano_rpc";
 import { deleteDeck, exportDecksJson, importDecksJson, listDecks, upsertDeck, type DeckV1 } from "@/lib/deck_store";
@@ -232,6 +233,14 @@ export function DecksPage() {
                   <button className="btn" onClick={() => loadDeckToForm(d)}>
                     Edit
                   </button>
+
+                  <Link className="btn no-underline" to={`/match?a=${d.id}`}>
+                    Use as A
+                  </Link>
+                  <Link className="btn no-underline" to={`/match?b=${d.id}`}>
+                    Use as B
+                  </Link>
+
                   <button className="btn" onClick={() => copy(JSON.stringify(d, null, 2))}>
                     Copy deck JSON
                   </button>

@@ -15,19 +15,29 @@ export function ArenaPage() {
             ここから「デッキ → 対戦 → 結果 → 共有」を一気通貫にします。まずはデッキ管理を固め、次に対戦UIを作ります。
           </p>
 
-          <div className="grid gap-3 md:grid-cols-3">
+          <div className="grid gap-3 md:grid-cols-4">
             <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
               <div className="font-medium">1) Decks</div>
               <div className="mt-1 text-xs text-slate-600">Nyano tokenId 5枚でデッキを保存</div>
               <div className="mt-3">
-                <Link className="btn btn-primary no-underline" to="/decks">
+                <Link className="btn no-underline" to="/decks">
                   Decks を開く
                 </Link>
               </div>
             </div>
 
             <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
-              <div className="font-medium">2) Replay</div>
+              <div className="font-medium">2) Match</div>
+              <div className="mt-1 text-xs text-slate-600">ローカル対戦（ドラフト）→ transcript → Replay</div>
+              <div className="mt-3">
+                <Link className="btn btn-primary no-underline" to="/match">
+                  Match を開始
+                </Link>
+              </div>
+            </div>
+
+            <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+              <div className="font-medium">3) Replay</div>
               <div className="mt-1 text-xs text-slate-600">共有リンクから誰でも検証</div>
               <div className="mt-3">
                 <Link className="btn no-underline" to="/replay">
@@ -37,7 +47,7 @@ export function ArenaPage() {
             </div>
 
             <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
-              <div className="font-medium">3) Playground</div>
+              <div className="font-medium">4) Playground</div>
               <div className="mt-1 text-xs text-slate-600">公式ベクタで議論の起点を固定</div>
               <div className="mt-3">
                 <Link className="btn no-underline" to="/playground">
@@ -48,7 +58,7 @@ export function ArenaPage() {
           </div>
 
           <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900">
-            <span className="font-medium">次の実装（予定）</span>：ローカル対戦（読み取り専用）→ 署名 → オンチェーン提出、の順で段階導入します。
+            <span className="font-medium">次の実装（予定）</span>：Match（ローカル対戦）を磨く → 署名 → オンチェーン提出、の順で段階導入します。
           </div>
         </div>
       </section>

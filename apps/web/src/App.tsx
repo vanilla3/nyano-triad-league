@@ -40,6 +40,7 @@ export function AppLayout() {
             <NavGroup title="Play">
               <NavItem to="/arena" label="Arena" />
               <NavItem to="/decks" label="Decks" />
+              <NavItem to="/match" label="Match" />
             </NavGroup>
 
             <NavGroup title="Watch">
