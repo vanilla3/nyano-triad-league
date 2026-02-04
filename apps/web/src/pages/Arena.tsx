@@ -28,7 +28,7 @@ export function ArenaPage() {
 
             <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
               <div className="font-medium">2) Match</div>
-              <div className="mt-1 text-xs text-slate-600">ローカル対戦（ドラフト）→ transcript → Replay</div>
+              <div className="mt-1 text-xs text-slate-600">ローカル対戦（ドラフト）→ transcript → Replay（Vs Nyano AIも可）</div>
               <div className="mt-3">
                 <Link className="btn btn-primary no-underline" to="/match">
                   Match を開始

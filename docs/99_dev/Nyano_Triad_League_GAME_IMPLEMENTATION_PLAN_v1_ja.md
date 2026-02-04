@@ -32,6 +32,14 @@
 ---
 
 ## Phase 2: Local Match（サンドボックス対戦）
+- PvP（手動）に加えて **Vs Nyano（AI）** を段階的に導入（イベント運用の土台）
+
+## Phase 2a: Vs Nyano（AI）
+- まずはクライアント内の簡易AI（壊れない・決定論）
+- difficulty（Easy/Normal）
+- transcript を生成し Replay で共有
+
+
 - デッキ選択（Decksから）
 - 対戦UI（ターンごとに cell + cardIndex を選ぶ）
 - 盤面/ログ/理由の表示

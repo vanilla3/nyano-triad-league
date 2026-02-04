@@ -18,6 +18,8 @@ import { stringifyWithBigInt } from "@/lib/json";
 import { fetchNyanoCards, getNyanoAddress, getRpcUrl } from "@/lib/nyano_rpc";
 
 type RulesetKey = "v1" | "v2";
+type OpponentMode = "pvp" | "vs_nyano_ai";
+type AiDifficulty = "easy" | "normal";
 
 type SimOk = {
   ok: true;
@@ -72,6 +74,19 @@ function computeUsed(turns: Turn[], firstPlayer: PlayerIndex): { cells: Set<numb
   return { cells, usedA, usedB };
 }
 
+function countWarningMarks(turns: Turn[], firstPlayer: PlayerIndex): { A: number; B: number } {
+  let A = 0;
+  let B = 0;
+  for (let i = 0; i < turns.length; i++) {
+    const t = turns[i];
+    if (t.warningMarkCell === undefined) continue;
+    const p = turnPlayer(firstPlayer, i);
+    if (p === 0) A++;
+    else B++;
+  }
+  return { A, B };
+}
+
 /**
  * Build a full 9-turn transcript by filling remaining turns with placeholders.
  * This enables "progress preview" without changing the protocol-level engine.
@@ -107,6 +122,102 @@ async function copyToClipboard(text: string): Promise<void> {
   await navigator.clipboard.writeText(text);
 }
 
+function jankenWins(a: number, b: number): boolean {
+  // 0:Rock, 1:Paper, 2:Scissors (typical)
+  if (a === b) return false;
+  return (a === 0 && b === 2) || (a === 1 && b === 0) || (a === 2 && b === 1);
+}
+
+function predictedImmediateFlips(board: any[], cell: number, placed: CardData, my: PlayerIndex): number {
+  const r = Math.floor(cell / 3);
+  const c = cell % 3;
+
+  const me = placed;
+  const myHand = Number(me.jankenHand);
+  const edge = (dir: "up" | "right" | "down" | "left") => Number(me.edges[dir]);
+
+  const trySide = (nr: number, nc: number, myDir: "up" | "right" | "down" | "left", theirDir: "up" | "right" | "down" | "left") => {
+    if (nr < 0 || nr > 2 || nc < 0 || nc > 2) return 0;
+    const idx = nr * 3 + nc;
+    const other = board[idx];
+    if (!other) return 0;
+    if (other.owner === my) return 0;
+
+    const myEdge = edge(myDir);
+    const theirEdge = Number(other.card.edges[theirDir]);
+
+    if (myEdge > theirEdge) return 1;
+    if (myEdge < theirEdge) return 0;
+
+    const theirHand = Number(other.card.jankenHand);
+    return jankenWins(myHand, theirHand) ? 1 : 0;
+  };
+
+  let flips = 0;
+  flips += trySide(r - 1, c, "up", "down");
+  flips += trySide(r + 1, c, "down", "up");
+  flips += trySide(r, c - 1, "left", "right");
+  flips += trySide(r, c + 1, "right", "left");
+  return flips;
+}
+
+function edgeSum(card: CardData): number {
+  return Number(card.edges.up) + Number(card.edges.right) + Number(card.edges.down) + Number(card.edges.left);
+}
+
+function pickAiMove(args: {
+  difficulty: AiDifficulty;
+  boardNow: any[];
+  deckTokens: bigint[];
+  usedCardIndexes: Set<number>;
+  usedCells: Set<number>;
+  cards: Map<bigint, CardData>;
+  my: PlayerIndex;
+}): { cell: number; cardIndex: number } {
+  const availableCells: number[] = [];
+  for (let c = 0; c < 9; c++) if (!args.usedCells.has(c)) availableCells.push(c);
+
+  const availableIdx: number[] = [];
+  for (let i = 0; i < 5; i++) if (!args.usedCardIndexes.has(i)) availableIdx.push(i);
+
+  if (availableCells.length === 0 || availableIdx.length === 0) {
+    // should never happen if protocol is intact
+    return { cell: 0, cardIndex: 0 };
+  }
+
+  if (args.difficulty === "easy") {
+    // Deterministic: pick the smallest available cell and smallest available card index
+    return { cell: availableCells[0], cardIndex: availableIdx[0] };
+  }
+
+  // normal: greedy on immediate flips; tie-break by edge sum, then smallest cell, then smallest idx
+  let best: { cell: number; cardIndex: number; flips: number; sum: number } | null = null;
+
+  for (const cell of availableCells) {
+    for (const idx of availableIdx) {
+      const tid = args.deckTokens[idx];
+      const card = tid !== undefined ? args.cards.get(tid) : undefined;
+      if (!card) continue;
+
+      const flips = predictedImmediateFlips(args.boardNow, cell, card, args.my);
+      const sum = edgeSum(card);
+      if (!best) {
+        best = { cell, cardIndex: idx, flips, sum };
+        continue;
+      }
+
+      if (flips > best.flips) best = { cell, cardIndex: idx, flips, sum };
+      else if (flips === best.flips && sum > best.sum) best = { cell, cardIndex: idx, flips, sum };
+      else if (flips === best.flips && sum === best.sum && cell < best.cell) best = { cell, cardIndex: idx, flips, sum };
+      else if (flips === best.flips && sum === best.sum && cell === best.cell && idx < best.cardIndex) best = { cell, cardIndex: idx, flips, sum };
+    }
+  }
+
+  if (best) return { cell: best.cell, cardIndex: best.cardIndex };
+  // fallback: at least deterministic
+  return { cell: availableCells[0], cardIndex: availableIdx[0] };
+}
+
 export function MatchPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const decks = React.useMemo(() => listDecks(), []);
@@ -116,6 +227,12 @@ export function MatchPage() {
 
   const deckA = React.useMemo(() => (deckAId ? getDeck(deckAId) : null), [deckAId]);
   const deckB = React.useMemo(() => (deckBId ? getDeck(deckBId) : null), [deckBId]);
+
+  const [opponentMode, setOpponentMode] = React.useState<OpponentMode>("pvp");
+  const isVsNyanoAi = opponentMode === "vs_nyano_ai";
+  const aiPlayer: PlayerIndex = 1; // Nyano is always B-side for now
+  const [aiAutoPlay, setAiAutoPlay] = React.useState(true);
+  const [aiDifficulty, setAiDifficulty] = React.useState<AiDifficulty>("normal");
 
   const [rulesetKey, setRulesetKey] = React.useState<RulesetKey>("v2");
   const [seasonId, setSeasonId] = React.useState<number>(1);
@@ -183,10 +300,14 @@ export function MatchPage() {
   const rulesetId = React.useMemo(() => computeRulesetIdV1(ruleset), [ruleset]);
 
   const used = React.useMemo(() => computeUsed(turns, firstPlayer), [turns, firstPlayer]);
+  const warnUsed = React.useMemo(() => countWarningMarks(turns, firstPlayer), [turns, firstPlayer]);
   const currentTurnIndex = turns.length;
   const currentPlayer = turnPlayer(firstPlayer, currentTurnIndex);
+  const isAiTurn = isVsNyanoAi && currentPlayer === aiPlayer;
+
   const currentDeckTokens = currentPlayer === 0 ? deckATokens : deckBTokens;
   const currentUsed = currentPlayer === 0 ? used.usedA : used.usedB;
+  const currentWarnRemaining = currentPlayer === 0 ? Math.max(0, 3 - warnUsed.A) : Math.max(0, 3 - warnUsed.B);
 
   const availableCells = React.useMemo(() => {
     const out: number[] = [];
@@ -278,59 +399,79 @@ export function MatchPage() {
 
   const boardNow = sim.ok ? sim.previewHistory[turns.length] ?? EMPTY_BOARD : EMPTY_BOARD;
 
-  const commitMove = () => {
-    setError(null);
-    setStatus(null);
+  const commitTurn = React.useCallback(
+    (next: Turn) => {
+      setError(null);
+      setStatus(null);
 
-    if (turns.length >= 9) {
-      setError("すでに 9 手が確定しています（Reset してください）");
-      return;
-    }
+      if (turns.length >= 9) {
+        setError("すでに 9 手が確定しています（Reset してください）");
+        return;
+      }
+
+      if (next.cell < 0 || next.cell > 8) {
+        setError("cell は 0..8 です");
+        return;
+      }
+      if (used.cells.has(next.cell)) {
+        setError(`cell ${next.cell} はすでに使用済みです`);
+        return;
+      }
+
+      if (next.cardIndex < 0 || next.cardIndex > 4) {
+        setError("cardIndex は 0..4 です");
+        return;
+      }
+      if (currentUsed.has(next.cardIndex)) {
+        setError(`cardIndex ${next.cardIndex} はすでに使用済みです`);
+        return;
+      }
+
+      if (next.warningMarkCell !== undefined) {
+        if (currentWarnRemaining <= 0) {
+          setError("warning mark の使用回数上限（3回）に達しています");
+          return;
+        }
+        if (next.warningMarkCell === next.cell) {
+          setError("warningMarkCell は placed cell と同じにできません");
+          return;
+        }
+        if (next.warningMarkCell < 0 || next.warningMarkCell > 8) {
+          setError("warningMarkCell は 0..8 です");
+          return;
+        }
+        if (used.cells.has(next.warningMarkCell)) {
+          setError(`warningMarkCell ${next.warningMarkCell} はすでに使用済み cell です`);
+          return;
+        }
+      }
+
+      setTurns((prev) => [...prev, next]);
+      setDraftCell(null);
+      setDraftCardIndex(null);
+      setDraftWarningMarkCell(null);
+      setSelectedTurnIndex(Math.max(0, turns.length)); // focus the move we just added
+    },
+    [turns.length, used.cells, currentUsed, currentWarnRemaining]
+  );
+
+  const commitMove = () => {
+    if (isAiTurn) return; // AI mode blocks manual B-side actions
 
     if (draftCell === null) {
       setError("cell を選択してください");
       return;
     }
-    if (used.cells.has(draftCell)) {
-      setError(`cell ${draftCell} はすでに使用済みです`);
-      return;
-    }
-
     if (draftCardIndex === null) {
       setError("card を選択してください");
       return;
     }
-    if (draftCardIndex < 0 || draftCardIndex > 4) {
-      setError("cardIndex は 0..4 です");
-      return;
-    }
-    if (currentUsed.has(draftCardIndex)) {
-      setError(`cardIndex ${draftCardIndex} はすでに使用済みです`);
-      return;
-    }
 
-    if (draftWarningMarkCell !== null) {
-      if (draftWarningMarkCell === draftCell) {
-        setError("warningMarkCell は placed cell と同じにできません");
-        return;
-      }
-      if (used.cells.has(draftWarningMarkCell)) {
-        setError(`warningMarkCell ${draftWarningMarkCell} はすでに使用済み cell です`);
-        return;
-      }
-    }
-
-    const next: Turn = {
+    commitTurn({
       cell: draftCell,
       cardIndex: draftCardIndex,
       warningMarkCell: draftWarningMarkCell === null ? undefined : draftWarningMarkCell,
-    };
-
-    setTurns((prev) => [...prev, next]);
-    setDraftCell(null);
-    setDraftCardIndex(null);
-    setDraftWarningMarkCell(null);
-    setSelectedTurnIndex(Math.max(0, turns.length)); // focus the move we just added
+    });
   };
 
   const undoMove = () => {
@@ -342,6 +483,35 @@ export function MatchPage() {
     setDraftWarningMarkCell(null);
     setSelectedTurnIndex((x) => Math.max(0, Math.min(x, Math.max(0, turns.length - 2))));
   };
+
+  const doAiMove = React.useCallback(() => {
+    if (!isVsNyanoAi) return;
+    if (!cards) return;
+    if (turns.length >= 9) return;
+    if (currentPlayer !== aiPlayer) return;
+
+    const move = pickAiMove({
+      difficulty: aiDifficulty,
+      boardNow: boardNow as any,
+      deckTokens: deckBTokens,
+      usedCardIndexes: used.usedB,
+      usedCells: used.cells,
+      cards,
+      my: aiPlayer,
+    });
+
+    commitTurn({ cell: move.cell, cardIndex: move.cardIndex });
+  }, [isVsNyanoAi, cards, turns.length, currentPlayer, aiPlayer, aiDifficulty, boardNow, deckBTokens, used.usedB, used.cells, commitTurn]);
+
+  React.useEffect(() => {
+    if (!isVsNyanoAi || !aiAutoPlay) return;
+    if (!cards) return;
+    if (turns.length >= 9) return;
+    if (currentPlayer !== aiPlayer) return;
+    // small delay for "thinking" feeling + to avoid UI jitter
+    const t = window.setTimeout(() => doAiMove(), 180);
+    return () => window.clearTimeout(t);
+  }, [isVsNyanoAi, aiAutoPlay, cards, turns.length, currentPlayer, aiPlayer, doAiMove]);
 
   const canFinalize = turns.length === 9 && sim.ok;
 
@@ -408,9 +578,7 @@ export function MatchPage() {
                 ))}
               </select>
               {deckA ? (
-                <div className="text-xs text-slate-500">
-                  {deckA.tokenIds.join(", ")}
-                </div>
+                <div className="text-xs text-slate-500">{deckA.tokenIds.join(", ")}</div>
               ) : (
                 <div className="text-xs text-slate-400">
                   まずは <Link className="underline" to="/decks">Decks</Link> で作成してください
@@ -429,13 +597,46 @@ export function MatchPage() {
                 ))}
               </select>
               {deckB ? (
-                <div className="text-xs text-slate-500">
-                  {deckB.tokenIds.join(", ")}
-                </div>
+                <div className="text-xs text-slate-500">{deckB.tokenIds.join(", ")}</div>
               ) : (
                 <div className="text-xs text-slate-400">Deck B を選択してください</div>
               )}
             </div>
+          </div>
+
+          <div className="grid gap-3 md:grid-cols-3">
+            <div className="grid gap-2">
+              <div className="text-xs font-medium text-slate-600">Opponent</div>
+              <select className="input" value={opponentMode} onChange={(e) => setOpponentMode(e.target.value as OpponentMode)}>
+                <option value="pvp">Human vs Human（両方手動）</option>
+                <option value="vs_nyano_ai">Vs Nyano（AIがBを操作）</option>
+              </select>
+              <div className="text-[11px] text-slate-500">
+                {isVsNyanoAi ? "B側の手を Nyano AI が自動で選択します（Deck B が Nyano のデッキ）" : "A/B 両方を手動でコミットします"}
+              </div>
+            </div>
+
+            {isVsNyanoAi ? (
+              <>
+                <div className="grid gap-2">
+                  <div className="text-xs font-medium text-slate-600">AI Difficulty</div>
+                  <select className="input" value={aiDifficulty} onChange={(e) => setAiDifficulty(e.target.value as AiDifficulty)}>
+                    <option value="easy">Easy（最小手）</option>
+                    <option value="normal">Normal（即時flip最大）</option>
+                  </select>
+                  <div className="text-[11px] text-slate-500">※ いまは「イベント運用しやすい・壊れない」ことを優先</div>
+                </div>
+
+                <div className="grid gap-2">
+                  <div className="text-xs font-medium text-slate-600">AI Auto</div>
+                  <label className="flex items-center gap-2 text-xs text-slate-700">
+                    <input type="checkbox" checked={aiAutoPlay} onChange={(e) => setAiAutoPlay(e.target.checked)} />
+                    Nyano turn を自動で進める
+                  </label>
+                  {!aiAutoPlay ? <div className="text-[11px] text-slate-500">Nyano turn のときに “Nyano Move” を押してください</div> : null}
+                </div>
+              </>
+            ) : null}
           </div>
 
           <div className="grid gap-3 md:grid-cols-3">
@@ -450,13 +651,7 @@ export function MatchPage() {
 
             <div className="grid gap-2">
               <div className="text-xs font-medium text-slate-600">Season</div>
-              <input
-                className="input"
-                type="number"
-                min={1}
-                value={seasonId}
-                onChange={(e) => setSeasonId(Number(e.target.value))}
-              />
+              <input className="input" type="number" min={1} value={seasonId} onChange={(e) => setSeasonId(Number(e.target.value))} />
               <div className="text-[11px] text-slate-500">※ 今は 1 固定でもOK（将来リーグで拡張）</div>
             </div>
 
@@ -477,9 +672,7 @@ export function MatchPage() {
                 <input className="input font-mono text-xs" value={playerA} onChange={(e) => setPlayerA(e.target.value as `0x${string}`)} />
                 <input className="input font-mono text-xs" value={playerB} onChange={(e) => setPlayerB(e.target.value as `0x${string}`)} />
               </div>
-              <div className="text-[11px] text-slate-500">
-                A: {shortAddr(playerA)} / B: {shortAddr(playerB)}
-              </div>
+              <div className="text-[11px] text-slate-500">A: {shortAddr(playerA)} / B: {shortAddr(playerB)}</div>
             </div>
 
             <div className="grid gap-2">
@@ -503,6 +696,11 @@ export function MatchPage() {
             <button className="btn" onClick={() => setSalt(randomSalt())}>
               New Salt
             </button>
+            {isVsNyanoAi && !aiAutoPlay && isAiTurn ? (
+              <button className="btn btn-primary" onClick={doAiMove}>
+                Nyano Move
+              </button>
+            ) : null}
           </div>
 
           {status ? <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs text-emerald-900">{status}</div> : null}
@@ -514,12 +712,19 @@ export function MatchPage() {
         <div className="card-hd">
           <div className="text-base font-semibold">Draft Moves</div>
           <div className="text-xs text-slate-500">
-            turn {currentTurnIndex}/9 · player {currentPlayer === 0 ? "A" : "B"} · cells remaining: {availableCells.length} · cards remaining:{" "}
-            {availableCardIndexes.length}
+            turn {currentTurnIndex}/9 · player {currentPlayer === 0 ? "A" : "B"}{" "}
+            {isAiTurn ? "（Nyano AI）" : ""} · cells remaining: {availableCells.length} · cards remaining: {availableCardIndexes.length} · warning marks left:{" "}
+            {currentWarnRemaining}
           </div>
         </div>
 
         <div className="card-bd grid gap-6">
+          {isAiTurn ? (
+            <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900">
+              Nyano の手番です。{aiAutoPlay ? "自動で進みます…" : "“Nyano Move” を押してください。"}
+            </div>
+          ) : null}
+
           <div className="grid gap-6 md:grid-cols-2">
             <div className="grid gap-3">
               <div className="text-xs font-medium text-slate-600">Board (click an empty cell)</div>
@@ -534,19 +739,15 @@ export function MatchPage() {
                   return (
                     <button
                       key={idx}
-                      disabled={disabled || turns.length >= 9}
+                      disabled={disabled || turns.length >= 9 || isAiTurn}
                       onClick={() => setDraftCell(idx)}
                       className={[
                         "aspect-square rounded-xl border p-2 text-left",
                         selected ? "border-slate-900" : "border-slate-200",
-                        disabled ? "bg-slate-50" : "bg-white hover:bg-slate-50",
+                        disabled || isAiTurn ? "bg-slate-50" : "bg-white hover:bg-slate-50",
                       ].join(" ")}
                     >
-                      {cell ? (
-                        <CardMini card={cell.card} owner={cell.owner} subtle />
-                      ) : (
-                        <div className="flex h-full items-center justify-center text-xs text-slate-400">{idx}</div>
-                      )}
+                      {cell ? <CardMini card={cell.card} owner={cell.owner} subtle /> : <div className="flex h-full items-center justify-center text-xs text-slate-400">{idx}</div>}
                     </button>
                   );
                 })}
@@ -561,7 +762,7 @@ export function MatchPage() {
                     const v = e.target.value;
                     setDraftWarningMarkCell(v === "" ? null : Number(v));
                   }}
-                  disabled={turns.length >= 9}
+                  disabled={turns.length >= 9 || isAiTurn || currentWarnRemaining <= 0}
                 >
                   <option value="">None</option>
                   {availableCells
@@ -572,16 +773,14 @@ export function MatchPage() {
                       </option>
                     ))}
                 </select>
-                <div className="text-[11px] text-slate-500">※ 置くと、相手がその cell に置いた時にペナルティが発生</div>
+                <div className="text-[11px] text-slate-500">※ 上限は各プレイヤー3回。相手がその cell に置いた時にペナルティが発生。</div>
               </div>
             </div>
 
             <div className="grid gap-3">
               <div className="text-xs font-medium text-slate-600">Pick a card (index 0..4)</div>
               {!cards ? (
-                <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600">
-                  まずは Load Cards を実行してください
-                </div>
+                <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600">まずは Load Cards を実行してください</div>
               ) : (
                 <div className="grid gap-2">
                   <div className="flex flex-wrap gap-2">
@@ -592,19 +791,15 @@ export function MatchPage() {
                       return (
                         <button
                           key={idx}
-                          disabled={usedHere || turns.length >= 9}
+                          disabled={usedHere || turns.length >= 9 || isAiTurn}
                           onClick={() => setDraftCardIndex(idx)}
                           className={[
                             "w-[120px] rounded-xl border p-2",
                             selected ? "border-slate-900" : "border-slate-200",
-                            usedHere ? "bg-slate-50 opacity-50" : "bg-white hover:bg-slate-50",
+                            usedHere || isAiTurn ? "bg-slate-50 opacity-50" : "bg-white hover:bg-slate-50",
                           ].join(" ")}
                         >
-                          {c ? (
-                            <CardMini card={c} owner={currentPlayer} subtle={!selected} />
-                          ) : (
-                            <div className="text-xs text-slate-500 font-mono">#{tid.toString()}</div>
-                          )}
+                          {c ? <CardMini card={c} owner={currentPlayer} subtle={!selected} /> : <div className="text-xs text-slate-500 font-mono">#{tid.toString()}</div>}
                           <div className="mt-1 text-[10px] text-slate-500">idx {idx}</div>
                         </button>
                       );
@@ -612,7 +807,7 @@ export function MatchPage() {
                   </div>
 
                   <div className="flex flex-wrap items-center gap-2">
-                    <button className="btn btn-primary" onClick={commitMove} disabled={turns.length >= 9}>
+                    <button className="btn btn-primary" onClick={commitMove} disabled={turns.length >= 9 || isAiTurn}>
                       Commit Move
                     </button>
                     <button className="btn" onClick={undoMove} disabled={turns.length === 0}>
@@ -621,9 +816,7 @@ export function MatchPage() {
                   </div>
 
                   {!sim.ok ? (
-                    <div className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-xs text-rose-900">
-                      engine error: {sim.error}
-                    </div>
+                    <div className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-xs text-rose-900">engine error: {sim.error}</div>
                   ) : null}
                 </div>
               )}
@@ -638,6 +831,7 @@ export function MatchPage() {
                   <div>cells used: {[...used.cells.values()].sort((a, b) => a - b).join(", ") || "—"}</div>
                   <div>cards used (A): {[...used.usedA.values()].sort((a, b) => a - b).join(", ") || "—"}</div>
                   <div>cards used (B): {[...used.usedB.values()].sort((a, b) => a - b).join(", ") || "—"}</div>
+                  <div>warning marks used (A/B): {warnUsed.A}/{warnUsed.B}</div>
                 </div>
               </div>
             </div>
@@ -690,22 +884,18 @@ export function MatchPage() {
                 )}
               </>
             ) : (
-              <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600">
-                まずはカードをロードして、1手コミットしてください
-              </div>
+              <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600">まずはカードをロードして、1手コミットしてください</div>
             )}
           </div>
 
           <div className="grid gap-2">
             {sim.ok ? (
-              <>
-                <TurnLog
-                  turns={sim.previewTurns}
-                  boardHistory={sim.previewHistory}
-                  selectedTurnIndex={Math.min(selectedTurnIndex, Math.max(0, sim.previewTurns.length - 1))}
-                  onSelect={(i) => setSelectedTurnIndex(i)}
-                />
-              </>
+              <TurnLog
+                turns={sim.previewTurns}
+                boardHistory={sim.previewHistory}
+                selectedTurnIndex={Math.min(selectedTurnIndex, Math.max(0, sim.previewTurns.length - 1))}
+                onSelect={(i) => setSelectedTurnIndex(i)}
+              />
             ) : (
               <div className="text-xs text-slate-600">—</div>
             )}
