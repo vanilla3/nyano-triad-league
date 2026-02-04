@@ -2,14 +2,7 @@ import React from "react";
 import { Link, useSearchParams } from "react-router-dom";
 
 import { CardMini } from "@/components/CardMini";
-import {
-  readStoredOverlayState,
-  readStoredStreamVoteState,
-  subscribeOverlayState,
-  subscribeStreamVoteState,
-  type OverlayStateV1,
-  type StreamVoteStateV1,
-} from "@/lib/streamer_bus";
+import { readStoredOverlayState, readStoredStreamVoteState, subscribeOverlayState, subscribeStreamVoteState, type OverlayStateV1, type StreamVoteStateV1 } from "@/lib/streamer_bus";
 
 function nowMs() {
   return Date.now();
@@ -52,19 +45,19 @@ export function OverlayPage() {
   const controls = searchParams.get("controls") !== "0";
   const bg = searchParams.get("bg");
   const transparent = isTransparentBg(bg);
-  const showVote = searchParams.get("vote") !== "0";
+  const voteEnabled = searchParams.get("vote") !== "0";
 
   const [state, setState] = React.useState<OverlayStateV1 | null>(() => readStoredOverlayState());
+  const [voteState, setVoteState] = React.useState<StreamVoteStateV1 | null>(() => readStoredStreamVoteState());
   const [tick, setTick] = React.useState(0);
-  const [vote, setVote] = React.useState<StreamVoteStateV1 | null>(() => readStoredStreamVoteState());
 
   React.useEffect(() => {
-    // keep timers fresh (age label & vote countdown)
-    const needTick = controls || (showVote && vote?.status === "open");
-    if (!needTick) return;
-    const t = window.setInterval(() => setTick((x) => x + 1), 1000);
-    return () => window.clearInterval(t);
-  }, [controls, showVote, vote?.status]);
+  // keep "age" and vote countdown fresh
+  const needTick = controls || voteState?.status === "open";
+  if (!needTick) return;
+  const t = window.setInterval(() => setTick((x) => x + 1), 500);
+  return () => window.clearInterval(t);
+}, [controls, voteState?.status]);
 
   React.useEffect(() => {
     const unsub = subscribeOverlayState((s) => setState(s));
@@ -72,7 +65,7 @@ export function OverlayPage() {
   }, []);
 
   React.useEffect(() => {
-    const unsub = subscribeStreamVoteState((s) => setVote(s));
+    const unsub = subscribeStreamVoteState((s) => setVoteState(s));
     return () => unsub();
   }, []);
 
@@ -104,23 +97,48 @@ export function OverlayPage() {
   const markCell = typeof state?.lastMove?.warningMarkCell === "number" ? state.lastMove.warningMarkCell : null;
 
 
-  const voteEndsAtMs = typeof vote?.endsAtMs === "number" ? vote!.endsAtMs : null;
-  const voteOpen = showVote && vote?.status === "open" && typeof voteEndsAtMs === "number" && voteEndsAtMs > nowMs();
-  const voteLeft = voteOpen && voteEndsAtMs ? Math.max(0, Math.ceil((voteEndsAtMs - nowMs()) / 1000)) : null;
-  const voteSide = typeof vote?.controlledSide === "number" ? (vote!.controlledSide === 0 ? "A" : "B") : null;
-  const voteTurn = typeof vote?.turn === "number" ? vote!.turn : null;
-  const topVotes = Array.isArray(vote?.top) ? (vote?.top ?? []).slice(0, 3) : [];
+const prevOwnersRef = React.useRef<Array<0 | 1 | null>>(Array.from({ length: 9 }, () => null));
+const [lastFlipCount, setLastFlipCount] = React.useState<number | null>(null);
+const [lastFlippedCells, setLastFlippedCells] = React.useState<number[]>([]);
+
+React.useEffect(() => {
+  const b: any[] = Array.isArray((state as any)?.board) ? ((state as any).board as any[]) : [];
+  const owners: Array<0 | 1 | null> = Array.from({ length: 9 }, (_, i) => {
+    const o = (b[i] as any)?.owner;
+    return o === 0 || o === 1 ? (o as 0 | 1) : null;
+  });
+
+  const prev = prevOwnersRef.current;
+  prevOwnersRef.current = owners;
+
+  if (!state?.lastMove) {
+    setLastFlipCount(null);
+    setLastFlippedCells([]);
+    return;
+  }
+
+  const by = state.lastMove.by;
+  const other: 0 | 1 = by === 0 ? 1 : 0;
+  const flips: number[] = [];
+  for (let i = 0; i < 9; i++) {
+    if (prev[i] === other && owners[i] === by) flips.push(i);
+  }
+  setLastFlipCount(flips.length);
+  setLastFlippedCells(flips);
+}, [state?.updatedAtMs]);
 
   const cellClass = (i: number): string => {
-    const base = "relative aspect-square rounded-2xl border p-2 shadow-sm";
-    const neutral = "border-slate-200 bg-white/60";
-    const last = "border-rose-300 bg-rose-50/70 ring-2 ring-rose-200";
-    const marked = "border-amber-300 bg-amber-50/70 ring-2 ring-amber-200";
+  const base = "relative aspect-square rounded-2xl border p-2 shadow-sm";
+  const neutral = "border-slate-200 bg-white/60";
+  const last = "border-rose-300 bg-rose-50/70 ring-2 ring-rose-200";
+  const marked = "border-amber-300 bg-amber-50/70 ring-2 ring-amber-200";
+  const flipped = "border-sky-300 bg-sky-50/70 ring-2 ring-sky-200";
 
-    if (lastCell === i) return [base, last].join(" ");
-    if (markCell === i) return [base, marked].join(" ");
-    return [base, neutral].join(" ");
-  };
+  if (lastCell === i) return [base, last].join(" ");
+  if (markCell === i) return [base, marked].join(" ");
+  if (lastFlippedCells.includes(i)) return [base, flipped].join(" ");
+  return [base, neutral].join(" ");
+};
 
   return (
     <div className={rootClass}>
@@ -210,35 +228,6 @@ export function OverlayPage() {
               {matchIdShort ? <div className="mt-1 text-[11px] text-slate-400">match: {matchIdShort}</div> : null}
             </div>
 
-{showVote && voteOpen ? (
-  <div className="rounded-2xl border border-slate-200 bg-white/70 px-4 py-3 shadow-sm">
-    <div className="flex items-center justify-between gap-2">
-      <div className="text-xs font-semibold text-slate-800">🗳️ Chat vote</div>
-      <span className="badge badge-emerald">OPEN · {voteLeft ?? "?"}s</span>
-    </div>
-    <div className="mt-1 text-xs text-slate-600">
-      Turn {voteTurn !== null ? voteTurn + 1 : "—"} · Chat controls <span className="font-semibold">{voteSide ?? "—"}</span>
-      {typeof vote?.totalVotes === "number" ? <span> · votes {vote.totalVotes}</span> : null}
-    </div>
-
-    {topVotes.length > 0 ? (
-      <div className="mt-2 space-y-1">
-        {topVotes.map((x, i) => (
-          <div key={i} className="flex items-center justify-between gap-2 text-xs">
-            <span className="font-mono">
-              cell {x.move.cell} · card {x.move.cardIndex}
-              {typeof x.move.warningMarkCell === "number" ? ` · wm ${x.move.warningMarkCell}` : ""}
-            </span>
-            <span className="badge badge-sky">{x.count}</span>
-          </div>
-        ))}
-      </div>
-    ) : (
-      <div className="mt-2 text-xs text-slate-500">No votes yet…</div>
-    )}
-  </div>
-) : null}
-
             {state?.lastMove ? (
               <div className="rounded-2xl border border-slate-200 bg-white/70 px-4 py-3 shadow-sm">
                 <div className="text-xs font-semibold text-slate-800">Last move</div>
@@ -251,6 +240,44 @@ export function OverlayPage() {
                     warning mark → cell <span className="font-mono">{state.lastMove.warningMarkCell}</span>
                   </div>
                 ) : null}
+
+{voteEnabled && voteState?.status === "open" ? (
+  <div className="rounded-2xl border border-slate-200 bg-white/70 px-4 py-3 shadow-sm">
+    <div className="flex items-center justify-between gap-2">
+      <div className="text-xs font-semibold text-slate-800">🗳️ Chat voting</div>
+      <span className="badge badge-emerald">
+        OPEN ·{" "}
+        {typeof voteState.endsAtMs === "number"
+          ? Math.max(0, Math.ceil((voteState.endsAtMs - nowMs()) / 1000))
+          : "?"}
+        s
+      </span>
+    </div>
+
+    <div className="mt-1 text-xs text-slate-600">
+      controls: <span className="font-mono">{voteState.controlledSide === 1 ? "B" : "A"}</span> ·{" "}
+      votes: <span className="font-mono">{typeof voteState.totalVotes === "number" ? voteState.totalVotes : 0}</span>
+    </div>
+
+    {Array.isArray(voteState.top) && voteState.top.length > 0 ? (
+      <div className="mt-2 space-y-1">
+        {voteState.top.slice(0, 3).map((x, i) => (
+          <div key={i} className="flex items-center justify-between gap-2 text-xs">
+            <span className="font-mono">
+              cell {x.move.cell} · card {x.move.cardIndex}
+              {typeof x.move.warningMarkCell === "number" ? ` · wm ${x.move.warningMarkCell}` : ""}
+            </span>
+            <span className="badge badge-sky">{x.count}</span>
+          </div>
+        ))}
+      </div>
+    ) : (
+      <div className="mt-2 text-xs text-slate-500">No votes yet…</div>
+    )}
+
+    {voteState.note ? <div className="mt-2 text-[11px] text-slate-500">{voteState.note}</div> : null}
+  </div>
+) : null}
               </div>
             ) : null}
 

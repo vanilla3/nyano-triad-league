@@ -4,14 +4,7 @@ import { Link } from "react-router-dom";
 import { CopyField } from "@/components/CopyField";
 import { useToast } from "@/components/Toast";
 import { EVENTS, getEventStatus, type EventV1 } from "@/lib/events";
-import {
-  makeStreamCommandId,
-  publishStreamCommand,
-  publishStreamVoteState,
-  readStoredOverlayState,
-  subscribeOverlayState,
-  type OverlayStateV1,
-} from "@/lib/streamer_bus";
+import { publishStreamCommand, makeStreamCommandId, publishStreamVoteState, readStoredOverlayState, subscribeOverlayState, type OverlayStateV1 } from "@/lib/streamer_bus";
 
 function origin(): string {
   if (typeof window === "undefined") return "";
@@ -24,27 +17,6 @@ function pickDefaultEvent(events: EventV1[]): string {
     const st = getEventStatus(e, now);
     return st === "active" || st === "always";
   });
-
-
-// Broadcast vote status to OBS overlay (so viewers can see the countdown & top votes).
-React.useEffect(() => {
-  const totalVotes = Object.keys(votesByUser).length;
-  const top = counts.slice(0, 3).map((x) => ({ move: x.move, count: x.count }));
-
-  publishStreamVoteState({
-    version: 1,
-    updatedAtMs: Date.now(),
-    status: voteOpen ? "open" : "closed",
-    eventId: e?.id,
-    eventTitle: e?.title,
-    turn: voteOpen ? (voteTurn ?? undefined) : undefined,
-    controlledSide,
-    endsAtMs: voteOpen ? (voteEndsAtMs ?? undefined) : undefined,
-    totalVotes: voteOpen ? totalVotes : 0,
-    top: voteOpen ? top : [],
-  });
-}, [voteOpen, voteEndsAtMs, voteTurn, controlledSide, votesByUser, counts, e?.id, e?.title]);
-
   return (active ?? events[0])?.id ?? "";
 }
 
@@ -130,23 +102,10 @@ export function StreamPage() {
     return subscribeOverlayState((s) => setLive(s));
   }, []);
 
-
-// When leaving Stream Studio, close the overlay vote panel (best-effort).
-React.useEffect(() => {
-  return () => {
-    try {
-      publishStreamVoteState({
-        version: 1,
-        updatedAtMs: Date.now(),
-        status: "closed",
-        eventId: e?.id,
-        eventTitle: e?.title,
-      });
-    } catch {
-      // ignore
-    }
-  };
-}, [e?.id, e?.title]);
+  // Ensure the overlay is not stuck in OPEN state after refresh
+  React.useEffect(() => {
+    publishStreamVoteState({ version: 1, updatedAtMs: Date.now(), status: "closed" });
+  }, []);
 
   // chat vote console (prototype)
   const [controlledSide, setControlledSide] = React.useState<0 | 1>(0); // A by default
@@ -315,6 +274,42 @@ React.useEffect(() => {
     if (!voteOpen || !voteEndsAtMs) return null;
     return Math.max(0, Math.ceil((voteEndsAtMs - Date.now()) / 1000));
   }, [voteOpen, voteEndsAtMs]);
+
+// Broadcast vote state to the overlay (OBS) so viewers can see countdown + top votes.
+React.useEffect(() => {
+  const now = Date.now();
+  const totalVotes = Object.keys(votesByUser).length;
+  const top = counts.slice(0, 3).map((x) => ({ move: x.move, count: x.count }));
+
+  if (!voteOpen) {
+    publishStreamVoteState({
+      version: 1,
+      updatedAtMs: now,
+      status: "closed",
+      eventId: live?.eventId,
+      eventTitle: live?.eventTitle,
+      turn: typeof liveTurn === "number" ? liveTurn : undefined,
+      controlledSide,
+      totalVotes,
+      top,
+    });
+    return;
+  }
+
+  publishStreamVoteState({
+    version: 1,
+    updatedAtMs: now,
+    status: "open",
+    eventId: live?.eventId,
+    eventTitle: live?.eventTitle,
+    turn: voteTurn ?? (typeof liveTurn === "number" ? liveTurn : undefined),
+    controlledSide,
+    endsAtMs: voteEndsAtMs ?? undefined,
+    totalVotes,
+    top,
+    note: canVoteNow ? "Voting…" : "Waiting for the host to be ready…",
+  });
+}, [voteOpen, voteEndsAtMs, voteTurn, votesByUser, counts, controlledSide, live?.eventId, live?.eventTitle, liveTurn, canVoteNow]);
 
   return (
     <div className="space-y-6">

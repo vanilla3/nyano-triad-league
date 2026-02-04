@@ -60,8 +60,6 @@ Twitch連携（EventSub/IRC）は後から差し替え可能にして、
 - `4 2 wm=6`
 - `!move 4 2 w 6`
 
-## Overlay への投票表示（任意）
-配信の参加感を上げるため、`/stream` は投票状態を `StreamVoteStateV1` として broadcast する。
-`/overlay` はそれを購読して、OPEN/CLOSED や Top votes を表示できる。
-
-- query: `vote=0` を付けると投票UIは非表示
+## Overlay表示（Phase 2.5）
+- vote status を overlay に表示する（OPEN/残り秒数/Top votes）
+- overlay 側で `vote=0` を指定すれば非表示にもできる
