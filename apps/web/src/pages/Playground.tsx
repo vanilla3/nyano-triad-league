@@ -255,9 +255,9 @@ export function PlaygroundPage() {
     <div className="grid gap-6">
       <section className="card">
         <div className="card-hd">
-          <div className="text-base font-semibold">Playground</div>
+          <div className="text-base font-semibold">Nyano Lab 🧪</div>
           <div className="text-xs text-slate-500">
-            テストベクタからケースを選び、決定論エンジンで再現し、盤面をリプレイします。URL共有で議論が回る形を目指します。
+            テストベクタからケースを選び、決定論エンジンで再現し、盤面をリプレイします。議論しやすいよう URL 共有を前提にしています。
           </div>
         </div>
 
@@ -291,9 +291,28 @@ export function PlaygroundPage() {
             </select>
           </div>
 
-          <div className="md:col-span-3 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600">
-            <div className="font-medium">{vf.schema}</div>
-            <div className="mt-1">{vf.notes?.join(" / ")}</div>
+          <div className="md:col-span-3 callout callout-muted">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="badge badge-slate">schema</span>
+              <div className="text-sm font-medium">{vf.schema}</div>
+            </div>
+
+            {(() => {
+              const notesRaw: any = (vf as any).notes;
+              const notes: string[] = Array.isArray(notesRaw)
+                ? notesRaw
+                : typeof notesRaw === "string"
+                  ? [notesRaw]
+                  : [];
+              if (notes.length === 0) return <div className="mt-2 text-xs text-slate-500">no notes</div>;
+              return (
+                <ul className="mt-2 list-disc pl-6 text-xs text-slate-600">
+                  {notes.map((n, i) => (
+                    <li key={i}>{n}</li>
+                  ))}
+                </ul>
+              );
+            })()}
           </div>
 
           <div className="md:col-span-3 flex flex-wrap items-center justify-between gap-2">
@@ -303,10 +322,10 @@ export function PlaygroundPage() {
             </div>
 
             <div className="flex flex-wrap items-center gap-2">
-              <button className="btn" onClick={() => copyWithToast("link", window.location.href)}>
+              <button className="btn btn-soft" onClick={() => copyWithToast("link", window.location.href)}>
                 Copy share link
               </button>
-              {copied ? <span className="text-xs text-slate-600">copied: {copied}</span> : null}
+              {copied ? <span className="badge badge-slate">copied: {copied}</span> : null}
             </div>
           </div>
         </div>
@@ -427,8 +446,9 @@ export function PlaygroundPage() {
                   </div>
                 </div>
 
-                  <div className="mt-2 text-xs text-slate-500">
-                    ※ Replayリンクは Nyano のオンチェーン属性で再現します。Playgroundのベクタ(CardData)とは結果が変わる可能性があります。
+                  <div className="mt-2 callout callout-warn text-xs">
+                    <div className="font-medium">注意</div>
+                    <div className="mt-1">Replayリンクは Nyano のオンチェーン属性で再現します。Playgroundのベクタ(CardData)とは結果が変わる可能性があります。</div>
                   </div>
 
               </div>

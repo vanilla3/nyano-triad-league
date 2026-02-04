@@ -147,11 +147,21 @@ export function DecksPage() {
     <div className="grid gap-6">
       <section className="card">
         <div className="card-hd">
-          <div className="text-base font-semibold">Decks</div>
-          <div className="text-xs text-slate-500">Nyano tokenId 5枚をまとめて保存（ローカル保存）</div>
+          <div className="text-base font-semibold">Deck Studio 🧩</div>
+          <div className="text-xs text-slate-500">Nyano tokenId（5枚）を保存して、Match / Events へすばやく持ち込むための管理画面です（ローカル保存）。</div>
         </div>
 
         <div className="card-bd grid gap-4">
+          <div className="callout callout-info">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="badge badge-sky">TIP</span>
+              <div className="text-sm font-medium">「5枚・重複なし」が基本ルールです</div>
+            </div>
+            <ul className="mt-2 list-disc pl-6 text-sm">
+              <li>Preview は RPC 経由で Nyano を読み込み、カード性能に変換します</li>
+              <li>デッキを保存したら <span className="font-medium">Set as A/B</span> で Match へ即投入できます</li>
+            </ul>
+          </div>
           <div className="grid gap-3 md:grid-cols-3">
             <div className="grid gap-2 md:col-span-1">
               <div className="text-xs font-medium text-slate-600">Deck name</div>
@@ -211,7 +221,7 @@ export function DecksPage() {
 
           <div className="flex flex-wrap items-center gap-2">
             <button className="btn" onClick={doExportAll}>
-              Copy all decks JSON
+              Copy export JSON
             </button>
           </div>
         </div>
@@ -235,18 +245,19 @@ export function DecksPage() {
                   </button>
 
                   <Link className="btn no-underline" to={`/match?a=${d.id}`}>
-                    Use as A
+                    Set as A
                   </Link>
                   <Link className="btn no-underline" to={`/match?b=${d.id}`}>
-                    Use as B
+                    Set as B
                   </Link>
 
                   <button className="btn" onClick={() => copy(JSON.stringify(d, null, 2))}>
                     Copy deck JSON
                   </button>
                   <button
-                    className="btn"
+                    className="btn btn-danger"
                     onClick={() => {
+                      if (!window.confirm(`Delete deck: ${d.name}?`)) return;
                       deleteDeck(d.id);
                       refresh();
                       setStatus("deleted");
