@@ -39,6 +39,7 @@ export function AppLayout() {
           <nav className="flex flex-col gap-2 md:flex-row md:items-center md:gap-4">
             <NavGroup title="Play">
               <NavItem to="/arena" label="Arena" />
+              <NavItem to="/events" label="Events" />
               <NavItem to="/decks" label="Decks" />
               <NavItem to="/match" label="Match" />
             </NavGroup>

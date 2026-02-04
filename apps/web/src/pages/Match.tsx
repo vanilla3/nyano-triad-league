@@ -14,6 +14,7 @@ import { CardMini } from "@/components/CardMini";
 import { TurnLog } from "@/components/TurnLog";
 import { base64UrlEncodeUtf8, tryGzipCompressUtf8ToBase64Url } from "@/lib/base64url";
 import { getDeck, listDecks, type DeckV1 } from "@/lib/deck_store";
+import { getEventById, getEventStatus, type EventV1 } from "@/lib/events";
 import { stringifyWithBigInt } from "@/lib/json";
 import { fetchNyanoCards, getNyanoAddress, getRpcUrl } from "@/lib/nyano_rpc";
 
@@ -132,9 +133,8 @@ function predictedImmediateFlips(board: any[], cell: number, placed: CardData, m
   const r = Math.floor(cell / 3);
   const c = cell % 3;
 
-  const me = placed;
-  const myHand = Number(me.jankenHand);
-  const edge = (dir: "up" | "right" | "down" | "left") => Number(me.edges[dir]);
+  const myHand = Number(placed.jankenHand);
+  const edge = (dir: "up" | "right" | "down" | "left") => Number(placed.edges[dir]);
 
   const trySide = (nr: number, nc: number, myDir: "up" | "right" | "down" | "left", theirDir: "up" | "right" | "down" | "left") => {
     if (nr < 0 || nr > 2 || nc < 0 || nc > 2) return 0;
@@ -173,7 +173,7 @@ function pickAiMove(args: {
   usedCells: Set<number>;
   cards: Map<bigint, CardData>;
   my: PlayerIndex;
-}): { cell: number; cardIndex: number } {
+}): { cell: number; cardIndex: number; reason: string } {
   const availableCells: number[] = [];
   for (let c = 0; c < 9; c++) if (!args.usedCells.has(c)) availableCells.push(c);
 
@@ -181,13 +181,11 @@ function pickAiMove(args: {
   for (let i = 0; i < 5; i++) if (!args.usedCardIndexes.has(i)) availableIdx.push(i);
 
   if (availableCells.length === 0 || availableIdx.length === 0) {
-    // should never happen if protocol is intact
-    return { cell: 0, cardIndex: 0 };
+    return { cell: 0, cardIndex: 0, reason: "fallback" };
   }
 
   if (args.difficulty === "easy") {
-    // Deterministic: pick the smallest available cell and smallest available card index
-    return { cell: availableCells[0], cardIndex: availableIdx[0] };
+    return { cell: availableCells[0], cardIndex: availableIdx[0], reason: "easy: pick smallest cell & cardIndex" };
   }
 
   // normal: greedy on immediate flips; tie-break by edge sum, then smallest cell, then smallest idx
@@ -213,14 +211,48 @@ function pickAiMove(args: {
     }
   }
 
-  if (best) return { cell: best.cell, cardIndex: best.cardIndex };
-  // fallback: at least deterministic
-  return { cell: availableCells[0], cardIndex: availableIdx[0] };
+  if (best) return { cell: best.cell, cardIndex: best.cardIndex, reason: `normal: maximize immediate flips=${best.flips} (tie → edgeSum=${best.sum})` };
+  return { cell: availableCells[0], cardIndex: availableIdx[0], reason: "fallback" };
+}
+
+function parseOpponentMode(v: string | null): OpponentMode {
+  if (!v) return "pvp";
+  if (v === "vs_nyano_ai" || v === "ai" || v === "nyano") return "vs_nyano_ai";
+  return "pvp";
+}
+
+function parseRulesetKey(v: string | null): RulesetKey {
+  if (v === "v1") return "v1";
+  return "v2";
+}
+
+function parseAiDifficulty(v: string | null): AiDifficulty {
+  if (v === "easy") return "easy";
+  return "normal";
+}
+
+function parseFirstPlayer(v: string | null): PlayerIndex {
+  return v === "1" ? 1 : 0;
+}
+
+function parseSeason(v: string | null): number {
+  const n = Number(v);
+  return Number.isFinite(n) && n >= 1 ? Math.floor(n) : 1;
+}
+
+function parseBool01(v: string | null, defaultValue: boolean): boolean {
+  if (v === "1") return true;
+  if (v === "0") return false;
+  return defaultValue;
 }
 
 export function MatchPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const decks = React.useMemo(() => listDecks(), []);
+
+  const eventId = searchParams.get("event") ?? "";
+  const event: EventV1 | null = React.useMemo(() => (eventId ? getEventById(eventId) : null), [eventId]);
+  const eventStatus = event ? getEventStatus(event) : null;
 
   const deckAId = searchParams.get("a") ?? "";
   const deckBId = searchParams.get("b") ?? "";
@@ -228,15 +260,23 @@ export function MatchPage() {
   const deckA = React.useMemo(() => (deckAId ? getDeck(deckAId) : null), [deckAId]);
   const deckB = React.useMemo(() => (deckBId ? getDeck(deckBId) : null), [deckBId]);
 
-  const [opponentMode, setOpponentMode] = React.useState<OpponentMode>("pvp");
+  const opponentModeParam = parseOpponentMode(searchParams.get("opp"));
+  const aiDifficultyParam = parseAiDifficulty(searchParams.get("ai"));
+  const aiAutoPlay = parseBool01(searchParams.get("auto"), true);
+
+  const rulesetKeyParam = parseRulesetKey(searchParams.get("rk"));
+  const seasonIdParam = parseSeason(searchParams.get("season"));
+  const firstPlayerParam = parseFirstPlayer(searchParams.get("fp"));
+
+  const isEvent = Boolean(event);
+  const opponentMode: OpponentMode = isEvent ? "vs_nyano_ai" : opponentModeParam;
   const isVsNyanoAi = opponentMode === "vs_nyano_ai";
   const aiPlayer: PlayerIndex = 1; // Nyano is always B-side for now
-  const [aiAutoPlay, setAiAutoPlay] = React.useState(true);
-  const [aiDifficulty, setAiDifficulty] = React.useState<AiDifficulty>("normal");
+  const aiDifficulty: AiDifficulty = isEvent ? (event!.aiDifficulty as AiDifficulty) : aiDifficultyParam;
 
-  const [rulesetKey, setRulesetKey] = React.useState<RulesetKey>("v2");
-  const [seasonId, setSeasonId] = React.useState<number>(1);
-  const [firstPlayer, setFirstPlayer] = React.useState<PlayerIndex>(0);
+  const rulesetKey: RulesetKey = isEvent ? (event!.rulesetKey as RulesetKey) : rulesetKeyParam;
+  const seasonId: number = isEvent ? event!.seasonId : seasonIdParam;
+  const firstPlayer: PlayerIndex = isEvent ? (event!.firstPlayer as PlayerIndex) : firstPlayerParam;
 
   const [salt, setSalt] = React.useState<`0x${string}`>(() => randomSalt());
   const [deadline, setDeadline] = React.useState<number>(() => Math.floor(Date.now() / 1000) + 24 * 3600);
@@ -258,12 +298,15 @@ export function MatchPage() {
   const [status, setStatus] = React.useState<string | null>(null);
   const [error, setError] = React.useState<string | null>(null);
 
+  const [aiNotes, setAiNotes] = React.useState<Record<number, string>>({});
+
   const resetMatch = React.useCallback(() => {
     setTurns([]);
     setDraftCell(null);
     setDraftCardIndex(null);
     setDraftWarningMarkCell(null);
     setSelectedTurnIndex(0);
+    setAiNotes({});
     setSalt(randomSalt());
     setDeadline(Math.floor(Date.now() / 1000) + 24 * 3600);
   }, []);
@@ -276,7 +319,7 @@ export function MatchPage() {
     setStatus(null);
     setError(null);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [deckAId, deckBId]);
+  }, [deckAId, deckBId, eventId]);
 
   // If firstPlayer changes, reset drafted moves (but keep loaded cards).
   React.useEffect(() => {
@@ -293,8 +336,17 @@ export function MatchPage() {
     setSearchParams(next, { replace: true });
   };
 
+  const clearEvent = () => {
+    const next = new URLSearchParams(searchParams);
+    next.delete("event");
+    setSearchParams(next, { replace: true });
+  };
+
   const deckATokens = React.useMemo(() => parseDeckTokenIds(deckA), [deckA]);
-  const deckBTokens = React.useMemo(() => parseDeckTokenIds(deckB), [deckB]);
+  const deckBTokens = React.useMemo(() => {
+    if (event) return event.nyanoDeckTokenIds.map((x) => BigInt(x));
+    return parseDeckTokenIds(deckB);
+  }, [deckB, event]);
 
   const ruleset: RulesetConfigV1 = rulesetKey === "v1" ? ONCHAIN_CORE_TACTICS_RULESET_CONFIG_V1 : ONCHAIN_CORE_TACTICS_SHADOW_RULESET_CONFIG_V2;
   const rulesetId = React.useMemo(() => computeRulesetIdV1(ruleset), [ruleset]);
@@ -321,14 +373,18 @@ export function MatchPage() {
     return out;
   }, [currentUsed]);
 
-  const canLoad = Boolean(deckA && deckB);
+  const canLoad = Boolean(deckA && deckATokens.length === 5 && deckBTokens.length === 5);
 
   const loadCards = async () => {
     setError(null);
     setStatus(null);
 
-    if (!deckA || !deckB) {
-      setError("Deck A / Deck B を選択してください");
+    if (!deckA || deckATokens.length !== 5) {
+      setError("Deck A を選択してください（5枚）");
+      return;
+    }
+    if (deckBTokens.length !== 5) {
+      setError("Deck B が不正です（5枚）");
       return;
     }
 
@@ -478,6 +534,11 @@ export function MatchPage() {
     setError(null);
     setStatus(null);
     setTurns((prev) => prev.slice(0, -1));
+    setAiNotes((prev) => {
+      const next = { ...prev };
+      delete next[turns.length - 1];
+      return next;
+    });
     setDraftCell(null);
     setDraftCardIndex(null);
     setDraftWarningMarkCell(null);
@@ -499,6 +560,11 @@ export function MatchPage() {
       cards,
       my: aiPlayer,
     });
+
+    const tid = deckBTokens[move.cardIndex];
+    const note = `Nyano chose cell ${move.cell}, cardIndex ${move.cardIndex}${tid !== undefined ? ` (#${tid.toString()})` : ""} — ${move.reason}`;
+    setAiNotes((prev) => ({ ...prev, [turns.length]: note }));
+    setStatus(note);
 
     commitTurn({ cell: move.cell, cardIndex: move.cardIndex });
   }, [isVsNyanoAi, cards, turns.length, currentPlayer, aiPlayer, aiDifficulty, boardNow, deckBTokens, used.usedB, used.cells, commitTurn]);
@@ -559,6 +625,34 @@ export function MatchPage() {
 
   return (
     <div className="grid gap-6">
+      {event ? (
+        <section className="card">
+          <div className="card-hd flex flex-wrap items-center justify-between gap-2">
+            <div>
+              <div className="text-base font-semibold">Event: {event.title}</div>
+              <div className="text-xs text-slate-500">
+                status: <span className="font-medium">{eventStatus}</span> · ruleset={event.rulesetKey} · ai={event.aiDifficulty}
+              </div>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2">
+              <Link className="btn no-underline" to="/events">
+                All events
+              </Link>
+              <button className="btn" onClick={clearEvent}>
+                Leave event
+              </button>
+            </div>
+          </div>
+          <div className="card-bd grid gap-2 text-sm text-slate-700">
+            <p>{event.description}</p>
+            <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-700">
+              Nyano deck tokenIds: <span className="font-mono">{event.nyanoDeckTokenIds.join(", ")}</span>
+            </div>
+          </div>
+        </section>
+      ) : null}
+
       <section className="card">
         <div className="card-hd">
           <div className="text-base font-semibold">Match</div>
@@ -581,25 +675,34 @@ export function MatchPage() {
                 <div className="text-xs text-slate-500">{deckA.tokenIds.join(", ")}</div>
               ) : (
                 <div className="text-xs text-slate-400">
-                  まずは <Link className="underline" to="/decks">Decks</Link> で作成してください
+                  まずは{" "}
+                  <Link className="underline" to="/decks">
+                    Decks
+                  </Link>{" "}
+                  で作成してください
                 </div>
               )}
             </div>
 
             <div className="grid gap-2">
               <div className="text-xs font-medium text-slate-600">Deck B</div>
-              <select className="input" value={deckBId} onChange={(e) => setParam("b", e.target.value)}>
-                <option value="">Select…</option>
-                {decks.map((d) => (
-                  <option key={d.id} value={d.id}>
-                    {d.name}
-                  </option>
-                ))}
-              </select>
-              {deckB ? (
-                <div className="text-xs text-slate-500">{deckB.tokenIds.join(", ")}</div>
+
+              {event ? (
+                <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-700">
+                  Event deck (fixed): <span className="font-mono">{event.nyanoDeckTokenIds.join(", ")}</span>
+                </div>
               ) : (
-                <div className="text-xs text-slate-400">Deck B を選択してください</div>
+                <>
+                  <select className="input" value={deckBId} onChange={(e) => setParam("b", e.target.value)}>
+                    <option value="">Select…</option>
+                    {decks.map((d) => (
+                      <option key={d.id} value={d.id}>
+                        {d.name}
+                      </option>
+                    ))}
+                  </select>
+                  {deckB ? <div className="text-xs text-slate-500">{deckB.tokenIds.join(", ")}</div> : <div className="text-xs text-slate-400">Deck B を選択してください</div>}
+                </>
               )}
             </div>
           </div>
@@ -607,12 +710,16 @@ export function MatchPage() {
           <div className="grid gap-3 md:grid-cols-3">
             <div className="grid gap-2">
               <div className="text-xs font-medium text-slate-600">Opponent</div>
-              <select className="input" value={opponentMode} onChange={(e) => setOpponentMode(e.target.value as OpponentMode)}>
+              <select className="input" value={opponentMode} disabled={isEvent} onChange={(e) => setParam("opp", e.target.value)}>
                 <option value="pvp">Human vs Human（両方手動）</option>
                 <option value="vs_nyano_ai">Vs Nyano（AIがBを操作）</option>
               </select>
               <div className="text-[11px] text-slate-500">
-                {isVsNyanoAi ? "B側の手を Nyano AI が自動で選択します（Deck B が Nyano のデッキ）" : "A/B 両方を手動でコミットします"}
+                {isEvent
+                  ? "Event では対戦条件が固定です（公平性のため）"
+                  : isVsNyanoAi
+                    ? "B側の手を Nyano AI が自動で選択します（Deck B が Nyano のデッキ）"
+                    : "A/B 両方を手動でコミットします"}
               </div>
             </div>
 
@@ -620,7 +727,7 @@ export function MatchPage() {
               <>
                 <div className="grid gap-2">
                   <div className="text-xs font-medium text-slate-600">AI Difficulty</div>
-                  <select className="input" value={aiDifficulty} onChange={(e) => setAiDifficulty(e.target.value as AiDifficulty)}>
+                  <select className="input" value={aiDifficulty} disabled={isEvent} onChange={(e) => setParam("ai", e.target.value)}>
                     <option value="easy">Easy（最小手）</option>
                     <option value="normal">Normal（即時flip最大）</option>
                   </select>
@@ -630,7 +737,7 @@ export function MatchPage() {
                 <div className="grid gap-2">
                   <div className="text-xs font-medium text-slate-600">AI Auto</div>
                   <label className="flex items-center gap-2 text-xs text-slate-700">
-                    <input type="checkbox" checked={aiAutoPlay} onChange={(e) => setAiAutoPlay(e.target.checked)} />
+                    <input type="checkbox" checked={aiAutoPlay} onChange={(e) => setParam("auto", e.target.checked ? "1" : "0")} />
                     Nyano turn を自動で進める
                   </label>
                   {!aiAutoPlay ? <div className="text-[11px] text-slate-500">Nyano turn のときに “Nyano Move” を押してください</div> : null}
@@ -642,7 +749,7 @@ export function MatchPage() {
           <div className="grid gap-3 md:grid-cols-3">
             <div className="grid gap-2">
               <div className="text-xs font-medium text-slate-600">Ruleset</div>
-              <select className="input" value={rulesetKey} onChange={(e) => setRulesetKey(e.target.value as RulesetKey)}>
+              <select className="input" value={rulesetKey} disabled={isEvent} onChange={(e) => setParam("rk", e.target.value)}>
                 <option value="v1">v1 (core+tactics)</option>
                 <option value="v2">v2 (shadow ignores warning mark)</option>
               </select>
@@ -651,13 +758,13 @@ export function MatchPage() {
 
             <div className="grid gap-2">
               <div className="text-xs font-medium text-slate-600">Season</div>
-              <input className="input" type="number" min={1} value={seasonId} onChange={(e) => setSeasonId(Number(e.target.value))} />
+              <input className="input" type="number" min={1} value={seasonId} disabled={isEvent} onChange={(e) => setParam("season", String(Number(e.target.value)))} />
               <div className="text-[11px] text-slate-500">※ 今は 1 固定でもOK（将来リーグで拡張）</div>
             </div>
 
             <div className="grid gap-2">
               <div className="text-xs font-medium text-slate-600">First Player</div>
-              <select className="input" value={String(firstPlayer)} onChange={(e) => setFirstPlayer(Number(e.target.value) as PlayerIndex)}>
+              <select className="input" value={String(firstPlayer)} disabled={isEvent} onChange={(e) => setParam("fp", e.target.value)}>
                 <option value="0">A first</option>
                 <option value="1">B first</option>
               </select>
@@ -672,7 +779,10 @@ export function MatchPage() {
                 <input className="input font-mono text-xs" value={playerA} onChange={(e) => setPlayerA(e.target.value as `0x${string}`)} />
                 <input className="input font-mono text-xs" value={playerB} onChange={(e) => setPlayerB(e.target.value as `0x${string}`)} />
               </div>
-              <div className="text-[11px] text-slate-500">A: {shortAddr(playerA)} / B: {shortAddr(playerB)}</div>
+              <div className="text-[11px] text-slate-500">
+                A: {shortAddr(playerA)} / B: {shortAddr(playerB)}{" "}
+                {isVsNyanoAi ? <span className="text-slate-400">（Nyano AI は “Bの操作” を担当）</span> : null}
+              </div>
             </div>
 
             <div className="grid gap-2">
@@ -712,9 +822,7 @@ export function MatchPage() {
         <div className="card-hd">
           <div className="text-base font-semibold">Draft Moves</div>
           <div className="text-xs text-slate-500">
-            turn {currentTurnIndex}/9 · player {currentPlayer === 0 ? "A" : "B"}{" "}
-            {isAiTurn ? "（Nyano AI）" : ""} · cells remaining: {availableCells.length} · cards remaining: {availableCardIndexes.length} · warning marks left:{" "}
-            {currentWarnRemaining}
+            turn {currentTurnIndex}/9 · player {currentPlayer === 0 ? "A" : "B"} {isAiTurn ? "（Nyano AI）" : ""} · warning marks left: {currentWarnRemaining}
           </div>
         </div>
 
@@ -822,6 +930,21 @@ export function MatchPage() {
               )}
             </div>
           </div>
+
+          {Object.keys(aiNotes).length > 0 ? (
+            <div className="rounded-lg border border-slate-200 bg-white p-3 text-xs text-slate-700">
+              <div className="text-xs font-medium text-slate-600">Nyano decisions (debug)</div>
+              <div className="mt-2 grid gap-1 font-mono">
+                {Object.entries(aiNotes)
+                  .sort((a, b) => Number(a[0]) - Number(b[0]))
+                  .map(([k, v]) => (
+                    <div key={k}>
+                      turn {k}: {v}
+                    </div>
+                  ))}
+              </div>
+            </div>
+          ) : null}
 
           <div className="grid gap-4 md:grid-cols-2">
             <div className="grid gap-2">

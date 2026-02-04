@@ -63,6 +63,35 @@ export function ArenaPage() {
         </div>
       </section>
 
+
+      <section className="card">
+        <div className="card-hd">
+          <div className="text-base font-semibold">Events</div>
+          <div className="text-xs text-slate-500">運営が薄くても回る“挑戦の場”を用意します</div>
+        </div>
+
+        <div className="card-bd grid gap-3 text-sm text-slate-700">
+          <p>
+            PvP は盛り上がりますが、イベント運用では「いつでも挑める固定の熱源」があると強いです。
+            そこで、<span className="font-semibold">AIキャラ Nyano と戦えるイベント</span> を用意し、リプレイ共有で議論が回る形にします。
+          </p>
+
+          <div className="flex flex-wrap items-center gap-2">
+            <Link className="btn btn-primary no-underline" to="/events">
+              Events を開く
+            </Link>
+            <Link className="btn no-underline" to="/match?event=nyano-open-challenge">
+              Nyano Open Challenge を開始
+            </Link>
+          </div>
+
+          <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600">
+            ※ Event はまず off-chain（transcript共有）で成立させ、後から on-chain 提出やランキングに拡張します。
+          </div>
+        </div>
+      </section>
+
+
       <section className="card">
         <div className="card-hd">
           <div className="text-base font-semibold">運営品質へ寄せるためのUI要件（概要）</div>

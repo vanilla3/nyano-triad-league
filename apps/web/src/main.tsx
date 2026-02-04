@@ -5,6 +5,7 @@ import { RouterProvider, createBrowserRouter } from "react-router-dom";
 import { AppLayout } from "./App";
 import { HomePage } from "./pages/Home";
 import { ArenaPage } from "./pages/Arena";
+import { EventsPage } from "./pages/Events";
 import { DecksPage } from "./pages/Decks";
 import { MatchPage } from "./pages/Match";
 import { PlaygroundPage } from "./pages/Playground";
@@ -21,6 +22,7 @@ const router = createBrowserRouter([
     children: [
       { index: true, element: <HomePage /> },
       { path: "arena", element: <ArenaPage /> },
+      { path: "events", element: <EventsPage /> },
       { path: "decks", element: <DecksPage /> },
       { path: "match", element: <MatchPage /> },
       { path: "playground", element: <PlaygroundPage /> },
