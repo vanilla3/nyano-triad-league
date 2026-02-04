@@ -1,4 +1,5 @@
 import React from "react";
+import { useToast } from "@/components/Toast";
 import OFFICIAL from "@root/rulesets/official_onchain_rulesets.json";
 
 type OfficialRuleset = {
@@ -18,12 +19,11 @@ export function RulesetsPage() {
   const notes = ((OFFICIAL as any).notes as any) ?? [];
 
   const [q, setQ] = React.useState<string>("");
-  const [copied, setCopied] = React.useState<string | null>(null);
+  const toast = useToast();
 
   const copyWithToast = async (label: string, text: string) => {
     await navigator.clipboard.writeText(text);
-    setCopied(label);
-    window.setTimeout(() => setCopied(null), 1200);
+    toast.success("Copied", label);
   };
 
   const ql = safeLower(q.trim());
@@ -60,7 +60,7 @@ export function RulesetsPage() {
             </div>
 
             <div className="flex items-center gap-2">
-              {copied ? <span className="badge badge-slate">copied: {copied}</span> : null}
+              
             </div>
           </div>
         </div>
@@ -134,7 +134,7 @@ export function RulesetsPage() {
             </thead>
             <tbody className="align-top">
               {filtered.map((r) => (
-                <tr key={r.rulesetId} className="border-t border-slate-100">
+                <tr key={r.rulesetId} className="border-t border-slate-100 hover:bg-white/60">
                   <td className="py-3 pr-3">
                     <div className="font-medium">{r.name}</div>
                     <div className="mt-1 text-xs text-slate-500">engine #{r.engineId}</div>
@@ -154,7 +154,7 @@ export function RulesetsPage() {
 
                   <td className="py-3 pr-3">
                     <a className="text-xs" href={r.uri} target="_blank" rel="noreferrer noopener">
-                      <code className="text-xs">{r.uri}</code>
+                      <code className="text-xs block max-w-[320px] truncate">{r.uri}</code>
                     </a>
                   </td>
 

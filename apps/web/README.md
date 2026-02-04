@@ -15,10 +15,22 @@ pnpm -C packages/triad-engine build
 pnpm -C apps/web dev
 ```
 
-## RPC 設定（任意）
+## RPC 設定（任意 / 推奨）
 
-デフォルトでは `https://cloudflare-eth.com` を利用します。  
-混雑や制限がある場合は、`apps/web/.env` を作成して差し替えてください。
+ブラウザからMainnetのデータを読むために RPC が必要です。  
+公開RPCは **CORS / 混雑 / レート制限**で「Failed to fetch」になることがあります。
+
+### ✅ まずは UI で切り替え（簡単）
+
+`/nyano` の **RPC Settings** から、RPC を試験して切り替えできます（localStorage に保存）。
+
+- 「Test」で疎通確認（chainId=0x1 を期待）
+- 「Use this RPC」で適用
+- 「Reset」で env/default に戻す
+
+### ✅ 確実にするなら .env（本番向け）
+
+`apps/web/.env` を作成して差し替えてください（最も安定）。
 
 `apps/web/.env.example`:
 

@@ -4,6 +4,7 @@ import type { CardData } from "@nyano/triad-engine";
 import { fetchNyanoCards } from "@/lib/nyano_rpc";
 import { deleteDeck, exportDecksJson, importDecksJson, listDecks, upsertDeck, type DeckV1 } from "@/lib/deck_store";
 import { CardMini } from "@/components/CardMini";
+import { useToast } from "@/components/Toast";
 
 function parseTokenIds(text: string): bigint[] {
   const parts = text
@@ -39,9 +40,9 @@ export function DecksPage() {
   const [editingId, setEditingId] = React.useState<string | null>(null);
   const [name, setName] = React.useState<string>("");
   const [tokenText, setTokenText] = React.useState<string>("");
-
-  const [status, setStatus] = React.useState<string | null>(null);
   const [error, setError] = React.useState<string | null>(null);
+
+  const toast = useToast();
 
   const [previewLoading, setPreviewLoading] = React.useState(false);
   const [previewCards, setPreviewCards] = React.useState<Map<bigint, CardData> | null>(null);
@@ -54,7 +55,6 @@ export function DecksPage() {
     setTokenText("");
     setPreviewCards(null);
     setError(null);
-    setStatus(null);
   };
 
   const loadDeckToForm = (d: DeckV1) => {
@@ -63,12 +63,10 @@ export function DecksPage() {
     setTokenText(d.tokenIds.join(", "));
     setPreviewCards(null);
     setError(null);
-    setStatus(null);
   };
 
   const doPreview = async () => {
     setError(null);
-    setStatus(null);
     setPreviewCards(null);
 
     let tokenIds: bigint[];
@@ -88,7 +86,7 @@ export function DecksPage() {
     try {
       const bundles = await fetchNyanoCards(tokenIds);
       setPreviewCards(toCardsMap(bundles));
-      setStatus("loaded");
+      toast.info("Preview loaded");
     } catch (e: any) {
       setError(e?.message ?? String(e));
     } finally {
@@ -98,7 +96,6 @@ export function DecksPage() {
 
   const doSave = () => {
     setError(null);
-    setStatus(null);
 
     let tokenIds: bigint[];
     try {
@@ -114,30 +111,28 @@ export function DecksPage() {
     }
 
     const d = upsertDeck({ id: editingId ?? undefined, name, tokenIds });
-    setStatus(`saved: ${d.name}`);
+    toast.success("Saved deck", d.name);
     refresh();
     setEditingId(d.id);
   };
 
-  const copy = async (text: string) => {
+  const copy = async (label: string, text: string) => {
     await navigator.clipboard.writeText(text);
-    setStatus("copied");
-    window.setTimeout(() => setStatus(null), 900);
+    toast.success("Copied", label);
   };
 
   const [importText, setImportText] = React.useState<string>("");
 
   const doExportAll = async () => {
-    await copy(exportDecksJson());
+    await copy("Decks JSON", exportDecksJson());
   };
 
   const doImport = () => {
     setError(null);
-    setStatus(null);
     try {
       const { imported, skipped } = importDecksJson(importText);
       refresh();
-      setStatus(`imported=${imported}, skipped=${skipped}`);
+      toast.success("Imported decks", `imported=${imported}, skipped=${skipped}`);
     } catch (e: any) {
       setError(e?.message ?? String(e));
     }
@@ -195,9 +190,6 @@ export function DecksPage() {
           {error ? (
             <div className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-900">{error}</div>
           ) : null}
-          {status ? (
-            <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600">{status}</div>
-          ) : null}
 
           {previewCards ? (
             <div className="grid gap-2">
@@ -251,7 +243,7 @@ export function DecksPage() {
                     Set as B
                   </Link>
 
-                  <button className="btn" onClick={() => copy(JSON.stringify(d, null, 2))}>
+                  <button className="btn" onClick={() => copy("Deck JSON", JSON.stringify(d, null, 2))}>
                     Copy deck JSON
                   </button>
                   <button
@@ -260,7 +252,7 @@ export function DecksPage() {
                       if (!window.confirm(`Delete deck: ${d.name}?`)) return;
                       deleteDeck(d.id);
                       refresh();
-                      setStatus("deleted");
+                      toast.success("Deleted deck", d.name);
                       if (editingId === d.id) resetForm();
                     }}
                   >

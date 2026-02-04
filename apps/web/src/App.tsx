@@ -1,5 +1,6 @@
 import React from "react";
 import { NavLink, Outlet } from "react-router-dom";
+import { ToastProvider } from "./components/Toast";
 
 const NavItem = (props: { to: string; label: string; emoji?: string }) => {
   return (
@@ -26,7 +27,8 @@ const NavGroup = (props: { title: string; children: React.ReactNode }) => {
 
 export function AppLayout() {
   return (
-    <div>
+    <ToastProvider>
+      <div>
       <header className="sticky top-0 z-10 border-b border-slate-200/70 bg-white/70 backdrop-blur">
         <div className="container-page flex flex-col gap-3 py-4 md:flex-row md:items-center md:justify-between">
           <div className="flex items-baseline gap-3">
@@ -70,6 +72,7 @@ export function AppLayout() {
           Built for replayability & community verification. No promises, just determinism.
         </div>
       </footer>
-    </div>
+      </div>
+    </ToastProvider>
   );
 }

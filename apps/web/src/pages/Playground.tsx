@@ -1,5 +1,7 @@
 import React from "react";
 import { useSearchParams } from "react-router-dom";
+import { useToast } from "@/components/Toast";
+import { Disclosure } from "@/components/Disclosure";
 
 import type { CardData, MatchResultWithHistory, RulesetConfigV1, TranscriptV1 } from "@nyano/triad-engine";
 import {
@@ -173,12 +175,11 @@ export function PlaygroundPage() {
   const copy = async (text: string) => {
     await navigator.clipboard.writeText(text);
   };
+  const toast = useToast();
 
-  const [copied, setCopied] = React.useState<string | null>(null);
   const copyWithToast = async (label: string, text: string) => {
     await copy(text);
-    setCopied(label);
-    window.setTimeout(() => setCopied(null), 1200);
+    toast.success("Copied", label);
   };
 
   const buildReplayLink = async (): Promise<string> => {
@@ -325,7 +326,7 @@ export function PlaygroundPage() {
               <button className="btn btn-soft" onClick={() => copyWithToast("link", window.location.href)}>
                 Copy share link
               </button>
-              {copied ? <span className="badge badge-slate">copied: {copied}</span> : null}
+              
             </div>
           </div>
         </div>
@@ -400,6 +401,23 @@ export function PlaygroundPage() {
                         →
                       </button>
                     </div>
+                  </div>
+
+                  <div className="mt-3">
+                    <Disclosure title={<span>Show raw JSON (debug)</span>}>
+                      <div className="grid gap-3">
+                        <div>
+                          <div className="text-xs font-medium text-slate-600">transcript</div>
+                          <pre className="mt-1 overflow-x-auto rounded-xl border border-slate-200 bg-white/70 p-3 text-xs">{transcriptJson}</pre>
+                        </div>
+                        <div>
+                          <div className="text-xs font-medium text-slate-600">result</div>
+                          <pre className="mt-1 overflow-x-auto rounded-xl border border-slate-200 bg-white/70 p-3 text-xs">
+                            {stringifyWithBigInt(sim.current)}
+                          </pre>
+                        </div>
+                      </div>
+                    </Disclosure>
                   </div>
                 </div>
 

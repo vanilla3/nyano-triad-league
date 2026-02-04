@@ -94,6 +94,10 @@ a {
   @apply border-sky-200 bg-sky-50 text-sky-800;
 }
 
+.badge-emerald {
+  @apply border-emerald-200 bg-emerald-50 text-emerald-800;
+}
+
 .badge-nyano {
   @apply border-rose-200 bg-rose-50 text-rose-700;
 }
@@ -120,4 +124,83 @@ a {
 
 .callout-nyano {
   @apply border-rose-200 bg-rose-50 text-rose-900;
+}
+
+/* Toasts */
+.toast-viewport {
+  @apply fixed bottom-4 right-4 z-50 grid gap-2;
+}
+
+@keyframes toast-in {
+  from {
+    transform: translateY(6px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.toast {
+  @apply w-[min(360px,calc(100vw-2rem))] rounded-2xl border bg-white/90 px-3 py-2 text-left shadow-md backdrop-blur;
+  animation: toast-in 0.18s ease-out;
+}
+
+.toast:hover {
+  @apply shadow-lg;
+}
+
+.toast-title {
+  @apply text-sm font-semibold;
+}
+
+.toast-desc {
+  @apply mt-0.5 text-xs text-slate-700;
+}
+
+.toast-success {
+  @apply border-emerald-200 bg-emerald-50 text-emerald-950;
+}
+
+.toast-info {
+  @apply border-sky-200 bg-sky-50 text-sky-950;
+}
+
+.toast-warn {
+  @apply border-amber-200 bg-amber-50 text-amber-950;
+}
+
+.toast-error {
+  @apply border-rose-200 bg-rose-50 text-rose-950;
+}
+
+/* Progressive disclosure */
+.disclosure {
+  @apply rounded-2xl border border-slate-200 bg-white/70 shadow-sm;
+}
+
+.disclosure-summary {
+  @apply cursor-pointer list-none px-4 py-3 text-sm font-medium text-slate-800;
+}
+
+.disclosure-summary::-webkit-details-marker {
+  display: none;
+}
+
+.disclosure-summary::after {
+  content: "▾";
+  @apply float-right text-slate-400;
+}
+
+.disclosure[open] .disclosure-summary::after {
+  content: "▴";
+}
+
+.disclosure-body {
+  @apply border-t border-slate-200/70 px-4 py-3 text-sm text-slate-700;
+}
+
+.code-inline {
+  @apply rounded-lg border border-slate-200 bg-white/70 px-2 py-1 font-mono text-xs;
 }

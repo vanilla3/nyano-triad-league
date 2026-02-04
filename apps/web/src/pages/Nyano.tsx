@@ -1,13 +1,19 @@
 import React from "react";
 
 import { CardMini } from "@/components/CardMini";
+import { CopyField } from "@/components/CopyField";
+import { useToast } from "@/components/Toast";
 import { stringifyWithBigInt } from "@/lib/json";
 import {
-  DEFAULT_NYANO_ADDRESS,
-  DEFAULT_RPC_URL,
+  clearUserRpcOverride,
+  fetchMintedTokenIds,
   fetchNyanoCard,
   getNyanoAddress,
+  getRpcCandidates,
   getRpcUrl,
+  getUserRpcOverride,
+  pingRpcUrl,
+  setUserRpcOverride,
   type NyanoCardBundle,
 } from "@/lib/nyano_rpc";
 
@@ -31,15 +37,25 @@ function shortAddr(a: string): string {
   return a.slice(0, 6) + "…" + a.slice(-4);
 }
 
+function rpcLabel(url: string): string {
+  const u = url.toLowerCase();
+  if (u.includes("publicnode")) return "PublicNode";
+  if (u.includes("ankr")) return "Ankr";
+  if (u.includes("llamarpc")) return "Llama";
+  if (u.includes("cloudflare-eth")) return "Cloudflare";
+  return "Custom";
+}
+
 const EXAMPLES: Array<{ label: string; value: string }> = [
-  { label: "Starter (1 2 3)", value: "1 2 3" },
-  { label: "Special (201 202 242)", value: "201 202 242" },
-  { label: "Random-ish (491 2300 2828)", value: "491 2300 2828" },
+  { label: "（例）1 2 3 ※存在しない可能性あり", value: "1 2 3" },
+  { label: "（例）201 202 242 ※存在しない可能性あり", value: "201 202 242" },
+  { label: "（例）491 2300 2828 ※存在しない可能性あり", value: "491 2300 2828" },
 ];
 
 export function NyanoPage() {
-  const [input, setInput] = React.useState<string>("1 2 3");
+  const [input, setInput] = React.useState<string>("");
   const [loading, setLoading] = React.useState(false);
+  const [sampleLoading, setSampleLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
   const [items, setItems] = React.useState<
     Array<
@@ -49,19 +65,21 @@ export function NyanoPage() {
     | null
   >(null);
 
-  const [copied, setCopied] = React.useState<string | null>(null);
+  const toast = useToast();
 
   const rpcUrl = getRpcUrl();
   const contract = getNyanoAddress();
+  const userOverride = getUserRpcOverride();
 
-  const copy = async (text: string) => {
-    await navigator.clipboard.writeText(text);
-  };
+  const [rpcDraft, setRpcDraft] = React.useState<string>(() => userOverride ?? rpcUrl);
+  const [rpcProbing, setRpcProbing] = React.useState(false);
+  const [rpcProbe, setRpcProbe] = React.useState<{ ok: boolean; chainId?: string; error?: string } | null>(null);
+
+  const rpcCandidates = React.useMemo(() => getRpcCandidates(), [userOverride, rpcUrl]);
 
   const copyWithToast = async (label: string, text: string) => {
-    await copy(text);
-    setCopied(label);
-    window.setTimeout(() => setCopied(null), 1200);
+    await navigator.clipboard.writeText(text);
+    toast.success("Copied", label);
   };
 
   const openEtherscan = (tokenId: bigint) => {
@@ -74,6 +92,25 @@ export function NyanoPage() {
     window.open("https://mint.nyano.ai/", "_blank", "noopener,noreferrer");
   };
 
+
+
+  const loadSampleMinted = async () => {
+    setSampleLoading(true);
+    try {
+      const ids = await fetchMintedTokenIds(6, 0);
+      if (ids.length === 0) {
+        toast.warn("No minted tokens", "totalSupply=0?");
+        return;
+      }
+      const text = ids.map((x) => x.toString()).join(" ");
+      setInput(text);
+      toast.success("Sample tokenIds loaded", text);
+    } catch (e: any) {
+      toast.error("Sample load failed", e?.message ?? String(e));
+    } finally {
+      setSampleLoading(false);
+    }
+  };
   const load = async () => {
     setLoading(true);
     setError(null);
@@ -101,6 +138,36 @@ export function NyanoPage() {
     }
   };
 
+  const testRpc = async () => {
+    setRpcProbing(true);
+    setRpcProbe(null);
+    try {
+      const r = await pingRpcUrl(rpcDraft);
+      setRpcProbe(r);
+      if (r.ok) toast.success("RPC OK", `chainId=${r.chainId ?? "?"}`);
+      else toast.warn("RPC NG", r.error ?? "unknown error");
+    } finally {
+      setRpcProbing(false);
+    }
+  };
+
+  const applyRpc = () => {
+    try {
+      setUserRpcOverride(rpcDraft);
+      setRpcProbe(null);
+      toast.success("RPC switched", rpcLabel(rpcDraft));
+    } catch (e: any) {
+      toast.error("RPC switch failed", e?.message ?? String(e));
+    }
+  };
+
+  const resetRpc = () => {
+    clearUserRpcOverride();
+    setRpcDraft(getRpcUrl());
+    setRpcProbe(null);
+    toast.success("RPC reset", "env/default に戻しました");
+  };
+
   return (
     <div className="grid gap-6">
       <section className="card">
@@ -124,17 +191,19 @@ export function NyanoPage() {
           <div className="grid gap-2 md:col-span-2">
             <div className="flex items-center justify-between">
               <div className="text-xs font-medium text-slate-600">tokenIds</div>
-              {copied ? <div className="text-xs text-slate-500">copied: {copied}</div> : null}
             </div>
 
             <input
               className="input"
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              placeholder="例: 1 2 3 / 10,11,12"
+              placeholder="例: 501 1001 2800 / 10,11,12"
             />
 
             <div className="flex flex-wrap gap-2">
+              <button className="btn btn-sm" onClick={loadSampleMinted} disabled={sampleLoading}>
+                {sampleLoading ? "Loading…" : "サンプル（存在するtokenId）を取得"}
+              </button>
               {EXAMPLES.map((ex) => (
                 <button key={ex.label} className="btn btn-sm" onClick={() => setInput(ex.value)}>
                   {ex.label}
@@ -142,7 +211,7 @@ export function NyanoPage() {
               ))}
             </div>
 
-            <div className="text-xs text-slate-500">空白/カンマ区切り。最大20件。</div>
+            <div className="text-xs text-slate-500">空白/カンマ区切り。最大20件。存在しない tokenId は読み込み時に弾かれます。</div>
           </div>
 
           <div className="grid gap-2">
@@ -152,32 +221,69 @@ export function NyanoPage() {
             </button>
             {error ? <div className="callout callout-warn">{error}</div> : null}
 
-            <div className="callout callout-muted text-xs">
-              <div className="flex flex-wrap items-center justify-between gap-2">
-                <div className="flex flex-wrap items-center gap-2">
-                  <span className="badge badge-slate">RPC</span>
-                  <code>{rpcUrl}</code>
-                  {rpcUrl === DEFAULT_RPC_URL ? <span className="text-slate-400">(default)</span> : null}
+            <div className="grid gap-2">
+              <CopyField label="RPC (active)" value={rpcUrl} copyValue={rpcUrl} />
+              <CopyField
+                label="Contract"
+                value={contract}
+                copyValue={contract}
+                href={`https://etherscan.io/token/${contract}#code`}
+              />
+
+              {userOverride ? (
+                <div className="callout callout-nyano text-xs">
+                  RPC override: <span className="font-mono">{userOverride}</span>
                 </div>
-                <button className="btn btn-sm" onClick={() => copyWithToast("rpc", rpcUrl)}>
-                  Copy
+              ) : (
+                <div className="text-xs text-slate-500">※ RPC は env（VITE_RPC_URL）または /nyano から一時的に差し替え可能です。</div>
+              )}
+            </div>
+
+            <div className="mt-2 grid gap-2">
+              <div className="text-xs font-medium text-slate-600">RPC Settings</div>
+              <div className="callout callout-info text-xs">
+                「Load Cards / Load from chain」が <span className="font-mono">Failed to fetch</span> で落ちる場合、公開RPCのCORS/混雑のことが多いです。
+                ここでRPCを切り替えると改善することがあります。
+              </div>
+
+              <input
+                className="input"
+                value={rpcDraft}
+                onChange={(e) => setRpcDraft(e.target.value)}
+                placeholder="https://your-rpc.example"
+              />
+
+              <div className="flex flex-wrap gap-2">
+                {rpcCandidates.slice(0, 6).map((u) => (
+                  <button key={u} className="btn btn-sm" onClick={() => setRpcDraft(u)} title={u}>
+                    {rpcLabel(u)}
+                  </button>
+                ))}
+              </div>
+
+              <div className="flex flex-wrap gap-2">
+                <button className="btn btn-sm" onClick={testRpc} disabled={rpcProbing}>
+                  {rpcProbing ? "Testing…" : "Test"}
+                </button>
+                <button className="btn btn-primary btn-sm" onClick={applyRpc} disabled={!rpcDraft.trim()}>
+                  Use this RPC
+                </button>
+                <button className="btn btn-soft btn-sm" onClick={resetRpc} disabled={!userOverride}>
+                  Reset
                 </button>
               </div>
 
-              <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
-                <div className="flex flex-wrap items-center gap-2">
-                  <span className="badge badge-slate">Contract</span>
-                  <code>{contract}</code>
-                  {contract === DEFAULT_NYANO_ADDRESS ? <span className="text-slate-400">(default)</span> : null}
-                </div>
-                <button className="btn btn-sm" onClick={() => copyWithToast("contract", contract)}>
-                  Copy
-                </button>
-              </div>
-
-              <div className="mt-2 text-slate-500">
-                ※ RPC は .env（VITE_RPC_URL）で差し替え可能です。
-              </div>
+              {rpcProbe ? (
+                rpcProbe.ok ? (
+                  <div className="callout callout-muted text-xs">
+                    ✅ OK: chainId=<span className="font-mono">{rpcProbe.chainId ?? "?"}</span>
+                  </div>
+                ) : (
+                  <div className="callout callout-warn text-xs">
+                    ❌ NG: <span className="font-mono">{rpcProbe.error ?? "unknown error"}</span>
+                  </div>
+                )
+              ) : null}
             </div>
           </div>
         </div>

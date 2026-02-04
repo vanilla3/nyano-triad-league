@@ -71,3 +71,38 @@ UIを「見た目から」ではなく、「理解の段階」から組み立て
 - データ表示の“折りたたみ”（特に JSON / 長いURI）
 - Arena / Match の体験を「ゲーム」へ寄せる（演出・音・アニメ）
 
+## 4.5 Toast（フィードバックの一貫化）
+- 目的：**一時的な成功/コピー**など、ページを汚さずに「ちゃんと起きた」を伝える
+- 使いどころ：
+  - Copy（rulesetId / URL / JSON など）
+  - Save / Delete / Clear（local storage など）
+  - Preview loaded など軽い通知
+- 原則：
+  - 重要なエラーは toast ではなく **callout-warn** で残す
+  - toast は「短く」「具体的に」（例：Copied / transcript JSON）
+
+実装：`ToastProvider`（AppLayout） + `useToast()`
+
+## 4.6 Disclosure（折りたたみ / Progressive disclosure）
+- 目的：**JSON/長文**を常時表示しない（読む人だけが開く）
+- 例：
+  - Replay / Playground の “Show raw JSON (debug)”
+- 原則：
+  - summary（見出し）は 1行で要点
+  - 中身は code/pre を使って読みやすく
+
+実装：`<Disclosure title="..."> ... </Disclosure>`
+
+## 4.7 CopyField（長い値を見やすく + Copy/Open）
+- 目的：RPC/Contract/URI のような長い値を **短く表示しつつ**、コピー/参照を迷わせない
+- 構成：
+  - label（何の値か）
+  - value（短縮表示 + Expand/Fold）
+  - actions（Copy / Open）
+
+実装：`<CopyField label="Contract" value={contract} href="..."/>`
+
+## 4.8 Badge（状態色の追加）
+- active/OK 系は `badge-emerald` を使用可能にしました。
+- 例：Event status（active/always）
+

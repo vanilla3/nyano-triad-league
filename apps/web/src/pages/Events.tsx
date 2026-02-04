@@ -1,20 +1,20 @@
 import React from "react";
+import { useToast } from "@/components/Toast";
 import { Link } from "react-router-dom";
 
 import { EVENTS, formatEventPeriod, getEventStatus } from "@/lib/events";
 import { clearEventAttempts, deleteEventAttempt, listEventAttempts } from "@/lib/event_attempts";
 
 function StatusBadge(props: { status: string }) {
-  const cls =
+  const variant =
     props.status === "active" || props.status === "always"
-      ? "border-emerald-200 bg-emerald-50 text-emerald-900"
+      ? "badge-emerald"
       : props.status === "upcoming"
-        ? "border-sky-200 bg-sky-50 text-sky-900"
-        : "border-slate-200 bg-slate-50 text-slate-700";
+        ? "badge-sky"
+        : "badge-slate";
 
-  return <span className={`rounded-full border px-2 py-0.5 text-[11px] ${cls}`}>{props.status}</span>;
+  return <span className={["badge", variant].join(" ")}>{props.status}</span>;
 }
-
 
 function formatIsoShort(iso: string): string {
   // "2026-02-04T12:34:56.000Z" -> "2026-02-04 12:34:56Z"
@@ -29,6 +29,12 @@ function winnerLabel(w: number): string {
 
 export function EventsPage() {
   const [refresh, setRefresh] = React.useState(0);
+  const toast = useToast();
+
+  const copyWithToast = async (label: string, v: string) => {
+    await navigator.clipboard.writeText(v);
+    toast.success("Copied", label);
+  };
 
   return (
     <div className="grid gap-6">
@@ -99,7 +105,7 @@ export function EventsPage() {
                   if (attempts.length === 0) {
                     return (
                       <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600">
-                        My Attempts: none yet. Replay 画面で <span className="font-medium">Save</span> するとここに表示されます。
+                        My Pawprints 🐾: まだ足跡がありません。Replay 画面で <span className="font-medium">Save</span> するとここに表示されます。
                       </div>
                     );
                   }
@@ -107,13 +113,14 @@ export function EventsPage() {
                   return (
                     <div className="rounded-lg border border-slate-200 bg-white p-3 text-xs text-slate-700">
                       <div className="flex flex-wrap items-center justify-between gap-2">
-                        <div className="text-xs font-medium text-slate-600">My Attempts ({attempts.length})</div>
+                        <div className="text-xs font-medium text-slate-600">My Pawprints 🐾 ({attempts.length})</div>
                         <button
                           className="btn"
                           onClick={() => {
+                            if (!window.confirm("Clear all local attempts for this event?")) return;
                             clearEventAttempts(e.id);
-                            // trigger re-render for the current page
                             setRefresh((v) => v + 1);
+                            toast.success("Cleared", "local attempts");
                           }}
                         >
                           Clear local
@@ -135,11 +142,16 @@ export function EventsPage() {
                               <a className="btn no-underline" href={a.replayUrl} target="_blank" rel="noreferrer">
                                 Open
                               </a>
+                              <button className="btn" onClick={() => void copyWithToast("replay url", a.replayUrl)}>
+                                Copy
+                              </button>
                               <button
                                 className="btn"
                                 onClick={() => {
+                                  if (!window.confirm("Remove this attempt from local storage?")) return;
                                   deleteEventAttempt(e.id, a.id);
                                   setRefresh((v) => v + 1);
+                                  toast.success("Removed", "attempt");
                                 }}
                               >
                                 Remove

@@ -1,4 +1,5 @@
 import React from "react";
+import { useToast } from "@/components/Toast";
 import { Link, useSearchParams } from "react-router-dom";
 
 import type { CardData, MatchResultWithHistory, PlayerIndex, RulesetConfigV1, TranscriptV1, Turn } from "@nyano/triad-engine";
@@ -54,6 +55,11 @@ function turnPlayer(firstPlayer: PlayerIndex, turnIndex: number): PlayerIndex {
 function shortAddr(a: string): string {
   if (!a.startsWith("0x") || a.length < 10) return a;
   return `${a.slice(0, 6)}…${a.slice(-4)}`;
+}
+
+function looksLikeRpcError(message: string): boolean {
+  const m = message.toLowerCase();
+  return m.includes("failed to fetch") || m.includes("http request failed") || m.includes("rpc接続") || m.includes("cors") || m.includes("429");
 }
 
 function parseDeckTokenIds(d: DeckV1 | null): bigint[] {
@@ -296,6 +302,7 @@ export function MatchPage() {
   const [selectedTurnIndex, setSelectedTurnIndex] = React.useState<number>(0);
 
   const [status, setStatus] = React.useState<string | null>(null);
+  const toast = useToast();
   const [error, setError] = React.useState<string | null>(null);
 
   const [aiNotes, setAiNotes] = React.useState<Record<number, string>>({});
@@ -412,7 +419,14 @@ export function MatchPage() {
 
       setStatus(`loaded ${bundles.size} cards from mainnet`);
     } catch (e: any) {
-      setError(e?.message ?? String(e));
+      const msg = e?.message ?? String(e);
+      setError(msg);
+
+      if (msg.includes("存在しない tokenId")) {
+        toast.warn("カード読込失敗", "存在しない tokenId が含まれています。/nyano で確認してください。");
+      } else if (looksLikeRpcError(msg)) {
+        toast.warn("カード読込失敗", "RPC 接続に失敗しました。/nyano の RPC Settings で切替できます。");
+      }
     } finally {
       setLoading(false);
     }
@@ -583,19 +597,17 @@ export function MatchPage() {
 
   const copyTranscriptJson = async () => {
     setError(null);
-    setStatus(null);
     if (!sim.ok) {
       setError(sim.error);
       return;
     }
     const json = stringifyWithBigInt(sim.transcript, 2);
     await copyToClipboard(json);
-    setStatus("copied transcript JSON");
+    toast.success("Copied", "transcript JSON");
   };
 
   const copyShareUrl = async () => {
     setError(null);
-    setStatus(null);
     if (!sim.ok) {
       setError(sim.error);
       return;
@@ -608,7 +620,7 @@ export function MatchPage() {
     const url = z ? `${origin}/replay?z=${z}${qp}` : `${origin}/replay?t=${base64UrlEncodeUtf8(json)}${qp}`;
 
     await copyToClipboard(url);
-    setStatus("copied share URL");
+    toast.success("Copied", "share URL");
   };
 
   const openReplay = async () => {
@@ -816,7 +828,18 @@ export function MatchPage() {
           </div>
 
           {status ? <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs text-emerald-900">{status}</div> : null}
-          {error ? <div className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-xs text-rose-900">{error}</div> : null}
+          {error ? (
+            <div className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-xs text-rose-900">
+              <div>{error}</div>
+              {looksLikeRpcError(error) ? (
+                <div className="mt-2 flex flex-wrap gap-2">
+                  <Link className="btn btn-sm" to="/nyano">
+                    RPC Settings
+                  </Link>
+                </div>
+              ) : null}
+            </div>
+          ) : null}
         </div>
       </section>
 

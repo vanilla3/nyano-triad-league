@@ -1,4 +1,6 @@
 import React from "react";
+import { useToast } from "@/components/Toast";
+import { Disclosure } from "@/components/Disclosure";
 import { Link, useSearchParams } from "react-router-dom";
 
 import type { CardData, MatchResultWithHistory, RulesetConfigV1, TranscriptV1 } from "@nyano/triad-engine";
@@ -125,21 +127,15 @@ export function ReplayPage() {
   const [sim, setSim] = React.useState<SimState>({ ok: false, error: "Paste transcript JSON and load." });
 
   const [step, setStep] = React.useState<number>(initialStep);
-
-  const [copied, setCopied] = React.useState<string | null>(null);
+  const toast = useToast();
 
   const copy = async (v: string) => {
     await navigator.clipboard.writeText(v);
   };
 
-  const toast = (label: string) => {
-    setCopied(label);
-    window.setTimeout(() => setCopied(null), 1200);
-  };
-
   const copyWithToast = async (label: string, v: string) => {
     await copy(v);
-    toast(label);
+    toast.success("Copied", label);
   };
 
   const load = async (override?: { text?: string; mode?: Mode; step?: number }) => {
@@ -473,7 +469,7 @@ const buildShareLink = async (): Promise<string> => {
                   })()
                 ) : null}
 
-                {copied ? <span className="text-xs text-slate-500">copied: {copied}</span> : null}
+                
               </div>
             </div>
 
@@ -568,6 +564,25 @@ const buildShareLink = async (): Promise<string> => {
                     <button className="btn" onClick={() => copyWithToast("result", stringifyWithBigInt(sim.current))}>
                       Copy result JSON
                     </button>
+                  </div>
+
+                  <div className="mt-3">
+                    <Disclosure title={<span>Show raw JSON (debug)</span>}>
+                      <div className="grid gap-3">
+                        <div>
+                          <div className="text-xs font-medium text-slate-600">transcript</div>
+                          <pre className="mt-1 overflow-x-auto rounded-xl border border-slate-200 bg-white/70 p-3 text-xs">
+                            {stringifyWithBigInt(sim.transcript)}
+                          </pre>
+                        </div>
+                        <div>
+                          <div className="text-xs font-medium text-slate-600">result</div>
+                          <pre className="mt-1 overflow-x-auto rounded-xl border border-slate-200 bg-white/70 p-3 text-xs">
+                            {stringifyWithBigInt(sim.current)}
+                          </pre>
+                        </div>
+                      </div>
+                    </Disclosure>
                   </div>
                 </div>
               </div>
