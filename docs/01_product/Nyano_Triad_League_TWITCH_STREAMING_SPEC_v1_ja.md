@@ -103,3 +103,17 @@
 ## UI改善（配信の“理解速度”を上げる）
 - Overlay: flip×N / MARK などの即時サマリー
 - Stream Studio: legal move helper（空きセル・残りカード・wm残数）
+
+
+## Stream Studio の運用改善（Phase 2.5）
+- Quick move picker: 空きセル/残りカード/wm残数を明示
+- Suggested moves: “center→corner→edge” の型で3案を提示（参加しやすさ優先）
+- Overlay: vote/flip の要点を短いバッジで表示（実況が自然に出る）
+
+
+## Overlay: turn summary badges（Phase 2）
+- flip×N（engine turn summary 由来）
+- COMBO: MOMENTUM/DOMINATION/FEVER
+- PLUS +X / IGNORE MARK / TRIGGERED MARK / PLACED MARK
+
+※ 次フェーズで trace を導入し、EDGE/FORMATION 等の理由も確定表示へ。

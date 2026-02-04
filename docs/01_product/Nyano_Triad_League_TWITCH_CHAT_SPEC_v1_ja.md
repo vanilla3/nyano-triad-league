@@ -72,3 +72,14 @@ Twitch連携（EventSub/IRC）は後から差し替え可能にして、
   - warning mark 残数（3 - used）
 
 これらは /match が overlay bus に best-effort で送る。存在しない場合はUIが控えめにフォールバックする。
+
+
+## Suggested moves（運用補助）
+- 配信/イベント運用では “参加しやすさ” が最重要。
+- 強さ最適化の前に、視聴者が迷わない **型（center→corner→edge）** を提示する。
+- 次フェーズで engine trace を導入し、強さベースの推薦に置き換える。
+
+
+## Overlay の turn summary（配信向け）
+- /match, /replay から overlay bus に lastTurnSummary を送る。
+- overlay は flip/COMBO/PLUS/MARK を短いバッジで表示し、実況の足場にする。

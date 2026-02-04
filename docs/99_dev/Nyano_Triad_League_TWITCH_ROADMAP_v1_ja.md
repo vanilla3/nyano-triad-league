@@ -73,3 +73,15 @@ AI Nyano が Twitch で配信しつつ、視聴者が “その場で参加で�
 - [x] overlay: vote countdown + top votes
 - [x] overlay: flip summary (flip×N / mark)
 - [x] stream: legal move helper (cells/cards/wm)
+
+
+### UI polish (stream ops)
+- [x] overlay: vote card (OPEN/countdown/top)
+- [x] overlay: flip summary (flip×N, flipped cells)
+- [x] stream: suggested moves presets (center→corner→edge)
+
+
+### Reason badges
+- [x] overlay: engine turn summary badges (combo/plus/mark)
+- [ ] engine trace: EDGE/BONUS/COMBO/FORMATION per flip
+- [ ] overlay: show per-flip reason (with trace)

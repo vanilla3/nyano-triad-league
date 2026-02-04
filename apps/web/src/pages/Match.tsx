@@ -533,6 +533,21 @@ const streamControlledSide = (streamCtrlParam === "B" ? 1 : 0) as PlayerIndex;
             }
           : undefined;
 
+const lastSummary = lastIndex >= 0 ? (sim.previewTurns[lastIndex] as any) : null;
+const lastTurnSummary =
+  lastSummary
+    ? {
+        flipCount: Number(lastSummary.flipCount ?? 0),
+        comboCount: Number(lastSummary.comboCount ?? 0),
+        comboEffect: (lastSummary.comboEffect ?? "none") as "none" | "momentum" | "domination" | "fever",
+        triadPlus: Number(lastSummary.appliedBonus?.triadPlus ?? 0),
+        ignoreWarningMark: Boolean(lastSummary.appliedBonus?.ignoreWarningMark),
+        warningTriggered: Boolean(lastSummary.warningTriggered),
+        warningPlaced: typeof lastSummary.warningPlaced === "number" ? Number(lastSummary.warningPlaced) : null,
+      }
+    : undefined;
+
+
       publishOverlayState({
         version: 1,
         updatedAtMs,
@@ -554,6 +569,7 @@ warningMarksUsedA: warnUsed.A,
 warningMarksUsedB: warnUsed.B,
         board: boardNow,
         lastMove,
+        lastTurnSummary,
         aiNote: lastIndex >= 0 ? aiNotes[lastIndex] : undefined,
         status: sim.full
           ? {

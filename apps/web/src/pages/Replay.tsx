@@ -182,6 +182,20 @@ export function ReplayPage() {
               }
             : undefined;
 
+const lastTurnSummary =
+  last
+    ? {
+        flipCount: Number((last as any).flipCount ?? 0),
+        comboCount: Number((last as any).comboCount ?? 0),
+        comboEffect: (((last as any).comboEffect ?? "none") as "none" | "momentum" | "domination" | "fever"),
+        triadPlus: Number((last as any).appliedBonus?.triadPlus ?? 0),
+        ignoreWarningMark: Boolean((last as any).appliedBonus?.ignoreWarningMark),
+        warningTriggered: Boolean((last as any).warningTriggered),
+        warningPlaced: typeof (last as any).warningPlaced === "number" ? Number((last as any).warningPlaced) : null,
+      }
+    : undefined;
+
+
         publishOverlayState({
           version: 1,
           updatedAtMs,
@@ -198,6 +212,7 @@ export function ReplayPage() {
           deckB: transcript.header.deckB.map((x) => x.toString()),
           board: res.boardHistory[step],
           lastMove,
+          lastTurnSummary,
           status: {
             finished: step >= 9,
             winner: res.winner === 0 ? "A" : "B",

@@ -47,7 +47,21 @@ export type OverlayStateV1 = {
     warningMarkCell?: number | null;
   };
 
-  aiNote?: string;
+/**
+ * Optional: richer turn details from the engine (used for stream overlays).
+ * Keep this as a small JSON-shape so overlay doesn't need to import engine types.
+ */
+lastTurnSummary?: {
+  flipCount: number;
+  comboCount: number;
+  comboEffect: "none" | "momentum" | "domination" | "fever";
+  triadPlus: number;
+  ignoreWarningMark: boolean;
+  warningTriggered: boolean;
+  warningPlaced: number | null;
+};
+
+aiNote?: string;
 
   status?: {
     finished?: boolean;

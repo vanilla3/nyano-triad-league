@@ -2,7 +2,14 @@ import React from "react";
 import { Link, useSearchParams } from "react-router-dom";
 
 import { CardMini } from "@/components/CardMini";
-import { readStoredOverlayState, readStoredStreamVoteState, subscribeOverlayState, subscribeStreamVoteState, type OverlayStateV1, type StreamVoteStateV1 } from "@/lib/streamer_bus";
+import {
+  readStoredOverlayState,
+  readStoredStreamVoteState,
+  subscribeOverlayState,
+  subscribeStreamVoteState,
+  type OverlayStateV1,
+  type StreamVoteStateV1,
+} from "@/lib/streamer_bus";
 
 function nowMs() {
   return Date.now();
@@ -40,6 +47,44 @@ function shortId(id: string | undefined): string | null {
   return `${id.slice(0, 6)}…${id.slice(-4)}`;
 }
 
+type Owner = 0 | 1 | null;
+
+function readOwnersFromBoard(board: any[]): Owner[] {
+  const out: Owner[] = Array.from({ length: 9 }, () => null);
+  for (let i = 0; i < 9; i++) {
+    const o = (board[i] as any)?.owner;
+    out[i] = o === 0 || o === 1 ? (o as 0 | 1) : null;
+  }
+  return out;
+}
+
+function computeToPlay(state: OverlayStateV1 | null): "A" | "B" | null {
+  if (!state) return null;
+  if (state?.status?.finished) return null;
+  if (typeof state.turn !== "number") return null;
+  if (typeof state.firstPlayer !== "number") return null;
+  if (state.turn >= 9) return null;
+  const p = ((state.firstPlayer + (state.turn % 2)) % 2) as 0 | 1;
+  return p === 0 ? "A" : "B";
+}
+
+type LastTurnSummary = {
+  flipCount: number;
+  comboCount: number;
+  comboEffect: "none" | "momentum" | "domination" | "fever";
+  triadPlus: number;
+  ignoreWarningMark: boolean;
+  warningTriggered: boolean;
+  warningPlaced: number | null;
+};
+
+function safeLastTurnSummary(state: OverlayStateV1 | null): LastTurnSummary | null {
+  const s = (state as any)?.lastTurnSummary;
+  if (!s) return null;
+  if (typeof s.flipCount !== "number") return null;
+  return s as LastTurnSummary;
+}
+
 export function OverlayPage() {
   const [searchParams] = useSearchParams();
   const controls = searchParams.get("controls") !== "0";
@@ -49,24 +94,22 @@ export function OverlayPage() {
 
   const [state, setState] = React.useState<OverlayStateV1 | null>(() => readStoredOverlayState());
   const [voteState, setVoteState] = React.useState<StreamVoteStateV1 | null>(() => readStoredStreamVoteState());
-  const [tick, setTick] = React.useState(0);
+  const [_tick, setTick] = React.useState(0);
 
   React.useEffect(() => {
-  // keep "age" and vote countdown fresh
-  const needTick = controls || voteState?.status === "open";
-  if (!needTick) return;
-  const t = window.setInterval(() => setTick((x) => x + 1), 500);
-  return () => window.clearInterval(t);
-}, [controls, voteState?.status]);
+    // keep "age" and vote countdown fresh
+    const needTick = controls || voteState?.status === "open";
+    if (!needTick) return;
+    const t = window.setInterval(() => setTick((x) => x + 1), 500);
+    return () => window.clearInterval(t);
+  }, [controls, voteState?.status]);
 
   React.useEffect(() => {
-    const unsub = subscribeOverlayState((s) => setState(s));
-    return () => unsub();
+    return subscribeOverlayState((s) => setState(s));
   }, []);
 
   React.useEffect(() => {
-    const unsub = subscribeStreamVoteState((s) => setVoteState(s));
-    return () => unsub();
+    return subscribeStreamVoteState((s) => setVoteState(s));
   }, []);
 
   const rootClass = [
@@ -86,70 +129,74 @@ export function OverlayPage() {
   const tilesB = typeof state?.status?.tilesB === "number" ? state?.status?.tilesB : null;
   const matchIdShort = state?.status?.matchId ? shortId(state.status.matchId) : null;
 
+  const sub =
+    state?.status?.finished && winnerLabel
+      ? `Winner: ${winnerLabel}${tilesA !== null && tilesB !== null ? ` · tiles A:${tilesA}/B:${tilesB}` : ""}`
+      : typeof state?.turn === "number"
+        ? `Turn ${state.turn}/9`
+        : "Waiting…";
 
-const sub =
-  state?.status?.finished && winnerLabel
-    ? `Winner: ${winnerLabel}${tilesA !== null && tilesB !== null ? ` · tiles A:${tilesA}/B:${tilesB}` : ""}`
-    : typeof state?.turn === "number"
-      ? `Turn ${state.turn}/9`
-      : "Waiting…";
-
-const toPlay = React.useMemo(() => {
-  if (!state) return null;
-  if (state?.status?.finished) return null;
-  if (typeof state.turn !== "number") return null;
-  if (typeof state.firstPlayer !== "number") return null;
-  if (state.turn >= 9) return null;
-  const p = ((state.firstPlayer + (state.turn % 2)) % 2) as 0 | 1;
-  return p === 0 ? "A" : "B";
-}, [state?.updatedAtMs]);
+  const toPlay = React.useMemo(() => computeToPlay(state), [state?.updatedAtMs]);
 
   const lastCell = typeof state?.lastMove?.cell === "number" ? state.lastMove.cell : null;
   const markCell = typeof state?.lastMove?.warningMarkCell === "number" ? state.lastMove.warningMarkCell : null;
 
+  const lastTurnSummary = safeLastTurnSummary(state);
 
-const prevOwnersRef = React.useRef<Array<0 | 1 | null>>(Array.from({ length: 9 }, () => null));
-const [lastFlipCount, setLastFlipCount] = React.useState<number | null>(null);
-const [lastFlippedCells, setLastFlippedCells] = React.useState<number[]>([]);
+  // Flip detection (best-effort) by comparing owners between last and current board.
+  const prevOwnersRef = React.useRef<Owner[]>(Array.from({ length: 9 }, () => null));
+  const [lastFlipCount, setLastFlipCount] = React.useState<number | null>(null);
+  const [lastFlippedCells, setLastFlippedCells] = React.useState<number[]>([]);
 
-React.useEffect(() => {
-  const b: any[] = Array.isArray((state as any)?.board) ? ((state as any).board as any[]) : [];
-  const owners: Array<0 | 1 | null> = Array.from({ length: 9 }, (_, i) => {
-    const o = (b[i] as any)?.owner;
-    return o === 0 || o === 1 ? (o as 0 | 1) : null;
-  });
+  React.useEffect(() => {
+    const owners = readOwnersFromBoard(board);
 
-  const prev = prevOwnersRef.current;
-  prevOwnersRef.current = owners;
+    const prev = prevOwnersRef.current;
+    prevOwnersRef.current = owners;
 
-  if (!state?.lastMove) {
-    setLastFlipCount(null);
-    setLastFlippedCells([]);
-    return;
-  }
+    if (!state?.lastMove) {
+      setLastFlipCount(null);
+      setLastFlippedCells([]);
+      return;
+    }
 
-  const by = state.lastMove.by;
-  const other: 0 | 1 = by === 0 ? 1 : 0;
-  const flips: number[] = [];
-  for (let i = 0; i < 9; i++) {
-    if (prev[i] === other && owners[i] === by) flips.push(i);
-  }
-  setLastFlipCount(flips.length);
-  setLastFlippedCells(flips);
-}, [state?.updatedAtMs]);
+    const by = state.lastMove.by;
+    const other: 0 | 1 = by === 0 ? 1 : 0;
+    const flips: number[] = [];
+    for (let i = 0; i < 9; i++) {
+      if (prev[i] === other && owners[i] === by) flips.push(i);
+    }
+    setLastFlipCount(flips.length);
+    setLastFlippedCells(flips);
+  }, [state?.updatedAtMs]);
 
   const cellClass = (i: number): string => {
-  const base = "relative aspect-square rounded-2xl border p-2 shadow-sm";
-  const neutral = "border-slate-200 bg-white/60";
-  const last = "border-rose-300 bg-rose-50/70 ring-2 ring-rose-200";
-  const marked = "border-amber-300 bg-amber-50/70 ring-2 ring-amber-200";
-  const flipped = "border-sky-300 bg-sky-50/70 ring-2 ring-sky-200";
+    const base = "relative aspect-square rounded-2xl border p-2 shadow-sm";
+    const neutral = "border-slate-200 bg-white/60";
+    const last = "border-rose-300 bg-rose-50/70 ring-2 ring-rose-200";
+    const marked = "border-amber-300 bg-amber-50/70 ring-2 ring-amber-200";
+    const flipped = "border-sky-300 bg-sky-50/70 ring-2 ring-sky-200";
 
-  if (lastCell === i) return [base, last].join(" ");
-  if (markCell === i) return [base, marked].join(" ");
-  if (lastFlippedCells.includes(i)) return [base, flipped].join(" ");
-  return [base, neutral].join(" ");
-};
+    if (lastCell === i) return [base, last].join(" ");
+    if (markCell === i) return [base, marked].join(" ");
+    if (lastFlippedCells.includes(i)) return [base, flipped].join(" ");
+    return [base, neutral].join(" ");
+  };
+
+  const voteRemainingSec =
+    voteState?.status === "open" && typeof voteState.endsAtMs === "number" ? Math.max(0, Math.ceil((voteState.endsAtMs - nowMs()) / 1000)) : null;
+
+  const flipCountLabel =
+    typeof lastTurnSummary?.flipCount === "number"
+      ? lastTurnSummary.flipCount
+      : typeof lastFlipCount === "number"
+        ? lastFlipCount
+        : null;
+
+  const flipBadgeLabel = flipCountLabel === null ? "flip×?" : `flip×${flipCountLabel}`;
+
+  const swingBadge =
+    typeof flipCountLabel === "number" && flipCountLabel >= 3 ? <span className="badge badge-nyano">BIG SWING</span> : null;
 
   return (
     <div className={rootClass}>
@@ -184,7 +231,7 @@ React.useEffect(() => {
           </div>
         ) : null}
 
-        <div className={controls ? "grid gap-4 md:grid-cols-[1fr,340px]" : "grid gap-3 p-4"}>
+        <div className={controls ? "grid gap-4 md:grid-cols-[1fr,360px]" : "grid gap-3 p-4"}>
           <div className="rounded-3xl border border-slate-200 bg-white/75 p-3 shadow-sm">
             <div className="grid grid-cols-3 gap-2">
               {Array.from({ length: 9 }, (_, i) => {
@@ -198,21 +245,15 @@ React.useEffect(() => {
                 return (
                   <div key={i} className={cellClass(i)} title={`Cell ${i}`}>
                     {controls ? (
-                      <div className="absolute left-2 top-2 rounded-full bg-white/80 px-2 py-0.5 text-[10px] font-semibold text-slate-500">
-                        {i}
-                      </div>
+                      <div className="absolute left-2 top-2 rounded-full bg-white/80 px-2 py-0.5 text-[10px] font-semibold text-slate-500">{i}</div>
                     ) : null}
 
                     {isLast ? (
-                      <div className="absolute right-2 top-2 rounded-full bg-rose-500/90 px-2 py-0.5 text-[10px] font-semibold text-white">
-                        ✨
-                      </div>
+                      <div className="absolute right-2 top-2 rounded-full bg-rose-500/90 px-2 py-0.5 text-[10px] font-semibold text-white">✨</div>
                     ) : null}
 
                     {isMark ? (
-                      <div className="absolute right-2 bottom-2 rounded-full bg-amber-500/90 px-2 py-0.5 text-[10px] font-semibold text-white">
-                        !
-                      </div>
+                      <div className="absolute right-2 bottom-2 rounded-full bg-amber-500/90 px-2 py-0.5 text-[10px] font-semibold text-white">!</div>
                     ) : null}
 
                     {card ? (
@@ -235,9 +276,44 @@ React.useEffect(() => {
                 {modeBadge}
               </div>
               <div className="mt-1 text-sm text-slate-700">{title}</div>
-              <div className="mt-1 text-xs text-slate-500">{sub} {toPlay ? (<span className="badge badge-sky">Next: {toPlay}</span>) : null}</div>
+              <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-slate-500">
+                <span>{sub}</span>
+                {toPlay ? <span className="badge badge-sky">Next: {toPlay}</span> : null}
+              </div>
               {matchIdShort ? <div className="mt-1 text-[11px] text-slate-400">match: {matchIdShort}</div> : null}
             </div>
+
+            {voteEnabled && voteState?.status === "open" ? (
+              <div className="rounded-2xl border border-slate-200 bg-white/70 px-4 py-3 shadow-sm">
+                <div className="flex items-center justify-between gap-2">
+                  <div className="text-xs font-semibold text-slate-800">🗳️ Chat voting</div>
+                  <span className="badge badge-emerald">OPEN · {voteRemainingSec ?? "?"}s</span>
+                </div>
+
+                <div className="mt-1 text-xs text-slate-600">
+                  controls: <span className="font-mono">{voteState.controlledSide === 1 ? "B" : "A"}</span> · votes:{" "}
+                  <span className="font-mono">{typeof voteState.totalVotes === "number" ? voteState.totalVotes : 0}</span>
+                </div>
+
+                {Array.isArray(voteState.top) && voteState.top.length > 0 ? (
+                  <div className="mt-2 space-y-1">
+                    {voteState.top.slice(0, 3).map((x, i) => (
+                      <div key={i} className="flex items-center justify-between gap-2 text-xs">
+                        <span className="font-mono">
+                          cell {x.move.cell} · card {x.move.cardIndex}
+                          {typeof x.move.warningMarkCell === "number" ? ` · wm ${x.move.warningMarkCell}` : ""}
+                        </span>
+                        <span className="badge badge-sky">{x.count}</span>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="mt-2 text-xs text-slate-500">No votes yet…</div>
+                )}
+
+                {voteState.note ? <div className="mt-2 text-[11px] text-slate-500">{voteState.note}</div> : null}
+              </div>
+            ) : null}
 
             {state?.lastMove ? (
               <div className="rounded-2xl border border-slate-200 bg-white/70 px-4 py-3 shadow-sm">
@@ -246,12 +322,50 @@ React.useEffect(() => {
                   Turn {state.lastMove.turnIndex + 1}: <span className="font-semibold">{state.lastMove.by === 0 ? "A" : "B"}</span> placed{" "}
                   <span className="font-mono">#{state.lastMove.cardIndex}</span> at cell <span className="font-mono">{state.lastMove.cell}</span>
                 </div>
+
+                <div className="mt-2 flex flex-wrap items-center gap-2">
+                  <span className="badge badge-sky">{flipBadgeLabel}</span>
+                  {typeof state.lastMove.warningMarkCell === "number" ? <span className="badge badge-amber">MARK</span> : null}
+                  {flipCountLabel === 0 ? <span className="badge">NO FLIP</span> : null}
+                  {swingBadge}
+
+                  {lastTurnSummary && lastTurnSummary.comboEffect !== "none" ? (
+                    <span className="badge badge-emerald">COMBO: {String(lastTurnSummary.comboEffect).toUpperCase()}</span>
+                  ) : null}
+                  {lastTurnSummary && typeof lastTurnSummary.comboCount === "number" && lastTurnSummary.comboCount > 0 ? (
+                    <span className="badge">combo×{lastTurnSummary.comboCount}</span>
+                  ) : null}
+
+                  {lastTurnSummary && typeof lastTurnSummary.triadPlus === "number" && lastTurnSummary.triadPlus > 0 ? (
+                    <span className="badge badge-emerald">PLUS +{lastTurnSummary.triadPlus}</span>
+                  ) : null}
+
+                  {lastTurnSummary?.ignoreWarningMark ? <span className="badge badge-nyano">IGNORE MARK</span> : null}
+                  {lastTurnSummary?.warningTriggered ? <span className="badge badge-amber">TRIGGERED MARK</span> : null}
+                  {typeof lastTurnSummary?.warningPlaced === "number" ? <span className="badge badge-amber">PLACED MARK</span> : null}
+                </div>
+
                 {typeof state.lastMove.warningMarkCell === "number" ? (
                   <div className="mt-1 text-xs text-slate-500">
                     warning mark → cell <span className="font-mono">{state.lastMove.warningMarkCell}</span>
                   </div>
                 ) : null}
 
+                {typeof lastTurnSummary?.warningPlaced === "number" ? (
+                  <div className="mt-1 text-xs text-slate-500">
+                    placed warning mark → cell <span className="font-mono">{lastTurnSummary.warningPlaced}</span>
+                  </div>
+                ) : null}
+
+                {lastFlippedCells.length > 0 ? (
+                  <div className="mt-1 text-[11px] text-slate-500">
+                    flipped: <span className="font-mono">{lastFlippedCells.join(", ")}</span>
+                  </div>
+                ) : null}
+
+                <div className="mt-2 text-[11px] text-slate-400">
+                  phase 2: engine turn summary now available (combo/plus/mark). Next: add edge/formation reasoning with traces.
+                </div>
               </div>
             ) : null}
 
@@ -285,10 +399,11 @@ React.useEffect(() => {
                 Tips:
                 <ul className="mt-1 list-disc pl-4">
                   <li>
-                    OBS BrowserSource: use <span className="font-mono">/overlay?controls=0</span>
+                    OBS BrowserSource: use <span className="font-mono">/overlay?controls=0</span> (and optionally{" "}
+                    <span className="font-mono">bg=transparent</span>)
                   </li>
                   <li>
-                    Transparent mode: <span className="font-mono">/overlay?controls=0&amp;bg=transparent</span>
+                    Vote UI: toggle by <span className="font-mono">vote=0</span>
                   </li>
                 </ul>
               </div>
@@ -296,9 +411,6 @@ React.useEffect(() => {
           </div>
         </div>
       </div>
-
-      {/* avoid unused tick warning */}
-      <span className="hidden">{tick}</span>
     </div>
   );
 }
