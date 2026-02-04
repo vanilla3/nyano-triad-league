@@ -1,5 +1,5 @@
 import React from "react";
-import { useSearchParams } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 
 import type { CardData, MatchResultWithHistory, RulesetConfigV1, TranscriptV1 } from "@nyano/triad-engine";
 import {
@@ -20,6 +20,8 @@ import {
   tryGzipCompressUtf8ToBase64Url,
 } from "@/lib/base64url";
 import { stringifyWithBigInt } from "@/lib/json";
+import { formatEventPeriod, getEventById, getEventStatus } from "@/lib/events";
+import { hasEventAttempt, upsertEventAttempt, type EventAttemptV1 } from "@/lib/event_attempts";
 import { fetchNyanoCards } from "@/lib/nyano_rpc";
 import { parseTranscriptV1Json } from "@/lib/transcript_import";
 
@@ -101,6 +103,11 @@ function pickDefaultMode(rulesetId: string): Mode {
 export function ReplayPage() {
   const [searchParams, setSearchParams] = useSearchParams();
 
+  const eventId = searchParams.get("event") ?? "";
+  const event = React.useMemo(() => (eventId ? getEventById(eventId) : null), [eventId]);
+  const eventStatus = event ? getEventStatus(event) : null;
+
+
   // Initial values from shareable URL
   const initialT = searchParams.get("t");
   const initialZ = searchParams.get("z");
@@ -125,10 +132,14 @@ export function ReplayPage() {
     await navigator.clipboard.writeText(v);
   };
 
-  const copyWithToast = async (label: string, v: string) => {
-    await copy(v);
+  const toast = (label: string) => {
     setCopied(label);
     window.setTimeout(() => setCopied(null), 1200);
+  };
+
+  const copyWithToast = async (label: string, v: string) => {
+    await copy(v);
+    toast(label);
   };
 
   const load = async (override?: { text?: string; mode?: Mode; step?: number }) => {
@@ -290,7 +301,51 @@ export function ReplayPage() {
     );
   };
 
-  const buildShareLink = async (): Promise<string> => {
+  
+  const buildCanonicalReplayLink = async (): Promise<string> => {
+    const trimmed = text.trim();
+    if (!trimmed) throw new Error("transcript JSON is empty");
+
+    const origin = window.location.origin;
+    const url = new URL(`${origin}/replay`);
+
+    url.searchParams.delete("t");
+    url.searchParams.delete("z");
+
+    const z = await tryGzipCompressUtf8ToBase64Url(trimmed);
+    if (z) url.searchParams.set("z", z);
+    else url.searchParams.set("t", base64UrlEncodeUtf8(trimmed));
+
+    if (eventId) url.searchParams.set("event", eventId);
+    url.searchParams.set("mode", "auto");
+    url.searchParams.set("step", "9");
+    return url.toString();
+  };
+
+  const saveToMyAttempts = async () => {
+    if (!eventId) throw new Error("eventId is missing");
+    if (!sim.ok) throw new Error("replay is not ready");
+
+    const replayUrl = await buildCanonicalReplayLink();
+
+    const a: EventAttemptV1 = {
+      id: sim.current.matchId,
+      createdAt: new Date().toISOString(),
+      eventId,
+      replayUrl,
+      matchId: sim.current.matchId,
+      winner: sim.current.winner as 0 | 1,
+      tilesA: Number(sim.current.tiles.A),
+      tilesB: Number(sim.current.tiles.B),
+      rulesetLabel: sim.currentRulesetLabel,
+      deckA: sim.transcript.header.deckA.map((x) => x.toString()),
+      deckB: sim.transcript.header.deckB.map((x) => x.toString()),
+    };
+
+    upsertEventAttempt(a);
+  };
+
+const buildShareLink = async (): Promise<string> => {
     const trimmed = text.trim();
     if (!trimmed) throw new Error("transcript JSON is empty");
 
@@ -311,6 +366,47 @@ export function ReplayPage() {
 
   return (
     <div className="grid gap-6">
+      {eventId ? (
+        <section className="card">
+          <div className="card-hd flex flex-wrap items-center justify-between gap-2">
+            <div className="grid gap-1">
+              <div className="text-base font-semibold">Replay Event</div>
+              <div className="text-xs text-slate-500">
+                {event ? (
+                  <>
+                    <span className="font-medium">{event.title}</span> · status: <span className="font-medium">{eventStatus}</span> · {formatEventPeriod(event)}
+                  </>
+                ) : (
+                  <>
+                    eventId: <span className="font-mono">{eventId}</span>（unknown）
+                  </>
+                )}
+              </div>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2">
+              <Link className="btn no-underline" to="/events">
+                Events
+              </Link>
+              {event ? (
+                <Link className="btn btn-primary no-underline" to={`/match?event=${encodeURIComponent(event.id)}`}>
+                  Challenge again
+                </Link>
+              ) : null}
+            </div>
+          </div>
+
+          {event ? (
+            <div className="card-bd grid gap-2 text-sm text-slate-700">
+              <p>{event.description}</p>
+              <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-700">
+                Nyano deck tokenIds: <span className="font-mono">{event.nyanoDeckTokenIds.join(", ")}</span>
+              </div>
+            </div>
+          ) : null}
+        </section>
+      ) : null}
+
       <section className="card">
         <div className="card-hd">
           <div className="text-base font-semibold">Replay from transcript</div>
@@ -352,6 +448,30 @@ export function ReplayPage() {
                 >
                   Copy share link
                 </button>
+
+                {eventId ? (
+                  (() => {
+                    const saved = sim.ok ? hasEventAttempt(eventId, sim.current.matchId) : false;
+                    return (
+                      <button
+                        className="btn"
+                        disabled={!sim.ok || saved}
+                        onClick={() => {
+                          (async () => {
+                            try {
+                              await saveToMyAttempts();
+                              toast("saved");
+                            } catch (e: any) {
+                              setSim({ ok: false, error: e?.message ?? String(e) });
+                            }
+                          })();
+                        }}
+                      >
+                        {saved ? "Saved" : "Save"}
+                      </button>
+                    );
+                  })()
+                ) : null}
 
                 {copied ? <span className="text-xs text-slate-500">copied: {copied}</span> : null}
               </div>

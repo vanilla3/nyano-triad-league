@@ -117,3 +117,8 @@ UIとしては以下を満たすことを最優先にします。
 - 結果が比較できる（同じ条件で戦えるので議論が育つ）
 
 実装上は `apps/web/src/lib/events.ts` にイベント定義（v1）を置き、`/events` で一覧表示します。
+
+
+### Events: My Attempts（ローカル保存）
+- Replay 画面でイベント結果を `Save` すると、`/events` の各イベントカードに My Attempts が表示されます。
+- v1 は localStorage ベースで “まず回る” を優先し、将来オンチェーン提出・ランキングへ拡張します。

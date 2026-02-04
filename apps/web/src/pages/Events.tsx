@@ -2,6 +2,7 @@ import React from "react";
 import { Link } from "react-router-dom";
 
 import { EVENTS, formatEventPeriod, getEventStatus } from "@/lib/events";
+import { clearEventAttempts, deleteEventAttempt, listEventAttempts } from "@/lib/event_attempts";
 
 function StatusBadge(props: { status: string }) {
   const cls =
@@ -14,7 +15,21 @@ function StatusBadge(props: { status: string }) {
   return <span className={`rounded-full border px-2 py-0.5 text-[11px] ${cls}`}>{props.status}</span>;
 }
 
+
+function formatIsoShort(iso: string): string {
+  // "2026-02-04T12:34:56.000Z" -> "2026-02-04 12:34:56Z"
+  if (!iso) return "";
+  const x = iso.replace("T", " ");
+  return x.length >= 20 ? x.slice(0, 19) + "Z" : x;
+}
+
+function winnerLabel(w: number): string {
+  return w === 0 ? "A" : "B";
+}
+
 export function EventsPage() {
+  const [refresh, setRefresh] = React.useState(0);
+
   return (
     <div className="grid gap-6">
       <section className="card">
@@ -77,6 +92,66 @@ export function EventsPage() {
                 <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-700">
                   Nyano deck tokenIds: <span className="font-mono">{e.nyanoDeckTokenIds.join(", ")}</span>
                 </div>
+
+                {(() => {
+                  void refresh;
+                  const attempts = listEventAttempts(e.id);
+                  if (attempts.length === 0) {
+                    return (
+                      <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600">
+                        My Attempts: none yet. Replay 画面で <span className="font-medium">Save</span> するとここに表示されます。
+                      </div>
+                    );
+                  }
+
+                  return (
+                    <div className="rounded-lg border border-slate-200 bg-white p-3 text-xs text-slate-700">
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <div className="text-xs font-medium text-slate-600">My Attempts ({attempts.length})</div>
+                        <button
+                          className="btn"
+                          onClick={() => {
+                            clearEventAttempts(e.id);
+                            // trigger re-render for the current page
+                            setRefresh((v) => v + 1);
+                          }}
+                        >
+                          Clear local
+                        </button>
+                      </div>
+
+                      <div className="mt-2 grid gap-2">
+                        {attempts.slice(0, 5).map((a) => (
+                          <div key={a.id} className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2">
+                            <div className="grid gap-0.5">
+                              <div className="text-[11px] text-slate-500">{formatIsoShort(a.createdAt)}</div>
+                              <div className="text-xs">
+                                winner: <span className="font-medium">{winnerLabel(a.winner)}</span> · tiles A:{a.tilesA}/B:{a.tilesB}
+                              </div>
+                              <div className="text-[11px] text-slate-500 font-mono">matchId: {a.matchId}</div>
+                            </div>
+
+                            <div className="flex flex-wrap items-center gap-2">
+                              <a className="btn no-underline" href={a.replayUrl} target="_blank" rel="noreferrer">
+                                Open
+                              </a>
+                              <button
+                                className="btn"
+                                onClick={() => {
+                                  deleteEventAttempt(e.id, a.id);
+                                  setRefresh((v) => v + 1);
+                                }}
+                              >
+                                Remove
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                        {attempts.length > 5 ? <div className="text-[11px] text-slate-500">…and {attempts.length - 5} more</div> : null}
+                      </div>
+                    </div>
+                  );
+                })()}
 
                 <div className="flex flex-wrap items-center gap-2">
                   <Link className="btn btn-primary no-underline" to={`/match?event=${encodeURIComponent(e.id)}`}>

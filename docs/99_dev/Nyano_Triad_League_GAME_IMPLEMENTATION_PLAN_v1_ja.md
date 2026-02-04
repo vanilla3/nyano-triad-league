@@ -81,3 +81,11 @@
 - イベントIDで条件を固定して `/match?event=...` に誘導
 - オフチェーンで回ることを最優先（Replay共有）
 - 将来：オンチェーン提出/ランキングへ拡張
+
+
+---
+
+## Phase 2c: Event UX（My Attempts / 簡易ランキング）
+- Replay で “このイベントの挑戦結果” を Save（localStorage）
+- `/events` で My Attempts を表示（まずはローカルで十分）
+- 共有URLには eventId を含める（比較可能性のため）

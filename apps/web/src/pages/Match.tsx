@@ -604,7 +604,8 @@ export function MatchPage() {
 
     const z = await tryGzipCompressUtf8ToBase64Url(json);
     const origin = window.location.origin;
-    const url = z ? `${origin}/replay?z=${z}` : `${origin}/replay?t=${base64UrlEncodeUtf8(json)}`;
+    const qp = `&step=9${event ? `&event=${encodeURIComponent(event.id)}` : ""}`;
+    const url = z ? `${origin}/replay?z=${z}${qp}` : `${origin}/replay?t=${base64UrlEncodeUtf8(json)}${qp}`;
 
     await copyToClipboard(url);
     setStatus("copied share URL");
@@ -619,7 +620,8 @@ export function MatchPage() {
     }
     const json = stringifyWithBigInt(sim.transcript, 0);
     const z = await tryGzipCompressUtf8ToBase64Url(json);
-    const url = z ? `/replay?z=${z}` : `/replay?t=${base64UrlEncodeUtf8(json)}`;
+    const qp = `&step=9${event ? `&event=${encodeURIComponent(event.id)}` : ""}`;
+    const url = z ? `/replay?z=${z}${qp}` : `/replay?t=${base64UrlEncodeUtf8(json)}${qp}`;
     window.open(url, "_blank");
   };
 
