@@ -18,7 +18,7 @@ import { getDeck, listDecks, type DeckV1 } from "@/lib/deck_store";
 import { getEventById, getEventStatus, type EventV1 } from "@/lib/events";
 import { stringifyWithBigInt } from "@/lib/json";
 import { fetchMintedTokenIds, fetchNyanoCards, getNyanoAddress, getRpcUrl } from "@/lib/nyano_rpc";
-import { publishOverlayState } from "@/lib/streamer_bus";
+import { publishOverlayState, subscribeStreamCommand, type StreamCommandV1 } from "@/lib/streamer_bus";
 
 type RulesetKey = "v1" | "v2";
 type OpponentMode = "pvp" | "vs_nyano_ai";
@@ -275,7 +275,11 @@ export function MatchPage() {
 
   const opponentModeParam = parseOpponentMode(searchParams.get("opp"));
   const aiDifficultyParam = parseAiDifficulty(searchParams.get("ai"));
-  const aiAutoPlay = parseBool01(searchParams.get("auto"), true);
+
+const aiAutoPlay = parseBool01(searchParams.get("auto"), true);
+const streamMode = parseBool01(searchParams.get("stream"), false);
+const streamCtrlParam = (searchParams.get("ctrl") ?? "A").toUpperCase();
+const streamControlledSide = (streamCtrlParam === "B" ? 1 : 0) as PlayerIndex;
 
   const rulesetKeyParam = parseRulesetKey(searchParams.get("rk"));
   const seasonIdParam = parseSeason(searchParams.get("season"));
@@ -310,6 +314,7 @@ export function MatchPage() {
 
   const [status, setStatus] = React.useState<string | null>(null);
   const toast = useToast();
+  const lastStreamCmdIdRef = React.useRef<string>("");
   const [error, setError] = React.useState<string | null>(null);
 
   const [aiNotes, setAiNotes] = React.useState<Record<number, string>>({});
@@ -698,6 +703,45 @@ export function MatchPage() {
     return () => window.clearTimeout(t);
   }, [isVsNyanoAi, aiAutoPlay, cards, turns.length, currentPlayer, aiPlayer, doAiMove]);
 
+// Stream commands (from /stream). This is an opt-in feature for Twitch/OBS operation.
+React.useEffect(() => {
+  if (!streamMode) return;
+
+  return subscribeStreamCommand((cmd: StreamCommandV1) => {
+    try {
+      if (!cmd || cmd.version !== 1) return;
+      if (cmd.id === lastStreamCmdIdRef.current) return;
+      lastStreamCmdIdRef.current = cmd.id;
+
+      if (cmd.type !== "commit_move_v1") return;
+      if (turns.length >= 9) return;
+
+      // Only accept the side configured for stream control.
+      if (cmd.by !== streamControlledSide) return;
+
+      // Do not override Nyano AI.
+      if (isVsNyanoAi && currentPlayer === aiPlayer) return;
+
+      // Must match the live turn to avoid desync / replay.
+      if (cmd.forTurn !== turns.length) return;
+
+      // Must be the correct player's turn.
+      if (cmd.by !== currentPlayer) return;
+
+      const wm = cmd.move.warningMarkCell;
+      commitTurn({
+        cell: cmd.move.cell,
+        cardIndex: cmd.move.cardIndex,
+        warningMarkCell: typeof wm === "number" ? wm : undefined,
+      });
+
+      toast.success("Stream move", `cell ${cmd.move.cell} · cardIndex ${cmd.move.cardIndex}`);
+    } catch {
+      // ignore
+    }
+  });
+}, [streamMode, streamControlledSide, turns.length, currentPlayer, isVsNyanoAi, aiPlayer, commitTurn, toast]);
+
   const canFinalize = turns.length === 9 && sim.ok;
 
   const copyTranscriptJson = async () => {
@@ -865,6 +909,37 @@ export function MatchPage() {
             ) : null}
           </div>
 
+
+
+<div className="grid gap-3 md:grid-cols-3">
+  <div className="grid gap-2">
+    <div className="text-xs font-medium text-slate-600">Stream mode</div>
+    <label className="flex items-center gap-2 text-xs text-slate-700">
+      <input type="checkbox" checked={streamMode} onChange={(e) => setParam("stream", e.target.checked ? "1" : "0")} />
+      /stream からの投票結果を反映する（配信用）
+    </label>
+
+    {streamMode ? (
+      <>
+        <label className="text-[11px] text-slate-500">Controlled side</label>
+        <select className="input" value={streamCtrlParam} onChange={(e) => setParam("ctrl", e.target.value)}>
+          <option value="A">Chat controls A</option>
+          <option value="B">Chat controls B</option>
+        </select>
+        <div className="text-[11px] text-slate-500">
+          Stream Studio:{" "}
+          <Link className="underline" to="/stream">
+            /stream
+          </Link>
+        </div>
+      </>
+    ) : (
+      <div className="text-[11px] text-slate-500">
+        Twitch配信の「Nyano vs Chat」用。まずは /stream の投票コンソールで動作確認できます。
+      </div>
+    )}
+  </div>
+</div>
           <div className="grid gap-3 md:grid-cols-3">
             <div className="grid gap-2">
               <div className="text-xs font-medium text-slate-600">Ruleset</div>

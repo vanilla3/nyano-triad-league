@@ -78,3 +78,19 @@
 ## 参照
 - 実装: `/overlay` と `/stream`
 - 次の実装: Twitch Bridge / Chat投票 / Coordinator
+
+## 段階的導入（Phase）
+### Phase 2: Chat voting（Twitch前のプロトタイプ）
+目的は「Twitch API と接続する前に、ゲーム側のインターフェース（コマンド）を固定する」こと。
+
+- `/stream` が **投票集計（chat simulation）** を担当
+- `/match?stream=1` が **投票結果を適用**（opt-in）
+- Tab間の通信は `BroadcastChannel` / `localStorage` fallback で行う（バックエンド不要）
+- 後から Twitch Bridge（EventSub/IRC）に置換しても、`/match` 側の契約は変えない
+
+**採用する最小コマンド**
+- commit_move_v1: `turn`, `by(A/B)`, `cell`, `cardIndex`, `warningMarkCell?`
+
+**UX**
+- “投票が成立した” → toast
+- turnが進んだら vote は自動で閉じる（誤適用防止）

@@ -59,3 +59,9 @@ AI Nyano が Twitch で配信しつつ、視聴者が “その場で参加で�
 - Chat: IRC / EventSub
 - Auth: OAuth（Bot/配信者トークン）
 - Event: Channel Points / Subscription など（後回しでも成立）
+
+### 2) Chat voting プロトタイプ（/stream → /match）
+- [x] `/stream` で投票集計（ローカル chat simulation）
+- [x] `/match?stream=1` が command bus を購読して move を適用
+- [ ] Twitch Bridge（EventSub/IRC）を別プロセスで実装（秘密情報をブラウザに置かない）
+- [ ] 視聴者の荒らし耐性：投票窓・クールダウン・BANリストなど

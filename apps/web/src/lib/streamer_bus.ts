@@ -134,3 +134,123 @@ export function subscribeOverlayState(onState: (s: OverlayStateV1) => void): () 
   window.addEventListener("storage", onStorage);
   return () => window.removeEventListener("storage", onStorage);
 }
+
+
+// ---------------------------------------------------------------------------
+// Stream commands (Prototype)
+// ---------------------------------------------------------------------------
+
+/**
+ * Commands sent from Stream Studio (/stream) to the live Match tab.
+ *
+ * Notes:
+ * - This is intentionally minimal and "best-effort".
+ * - Match side must explicitly opt-in (stream=1) before applying commands.
+ * - This bus is designed so we can later replace the Stream Studio input source with
+ *   a Twitch Bridge process (EventSub/IRC) without changing the Match UI contract.
+ */
+export type StreamCommandV1 = {
+  version: 1;
+  id: string;
+  issuedAtMs: number;
+
+  type: "commit_move_v1";
+
+  /** Which player is trying to commit the move. */
+  by: 0 | 1;
+
+  /** Must match the current turn index (0..8) on the Match side. */
+  forTurn: number;
+
+  move: {
+    cell: number; // 0..8
+    cardIndex: number; // 0..4
+    warningMarkCell?: number | null;
+  };
+
+  /** Optional metadata for debugging. */
+  source?: string;
+};
+
+const CMD_CHANNEL_NAME = "nyano-triad-league.stream_cmd.v1";
+const CMD_STORAGE_KEY = "nyano_triad_league.stream_cmd_v1";
+
+export function makeStreamCommandId(prefix = "cmd"): string {
+  try {
+    const b = new Uint8Array(8);
+    crypto.getRandomValues(b);
+    const hex = Array.from(b)
+      .map((x) => x.toString(16).padStart(2, "0"))
+      .join("");
+    return `${prefix}_${hex}`;
+  } catch {
+    return `${prefix}_${Date.now()}_${Math.floor(Math.random() * 1e9)}`;
+  }
+}
+
+export function publishStreamCommand(cmd: StreamCommandV1): void {
+  // store (so other tabs can read the latest)
+  try {
+    localStorage.setItem(CMD_STORAGE_KEY, safeStringify(cmd));
+  } catch {
+    // ignore
+  }
+
+  // broadcast
+  try {
+    if (typeof (window as any).BroadcastChannel !== "undefined") {
+      const bc = new BroadcastChannel(CMD_CHANNEL_NAME);
+      bc.postMessage({ type: "stream_command_v1", cmd });
+      bc.close();
+      return;
+    }
+  } catch {
+    // ignore and fallback
+  }
+
+  // fallback for older environments: storage event across tabs
+  try {
+    localStorage.setItem(CMD_STORAGE_KEY + ":tick", String(Date.now()));
+  } catch {
+    // ignore
+  }
+}
+
+export function subscribeStreamCommand(onCmd: (c: StreamCommandV1) => void): () => void {
+  // BroadcastChannel
+  try {
+    if (typeof (window as any).BroadcastChannel !== "undefined") {
+      const bc = new BroadcastChannel(CMD_CHANNEL_NAME);
+      bc.onmessage = (ev: MessageEvent) => {
+        const data: any = ev.data;
+        if (data?.type === "stream_command_v1" && data?.cmd?.version === 1) {
+          onCmd(data.cmd as StreamCommandV1);
+        }
+      };
+      return () => bc.close();
+    }
+  } catch {
+    // ignore and fallback
+  }
+
+  // Fallback: localStorage (cross-tab)
+  const onStorage = (e: StorageEvent) => {
+    if (e.key === CMD_STORAGE_KEY && typeof e.newValue === "string") {
+      const c = safeParse<StreamCommandV1>(e.newValue);
+      if (c && c.version === 1) onCmd(c);
+    }
+  };
+
+  window.addEventListener("storage", onStorage);
+  return () => window.removeEventListener("storage", onStorage);
+}
+
+export function readStoredStreamCommand(): StreamCommandV1 | null {
+  try {
+    const raw = localStorage.getItem(CMD_STORAGE_KEY);
+    if (!raw) return null;
+    return safeParse<StreamCommandV1>(raw);
+  } catch {
+    return null;
+  }
+}
