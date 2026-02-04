@@ -23,6 +23,23 @@ function isTransparentBg(bg: string | null): boolean {
   return bg === "transparent" || bg === "0" || bg === "false";
 }
 
+function normalizeWinner(w: unknown): string | null {
+  if (w === null || w === undefined) return null;
+  if (w === 0 || w === "0") return "A";
+  if (w === 1 || w === "1") return "B";
+  if (typeof w === "string") {
+    const s = w.trim().toUpperCase();
+    if (s === "A" || s === "B") return s;
+  }
+  return String(w);
+}
+
+function shortId(id: string | undefined): string | null {
+  if (!id) return null;
+  if (id.length <= 10) return id;
+  return `${id.slice(0, 6)}…${id.slice(-4)}`;
+}
+
 export function OverlayPage() {
   const [searchParams] = useSearchParams();
   const controls = searchParams.get("controls") !== "0";
@@ -53,12 +70,34 @@ export function OverlayPage() {
   const board: any[] = Array.isArray((state as any)?.board) ? ((state as any).board as any[]) : Array.from({ length: 9 }, () => null);
 
   const title = state?.eventTitle ? state.eventTitle : "Nyano Triad League";
+  const modeBadge =
+    state?.mode === "live" ? <span className="badge badge-nyano">LIVE</span> : state?.mode === "replay" ? <span className="badge badge-sky">REPLAY</span> : null;
+
+  const winnerLabel = normalizeWinner(state?.status?.winner);
+  const tilesA = typeof state?.status?.tilesA === "number" ? state?.status?.tilesA : null;
+  const tilesB = typeof state?.status?.tilesB === "number" ? state?.status?.tilesB : null;
+  const matchIdShort = state?.status?.matchId ? shortId(state.status.matchId) : null;
+
   const sub =
-    state?.status?.finished && state?.status?.winner
-      ? `Winner: ${state.status.winner}`
+    state?.status?.finished && winnerLabel
+      ? `Winner: ${winnerLabel}${tilesA !== null && tilesB !== null ? ` · tiles A:${tilesA}/B:${tilesB}` : ""}`
       : typeof state?.turn === "number"
         ? `Turn ${state.turn}/9`
         : "Waiting…";
+
+  const lastCell = typeof state?.lastMove?.cell === "number" ? state.lastMove.cell : null;
+  const markCell = typeof state?.lastMove?.warningMarkCell === "number" ? state.lastMove.warningMarkCell : null;
+
+  const cellClass = (i: number): string => {
+    const base = "relative aspect-square rounded-2xl border p-2 shadow-sm";
+    const neutral = "border-slate-200 bg-white/60";
+    const last = "border-rose-300 bg-rose-50/70 ring-2 ring-rose-200";
+    const marked = "border-amber-300 bg-amber-50/70 ring-2 ring-amber-200";
+
+    if (lastCell === i) return [base, last].join(" ");
+    if (markCell === i) return [base, marked].join(" ");
+    return [base, neutral].join(" ");
+  };
 
   return (
     <div className={rootClass}>
@@ -67,11 +106,12 @@ export function OverlayPage() {
           <div className="mb-4 flex flex-col gap-2 rounded-2xl border border-slate-200 bg-white/70 px-4 py-3 shadow-sm md:flex-row md:items-center md:justify-between">
             <div className="min-w-0">
               <div className="text-xs font-semibold text-slate-800">
-                🎥 Overlay · <span className="text-rose-600">{title}</span>
+                🎥 Overlay · <span className="text-rose-600">{title}</span> {modeBadge}
               </div>
               <div className="text-[11px] text-slate-500">
                 {state?.updatedAtMs ? `Updated ${ageLabel(state.updatedAtMs)} · ` : null}
                 {sub}
+                {matchIdShort ? <span> · match {matchIdShort}</span> : null}
               </div>
             </div>
 
@@ -85,11 +125,14 @@ export function OverlayPage() {
               <Link className="btn btn-sm no-underline" to="/match">
                 Match
               </Link>
+              <Link className="btn btn-sm no-underline" to="/replay">
+                Replay
+              </Link>
             </div>
           </div>
         ) : null}
 
-        <div className={controls ? "grid gap-4 md:grid-cols-[1fr,320px]" : "grid gap-3 p-4"}>
+        <div className={controls ? "grid gap-4 md:grid-cols-[1fr,340px]" : "grid gap-3 p-4"}>
           <div className="rounded-3xl border border-slate-200 bg-white/75 p-3 shadow-sm">
             <div className="grid grid-cols-3 gap-2">
               {Array.from({ length: 9 }, (_, i) => {
@@ -97,12 +140,29 @@ export function OverlayPage() {
                 const owner = cell?.owner;
                 const card = cell?.card;
 
+                const isLast = lastCell === i;
+                const isMark = markCell === i;
+
                 return (
-                  <div
-                    key={i}
-                    className="aspect-square rounded-2xl border border-slate-200 bg-white/60 p-2 shadow-sm"
-                    title={`Cell ${i}`}
-                  >
+                  <div key={i} className={cellClass(i)} title={`Cell ${i}`}>
+                    {controls ? (
+                      <div className="absolute left-2 top-2 rounded-full bg-white/80 px-2 py-0.5 text-[10px] font-semibold text-slate-500">
+                        {i}
+                      </div>
+                    ) : null}
+
+                    {isLast ? (
+                      <div className="absolute right-2 top-2 rounded-full bg-rose-500/90 px-2 py-0.5 text-[10px] font-semibold text-white">
+                        ✨
+                      </div>
+                    ) : null}
+
+                    {isMark ? (
+                      <div className="absolute right-2 bottom-2 rounded-full bg-amber-500/90 px-2 py-0.5 text-[10px] font-semibold text-white">
+                        !
+                      </div>
+                    ) : null}
+
                     {card ? (
                       <div className="h-full w-full">
                         <CardMini card={card} owner={owner} />
@@ -118,10 +178,29 @@ export function OverlayPage() {
 
           <div className="space-y-3">
             <div className="rounded-2xl border border-slate-200 bg-white/70 px-4 py-3 shadow-sm">
-              <div className="text-xs font-semibold text-slate-800">✨ Now Playing</div>
+              <div className="flex items-center justify-between gap-2">
+                <div className="text-xs font-semibold text-slate-800">✨ Now Playing</div>
+                {modeBadge}
+              </div>
               <div className="mt-1 text-sm text-slate-700">{title}</div>
               <div className="mt-1 text-xs text-slate-500">{sub}</div>
+              {matchIdShort ? <div className="mt-1 text-[11px] text-slate-400">match: {matchIdShort}</div> : null}
             </div>
+
+            {state?.lastMove ? (
+              <div className="rounded-2xl border border-slate-200 bg-white/70 px-4 py-3 shadow-sm">
+                <div className="text-xs font-semibold text-slate-800">Last move</div>
+                <div className="mt-1 text-sm text-slate-700">
+                  Turn {state.lastMove.turnIndex + 1}: <span className="font-semibold">{state.lastMove.by === 0 ? "A" : "B"}</span> placed{" "}
+                  <span className="font-mono">#{state.lastMove.cardIndex}</span> at cell <span className="font-mono">{state.lastMove.cell}</span>
+                </div>
+                {typeof state.lastMove.warningMarkCell === "number" ? (
+                  <div className="mt-1 text-xs text-slate-500">
+                    warning mark → cell <span className="font-mono">{state.lastMove.warningMarkCell}</span>
+                  </div>
+                ) : null}
+              </div>
+            ) : null}
 
             {state?.aiNote ? (
               <div className="callout callout-info">
@@ -133,7 +212,7 @@ export function OverlayPage() {
             {state?.error ? (
               <div className="callout callout-warn">
                 <div className="text-xs font-semibold">Overlay notice</div>
-                <div className="mt-1 text-sm whitespace-pre-wrap">{state.error}</div>
+                <div className="mt-1 whitespace-pre-wrap text-sm">{state.error}</div>
               </div>
             ) : null}
 
@@ -141,7 +220,7 @@ export function OverlayPage() {
               <div className="callout callout-muted">
                 <div className="text-xs font-semibold">No signal yet</div>
                 <div className="mt-1 text-sm text-slate-700">
-                  Open <span className="font-mono">/match</span>, load cards, then start a match.
+                  Open <span className="font-mono">/match</span> or <span className="font-mono">/replay</span>, then send state to the overlay.
                   <br />
                   The overlay will pick up the latest state automatically.
                 </div>

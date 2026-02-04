@@ -25,6 +25,7 @@ import { stringifyWithBigInt } from "@/lib/json";
 import { formatEventPeriod, getEventById, getEventStatus } from "@/lib/events";
 import { hasEventAttempt, upsertEventAttempt, type EventAttemptV1 } from "@/lib/event_attempts";
 import { fetchNyanoCards } from "@/lib/nyano_rpc";
+import { publishOverlayState } from "@/lib/streamer_bus";
 import { parseTranscriptV1Json } from "@/lib/transcript_import";
 
 type Mode = "auto" | "v1" | "v2" | "compare";
@@ -46,6 +47,12 @@ function clampInt(n: number, min: number, max: number): number {
   if (Number.isNaN(n)) return min;
   return Math.max(min, Math.min(max, n));
 }
+
+
+function turnPlayer(firstPlayer: 0 | 1, turnIndex: number): 0 | 1 {
+  return ((firstPlayer + (turnIndex % 2)) % 2) as 0 | 1;
+}
+
 
 function parseMode(v: string | null): Mode {
   if (v === "auto" || v === "v1" || v === "v2" || v === "compare") return v;
@@ -128,6 +135,9 @@ export function ReplayPage() {
 
   const [step, setStep] = React.useState<number>(initialStep);
   const toast = useToast();
+  const initialBroadcast = searchParams.get("broadcast") === "1";
+  const [broadcastOverlay, setBroadcastOverlay] = React.useState<boolean>(initialBroadcast);
+
 
   const copy = async (v: string) => {
     await navigator.clipboard.writeText(v);
@@ -137,6 +147,96 @@ export function ReplayPage() {
     await copy(v);
     toast.success("Copied", label);
   };
+
+  const pushOverlay = React.useCallback(
+    (opts?: { silent?: boolean }) => {
+      const updatedAtMs = Date.now();
+      try {
+        if (!sim.ok) {
+          publishOverlayState({
+            version: 1,
+            updatedAtMs,
+            mode: "replay",
+            eventId: event?.id ?? (eventId || undefined),
+            eventTitle: event?.title,
+            error: sim.error || "Replay not loaded",
+          });
+          if (!opts?.silent) toast.warn("Overlay", "Replay not ready");
+          return;
+        }
+
+        const res = sim.current;
+        const transcript = sim.transcript;
+
+        const lastIndex = step - 1;
+        const last = lastIndex >= 0 ? res.turns[lastIndex] : null;
+
+        const lastMove =
+          last && typeof (last as any).cell === "number"
+            ? {
+                turnIndex: lastIndex,
+                by: turnPlayer(transcript.header.firstPlayer as 0 | 1, lastIndex),
+                cell: Number((last as any).cell),
+                cardIndex: Number((last as any).cardIndex ?? 0),
+                warningMarkCell: typeof (last as any).warningMarkCell === "number" ? Number((last as any).warningMarkCell) : null,
+              }
+            : undefined;
+
+        publishOverlayState({
+          version: 1,
+          updatedAtMs,
+          mode: "replay",
+          eventId: event?.id ?? (eventId || undefined),
+          eventTitle: event?.title,
+          turn: step,
+          firstPlayer: transcript.header.firstPlayer as 0 | 1,
+          playerA: transcript.header.playerA,
+          playerB: transcript.header.playerB,
+          rulesetId: transcript.header.rulesetId,
+          seasonId: transcript.header.seasonId,
+          deckA: transcript.header.deckA.map((x) => x.toString()),
+          deckB: transcript.header.deckB.map((x) => x.toString()),
+          board: res.boardHistory[step],
+          lastMove,
+          status: {
+            finished: step >= 9,
+            winner: res.winner === 0 ? "A" : "B",
+            tilesA: Number(res.tiles.A),
+            tilesB: Number(res.tiles.B),
+            matchId: res.matchId,
+          },
+        });
+
+        if (!opts?.silent) toast.success("Overlay", "Sent to OBS overlay");
+      } catch (e: any) {
+        publishOverlayState({
+          version: 1,
+          updatedAtMs,
+          mode: "replay",
+          eventId: event?.id ?? (eventId || undefined),
+          eventTitle: event?.title,
+          error: e?.message ?? String(e),
+        });
+        if (!opts?.silent) toast.error("Overlay", e?.message ?? String(e));
+      }
+    },
+    [sim, step, event?.id, event?.title, eventId, toast]
+  );
+
+  const setBroadcastOverlayWithUrl = (nextOn: boolean) => {
+    setBroadcastOverlay(nextOn);
+    const next = new URLSearchParams(searchParams);
+    if (nextOn) next.set("broadcast", "1");
+    else next.delete("broadcast");
+    setSearchParams(next, { replace: true });
+  };
+
+  React.useEffect(() => {
+    if (!broadcastOverlay) return;
+    // silent sync while stepping through replay
+    pushOverlay({ silent: true });
+  }, [broadcastOverlay, step, sim.ok, pushOverlay]);
+
 
   const load = async (override?: { text?: string; mode?: Mode; step?: number }) => {
     setLoading(true);
@@ -456,7 +556,7 @@ const buildShareLink = async (): Promise<string> => {
                           (async () => {
                             try {
                               await saveToMyAttempts();
-                              toast("saved");
+                              toast.success("Saved", "Added to My Attempts");
                             } catch (e: any) {
                               setSim({ ok: false, error: e?.message ?? String(e) });
                             }
@@ -480,6 +580,55 @@ const buildShareLink = async (): Promise<string> => {
               onChange={(e) => setText(e.target.value)}
               placeholder='Playgroundの "Copy transcript JSON" を貼り付けてください（または共有リンクを開いてください）'
             />
+
+            <div className="mt-3">
+              <Disclosure title={<span>Streamer tools (Overlay)</span>}>
+                <div className="grid gap-3">
+                  <div className="text-xs text-slate-600">
+                    OBSの <span className="font-mono">/overlay</span> を開いた状態で、Replay の <span className="font-mono">step</span> を動かすと overlay が追随します。
+                  </div>
+
+                  <div className="flex flex-wrap items-center gap-2">
+                    <label className="flex items-center gap-2 text-xs text-slate-700">
+                      <input
+                        type="checkbox"
+                        checked={broadcastOverlay}
+                        onChange={(e) => setBroadcastOverlayWithUrl(e.target.checked)}
+                      />
+                      Broadcast to overlay (sync step)
+                    </label>
+
+                    <button className="btn btn-sm" onClick={() => pushOverlay()}>
+                      Send snapshot
+                    </button>
+
+                    <a
+                      className="btn btn-sm no-underline"
+                      href={`${window.location.origin}/overlay?controls=0`}
+                      target="_blank"
+                      rel="noreferrer noopener"
+                    >
+                      Open overlay
+                    </a>
+
+                    <button
+                      className="btn btn-sm"
+                      onClick={() => {
+                        void copyWithToast("overlay URL", `${window.location.origin}/overlay?controls=0`);
+                      }}
+                    >
+                      Copy overlay URL
+                    </button>
+                  </div>
+
+                  <div className="text-[11px] text-slate-500">
+                    Tip: 配信者側で <span className="font-mono">/replay?broadcast=1</span> を使うと、step同期が最初からONになります。
+                  </div>
+                </div>
+              </Disclosure>
+            </div>
+
+
 
             {!sim.ok && sim.error ? <div className="text-sm text-rose-700">Error: {sim.error}</div> : null}
 

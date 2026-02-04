@@ -548,10 +548,10 @@ export function MatchPage() {
         status: sim.full
           ? {
               finished: turns.length >= 9,
-              winner: (sim.full as any).winner,
-              tilesA: (sim.full as any).tilesA,
-              tilesB: (sim.full as any).tilesB,
-              matchId: (sim.full as any).matchId,
+              winner: sim.full.winner === 0 ? "A" : "B",
+              tilesA: Number(sim.full.tiles.A),
+              tilesB: Number(sim.full.tiles.B),
+              matchId: sim.full.matchId,
             }
           : undefined,
       });

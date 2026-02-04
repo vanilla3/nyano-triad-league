@@ -17,14 +17,14 @@ AI Nyano が Twitch で配信しつつ、視聴者が “その場で参加で�
 ---
 
 ## 次に実装する順番（現実的な最短）
-### 1) Replay → Overlay 出力
-- Replayページで開いた replay を overlay に投げる
-- 「この replay を解説中」の配信用 UI が作れる
+### 1) Replay → Overlay 出力（実装済み）
+- Replayページで開いた replay を overlay に投げられる
+- step 移動で overlay が追随（解説/採点がやりやすい）
 
-### 2) Overlay 表示品質
-- 盤面の “どこが変化したか” の強調（直前手のセルをハイライト）
-- 勝敗演出（小さくて良いが、気持ちよく）
-- 透明背景/サイズ指定など OBS 向けのパラメータ強化
+### 2) Overlay 表示品質（第一段階）
+- 直前手のセル（✨）と warning mark（!）をハイライト
+- LIVE/REPLAY バッジ、matchId/tiles 表示など “状況が一目で分かる” 情報を追加
+- 透明背景/サイズ指定など OBS 向けパラメータは維持
 
 ### 3) Chat Command Parser（Twitch未接続）
 - Web側に “チャット風入力” を用意し、コマンド処理の仕様を先に固める

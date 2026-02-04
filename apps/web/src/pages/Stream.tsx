@@ -28,6 +28,7 @@ export function StreamPage() {
   const matchUrl = e ? `${origin()}/match?event=${encodeURIComponent(e.id)}` : `${origin()}/match`;
   const overlayUrl = `${origin()}/overlay?controls=0`;
   const overlayTransparentUrl = `${origin()}/overlay?controls=0&bg=transparent`;
+  const replayBroadcastUrl = `${origin()}/replay?broadcast=1`;
 
   const copy = async (label: string, v: string) => {
     await navigator.clipboard.writeText(v);
@@ -96,6 +97,29 @@ export function StreamPage() {
               <br />
               配信側は <Link to="/replay">Replay</Link> で拾って、解説・採点・ランキング化へ。
             </div>
+          </div>
+
+
+          <div className="rounded-2xl border border-slate-200 bg-white/70 px-4 py-3 shadow-sm">
+            <div className="text-xs font-semibold text-slate-800">Step 3 · Review replays on stream</div>
+            <div className="mt-1 text-sm text-slate-700">
+              <span className="font-mono">/replay</span> で共有URLを開き、<span className="font-semibold">Broadcast to overlay</span> をONにすると、
+              overlayが step と一緒に追随します（解説がしやすい）。
+            </div>
+            <div className="mt-3 flex flex-wrap items-center gap-2">
+              <button className="btn btn-sm btn-primary" onClick={() => copy("Replay (broadcast)", replayBroadcastUrl)}>
+                Copy replay (broadcast)
+              </button>
+              <a className="btn btn-sm no-underline" href={replayBroadcastUrl} target="_blank" rel="noreferrer noopener">
+                Open
+              </a>
+            </div>
+            <div className="mt-2 text-xs text-slate-500">
+              ※ OBS側は <span className="font-mono">/overlay?controls=0</span> を開きっぱなしにしておきます。
+            </div>
+          </div>
+
+
           </div>
 
           <div className="rounded-2xl border border-slate-200 bg-white/70 px-4 py-3 shadow-sm">

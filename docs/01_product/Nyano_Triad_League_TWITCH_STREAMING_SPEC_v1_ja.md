@@ -14,14 +14,16 @@
 - Twitch と on-chain は速度が違う：**配信は off-chain を主軸**にし、段階的に on-chain 提出へ
 
 ## フェーズ設計（段階導入）
-### Phase 0: Replay共有（今できていること）
+### Phase 0: Replay共有（いま回せる形）
 - 視聴者は「Nyano AI Challenge」リンクで遊ぶ
 - 勝った replay URL をチャットに貼る
 - 配信者は replay を拾って解説（採点・ランキングに繋げられる）
+- さらに、Replay を overlay に同期して “配信の絵” にできる
 
-### Phase 1: OBS Overlay（このコミットで導入）
+### Phase 1: OBS Overlay（導入済み）
 - ブラウザだけで成立する overlay: `/overlay`
 - Match の進行を overlay にブロードキャスト（BroadcastChannel / localStorage fallback）
+- **Replay の step も overlay に同期**できる（解説・採点に向く）
 - OBS Browser Source に貼るだけで試合が映る
 
 ### Phase 2: “Chat ↔ Match” の接続（次の実装）
