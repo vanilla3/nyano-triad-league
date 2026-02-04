@@ -54,6 +54,7 @@ export function AppLayout() {
               <NavItem to="/playground" label="Playground" emoji="🧪" />
               <NavItem to="/nyano" label="Nyano" emoji="🐾" />
               <NavItem to="/rulesets" label="Rulesets" emoji="📜" />
+              <NavItem to="/stream" label="Stream" emoji="🎥" />
             </NavGroup>
 
             <NavGroup title="">

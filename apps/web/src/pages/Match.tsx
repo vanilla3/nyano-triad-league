@@ -17,7 +17,8 @@ import { base64UrlEncodeUtf8, tryGzipCompressUtf8ToBase64Url } from "@/lib/base6
 import { getDeck, listDecks, type DeckV1 } from "@/lib/deck_store";
 import { getEventById, getEventStatus, type EventV1 } from "@/lib/events";
 import { stringifyWithBigInt } from "@/lib/json";
-import { fetchNyanoCards, getNyanoAddress, getRpcUrl } from "@/lib/nyano_rpc";
+import { fetchMintedTokenIds, fetchNyanoCards, getNyanoAddress, getRpcUrl } from "@/lib/nyano_rpc";
+import { publishOverlayState } from "@/lib/streamer_bus";
 
 type RulesetKey = "v1" | "v2";
 type OpponentMode = "pvp" | "vs_nyano_ai";
@@ -260,6 +261,12 @@ export function MatchPage() {
   const event: EventV1 | null = React.useMemo(() => (eventId ? getEventById(eventId) : null), [eventId]);
   const eventStatus = event ? getEventStatus(event) : null;
 
+  const [eventNyanoDeckOverride, setEventNyanoDeckOverride] = React.useState<bigint[] | null>(null);
+  React.useEffect(() => {
+    // reset when switching events
+    setEventNyanoDeckOverride(null);
+  }, [eventId]);
+
   const deckAId = searchParams.get("a") ?? "";
   const deckBId = searchParams.get("b") ?? "";
 
@@ -351,9 +358,9 @@ export function MatchPage() {
 
   const deckATokens = React.useMemo(() => parseDeckTokenIds(deckA), [deckA]);
   const deckBTokens = React.useMemo(() => {
-    if (event) return event.nyanoDeckTokenIds.map((x) => BigInt(x));
+    if (event) return (eventNyanoDeckOverride ?? event.nyanoDeckTokenIds.map((x) => BigInt(x)));
     return parseDeckTokenIds(deckB);
-  }, [deckB, event]);
+  }, [deckB, event, eventNyanoDeckOverride]);
 
   const ruleset: RulesetConfigV1 = rulesetKey === "v1" ? ONCHAIN_CORE_TACTICS_RULESET_CONFIG_V1 : ONCHAIN_CORE_TACTICS_SHADOW_RULESET_CONFIG_V2;
   const rulesetId = React.useMemo(() => computeRulesetIdV1(ruleset), [ruleset]);
@@ -397,7 +404,27 @@ export function MatchPage() {
 
     setLoading(true);
     try {
-      const tokenIds = [...deckATokens, ...deckBTokens];
+      // Event decks are allowed to be "placeholder" while the official deck is still undecided.
+      // If the default event deck uses fragile tokenIds (e.g. 1..5), we auto-pick actually-minted tokenIds.
+      let deckBForLoad = deckBTokens;
+
+      if (event && !eventNyanoDeckOverride) {
+        const raw = event.nyanoDeckTokenIds.join(",");
+        const looksPlaceholder = raw === "1,2,3,4,5";
+
+        if (looksPlaceholder) {
+          const minted = await fetchMintedTokenIds(5, 0);
+          deckBForLoad = minted;
+          setEventNyanoDeckOverride(minted);
+
+          toast.success(
+            "Nyano deck auto-selected",
+            minted.map((t) => `#${t.toString()}`).join(", ")
+          );
+        }
+      }
+
+      const tokenIds = [...deckATokens, ...deckBForLoad];
 
       const bundles = await fetchNyanoCards(tokenIds);
 
@@ -468,6 +495,84 @@ export function MatchPage() {
   }, [cards, deckATokens, deckBTokens, turns, firstPlayer, ruleset, rulesetId, seasonId, playerA, playerB, deadline, salt]);
 
   const boardNow = sim.ok ? sim.previewHistory[turns.length] ?? EMPTY_BOARD : EMPTY_BOARD;
+
+  React.useEffect(() => {
+    // Broadcast the current match state for OBS overlay (/overlay).
+    // This is intentionally "best-effort" (no hard failure for normal gameplay).
+    try {
+      const updatedAtMs = Date.now();
+
+      if (!sim.ok) {
+        publishOverlayState({
+          version: 1,
+          updatedAtMs,
+          mode: "live",
+          eventId: event?.id,
+          eventTitle: event?.title,
+          error: sim.error,
+        });
+        return;
+      }
+
+      const lastIndex = turns.length - 1;
+      const last = lastIndex >= 0 ? turns[lastIndex] : null;
+
+      const lastMove =
+        last && typeof last.cell === "number"
+          ? {
+              turnIndex: lastIndex,
+              by: turnPlayer(firstPlayer, lastIndex),
+              cell: Number(last.cell),
+              cardIndex: Number((last as any).cardIndex ?? 0),
+              warningMarkCell: typeof (last as any).warningMarkCell === "number" ? Number((last as any).warningMarkCell) : null,
+            }
+          : undefined;
+
+      publishOverlayState({
+        version: 1,
+        updatedAtMs,
+        mode: "live",
+        eventId: event?.id,
+        eventTitle: event?.title,
+        turn: turns.length,
+        firstPlayer,
+        playerA,
+        playerB,
+        rulesetId,
+        seasonId,
+        deckA: deckATokens.map((t) => t.toString()),
+        deckB: deckBTokens.map((t) => t.toString()),
+        board: boardNow,
+        lastMove,
+        aiNote: lastIndex >= 0 ? aiNotes[lastIndex] : undefined,
+        status: sim.full
+          ? {
+              finished: turns.length >= 9,
+              winner: (sim.full as any).winner,
+              tilesA: (sim.full as any).tilesA,
+              tilesB: (sim.full as any).tilesB,
+              matchId: (sim.full as any).matchId,
+            }
+          : undefined,
+      });
+    } catch {
+      // ignore
+    }
+  }, [
+    sim,
+    turns,
+    boardNow,
+    event?.id,
+    event?.title,
+    firstPlayer,
+    playerA,
+    playerB,
+    rulesetId,
+    seasonId,
+    deckATokens,
+    deckBTokens,
+    aiNotes,
+  ]);
 
   const commitTurn = React.useCallback(
     (next: Turn) => {
@@ -820,6 +925,14 @@ export function MatchPage() {
             <button className="btn" onClick={() => setSalt(randomSalt())}>
               New Salt
             </button>
+            <a
+              className="btn"
+              href={`${window.location.origin}/overlay?controls=0`}
+              target="_blank"
+              rel="noreferrer noopener"
+            >
+              Open Overlay
+            </a>
             {isVsNyanoAi && !aiAutoPlay && isAiTurn ? (
               <button className="btn btn-primary" onClick={doAiMove}>
                 Nyano Move

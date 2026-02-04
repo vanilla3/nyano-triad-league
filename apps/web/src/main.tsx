@@ -12,10 +12,16 @@ import { PlaygroundPage } from "./pages/Playground";
 import { ReplayPage } from "./pages/Replay";
 import { NyanoPage } from "./pages/Nyano";
 import { RulesetsPage } from "./pages/Rulesets";
+import { StreamPage } from "./pages/Stream";
+import { OverlayPage } from "./pages/Overlay";
 
 import "./styles.css";
 
 const router = createBrowserRouter([
+  {
+    path: "/overlay",
+    element: <OverlayPage />,
+  },
   {
     path: "/",
     element: <AppLayout />,
@@ -29,6 +35,7 @@ const router = createBrowserRouter([
       { path: "replay", element: <ReplayPage /> },
       { path: "nyano", element: <NyanoPage /> },
       { path: "rulesets", element: <RulesetsPage /> },
+      { path: "stream", element: <StreamPage /> },
     ],
   },
 ]);
