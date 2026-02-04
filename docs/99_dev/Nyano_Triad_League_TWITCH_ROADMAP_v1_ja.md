@@ -67,3 +67,9 @@ AI Nyano が Twitch で配信しつつ、視聴者が “その場で参加で�
 - [ ] 視聴者の荒らし耐性：投票窓・クールダウン・BANリストなど
 
 - [x] Overlay: vote countdown + top votes（/stream → /overlay）
+
+
+### UI polish (stream ops)
+- [x] overlay: vote countdown + top votes
+- [x] overlay: flip summary (flip×N / mark)
+- [x] stream: legal move helper (cells/cards/wm)

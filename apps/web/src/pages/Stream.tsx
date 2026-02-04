@@ -119,17 +119,59 @@ export function StreamPage() {
   const [userName, setUserName] = React.useState<string>("viewer");
   const [chatText, setChatText] = React.useState<string>("!move 4 2");
 
+  // Quick move picker (error prevention + faster stream ops)
+  const [pickCell, setPickCell] = React.useState<number | null>(null);
+  const [pickCardIndex, setPickCardIndex] = React.useState<number | null>(null);
+  const [pickWarningMarkCell, setPickWarningMarkCell] = React.useState<number | null>(null);
+
   const [votesByUser, setVotesByUser] = React.useState<Record<string, ParsedMove>>({});
 
   const liveTurn = typeof live?.turn === "number" ? live.turn : null;
   const liveFirst = typeof live?.firstPlayer === "number" ? (live.firstPlayer as 0 | 1) : null;
   const liveCurrent = currentPlayer(liveFirst ?? undefined, liveTurn ?? undefined);
 
-  const canVoteNow =
-    live?.mode === "live" &&
-    typeof liveTurn === "number" &&
-    typeof liveCurrent === "number" &&
-    liveCurrent === controlledSide;
+const canVoteNow =
+  live?.mode === "live" &&
+  typeof liveTurn === "number" &&
+  typeof liveCurrent === "number" &&
+  liveCurrent === controlledSide;
+
+// Best-effort "legal move" hints from the host (/match) via overlay bus.
+const usedCellsLive = React.useMemo(() => {
+  const arr = Array.isArray((live as any)?.usedCells) ? ((live as any).usedCells as number[]) : null;
+  if (arr && arr.length >= 0) return new Set(arr.filter((x) => Number.isFinite(x)));
+  // fallback: derive from board occupancy
+  const b: any[] = Array.isArray((live as any)?.board) ? ((live as any).board as any[]) : [];
+  const s = new Set<number>();
+  for (let i = 0; i < 9; i++) if (b[i]?.card) s.add(i);
+  return s;
+}, [live?.updatedAtMs]);
+
+const remainingCellsLive = React.useMemo(() => {
+  const out: number[] = [];
+  for (let c = 0; c < 9; c++) if (!usedCellsLive.has(c)) out.push(c);
+  return out;
+}, [usedCellsLive]);
+
+const usedCardsLive = React.useMemo(() => {
+  const a = Array.isArray((live as any)?.usedCardIndicesA) ? ((live as any).usedCardIndicesA as number[]) : [];
+  const b = Array.isArray((live as any)?.usedCardIndicesB) ? ((live as any).usedCardIndicesB as number[]) : [];
+  const s = controlledSide === 0 ? a : b;
+  return new Set(s.filter((x) => Number.isFinite(x)));
+}, [live?.updatedAtMs, controlledSide]);
+
+const remainingCardsLive = React.useMemo(() => {
+  const out: number[] = [];
+  for (let i = 0; i < 5; i++) if (!usedCardsLive.has(i)) out.push(i);
+  return out;
+}, [usedCardsLive]);
+
+const remainingWarningMarks = React.useMemo(() => {
+  const usedA = typeof (live as any)?.warningMarksUsedA === "number" ? (live as any).warningMarksUsedA : 0;
+  const usedB = typeof (live as any)?.warningMarksUsedB === "number" ? (live as any).warningMarksUsedB : 0;
+  const used = controlledSide === 0 ? usedA : usedB;
+  return Math.max(0, 3 - used);
+}, [live?.updatedAtMs, controlledSide]);
 
   const resetVotes = React.useCallback(() => {
     setVotesByUser({});
@@ -311,7 +353,48 @@ React.useEffect(() => {
   });
 }, [voteOpen, voteEndsAtMs, voteTurn, votesByUser, counts, controlledSide, live?.eventId, live?.eventTitle, liveTurn, canVoteNow]);
 
-  return (
+
+function buildMoveText(cell: number, cardIndex: number, wm: number | null): string {
+  const base = `!move ${cell} ${cardIndex}`;
+  if (typeof wm === "number") return `${base} wm=${wm}`;
+  return base;
+}
+
+const applyPickerToChatText = React.useCallback(() => {
+  if (pickCell === null || pickCardIndex === null) {
+    toast.warn("Picker", "Select a cell and a card first.");
+    return;
+  }
+  const wm = pickWarningMarkCell;
+  const txt = buildMoveText(pickCell, pickCardIndex, wm);
+  setChatText(txt);
+  toast.success("Picker", "Filled chat command");
+}, [pickCell, pickCardIndex, pickWarningMarkCell, toast]);
+
+const addVoteFromPicker = React.useCallback(() => {
+  if (!voteOpen) {
+    toast.warn("Vote", "Start vote first.");
+    return;
+  }
+  if (pickCell === null || pickCardIndex === null) {
+    toast.warn("Vote", "Select a cell and a card first.");
+    return;
+  }
+  const u = userName.trim() || "viewer";
+  setVotesByUser((prev) => ({
+    ...prev,
+    [u]: { cell: pickCell, cardIndex: pickCardIndex, warningMarkCell: pickWarningMarkCell },
+  }));
+  toast.success("Vote", "Added vote from picker");
+}, [voteOpen, pickCell, pickCardIndex, pickWarningMarkCell, userName, toast]);
+
+const clearPicker = React.useCallback(() => {
+  setPickCell(null);
+  setPickCardIndex(null);
+  setPickWarningMarkCell(null);
+}, []);
+
+return (
     <div className="space-y-6">
       <div className="card">
         <div className="card-hd">

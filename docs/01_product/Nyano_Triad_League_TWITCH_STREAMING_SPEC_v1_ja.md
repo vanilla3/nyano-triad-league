@@ -98,3 +98,8 @@
 ### Overlay に投票状況を表示（Phase 2.5）
 - /stream が vote state を broadcast し、/overlay が countdown と top votes を表示
 - 視聴者が「いま投票中」を理解できることで参加率が上がる（配信の絵が成立）
+
+
+## UI改善（配信の“理解速度”を上げる）
+- Overlay: flip×N / MARK などの即時サマリー
+- Stream Studio: legal move helper（空きセル・残りカード・wm残数）

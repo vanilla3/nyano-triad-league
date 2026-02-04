@@ -63,3 +63,12 @@ Twitch連携（EventSub/IRC）は後から差し替え可能にして、
 ## Overlay表示（Phase 2.5）
 - vote status を overlay に表示する（OPEN/残り秒数/Top votes）
 - overlay 側で `vote=0` を指定すれば非表示にもできる
+
+
+## Stream Studio 補助UI（v1）
+- legal move helper:
+  - 空きセル（usedCells）
+  - 残りカードIndex（usedCardIndicesA/B）
+  - warning mark 残数（3 - used）
+
+これらは /match が overlay bus に best-effort で送る。存在しない場合はUIが控えめにフォールバックする。

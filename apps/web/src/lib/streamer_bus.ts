@@ -29,6 +29,13 @@ export type OverlayStateV1 = {
   deckA?: string[]; // decimal strings
   deckB?: string[]; // decimal strings
 
+  // Optional usage hints for stream tooling (best-effort).
+  usedCells?: number[]; // 0..8
+  usedCardIndicesA?: number[]; // 0..4
+  usedCardIndicesB?: number[]; // 0..4
+  warningMarksUsedA?: number;
+  warningMarksUsedB?: number;
+
   /** Engine board cell objects (kept as 'unknown' to avoid tight coupling). */
   board?: unknown;
 

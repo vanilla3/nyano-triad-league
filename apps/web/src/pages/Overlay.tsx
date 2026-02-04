@@ -86,12 +86,23 @@ export function OverlayPage() {
   const tilesB = typeof state?.status?.tilesB === "number" ? state?.status?.tilesB : null;
   const matchIdShort = state?.status?.matchId ? shortId(state.status.matchId) : null;
 
-  const sub =
-    state?.status?.finished && winnerLabel
-      ? `Winner: ${winnerLabel}${tilesA !== null && tilesB !== null ? ` · tiles A:${tilesA}/B:${tilesB}` : ""}`
-      : typeof state?.turn === "number"
-        ? `Turn ${state.turn}/9`
-        : "Waiting…";
+
+const sub =
+  state?.status?.finished && winnerLabel
+    ? `Winner: ${winnerLabel}${tilesA !== null && tilesB !== null ? ` · tiles A:${tilesA}/B:${tilesB}` : ""}`
+    : typeof state?.turn === "number"
+      ? `Turn ${state.turn}/9`
+      : "Waiting…";
+
+const toPlay = React.useMemo(() => {
+  if (!state) return null;
+  if (state?.status?.finished) return null;
+  if (typeof state.turn !== "number") return null;
+  if (typeof state.firstPlayer !== "number") return null;
+  if (state.turn >= 9) return null;
+  const p = ((state.firstPlayer + (state.turn % 2)) % 2) as 0 | 1;
+  return p === 0 ? "A" : "B";
+}, [state?.updatedAtMs]);
 
   const lastCell = typeof state?.lastMove?.cell === "number" ? state.lastMove.cell : null;
   const markCell = typeof state?.lastMove?.warningMarkCell === "number" ? state.lastMove.warningMarkCell : null;
@@ -224,7 +235,7 @@ React.useEffect(() => {
                 {modeBadge}
               </div>
               <div className="mt-1 text-sm text-slate-700">{title}</div>
-              <div className="mt-1 text-xs text-slate-500">{sub}</div>
+              <div className="mt-1 text-xs text-slate-500">{sub} {toPlay ? (<span className="badge badge-sky">Next: {toPlay}</span>) : null}</div>
               {matchIdShort ? <div className="mt-1 text-[11px] text-slate-400">match: {matchIdShort}</div> : null}
             </div>
 
@@ -241,43 +252,6 @@ React.useEffect(() => {
                   </div>
                 ) : null}
 
-{voteEnabled && voteState?.status === "open" ? (
-  <div className="rounded-2xl border border-slate-200 bg-white/70 px-4 py-3 shadow-sm">
-    <div className="flex items-center justify-between gap-2">
-      <div className="text-xs font-semibold text-slate-800">🗳️ Chat voting</div>
-      <span className="badge badge-emerald">
-        OPEN ·{" "}
-        {typeof voteState.endsAtMs === "number"
-          ? Math.max(0, Math.ceil((voteState.endsAtMs - nowMs()) / 1000))
-          : "?"}
-        s
-      </span>
-    </div>
-
-    <div className="mt-1 text-xs text-slate-600">
-      controls: <span className="font-mono">{voteState.controlledSide === 1 ? "B" : "A"}</span> ·{" "}
-      votes: <span className="font-mono">{typeof voteState.totalVotes === "number" ? voteState.totalVotes : 0}</span>
-    </div>
-
-    {Array.isArray(voteState.top) && voteState.top.length > 0 ? (
-      <div className="mt-2 space-y-1">
-        {voteState.top.slice(0, 3).map((x, i) => (
-          <div key={i} className="flex items-center justify-between gap-2 text-xs">
-            <span className="font-mono">
-              cell {x.move.cell} · card {x.move.cardIndex}
-              {typeof x.move.warningMarkCell === "number" ? ` · wm ${x.move.warningMarkCell}` : ""}
-            </span>
-            <span className="badge badge-sky">{x.count}</span>
-          </div>
-        ))}
-      </div>
-    ) : (
-      <div className="mt-2 text-xs text-slate-500">No votes yet…</div>
-    )}
-
-    {voteState.note ? <div className="mt-2 text-[11px] text-slate-500">{voteState.note}</div> : null}
-  </div>
-) : null}
               </div>
             ) : null}
 
