@@ -65,3 +65,8 @@ AI Nyano が Twitch で配信しつつ、視聴者が “その場で参加で�
 - [x] `/match?stream=1` が command bus を購読して move を適用
 - [ ] Twitch Bridge（EventSub/IRC）を別プロセスで実装（秘密情報をブラウザに置かない）
 - [ ] 視聴者の荒らし耐性：投票窓・クールダウン・BANリストなど
+
+### 3) Overlay 参加感の強化
+- [x] overlay: LIVE/REPLAY 表示 + 直前手のハイライト
+- [x] overlay: 投票タイマー + Top votes 表示（Nyano vs Chat）
+- [ ] overlay: “なぜその手？”（flip理由短文）を表示

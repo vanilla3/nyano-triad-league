@@ -137,6 +137,119 @@ export function subscribeOverlayState(onState: (s: OverlayStateV1) => void): () 
 
 
 // ---------------------------------------------------------------------------
+// Stream vote state (Prototype)
+// ---------------------------------------------------------------------------
+
+/**
+ * Vote status sent from Stream Studio (/stream) to the overlay (and optionally other tabs).
+ *
+ * This is used to show "Chat is voting now" with a countdown + top votes on the OBS overlay.
+ * Twitch integration will later replace /stream's simulated chat, but this bus contract can remain.
+ */
+export type StreamVoteStateV1 = {
+  version: 1;
+  updatedAtMs: number;
+
+  status: "open" | "closed";
+
+  eventId?: string;
+  eventTitle?: string;
+
+  /** 0..8 (turn index) */
+  turn?: number;
+
+  /** Which side the chat controls */
+  controlledSide?: 0 | 1;
+
+  /** Vote closing time (ms since epoch). Present when status="open". */
+  endsAtMs?: number;
+
+  totalVotes?: number;
+
+  top?: Array<{
+    move: {
+      cell: number; // 0..8
+      cardIndex: number; // 0..4
+      warningMarkCell?: number | null;
+    };
+    count: number;
+  }>;
+
+  note?: string;
+};
+
+const VOTE_CHANNEL_NAME = "nyano-triad-league.stream_vote.v1";
+const VOTE_STORAGE_KEY = "nyano_triad_league.stream_vote_state_v1";
+
+export function readStoredStreamVoteState(): StreamVoteStateV1 | null {
+  try {
+    const raw = localStorage.getItem(VOTE_STORAGE_KEY);
+    if (!raw) return null;
+    return safeParse<StreamVoteStateV1>(raw);
+  } catch {
+    return null;
+  }
+}
+
+export function publishStreamVoteState(state: StreamVoteStateV1): void {
+  // store (so overlay can recover after refresh)
+  try {
+    localStorage.setItem(VOTE_STORAGE_KEY, safeStringify(state));
+  } catch {
+    // ignore
+  }
+
+  // broadcast
+  try {
+    if (typeof (window as any).BroadcastChannel !== "undefined") {
+      const bc = new BroadcastChannel(VOTE_CHANNEL_NAME);
+      bc.postMessage({ type: "stream_vote_state_v1", state });
+      bc.close();
+      return;
+    }
+  } catch {
+    // ignore and fallback
+  }
+
+  // fallback for older environments: storage event across tabs
+  try {
+    localStorage.setItem(VOTE_STORAGE_KEY + ":tick", String(Date.now()));
+  } catch {
+    // ignore
+  }
+}
+
+export function subscribeStreamVoteState(onState: (s: StreamVoteStateV1) => void): () => void {
+  // BroadcastChannel
+  try {
+    if (typeof (window as any).BroadcastChannel !== "undefined") {
+      const bc = new BroadcastChannel(VOTE_CHANNEL_NAME);
+      bc.onmessage = (ev: MessageEvent) => {
+        const data: any = ev.data;
+        if (data?.type === "stream_vote_state_v1" && data?.state?.version === 1) {
+          onState(data.state as StreamVoteStateV1);
+        }
+      };
+      return () => bc.close();
+    }
+  } catch {
+    // ignore and fallback
+  }
+
+  // Fallback: listen for localStorage changes (cross-tab)
+  const onStorage = (e: StorageEvent) => {
+    if (e.key === VOTE_STORAGE_KEY && typeof e.newValue === "string") {
+      const s = safeParse<StreamVoteStateV1>(e.newValue);
+      if (s && s.version === 1) onState(s);
+    }
+  };
+
+  window.addEventListener("storage", onStorage);
+  return () => window.removeEventListener("storage", onStorage);
+}
+
+
+// ---------------------------------------------------------------------------
 // Stream commands (Prototype)
 // ---------------------------------------------------------------------------
 

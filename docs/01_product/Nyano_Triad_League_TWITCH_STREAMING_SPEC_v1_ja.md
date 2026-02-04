@@ -94,3 +94,10 @@
 **UX**
 - “投票が成立した” → toast
 - turnが進んだら vote は自動で閉じる（誤適用防止）
+
+## Phase 3: Overlay に投票状況を表示（配信の参加感）
+- `/stream` が投票状態（OPEN/CLOSED, 残り秒数, Top votes）を broadcast
+- `/overlay` がそれを受信して表示（視聴者が「いま投票中」を一目で理解できる）
+
+URL param:
+- `vote=0` を付けると投票UIを隠せる（演出の自由度）

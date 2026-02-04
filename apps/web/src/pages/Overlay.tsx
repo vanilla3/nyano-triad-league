@@ -2,7 +2,14 @@ import React from "react";
 import { Link, useSearchParams } from "react-router-dom";
 
 import { CardMini } from "@/components/CardMini";
-import { readStoredOverlayState, subscribeOverlayState, type OverlayStateV1 } from "@/lib/streamer_bus";
+import {
+  readStoredOverlayState,
+  readStoredStreamVoteState,
+  subscribeOverlayState,
+  subscribeStreamVoteState,
+  type OverlayStateV1,
+  type StreamVoteStateV1,
+} from "@/lib/streamer_bus";
 
 function nowMs() {
   return Date.now();
@@ -45,19 +52,27 @@ export function OverlayPage() {
   const controls = searchParams.get("controls") !== "0";
   const bg = searchParams.get("bg");
   const transparent = isTransparentBg(bg);
+  const showVote = searchParams.get("vote") !== "0";
 
   const [state, setState] = React.useState<OverlayStateV1 | null>(() => readStoredOverlayState());
   const [tick, setTick] = React.useState(0);
+  const [vote, setVote] = React.useState<StreamVoteStateV1 | null>(() => readStoredStreamVoteState());
 
   React.useEffect(() => {
-    // keep a small "age" indicator fresh (when controls are on)
-    if (!controls) return;
+    // keep timers fresh (age label & vote countdown)
+    const needTick = controls || (showVote && vote?.status === "open");
+    if (!needTick) return;
     const t = window.setInterval(() => setTick((x) => x + 1), 1000);
     return () => window.clearInterval(t);
-  }, [controls]);
+  }, [controls, showVote, vote?.status]);
 
   React.useEffect(() => {
     const unsub = subscribeOverlayState((s) => setState(s));
+    return () => unsub();
+  }, []);
+
+  React.useEffect(() => {
+    const unsub = subscribeStreamVoteState((s) => setVote(s));
     return () => unsub();
   }, []);
 
@@ -87,6 +102,14 @@ export function OverlayPage() {
 
   const lastCell = typeof state?.lastMove?.cell === "number" ? state.lastMove.cell : null;
   const markCell = typeof state?.lastMove?.warningMarkCell === "number" ? state.lastMove.warningMarkCell : null;
+
+
+  const voteEndsAtMs = typeof vote?.endsAtMs === "number" ? vote!.endsAtMs : null;
+  const voteOpen = showVote && vote?.status === "open" && typeof voteEndsAtMs === "number" && voteEndsAtMs > nowMs();
+  const voteLeft = voteOpen && voteEndsAtMs ? Math.max(0, Math.ceil((voteEndsAtMs - nowMs()) / 1000)) : null;
+  const voteSide = typeof vote?.controlledSide === "number" ? (vote!.controlledSide === 0 ? "A" : "B") : null;
+  const voteTurn = typeof vote?.turn === "number" ? vote!.turn : null;
+  const topVotes = Array.isArray(vote?.top) ? (vote?.top ?? []).slice(0, 3) : [];
 
   const cellClass = (i: number): string => {
     const base = "relative aspect-square rounded-2xl border p-2 shadow-sm";
@@ -186,6 +209,35 @@ export function OverlayPage() {
               <div className="mt-1 text-xs text-slate-500">{sub}</div>
               {matchIdShort ? <div className="mt-1 text-[11px] text-slate-400">match: {matchIdShort}</div> : null}
             </div>
+
+{showVote && voteOpen ? (
+  <div className="rounded-2xl border border-slate-200 bg-white/70 px-4 py-3 shadow-sm">
+    <div className="flex items-center justify-between gap-2">
+      <div className="text-xs font-semibold text-slate-800">🗳️ Chat vote</div>
+      <span className="badge badge-emerald">OPEN · {voteLeft ?? "?"}s</span>
+    </div>
+    <div className="mt-1 text-xs text-slate-600">
+      Turn {voteTurn !== null ? voteTurn + 1 : "—"} · Chat controls <span className="font-semibold">{voteSide ?? "—"}</span>
+      {typeof vote?.totalVotes === "number" ? <span> · votes {vote.totalVotes}</span> : null}
+    </div>
+
+    {topVotes.length > 0 ? (
+      <div className="mt-2 space-y-1">
+        {topVotes.map((x, i) => (
+          <div key={i} className="flex items-center justify-between gap-2 text-xs">
+            <span className="font-mono">
+              cell {x.move.cell} · card {x.move.cardIndex}
+              {typeof x.move.warningMarkCell === "number" ? ` · wm ${x.move.warningMarkCell}` : ""}
+            </span>
+            <span className="badge badge-sky">{x.count}</span>
+          </div>
+        ))}
+      </div>
+    ) : (
+      <div className="mt-2 text-xs text-slate-500">No votes yet…</div>
+    )}
+  </div>
+) : null}
 
             {state?.lastMove ? (
               <div className="rounded-2xl border border-slate-200 bg-white/70 px-4 py-3 shadow-sm">
