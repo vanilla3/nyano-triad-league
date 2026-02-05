@@ -205,6 +205,23 @@ if (Array.isArray((lastTurnSummary as any)?.flips)) {
   const voteRemainingSec =
     voteState?.status === "open" && typeof voteState.endsAtMs === "number" ? Math.max(0, Math.ceil((voteState.endsAtMs - nowMs()) / 1000)) : null;
 
+
+const flipStats = React.useMemo(() => {
+  const flips = Array.isArray((lastTurnSummary as any)?.flips) ? ((lastTurnSummary as any).flips as any[]) : null;
+  if (!flips) return null;
+  const chain = flips.filter((f) => Boolean(f.isChain)).length;
+  const diag = flips.filter((f) => f.kind === "diag").length;
+  const janken = flips.filter((f) => Boolean(f.tieBreak)).length;
+  const total = flips.length;
+  return {
+    total,
+    chain,
+    direct: Math.max(0, total - chain),
+    diag,
+    ortho: Math.max(0, total - diag),
+    janken,
+  };
+}, [state?.updatedAtMs]);
   const flipCountLabel =
     typeof lastTurnSummary?.flipCount === "number"
       ? lastTurnSummary.flipCount
@@ -362,6 +379,11 @@ if (Array.isArray((lastTurnSummary as any)?.flips)) {
                   {lastTurnSummary?.ignoreWarningMark ? <span className="badge badge-nyano">IGNORE MARK</span> : null}
                   {lastTurnSummary?.warningTriggered ? <span className="badge badge-amber">TRIGGERED MARK</span> : null}
                   {typeof lastTurnSummary?.warningPlaced === "number" ? <span className="badge badge-amber">PLACED MARK</span> : null}
+
+
+{flipStats && flipStats.chain > 0 ? <span className="badge badge-slate">CHAIN×{flipStats.chain}</span> : null}
+{flipStats && flipStats.diag > 0 ? <span className="badge badge-sky">DIAG×{flipStats.diag}</span> : null}
+{flipStats && flipStats.janken > 0 ? <span className="badge badge-rose">JANKEN×{flipStats.janken}</span> : null}
                 </div>
 
                 {typeof state.lastMove.warningMarkCell === "number" ? (
@@ -381,6 +403,17 @@ if (Array.isArray((lastTurnSummary as any)?.flips)) {
                     flipped: <span className="font-mono">{lastFlippedCells.join(", ")}</span>
                   </div>
                 ) : null}
+
+
+{flipStats ? (
+  <div className="mt-1 text-[11px] text-slate-500">
+    Why: {flipStats.chain > 0 ? `chain×${flipStats.chain}` : null}
+    {flipStats.chain > 0 && (flipStats.diag > 0 || flipStats.janken > 0) ? " · " : null}
+    {flipStats.diag > 0 ? `diag×${flipStats.diag}` : null}
+    {flipStats.diag > 0 && flipStats.janken > 0 ? " · " : null}
+    {flipStats.janken > 0 ? `janken×${flipStats.janken}` : null}
+  </div>
+) : null}
 
 
 {controls && lastTurnSummary && Array.isArray(lastTurnSummary.flips) && lastTurnSummary.flips.length > 0 ? (

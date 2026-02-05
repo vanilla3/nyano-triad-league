@@ -562,6 +562,30 @@ const lastTurnSummary =
     : undefined;
 
 
+const protocolV1 =
+  sim.ok
+    ? {
+        header: {
+          version: Number(sim.transcript.header.version),
+          rulesetId: String(sim.transcript.header.rulesetId),
+          seasonId: Number(sim.transcript.header.seasonId),
+          playerA: String(sim.transcript.header.playerA),
+          playerB: String(sim.transcript.header.playerB),
+          deckA: sim.transcript.header.deckA.map((x) => x.toString()),
+          deckB: sim.transcript.header.deckB.map((x) => x.toString()),
+          firstPlayer: sim.transcript.header.firstPlayer as 0 | 1,
+          deadline: Number(sim.transcript.header.deadline),
+          salt: String(sim.transcript.header.salt),
+        },
+        turns: turns.map((t) => ({
+          cell: Number(t.cell),
+          cardIndex: Number(t.cardIndex),
+          ...(typeof t.warningMarkCell === "number" ? { warningMarkCell: Number(t.warningMarkCell) } : {}),
+        })),
+      }
+    : undefined;
+
+
       publishOverlayState({
         version: 1,
         updatedAtMs,
@@ -576,6 +600,7 @@ const lastTurnSummary =
         seasonId,
         deckA: deckATokens.map((t) => t.toString()),
         deckB: deckBTokens.map((t) => t.toString()),
+        protocolV1,
 usedCells: Array.from(used.cells).sort((a, b) => a - b),
 usedCardIndicesA: Array.from(used.usedA).sort((a, b) => a - b),
 usedCardIndicesB: Array.from(used.usedB).sort((a, b) => a - b),

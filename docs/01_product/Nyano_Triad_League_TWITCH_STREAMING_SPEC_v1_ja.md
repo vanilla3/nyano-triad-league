@@ -128,3 +128,16 @@
   を表示（controls=1 のときのみ）
 
 これにより実況で「なぜ？」が説明しやすくなる。
+
+
+## Reason badges（Phase 3.1）
+- overlay の Last move に CHAIN× / DIAG× / JANKEN× の集計バッジを追加
+- 詳細（from/to/aVal/dVal）は controls=1 のときのみ表示
+
+
+## nyano-warudo 連携（Puzzle Show trigger）
+- Triad League から `POST /v1/snapshots` を送信できることが最短。
+- `kind=ai_prompt` / `kind=state_json` の両方を用意し、配信運用で使い分ける。
+
+
+- 詳細: `docs/01_product/Nyano_Triad_League_NYANO_WARUDO_BRIDGE_SPEC_v1_ja.md`

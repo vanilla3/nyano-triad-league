@@ -92,3 +92,13 @@ AI Nyano が Twitch で配信しつつ、視聴者が “その場で参加で�
 - [x] overlay: show per-flip trace list (controls only)
 - [ ] triad-engine: richer reason tags (EDGE/BONUS/COMBO/FORMATION/MARK)
 - [ ] overlay: show reason tags per flip (iconized)
+
+
+### Overlay reason badges
+- [x] overlay: aggregated reason badges (CHAIN× / DIAG× / JANKEN×)
+
+
+### nyano-warudo bridge
+- [x] send snapshots to nyano-warudo (POST /v1/snapshots)
+- [x] agree viewer command format (#triad A2->B2)
+- [x] provide sample state/transcript/protocol file

@@ -88,3 +88,21 @@ Twitch連携（EventSub/IRC）は後から差し替え可能にして、
 ## Flip traces（実況補助）
 - overlay bus の lastTurnSummary.flips に per-flip trace を入れる。
 - OBS表示は原則OFF（controls=0）で、配信者の確認時（controls=1）だけ詳細を出す。
+
+
+## Reason badges（短い実況用）
+- overlay は per-flip trace から CHAIN/DIAG/JANKEN を集計し、短いバッジで表示する。
+
+
+## 視聴者コマンド（提案の型）
+### Canonical
+`#triad A2->B2 wm=C1`
+
+- A2: 手札スロット2（1..5）
+- B2: 盤面セル（A1..C3）
+- wm=...: optional warning mark
+
+### 正規表現（例）
+- `/#triad\s+([A][1-5]|[1-5])\s*->\s*([A-C][1-3])(\s+wm=([A-C][1-3]))?/i`
+
+Triad League 側はこの形式も parse できるようにしてあります。

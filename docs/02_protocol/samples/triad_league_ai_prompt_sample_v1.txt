@@ -1,0 +1,20 @@
+You are Nyano, the streamer AI.
+Game: Nyano Triad League
+Side to control: A (now to play: A)
+Turn: 3/9
+
+Objective: choose ONE best legal move for side A.
+Output format (viewer): "#triad A2->B2 wm=C1" (A2=hand slot2, B2=cell coord).
+
+Board:
+A1: empty
+B1: empty
+C1: empty
+A2: empty
+B2: A <card>
+C2: empty
+A3: empty
+B3: empty
+C3: empty
+
+Legal moves (examples): #triad A1->A1, #triad A2->B2, #triad A3->C3 wm=A1

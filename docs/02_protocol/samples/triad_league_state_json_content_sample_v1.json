@@ -1,0 +1,108 @@
+{
+  "protocol": "triad_league_state_json_v1",
+  "sentAtMs": 2000000000000,
+  "eventId": "nyano-open-challenge",
+  "eventTitle": "Nyano Open Challenge",
+  "mode": "live",
+  "turn": 3,
+  "toPlay": "A",
+  "controlledSide": "A",
+  "viewerCommandFormat": "#triad A2->B2 wm=C1",
+  "protocolV1": {
+    "header": {
+      "version": 1,
+      "rulesetId": "0x1111111111111111111111111111111111111111111111111111111111111111",
+      "seasonId": 1,
+      "playerA": "0xaAaAaAaaAaAaAaaAaAAAAAAAAaaaAaAaAaaAaaAa",
+      "playerB": "0xbBbBBBBbbBBBbbbBbbBbbbbBBbBbbbbBbBbbBBbB",
+      "deckA": [
+        "1",
+        "2",
+        "3",
+        "4",
+        "5"
+      ],
+      "deckB": [
+        "6",
+        "7",
+        "8",
+        "9",
+        "10"
+      ],
+      "firstPlayer": 0,
+      "deadline": 2000000000,
+      "salt": "0x2222222222222222222222222222222222222222222222222222222222222222"
+    },
+    "turns": [
+      {
+        "cell": 4,
+        "cardIndex": 1
+      },
+      {
+        "cell": 0,
+        "cardIndex": 0
+      },
+      {
+        "cell": 8,
+        "cardIndex": 2,
+        "warningMarkCell": 6
+      },
+      {
+        "cell": 2,
+        "cardIndex": 1
+      },
+      {
+        "cell": 6,
+        "cardIndex": 3
+      },
+      {
+        "cell": 1,
+        "cardIndex": 4
+      },
+      {
+        "cell": 7,
+        "cardIndex": 0
+      },
+      {
+        "cell": 3,
+        "cardIndex": 4
+      },
+      {
+        "cell": 5,
+        "cardIndex": 3
+      }
+    ]
+  },
+  "board": [
+    null,
+    null,
+    null,
+    null,
+    {
+      "owner": "A",
+      "cardSlot": 2
+    },
+    null,
+    null,
+    null,
+    null
+  ],
+  "legalMoves": [
+    {
+      "viewer": "#triad A1->A1",
+      "cell": 0,
+      "cardIndex": 0
+    },
+    {
+      "viewer": "#triad A2->B2",
+      "cell": 4,
+      "cardIndex": 1
+    },
+    {
+      "viewer": "#triad A3->C3 wm=A1",
+      "cell": 8,
+      "cardIndex": 2,
+      "warningMarkCell": 0
+    }
+  ]
+}
