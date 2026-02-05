@@ -11,6 +11,7 @@ import {
 } from "@nyano/triad-engine";
 
 import { BoardView } from "@/components/BoardView";
+import { NyanoImage } from "@/components/NyanoImage";
 import { CardMini } from "@/components/CardMini";
 import { TurnLog } from "@/components/TurnLog";
 import { base64UrlEncodeUtf8, tryGzipCompressUtf8ToBase64Url } from "@/lib/base64url";
@@ -848,6 +849,22 @@ React.useEffect(() => {
 
   return (
     <div className="grid gap-6">
+<section className="relative overflow-hidden rounded-2xl border border-slate-200 bg-white">
+  <div className="flex flex-col items-start gap-4 p-4 md:flex-row md:items-center md:p-6">
+    <NyanoImage size={96} className="shadow-sm" alt="Nyano" />
+    <div className="min-w-0">
+      <div className="text-xl font-semibold">Nyano Triad League</div>
+      <div className="mt-1 text-sm text-slate-600">
+        Nyano NFTで遊ぶ、コミュニティ主導のトライアド対戦。対局ログ（transcript）を共有して、配信・投票にも繋げられます。
+      </div>
+      <div className="mt-3 flex flex-wrap gap-2 text-xs text-slate-500">
+        <span className="rounded-full border border-slate-200 bg-slate-50 px-2 py-1">ETH on-chain</span>
+        <span className="rounded-full border border-slate-200 bg-slate-50 px-2 py-1">Replay share</span>
+        <span className="rounded-full border border-slate-200 bg-slate-50 px-2 py-1">Twitch voting</span>
+      </div>
+    </div>
+  </div>
+</section>
       {event ? (
         <section className="card">
           <div className="card-hd flex flex-wrap items-center justify-between gap-2">

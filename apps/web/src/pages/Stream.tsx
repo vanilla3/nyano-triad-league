@@ -2,6 +2,7 @@ import React from "react";
 import { Link } from "react-router-dom";
 
 import { CopyField } from "@/components/CopyField";
+import { NyanoImage } from "@/components/NyanoImage";
 import { useToast } from "@/components/Toast";
 import { EVENTS, getEventStatus, type EventV1 } from "@/lib/events";
 import { postNyanoWarudoSnapshot } from "@/lib/nyano_warudo_bridge";
@@ -922,7 +923,10 @@ return (
       <div className="card">
         <div className="card-hd">
           <div>
-            <div className="text-lg font-semibold">🎥 Nyano Stream Studio</div>
+            <div className="flex items-center gap-3">
+              <NyanoImage size={56} className="shrink-0" alt="Nyano" />
+              <div className="text-lg font-semibold">🎥 Nyano Stream Studio</div>
+            </div>
             <div className="text-sm text-slate-600">
               Twitch配信に向けた「導線・見せ方・共有」を整えます。まずは OBS Overlay → その次に Chat voting。
             </div>
