@@ -85,3 +85,10 @@ AI Nyano が Twitch で配信しつつ、視聴者が “その場で参加で�
 - [x] overlay: engine turn summary badges (combo/plus/mark)
 - [ ] engine trace: EDGE/BONUS/COMBO/FORMATION per flip
 - [ ] overlay: show per-flip reason (with trace)
+
+
+### Trace (why a flip happened)
+- [x] triad-engine: TurnSummary.flipTraces (per-flip)
+- [x] overlay: show per-flip trace list (controls only)
+- [ ] triad-engine: richer reason tags (EDGE/BONUS/COMBO/FORMATION/MARK)
+- [ ] overlay: show reason tags per flip (iconized)

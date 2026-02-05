@@ -543,8 +543,22 @@ const lastTurnSummary =
         triadPlus: Number(lastSummary.appliedBonus?.triadPlus ?? 0),
         ignoreWarningMark: Boolean(lastSummary.appliedBonus?.ignoreWarningMark),
         warningTriggered: Boolean(lastSummary.warningTriggered),
-        warningPlaced: typeof lastSummary.warningPlaced === "number" ? Number(lastSummary.warningPlaced) : null,
-      }
+  warningPlaced: typeof lastSummary.warningPlaced === "number" ? Number(lastSummary.warningPlaced) : null,
+  flips: Array.isArray(lastSummary.flipTraces)
+    ? lastSummary.flipTraces.map((f: any) => ({
+        from: Number(f.from),
+        to: Number(f.to),
+        isChain: Boolean(f.isChain),
+        kind: f.kind === "diag" ? "diag" : "ortho",
+        dir: typeof f.dir === "string" ? f.dir : undefined,
+        vert: typeof f.vert === "string" ? f.vert : undefined,
+        horiz: typeof f.horiz === "string" ? f.horiz : undefined,
+        aVal: Number(f.aVal ?? 0),
+        dVal: Number(f.dVal ?? 0),
+        tieBreak: Boolean(f.tieBreak),
+      }))
+    : undefined,
+}
     : undefined;
 
 

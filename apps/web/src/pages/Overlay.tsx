@@ -158,6 +158,25 @@ export function OverlayPage() {
       setLastFlipCount(null);
       setLastFlippedCells([]);
       return;
+
+
+// Prefer engine-provided flip traces if available (more accurate than owner-diff heuristics).
+if (Array.isArray((lastTurnSummary as any)?.flips)) {
+  const flips = (lastTurnSummary as any).flips as any[];
+  const cells = Array.from(
+    new Set(
+      flips
+        .map((f) => Number(f.to))
+        .filter((n) => Number.isFinite(n))
+    )
+  ).sort((a, b) => a - b);
+
+  setLastFlippedCells(cells);
+  if (typeof (lastTurnSummary as any)?.flipCount === "number") setLastFlipCount(Number((lastTurnSummary as any).flipCount));
+  else setLastFlipCount(cells.length);
+  return;
+}
+
     }
 
     const by = state.lastMove.by;
@@ -362,6 +381,34 @@ export function OverlayPage() {
                     flipped: <span className="font-mono">{lastFlippedCells.join(", ")}</span>
                   </div>
                 ) : null}
+
+
+{controls && lastTurnSummary && Array.isArray(lastTurnSummary.flips) && lastTurnSummary.flips.length > 0 ? (
+  <div className="mt-3 rounded-xl border border-slate-200 bg-white/60 px-3 py-2">
+    <div className="flex items-center justify-between gap-2">
+      <div className="text-[11px] font-semibold text-slate-700">Flip traces</div>
+      <div className="text-[11px] text-slate-500">（実況・デバッグ用 / OBSでは通常非表示）</div>
+    </div>
+    <div className="mt-2 space-y-1">
+      {lastTurnSummary.flips.slice(0, 8).map((f, i) => (
+        <div key={i} className="flex flex-wrap items-center justify-between gap-2 text-xs">
+          <span className="font-mono">
+            {f.to} ← {f.from}{" "}
+            {f.kind === "ortho" ? (f.dir ? `(${f.dir})` : "") : f.vert && f.horiz ? `(${f.vert}+${f.horiz})` : "(diag)"}
+          </span>
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="badge badge-slate">
+              a:{f.aVal} / d:{f.dVal}
+            </span>
+            {f.isChain ? <span className="badge">CHAIN</span> : <span className="badge">DIRECT</span>}
+            {f.tieBreak ? <span className="badge badge-rose">JANKEN</span> : null}
+            {f.kind === "diag" ? <span className="badge badge-sky">DIAG</span> : null}
+          </div>
+        </div>
+      ))}
+    </div>
+  </div>
+) : null}
 
                 <div className="mt-2 text-[11px] text-slate-400">
                   phase 2: engine turn summary now available (combo/plus/mark). Next: add edge/formation reasoning with traces.

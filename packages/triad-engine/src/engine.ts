@@ -15,6 +15,7 @@ import type {
   TurnSummary,
   TraitType,
   FormationId,
+  FlipTraceV1,
 } from "./types.js";
 
 /**
@@ -561,7 +562,13 @@ export function simulateMatchV1(
     | { kind: "ortho"; dir: Direction; opp: Direction }
     | { kind: "diag"; vert: Direction; horiz: Direction; oppVert: Direction; oppHoriz: Direction };
 
-  const compareAndMaybeFlip = (attackerIdx: number, defenderIdx: number, attackIsChain: boolean, mode: AttackMode): boolean => {
+  const compareAndMaybeFlip = (
+    attackerIdx: number,
+    defenderIdx: number,
+    attackIsChain: boolean,
+    mode: AttackMode,
+    flipTraces?: FlipTraceV1[]
+  ): boolean => {
     const attacker = board[attackerIdx];
     const defender = board[defenderIdx];
     if (!attacker || !defender) return false;
@@ -584,9 +591,13 @@ export function simulateMatchV1(
     }
 
     let attackerWins = false;
+    let tieBreak = false;
     if (aVal > dVal) attackerWins = true;
     else if (aVal < dVal) attackerWins = false;
-    else attackerWins = attackerWinsTie(attacker.card, defender.card);
+    else {
+      tieBreak = true;
+      attackerWins = attackerWinsTie(attacker.card, defender.card);
+    }
 
     if (!attackerWins) return false;
 
@@ -596,8 +607,36 @@ export function simulateMatchV1(
       return false;
     }
 
-    board[defenderIdx] = { owner: attacker.owner, card: defender.card, state: defender.state };
-    return true;
+board[defenderIdx] = { owner: attacker.owner, card: defender.card, state: defender.state };
+
+if (flipTraces) {
+  if (mode.kind === "ortho") {
+    flipTraces.push({
+      from: attackerIdx,
+      to: defenderIdx,
+      isChain: attackIsChain,
+      kind: "ortho",
+      dir: mode.dir,
+      aVal,
+      dVal,
+      tieBreak,
+    });
+  } else {
+    flipTraces.push({
+      from: attackerIdx,
+      to: defenderIdx,
+      isChain: attackIsChain,
+      kind: "diag",
+      vert: mode.vert,
+      horiz: mode.horiz,
+      aVal,
+      dVal,
+      tieBreak,
+    });
+  }
+}
+
+return true;
   };
 
   const applyThunderDebuff = (placedIdx: number): void => {
@@ -619,7 +658,7 @@ export function simulateMatchV1(
     }
   };
 
-  const applyChainFlips = (startIdx: number): number => {
+  const applyChainFlips = (startIdx: number, flipTraces: FlipTraceV1[]): number => {
     // Returns number of flips that happened during this placement (for combo bonus).
     let flipCount = 0;
 
@@ -637,7 +676,7 @@ export function simulateMatchV1(
       for (const { dir, opp } of DIRS) {
         const n = neighborIndex(attackerIdx, dir);
         if (n === null) continue;
-        const flipped = compareAndMaybeFlip(attackerIdx, n, isChain, { kind: "ortho", dir, opp });
+        const flipped = compareAndMaybeFlip(attackerIdx, n, isChain, { kind: "ortho", dir, opp }, flipTraces);
         if (flipped) flipCount += 1;
         if (flipped && !inQueue.has(n)) {
           queue.push({ idx: n, isChain: true });
@@ -656,7 +695,7 @@ export function simulateMatchV1(
             horiz: d.horiz,
             oppVert: d.oppVert,
             oppHoriz: d.oppHoriz,
-          });
+          }, flipTraces);
           if (flipped) flipCount += 1;
           if (flipped && !inQueue.has(n)) {
             queue.push({ idx: n, isChain: true });
@@ -763,7 +802,8 @@ export function simulateMatchV1(
     applyThunderDebuff(turn.cell);
 
     // Chain flips (core rule)
-    const flipCount = applyChainFlips(turn.cell);
+    const flipTracesThisTurn: FlipTraceV1[] = [];
+    const flipCount = applyChainFlips(turn.cell, flipTracesThisTurn);
 
     // Determine combo bonus (Design v2 default), if enabled by ruleset.
     const comboCount = 1 + flipCount;

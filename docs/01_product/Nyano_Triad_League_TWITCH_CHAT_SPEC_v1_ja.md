@@ -83,3 +83,8 @@ Twitch連携（EventSub/IRC）は後から差し替え可能にして、
 ## Overlay の turn summary（配信向け）
 - /match, /replay から overlay bus に lastTurnSummary を送る。
 - overlay は flip/COMBO/PLUS/MARK を短いバッジで表示し、実況の足場にする。
+
+
+## Flip traces（実況補助）
+- overlay bus の lastTurnSummary.flips に per-flip trace を入れる。
+- OBS表示は原則OFF（controls=0）で、配信者の確認時（controls=1）だけ詳細を出す。

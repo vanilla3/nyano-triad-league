@@ -117,3 +117,14 @@
 - PLUS +X / IGNORE MARK / TRIGGERED MARK / PLACED MARK
 
 ※ 次フェーズで trace を導入し、EDGE/FORMATION 等の理由も確定表示へ。
+
+
+## Overlay: Flip traces（Phase 3）
+- triad-engine の TurnSummary.flipTraces を転送し、flipごとに
+  - DIRECT/CHAIN
+  - DIAG
+  - JANKEN（tie-break）
+  - aVal/dVal
+  を表示（controls=1 のときのみ）
+
+これにより実況で「なぜ？」が説明しやすくなる。

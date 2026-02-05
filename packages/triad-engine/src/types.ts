@@ -2,6 +2,33 @@ export type PlayerIndex = 0 | 1;
 
 export type Direction = "up" | "right" | "down" | "left";
 
+
+/**
+ * Per-flip trace (v1): enough to explain "why this cell flipped" on stream overlays.
+ * This is intentionally small & JSON-friendly.
+ */
+export interface FlipTraceV1 {
+  /** attacker cell index (0..8) */
+  from: number;
+  /** defender cell index (0..8) that flipped */
+  to: number;
+  /** whether this flip was caused by a chain capture */
+  isChain: boolean;
+  /** attack kind */
+  kind: "ortho" | "diag";
+  /** for ortho attacks: the attacker direction used */
+  dir?: Direction;
+  /** for diagonal attacks: attacker vertical/horizontal components */
+  vert?: Direction;
+  horiz?: Direction;
+  /** effective comparison values after all modifiers */
+  aVal: number;
+  dVal: number;
+  /** true if aVal == dVal and janken tie-break decided the outcome */
+  tieBreak: boolean;
+}
+
+
 export interface Edges {
   up: number;   // 0..10 (Nyano triad 1..10 をそのまま入れてOK)
   right: number;// 0..10
@@ -133,6 +160,8 @@ export interface TurnSummary {
   cardIndex: number;
   tokenId: bigint;
   flipCount: number;   // このターンでひっくり返した枚数
+  /** Per-flip traces (for overlays/debug). */
+  flipTraces?: FlipTraceV1[];
   comboCount: number;  // 1（配置）+ flipCount（設計ドキュメント準拠）
   comboEffect: ComboEffectName;
   appliedBonus: {

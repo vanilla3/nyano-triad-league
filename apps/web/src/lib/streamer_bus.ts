@@ -59,6 +59,20 @@ lastTurnSummary?: {
   ignoreWarningMark: boolean;
   warningTriggered: boolean;
   warningPlaced: number | null;
+
+  /** Optional per-flip traces (small JSON). */
+  flips?: Array<{
+    from: number;
+    to: number;
+    isChain: boolean;
+    kind: "ortho" | "diag";
+    dir?: "up" | "right" | "down" | "left";
+    vert?: "up" | "down";
+    horiz?: "left" | "right";
+    aVal: number;
+    dVal: number;
+    tieBreak: boolean;
+  }>;
 };
 
 aiNote?: string;
