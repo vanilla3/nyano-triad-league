@@ -142,3 +142,8 @@
 
 
 - 詳細: `docs/01_product/Nyano_Triad_League_NYANO_WARUDO_BRIDGE_SPEC_v1_ja.md`
+
+
+### nyano-warudo strictAllowed
+- vote start: state_json を送って合法手 allowlist を確定
+- vote open: state が更新された場合に state_json を再送（任意 / debounced）

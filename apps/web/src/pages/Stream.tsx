@@ -228,6 +228,7 @@ const [warudoBaseUrl, setWarudoBaseUrl] = React.useState<string>(() => {
   return (saved ?? env ?? "").toString();
 });
 const [autoSendPromptOnVoteStart, setAutoSendPromptOnVoteStart] = React.useState<boolean>(false);
+const [autoResendStateDuringVoteOpen, setAutoResendStateDuringVoteOpen] = React.useState<boolean>(false);
 const [autoSendStateOnVoteEnd, setAutoSendStateOnVoteEnd] = React.useState<boolean>(false);
 const [lastBridgePayload, setLastBridgePayload] = React.useState<string>("");
 const [lastBridgeResult, setLastBridgeResult] = React.useState<string>("");
@@ -452,12 +453,12 @@ function buildAiPrompt(state: OverlayStateV1 | null, controlled: 0 | 1): string 
 }
 
 const sendNyanoWarudo = React.useCallback(
-  async (kind: "ai_prompt" | "state_json") => {
+  async (kind: "ai_prompt" | "state_json", opts?: { silent?: boolean }) => {
     const state = live;
     if (!state) {
       const msg = "No live state yet (open /match or /replay with broadcast=1).";
       setLastBridgeResult(msg);
-      toast.warn("Nyano Warudo", msg);
+      if (!opts?.silent) toast.warn("Nyano Warudo", msg);
       return;
     }
 
@@ -476,8 +477,10 @@ const sendNyanoWarudo = React.useCallback(
 
     const summary = `ok=${res.ok} status=${res.status} ${res.text ? `\n${res.text}` : ""}`;
     setLastBridgeResult(summary);
-    if (res.ok) toast.success("Nyano Warudo", `Sent ${kind}`);
-    else toast.error("Nyano Warudo", `Failed to send ${kind}`);
+    if (!opts?.silent) {
+      if (res.ok) toast.success("Nyano Warudo", `Sent ${kind}`);
+      else toast.error("Nyano Warudo", `Failed to send ${kind}`);
+    }
   },
   [live, controlledSide, warudoBaseUrl, toast]
 );
@@ -551,8 +554,8 @@ const remainingWarningMarks = React.useMemo(() => {
     if (autoSendPromptOnVoteStart) {
       // best-effort (do not block stream ops)
       // IMPORTANT: Send state_json first so nyano-warudo strictAllowed can lock an up-to-date allowlist during the vote.
-      sendNyanoWarudo("state_json").catch(() => {});
-      sendNyanoWarudo("ai_prompt").catch(() => {});
+      sendNyanoWarudo("state_json", { silent: true }).catch(() => {});
+      sendNyanoWarudo("ai_prompt", { silent: true }).catch(() => {});
     }
     setVoteTurn(liveTurn);
     setVoteEndsAtMs(now + sec * 1000);
@@ -618,7 +621,7 @@ const remainingWarningMarks = React.useMemo(() => {
 
 
 if (autoSendStateOnVoteEnd) {
-  sendNyanoWarudo("state_json").catch(() => {});
+  sendNyanoWarudo("state_json", { silent: true }).catch(() => {});
 }
 
     toast.success("Sent", moveKey(mv));
@@ -626,7 +629,42 @@ if (autoSendStateOnVoteEnd) {
     setVoteTurn(null);
     setVoteEndsAtMs(null);
     resetVotes();
-  }, [voteOpen, pickWinner, canVoteNow, liveTurn, controlledSide, resetVotes, toast]);
+  }, [voteOpen, pickWinner, canVoteNow, liveTurn, controlledSide, resetVotes, toast, autoSendStateOnVoteEnd, sendNyanoWarudo]);
+
+// keep nyano-warudo strictAllowed allowlist fresh during an open vote (optional)
+const resendTimerRef = React.useRef<number | null>(null);
+const lastResendSigRef = React.useRef<string>("");
+
+React.useEffect(() => {
+  if (!autoResendStateDuringVoteOpen) return;
+  if (!voteOpen) return;
+  if (!live) return;
+
+  // Signature of "things that affect legal moves" (keep tiny to avoid noise)
+  const sigObj = {
+    updatedAtMs: live.updatedAtMs ?? null,
+    turn: typeof live.turn === "number" ? live.turn : null,
+    firstPlayer: typeof live.firstPlayer === "number" ? live.firstPlayer : null,
+    usedCells: Array.isArray(live.usedCells) ? live.usedCells : null,
+    usedA: Array.isArray(live.usedCardIndicesA) ? live.usedCardIndicesA : null,
+    usedB: Array.isArray(live.usedCardIndicesB) ? live.usedCardIndicesB : null,
+    wA: typeof live.warningMarksUsedA === "number" ? live.warningMarksUsedA : null,
+    wB: typeof live.warningMarksUsedB === "number" ? live.warningMarksUsedB : null,
+  };
+  const sig = JSON.stringify(sigObj);
+  if (sig === lastResendSigRef.current) return;
+  lastResendSigRef.current = sig;
+
+  if (resendTimerRef.current) window.clearTimeout(resendTimerRef.current);
+  resendTimerRef.current = window.setTimeout(() => {
+    sendNyanoWarudo("state_json", { silent: true }).catch(() => {});
+  }, 250);
+
+  return () => {
+    if (resendTimerRef.current) window.clearTimeout(resendTimerRef.current);
+    resendTimerRef.current = null;
+  };
+}, [autoResendStateDuringVoteOpen, voteOpen, live?.updatedAtMs, controlledSide, sendNyanoWarudo]);
 
   // timer tick
   React.useEffect(() => {
@@ -900,8 +938,17 @@ return (
               <div className="rounded-xl border border-slate-200 bg-white px-3 py-2">
                 <div className="text-[11px] font-semibold text-slate-700">Vote control</div>
 
-                <div className="mt-2 grid grid-cols-2 gap-2">
+                <div className="mt-2 grid gap-2">
                   <label className="text-[11px] text-slate-600">Controlled side</label>
+
+<label className="flex items-center gap-2 text-xs text-slate-700">
+  <input
+    type="checkbox"
+    checked={autoResendStateDuringVoteOpen}
+    onChange={(e) => setAutoResendStateDuringVoteOpen(e.target.checked)}
+  />
+  vote open → refresh state_json on state updates (strictAllowed)
+</label>
                   <select
                     className="rounded-lg border border-slate-200 bg-white px-2 py-1 text-xs"
                     value={String(controlledSide)}

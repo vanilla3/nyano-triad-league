@@ -102,3 +102,8 @@ AI Nyano が Twitch で配信しつつ、視聴者が “その場で参加で�
 - [x] send snapshots to nyano-warudo (POST /v1/snapshots)
 - [x] agree viewer command format (#triad A2->B2)
 - [x] provide sample state/transcript/protocol file
+
+
+### nyano-warudo integration
+- [x] vote start: send state_json (strictAllowed allowlist)
+- [x] optional: resend state_json on state updates while vote open (debounced)

@@ -69,3 +69,11 @@ nyano-warudo で正規表現・表示・集計しやすい “短い型” を�
 - `hands`（deck slots + used）
 - `legalMoves`（viewer command string 付き）
 - `warningMark`（remaining + candidates）
+## strictAllowed をフル活用する（推奨）
+nyano-warudo 側で strictAllowed（合法手 allowlist）を使う場合、Triad League 側は少なくとも以下を行う。
+
+- vote start 時に **state_json を送る**（allowlistを最新化し、投票中の荒れを抑える）
+- （任意）vote open 中に state が更新された場合は **state_json を再送する**  
+  - Triad League 側の Stream Studio で `vote open → refresh state_json on state updates` をON
+
+※ 自動送信は `silent` で実行し、配信中の toast スパムを避ける。

@@ -106,3 +106,8 @@ Twitch連携（EventSub/IRC）は後から差し替え可能にして、
 - `/#triad\s+([A][1-5]|[1-5])\s*->\s*([A-C][1-3])(\s+wm=([A-C][1-3]))?/i`
 
 Triad League 側はこの形式も parse できるようにしてあります。
+
+
+## strictAllowed（荒れ防止）
+- 投票開始時点で state_json を送ることで合法手 allowlist を固定できる。
+- 投票中に state が変化する可能性がある場合は再送（debounced）を有効化する。
