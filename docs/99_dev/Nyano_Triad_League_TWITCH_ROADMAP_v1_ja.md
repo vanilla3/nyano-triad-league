@@ -107,3 +107,8 @@ AI Nyano が Twitch で配信しつつ、視聴者が “その場で参加で�
 ### nyano-warudo integration
 - [x] vote start: send state_json (strictAllowed allowlist)
 - [x] optional: resend state_json on state updates while vote open (debounced)
+
+
+### Samples for nyano-warudo
+- [x] /stream: download state_json / transcript / ai_prompt
+- [ ] capture a full 1-game transcript file during a live run and attach to nyano-warudo PR

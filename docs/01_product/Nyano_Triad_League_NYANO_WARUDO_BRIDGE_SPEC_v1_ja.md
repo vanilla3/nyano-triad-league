@@ -77,3 +77,20 @@ nyano-warudo 側で strictAllowed（合法手 allowlist）を使う場合、Tria
   - Triad League 側の Stream Studio で `vote open → refresh state_json on state updates` をON
 
 ※ 自動送信は `silent` で実行し、配信中の toast スパムを避ける。
+
+
+## state_json v1 の互換ルール（重要）
+- `protocol` は固定文字列（`triad_league_state_json_v1`）。変更しない。
+- **追加はOK / 削除・型変更はNG**（後方互換）。
+- 既存フィールドの意味を変えない。
+- `tokenId` は JS/JSON 安全のため **decimal string** を維持。
+- `legalMoves` は strictAllowed の allowlist として扱えるよう、可能な限り送る（欠落させない）。
+- enum は値追加のみ（既存値の意味変更はNG）。
+
+## 1クリックでサンプル提出
+Stream Studio（`/stream`）の Bridge パネルから以下をDLできる。
+- Download state_json
+- Download transcript
+- Download ai_prompt
+
+nyano-warudo 側へ「このファイルでOK」と渡せる。

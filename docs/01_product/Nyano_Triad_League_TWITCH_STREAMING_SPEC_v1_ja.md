@@ -147,3 +147,10 @@
 ### nyano-warudo strictAllowed
 - vote start: state_json を送って合法手 allowlist を確定
 - vote open: state が更新された場合に state_json を再送（任意 / debounced）
+
+
+## サンプル提出（nyano-warudo 実装確定用）
+`/stream` の Bridge から以下をエクスポートできる。
+- state_json（strictAllowed の allowlist 検証に使用）
+- transcript/protocolV1（正規表現/表示/集計の実装確定に使用）
+- ai_prompt（Puzzle Show trigger / LLM 用）

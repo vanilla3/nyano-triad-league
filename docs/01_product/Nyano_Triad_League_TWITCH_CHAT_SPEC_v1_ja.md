@@ -111,3 +111,8 @@ Triad League 側はこの形式も parse できるようにしてあります。
 ## strictAllowed（荒れ防止）
 - 投票開始時点で state_json を送ることで合法手 allowlist を固定できる。
 - 投票中に state が変化する可能性がある場合は再送（debounced）を有効化する。
+
+
+## サンプル提出（実戦）
+- `/stream` の Download ボタンで state_json / transcript を書き出す。
+- nyano-warudo 側の strictAllowed / regex 実装の固定に利用する。

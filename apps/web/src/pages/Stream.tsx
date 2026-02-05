@@ -195,6 +195,34 @@ export function StreamPage() {
     toast.success("Copied", label);
   };
 
+
+function downloadTextFile(filename: string, content: string, mime: string) {
+  try {
+    const blob = new Blob([content], { type: mime });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  } catch (err) {
+    console.error(err);
+    toast.error("Download failed", String(err));
+  }
+}
+
+function safeFileStem(): string {
+  const parts = [
+    e?.id ?? "event",
+    typeof live?.turn === "number" ? `turn${live.turn}` : null,
+    new Date().toISOString().replace(/[:.]/g, "-"),
+  ].filter(Boolean);
+  return parts.join("_");
+}
+
+
   // live state from Match/Replay via overlay bus
   const [live, setLive] = React.useState<OverlayStateV1 | null>(() => readStoredOverlayState());
 
@@ -484,6 +512,53 @@ const sendNyanoWarudo = React.useCallback(
   },
   [live, controlledSide, warudoBaseUrl, toast]
 );
+
+
+const downloadStateJson = React.useCallback(() => {
+  const state = live;
+  if (!state) {
+    toast.warn("Download", "No live state yet.");
+    return;
+  }
+  const contentObj = buildStateJsonContent(state, controlledSide);
+  const content = JSON.stringify(contentObj, null, 2);
+  setLastBridgePayload(content);
+  downloadTextFile(`triad_state_json_${safeFileStem()}.json`, content, "application/json");
+}, [live, controlledSide, toast]);
+
+const downloadTranscript = React.useCallback(() => {
+  const state = live;
+  if (!state) {
+    toast.warn("Download", "No live state yet.");
+    return;
+  }
+  const protocolV1 = (state as any)?.protocolV1 ?? null;
+  const content = JSON.stringify(
+    {
+      protocol: "triad_league_transcript_v1",
+      exportedAtMs: Date.now(),
+      eventId: state.eventId ?? null,
+      eventTitle: state.eventTitle ?? null,
+      protocolV1,
+    },
+    null,
+    2
+  );
+  setLastBridgePayload(content);
+  downloadTextFile(`triad_transcript_${safeFileStem()}.json`, content, "application/json");
+}, [live, toast]);
+
+const downloadAiPrompt = React.useCallback(() => {
+  const state = live;
+  if (!state) {
+    toast.warn("Download", "No live state yet.");
+    return;
+  }
+  const content = buildAiPrompt(state, controlledSide);
+  setLastBridgePayload(content);
+  downloadTextFile(`triad_ai_prompt_${safeFileStem()}.txt`, content, "text/plain");
+}, [live, controlledSide, toast]);
+
 
   // Quick move picker (error prevention + faster stream ops)
   const [pickCell, setPickCell] = React.useState<number | null>(null);
