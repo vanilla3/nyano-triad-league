@@ -203,10 +203,6 @@ export function StreamPage() {
   }, []);
 
 
-React.useEffect(() => {
-  localStorage.setItem("nyanoWarudo.baseUrl", warudoBaseUrl);
-}, [warudoBaseUrl]);
-
   // Ensure the overlay is not stuck in OPEN state after refresh
   React.useEffect(() => {
     publishStreamVoteState({ version: 1, updatedAtMs: Date.now(), status: "closed" });
@@ -235,6 +231,256 @@ const [autoSendPromptOnVoteStart, setAutoSendPromptOnVoteStart] = React.useState
 const [autoSendStateOnVoteEnd, setAutoSendStateOnVoteEnd] = React.useState<boolean>(false);
 const [lastBridgePayload, setLastBridgePayload] = React.useState<string>("");
 const [lastBridgeResult, setLastBridgeResult] = React.useState<string>("");
+
+React.useEffect(() => {
+  // persist for convenience (stream ops)
+  try {
+    localStorage.setItem("nyanoWarudo.baseUrl", warudoBaseUrl);
+  } catch {
+    // ignore
+  }
+}, [warudoBaseUrl]);
+
+function computeEmptyCells(state: OverlayStateV1 | null): number[] {
+  if (!state) return [];
+  if (Array.isArray(state.usedCells)) {
+    const used = new Set(state.usedCells);
+    return Array.from({ length: 9 }, (_, i) => i).filter((i) => !used.has(i));
+  }
+  if (Array.isArray(state.board)) {
+    const b = state.board as any[];
+    return Array.from({ length: 9 }, (_, i) => i).filter((i) => b[i] == null);
+  }
+  return Array.from({ length: 9 }, (_, i) => i);
+}
+
+function computeUsedCardIndices(state: OverlayStateV1 | null, side: 0 | 1): number[] {
+  if (!state) return [];
+  const arr = side === 0 ? state.usedCardIndicesA : state.usedCardIndicesB;
+  if (Array.isArray(arr)) return arr.map((x) => Number(x)).filter((n) => Number.isFinite(n));
+
+  // fallback: derive from protocolV1
+  const p = (state as any).protocolV1 as any;
+  if (!p?.header || !Array.isArray(p.turns)) return [];
+  const firstPlayer = typeof p.header.firstPlayer === "number" ? (p.header.firstPlayer as 0 | 1) : null;
+  if (firstPlayer === null) return [];
+  const used: number[] = [];
+  for (let i = 0; i < p.turns.length; i++) {
+    const by = ((firstPlayer + (i % 2)) % 2) as 0 | 1;
+    if (by !== side) continue;
+    const ci = Number(p.turns[i]?.cardIndex);
+    if (Number.isFinite(ci)) used.push(ci);
+  }
+  return used;
+}
+
+function computeWarningMarksUsed(state: OverlayStateV1 | null, side: 0 | 1): number {
+  if (!state) return 0;
+  const v = side === 0 ? state.warningMarksUsedA : state.warningMarksUsedB;
+  if (typeof v === "number" && Number.isFinite(v)) return v;
+
+  // fallback: derive from protocolV1
+  const p = (state as any).protocolV1 as any;
+  if (!p?.header || !Array.isArray(p.turns)) return 0;
+  const firstPlayer = typeof p.header.firstPlayer === "number" ? (p.header.firstPlayer as 0 | 1) : null;
+  if (firstPlayer === null) return 0;
+  let used = 0;
+  for (let i = 0; i < p.turns.length; i++) {
+    const by = ((firstPlayer + (i % 2)) % 2) as 0 | 1;
+    if (by !== side) continue;
+    if (typeof p.turns[i]?.warningMarkCell === "number") used += 1;
+  }
+  return used;
+}
+
+function computeRemainingCardIndices(state: OverlayStateV1 | null, side: 0 | 1): number[] {
+  const used = new Set(computeUsedCardIndices(state, side));
+  return [0, 1, 2, 3, 4].filter((i) => !used.has(i));
+}
+
+function bestEffortBoardToProtocolBoard(state: OverlayStateV1 | null): Array<any | null> {
+  // For nyano-warudo display/aggregation: keep it simple.
+  const out: Array<any | null> = Array.from({ length: 9 }, () => null);
+  if (!state || !Array.isArray(state.board)) return out;
+
+  const deckA = Array.isArray(state.deckA) ? state.deckA.map(String) : [];
+  const deckB = Array.isArray(state.deckB) ? state.deckB.map(String) : [];
+
+  const b = state.board as any[];
+  for (let i = 0; i < 9; i++) {
+    const cell = b[i];
+    if (!cell) continue;
+    const ownerRaw = (cell as any).owner;
+    const owner = ownerRaw === 0 || ownerRaw === "0" || ownerRaw === "A" ? "A" : ownerRaw === 1 || ownerRaw === "1" || ownerRaw === "B" ? "B" : null;
+    if (!owner) continue;
+
+    const tokenId = (cell as any)?.card?.tokenId != null ? String((cell as any).card.tokenId) : null;
+    const deck = owner === "A" ? deckA : deckB;
+    const slot = tokenId ? deck.findIndex((x) => x === tokenId) : -1;
+
+    out[i] = {
+      owner,
+      cardSlot: slot >= 0 ? slot : undefined,
+      tokenId: tokenId ?? undefined,
+    };
+  }
+  return out;
+}
+
+function buildStateJsonContent(state: OverlayStateV1 | null, controlled: 0 | 1): any {
+  const now = Date.now();
+  const first = typeof state?.firstPlayer === "number" ? (state!.firstPlayer as 0 | 1) : null;
+  const turn = typeof state?.turn === "number" ? Number(state!.turn) : null;
+  const toPlay = first !== null && turn !== null ? ((first + (turn % 2)) % 2) as 0 | 1 : null;
+
+  const emptyCells = computeEmptyCells(state);
+  const remainA = computeRemainingCardIndices(state, 0);
+  const remainB = computeRemainingCardIndices(state, 1);
+  const remainToPlay = toPlay === 0 ? remainA : toPlay === 1 ? remainB : [];
+
+  const wUsed = toPlay === 0 ? computeWarningMarksUsed(state, 0) : toPlay === 1 ? computeWarningMarksUsed(state, 1) : 0;
+  const wRemain = Math.max(0, 3 - wUsed);
+  const wmCandidates = wRemain > 0 ? emptyCells.map(cellIndexToCoord) : [];
+
+  const legalMoves: any[] = [];
+  for (const cell of emptyCells) {
+    for (const cardIndex of remainToPlay) {
+      legalMoves.push({
+        cell,
+        cardIndex,
+        viewer: toViewerMoveText({ cell, cardIndex }),
+      });
+    }
+  }
+
+  return {
+    protocol: "triad_league_state_json_v1",
+    sentAtMs: now,
+    eventId: state?.eventId ?? null,
+    eventTitle: state?.eventTitle ?? null,
+    mode: state?.mode ?? null,
+    turn,
+    toPlay: toPlay === 0 ? "A" : toPlay === 1 ? "B" : null,
+    controlledSide: controlled === 0 ? "A" : "B",
+    viewerCommandFormat: "#triad A2->B2 wm=C1",
+
+    // Protocol snapshot (best-effort)
+    protocolV1: (state as any)?.protocolV1 ?? null,
+
+    // Board in a minimal & stable shape
+    board: bestEffortBoardToProtocolBoard(state),
+
+    // Hand slots (tokenIds only, stable)
+    hands: {
+      A: Array.isArray(state?.deckA)
+        ? state!.deckA.map((t, i) => ({ slot: i, tokenId: String(t), used: computeUsedCardIndices(state, 0).includes(i) }))
+        : [],
+      B: Array.isArray(state?.deckB)
+        ? state!.deckB.map((t, i) => ({ slot: i, tokenId: String(t), used: computeUsedCardIndices(state, 1).includes(i) }))
+        : [],
+    },
+
+    // Turn-local legal action space
+    legalMoves,
+    warningMark: {
+      used: wUsed,
+      remaining: wRemain,
+      candidates: wmCandidates,
+    },
+  };
+}
+
+function buildAiPrompt(state: OverlayStateV1 | null, controlled: 0 | 1): string {
+  const first = typeof state?.firstPlayer === "number" ? (state!.firstPlayer as 0 | 1) : null;
+  const turn = typeof state?.turn === "number" ? Number(state!.turn) : null;
+  const toPlay = first !== null && turn !== null ? ((first + (turn % 2)) % 2) as 0 | 1 : null;
+
+  const emptyCells = computeEmptyCells(state);
+  const remain = computeRemainingCardIndices(state, toPlay === 1 ? 1 : 0);
+  const wUsed = computeWarningMarksUsed(state, toPlay === 1 ? 1 : 0);
+  const wRemain = Math.max(0, 3 - wUsed);
+
+  const boardMini = bestEffortBoardToProtocolBoard(state);
+
+  const lines: string[] = [];
+  lines.push("Nyano Triad League snapshot (ai_prompt)");
+  lines.push(`event: ${state?.eventTitle ?? state?.eventId ?? "—"}`);
+  lines.push(`mode: ${state?.mode ?? "—"}  turn: ${turn ?? "—"}/9`);
+  lines.push(`to_play: ${toPlay === 0 ? "A" : toPlay === 1 ? "B" : "—"}  controlled: ${controlled === 0 ? "A" : "B"}`);
+  lines.push("");
+  lines.push("Objective:");
+  lines.push("- Choose ONE strong move for the side to_play. Return ONLY the viewer command.");
+  lines.push("");
+  lines.push("Viewer command format:");
+  lines.push("- #triad A<slot>-><cell> wm=<cell> (wm optional)");
+  lines.push("  examples: #triad A2->B2   /   #triad A3->C3 wm=A1");
+  lines.push("");
+  lines.push("Board (A1..C3): each cell = owner+slot (tokenId if known)");
+  // render grid
+  const cellLabel = (i: number): string => {
+    const c = boardMini[i];
+    if (!c) return "--";
+    const owner = c.owner ?? "?";
+    const slot = typeof c.cardSlot === "number" ? `A${c.cardSlot + 1}` : "A?";
+    return `${owner}${slot}`;
+  };
+  lines.push(`A1 ${cellLabel(0)} | B1 ${cellLabel(1)} | C1 ${cellLabel(2)}`);
+  lines.push(`A2 ${cellLabel(3)} | B2 ${cellLabel(4)} | C2 ${cellLabel(5)}`);
+  lines.push(`A3 ${cellLabel(6)} | B3 ${cellLabel(7)} | C3 ${cellLabel(8)}`);
+  lines.push("");
+  lines.push(`Empty cells: ${emptyCells.map(cellIndexToCoord).join(", ")}`);
+  lines.push(`Remaining hand slots for to_play: ${remain.map((i) => `A${i + 1}`).join(", ") || "—"}`);
+  lines.push(`WarningMark: remaining=${wRemain} (used=${wUsed}) candidates=${wRemain > 0 ? emptyCells.map(cellIndexToCoord).join(", ") : "—"}`);
+  lines.push("");
+  lines.push("Legal moves (cell+slot):");
+  // Print up to 30 moves to keep prompt readable
+  const max = 30;
+  let printed = 0;
+  for (const cell of emptyCells) {
+    for (const cardIndex of remain) {
+      if (printed >= max) break;
+      lines.push(`- #triad A${cardIndex + 1}->${cellIndexToCoord(cell)}`);
+      printed += 1;
+    }
+    if (printed >= max) break;
+  }
+  if (emptyCells.length * remain.length > max) lines.push(`... (${emptyCells.length * remain.length} total)`);
+  lines.push("");
+  lines.push("Return format: ONLY one line, e.g. '#triad A2->B2' or '#triad A2->B2 wm=C1'");
+
+  return lines.join("\n");
+}
+
+const sendNyanoWarudo = React.useCallback(
+  async (kind: "ai_prompt" | "state_json") => {
+    const state = live;
+    if (!state) {
+      const msg = "No live state yet (open /match or /replay with broadcast=1).";
+      setLastBridgeResult(msg);
+      toast.warn("Nyano Warudo", msg);
+      return;
+    }
+
+    const content =
+      kind === "ai_prompt"
+        ? buildAiPrompt(state, controlledSide)
+        : JSON.stringify(buildStateJsonContent(state, controlledSide), null, 2);
+
+    setLastBridgePayload(content);
+
+    const res = await postNyanoWarudoSnapshot(warudoBaseUrl, {
+      source: "triad_league",
+      kind,
+      content,
+    });
+
+    const summary = `ok=${res.ok} status=${res.status} ${res.text ? `\n${res.text}` : ""}`;
+    setLastBridgeResult(summary);
+    if (res.ok) toast.success("Nyano Warudo", `Sent ${kind}`);
+    else toast.error("Nyano Warudo", `Failed to send ${kind}`);
+  },
+  [live, controlledSide, warudoBaseUrl, toast]
+);
 
   // Quick move picker (error prevention + faster stream ops)
   const [pickCell, setPickCell] = React.useState<number | null>(null);
@@ -312,7 +558,7 @@ if (autoSendPromptOnVoteStart) {
     setVoteEndsAtMs(now + sec * 1000);
     resetVotes();
     toast.success("Vote", `Started (${sec}s) for turn ${liveTurn}`);
-  }, [canVoteNow, voteSeconds, liveTurn, resetVotes, toast]);
+  }, [canVoteNow, voteSeconds, liveTurn, resetVotes, toast, autoSendPromptOnVoteStart, sendNyanoWarudo]);
 
   const pickWinner = React.useCallback((): ParsedMove | null => {
     const entries = Object.values(votesByUser);
@@ -749,6 +995,68 @@ return (
                 </div>
               </div>
             </div>
+
+
+<div className="mt-3 grid gap-3 md:grid-cols-2">
+  <div className="rounded-xl border border-slate-200 bg-white px-3 py-2">
+    <div className="flex items-center justify-between gap-2">
+      <div className="text-[11px] font-semibold text-slate-700">Nyano Warudo Bridge</div>
+      <div className="text-[11px] text-slate-500 font-mono">POST /v1/snapshots</div>
+    </div>
+    <div className="mt-2 space-y-2">
+      <label className="text-[11px] text-slate-600">nyano-warudo Base URL</label>
+      <input
+        className="w-full rounded-lg border border-slate-200 bg-white px-2 py-1 text-xs font-mono"
+        value={warudoBaseUrl}
+        onChange={(e) => setWarudoBaseUrl(e.target.value)}
+        placeholder="http://localhost:8787"
+      />
+      <div className="text-[11px] text-slate-500">
+        ※ CORSで失敗する場合は nyano-warudo 側で localhost を許可してください。
+      </div>
+
+      <div className="mt-2 grid grid-cols-2 gap-2">
+        <label className="flex items-center gap-2 text-xs text-slate-700">
+          <input
+            type="checkbox"
+            checked={autoSendPromptOnVoteStart}
+            onChange={(e) => setAutoSendPromptOnVoteStart(e.target.checked)}
+          />
+          vote start → ai_prompt
+        </label>
+        <label className="flex items-center gap-2 text-xs text-slate-700">
+          <input
+            type="checkbox"
+            checked={autoSendStateOnVoteEnd}
+            onChange={(e) => setAutoSendStateOnVoteEnd(e.target.checked)}
+          />
+          vote end → state_json
+        </label>
+      </div>
+
+      <div className="mt-2 flex flex-wrap items-center gap-2">
+        <button className="btn btn-sm btn-primary" onClick={() => sendNyanoWarudo("ai_prompt")}>
+          Send ai_prompt
+        </button>
+        <button className="btn btn-sm" onClick={() => sendNyanoWarudo("state_json")}>
+          Send state_json
+        </button>
+      </div>
+
+      <div className="mt-2 text-[11px] text-slate-500">
+        viewer cmd format: <span className="font-mono">#triad A2-&gt;B2 wm=C1</span>
+      </div>
+    </div>
+  </div>
+
+  <div className="rounded-xl border border-slate-200 bg-white px-3 py-2">
+    <div className="text-[11px] font-semibold text-slate-700">Last payload / result</div>
+    <div className="mt-2 space-y-2">
+      <CopyField label="payload (content)" value={lastBridgePayload || "—"} />
+      <CopyField label="result" value={lastBridgeResult || "—"} />
+    </div>
+  </div>
+</div>
 
             <div className="mt-3 text-[11px] text-slate-500">
               ここで確立した「command bus」は、次の段階で Twitch Bridge（EventSub/IRC）に置き換え可能です。

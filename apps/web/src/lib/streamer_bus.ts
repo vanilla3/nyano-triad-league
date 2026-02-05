@@ -29,6 +29,31 @@ export type OverlayStateV1 = {
   deckA?: string[]; // decimal strings
   deckB?: string[]; // decimal strings
 
+
+/**
+ * Protocol snapshot (Transcript-like) for integrations.
+ * JSON-friendly (tokenIds are strings).
+ */
+protocolV1?: {
+  header: {
+    version: number;
+    rulesetId: string;
+    seasonId: number;
+    playerA: string;
+    playerB: string;
+    deckA: string[]; // tokenId decimal strings
+    deckB: string[]; // tokenId decimal strings
+    firstPlayer: 0 | 1;
+    deadline: number;
+    salt: string;
+  };
+  turns: Array<{
+    cell: number;
+    cardIndex: number;
+    warningMarkCell?: number;
+  }>;
+};
+
   // Optional usage hints for stream tooling (best-effort).
   usedCells?: number[]; // 0..8
   usedCardIndicesA?: number[]; // 0..4

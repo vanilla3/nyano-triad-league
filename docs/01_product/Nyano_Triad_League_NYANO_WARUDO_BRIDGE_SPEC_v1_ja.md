@@ -43,3 +43,29 @@ nyano-warudo で正規表現・表示・集計しやすい “短い型” を�
 
 ## Samples
 - `docs/02_protocol/samples/*` を参照（1ゲーム分の transcript/state_json 例）。
+## Stream Studio UI
+`/stream` に **Nyano Warudo Bridge** パネルを設置し、以下を提供する。
+
+- Base URL input（`VITE_NYANO_WARUDO_BASE_URL` も参照）
+- 手動送信:
+  - Send ai_prompt
+  - Send state_json
+- 自動送信（任意）:
+  - vote start → ai_prompt
+  - vote end → state_json
+- payload / result を CopyField で確認（nyano-warudo 側のログと突き合わせしやすい）
+
+## state_json schema (v1)
+`content` は JSON文字列（stringified）で、少なくとも以下を含む。
+
+- `protocol`: `"triad_league_state_json_v1"`
+- `sentAtMs`
+- `eventId` / `eventTitle`
+- `mode` / `turn` / `toPlay`
+- `controlledSide`
+- `viewerCommandFormat`
+- `protocolV1`（Transcript: header + turns）
+- `board`（9 cells / owner + cardSlot + tokenId）
+- `hands`（deck slots + used）
+- `legalMoves`（viewer command string 付き）
+- `warningMark`（remaining + candidates）
