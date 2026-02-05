@@ -112,3 +112,7 @@ AI Nyano が Twitch で配信しつつ、視聴者が “その場で参加で�
 ### Samples for nyano-warudo
 - [x] /stream: download state_json / transcript / ai_prompt
 - [ ] capture a full 1-game transcript file during a live run and attach to nyano-warudo PR
+
+
+### Nyano-warudo bridge ops
+- [x] stream: sample downloads (state_json/transcript/ai_prompt)

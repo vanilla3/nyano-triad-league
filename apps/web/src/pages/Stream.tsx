@@ -1169,6 +1169,24 @@ return (
         </button>
       </div>
 
+<div className="mt-2 rounded-lg border border-slate-200 bg-slate-50 px-2 py-2">
+  <div className="text-[11px] font-semibold text-slate-700">Samples (share to nyano-warudo)</div>
+  <div className="mt-1 text-[11px] text-slate-500">
+    “実戦の1ゲーム分サンプル” を渡す用途。payload は右の欄にも残ります。
+  </div>
+  <div className="mt-2 flex flex-wrap items-center gap-2">
+    <button className="btn btn-sm" onClick={downloadStateJson}>
+      Download state_json
+    </button>
+    <button className="btn btn-sm" onClick={downloadTranscript}>
+      Download transcript
+    </button>
+    <button className="btn btn-sm" onClick={downloadAiPrompt}>
+      Download ai_prompt
+    </button>
+  </div>
+</div>
+
       <div className="mt-2 text-[11px] text-slate-500">
         viewer cmd format: <span className="font-mono">#triad A2-&gt;B2 wm=C1</span>
       </div>
