@@ -11,6 +11,8 @@
 - `#triad A1->B2`
 - `#triad 3->C3`
 - `#triad B2 2`
+- `#triad 3 B2` (swap order)
+- `#triad A2→B2` (unicode arrow)
 - `#triad A5->A1 wm=B3`
 
 ## Regex (nyano-warudo side) example
@@ -19,3 +21,5 @@
 ```
 
 Triad League 側は上記の形式を parse できます。
+
+補足: Triad League 側は unicode 矢印（→/⇒ 等）を `->` に正規化して parse します。

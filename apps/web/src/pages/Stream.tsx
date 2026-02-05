@@ -31,6 +31,20 @@ function ageLabel(updatedAtMs?: number): string {
   return `${m}m ago`;
 }
 
+
+
+function fnv1a32Hex(input: string): string {
+  // Non-cryptographic stable hash for allowlists (for strictAllowed dedupe).
+  // FNV-1a 32-bit
+  let h = 0x811c9dc5;
+  for (let i = 0; i < input.length; i++) {
+    h ^= input.charCodeAt(i);
+    // 32-bit multiply: h *= 16777619
+    h = (h + ((h << 1) + (h << 4) + (h << 7) + (h << 8) + (h << 24))) >>> 0;
+  }
+  return "0x" + h.toString(16).padStart(8, "0");
+}
+
 function currentPlayer(firstPlayer?: 0 | 1, turn?: number): 0 | 1 | null {
   if (typeof firstPlayer !== "number") return null;
   if (typeof turn !== "number") return null;
@@ -119,7 +133,13 @@ function parseChatMove(text: string): ParsedMove | null {
   //   - warning mark is optional (wm=... / w ...)
 
   // strip prefixes
-  const t = raw.replace(/^(?:#|!)(?:triad|move|m)\s+/i, "").trim();
+  const t = raw
+    .replace(/^(?:#|!)(?:triad|move|m)\s+/i, "")
+    .trim()
+    .replace(/　/g, " ") // fullwidth space
+    .replace(/[→➡⇒➔⟶⟹⮕]/g, "->")
+    .replace(/[‐‑‒–—−]/g, "-") // hyphen variants
+    .replace(/＝/g, "=");
 
   // Extract optional wm first (accept coord or digit)
   let main = t;
@@ -142,13 +162,22 @@ function parseChatMove(text: string): ParsedMove | null {
     return { cell, cardIndex, warningMarkCell: wm };
   }
 
-  // Space style: "<cell> <card>"
+  // Space style: "<cell> <card>" or "<card> <cell>"
   const parts = main.split(/\s+/).filter(Boolean);
   if (parts.length >= 2) {
+    // 1) cell first
     const cell = parseCellAny(parts[0]);
     const cardIndex = parseCardIndexHuman(parts[1]);
-    if (cell === null || cardIndex === null) return null;
-    return { cell, cardIndex, warningMarkCell: wm };
+    if (cell !== null && cardIndex !== null) return { cell, cardIndex, warningMarkCell: wm };
+
+    // 2) swap (card first) - allows: "#triad 3 B2"
+    const cardIndex2 = parseCardIndexHuman(parts[0]);
+    const cell2 = parseCellAny(parts[1]);
+    if (cell2 !== null && cardIndex2 !== null) return { cell: cell2, cardIndex: cardIndex2, warningMarkCell: wm };
+
+    return null;
+  }
+
   }
 
   // Fallback legacy numeric without prefix:
@@ -382,12 +411,16 @@ function buildStateJsonContent(state: OverlayStateV1 | null, controlled: 0 | 1):
     }
   }
 
+  const allowlist = legalMoves.map((m) => String(m.viewer)).sort();
+  const allowlistHash = fnv1a32Hex(allowlist.join("\n"));
+
   return {
     protocol: "triad_league_state_json_v1",
     sentAtMs: now,
     eventId: state?.eventId ?? null,
     eventTitle: state?.eventTitle ?? null,
     mode: state?.mode ?? null,
+    status: (state as any).status ?? null,
     turn,
     toPlay: toPlay === 0 ? "A" : toPlay === 1 ? "B" : null,
     controlledSide: controlled === 0 ? "A" : "B",
@@ -411,6 +444,10 @@ function buildStateJsonContent(state: OverlayStateV1 | null, controlled: 0 | 1):
 
     // Turn-local legal action space
     legalMoves,
+    strictAllowed: {
+      allowlist,
+      hash: allowlistHash,
+    },
     warningMark: {
       used: wUsed,
       remaining: wRemain,
@@ -539,6 +576,7 @@ const downloadTranscript = React.useCallback(() => {
       exportedAtMs: Date.now(),
       eventId: state.eventId ?? null,
       eventTitle: state.eventTitle ?? null,
+      result: (state as any).status ?? null,
       protocolV1,
     },
     null,

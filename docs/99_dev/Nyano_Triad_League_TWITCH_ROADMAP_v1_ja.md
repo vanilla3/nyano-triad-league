@@ -116,3 +116,5 @@ AI Nyano が Twitch で配信しつつ、視聴者が “その場で参加で�
 
 ### Nyano-warudo bridge ops
 - [x] stream: sample downloads (state_json/transcript/ai_prompt)
+
+- [x] state_json: strictAllowed allowlist + hash (dedupe)

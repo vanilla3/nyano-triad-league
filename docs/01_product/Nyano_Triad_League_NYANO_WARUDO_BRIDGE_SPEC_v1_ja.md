@@ -68,6 +68,7 @@ nyano-warudo で正規表現・表示・集計しやすい “短い型” を�
 - `board`（9 cells / owner + cardSlot + tokenId）
 - `hands`（deck slots + used）
 - `legalMoves`（viewer command string 付き）
+- `strictAllowed`（allowlist + hash; nyano-warudo strictAllowed 用）
 - `warningMark`（remaining + candidates）
 ## strictAllowed をフル活用する（推奨）
 nyano-warudo 側で strictAllowed（合法手 allowlist）を使う場合、Triad League 側は少なくとも以下を行う。

@@ -104,5 +104,20 @@
       "cardIndex": 2,
       "warningMarkCell": 0
     }
-  ]
+  ],
+  "strictAllowed": {
+    "allowlist": [
+      "#triad A1->A1",
+      "#triad A2->B2",
+      "#triad A3->C3 wm=A1"
+    ],
+    "hash": "0x533fb719"
+  },
+  "status": {
+    "finished": false,
+    "winner": null,
+    "tilesA": null,
+    "tilesB": null,
+    "matchId": null
+  }
 }
