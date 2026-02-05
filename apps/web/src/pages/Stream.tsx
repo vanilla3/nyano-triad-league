@@ -548,12 +548,12 @@ const remainingWarningMarks = React.useMemo(() => {
     const sec = Math.max(5, Math.min(60, Math.floor(voteSeconds || 15)));
     const now = Date.now();
     setVoteOpen(true);
-
-
-if (autoSendPromptOnVoteStart) {
-  // best-effort (do not block stream ops)
-  sendNyanoWarudo("ai_prompt").catch(() => {});
-}
+    if (autoSendPromptOnVoteStart) {
+      // best-effort (do not block stream ops)
+      // IMPORTANT: Send state_json first so nyano-warudo strictAllowed can lock an up-to-date allowlist during the vote.
+      sendNyanoWarudo("state_json").catch(() => {});
+      sendNyanoWarudo("ai_prompt").catch(() => {});
+    }
     setVoteTurn(liveTurn);
     setVoteEndsAtMs(now + sec * 1000);
     resetVotes();
@@ -1022,7 +1022,7 @@ return (
             checked={autoSendPromptOnVoteStart}
             onChange={(e) => setAutoSendPromptOnVoteStart(e.target.checked)}
           />
-          vote start → ai_prompt
+          vote start → state_json + ai_prompt
         </label>
         <label className="flex items-center gap-2 text-xs text-slate-700">
           <input
@@ -1033,6 +1033,10 @@ return (
           vote end → state_json
         </label>
       </div>
+
+<div className="mt-1 text-[11px] text-slate-500">
+  strictAllowed 用に、投票開始時点で state_json（合法手 allowlist）も送ります。
+</div>
 
       <div className="mt-2 flex flex-wrap items-center gap-2">
         <button className="btn btn-sm btn-primary" onClick={() => sendNyanoWarudo("ai_prompt")}>

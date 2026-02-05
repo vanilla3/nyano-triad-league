@@ -51,7 +51,7 @@ nyano-warudo で正規表現・表示・集計しやすい “短い型” を�
   - Send ai_prompt
   - Send state_json
 - 自動送信（任意）:
-  - vote start → ai_prompt
+  - vote start → state_json + ai_prompt（strictAllowed 用）
   - vote end → state_json
 - payload / result を CopyField で確認（nyano-warudo 側のログと突き合わせしやすい）
 

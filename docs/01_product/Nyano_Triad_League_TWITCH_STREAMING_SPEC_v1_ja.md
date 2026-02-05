@@ -138,6 +138,7 @@
 ## nyano-warudo 連携（Puzzle Show trigger）
 - Triad League から `POST /v1/snapshots` を送信できることが最短。
 - `kind=ai_prompt` / `kind=state_json` の両方を用意し、配信運用で使い分ける。
+- **投票開始時点でも state_json を送る**（strictAllowed の合法手 allowlist を投票中にズラさない）
 
 
 - 詳細: `docs/01_product/Nyano_Triad_League_NYANO_WARUDO_BRIDGE_SPEC_v1_ja.md`
