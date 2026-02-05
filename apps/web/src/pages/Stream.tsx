@@ -178,8 +178,6 @@ function parseChatMove(text: string): ParsedMove | null {
     return null;
   }
 
-  }
-
   // Fallback legacy numeric without prefix:
   const legacy = raw.match(/^(?<cell>\d)\s+(?<card>\d)(?:\s+(?:wm|w)\s*=?\s*(?<wm>\d))?$/i);
   if (legacy && (legacy as any).groups) {
