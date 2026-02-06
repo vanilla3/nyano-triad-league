@@ -2,6 +2,16 @@ import React from "react";
 import { Link, useSearchParams } from "react-router-dom";
 
 import { CardMini } from "@/components/CardMini";
+import { NyanoReactionBadge, type NyanoReactionInput } from "@/components/NyanoReaction";
+import { ScoreBar } from "@/components/ScoreBar";
+import { flipTracesReadout } from "@/components/flipTraceDescribe";
+import {
+  cellIndexToCoord,
+  computeStrictAllowed,
+  computeToPlay,
+  toViewerMoveText,
+  type PlayerSide,
+} from "@/lib/triad_vote_utils";
 import {
   readStoredOverlayState,
   readStoredStreamVoteState,
@@ -10,6 +20,7 @@ import {
   type OverlayStateV1,
   type StreamVoteStateV1,
 } from "@/lib/streamer_bus";
+import type { PlayerIndex } from "@nyano/triad-engine";
 
 function nowMs() {
   return Date.now();
@@ -30,15 +41,33 @@ function isTransparentBg(bg: string | null): boolean {
   return bg === "transparent" || bg === "0" || bg === "false";
 }
 
-function normalizeWinner(w: unknown): string | null {
+function normalizeWinner(w: unknown): "A" | "B" | "DRAW" | null {
   if (w === null || w === undefined) return null;
   if (w === 0 || w === "0") return "A";
   if (w === 1 || w === "1") return "B";
   if (typeof w === "string") {
-    const s = w.trim().toUpperCase();
+    const s0 = w.trim();
+    if (!s0) return null;
+    const s = s0.toUpperCase();
     if (s === "A" || s === "B") return s;
+    if (s === "DRAW") return "DRAW";
   }
-  return String(w);
+  // last resort: don't throw, but show something stable-ish
+  const raw = String(w).trim();
+  if (!raw) return null;
+  const up = raw.toUpperCase();
+  if (up === "A" || up === "B") return up as "A" | "B";
+  if (up === "DRAW") return "DRAW";
+  return null;
+}
+
+function winnerForScoreBar(state: OverlayStateV1 | null): PlayerIndex | "draw" | null {
+  if (!state?.status?.finished) return null;
+  const w = state.status.winner;
+  if (w === "A" || w === 0 || w === "0") return 0;
+  if (w === "B" || w === 1 || w === "1") return 1;
+  if (typeof w === "string" && w.trim().toLowerCase() === "draw") return "draw";
+  return null;
 }
 
 function shortId(id: string | undefined): string | null {
@@ -58,31 +87,30 @@ function readOwnersFromBoard(board: any[]): Owner[] {
   return out;
 }
 
-function computeToPlay(state: OverlayStateV1 | null): "A" | "B" | null {
-  if (!state) return null;
-  if (state?.status?.finished) return null;
-  if (typeof state.turn !== "number") return null;
-  if (typeof state.firstPlayer !== "number") return null;
-  if (state.turn >= 9) return null;
-  const p = ((state.firstPlayer + (state.turn % 2)) % 2) as 0 | 1;
-  return p === 0 ? "A" : "B";
+function countTilesFromBoard(board: any[]): { a: number; b: number } {
+  let a = 0;
+  let b = 0;
+  for (const cell of board) {
+    if (!cell) continue;
+    if ((cell as any).owner === 0) a += 1;
+    if ((cell as any).owner === 1) b += 1;
+  }
+  return { a, b };
 }
 
-type LastTurnSummary = {
-  flipCount: number;
-  comboCount: number;
-  comboEffect: "none" | "momentum" | "domination" | "fever";
-  triadPlus: number;
-  ignoreWarningMark: boolean;
-  warningTriggered: boolean;
-  warningPlaced: number | null;
-};
+type LastTurnSummary = NonNullable<OverlayStateV1["lastTurnSummary"]>;
 
 function safeLastTurnSummary(state: OverlayStateV1 | null): LastTurnSummary | null {
   const s = (state as any)?.lastTurnSummary;
   if (!s) return null;
   if (typeof s.flipCount !== "number") return null;
   return s as LastTurnSummary;
+}
+
+function sideLabel(side: PlayerSide | null): "A" | "B" | null {
+  if (side === 0) return "A";
+  if (side === 1) return "B";
+  return null;
 }
 
 export function OverlayPage() {
@@ -118,25 +146,33 @@ export function OverlayPage() {
     "text-slate-900",
   ].join(" ");
 
-  const board: any[] = Array.isArray((state as any)?.board) ? ((state as any).board as any[]) : Array.from({ length: 9 }, () => null);
+  const board: any[] = Array.isArray((state as any)?.board)
+    ? ((state as any).board as any[])
+    : Array.from({ length: 9 }, () => null);
 
   const title = state?.eventTitle ? state.eventTitle : "Nyano Triad League";
   const modeBadge =
-    state?.mode === "live" ? <span className="badge badge-nyano">LIVE</span> : state?.mode === "replay" ? <span className="badge badge-sky">REPLAY</span> : null;
+    state?.mode === "live" ? (
+      <span className="badge badge-nyano">LIVE</span>
+    ) : state?.mode === "replay" ? (
+      <span className="badge badge-sky">REPLAY</span>
+    ) : null;
 
   const winnerLabel = normalizeWinner(state?.status?.winner);
-  const tilesA = typeof state?.status?.tilesA === "number" ? state?.status?.tilesA : null;
-  const tilesB = typeof state?.status?.tilesB === "number" ? state?.status?.tilesB : null;
-  const matchIdShort = state?.status?.matchId ? shortId(state.status.matchId) : null;
+  const tiles = React.useMemo(() => countTilesFromBoard(board), [state?.updatedAtMs]);
+  const matchIdShort = state?.status?.finished && state?.status?.matchId ? shortId(state.status.matchId) : null;
 
   const sub =
     state?.status?.finished && winnerLabel
-      ? `Winner: ${winnerLabel}${tilesA !== null && tilesB !== null ? ` · tiles A:${tilesA}/B:${tilesB}` : ""}`
+      ? `Winner: ${winnerLabel}${Number.isFinite(tiles.a) && Number.isFinite(tiles.b) ? ` · tiles A:${tiles.a}/B:${tiles.b}` : ""}`
       : typeof state?.turn === "number"
-        ? `Turn ${state.turn}/9`
+        ? `Turn ${state.turn}/9 · tiles A:${tiles.a}/B:${tiles.b}`
         : "Waiting…";
 
   const toPlay = React.useMemo(() => computeToPlay(state), [state?.updatedAtMs]);
+  const toPlayLabel = sideLabel(toPlay);
+
+  const strictAllowed = React.useMemo(() => computeStrictAllowed(state), [state?.updatedAtMs]);
 
   const lastCell = typeof state?.lastMove?.cell === "number" ? state.lastMove.cell : null;
   const markCell = typeof state?.lastMove?.warningMarkCell === "number" ? state.lastMove.warningMarkCell : null;
@@ -158,25 +194,23 @@ export function OverlayPage() {
       setLastFlipCount(null);
       setLastFlippedCells([]);
       return;
+    }
 
+    // Prefer engine-provided flip traces if available (more accurate than owner-diff heuristics).
+    if (Array.isArray(lastTurnSummary?.flips)) {
+      const flips = lastTurnSummary.flips;
+      const cells = Array.from(
+        new Set(
+          flips
+            .map((f) => Number((f as any).to))
+            .filter((n) => Number.isFinite(n))
+        )
+      ).sort((a, b) => a - b);
 
-// Prefer engine-provided flip traces if available (more accurate than owner-diff heuristics).
-if (Array.isArray((lastTurnSummary as any)?.flips)) {
-  const flips = (lastTurnSummary as any).flips as any[];
-  const cells = Array.from(
-    new Set(
-      flips
-        .map((f) => Number(f.to))
-        .filter((n) => Number.isFinite(n))
-    )
-  ).sort((a, b) => a - b);
-
-  setLastFlippedCells(cells);
-  if (typeof (lastTurnSummary as any)?.flipCount === "number") setLastFlipCount(Number((lastTurnSummary as any).flipCount));
-  else setLastFlipCount(cells.length);
-  return;
-}
-
+      setLastFlippedCells(cells);
+      if (typeof lastTurnSummary?.flipCount === "number") setLastFlipCount(Number(lastTurnSummary.flipCount));
+      else setLastFlipCount(cells.length);
+      return;
     }
 
     const by = state.lastMove.by;
@@ -203,36 +237,76 @@ if (Array.isArray((lastTurnSummary as any)?.flips)) {
   };
 
   const voteRemainingSec =
-    voteState?.status === "open" && typeof voteState.endsAtMs === "number" ? Math.max(0, Math.ceil((voteState.endsAtMs - nowMs()) / 1000)) : null;
+    voteState?.status === "open" && typeof voteState.endsAtMs === "number"
+      ? Math.max(0, Math.ceil((voteState.endsAtMs - nowMs()) / 1000))
+      : null;
 
+  const flipStats = React.useMemo(() => {
+    const flips = Array.isArray(lastTurnSummary?.flips) ? lastTurnSummary!.flips : null;
+    if (!flips) return null;
+    const chain = flips.filter((f: any) => Boolean(f.isChain)).length;
+    const diag = flips.filter((f: any) => f.kind === "diag").length;
+    const janken = flips.filter((f: any) => Boolean(f.tieBreak)).length;
+    const total = flips.length;
+    return {
+      total,
+      chain,
+      direct: Math.max(0, total - chain),
+      diag,
+      ortho: Math.max(0, total - diag),
+      janken,
+    };
+  }, [state?.updatedAtMs]);
 
-const flipStats = React.useMemo(() => {
-  const flips = Array.isArray((lastTurnSummary as any)?.flips) ? ((lastTurnSummary as any).flips as any[]) : null;
-  if (!flips) return null;
-  const chain = flips.filter((f) => Boolean(f.isChain)).length;
-  const diag = flips.filter((f) => f.kind === "diag").length;
-  const janken = flips.filter((f) => Boolean(f.tieBreak)).length;
-  const total = flips.length;
-  return {
-    total,
-    chain,
-    direct: Math.max(0, total - chain),
-    diag,
-    ortho: Math.max(0, total - diag),
-    janken,
-  };
-}, [state?.updatedAtMs]);
   const flipCountLabel =
-    typeof lastTurnSummary?.flipCount === "number"
-      ? lastTurnSummary.flipCount
-      : typeof lastFlipCount === "number"
-        ? lastFlipCount
-        : null;
+    typeof lastTurnSummary?.flipCount === "number" ? lastTurnSummary.flipCount : typeof lastFlipCount === "number" ? lastFlipCount : null;
 
   const flipBadgeLabel = flipCountLabel === null ? "flip×?" : `flip×${flipCountLabel}`;
 
   const swingBadge =
     typeof flipCountLabel === "number" && flipCountLabel >= 3 ? <span className="badge badge-nyano">BIG SWING</span> : null;
+
+  const flipReadout = React.useMemo(() => {
+    if (!state?.lastMove) return null;
+    const traces = Array.isArray(lastTurnSummary?.flips) ? (lastTurnSummary!.flips as any[]) : [];
+    const byLabel = state.lastMove.by === 0 ? "A" : "B";
+    return flipTracesReadout(traces as any, byLabel, state.lastMove.cell);
+  }, [state?.updatedAtMs]);
+
+  const reactionInput = React.useMemo<NyanoReactionInput | null>(() => {
+    if (!state) return null;
+
+    const finished = Boolean(state?.status?.finished) || (typeof state.turn === "number" && state.turn >= 9);
+    const winner = finished ? winnerForScoreBar(state) : null;
+
+    const flipCount =
+      typeof lastTurnSummary?.flipCount === "number"
+        ? lastTurnSummary.flipCount
+        : typeof lastFlipCount === "number"
+          ? lastFlipCount
+          : 0;
+
+    const hasChain = Array.isArray(lastTurnSummary?.flips) ? lastTurnSummary!.flips!.some((f: any) => Boolean(f.isChain)) : false;
+
+    return {
+      flipCount,
+      hasChain,
+      comboEffect: (lastTurnSummary?.comboEffect ?? "none") as any,
+      warningTriggered: Boolean(lastTurnSummary?.warningTriggered),
+      tilesA: tiles.a,
+      tilesB: tiles.b,
+      perspective: null,
+      finished,
+      winner,
+    };
+  }, [state?.updatedAtMs, lastTurnSummary, lastFlipCount, tiles.a, tiles.b]);
+
+  const voteTurn = typeof voteState?.turn === "number" ? voteState.turn : null;
+  const voteSide = typeof voteState?.controlledSide === "number" ? (voteState.controlledSide as PlayerSide) : null;
+  const voteTurnOk = voteState?.status === "open" && typeof state?.turn === "number" && voteTurn !== null ? voteTurn === state.turn : null;
+  const voteSideOk = voteState?.status === "open" && toPlay !== null && voteSide !== null ? voteSide === toPlay : null;
+
+  const layoutClass = controls ? "grid gap-4 md:grid-cols-[1fr,360px]" : "grid gap-3 p-4 md:grid-cols-[1fr,360px]";
 
   return (
     <div className={rootClass}>
@@ -267,8 +341,9 @@ const flipStats = React.useMemo(() => {
           </div>
         ) : null}
 
-        <div className={controls ? "grid gap-4 md:grid-cols-[1fr,360px]" : "grid gap-3 p-4"}>
-          <div className="rounded-3xl border border-slate-200 bg-white/75 p-3 shadow-sm">
+        <div className={layoutClass}>
+          {/* Board */}
+          <div className={controls ? "rounded-3xl border border-slate-200 bg-white/75 p-3 shadow-sm" : "rounded-3xl border border-slate-200 bg-white/70 p-3 shadow-sm"}>
             <div className="grid grid-cols-3 gap-2">
               {Array.from({ length: 9 }, (_, i) => {
                 const cell = board[i];
@@ -279,9 +354,11 @@ const flipStats = React.useMemo(() => {
                 const isMark = markCell === i;
 
                 return (
-                  <div key={i} className={cellClass(i)} title={`Cell ${i}`}>
+                  <div key={i} className={cellClass(i)} title={`Cell ${i} (${cellIndexToCoord(i)})`}>
                     {controls ? (
-                      <div className="absolute left-2 top-2 rounded-full bg-white/80 px-2 py-0.5 text-[10px] font-semibold text-slate-500">{i}</div>
+                      <div className="absolute left-2 top-2 rounded-full bg-white/80 px-2 py-0.5 text-[10px] font-semibold text-slate-500">
+                        {cellIndexToCoord(i)}
+                      </div>
                     ) : null}
 
                     {isLast ? (
@@ -305,59 +382,154 @@ const flipStats = React.useMemo(() => {
             </div>
           </div>
 
+          {/* Right-side HUD */}
           <div className="space-y-3">
             <div className="rounded-2xl border border-slate-200 bg-white/70 px-4 py-3 shadow-sm">
               <div className="flex items-center justify-between gap-2">
                 <div className="text-xs font-semibold text-slate-800">✨ Now Playing</div>
-                {modeBadge}
+                <div className="flex items-center gap-2">
+                  {reactionInput ? <NyanoReactionBadge input={reactionInput} turnIndex={typeof state?.turn === "number" ? state.turn : 0} /> : null}
+                  {modeBadge}
+                </div>
               </div>
               <div className="mt-1 text-sm text-slate-700">{title}</div>
               <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-slate-500">
                 <span>{sub}</span>
-                {toPlay ? <span className="badge badge-sky">Next: {toPlay}</span> : null}
+                {toPlayLabel ? <span className="badge badge-sky">Next: {toPlayLabel}</span> : null}
               </div>
+
+              <div className="mt-2">
+                <ScoreBar
+                  board={board as any}
+                  moveCount={typeof state?.turn === "number" ? state.turn : 0}
+                  maxMoves={9}
+                  winner={winnerForScoreBar(state)}
+                  className="!justify-between"
+                />
+              </div>
+
               {matchIdShort ? <div className="mt-1 text-[11px] text-slate-400">match: {matchIdShort}</div> : null}
             </div>
 
-            {voteEnabled && voteState?.status === "open" ? (
+            {/* strictAllowed HUD (always visible) */}
+            <div className="rounded-2xl border border-slate-200 bg-white/70 px-4 py-3 shadow-sm">
+              <div className="flex items-center justify-between gap-2">
+                <div className="text-xs font-semibold text-slate-800">🔒 strictAllowed</div>
+                {strictAllowed ? (
+                  <span className="badge badge-slate">{strictAllowed.count}</span>
+                ) : (
+                  <span className="badge">—</span>
+                )}
+              </div>
+
+              {strictAllowed ? (
+                <>
+                  <div className="mt-1 text-xs text-slate-600">
+                    toPlay: <span className="font-mono">{sideLabel(strictAllowed.toPlay)}</span> · moves:{" "}
+                    <span className="font-mono">{strictAllowed.count}</span>
+                    {typeof strictAllowed.warningMark?.remaining === "number" ? (
+                      <>
+                        {" "}· WM:{" "}
+                        <span className="font-mono">{strictAllowed.warningMark.remaining}</span>
+                      </>
+                    ) : null}
+                  </div>
+
+                  <div className="mt-1 text-[11px] text-slate-500">
+                    hash: <span className="font-mono">{strictAllowed.hash}</span>
+                  </div>
+
+                  {controls && strictAllowed.warningMark.remaining > 0 ? (
+                    <div className="mt-1 text-[11px] text-slate-500">
+                      WM candidates: <span className="font-mono">{strictAllowed.warningMark.candidates.join(", ")}</span>
+                    </div>
+                  ) : null}
+                </>
+              ) : (
+                <div className="mt-1 text-xs text-slate-500">Waiting for host…</div>
+              )}
+            </div>
+
+            {/* Vote status (always visible when vote=1) */}
+            {voteEnabled ? (
               <div className="rounded-2xl border border-slate-200 bg-white/70 px-4 py-3 shadow-sm">
                 <div className="flex items-center justify-between gap-2">
                   <div className="text-xs font-semibold text-slate-800">🗳️ Chat voting</div>
-                  <span className="badge badge-emerald">OPEN · {voteRemainingSec ?? "?"}s</span>
+                  {voteState?.status === "open" ? (
+                    <span className="badge badge-emerald">OPEN · {voteRemainingSec ?? "?"}s</span>
+                  ) : (
+                    <span className="badge">CLOSED</span>
+                  )}
                 </div>
 
                 <div className="mt-1 text-xs text-slate-600">
-                  controls: <span className="font-mono">{voteState.controlledSide === 1 ? "B" : "A"}</span> · votes:{" "}
-                  <span className="font-mono">{typeof voteState.totalVotes === "number" ? voteState.totalVotes : 0}</span>
+                  controls:{" "}
+                  <span className="font-mono">{voteState?.controlledSide === 1 ? "B" : voteState?.controlledSide === 0 ? "A" : "—"}</span>
+                  {" "}· turn:{" "}
+                  <span className="font-mono">{voteState?.status === "open" ? (voteTurn ?? "?") : "—"}</span>
+                  {" "}· votes:{" "}
+                  <span className="font-mono">{typeof voteState?.totalVotes === "number" ? voteState.totalVotes : 0}</span>
                 </div>
 
-                {Array.isArray(voteState.top) && voteState.top.length > 0 ? (
+                {/* Sync badges */}
+                {voteState?.status === "open" ? (
+                  <div className="mt-2 flex flex-wrap items-center gap-2 text-xs">
+                    {voteTurnOk === true ? <span className="badge badge-slate">turn ok</span> : voteTurnOk === false ? <span className="badge badge-rose">TURN MISMATCH</span> : <span className="badge">turn ?</span>}
+                    {voteSideOk === true ? <span className="badge badge-slate">side ok</span> : voteSideOk === false ? <span className="badge badge-rose">SIDE MISMATCH</span> : <span className="badge">side ?</span>}
+                    {strictAllowed ? (
+                      <span className="badge badge-slate" title={strictAllowed.hash}>
+                        strictAllowed {strictAllowed.count} · {strictAllowed.hash}
+                      </span>
+                    ) : (
+                      <span className="badge">strictAllowed —</span>
+                    )}
+                  </div>
+                ) : (
+                  <div className="mt-2 text-xs text-slate-500">Vote is closed.</div>
+                )}
+
+                {voteState?.status === "open" && Array.isArray(voteState.top) && voteState.top.length > 0 ? (
                   <div className="mt-2 space-y-1">
                     {voteState.top.slice(0, 3).map((x, i) => (
                       <div key={i} className="flex items-center justify-between gap-2 text-xs">
                         <span className="font-mono">
-                          cell {x.move.cell} · card {x.move.cardIndex}
-                          {typeof x.move.warningMarkCell === "number" ? ` · wm ${x.move.warningMarkCell}` : ""}
+                          {toViewerMoveText({
+                            cell: x.move.cell,
+                            cardIndex: x.move.cardIndex,
+                            ...(typeof x.move.warningMarkCell === "number" ? { warningMarkCell: x.move.warningMarkCell } : {}),
+                          })}
                         </span>
                         <span className="badge badge-sky">{x.count}</span>
                       </div>
                     ))}
                   </div>
-                ) : (
-                  <div className="mt-2 text-xs text-slate-500">No votes yet…</div>
-                )}
+                ) : null}
 
-                {voteState.note ? <div className="mt-2 text-[11px] text-slate-500">{voteState.note}</div> : null}
+                {voteState?.note ? <div className="mt-2 text-[11px] text-slate-500">{voteState.note}</div> : null}
               </div>
             ) : null}
 
             {state?.lastMove ? (
               <div className="rounded-2xl border border-slate-200 bg-white/70 px-4 py-3 shadow-sm">
-                <div className="text-xs font-semibold text-slate-800">Last move</div>
-                <div className="mt-1 text-sm text-slate-700">
-                  Turn {state.lastMove.turnIndex + 1}: <span className="font-semibold">{state.lastMove.by === 0 ? "A" : "B"}</span> placed{" "}
-                  <span className="font-mono">#{state.lastMove.cardIndex}</span> at cell <span className="font-mono">{state.lastMove.cell}</span>
+                <div className="flex items-center justify-between gap-2">
+                  <div className="text-xs font-semibold text-slate-800">Last move</div>
+                  {state?.updatedAtMs ? <span className="text-[11px] text-slate-400">{ageLabel(state.updatedAtMs)}</span> : null}
                 </div>
+
+                <div className="mt-1 text-sm text-slate-700">
+                  Turn {state.lastMove.turnIndex + 1}:{" "}
+                  <span className="font-semibold">{state.lastMove.by === 0 ? "A" : "B"}</span>{" "}
+                  <span className="font-mono">
+                    {toViewerMoveText({
+                      cell: state.lastMove.cell,
+                      cardIndex: state.lastMove.cardIndex,
+                      ...(typeof state.lastMove.warningMarkCell === "number" ? { warningMarkCell: state.lastMove.warningMarkCell } : {}),
+                    })}
+                  </span>
+                </div>
+
+                {/* flipTracesReadout (P0) */}
+                {flipReadout ? <div className="mt-1 text-xs text-slate-600">{flipReadout}</div> : null}
 
                 <div className="mt-2 flex flex-wrap items-center gap-2">
                   <span className="badge badge-sky">{flipBadgeLabel}</span>
@@ -380,72 +552,71 @@ const flipStats = React.useMemo(() => {
                   {lastTurnSummary?.warningTriggered ? <span className="badge badge-amber">TRIGGERED MARK</span> : null}
                   {typeof lastTurnSummary?.warningPlaced === "number" ? <span className="badge badge-amber">PLACED MARK</span> : null}
 
-
-{flipStats && flipStats.chain > 0 ? <span className="badge badge-slate">CHAIN×{flipStats.chain}</span> : null}
-{flipStats && flipStats.diag > 0 ? <span className="badge badge-sky">DIAG×{flipStats.diag}</span> : null}
-{flipStats && flipStats.janken > 0 ? <span className="badge badge-rose">JANKEN×{flipStats.janken}</span> : null}
+                  {flipStats && flipStats.chain > 0 ? <span className="badge badge-slate">CHAIN×{flipStats.chain}</span> : null}
+                  {flipStats && flipStats.diag > 0 ? <span className="badge badge-sky">DIAG×{flipStats.diag}</span> : null}
+                  {flipStats && flipStats.janken > 0 ? <span className="badge badge-rose">JANKEN×{flipStats.janken}</span> : null}
                 </div>
 
                 {typeof state.lastMove.warningMarkCell === "number" ? (
                   <div className="mt-1 text-xs text-slate-500">
-                    warning mark → cell <span className="font-mono">{state.lastMove.warningMarkCell}</span>
+                    warning mark → <span className="font-mono">{cellIndexToCoord(state.lastMove.warningMarkCell)}</span>
                   </div>
                 ) : null}
 
                 {typeof lastTurnSummary?.warningPlaced === "number" ? (
                   <div className="mt-1 text-xs text-slate-500">
-                    placed warning mark → cell <span className="font-mono">{lastTurnSummary.warningPlaced}</span>
+                    placed warning mark → <span className="font-mono">{cellIndexToCoord(lastTurnSummary.warningPlaced)}</span>
                   </div>
                 ) : null}
 
                 {lastFlippedCells.length > 0 ? (
                   <div className="mt-1 text-[11px] text-slate-500">
-                    flipped: <span className="font-mono">{lastFlippedCells.join(", ")}</span>
+                    flipped: <span className="font-mono">{lastFlippedCells.map(cellIndexToCoord).join(", ")}</span>
                   </div>
                 ) : null}
 
+                {flipStats ? (
+                  <div className="mt-1 text-[11px] text-slate-500">
+                    Why: {flipStats.chain > 0 ? `chain×${flipStats.chain}` : null}
+                    {flipStats.chain > 0 && (flipStats.diag > 0 || flipStats.janken > 0) ? " · " : null}
+                    {flipStats.diag > 0 ? `diag×${flipStats.diag}` : null}
+                    {flipStats.diag > 0 && flipStats.janken > 0 ? " · " : null}
+                    {flipStats.janken > 0 ? `janken×${flipStats.janken}` : null}
+                  </div>
+                ) : null}
 
-{flipStats ? (
-  <div className="mt-1 text-[11px] text-slate-500">
-    Why: {flipStats.chain > 0 ? `chain×${flipStats.chain}` : null}
-    {flipStats.chain > 0 && (flipStats.diag > 0 || flipStats.janken > 0) ? " · " : null}
-    {flipStats.diag > 0 ? `diag×${flipStats.diag}` : null}
-    {flipStats.diag > 0 && flipStats.janken > 0 ? " · " : null}
-    {flipStats.janken > 0 ? `janken×${flipStats.janken}` : null}
-  </div>
-) : null}
-
-
-{controls && lastTurnSummary && Array.isArray(lastTurnSummary.flips) && lastTurnSummary.flips.length > 0 ? (
-  <div className="mt-3 rounded-xl border border-slate-200 bg-white/60 px-3 py-2">
-    <div className="flex items-center justify-between gap-2">
-      <div className="text-[11px] font-semibold text-slate-700">Flip traces</div>
-      <div className="text-[11px] text-slate-500">（実況・デバッグ用 / OBSでは通常非表示）</div>
-    </div>
-    <div className="mt-2 space-y-1">
-      {lastTurnSummary.flips.slice(0, 8).map((f, i) => (
-        <div key={i} className="flex flex-wrap items-center justify-between gap-2 text-xs">
-          <span className="font-mono">
-            {f.to} ← {f.from}{" "}
-            {f.kind === "ortho" ? (f.dir ? `(${f.dir})` : "") : f.vert && f.horiz ? `(${f.vert}+${f.horiz})` : "(diag)"}
-          </span>
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="badge badge-slate">
-              a:{f.aVal} / d:{f.dVal}
-            </span>
-            {f.isChain ? <span className="badge">CHAIN</span> : <span className="badge">DIRECT</span>}
-            {f.tieBreak ? <span className="badge badge-rose">JANKEN</span> : null}
-            {f.kind === "diag" ? <span className="badge badge-sky">DIAG</span> : null}
-          </div>
-        </div>
-      ))}
-    </div>
-  </div>
-) : null}
-
-                <div className="mt-2 text-[11px] text-slate-400">
-                  phase 2: engine turn summary now available (combo/plus/mark). Next: add edge/formation reasoning with traces.
-                </div>
+                {controls && lastTurnSummary && Array.isArray(lastTurnSummary.flips) && lastTurnSummary.flips.length > 0 ? (
+                  <div className="mt-3 rounded-xl border border-slate-200 bg-white/60 px-3 py-2">
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="text-[11px] font-semibold text-slate-700">Flip traces</div>
+                      <div className="text-[11px] text-slate-500">（実況・デバッグ用 / OBSでは通常非表示）</div>
+                    </div>
+                    <div className="mt-2 space-y-1">
+                      {lastTurnSummary.flips.slice(0, 8).map((f: any, i: number) => (
+                        <div key={i} className="flex flex-wrap items-center justify-between gap-2 text-xs">
+                          <span className="font-mono">
+                            {cellIndexToCoord(f.to)} ← {cellIndexToCoord(f.from)}{" "}
+                            {f.kind === "ortho"
+                              ? f.dir
+                                ? `(${f.dir})`
+                                : ""
+                              : f.vert && f.horiz
+                                ? `(${f.vert}+${f.horiz})`
+                                : "(diag)"}
+                          </span>
+                          <div className="flex flex-wrap items-center gap-2">
+                            <span className="badge badge-slate">
+                              a:{f.aVal} / d:{f.dVal}
+                            </span>
+                            {f.isChain ? <span className="badge">CHAIN</span> : <span className="badge">DIRECT</span>}
+                            {f.tieBreak ? <span className="badge badge-rose">JANKEN</span> : null}
+                            {f.kind === "diag" ? <span className="badge badge-sky">DIAG</span> : null}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ) : null}
               </div>
             ) : null}
 
