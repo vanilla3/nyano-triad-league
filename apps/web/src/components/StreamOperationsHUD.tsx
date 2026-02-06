@@ -16,65 +16,18 @@
  */
 import React from "react";
 import type { OverlayStateV1 } from "@/lib/streamer_bus";
+import {
+  cellIndexToCoord,
+  computeEmptyCells,
+  computeRemainingCardIndices,
+  computeWarningMarksRemaining,
+  fnv1a32Hex,
+  toViewerMoveText,
+} from "@/lib/triad_vote_utils";
 
 /* ─────────────────────────────────────────────────────────────
-   HELPERS
+   HELPERS (shared in @/lib/triad_vote_utils)
    ───────────────────────────────────────────────────────────── */
-
-function fnv1a32Hex(input: string): string {
-  let h = 0x811c9dc5;
-  for (let i = 0; i < input.length; i++) {
-    h ^= input.charCodeAt(i);
-    h = (h + ((h << 1) + (h << 4) + (h << 7) + (h << 8) + (h << 24))) >>> 0;
-  }
-  return "0x" + h.toString(16).padStart(8, "0");
-}
-
-function cellIndexToCoord(cell: number): string {
-  const row = Math.floor(cell / 3);
-  const col = cell % 3;
-  return `${col === 0 ? "A" : col === 1 ? "B" : "C"}${row + 1}`;
-}
-
-function computeEmptyCells(state: OverlayStateV1 | null): number[] {
-  if (!state) return [];
-  if (Array.isArray(state.usedCells)) {
-    const used = new Set(state.usedCells as number[]);
-    return Array.from({ length: 9 }, (_, i) => i).filter((i) => !used.has(i));
-  }
-  return Array.from({ length: 9 }, (_, i) => i);
-}
-
-function computeRemainingCardIndices(
-  state: OverlayStateV1 | null,
-  side: 0 | 1
-): number[] {
-  if (!state) return [];
-  const arr =
-    side === 0
-      ? (state as any).usedCardIndicesA
-      : (state as any).usedCardIndicesB;
-  const used = new Set(
-    Array.isArray(arr) ? arr.map(Number).filter(Number.isFinite) : []
-  );
-  return [0, 1, 2, 3, 4].filter((i) => !used.has(i));
-}
-
-function computeWarningMarksRemaining(
-  state: OverlayStateV1 | null,
-  side: 0 | 1
-): number {
-  if (!state) return 3;
-  const v =
-    side === 0
-      ? (state as any).warningMarksUsedA
-      : (state as any).warningMarksUsedB;
-  return Math.max(0, 3 - (typeof v === "number" ? v : 0));
-}
-
-function toViewerMoveText(cell: number, cardIndex: number): string {
-  return `#triad A${cardIndex + 1}->${cellIndexToCoord(cell)}`;
-}
 
 /* ─────────────────────────────────────────────────────────────
    MAIN HUD COMPONENT
@@ -123,7 +76,7 @@ export function StreamOperationsHUD({
     const moves: string[] = [];
     for (const cell of emptyCells) {
       for (const ci of remainCards) {
-        moves.push(toViewerMoveText(cell, ci));
+        moves.push(toViewerMoveText({ cell, cardIndex: ci }));
       }
     }
     return moves.sort();
