@@ -11,13 +11,16 @@ import {
 } from "@nyano/triad-engine";
 
 import { BoardView } from "@/components/BoardView";
-import { BoardViewRPG } from "@/components/BoardViewRPG";
+import { BoardViewRPG, HandDisplayRPG, GameResultOverlayRPG, TurnLogRPG } from "@/components/BoardViewRPG";
+import type { TurnLogEntry } from "@/components/BoardViewRPG";
 import { ScoreBar } from "@/components/ScoreBar";
 import { LastMoveFeedback, useBoardFlipAnimation } from "@/components/BoardFlipAnimator";
 import { NyanoImage } from "@/components/NyanoImage";
 import { CardMini } from "@/components/CardMini";
 import { TurnLog } from "@/components/TurnLog";
 import { GameResultOverlay, type GameResult } from "@/components/GameResultOverlay";
+import { NyanoReaction, type NyanoReactionInput } from "@/components/NyanoReaction";
+import { flipTracesSummary, flipTracesReadout } from "@/components/flipTraceDescribe";
 import { base64UrlEncodeUtf8, tryGzipCompressUtf8ToBase64Url } from "@/lib/base64url";
 import { getDeck, listDecks, type DeckV1 } from "@/lib/deck_store";
 import { getEventById, getEventStatus, type EventV1 } from "@/lib/events";
@@ -100,10 +103,6 @@ function countWarningMarks(turns: Turn[], firstPlayer: PlayerIndex): { A: number
   return { A, B };
 }
 
-/**
- * Build a full 9-turn transcript by filling remaining turns with placeholders.
- * This enables "progress preview" without changing the protocol-level engine.
- */
 function fillTurns(partial: Turn[], firstPlayer: PlayerIndex): Turn[] {
   const { cells, usedA, usedB } = computeUsed(partial, firstPlayer);
 
@@ -136,7 +135,6 @@ async function copyToClipboard(text: string): Promise<void> {
 }
 
 function jankenWins(a: number, b: number): boolean {
-  // 0:Rock, 1:Paper, 2:Scissors (typical)
   if (a === b) return false;
   return (a === 0 && b === 2) || (a === 1 && b === 0) || (a === 2 && b === 1);
 }
@@ -200,7 +198,6 @@ function pickAiMove(args: {
     return { cell: availableCells[0], cardIndex: availableIdx[0], reason: "easy: pick smallest cell & cardIndex" };
   }
 
-  // normal: greedy on immediate flips; tie-break by edge sum, then smallest cell, then smallest idx
   let best: { cell: number; cardIndex: number; flips: number; sum: number } | null = null;
 
   for (const cell of availableCells) {
@@ -258,6 +255,43 @@ function parseBool01(v: string | null, defaultValue: boolean): boolean {
   return defaultValue;
 }
 
+/* ═══════════════════════════════════════════════════════════════════════════
+   COLLAPSIBLE SECTION
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+function CollapsibleSection({
+  title,
+  subtitle,
+  defaultOpen = true,
+  children,
+}: {
+  title: string;
+  subtitle?: string;
+  defaultOpen?: boolean;
+  children: React.ReactNode;
+}) {
+  const [open, setOpen] = React.useState(defaultOpen);
+  return (
+    <section className="card">
+      <div
+        className="card-hd flex cursor-pointer items-center justify-between"
+        onClick={() => setOpen(!open)}
+      >
+        <div>
+          <div className="text-base font-semibold">{title}</div>
+          {subtitle && <div className="text-xs text-slate-500">{subtitle}</div>}
+        </div>
+        <span className="text-sm text-slate-400">{open ? "▲" : "▼"}</span>
+      </div>
+      {open && <div className="card-bd grid gap-4 text-sm">{children}</div>}
+    </section>
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   MATCH PAGE
+   ═══════════════════════════════════════════════════════════════════════════ */
+
 export function MatchPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const ui = (searchParams.get("ui") || "").toLowerCase();
@@ -270,7 +304,6 @@ export function MatchPage() {
 
   const [eventNyanoDeckOverride, setEventNyanoDeckOverride] = React.useState<bigint[] | null>(null);
   React.useEffect(() => {
-    // reset when switching events
     setEventNyanoDeckOverride(null);
   }, [eventId]);
 
@@ -283,10 +316,10 @@ export function MatchPage() {
   const opponentModeParam = parseOpponentMode(searchParams.get("opp"));
   const aiDifficultyParam = parseAiDifficulty(searchParams.get("ai"));
 
-const aiAutoPlay = parseBool01(searchParams.get("auto"), true);
-const streamMode = parseBool01(searchParams.get("stream"), false);
-const streamCtrlParam = (searchParams.get("ctrl") ?? "A").toUpperCase();
-const streamControlledSide = (streamCtrlParam === "B" ? 1 : 0) as PlayerIndex;
+  const aiAutoPlay = parseBool01(searchParams.get("auto"), true);
+  const streamMode = parseBool01(searchParams.get("stream"), false);
+  const streamCtrlParam = (searchParams.get("ctrl") ?? "A").toUpperCase();
+  const streamControlledSide = (streamCtrlParam === "B" ? 1 : 0) as PlayerIndex;
 
   const rulesetKeyParam = parseRulesetKey(searchParams.get("rk"));
   const seasonIdParam = parseSeason(searchParams.get("season"));
@@ -295,7 +328,7 @@ const streamControlledSide = (streamCtrlParam === "B" ? 1 : 0) as PlayerIndex;
   const isEvent = Boolean(event);
   const opponentMode: OpponentMode = isEvent ? "vs_nyano_ai" : opponentModeParam;
   const isVsNyanoAi = opponentMode === "vs_nyano_ai";
-  const aiPlayer: PlayerIndex = 1; // Nyano is always B-side for now
+  const aiPlayer: PlayerIndex = 1;
   const aiDifficulty: AiDifficulty = isEvent ? (event!.aiDifficulty as AiDifficulty) : aiDifficultyParam;
 
   const rulesetKey: RulesetKey = isEvent ? (event!.rulesetKey as RulesetKey) : rulesetKeyParam;
@@ -336,7 +369,6 @@ const streamControlledSide = (streamCtrlParam === "B" ? 1 : 0) as PlayerIndex;
     setAiNotes({});
     setSalt(randomSalt());
     setDeadline(Math.floor(Date.now() / 1000) + 24 * 3600);
-    // Clear last-move animation state (best-effort)
     try {
       boardAnim.clear();
     } catch {
@@ -344,7 +376,6 @@ const streamControlledSide = (streamCtrlParam === "B" ? 1 : 0) as PlayerIndex;
     }
   }, []);
 
-  // If deck selection changes, reset the drafted match + reload requirement.
   React.useEffect(() => {
     resetMatch();
     setCards(null);
@@ -354,7 +385,6 @@ const streamControlledSide = (streamCtrlParam === "B" ? 1 : 0) as PlayerIndex;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [deckAId, deckBId, eventId]);
 
-  // If firstPlayer changes, reset drafted moves (but keep loaded cards).
   React.useEffect(() => {
     resetMatch();
     setStatus(null);
@@ -400,6 +430,12 @@ const streamControlledSide = (streamCtrlParam === "B" ? 1 : 0) as PlayerIndex;
     return out;
   }, [used.cells]);
 
+  // P0-1: selectableCells for BoardView (only empty cells when it's not AI turn and game isn't over)
+  const selectableCells = React.useMemo(() => {
+    if (!cards || turns.length >= 9 || isAiTurn) return new Set<number>();
+    return new Set(availableCells);
+  }, [cards, turns.length, isAiTurn, availableCells]);
+
   const availableCardIndexes = React.useMemo(() => {
     const out: number[] = [];
     for (let i = 0; i < 5; i++) if (!currentUsed.has(i)) out.push(i);
@@ -423,8 +459,6 @@ const streamControlledSide = (streamCtrlParam === "B" ? 1 : 0) as PlayerIndex;
 
     setLoading(true);
     try {
-      // Event decks are allowed to be "placeholder" while the official deck is still undecided.
-      // If the default event deck uses fragile tokenIds (e.g. 1..5), we auto-pick actually-minted tokenIds.
       let deckBForLoad = deckBTokens;
 
       if (event && !eventNyanoDeckOverride) {
@@ -444,7 +478,6 @@ const streamControlledSide = (streamCtrlParam === "B" ? 1 : 0) as PlayerIndex;
       }
 
       const tokenIds = [...deckATokens, ...deckBForLoad];
-
       const bundles = await fetchNyanoCards(tokenIds);
 
       const cardsByTokenId = new Map<bigint, CardData>();
@@ -513,33 +546,30 @@ const streamControlledSide = (streamCtrlParam === "B" ? 1 : 0) as PlayerIndex;
     }
   }, [cards, deckATokens, deckBTokens, turns, firstPlayer, ruleset, rulesetId, seasonId, playerA, playerB, deadline, salt]);
 
-const matchId = sim.ok ? sim.full.matchId : null;
+  const matchId = sim.ok ? sim.full.matchId : null;
 
-const gameResult: GameResult | null = sim.ok
-  ? {
-      winner: sim.full.winner === 0 || sim.full.winner === 1 ? sim.full.winner : "draw",
-      tilesA: Number(sim.full.tiles.A),
-      tilesB: Number(sim.full.tiles.B),
-      matchId: sim.full.matchId,
+  const gameResult: GameResult | null = sim.ok
+    ? {
+        winner: sim.full.winner === 0 || sim.full.winner === 1 ? sim.full.winner : "draw",
+        tilesA: Number(sim.full.tiles.A),
+        tilesB: Number(sim.full.tiles.B),
+        matchId: sim.full.matchId,
+      }
+    : null;
+
+  React.useEffect(() => {
+    if (turns.length >= 9 && sim.ok) {
+      setShowResultOverlay(true);
+    } else {
+      setShowResultOverlay(false);
     }
-  : null;
-
-React.useEffect(() => {
-  if (turns.length >= 9 && sim.ok) {
-    setShowResultOverlay(true);
-  } else {
-    setShowResultOverlay(false);
-  }
-}, [turns.length, sim.ok, matchId]);
-
+  }, [turns.length, sim.ok, matchId]);
 
   const boardNow = sim.ok ? sim.previewHistory[turns.length] ?? EMPTY_BOARD : EMPTY_BOARD;
   const boardAnim = useBoardFlipAnimation(boardNow as any[], sim.ok);
 
-
+  // --- Overlay state publishing (unchanged) ---
   React.useEffect(() => {
-    // Broadcast the current match state for OBS overlay (/overlay).
-    // This is intentionally "best-effort" (no hard failure for normal gameplay).
     try {
       const updatedAtMs = Date.now();
 
@@ -569,58 +599,56 @@ React.useEffect(() => {
             }
           : undefined;
 
-const lastSummary = lastIndex >= 0 ? (sim.previewTurns[lastIndex] as any) : null;
-const lastTurnSummary =
-  lastSummary
-    ? {
-        flipCount: Number(lastSummary.flipCount ?? 0),
-        comboCount: Number(lastSummary.comboCount ?? 0),
-        comboEffect: (lastSummary.comboEffect ?? "none") as "none" | "momentum" | "domination" | "fever",
-        triadPlus: Number(lastSummary.appliedBonus?.triadPlus ?? 0),
-        ignoreWarningMark: Boolean(lastSummary.appliedBonus?.ignoreWarningMark),
-        warningTriggered: Boolean(lastSummary.warningTriggered),
-  warningPlaced: typeof lastSummary.warningPlaced === "number" ? Number(lastSummary.warningPlaced) : null,
-  flips: Array.isArray(lastSummary.flipTraces)
-    ? lastSummary.flipTraces.map((f: any) => ({
-        from: Number(f.from),
-        to: Number(f.to),
-        isChain: Boolean(f.isChain),
-        kind: f.kind === "diag" ? "diag" : "ortho",
-        dir: typeof f.dir === "string" ? f.dir : undefined,
-        vert: typeof f.vert === "string" ? f.vert : undefined,
-        horiz: typeof f.horiz === "string" ? f.horiz : undefined,
-        aVal: Number(f.aVal ?? 0),
-        dVal: Number(f.dVal ?? 0),
-        tieBreak: Boolean(f.tieBreak),
-      }))
-    : undefined,
-}
-    : undefined;
+      const lastSummary = lastIndex >= 0 ? (sim.previewTurns[lastIndex] as any) : null;
+      const lastTurnSummary =
+        lastSummary
+          ? {
+              flipCount: Number(lastSummary.flipCount ?? 0),
+              comboCount: Number(lastSummary.comboCount ?? 0),
+              comboEffect: (lastSummary.comboEffect ?? "none") as "none" | "momentum" | "domination" | "fever",
+              triadPlus: Number(lastSummary.appliedBonus?.triadPlus ?? 0),
+              ignoreWarningMark: Boolean(lastSummary.appliedBonus?.ignoreWarningMark),
+              warningTriggered: Boolean(lastSummary.warningTriggered),
+              warningPlaced: typeof lastSummary.warningPlaced === "number" ? Number(lastSummary.warningPlaced) : null,
+              flips: Array.isArray(lastSummary.flipTraces)
+                ? lastSummary.flipTraces.map((f: any) => ({
+                    from: Number(f.from),
+                    to: Number(f.to),
+                    isChain: Boolean(f.isChain),
+                    kind: f.kind === "diag" ? "diag" : "ortho",
+                    dir: typeof f.dir === "string" ? f.dir : undefined,
+                    vert: typeof f.vert === "string" ? f.vert : undefined,
+                    horiz: typeof f.horiz === "string" ? f.horiz : undefined,
+                    aVal: Number(f.aVal ?? 0),
+                    dVal: Number(f.dVal ?? 0),
+                    tieBreak: Boolean(f.tieBreak),
+                  }))
+                : undefined,
+            }
+          : undefined;
 
-
-const protocolV1 =
-  sim.ok
-    ? {
-        header: {
-          version: Number(sim.transcript.header.version),
-          rulesetId: String(sim.transcript.header.rulesetId),
-          seasonId: Number(sim.transcript.header.seasonId),
-          playerA: String(sim.transcript.header.playerA),
-          playerB: String(sim.transcript.header.playerB),
-          deckA: sim.transcript.header.deckA.map((x) => x.toString()),
-          deckB: sim.transcript.header.deckB.map((x) => x.toString()),
-          firstPlayer: sim.transcript.header.firstPlayer as 0 | 1,
-          deadline: Number(sim.transcript.header.deadline),
-          salt: String(sim.transcript.header.salt),
-        },
-        turns: turns.map((t) => ({
-          cell: Number(t.cell),
-          cardIndex: Number(t.cardIndex),
-          ...(typeof t.warningMarkCell === "number" ? { warningMarkCell: Number(t.warningMarkCell) } : {}),
-        })),
-      }
-    : undefined;
-
+      const protocolV1 =
+        sim.ok
+          ? {
+              header: {
+                version: Number(sim.transcript.header.version),
+                rulesetId: String(sim.transcript.header.rulesetId),
+                seasonId: Number(sim.transcript.header.seasonId),
+                playerA: String(sim.transcript.header.playerA),
+                playerB: String(sim.transcript.header.playerB),
+                deckA: sim.transcript.header.deckA.map((x) => x.toString()),
+                deckB: sim.transcript.header.deckB.map((x) => x.toString()),
+                firstPlayer: sim.transcript.header.firstPlayer as 0 | 1,
+                deadline: Number(sim.transcript.header.deadline),
+                salt: String(sim.transcript.header.salt),
+              },
+              turns: turns.map((t) => ({
+                cell: Number(t.cell),
+                cardIndex: Number(t.cardIndex),
+                ...(typeof t.warningMarkCell === "number" ? { warningMarkCell: Number(t.warningMarkCell) } : {}),
+              })),
+            }
+          : undefined;
 
       publishOverlayState({
         version: 1,
@@ -637,11 +665,11 @@ const protocolV1 =
         deckA: deckATokens.map((t) => t.toString()),
         deckB: deckBTokens.map((t) => t.toString()),
         protocolV1,
-usedCells: Array.from(used.cells).sort((a, b) => a - b),
-usedCardIndicesA: Array.from(used.usedA).sort((a, b) => a - b),
-usedCardIndicesB: Array.from(used.usedB).sort((a, b) => a - b),
-warningMarksUsedA: warnUsed.A,
-warningMarksUsedB: warnUsed.B,
+        usedCells: Array.from(used.cells).sort((a, b) => a - b),
+        usedCardIndicesA: Array.from(used.usedA).sort((a, b) => a - b),
+        usedCardIndicesB: Array.from(used.usedB).sort((a, b) => a - b),
+        warningMarksUsedA: warnUsed.A,
+        warningMarksUsedB: warnUsed.B,
         board: boardNow,
         lastMove,
         lastTurnSummary,
@@ -726,16 +754,16 @@ warningMarksUsedB: warnUsed.B,
       setDraftCell(null);
       setDraftCardIndex(null);
       setDraftWarningMarkCell(null);
-      setSelectedTurnIndex(Math.max(0, turns.length)); // focus the move we just added
+      setSelectedTurnIndex(Math.max(0, turns.length));
     },
     [turns.length, used.cells, currentUsed, currentWarnRemaining]
   );
 
   const commitMove = () => {
-    if (isAiTurn) return; // AI mode blocks manual B-side actions
+    if (isAiTurn) return;
 
     if (draftCell === null) {
-      setError("cell を選択してください");
+      setError("cell を選択してください（盤面をクリック）");
       return;
     }
     if (draftCardIndex === null) {
@@ -794,49 +822,41 @@ warningMarksUsedB: warnUsed.B,
     if (!cards) return;
     if (turns.length >= 9) return;
     if (currentPlayer !== aiPlayer) return;
-    // small delay for "thinking" feeling + to avoid UI jitter
     const t = window.setTimeout(() => doAiMove(), 180);
     return () => window.clearTimeout(t);
   }, [isVsNyanoAi, aiAutoPlay, cards, turns.length, currentPlayer, aiPlayer, doAiMove]);
 
-// Stream commands (from /stream). This is an opt-in feature for Twitch/OBS operation.
-React.useEffect(() => {
-  if (!streamMode) return;
+  // Stream commands (from /stream)
+  React.useEffect(() => {
+    if (!streamMode) return;
 
-  return subscribeStreamCommand((cmd: StreamCommandV1) => {
-    try {
-      if (!cmd || cmd.version !== 1) return;
-      if (cmd.id === lastStreamCmdIdRef.current) return;
-      lastStreamCmdIdRef.current = cmd.id;
+    return subscribeStreamCommand((cmd: StreamCommandV1) => {
+      try {
+        if (!cmd || cmd.version !== 1) return;
+        if (cmd.id === lastStreamCmdIdRef.current) return;
+        lastStreamCmdIdRef.current = cmd.id;
 
-      if (cmd.type !== "commit_move_v1") return;
-      if (turns.length >= 9) return;
+        if (cmd.type !== "commit_move_v1") return;
+        if (turns.length >= 9) return;
 
-      // Only accept the side configured for stream control.
-      if (cmd.by !== streamControlledSide) return;
+        if (cmd.by !== streamControlledSide) return;
+        if (isVsNyanoAi && currentPlayer === aiPlayer) return;
+        if (cmd.forTurn !== turns.length) return;
+        if (cmd.by !== currentPlayer) return;
 
-      // Do not override Nyano AI.
-      if (isVsNyanoAi && currentPlayer === aiPlayer) return;
+        const wm = cmd.move.warningMarkCell;
+        commitTurn({
+          cell: cmd.move.cell,
+          cardIndex: cmd.move.cardIndex,
+          warningMarkCell: typeof wm === "number" ? wm : undefined,
+        });
 
-      // Must match the live turn to avoid desync / replay.
-      if (cmd.forTurn !== turns.length) return;
-
-      // Must be the correct player's turn.
-      if (cmd.by !== currentPlayer) return;
-
-      const wm = cmd.move.warningMarkCell;
-      commitTurn({
-        cell: cmd.move.cell,
-        cardIndex: cmd.move.cardIndex,
-        warningMarkCell: typeof wm === "number" ? wm : undefined,
-      });
-
-      toast.success("Stream move", `cell ${cmd.move.cell} · cardIndex ${cmd.move.cardIndex}`);
-    } catch {
-      // ignore
-    }
-  });
-}, [streamMode, streamControlledSide, turns.length, currentPlayer, isVsNyanoAi, aiPlayer, commitTurn, toast]);
+        toast.success("Stream move", `cell ${cmd.move.cell} · cardIndex ${cmd.move.cardIndex}`);
+      } catch {
+        // ignore
+      }
+    });
+  }, [streamMode, streamControlledSide, turns.length, currentPlayer, isVsNyanoAi, aiPlayer, commitTurn, toast]);
 
   const canFinalize = turns.length === 9 && sim.ok;
 
@@ -882,38 +902,116 @@ React.useEffect(() => {
     window.open(url, "_blank");
   };
 
+  // P0-1: Cell select handler for BoardView / BoardViewRPG
+  const handleCellSelect = React.useCallback(
+    (cell: number) => {
+      if (isAiTurn || turns.length >= 9) return;
+      setDraftCell(cell);
+    },
+    [isAiTurn, turns.length],
+  );
+
+  // P1-2: Build NyanoReaction input from last turn
+  const nyanoReactionInput: NyanoReactionInput | null = React.useMemo(() => {
+    if (!sim.ok) return null;
+
+    const lastIdx = turns.length - 1;
+    const lastSummary = lastIdx >= 0 ? sim.previewTurns[lastIdx] : null;
+
+    // Count current tiles
+    let tilesA = 0;
+    let tilesB = 0;
+    for (const cell of boardNow) {
+      if (!cell) continue;
+      if ((cell as any).owner === 0) tilesA++;
+      else tilesB++;
+    }
+
+    return {
+      flipCount: lastSummary ? Number(lastSummary.flipCount ?? 0) : 0,
+      hasChain: lastSummary?.flipTraces ? lastSummary.flipTraces.some((t: any) => t.isChain) : false,
+      comboEffect: (lastSummary?.comboEffect ?? "none") as any,
+      warningTriggered: Boolean(lastSummary?.warningTriggered),
+      tilesA,
+      tilesB,
+      perspective: 0 as PlayerIndex,
+      finished: turns.length >= 9,
+      winner: turns.length >= 9 ? sim.full.winner : null,
+    };
+  }, [sim, turns.length, boardNow]);
+
+  // P1-1: flipTraces summary for last turn
+  const lastFlipSummaryText: string | null = React.useMemo(() => {
+    if (!sim.ok || turns.length === 0) return null;
+    const lastSummary = sim.previewTurns[turns.length - 1];
+    if (!lastSummary?.flipTraces || lastSummary.flipTraces.length === 0) return null;
+    return flipTracesSummary(lastSummary.flipTraces);
+  }, [sim, turns.length]);
+
+  // P0-2: Build TurnLogRPG entries from sim
+  const rpgLogEntries: TurnLogEntry[] = React.useMemo(() => {
+    if (!sim.ok) return [];
+    return sim.previewTurns.map((t) => ({
+      turnIndex: t.turnIndex,
+      player: t.player,
+      cell: t.cell,
+      janken: cards?.get(t.tokenId)?.jankenHand ?? 0,
+      flipCount: t.flipCount,
+    }));
+  }, [sim, cards]);
+
+  // P0-2: Build cards array for HandDisplayRPG
+  const currentHandCards: CardData[] = React.useMemo(() => {
+    if (!cards) return [];
+    return currentDeckTokens.map((tid) => cards.get(tid)).filter(Boolean) as CardData[];
+  }, [cards, currentDeckTokens]);
+
+  /* ═══════════════════════════════════════════════════════════════════════
+     RENDER
+     ═══════════════════════════════════════════════════════════════════════ */
+
   return (
     <div className="grid gap-6">
-{gameResult && (
-  <GameResultOverlay
-    show={showResultOverlay && turns.length >= 9}
-    result={gameResult}
-    onDismiss={() => setShowResultOverlay(false)}
-    onReplay={() => {
-      void openReplay();
-    }}
-    onShare={() => {
-      void copyShareUrl();
-    }}
-  />
-)}
+      {/* ── Result Overlay ── */}
+      {gameResult && (
+        isRpg ? (
+          <GameResultOverlayRPG
+            show={showResultOverlay && turns.length >= 9}
+            result={gameResult}
+            onDismiss={() => setShowResultOverlay(false)}
+            onReplay={() => { void openReplay(); }}
+            onShare={() => { void copyShareUrl(); }}
+          />
+        ) : (
+          <GameResultOverlay
+            show={showResultOverlay && turns.length >= 9}
+            result={gameResult}
+            onDismiss={() => setShowResultOverlay(false)}
+            onReplay={() => { void openReplay(); }}
+            onShare={() => { void copyShareUrl(); }}
+          />
+        )
+      )}
 
+      {/* ── Hero ── */}
       <section className="relative overflow-hidden rounded-2xl border border-slate-200 bg-white">
-  <div className="flex flex-col items-start gap-4 p-4 md:flex-row md:items-center md:p-6">
-    <NyanoImage size={96} className="shadow-sm" alt="Nyano" />
-    <div className="min-w-0">
-      <div className="text-xl font-semibold">Nyano Triad League</div>
-      <div className="mt-1 text-sm text-slate-600">
-        Nyano NFTで遊ぶ、コミュニティ主導のトライアド対戦。対局ログ（transcript）を共有して、配信・投票にも繋げられます。
-      </div>
-      <div className="mt-3 flex flex-wrap gap-2 text-xs text-slate-500">
-        <span className="rounded-full border border-slate-200 bg-slate-50 px-2 py-1">ETH on-chain</span>
-        <span className="rounded-full border border-slate-200 bg-slate-50 px-2 py-1">Replay share</span>
-        <span className="rounded-full border border-slate-200 bg-slate-50 px-2 py-1">Twitch voting</span>
-      </div>
-    </div>
-  </div>
-</section>
+        <div className="flex flex-col items-start gap-4 p-4 md:flex-row md:items-center md:p-6">
+          <NyanoImage size={96} className="shadow-sm" alt="Nyano" />
+          <div className="min-w-0">
+            <div className="text-xl font-semibold">Nyano Triad League</div>
+            <div className="mt-1 text-sm text-slate-600">
+              Nyano NFTで遊ぶ、コミュニティ主導のトライアド対戦。対局ログ（transcript）を共有して、配信・投票にも繋げられます。
+            </div>
+            <div className="mt-3 flex flex-wrap gap-2 text-xs text-slate-500">
+              <span className="rounded-full border border-slate-200 bg-slate-50 px-2 py-1">ETH on-chain</span>
+              <span className="rounded-full border border-slate-200 bg-slate-50 px-2 py-1">Replay share</span>
+              <span className="rounded-full border border-slate-200 bg-slate-50 px-2 py-1">Twitch voting</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ── Event ── */}
       {event ? (
         <section className="card">
           <div className="card-hd flex flex-wrap items-center justify-between gap-2">
@@ -923,14 +1021,9 @@ React.useEffect(() => {
                 status: <span className="font-medium">{eventStatus}</span> · ruleset={event.rulesetKey} · ai={event.aiDifficulty}
               </div>
             </div>
-
             <div className="flex flex-wrap items-center gap-2">
-              <Link className="btn no-underline" to="/events">
-                All events
-              </Link>
-              <button className="btn" onClick={clearEvent}>
-                Leave event
-              </button>
+              <Link className="btn no-underline" to="/events">All events</Link>
+              <button className="btn" onClick={clearEvent}>Leave event</button>
             </div>
           </div>
           <div className="card-bd grid gap-2 text-sm text-slate-700">
@@ -942,459 +1035,438 @@ React.useEffect(() => {
         </section>
       ) : null}
 
-      <section className="card">
-        <div className="card-hd">
-          <div className="text-base font-semibold">Match</div>
-          <div className="text-xs text-slate-500">ローカル対戦（ドラフト）→ transcript → Replay（共有）</div>
-        </div>
-
-        <div className="card-bd grid gap-4 text-sm">
-          <div className="grid gap-3 md:grid-cols-2">
-            <div className="grid gap-2">
-              <div className="text-xs font-medium text-slate-600">Deck A</div>
-              <select className="input" value={deckAId} onChange={(e) => setParam("a", e.target.value)}>
-                <option value="">Select…</option>
-                {decks.map((d) => (
-                  <option key={d.id} value={d.id}>
-                    {d.name}
-                  </option>
-                ))}
-              </select>
-              {deckA ? (
-                <div className="text-xs text-slate-500">{deckA.tokenIds.join(", ")}</div>
-              ) : (
-                <div className="text-xs text-slate-400">
-                  まずは{" "}
-                  <Link className="underline" to="/decks">
-                    Decks
-                  </Link>{" "}
-                  で作成してください
-                </div>
-              )}
-            </div>
-
-            <div className="grid gap-2">
-              <div className="text-xs font-medium text-slate-600">Deck B</div>
-
-              {event ? (
-                <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-700">
-                  Event deck (fixed): <span className="font-mono">{event.nyanoDeckTokenIds.join(", ")}</span>
-                </div>
-              ) : (
-                <>
-                  <select className="input" value={deckBId} onChange={(e) => setParam("b", e.target.value)}>
-                    <option value="">Select…</option>
-                    {decks.map((d) => (
-                      <option key={d.id} value={d.id}>
-                        {d.name}
-                      </option>
-                    ))}
-                  </select>
-                  {deckB ? <div className="text-xs text-slate-500">{deckB.tokenIds.join(", ")}</div> : <div className="text-xs text-slate-400">Deck B を選択してください</div>}
-                </>
-              )}
-            </div>
+      {/* ── Match Setup (collapsible after cards are loaded) ── */}
+      <CollapsibleSection
+        title="Match Setup"
+        subtitle="デッキ選択・ルールセット・対戦設定"
+        defaultOpen={!cards}
+      >
+        <div className="grid gap-3 md:grid-cols-2">
+          <div className="grid gap-2">
+            <div className="text-xs font-medium text-slate-600">Deck A</div>
+            <select className="input" value={deckAId} onChange={(e) => setParam("a", e.target.value)}>
+              <option value="">Select…</option>
+              {decks.map((d) => (
+                <option key={d.id} value={d.id}>{d.name}</option>
+              ))}
+            </select>
+            {deckA ? (
+              <div className="text-xs text-slate-500">{deckA.tokenIds.join(", ")}</div>
+            ) : (
+              <div className="text-xs text-slate-400">
+                まずは <Link className="underline" to="/decks">Decks</Link> で作成してください
+              </div>
+            )}
           </div>
 
-          <div className="grid gap-3 md:grid-cols-3">
-            <div className="grid gap-2">
-              <div className="text-xs font-medium text-slate-600">Opponent</div>
-              <select className="input" value={opponentMode} disabled={isEvent} onChange={(e) => setParam("opp", e.target.value)}>
-                <option value="pvp">Human vs Human（両方手動）</option>
-                <option value="vs_nyano_ai">Vs Nyano（AIがBを操作）</option>
-              </select>
-              <div className="text-[11px] text-slate-500">
-                {isEvent
-                  ? "Event では対戦条件が固定です（公平性のため）"
-                  : isVsNyanoAi
-                    ? "B側の手を Nyano AI が自動で選択します（Deck B が Nyano のデッキ）"
-                    : "A/B 両方を手動でコミットします"}
+          <div className="grid gap-2">
+            <div className="text-xs font-medium text-slate-600">Deck B</div>
+            {event ? (
+              <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-700">
+                Event deck (fixed): <span className="font-mono">{event.nyanoDeckTokenIds.join(", ")}</span>
               </div>
-            </div>
-
-            {isVsNyanoAi ? (
+            ) : (
               <>
-                <div className="grid gap-2">
-                  <div className="text-xs font-medium text-slate-600">AI Difficulty</div>
-                  <select className="input" value={aiDifficulty} disabled={isEvent} onChange={(e) => setParam("ai", e.target.value)}>
-                    <option value="easy">Easy（最小手）</option>
-                    <option value="normal">Normal（即時flip最大）</option>
-                  </select>
-                  <div className="text-[11px] text-slate-500">※ いまは「イベント運用しやすい・壊れない」ことを優先</div>
-                </div>
-
-                <div className="grid gap-2">
-                  <div className="text-xs font-medium text-slate-600">AI Auto</div>
-                  <label className="flex items-center gap-2 text-xs text-slate-700">
-                    <input type="checkbox" checked={aiAutoPlay} onChange={(e) => setParam("auto", e.target.checked ? "1" : "0")} />
-                    Nyano turn を自動で進める
-                  </label>
-                  {!aiAutoPlay ? <div className="text-[11px] text-slate-500">Nyano turn のときに “Nyano Move” を押してください</div> : null}
-                </div>
+                <select className="input" value={deckBId} onChange={(e) => setParam("b", e.target.value)}>
+                  <option value="">Select…</option>
+                  {decks.map((d) => (
+                    <option key={d.id} value={d.id}>{d.name}</option>
+                  ))}
+                </select>
+                {deckB ? <div className="text-xs text-slate-500">{deckB.tokenIds.join(", ")}</div> : <div className="text-xs text-slate-400">Deck B を選択してください</div>}
               </>
-            ) : null}
-          </div>
-
-
-
-<div className="grid gap-3 md:grid-cols-3">
-  <div className="grid gap-2">
-    <div className="text-xs font-medium text-slate-600">Stream mode</div>
-    <label className="flex items-center gap-2 text-xs text-slate-700">
-      <input type="checkbox" checked={streamMode} onChange={(e) => setParam("stream", e.target.checked ? "1" : "0")} />
-      /stream からの投票結果を反映する（配信用）
-    </label>
-
-    {streamMode ? (
-      <>
-        <label className="text-[11px] text-slate-500">Controlled side</label>
-        <select className="input" value={streamCtrlParam} onChange={(e) => setParam("ctrl", e.target.value)}>
-          <option value="A">Chat controls A</option>
-          <option value="B">Chat controls B</option>
-        </select>
-        <div className="text-[11px] text-slate-500">
-          Stream Studio:{" "}
-          <Link className="underline" to="/stream">
-            /stream
-          </Link>
-        </div>
-      </>
-    ) : (
-      <div className="text-[11px] text-slate-500">
-        Twitch配信の「Nyano vs Chat」用。まずは /stream の投票コンソールで動作確認できます。
-      </div>
-    )}
-  </div>
-</div>
-          <div className="grid gap-3 md:grid-cols-3">
-            <div className="grid gap-2">
-              <div className="text-xs font-medium text-slate-600">Ruleset</div>
-              <select className="input" value={rulesetKey} disabled={isEvent} onChange={(e) => setParam("rk", e.target.value)}>
-                <option value="v1">v1 (core+tactics)</option>
-                <option value="v2">v2 (shadow ignores warning mark)</option>
-              </select>
-              <div className="text-xs text-slate-500 font-mono">rulesetId: {rulesetId}</div>
-            </div>
-
-            <div className="grid gap-2">
-              <div className="text-xs font-medium text-slate-600">Season</div>
-              <input className="input" type="number" min={1} value={seasonId} disabled={isEvent} onChange={(e) => setParam("season", String(Number(e.target.value)))} />
-              <div className="text-[11px] text-slate-500">※ 今は 1 固定でもOK（将来リーグで拡張）</div>
-            </div>
-
-            <div className="grid gap-2">
-              <div className="text-xs font-medium text-slate-600">First Player</div>
-              <select className="input" value={String(firstPlayer)} disabled={isEvent} onChange={(e) => setParam("fp", e.target.value)}>
-                <option value="0">A first</option>
-                <option value="1">B first</option>
-              </select>
-              <div className="text-[11px] text-slate-500">firstPlayer を変えると drafted moves はリセットされます</div>
-            </div>
-          </div>
-
-          <div className="grid gap-3 md:grid-cols-2">
-            <div className="grid gap-2">
-              <div className="text-xs font-medium text-slate-600">Players (auto-filled from first token owner)</div>
-              <div className="grid grid-cols-2 gap-2">
-                <input className="input font-mono text-xs" value={playerA} onChange={(e) => setPlayerA(e.target.value as `0x${string}`)} />
-                <input className="input font-mono text-xs" value={playerB} onChange={(e) => setPlayerB(e.target.value as `0x${string}`)} />
-              </div>
-              <div className="text-[11px] text-slate-500">
-                A: {shortAddr(playerA)} / B: {shortAddr(playerB)}{" "}
-                {isVsNyanoAi ? <span className="text-slate-400">（Nyano AI は “Bの操作” を担当）</span> : null}
-              </div>
-            </div>
-
-            <div className="grid gap-2">
-              <div className="text-xs font-medium text-slate-600">Chain</div>
-              <div className="text-xs text-slate-600">
-                RPC: <span className="font-mono">{getRpcUrl()}</span>
-              </div>
-              <div className="text-xs text-slate-600">
-                Nyano: <span className="font-mono">{getNyanoAddress()}</span>
-              </div>
-            </div>
-          </div>
-
-          <div className="flex flex-wrap items-center gap-2">
-            <button className="btn btn-primary" disabled={!canLoad || loading} onClick={loadCards}>
-              {loading ? "Loading…" : "Load Cards"}
-            </button>
-            <button className="btn" onClick={resetMatch}>
-              Reset Match
-            </button>
-            <button className="btn" onClick={() => setSalt(randomSalt())}>
-              New Salt
-            </button>
-            <a
-              className="btn"
-              href={`${window.location.origin}/overlay?controls=0`}
-              target="_blank"
-              rel="noreferrer noopener"
-            >
-              Open Overlay
-            </a>
-            {isVsNyanoAi && !aiAutoPlay && isAiTurn ? (
-              <button className="btn btn-primary" onClick={doAiMove}>
-                Nyano Move
-              </button>
-            ) : null}
-          </div>
-
-          {status ? <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs text-emerald-900">{status}</div> : null}
-          {error ? (
-            <div className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-xs text-rose-900">
-              <div>{error}</div>
-              {looksLikeRpcError(error) ? (
-                <div className="mt-2 flex flex-wrap gap-2">
-                  <Link className="btn btn-sm" to="/nyano">
-                    RPC Settings
-                  </Link>
-                </div>
-              ) : null}
-            </div>
-          ) : null}
-        </div>
-      </section>
-
-      <section className="card">
-        <div className="card-hd">
-          <div className="text-base font-semibold">Draft Moves</div>
-          <div className="text-xs text-slate-500">
-            turn {currentTurnIndex}/9 · player {currentPlayer === 0 ? "A" : "B"} {isAiTurn ? "（Nyano AI）" : ""} · warning marks left: {currentWarnRemaining}
+            )}
           </div>
         </div>
 
-        <div className="card-bd grid gap-6">
-          {isAiTurn ? (
-            <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900">
-              Nyano の手番です。{aiAutoPlay ? "自動で進みます…" : "“Nyano Move” を押してください。"}
-            </div>
-          ) : null}
+        <div className="grid gap-3 md:grid-cols-3">
+          <div className="grid gap-2">
+            <div className="text-xs font-medium text-slate-600">Opponent</div>
+            <select className="input" value={opponentMode} disabled={isEvent} onChange={(e) => setParam("opp", e.target.value)}>
+              <option value="pvp">Human vs Human（両方手動）</option>
+              <option value="vs_nyano_ai">Vs Nyano（AIがBを操作）</option>
+            </select>
+          </div>
 
-          <div className="grid gap-6 md:grid-cols-2">
-            <div className="grid gap-3">
-              <div className="text-xs font-medium text-slate-600">Board (click an empty cell)</div>
-
-              <div className="grid grid-cols-3 gap-2">
-                {Array.from({ length: 9 }, (_, idx) => {
-                  const cell = (boardNow as any)[idx] as any;
-                  const occupied = Boolean(cell);
-                  const selected = draftCell === idx;
-                  const disabled = occupied || used.cells.has(idx);
-
-                  const isPlaced = boardAnim.placedCell === idx;
-                  const flippedIndex = boardAnim.flippedCells.indexOf(idx);
-                  const isFlipped = flippedIndex >= 0;
-                  const flipDelayClass = flippedIndex > 0 ? `flip-delay-${Math.min(flippedIndex, 3)}` : "";
-
-                  return (
-                    <button
-                      key={idx}
-                      disabled={disabled || turns.length >= 9 || isAiTurn}
-                      onClick={() => setDraftCell(idx)}
-                      className={[
-                        "aspect-square rounded-xl border p-2 text-left transition-all duration-200",
-                        selected ? "border-slate-900" : "border-slate-200",
-                        disabled || isAiTurn ? "bg-slate-50" : "bg-white hover:bg-slate-50",
-                        isPlaced ? "animate-cell-place ring-4 ring-flip/40 shadow-flip" : "",
-                        isFlipped ? ["animate-cell-flip animate-flip-glow ring-4 ring-chain/40 shadow-chain", flipDelayClass].join(" ") : "",
-                      ].join(" ")}
-                    >
-                      {cell ? <CardMini card={cell.card} owner={cell.owner} subtle /> : <div className="flex h-full items-center justify-center text-xs text-slate-400">{idx}</div>}
-                    </button>
-                  );
-                })}
+          {isVsNyanoAi ? (
+            <>
+              <div className="grid gap-2">
+                <div className="text-xs font-medium text-slate-600">AI Difficulty</div>
+                <select className="input" value={aiDifficulty} disabled={isEvent} onChange={(e) => setParam("ai", e.target.value)}>
+                  <option value="easy">Easy（最小手）</option>
+                  <option value="normal">Normal（即時flip最大）</option>
+                </select>
               </div>
 
               <div className="grid gap-2">
-                <div className="text-xs font-medium text-slate-600">Warning mark (optional)</div>
-                <select
-                  className="input"
-                  value={draftWarningMarkCell === null ? "" : String(draftWarningMarkCell)}
-                  onChange={(e) => {
-                    const v = e.target.value;
-                    setDraftWarningMarkCell(v === "" ? null : Number(v));
-                  }}
-                  disabled={turns.length >= 9 || isAiTurn || currentWarnRemaining <= 0}
-                >
-                  <option value="">None</option>
-                  {availableCells
-                    .filter((c) => c !== draftCell)
-                    .map((c) => (
-                      <option key={c} value={String(c)}>
-                        cell {c}
-                      </option>
-                    ))}
-                </select>
-                <div className="text-[11px] text-slate-500">※ 上限は各プレイヤー3回。相手がその cell に置いた時にペナルティが発生。</div>
+                <div className="text-xs font-medium text-slate-600">AI Auto</div>
+                <label className="flex items-center gap-2 text-xs text-slate-700">
+                  <input type="checkbox" checked={aiAutoPlay} onChange={(e) => setParam("auto", e.target.checked ? "1" : "0")} />
+                  Nyano turn を自動で進める
+                </label>
               </div>
-            </div>
-
-            <div className="grid gap-3">
-              <div className="text-xs font-medium text-slate-600">Pick a card (index 0..4)</div>
-              {!cards ? (
-                <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600">まずは Load Cards を実行してください</div>
-              ) : (
-                <div className="grid gap-2">
-                  <div className="flex flex-wrap gap-2">
-                    {currentDeckTokens.map((tid, idx) => {
-                      const c = cards.get(tid);
-                      const usedHere = currentUsed.has(idx);
-                      const selected = draftCardIndex === idx;
-                      return (
-                        <button
-                          key={idx}
-                          disabled={usedHere || turns.length >= 9 || isAiTurn}
-                          onClick={() => setDraftCardIndex(idx)}
-                          className={[
-                            "w-[120px] rounded-xl border p-2",
-                            selected ? "border-slate-900" : "border-slate-200",
-                            usedHere || isAiTurn ? "bg-slate-50 opacity-50" : "bg-white hover:bg-slate-50",
-                          ].join(" ")}
-                        >
-                          {c ? <CardMini card={c} owner={currentPlayer} subtle={!selected} /> : <div className="text-xs text-slate-500 font-mono">#{tid.toString()}</div>}
-                          <div className="mt-1 text-[10px] text-slate-500">idx {idx}</div>
-                        </button>
-                      );
-                    })}
-                  </div>
-
-                  <div className="flex flex-wrap items-center gap-2">
-                    <button className="btn btn-primary" onClick={commitMove} disabled={turns.length >= 9 || isAiTurn}>
-                      Commit Move
-                    </button>
-                    <button className="btn" onClick={undoMove} disabled={turns.length === 0}>
-                      Undo
-                    </button>
-                  </div>
-
-                  {!sim.ok ? (
-                    <div className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-xs text-rose-900">engine error: {sim.error}</div>
-                  ) : null}
-                </div>
-              )}
-            </div>
-          </div>
-
-          {Object.keys(aiNotes).length > 0 ? (
-            <div className="rounded-lg border border-slate-200 bg-white p-3 text-xs text-slate-700">
-              <div className="text-xs font-medium text-slate-600">Nyano decisions (debug)</div>
-              <div className="mt-2 grid gap-1 font-mono">
-                {Object.entries(aiNotes)
-                  .sort((a, b) => Number(a[0]) - Number(b[0]))
-                  .map(([k, v]) => (
-                    <div key={k}>
-                      turn {k}: {v}
-                    </div>
-                  ))}
-              </div>
-            </div>
+            </>
           ) : null}
+        </div>
 
-          <div className="grid gap-4 md:grid-cols-2">
-            <div className="grid gap-2">
-              <div className="text-xs font-medium text-slate-600">Progress</div>
-              <div className="rounded-lg border border-slate-200 bg-white p-3 text-xs text-slate-700">
-                <div className="grid gap-1">
-                  <div>cells used: {[...used.cells.values()].sort((a, b) => a - b).join(", ") || "—"}</div>
-                  <div>cards used (A): {[...used.usedA.values()].sort((a, b) => a - b).join(", ") || "—"}</div>
-                  <div>cards used (B): {[...used.usedB.values()].sort((a, b) => a - b).join(", ") || "—"}</div>
-                  <div>warning marks used (A/B): {warnUsed.A}/{warnUsed.B}</div>
-                </div>
-              </div>
-            </div>
+        <div className="grid gap-3 md:grid-cols-3">
+          <div className="grid gap-2">
+            <div className="text-xs font-medium text-slate-600">Stream mode</div>
+            <label className="flex items-center gap-2 text-xs text-slate-700">
+              <input type="checkbox" checked={streamMode} onChange={(e) => setParam("stream", e.target.checked ? "1" : "0")} />
+              /stream からの投票結果を反映
+            </label>
+            {streamMode ? (
+              <select className="input" value={streamCtrlParam} onChange={(e) => setParam("ctrl", e.target.value)}>
+                <option value="A">Chat controls A</option>
+                <option value="B">Chat controls B</option>
+              </select>
+            ) : null}
+          </div>
 
-            <div className="grid gap-2">
-              <div className="text-xs font-medium text-slate-600">Share</div>
-              <div className="flex flex-wrap items-center gap-2">
-                <button className="btn" onClick={copyTranscriptJson} disabled={!sim.ok}>
-                  Copy transcript JSON
-                </button>
-                <button className="btn" onClick={copyShareUrl} disabled={!canFinalize}>
-                  Copy share URL
-                </button>
-                <button className="btn" onClick={openReplay} disabled={!canFinalize}>
-                  Open Replay
-                </button>
-              </div>
-              <div className="text-[11px] text-slate-500">
-                共有URLは <span className="font-medium">9手確定</span> 後に解放（途中は placeholder が入るため）
-              </div>
-            </div>
+          <div className="grid gap-2">
+            <div className="text-xs font-medium text-slate-600">Ruleset</div>
+            <select className="input" value={rulesetKey} disabled={isEvent} onChange={(e) => setParam("rk", e.target.value)}>
+              <option value="v1">v1 (core+tactics)</option>
+              <option value="v2">v2 (shadow ignores warning mark)</option>
+            </select>
+            <div className="text-xs text-slate-500 font-mono truncate">rulesetId: {rulesetId}</div>
+          </div>
+
+          <div className="grid gap-2">
+            <div className="text-xs font-medium text-slate-600">First Player</div>
+            <select className="input" value={String(firstPlayer)} disabled={isEvent} onChange={(e) => setParam("fp", e.target.value)}>
+              <option value="0">A first</option>
+              <option value="1">B first</option>
+            </select>
           </div>
         </div>
-      </section>
 
-      <section className="card">
-        <div className="card-hd">
-          <div className="text-base font-semibold">Turn Log</div>
-          <div className="text-xs text-slate-500">コミット済みの手のみ表示（placeholderは非表示）</div>
+        <div className="flex flex-wrap items-center gap-2">
+          <button className="btn btn-primary" disabled={!canLoad || loading} onClick={loadCards}>
+            {loading ? "Loading…" : "Load Cards"}
+          </button>
+          <button className="btn" onClick={resetMatch}>Reset Match</button>
+          <button className="btn" onClick={() => setSalt(randomSalt())}>New Salt</button>
+          <a
+            className="btn"
+            href={`${window.location.origin}/overlay?controls=0`}
+            target="_blank"
+            rel="noreferrer noopener"
+          >
+            Open Overlay
+          </a>
         </div>
 
-        <div className="card-bd grid gap-4 md:grid-cols-2">
-          <div className="grid gap-3">
-            {sim.ok ? (
-              <>
-                {sim.ok ? (
-  <div className="mb-3">
-    <ScoreBar board={boardNow as any} moveCount={turns.length} maxMoves={9} />
-  </div>
-) : null}
+        {status ? <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs text-emerald-900">{status}</div> : null}
+        {error && !cards ? (
+          <div className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-xs text-rose-900">
+            <div>{error}</div>
+            {looksLikeRpcError(error) ? (
+              <div className="mt-2 flex flex-wrap gap-2">
+                <Link className="btn btn-sm" to="/nyano">RPC Settings</Link>
+              </div>
+            ) : null}
+          </div>
+        ) : null}
+      </CollapsibleSection>
 
-{isRpg ? (
-                  <BoardViewRPG
+      {/* ═══════════════════════════════════════════════════════════════════
+         GAME ARENA — unified play section (P0-1 / P0-2)
+         ═══════════════════════════════════════════════════════════════════ */}
+      <section className={isRpg ? "rounded-2xl" : "card"} style={isRpg ? { background: "#0A0A0A" } : undefined}>
+        {!isRpg && (
+          <div className="card-hd">
+            <div className="text-base font-semibold">
+              Game · turn {currentTurnIndex}/9
+              {isAiTurn ? " · Nyano AI" : ` · Player ${currentPlayer === 0 ? "A" : "B"}`}
+            </div>
+            <div className="text-xs text-slate-500">
+              warning marks left: {currentWarnRemaining}
+              {streamMode ? " · stream mode ON" : ""}
+            </div>
+          </div>
+        )}
+
+        <div className={isRpg ? "p-4" : "card-bd"}>
+          {!cards ? (
+            <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-8 text-center text-sm text-slate-600">
+              まずは Match Setup でデッキを選択し、<strong>Load Cards</strong> を実行してください
+            </div>
+          ) : (
+            <div className="grid gap-6 lg:grid-cols-[1fr_300px]">
+              {/* ── Left: Board + Hand ── */}
+              <div className="grid gap-4">
+                {/* ScoreBar */}
+                {sim.ok && (
+                  <ScoreBar
                     board={boardNow as any}
-                    focusCell={null}
-                    placedCell={boardAnim.placedCell}
-                    flippedCells={boardAnim.flippedCells}
-                    showCoordinates
-                    showCandles
-                    showParticles
+                    moveCount={turns.length}
+                    maxMoves={9}
+                    winner={turns.length >= 9 ? sim.full.winner : null}
                   />
-                ) : (
-                  <BoardView board={boardNow as any} focusCell={null} placedCell={boardAnim.placedCell} flippedCells={boardAnim.flippedCells} />
                 )}
-                {boardAnim.isAnimating ? (
+
+                {/* AI turn notice */}
+                {isAiTurn && (
+                  <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900">
+                    Nyano の手番です。{aiAutoPlay ? "自動で進みます…" : ""Nyano Move" を押してください。"}
+                  </div>
+                )}
+
+                {/* ────────────────────────────────────────────
+                    P0-1: Interactive Board (unified input)
+                    
+                    BoardView / BoardViewRPG with:
+                    - selectableCells = empty cells (when it's your turn)
+                    - selectedCell = draftCell
+                    - onCellSelect = handleCellSelect
+                    ──────────────────────────────────────────── */}
+                {sim.ok ? (
+                  isRpg ? (
+                    <BoardViewRPG
+                      board={boardNow as any}
+                      selectedCell={draftCell}
+                      placedCell={boardAnim.placedCell}
+                      flippedCells={boardAnim.flippedCells}
+                      selectableCells={selectableCells}
+                      onCellSelect={handleCellSelect}
+                      currentPlayer={currentPlayer}
+                      showCoordinates
+                      showCandles
+                      showParticles
+                    />
+                  ) : (
+                    <BoardView
+                      board={boardNow as any}
+                      selectedCell={draftCell}
+                      placedCell={boardAnim.placedCell}
+                      flippedCells={boardAnim.flippedCells}
+                      selectableCells={selectableCells}
+                      onCellSelect={handleCellSelect}
+                      currentPlayer={currentPlayer}
+                      showCoordinates
+                    />
+                  )
+                ) : (
+                  <div className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-xs text-rose-900">
+                    engine error: {(sim as any).error}
+                  </div>
+                )}
+
+                {/* Last move feedback */}
+                {boardAnim.isAnimating && (
                   <LastMoveFeedback
                     placedCell={boardAnim.placedCell}
                     flippedCells={boardAnim.flippedCells}
                     by={turns.length > 0 ? (turnPlayer(firstPlayer as any, turns.length - 1) === 0 ? "A" : "B") : "A"}
                   />
-                ) : null}
+                )}
 
-                {turns.length === 9 ? (
-                  <div className="rounded-lg border border-slate-200 bg-white p-3 text-xs text-slate-700">
-                    <div className="grid gap-1">
-                      <div>
-                        winner: <span className="font-medium">{sim.full.winner}</span> (tiles A/B = {sim.full.tiles.A}/{sim.full.tiles.B})
-                      </div>
-                      <div className="font-mono">matchId: {sim.full.matchId}</div>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600">
-                    9手確定後に勝敗が確定します（いまは途中経過の盤面だけ表示）
+                {/* P1-1: Flip summary in Japanese */}
+                {lastFlipSummaryText && (
+                  <div className={
+                    isRpg
+                      ? "rounded-lg px-3 py-2 text-xs font-semibold"
+                      : "rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900"
+                  }
+                  style={isRpg ? { background: "rgba(245,166,35,0.15)", color: "#F5A623", border: "1px solid rgba(245,166,35,0.3)" } : undefined}
+                  >
+                    ⚔ {lastFlipSummaryText}
                   </div>
                 )}
-              </>
-            ) : (
-              <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600">まずはカードをロードして、1手コミットしてください</div>
-            )}
-          </div>
 
-          <div className="grid gap-2">
-            {sim.ok ? (
-              <TurnLog
-                turns={sim.previewTurns}
-                boardHistory={sim.previewHistory}
-                selectedTurnIndex={Math.min(selectedTurnIndex, Math.max(0, sim.previewTurns.length - 1))}
-                onSelect={(i) => setSelectedTurnIndex(i)}
-              />
-            ) : (
-              <div className="text-xs text-slate-600">—</div>
-            )}
-          </div>
+                {/* P1-2: Nyano Reaction */}
+                {nyanoReactionInput && (
+                  <NyanoReaction
+                    input={nyanoReactionInput}
+                    turnIndex={turns.length}
+                    rpg={isRpg}
+                  />
+                )}
+
+                {/* ────────────────────────────────────────────
+                    P0-2: Hand Display (RPG or standard)
+                    ──────────────────────────────────────────── */}
+                <div className="grid gap-3">
+                  <div className={isRpg ? "text-xs font-bold uppercase tracking-wider" : "text-xs font-medium text-slate-600"}
+                    style={isRpg ? { fontFamily: "'Cinzel', serif", color: "var(--rpg-text-gold, #E8D48B)" } : undefined}
+                  >
+                    {currentPlayer === 0 ? "Player A" : "Player B"} Hand
+                    {draftCell !== null && <span className={isRpg ? "" : " text-slate-400"}> · placing on cell {draftCell}</span>}
+                  </div>
+
+                  {isRpg && currentHandCards.length > 0 ? (
+                    /* P0-2: RPG Hand Display */
+                    <HandDisplayRPG
+                      cards={currentHandCards}
+                      owner={currentPlayer}
+                      usedIndices={currentUsed}
+                      selectedIndex={draftCardIndex}
+                      onSelect={(idx) => setDraftCardIndex(idx)}
+                      disabled={turns.length >= 9 || isAiTurn}
+                    />
+                  ) : (
+                    /* Standard card buttons */
+                    <div className="flex flex-wrap gap-2">
+                      {currentDeckTokens.map((tid, idx) => {
+                        const c = cards.get(tid);
+                        const usedHere = currentUsed.has(idx);
+                        const selected = draftCardIndex === idx;
+                        return (
+                          <button
+                            key={idx}
+                            disabled={usedHere || turns.length >= 9 || isAiTurn}
+                            onClick={() => setDraftCardIndex(idx)}
+                            className={[
+                              "w-[120px] rounded-xl border p-2",
+                              selected ? "border-slate-900 ring-2 ring-nyano-400/60" : "border-slate-200",
+                              usedHere || isAiTurn ? "bg-slate-50 opacity-50" : "bg-white hover:bg-slate-50",
+                            ].join(" ")}
+                          >
+                            {c ? <CardMini card={c} owner={currentPlayer} subtle={!selected} /> : <div className="text-xs text-slate-500 font-mono">#{tid.toString()}</div>}
+                            <div className="mt-1 text-[10px] text-slate-500">idx {idx}</div>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+
+                  {/* Warning mark + Commit/Undo */}
+                  <div className="flex flex-wrap items-end gap-4">
+                    <div className="grid gap-1">
+                      <div className={isRpg ? "text-[10px] uppercase tracking-wider" : "text-[11px] text-slate-600"}
+                        style={isRpg ? { fontFamily: "'Cinzel', serif", color: "var(--rpg-text-dim, #8A7E6B)" } : undefined}
+                      >
+                        Warning Mark ({currentWarnRemaining} left)
+                      </div>
+                      <select
+                        className="input"
+                        value={draftWarningMarkCell === null ? "" : String(draftWarningMarkCell)}
+                        onChange={(e) => {
+                          const v = e.target.value;
+                          setDraftWarningMarkCell(v === "" ? null : Number(v));
+                        }}
+                        disabled={turns.length >= 9 || isAiTurn || currentWarnRemaining <= 0}
+                      >
+                        <option value="">None</option>
+                        {availableCells
+                          .filter((c) => c !== draftCell)
+                          .map((c) => (
+                            <option key={c} value={String(c)}>cell {c}</option>
+                          ))}
+                      </select>
+                    </div>
+
+                    <div className="flex flex-wrap items-center gap-2">
+                      <button
+                        className={isRpg ? "rpg-result__btn rpg-result__btn--primary" : "btn btn-primary"}
+                        onClick={commitMove}
+                        disabled={turns.length >= 9 || isAiTurn || draftCell === null || draftCardIndex === null}
+                      >
+                        Commit Move
+                      </button>
+                      <button
+                        className={isRpg ? "rpg-result__btn" : "btn"}
+                        onClick={undoMove}
+                        disabled={turns.length === 0}
+                      >
+                        Undo
+                      </button>
+                      {isVsNyanoAi && !aiAutoPlay && isAiTurn ? (
+                        <button className={isRpg ? "rpg-result__btn rpg-result__btn--primary" : "btn btn-primary"} onClick={doAiMove}>
+                          Nyano Move
+                        </button>
+                      ) : null}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Error display */}
+                {error && cards ? (
+                  <div className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-xs text-rose-900">{error}</div>
+                ) : null}
+              </div>
+
+              {/* ── Right: Turn Log + Info ── */}
+              <div className="grid gap-4 content-start">
+                {/* P0-2: RPG or standard Turn Log */}
+                {isRpg ? (
+                  <TurnLogRPG entries={rpgLogEntries} />
+                ) : (
+                  sim.ok ? (
+                    <TurnLog
+                      turns={sim.previewTurns}
+                      boardHistory={sim.previewHistory}
+                      selectedTurnIndex={Math.min(selectedTurnIndex, Math.max(0, sim.previewTurns.length - 1))}
+                      onSelect={(i) => setSelectedTurnIndex(i)}
+                    />
+                  ) : (
+                    <div className="text-xs text-slate-600">—</div>
+                  )
+                )}
+
+                {/* Winner / Match info */}
+                {turns.length === 9 && sim.ok ? (
+                  <div className={
+                    isRpg
+                      ? "rounded-lg p-3 text-xs"
+                      : "rounded-lg border border-slate-200 bg-white p-3 text-xs text-slate-700"
+                  }
+                  style={isRpg ? { background: "rgba(0,0,0,0.4)", color: "#F5F0E1", border: "1px solid rgba(201,168,76,0.2)" } : undefined}
+                  >
+                    <div>winner: <span className="font-medium">{sim.full.winner}</span> (tiles A/B = {sim.full.tiles.A}/{sim.full.tiles.B})</div>
+                    <div className="font-mono mt-1 truncate">matchId: {sim.full.matchId}</div>
+                  </div>
+                ) : (
+                  <div className={
+                    isRpg
+                      ? "rounded-lg p-3 text-xs"
+                      : "rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600"
+                  }
+                  style={isRpg ? { background: "rgba(0,0,0,0.3)", color: "var(--rpg-text-dim, #8A7E6B)" } : undefined}
+                  >
+                    9手確定後に勝敗が確定します
+                  </div>
+                )}
+
+                {/* Share buttons */}
+                <div className="grid gap-2">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <button className={isRpg ? "rpg-result__btn" : "btn"} onClick={copyTranscriptJson} disabled={!sim.ok}>
+                      Copy JSON
+                    </button>
+                    <button className={isRpg ? "rpg-result__btn" : "btn"} onClick={copyShareUrl} disabled={!canFinalize}>
+                      Share URL
+                    </button>
+                    <button className={isRpg ? "rpg-result__btn" : "btn"} onClick={openReplay} disabled={!canFinalize}>
+                      Replay
+                    </button>
+                  </div>
+                </div>
+
+                {/* AI debug notes (collapsed) */}
+                {Object.keys(aiNotes).length > 0 ? (
+                  <details className={
+                    isRpg
+                      ? "rounded-lg p-2 text-xs"
+                      : "rounded-lg border border-slate-200 bg-white p-3 text-xs text-slate-700"
+                  }
+                  style={isRpg ? { background: "rgba(0,0,0,0.3)", color: "var(--rpg-text-dim, #8A7E6B)" } : undefined}
+                  >
+                    <summary className="cursor-pointer font-medium">Nyano decisions ({Object.keys(aiNotes).length})</summary>
+                    <div className="mt-2 grid gap-1 font-mono">
+                      {Object.entries(aiNotes)
+                        .sort((a, b) => Number(a[0]) - Number(b[0]))
+                        .map(([k, v]) => (
+                          <div key={k}>turn {k}: {v}</div>
+                        ))}
+                    </div>
+                  </details>
+                ) : null}
+              </div>
+            </div>
+          )}
         </div>
       </section>
     </div>

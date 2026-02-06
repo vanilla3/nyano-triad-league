@@ -11,6 +11,8 @@ import {
 } from "@nyano/triad-engine";
 
 import { BoardView } from "@/components/BoardView";
+import { BoardViewRPG } from "@/components/BoardViewRPG";
+import { ScoreBar } from "@/components/ScoreBar";
 import { LastMoveFeedback, useBoardFlipAnimation } from "@/components/BoardFlipAnimator";
 import { NyanoImage } from "@/components/NyanoImage";
 import { CardMini } from "@/components/CardMini";
@@ -258,6 +260,8 @@ function parseBool01(v: string | null, defaultValue: boolean): boolean {
 
 export function MatchPage() {
   const [searchParams, setSearchParams] = useSearchParams();
+  const ui = (searchParams.get("ui") || "").toLowerCase();
+  const isRpg = ui === "rpg";
   const decks = React.useMemo(() => listDecks(), []);
 
   const eventId = searchParams.get("event") ?? "";
@@ -1332,7 +1336,25 @@ React.useEffect(() => {
           <div className="grid gap-3">
             {sim.ok ? (
               <>
-                <BoardView board={boardNow as any} focusCell={null} placedCell={boardAnim.placedCell} flippedCells={boardAnim.flippedCells} />
+                {sim.ok ? (
+  <div className="mb-3">
+    <ScoreBar board={boardNow as any} moveCount={turns.length} maxMoves={9} />
+  </div>
+) : null}
+
+{isRpg ? (
+                  <BoardViewRPG
+                    board={boardNow as any}
+                    focusCell={null}
+                    placedCell={boardAnim.placedCell}
+                    flippedCells={boardAnim.flippedCells}
+                    showCoordinates
+                    showCandles
+                    showParticles
+                  />
+                ) : (
+                  <BoardView board={boardNow as any} focusCell={null} placedCell={boardAnim.placedCell} flippedCells={boardAnim.flippedCells} />
+                )}
                 {boardAnim.isAnimating ? (
                   <LastMoveFeedback
                     placedCell={boardAnim.placedCell}
