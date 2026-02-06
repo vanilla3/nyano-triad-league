@@ -199,6 +199,20 @@ const lastTurnSummary =
         ignoreWarningMark: Boolean((last as any).appliedBonus?.ignoreWarningMark),
         warningTriggered: Boolean((last as any).warningTriggered),
         warningPlaced: typeof (last as any).warningPlaced === "number" ? Number((last as any).warningPlaced) : null,
+        flips: Array.isArray((last as any).flipTraces)
+          ? (last as any).flipTraces.map((f: any) => ({
+              from: Number(f.from),
+              to: Number(f.to),
+              isChain: Boolean(f.isChain),
+              kind: f.kind === "diag" ? "diag" : "ortho",
+              dir: typeof f.dir === "string" ? f.dir : undefined,
+              vert: typeof f.vert === "string" ? f.vert : undefined,
+              horiz: typeof f.horiz === "string" ? f.horiz : undefined,
+              aVal: Number(f.aVal ?? 0),
+              dVal: Number(f.dVal ?? 0),
+              tieBreak: Boolean(f.tieBreak),
+            }))
+          : undefined,
       }
     : undefined;
 
@@ -241,7 +255,7 @@ protocolV1: {
           lastTurnSummary,
           status: {
             finished: step >= 9,
-            winner: res.winner === 0 ? "A" : "B",
+            winner: res.winner === "draw" ? "draw" : res.winner === 0 ? "A" : "B",
             tilesA: Number(res.tiles.A),
             tilesB: Number(res.tiles.B),
             matchId: res.matchId,

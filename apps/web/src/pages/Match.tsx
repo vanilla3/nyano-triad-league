@@ -677,7 +677,7 @@ export function MatchPage() {
         status: sim.full
           ? {
               finished: turns.length >= 9,
-              winner: sim.full.winner === 0 ? "A" : "B",
+              winner: sim.full.winner === "draw" ? "draw" : sim.full.winner === 0 ? "A" : "B",
               tilesA: Number(sim.full.tiles.A),
               tilesB: Number(sim.full.tiles.B),
               matchId: sim.full.matchId,
