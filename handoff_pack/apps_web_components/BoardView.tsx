@@ -85,6 +85,8 @@ interface BoardCellProps {
   isSelected: boolean;
   isPlaced: boolean;
   isFlipped: boolean;
+  /** Optional CSS class to stagger flip animations for chain effects */
+  flipDelayClass?: string;
   isFocus: boolean;
   isSelectable: boolean;
   warningMark?: PlayerIndex | null;
@@ -99,6 +101,7 @@ function BoardCell({
   isSelected,
   isPlaced,
   isFlipped,
+  flipDelayClass,
   isFocus,
   isSelectable,
   warningMark,
@@ -133,8 +136,11 @@ function BoardCell({
     baseClasses.push("cursor-default");
   }
 
-  if (isPlaced) baseClasses.push("ring-4 ring-flip/40 animate-pulse-soft");
-  if (isFlipped) baseClasses.push("ring-4 ring-chain/40 animate-bounce-subtle");
+  if (isPlaced) baseClasses.push("ring-4 ring-flip/40 shadow-flip animate-cell-place");
+  if (isFlipped) {
+    baseClasses.push("ring-4 ring-chain/40 shadow-chain animate-cell-flip animate-flip-glow");
+    if (flipDelayClass) baseClasses.push(flipDelayClass);
+  }
 
   // Focus highlight (works even when the cell already has a card)
   if (isFocus && !isPlaced) baseClasses.push("ring-2 ring-nyano-400/70 ring-offset-2");
@@ -256,6 +262,8 @@ export function BoardView({
           const isSelectable = !disabled && selectableSet.has(idx);
           const isPlaced = placedCell === idx;
           const isFlipped = flippedSet.has(idx);
+          const flipIndex = isFlipped ? flippedCells.indexOf(idx) : -1;
+          const flipDelayClass = flipIndex > 0 ? `flip-delay-${Math.min(flipIndex, 3)}` : undefined;
           const isFocus = focus === idx;
           const isSelected = effectiveSelected === idx;
           const warning = warnMap.get(idx) ?? null;
@@ -269,6 +277,7 @@ export function BoardView({
               isSelected={!!isSelected}
               isPlaced={!!isPlaced}
               isFlipped={!!isFlipped}
+              flipDelayClass={flipDelayClass}
               isFocus={!!isFocus}
               isSelectable={isSelectable}
               warningMark={warning}

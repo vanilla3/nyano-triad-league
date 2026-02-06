@@ -848,6 +848,7 @@ return true;
       cardIndex: turn.cardIndex,
       tokenId,
       flipCount,
+      flipTraces: flipTracesThisTurn.length > 0 ? flipTracesThisTurn : undefined,
       comboCount,
       comboEffect,
       appliedBonus: { triadPlus: applied.triadPlus, ignoreWarningMark: applied.ignoreWarningMark },

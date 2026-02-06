@@ -1,6 +1,8 @@
 import React from "react";
 import { Link } from "react-router-dom";
 
+import { StreamOperationsHUD } from "@/components/StreamOperationsHUD";
+
 import { CopyField } from "@/components/CopyField";
 import { NyanoImage } from "@/components/NyanoImage";
 import { useToast } from "@/components/Toast";
@@ -920,6 +922,14 @@ const clearPicker = React.useCallback(() => {
 
 return (
     <div className="space-y-6">
+      <StreamOperationsHUD
+        live={live}
+        controlledSide={controlledSide}
+        voteOpen={voteOpen}
+        voteEndsAtMs={voteEndsAtMs}
+        totalVotes={Object.keys(votesByUser).length}
+        voteTurn={voteTurn}
+      />
       <div className="card">
         <div className="card-hd">
           <div>
