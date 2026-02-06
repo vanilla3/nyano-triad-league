@@ -1,5 +1,6 @@
 import React from "react";
 import type { BoardState, TurnSummary } from "@nyano/triad-engine";
+import { FlipTraceBadges, FlipTraceDetailList } from "@/components/FlipTraceBadges";
 
 const cellRC = (cell: number): string => {
   const r = Math.floor(cell / 3);
@@ -247,7 +248,7 @@ export function TurnLog(props: {
             key={t.turnIndex}
             className={[
               "w-full rounded-lg border px-3 py-2 text-left text-sm",
-              selected ? "border-slate-900 bg-slate-50" : "border-slate-200 bg-white hover:bg-slate-50",
+              selected ? "border-surface-900 bg-surface-50" : "border-surface-200 bg-white hover:bg-surface-50",
             ].join(" ")}
             onClick={() => props.onSelect(t.turnIndex)}
           >
@@ -256,60 +257,73 @@ export function TurnLog(props: {
                 Turn {t.turnIndex + 1} · {t.player === 0 ? "A" : "B"} · cell {t.cell} ({cellRC(t.cell)}) · cardIndex{" "}
                 {t.cardIndex}
               </div>
-              <div className="text-xs text-slate-500">token #{t.tokenId.toString()}</div>
+              <div className="text-xs text-surface-500">token #{t.tokenId.toString()}</div>
             </div>
 
-            <div className="mt-1 flex flex-wrap gap-2 text-xs text-slate-600">
-              <span className="rounded-md border border-slate-200 bg-slate-50 px-2 py-0.5">flips: {t.flipCount}</span>
+            <div className="mt-1 flex flex-wrap gap-2 text-xs text-surface-600">
+              <span className="badge">flips: {t.flipCount}</span>
+              <FlipTraceBadges flipTraces={t.flipTraces} />
 
               {d ? (
                 <>
-                  <span className="rounded-md border border-slate-200 bg-slate-50 px-2 py-0.5">
-                    placed: {d.placedCell ?? "—"}
-                  </span>
-                  <span className="rounded-md border border-amber-200 bg-amber-50 px-2 py-0.5">
-                    flipped cells: {formatCells(d.flippedCells)}
-                  </span>
+                  <span className="badge">placed: {d.placedCell ?? "—"}</span>
+                  <span className="badge badge-amber">flipped cells: {formatCells(d.flippedCells)}</span>
                 </>
               ) : null}
 
-              <span className="rounded-md border border-slate-200 bg-slate-50 px-2 py-0.5">comboCount: {t.comboCount}</span>
-              <span className="rounded-md border border-slate-200 bg-slate-50 px-2 py-0.5">combo: {t.comboEffect}</span>
-              <span className="rounded-md border border-slate-200 bg-slate-50 px-2 py-0.5">+triad: {t.appliedBonus.triadPlus}</span>
-              <span className="rounded-md border border-slate-200 bg-slate-50 px-2 py-0.5">
-                ignoreWarning: {t.appliedBonus.ignoreWarningMark ? "yes" : "no"}
-              </span>
+              <span className="badge">comboCount: {t.comboCount}</span>
+              <span className="badge">combo: {t.comboEffect}</span>
+              <span className="badge">+triad: {t.appliedBonus.triadPlus}</span>
+              <span className="badge">ignoreWarning: {t.appliedBonus.ignoreWarningMark ? "yes" : "no"}</span>
 
               {t.warningPlaced !== null ? (
                 <span className="rounded-md border border-slate-200 bg-slate-50 px-2 py-0.5">placed mark: {t.warningPlaced}</span>
               ) : null}
 
               {t.warningTriggered ? (
-                <span className="rounded-md border border-amber-300 bg-amber-50 px-2 py-0.5">stepped on warning</span>
+                <span className="badge badge-amber">stepped on warning</span>
               ) : null}
             </div>
 
-            {selected && d ? (
-              <div className="mt-2 rounded-lg border border-slate-200 bg-white p-2 text-xs text-slate-700">
-                <div className="font-medium">Δ (board diff)</div>
-                <div className="mt-1 grid gap-1 font-mono">
-                  <div>
-                    placed: cell {d.placedCell ?? "—"}{" "}
-                    {d.placedTokenId !== null ? `(#${d.placedTokenId.toString()})` : ""}{" "}
-                    {d.placedOwner !== null ? `by ${ownerLabel(d.placedOwner)}` : ""}
-                  </div>
-                  <div>flipped: {d.flipped.length}</div>
+            {selected ? (
+  <div className="mt-2 grid gap-2">
+    {t.flipTraces && t.flipTraces.length ? (
+      <div className="rounded-lg border border-surface-200 bg-white p-2 text-xs text-surface-700">
+        <div className="font-medium">Flip traces (after modifiers)</div>
+        <FlipTraceDetailList flipTraces={t.flipTraces} />
+      </div>
+    ) : null}
 
-                  {d.flipped.length ? (
-                    <div className="mt-1 grid gap-1">
-                      {d.flipped.map((f) => (
-                        <div key={`${t.turnIndex}-${f.cell}`} className="rounded-md border border-slate-200 bg-slate-50 px-2 py-1">
-                          <div className="font-mono">{formatFlipLine(f)}</div>
-                          <div className="mt-0.5 text-slate-600">{f.explain}</div>
-                        </div>
-                      ))}
-                    </div>
-                  ) : null}
+    {d ? (
+      <div className="rounded-lg border border-surface-200 bg-white p-2 text-xs text-surface-700">
+        <div className="font-medium">Δ (board diff)</div>
+        <div className="mt-1 grid gap-1 font-mono">
+          <div>
+            placed: cell {d.placedCell ?? "—"}{" "}
+            {d.placedTokenId !== null ? `(#${d.placedTokenId.toString()})` : ""}{" "}
+            {d.placedOwner !== null ? `by ${ownerLabel(d.placedOwner)}` : ""}
+          </div>
+          <div>flipped: {d.flipped.length}</div>
+
+          {d.flipped.length ? (
+            <div className="mt-1 grid gap-1">
+              {d.flipped.map((f) => (
+                <div
+                  key={`${t.turnIndex}-${f.cell}`}
+                  className="rounded-md border border-surface-200 bg-surface-50 px-2 py-1"
+                >
+                  <div className="font-mono">{formatFlipLine(f)}</div>
+                  <div className="mt-0.5 text-surface-600">{f.explain}</div>
+                </div>
+              ))}
+            </div>
+          ) : null}
+        </div>
+      </div>
+    ) : null}
+  </div>
+) : null}
+
                 </div>
               </div>
             ) : null}

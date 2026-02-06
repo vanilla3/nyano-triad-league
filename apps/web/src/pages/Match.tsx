@@ -12,6 +12,7 @@ import {
 
 import { BoardView } from "@/components/BoardView";
 import { BoardViewRPG } from "@/components/BoardViewRPG";
+import { ScoreBar } from "@/components/ScoreBar";
 import { LastMoveFeedback, useBoardFlipAnimation } from "@/components/BoardFlipAnimator";
 import { NyanoImage } from "@/components/NyanoImage";
 import { CardMini } from "@/components/CardMini";
@@ -1335,7 +1336,13 @@ React.useEffect(() => {
           <div className="grid gap-3">
             {sim.ok ? (
               <>
-                {isRpg ? (
+                {sim.ok ? (
+  <div className="mb-3">
+    <ScoreBar board={boardNow as any} moveCount={turns.length} maxMoves={9} />
+  </div>
+) : null}
+
+{isRpg ? (
                   <BoardViewRPG
                     board={boardNow as any}
                     focusCell={null}
