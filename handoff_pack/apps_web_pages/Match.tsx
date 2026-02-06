@@ -11,7 +11,6 @@ import {
 } from "@nyano/triad-engine";
 
 import { BoardView } from "@/components/BoardView";
-import { LastMoveFeedback, useBoardFlipAnimation } from "@/components/BoardFlipAnimator";
 import { NyanoImage } from "@/components/NyanoImage";
 import { CardMini } from "@/components/CardMini";
 import { TurnLog } from "@/components/TurnLog";
@@ -332,12 +331,6 @@ const streamControlledSide = (streamCtrlParam === "B" ? 1 : 0) as PlayerIndex;
     setAiNotes({});
     setSalt(randomSalt());
     setDeadline(Math.floor(Date.now() / 1000) + 24 * 3600);
-    // Clear last-move animation state (best-effort)
-    try {
-      boardAnim.clear();
-    } catch {
-      // ignore
-    }
   }, []);
 
   // If deck selection changes, reset the drafted match + reload requirement.
@@ -530,8 +523,6 @@ React.useEffect(() => {
 
 
   const boardNow = sim.ok ? sim.previewHistory[turns.length] ?? EMPTY_BOARD : EMPTY_BOARD;
-  const boardAnim = useBoardFlipAnimation(boardNow as any[], sim.ok);
-
 
   React.useEffect(() => {
     // Broadcast the current match state for OBS overlay (/overlay).
@@ -1179,22 +1170,15 @@ React.useEffect(() => {
                   const selected = draftCell === idx;
                   const disabled = occupied || used.cells.has(idx);
 
-                  const isPlaced = boardAnim.placedCell === idx;
-                  const flippedIndex = boardAnim.flippedCells.indexOf(idx);
-                  const isFlipped = flippedIndex >= 0;
-                  const flipDelayClass = flippedIndex > 0 ? `flip-delay-${Math.min(flippedIndex, 3)}` : "";
-
                   return (
                     <button
                       key={idx}
                       disabled={disabled || turns.length >= 9 || isAiTurn}
                       onClick={() => setDraftCell(idx)}
                       className={[
-                        "aspect-square rounded-xl border p-2 text-left transition-all duration-200",
+                        "aspect-square rounded-xl border p-2 text-left",
                         selected ? "border-slate-900" : "border-slate-200",
                         disabled || isAiTurn ? "bg-slate-50" : "bg-white hover:bg-slate-50",
-                        isPlaced ? "animate-cell-place ring-4 ring-flip/40 shadow-flip" : "",
-                        isFlipped ? ["animate-cell-flip animate-flip-glow ring-4 ring-chain/40 shadow-chain", flipDelayClass].join(" ") : "",
                       ].join(" ")}
                     >
                       {cell ? <CardMini card={cell.card} owner={cell.owner} subtle /> : <div className="flex h-full items-center justify-center text-xs text-slate-400">{idx}</div>}
@@ -1332,15 +1316,7 @@ React.useEffect(() => {
           <div className="grid gap-3">
             {sim.ok ? (
               <>
-                <BoardView board={boardNow as any} focusCell={null} placedCell={boardAnim.placedCell} flippedCells={boardAnim.flippedCells} />
-                {boardAnim.isAnimating ? (
-                  <LastMoveFeedback
-                    placedCell={boardAnim.placedCell}
-                    flippedCells={boardAnim.flippedCells}
-                    by={turns.length > 0 ? (turnPlayer(firstPlayer as any, turns.length - 1) === 0 ? "A" : "B") : "A"}
-                  />
-                ) : null}
-
+                <BoardView board={boardNow as any} focusCell={null} />
                 {turns.length === 9 ? (
                   <div className="rounded-lg border border-slate-200 bg-white p-3 text-xs text-slate-700">
                     <div className="grid gap-1">

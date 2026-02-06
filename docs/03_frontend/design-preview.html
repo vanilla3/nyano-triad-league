@@ -1,0 +1,1201 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Nyano Triad League - Design Preview</title>
+  
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800&family=Noto+Sans+JP:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  
+  <style>
+    :root {
+      /* Nyano Brand Colors */
+      --nyano-50: #FFF8F5;
+      --nyano-100: #FFEDE5;
+      --nyano-200: #FFD9C7;
+      --nyano-300: #FFC2A3;
+      --nyano-400: #FFA67A;
+      --nyano-500: #FF8A50;
+      --nyano-600: #E67340;
+      --nyano-700: #CC5C30;
+      
+      /* Player Colors */
+      --player-a-100: #E0F2FE;
+      --player-a-400: #38BDF8;
+      --player-a-500: #0EA5E9;
+      --player-a-600: #0284C7;
+      --player-a-700: #0369A1;
+      
+      --player-b-100: #FFE4E6;
+      --player-b-400: #FB7185;
+      --player-b-500: #F43F5E;
+      --player-b-600: #E11D48;
+      --player-b-700: #BE123C;
+      
+      /* Surface Colors */
+      --surface-50: #FAFAF9;
+      --surface-100: #F5F5F4;
+      --surface-200: #E7E5E4;
+      --surface-300: #D6D3D1;
+      --surface-400: #A8A29E;
+      --surface-500: #78716C;
+      --surface-600: #57534E;
+      --surface-700: #44403C;
+      --surface-800: #292524;
+      --surface-900: #1C1917;
+      
+      /* Semantic */
+      --victory: #10B981;
+      --defeat: #EF4444;
+      --flip: #F59E0B;
+      --chain: #8B5CF6;
+    }
+    
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: 'Noto Sans JP', 'Hiragino Sans', sans-serif;
+      background: var(--surface-50);
+      color: var(--surface-900);
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+    }
+    
+    .font-display {
+      font-family: 'Nunito', 'Rounded Mplus 1c', sans-serif;
+    }
+    
+    .font-mono {
+      font-family: 'JetBrains Mono', monospace;
+    }
+    
+    /* Container */
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 2rem 1rem;
+    }
+    
+    /* Section */
+    .section {
+      margin-bottom: 3rem;
+    }
+    
+    .section-title {
+      font-family: 'Nunito', sans-serif;
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--surface-800);
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    
+    .section-desc {
+      color: var(--surface-500);
+      font-size: 0.875rem;
+      margin-bottom: 1.5rem;
+    }
+    
+    /* Hero */
+    .hero {
+      text-align: center;
+      padding: 4rem 1rem;
+      background: linear-gradient(135deg, var(--nyano-100) 0%, transparent 50%, var(--player-a-100) 100%);
+      border-radius: 2rem;
+      margin-bottom: 3rem;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .hero::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      right: -20%;
+      width: 400px;
+      height: 400px;
+      background: radial-gradient(circle, var(--nyano-200) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    
+    .hero-mascot {
+      width: 120px;
+      height: 120px;
+      border-radius: 1.5rem;
+      border: 4px solid var(--nyano-300);
+      background: var(--nyano-50);
+      margin: 0 auto 1.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 4rem;
+      box-shadow: 0 0 30px -5px rgba(255, 138, 80, 0.4);
+      animation: float 3s ease-in-out infinite;
+    }
+    
+    @keyframes float {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-8px); }
+    }
+    
+    .hero-title {
+      font-family: 'Nunito', sans-serif;
+      font-size: 2.5rem;
+      font-weight: 800;
+      color: var(--surface-900);
+      margin-bottom: 0.5rem;
+    }
+    
+    .hero-subtitle {
+      color: var(--surface-600);
+      font-size: 1.125rem;
+    }
+    
+    /* Card Component */
+    .card {
+      background: white;
+      border-radius: 1rem;
+      border: 1px solid var(--surface-200);
+      box-shadow: 0 2px 8px -2px rgba(0, 0, 0, 0.06);
+      overflow: hidden;
+      transition: all 0.2s;
+    }
+    
+    .card:hover {
+      box-shadow: 0 4px 16px -4px rgba(0, 0, 0, 0.1);
+    }
+    
+    .card-hd {
+      padding: 0.75rem 1rem;
+      border-bottom: 1px solid var(--surface-100);
+    }
+    
+    .card-bd {
+      padding: 1rem;
+    }
+    
+    /* Button */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      padding: 0.5rem 1rem;
+      border-radius: 0.75rem;
+      font-family: 'Nunito', sans-serif;
+      font-size: 0.875rem;
+      font-weight: 600;
+      border: 1px solid var(--surface-200);
+      background: var(--surface-100);
+      color: var(--surface-700);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    
+    .btn:hover {
+      background: var(--surface-200);
+      border-color: var(--surface-300);
+    }
+    
+    .btn-primary {
+      background: var(--nyano-500);
+      color: white;
+      border-color: var(--nyano-600);
+      box-shadow: 0 2px 8px -2px rgba(255, 138, 80, 0.4);
+    }
+    
+    .btn-primary:hover {
+      background: var(--nyano-600);
+    }
+    
+    .btn-player-a {
+      background: var(--player-a-500);
+      color: white;
+      border-color: var(--player-a-600);
+    }
+    
+    .btn-player-b {
+      background: var(--player-b-500);
+      color: white;
+      border-color: var(--player-b-600);
+    }
+    
+    .btn-lg {
+      padding: 0.75rem 1.5rem;
+      font-size: 1rem;
+      border-radius: 1rem;
+    }
+    
+    /* Badge */
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+      padding: 0.25rem 0.5rem;
+      border-radius: 0.375rem;
+      font-size: 0.75rem;
+      font-weight: 500;
+      background: var(--surface-100);
+      color: var(--surface-600);
+      border: 1px solid var(--surface-200);
+    }
+    
+    .badge-nyano { background: var(--nyano-100); color: var(--nyano-700); border-color: var(--nyano-200); }
+    .badge-sky { background: var(--player-a-100); color: var(--player-a-700); border-color: #BAE6FD; }
+    .badge-rose { background: var(--player-b-100); color: var(--player-b-700); border-color: #FECDD3; }
+    .badge-amber { background: #FEF3C7; color: #B45309; border-color: #FDE68A; }
+    .badge-emerald { background: #D1FAE5; color: #047857; border-color: #A7F3D0; }
+    .badge-violet { background: #EDE9FE; color: #6D28D9; border-color: #DDD6FE; }
+    
+    /* Grid */
+    .grid {
+      display: grid;
+      gap: 1rem;
+    }
+    
+    .grid-2 { grid-template-columns: repeat(2, 1fr); }
+    .grid-3 { grid-template-columns: repeat(3, 1fr); }
+    .grid-4 { grid-template-columns: repeat(4, 1fr); }
+    
+    @media (max-width: 768px) {
+      .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; }
+    }
+    
+    /* Game Board */
+    .board-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1rem;
+    }
+    
+    .board-score {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+    
+    .score-item {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    
+    .score-player {
+      width: 2rem;
+      height: 2rem;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Nunito', sans-serif;
+      font-weight: 700;
+      font-size: 0.875rem;
+    }
+    
+    .score-player.active {
+      animation: pulse 1.5s ease-in-out infinite;
+    }
+    
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.7; }
+    }
+    
+    .score-player-a {
+      background: var(--player-a-100);
+      color: var(--player-a-700);
+    }
+    
+    .score-player-a.active {
+      background: var(--player-a-500);
+      color: white;
+    }
+    
+    .score-player-b {
+      background: var(--player-b-100);
+      color: var(--player-b-700);
+    }
+    
+    .score-player-b.active {
+      background: var(--player-b-500);
+      color: white;
+    }
+    
+    .score-value {
+      font-family: 'Nunito', sans-serif;
+      font-size: 1.5rem;
+      font-weight: 700;
+    }
+    
+    .score-value-a { color: var(--player-a-600); }
+    .score-value-b { color: var(--player-b-600); }
+    
+    .board {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 0.5rem;
+    }
+    
+    .board-cell {
+      width: 80px;
+      height: 80px;
+      border-radius: 1rem;
+      border: 2px solid var(--surface-200);
+      background: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.75rem;
+      color: var(--surface-400);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    
+    .board-cell:hover:not(.occupied) {
+      border-color: var(--nyano-400);
+      background: var(--nyano-50);
+    }
+    
+    .board-cell.selected {
+      border-color: var(--nyano-500);
+      background: var(--nyano-50);
+      box-shadow: 0 0 0 3px rgba(255, 138, 80, 0.2);
+    }
+    
+    .board-cell.occupied {
+      cursor: default;
+    }
+    
+    .board-cell.owner-a {
+      border-color: var(--player-a-400);
+      background: var(--player-a-100);
+    }
+    
+    .board-cell.owner-b {
+      border-color: var(--player-b-400);
+      background: var(--player-b-100);
+    }
+    
+    /* Game Card (inside cell) */
+    .game-card {
+      width: 100%;
+      height: 100%;
+      border-radius: 0.75rem;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      grid-template-rows: repeat(3, 1fr);
+      gap: 2px;
+      padding: 4px;
+    }
+    
+    .game-card-edge {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.625rem;
+      font-weight: 600;
+      background: var(--surface-100);
+      border-radius: 3px;
+    }
+    
+    .game-card-center {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1rem;
+      border-radius: 4px;
+    }
+    
+    .owner-a .game-card-center { background: var(--player-a-200); }
+    .owner-b .game-card-center { background: var(--player-b-200); }
+    
+    /* Hand Display */
+    .hand {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    
+    .hand-card {
+      width: 100px;
+      height: 140px;
+      border-radius: 1rem;
+      border: 2px solid var(--surface-200);
+      background: white;
+      padding: 0.5rem;
+      cursor: pointer;
+      transition: all 0.2s;
+      position: relative;
+    }
+    
+    .hand-card:hover:not(.used) {
+      transform: translateY(-4px);
+      box-shadow: 0 8px 24px -8px rgba(0, 0, 0, 0.15);
+    }
+    
+    .hand-card.selected {
+      border-color: var(--nyano-500);
+      box-shadow: 0 0 0 3px rgba(255, 138, 80, 0.2);
+    }
+    
+    .hand-card.used {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+    
+    .hand-card.owner-a {
+      border-color: var(--player-a-400);
+    }
+    
+    .hand-card.owner-b {
+      border-color: var(--player-b-400);
+    }
+    
+    .hand-card-image {
+      width: 48px;
+      height: 48px;
+      border-radius: 0.75rem;
+      background: var(--surface-100);
+      margin: 0 auto 0.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+    }
+    
+    .hand-card-edges {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      grid-template-rows: repeat(3, 1fr);
+      gap: 2px;
+      font-size: 0.625rem;
+      font-weight: 600;
+    }
+    
+    .hand-card-edge {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--surface-100);
+      border-radius: 2px;
+      height: 16px;
+    }
+    
+    .hand-card-janken {
+      text-align: center;
+      font-size: 0.875rem;
+      margin-top: 0.25rem;
+    }
+    
+    .hand-card-index {
+      position: absolute;
+      bottom: -8px;
+      right: -8px;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: var(--surface-600);
+      color: white;
+      font-size: 0.625rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 2px solid white;
+    }
+    
+    .hand-card.selected .hand-card-index {
+      background: var(--nyano-500);
+    }
+    
+    /* Turn Log */
+    .turn-log {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+    
+    .turn-item {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.5rem 0.75rem;
+      border-radius: 0.75rem;
+      border: 2px solid var(--surface-200);
+      background: white;
+      font-size: 0.75rem;
+    }
+    
+    .turn-item.player-a {
+      border-color: var(--player-a-200);
+      background: var(--player-a-100);
+    }
+    
+    .turn-item.player-b {
+      border-color: var(--player-b-200);
+      background: var(--player-b-100);
+    }
+    
+    .turn-number {
+      width: 1.5rem;
+      height: 1.5rem;
+      border-radius: 0.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 0.625rem;
+    }
+    
+    .player-a .turn-number {
+      background: var(--player-a-500);
+      color: white;
+    }
+    
+    .player-b .turn-number {
+      background: var(--player-b-500);
+      color: white;
+    }
+    
+    /* Result Overlay */
+    .result-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s;
+    }
+    
+    .result-overlay.show {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    
+    .result-card {
+      background: white;
+      border-radius: 1.5rem;
+      width: 90%;
+      max-width: 360px;
+      overflow: hidden;
+      transform: scale(0.95);
+      transition: transform 0.3s;
+    }
+    
+    .result-overlay.show .result-card {
+      transform: scale(1);
+    }
+    
+    .result-header {
+      padding: 2rem;
+      text-align: center;
+    }
+    
+    .result-header.victory {
+      background: linear-gradient(135deg, #10B981, #059669);
+      color: white;
+    }
+    
+    .result-header.defeat {
+      background: linear-gradient(135deg, var(--surface-600), var(--surface-800));
+      color: white;
+    }
+    
+    .result-mascot {
+      width: 80px;
+      height: 80px;
+      border-radius: 1rem;
+      background: rgba(255, 255, 255, 0.2);
+      margin: 0 auto 1rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2.5rem;
+    }
+    
+    .result-title {
+      font-family: 'Nunito', sans-serif;
+      font-size: 2rem;
+      font-weight: 800;
+    }
+    
+    .result-body {
+      padding: 1.5rem;
+    }
+    
+    .result-scores {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 2rem;
+    }
+    
+    .result-score-item {
+      text-align: center;
+    }
+    
+    .result-score-value {
+      width: 4rem;
+      height: 4rem;
+      border-radius: 1rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Nunito', sans-serif;
+      font-size: 1.5rem;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+    }
+    
+    .result-score-value.player-a {
+      background: var(--player-a-100);
+      color: var(--player-a-700);
+    }
+    
+    .result-score-value.player-b {
+      background: var(--player-b-100);
+      color: var(--player-b-700);
+    }
+    
+    .result-score-value.winner {
+      background: var(--victory);
+      color: white;
+    }
+    
+    .result-actions {
+      display: flex;
+      gap: 0.75rem;
+      padding: 1rem 1.5rem;
+      background: var(--surface-50);
+    }
+    
+    .result-actions .btn {
+      flex: 1;
+    }
+    
+    /* Color Palette Display */
+    .color-palette {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+    
+    .color-swatch {
+      width: 60px;
+      height: 60px;
+      border-radius: 0.75rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.5rem;
+      font-weight: 600;
+      color: white;
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+    }
+    
+    /* Utility */
+    .flex { display: flex; }
+    .flex-wrap { flex-wrap: wrap; }
+    .items-center { align-items: center; }
+    .justify-center { justify-content: center; }
+    .justify-between { justify-content: space-between; }
+    .gap-1 { gap: 0.25rem; }
+    .gap-2 { gap: 0.5rem; }
+    .gap-3 { gap: 0.75rem; }
+    .gap-4 { gap: 1rem; }
+    .mt-4 { margin-top: 1rem; }
+    .mb-4 { margin-bottom: 1rem; }
+    .text-center { text-align: center; }
+    .text-sm { font-size: 0.875rem; }
+    .text-xs { font-size: 0.75rem; }
+    .font-bold { font-weight: 700; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Hero Section -->
+    <div class="hero">
+      <div class="hero-mascot">🐱</div>
+      <h1 class="hero-title">Nyano Triad League</h1>
+      <p class="hero-subtitle">NyanoNFTを使ったカードバトルゲーム</p>
+      <div class="flex justify-center gap-3 mt-4">
+        <button class="btn btn-primary btn-lg">⚔️ Play Now</button>
+        <button class="btn btn-lg">🃏 Build Deck</button>
+      </div>
+    </div>
+    
+    <!-- Color Palette -->
+    <div class="section">
+      <h2 class="section-title">🎨 Color System</h2>
+      <p class="section-desc">Nyanoブランドカラーとゲームカラー</p>
+      
+      <div class="grid grid-2">
+        <div class="card">
+          <div class="card-hd"><strong>Nyano Brand</strong></div>
+          <div class="card-bd">
+            <div class="color-palette">
+              <div class="color-swatch" style="background: var(--nyano-300);">300</div>
+              <div class="color-swatch" style="background: var(--nyano-400);">400</div>
+              <div class="color-swatch" style="background: var(--nyano-500);">500</div>
+              <div class="color-swatch" style="background: var(--nyano-600);">600</div>
+              <div class="color-swatch" style="background: var(--nyano-700);">700</div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="card">
+          <div class="card-hd"><strong>Player Colors</strong></div>
+          <div class="card-bd">
+            <div class="color-palette">
+              <div class="color-swatch" style="background: var(--player-a-400);">A-400</div>
+              <div class="color-swatch" style="background: var(--player-a-500);">A-500</div>
+              <div class="color-swatch" style="background: var(--player-b-400);">B-400</div>
+              <div class="color-swatch" style="background: var(--player-b-500);">B-500</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Buttons & Badges -->
+    <div class="section">
+      <h2 class="section-title">🔘 Buttons & Badges</h2>
+      
+      <div class="card">
+        <div class="card-bd">
+          <div class="flex flex-wrap gap-2 mb-4">
+            <button class="btn">Default</button>
+            <button class="btn btn-primary">Primary</button>
+            <button class="btn btn-player-a">Player A</button>
+            <button class="btn btn-player-b">Player B</button>
+          </div>
+          
+          <div class="flex flex-wrap gap-2">
+            <span class="badge">Default</span>
+            <span class="badge badge-nyano">Nyano</span>
+            <span class="badge badge-sky">Player A</span>
+            <span class="badge badge-rose">Player B</span>
+            <span class="badge badge-amber">⚔ Flip</span>
+            <span class="badge badge-emerald">✓ Victory</span>
+            <span class="badge badge-violet">⚡ Chain</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Game Board -->
+    <div class="section">
+      <h2 class="section-title">🎮 Game Board</h2>
+      <p class="section-desc">3x3のゲームボードとスコア表示</p>
+      
+      <div class="card">
+        <div class="card-bd">
+          <div class="board-container">
+            <!-- Score -->
+            <div class="board-score">
+              <div class="score-item">
+                <div class="score-player score-player-a active">A</div>
+                <span class="score-value score-value-a">3</span>
+              </div>
+              <span style="color: var(--surface-400);">:</span>
+              <div class="score-item">
+                <span class="score-value score-value-b">2</span>
+                <div class="score-player score-player-b">B</div>
+              </div>
+            </div>
+            
+            <!-- Board -->
+            <div class="board">
+              <div class="board-cell owner-a occupied">
+                <div class="game-card">
+                  <div></div>
+                  <div class="game-card-edge">7</div>
+                  <div></div>
+                  <div class="game-card-edge">4</div>
+                  <div class="game-card-center">✊</div>
+                  <div class="game-card-edge">6</div>
+                  <div></div>
+                  <div class="game-card-edge">3</div>
+                  <div></div>
+                </div>
+              </div>
+              <div class="board-cell owner-b occupied">
+                <div class="game-card">
+                  <div></div>
+                  <div class="game-card-edge">5</div>
+                  <div></div>
+                  <div class="game-card-edge">8</div>
+                  <div class="game-card-center">✋</div>
+                  <div class="game-card-edge">2</div>
+                  <div></div>
+                  <div class="game-card-edge">5</div>
+                  <div></div>
+                </div>
+              </div>
+              <div class="board-cell">A1</div>
+              <div class="board-cell owner-a occupied">
+                <div class="game-card">
+                  <div></div>
+                  <div class="game-card-edge">6</div>
+                  <div></div>
+                  <div class="game-card-edge">5</div>
+                  <div class="game-card-center">✌️</div>
+                  <div class="game-card-edge">7</div>
+                  <div></div>
+                  <div class="game-card-edge">4</div>
+                  <div></div>
+                </div>
+              </div>
+              <div class="board-cell selected">B2</div>
+              <div class="board-cell owner-b occupied">
+                <div class="game-card">
+                  <div></div>
+                  <div class="game-card-edge">3</div>
+                  <div></div>
+                  <div class="game-card-edge">6</div>
+                  <div class="game-card-center">✊</div>
+                  <div class="game-card-edge">4</div>
+                  <div></div>
+                  <div class="game-card-edge">9</div>
+                  <div></div>
+                </div>
+              </div>
+              <div class="board-cell owner-a occupied">
+                <div class="game-card">
+                  <div></div>
+                  <div class="game-card-edge">4</div>
+                  <div></div>
+                  <div class="game-card-edge">7</div>
+                  <div class="game-card-center">✋</div>
+                  <div class="game-card-edge">3</div>
+                  <div></div>
+                  <div class="game-card-edge">8</div>
+                  <div></div>
+                </div>
+              </div>
+              <div class="board-cell">B3</div>
+              <div class="board-cell">C3</div>
+            </div>
+            
+            <!-- Turn indicator -->
+            <div style="display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 1rem; background: var(--player-a-100); border-radius: 2rem;">
+              <span style="width: 8px; height: 8px; background: var(--player-a-500); border-radius: 50%; animation: pulse 1.5s infinite;"></span>
+              <span class="font-display font-bold text-sm" style="color: var(--player-a-700);">Player A's turn</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Hand Display -->
+    <div class="section">
+      <h2 class="section-title">🃏 Hand Display</h2>
+      <p class="section-desc">プレイヤーの手札カード表示</p>
+      
+      <div class="card">
+        <div class="card-bd">
+          <div class="hand">
+            <div class="hand-card owner-a used">
+              <div class="hand-card-image">🐱</div>
+              <div class="hand-card-edges">
+                <div></div>
+                <div class="hand-card-edge">7</div>
+                <div></div>
+                <div class="hand-card-edge">4</div>
+                <div class="hand-card-edge" style="background: var(--player-a-200);">✊</div>
+                <div class="hand-card-edge">6</div>
+                <div></div>
+                <div class="hand-card-edge">3</div>
+                <div></div>
+              </div>
+              <div class="hand-card-index">1</div>
+            </div>
+            
+            <div class="hand-card owner-a selected">
+              <div class="hand-card-image">🐱</div>
+              <div class="hand-card-edges">
+                <div></div>
+                <div class="hand-card-edge">8</div>
+                <div></div>
+                <div class="hand-card-edge">5</div>
+                <div class="hand-card-edge" style="background: var(--player-a-200);">✋</div>
+                <div class="hand-card-edge">4</div>
+                <div></div>
+                <div class="hand-card-edge">6</div>
+                <div></div>
+              </div>
+              <div class="hand-card-index">2</div>
+            </div>
+            
+            <div class="hand-card owner-a">
+              <div class="hand-card-image">🐱</div>
+              <div class="hand-card-edges">
+                <div></div>
+                <div class="hand-card-edge">5</div>
+                <div></div>
+                <div class="hand-card-edge">9</div>
+                <div class="hand-card-edge" style="background: var(--player-a-200);">✌️</div>
+                <div class="hand-card-edge">3</div>
+                <div></div>
+                <div class="hand-card-edge">5</div>
+                <div></div>
+              </div>
+              <div class="hand-card-index">3</div>
+            </div>
+            
+            <div class="hand-card owner-a used">
+              <div class="hand-card-image">🐱</div>
+              <div class="hand-card-edges">
+                <div></div>
+                <div class="hand-card-edge">6</div>
+                <div></div>
+                <div class="hand-card-edge">5</div>
+                <div class="hand-card-edge" style="background: var(--player-a-200);">✊</div>
+                <div class="hand-card-edge">7</div>
+                <div></div>
+                <div class="hand-card-edge">4</div>
+                <div></div>
+              </div>
+              <div class="hand-card-index">4</div>
+            </div>
+            
+            <div class="hand-card owner-a used">
+              <div class="hand-card-image">🐱</div>
+              <div class="hand-card-edges">
+                <div></div>
+                <div class="hand-card-edge">4</div>
+                <div></div>
+                <div class="hand-card-edge">7</div>
+                <div class="hand-card-edge" style="background: var(--player-a-200);">✋</div>
+                <div class="hand-card-edge">3</div>
+                <div></div>
+                <div class="hand-card-edge">8</div>
+                <div></div>
+              </div>
+              <div class="hand-card-index">5</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Turn Log -->
+    <div class="section">
+      <h2 class="section-title">📜 Turn Log</h2>
+      
+      <div class="grid grid-2">
+        <div class="card">
+          <div class="card-hd"><strong>Recent Turns</strong></div>
+          <div class="card-bd">
+            <div class="turn-log">
+              <div class="turn-item player-a">
+                <div class="turn-number">1</div>
+                <span class="font-bold" style="color: var(--player-a-700);">A</span>
+                <span>→</span>
+                <span class="font-mono">A1</span>
+                <span class="badge badge-sm">Card #1234</span>
+              </div>
+              <div class="turn-item player-b">
+                <div class="turn-number">2</div>
+                <span class="font-bold" style="color: var(--player-b-700);">B</span>
+                <span>→</span>
+                <span class="font-mono">B1</span>
+                <span class="badge badge-amber badge-sm">⚔ 1</span>
+              </div>
+              <div class="turn-item player-a">
+                <div class="turn-number">3</div>
+                <span class="font-bold" style="color: var(--player-a-700);">A</span>
+                <span>→</span>
+                <span class="font-mono">A2</span>
+                <span class="badge badge-violet badge-sm">Chain!</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="card">
+          <div class="card-hd"><strong>Turn Timeline</strong></div>
+          <div class="card-bd">
+            <div style="display: flex; gap: 0.25rem;">
+              <div style="width: 2rem; height: 2rem; border-radius: 0.5rem; background: var(--player-a-500); color: white; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 700;">1</div>
+              <div style="width: 2rem; height: 2rem; border-radius: 0.5rem; background: var(--player-b-500); color: white; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 700;">2</div>
+              <div style="width: 2rem; height: 2rem; border-radius: 0.5rem; background: var(--player-a-500); color: white; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 700;">3</div>
+              <div style="width: 2rem; height: 2rem; border-radius: 0.5rem; background: var(--player-b-500); color: white; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 700;">4</div>
+              <div style="width: 2rem; height: 2rem; border-radius: 0.5rem; background: var(--player-a-500); color: white; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 700; box-shadow: 0 0 0 3px var(--player-a-200);">5</div>
+              <div style="width: 2rem; height: 2rem; border-radius: 0.5rem; background: var(--surface-100); color: var(--surface-400); display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 700;">6</div>
+              <div style="width: 2rem; height: 2rem; border-radius: 0.5rem; background: var(--surface-100); color: var(--surface-400); display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 700;">7</div>
+              <div style="width: 2rem; height: 2rem; border-radius: 0.5rem; background: var(--surface-100); color: var(--surface-400); display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 700;">8</div>
+              <div style="width: 2rem; height: 2rem; border-radius: 0.5rem; background: var(--surface-100); color: var(--surface-400); display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 700;">9</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Result Overlay Preview -->
+    <div class="section">
+      <h2 class="section-title">🏆 Result Overlay</h2>
+      <p class="section-desc">勝敗結果の表示</p>
+      
+      <div class="grid grid-2">
+        <div class="card">
+          <div class="card-bd text-center">
+            <div style="background: linear-gradient(135deg, #10B981, #059669); color: white; padding: 2rem; border-radius: 1rem; margin-bottom: 1rem;">
+              <div style="font-size: 3rem; margin-bottom: 0.5rem;">🎉</div>
+              <div class="font-display font-bold" style="font-size: 1.5rem;">Victory!</div>
+              <div style="opacity: 0.9;">おめでとう！</div>
+            </div>
+            <div class="flex justify-center gap-4">
+              <div class="text-center">
+                <div style="width: 3rem; height: 3rem; border-radius: 0.75rem; background: var(--victory); color: white; display: flex; align-items: center; justify-content: center; font-size: 1.25rem; font-weight: 700; margin: 0 auto 0.25rem;">5</div>
+                <div class="text-sm">Player A</div>
+              </div>
+              <div style="color: var(--surface-300); font-size: 1.5rem;">:</div>
+              <div class="text-center">
+                <div style="width: 3rem; height: 3rem; border-radius: 0.75rem; background: var(--player-b-100); color: var(--player-b-700); display: flex; align-items: center; justify-content: center; font-size: 1.25rem; font-weight: 700; margin: 0 auto 0.25rem;">4</div>
+                <div class="text-sm">Player B</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="card">
+          <div class="card-bd text-center">
+            <div style="background: linear-gradient(135deg, var(--surface-600), var(--surface-800)); color: white; padding: 2rem; border-radius: 1rem; margin-bottom: 1rem;">
+              <div style="font-size: 3rem; margin-bottom: 0.5rem;">😢</div>
+              <div class="font-display font-bold" style="font-size: 1.5rem;">Defeat</div>
+              <div style="opacity: 0.9;">また挑戦しよう！</div>
+            </div>
+            <div class="flex justify-center gap-4">
+              <div class="text-center">
+                <div style="width: 3rem; height: 3rem; border-radius: 0.75rem; background: var(--player-a-100); color: var(--player-a-700); display: flex; align-items: center; justify-content: center; font-size: 1.25rem; font-weight: 700; margin: 0 auto 0.25rem;">3</div>
+                <div class="text-sm">Player A</div>
+              </div>
+              <div style="color: var(--surface-300); font-size: 1.5rem;">:</div>
+              <div class="text-center">
+                <div style="width: 3rem; height: 3rem; border-radius: 0.75rem; background: var(--victory); color: white; display: flex; align-items: center; justify-content: center; font-size: 1.25rem; font-weight: 700; margin: 0 auto 0.25rem;">6</div>
+                <div class="text-sm">Player B</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- OBS Overlay Preview -->
+    <div class="section">
+      <h2 class="section-title">📺 OBS Overlay</h2>
+      <p class="section-desc">配信用オーバーレイのプレビュー</p>
+      
+      <div style="background: linear-gradient(135deg, #1a1a2e, #16213e); padding: 2rem; border-radius: 1rem; min-height: 400px; position: relative;">
+        <!-- Overlay Panel -->
+        <div style="width: 280px; background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(8px); border-radius: 1.5rem; padding: 1rem; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);">
+          <!-- Header -->
+          <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1rem;">
+            <div style="width: 40px; height: 40px; border-radius: 50%; background: var(--surface-100); display: flex; align-items: center; justify-content: center; font-size: 1.5rem;">🐱</div>
+            <div>
+              <div class="font-display font-bold text-sm">Nyano Triad League</div>
+              <div class="text-xs" style="color: var(--surface-500);">Turn 5 / 9</div>
+            </div>
+          </div>
+          
+          <!-- Score -->
+          <div style="display: flex; align-items: center; justify-content: center; gap: 0.75rem; margin-bottom: 1rem;">
+            <div style="display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 0.75rem; background: var(--player-a-500); color: white; border-radius: 0.75rem;">
+              <span class="font-display font-bold text-sm">A</span>
+              <span class="font-display font-bold" style="font-size: 1.25rem;">3</span>
+            </div>
+            <span style="color: var(--surface-400);">vs</span>
+            <div style="display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 0.75rem; background: var(--player-b-100); color: var(--player-b-700); border-radius: 0.75rem;">
+              <span class="font-display font-bold" style="font-size: 1.25rem;">2</span>
+              <span class="font-display font-bold text-sm">B</span>
+            </div>
+          </div>
+          
+          <!-- Mini Board -->
+          <div style="display: flex; justify-content: center; margin-bottom: 1rem;">
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; padding: 0.5rem; background: var(--surface-100); border-radius: 0.75rem;">
+              <div style="width: 24px; height: 24px; border-radius: 4px; background: var(--player-a-400);"></div>
+              <div style="width: 24px; height: 24px; border-radius: 4px; background: var(--player-b-400);"></div>
+              <div style="width: 24px; height: 24px; border-radius: 4px; background: var(--surface-200);"></div>
+              <div style="width: 24px; height: 24px; border-radius: 4px; background: var(--player-a-400);"></div>
+              <div style="width: 24px; height: 24px; border-radius: 4px; background: var(--surface-200);"></div>
+              <div style="width: 24px; height: 24px; border-radius: 4px; background: var(--player-b-400);"></div>
+              <div style="width: 24px; height: 24px; border-radius: 4px; background: var(--player-a-400);"></div>
+              <div style="width: 24px; height: 24px; border-radius: 4px; background: var(--surface-200);"></div>
+              <div style="width: 24px; height: 24px; border-radius: 4px; background: var(--surface-200);"></div>
+            </div>
+          </div>
+          
+          <!-- Vote Box -->
+          <div style="background: var(--nyano-500); color: white; border-radius: 1rem; overflow: hidden;">
+            <div style="background: var(--nyano-600); padding: 0.5rem 1rem; display: flex; justify-content: space-between; align-items: center;">
+              <span class="font-display font-bold text-sm">🗳 VOTE</span>
+              <span class="font-mono font-bold">15s</span>
+            </div>
+            <div style="height: 4px; background: var(--nyano-400);">
+              <div style="width: 50%; height: 100%; background: rgba(255,255,255,0.5);"></div>
+            </div>
+            <div style="padding: 0.75rem 1rem;">
+              <div class="text-xs" style="opacity: 0.8; margin-bottom: 0.5rem;">12 votes</div>
+              <div style="display: flex; justify-content: space-between; font-size: 0.875rem;">
+                <span class="font-mono">#2 → B2</span>
+                <span class="font-bold">5</span>
+              </div>
+              <div style="display: flex; justify-content: space-between; font-size: 0.875rem; opacity: 0.8;">
+                <span class="font-mono">#3 → C1</span>
+                <span class="font-bold">4</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Stream indicator -->
+        <div style="position: absolute; top: 1rem; right: 1rem; display: flex; align-items: center; gap: 0.5rem; color: white; font-size: 0.75rem;">
+          <span style="width: 8px; height: 8px; background: #EF4444; border-radius: 50%; animation: pulse 1.5s infinite;"></span>
+          LIVE
+        </div>
+      </div>
+    </div>
+    
+    <!-- Footer -->
+    <footer style="text-align: center; padding: 2rem; color: var(--surface-400); font-size: 0.75rem;">
+      Nyano Triad League Design System Preview
+    </footer>
+  </div>
+  
+  <script>
+    // Interactive demo: select cards and cells
+    document.querySelectorAll('.hand-card:not(.used)').forEach(card => {
+      card.addEventListener('click', function() {
+        document.querySelectorAll('.hand-card').forEach(c => c.classList.remove('selected'));
+        this.classList.add('selected');
+      });
+    });
+    
+    document.querySelectorAll('.board-cell:not(.occupied)').forEach(cell => {
+      cell.addEventListener('click', function() {
+        document.querySelectorAll('.board-cell').forEach(c => c.classList.remove('selected'));
+        this.classList.add('selected');
+      });
+    });
+  </script>
+</body>
+</html>

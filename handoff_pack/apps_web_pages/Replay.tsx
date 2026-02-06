@@ -15,7 +15,6 @@ import OFFICIAL from "@root/rulesets/official_onchain_rulesets.json";
 import { BoardView } from "@/components/BoardView";
 import { CardMini } from "@/components/CardMini";
 import { TurnLog } from "@/components/TurnLog";
-import { GameResultBanner } from "@/components/GameResultOverlay";
 import {
   base64UrlEncodeUtf8,
   safeBase64UrlDecodeUtf8,
@@ -676,74 +675,6 @@ const buildShareLink = async (): Promise<string> => {
 
       {sim.ok ? (
         <>
-          {step >= 9 ? (
-            <section className="animate-banner-enter">
-              <div className="relative overflow-hidden rounded-2xl border-2 border-surface-200 bg-white shadow-soft">
-                {sim.current.winner !== null ? (
-                  <div
-                    className={[
-                      "absolute inset-0 opacity-20 result-banner-shimmer",
-                      sim.current.winner === 0 ? "bg-gradient-to-r from-player-a-200 via-player-a-100 to-player-a-200" : "bg-gradient-to-r from-player-b-200 via-player-b-100 to-player-b-200",
-                    ].join(" ")}
-                  />
-                ) : null}
-                <div className="relative">
-                  <GameResultBanner
-                    result={{
-                      winner: sim.current.winner === null ? "draw" : sim.current.winner,
-                      tilesA: Number(sim.current.tiles.A),
-                      tilesB: Number(sim.current.tiles.B),
-                      matchId: sim.current.matchId,
-                    }}
-                  />
-                  <div className="flex flex-wrap items-center justify-between gap-2 border-t border-surface-100 bg-surface-50/80 px-4 py-3">
-                    <div className="text-xs text-slate-600">
-                      <span className="font-medium">Finished</span> · step {step}/{stepMax}
-                    </div>
-                    <div className="flex flex-wrap items-center gap-2">
-                      <button
-                        className="btn btn-sm"
-                        onClick={() => copyWithToast("matchId", sim.current.matchId)}
-                      >
-                        Copy matchId
-                      </button>
-                      <button
-                        className="btn btn-sm"
-                        onClick={() => copyWithToast("transcript", stringifyWithBigInt(sim.transcript))}
-                      >
-                        Copy transcript
-                      </button>
-                      <button
-                        className="btn btn-sm btn-primary"
-                        onClick={() => copyWithToast("share link", buildShareLink())}
-                      >
-                        Share
-                      </button>
-                      {eventId ? (
-                        <button
-                          className="btn btn-sm"
-                          disabled={hasEventAttempt(eventId, sim.current.matchId)}
-                          onClick={() => {
-                            (async () => {
-                              try {
-                                await saveToMyAttempts();
-                                toast.success("Saved", "Added to My Attempts");
-                              } catch (e: any) {
-                                setSim({ ok: false, error: e?.message ?? String(e) });
-                              }
-                            })();
-                          }}
-                        >
-                          {hasEventAttempt(eventId, sim.current.matchId) ? "Saved" : "Save"}
-                        </button>
-                      ) : null}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </section>
-          ) : null}
-
           <section className="grid gap-6 lg:grid-cols-2">
             <div className="card">
               <div className="card-hd flex items-center justify-between">
