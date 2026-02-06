@@ -13,6 +13,7 @@ import {
 import OFFICIAL from "@root/rulesets/official_onchain_rulesets.json";
 
 import { BoardView } from "@/components/BoardView";
+import { BoardViewRPG } from "@/components/BoardViewRPG";
 import { CardMini } from "@/components/CardMini";
 import { TurnLog } from "@/components/TurnLog";
 import { GameResultBanner } from "@/components/GameResultOverlay";
@@ -112,6 +113,8 @@ function pickDefaultMode(rulesetId: string): Mode {
 
 export function ReplayPage() {
   const [searchParams, setSearchParams] = useSearchParams();
+  const ui = (searchParams.get("ui") || "").toLowerCase();
+  const isRpg = ui === "rpg";
 
   const eventId = searchParams.get("event") ?? "";
   const event = React.useMemo(() => (eventId ? getEventById(eventId) : null), [eventId]);
@@ -434,12 +437,24 @@ React.useEffect(() => {
           </div>
         </div>
 
-        <BoardView
-          board={boardNow}
-          focusCell={focusTurnIndex !== null ? res.turns[focusTurnIndex]?.cell : null}
-          placedCell={placedCell}
-          flippedCells={flippedCells}
-        />
+{isRpg ? (
+  <BoardViewRPG
+    board={boardNow as any}
+    focusCell={focusTurnIndex !== null ? res.turns[focusTurnIndex]?.cell : null}
+    placedCell={placedCell}
+    flippedCells={flippedCells}
+    showCoordinates
+    showCandles
+    showParticles
+  />
+) : (
+  <BoardView
+    board={boardNow}
+    focusCell={focusTurnIndex !== null ? res.turns[focusTurnIndex]?.cell : null}
+    placedCell={placedCell}
+    flippedCells={flippedCells}
+  />
+)}
 
         {step > 0 ? (
           <div className="flex flex-wrap gap-2 text-xs text-slate-600">

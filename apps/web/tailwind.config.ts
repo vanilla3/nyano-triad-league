@@ -1,4 +1,5 @@
 import type { Config } from "tailwindcss";
+import { rpgAnimations, rpgColors, rpgFontFamily, rpgKeyframes } from "./rpg-theme/rpg-tailwind-extend";
 
 /**
  * Nyano Triad League - Tailwind Configuration
@@ -83,6 +84,7 @@ export default {
         victory: "#10B981",   // Emerald - win
         defeat: "#EF4444",    // Red - loss
         draw: "#6B7280",      // Gray - draw
+        ...rpgColors,
       },
       
       // ═══════════════════════════════════════════════════════════════
@@ -110,6 +112,7 @@ export default {
           "Consolas",
           "monospace",
         ],
+        ...rpgFontFamily,
       },
       
       fontSize: {
@@ -194,6 +197,7 @@ export default {
         // Loading states
         "shimmer": "shimmer 2s linear infinite",
         "spin-slow": "spin 2s linear infinite",
+        ...rpgAnimations,
       },
       
       keyframes: {
@@ -251,6 +255,7 @@ export default {
           "0%": { backgroundPosition: "-200% 0" },
           "100%": { backgroundPosition: "200% 0" },
         },
+        ...rpgKeyframes,
       },
       
       // ═══════════════════════════════════════════════════════════════
