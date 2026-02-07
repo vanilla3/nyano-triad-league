@@ -4,7 +4,7 @@
 目的・仕様・現状・次の実装計画・重要ファイルをまとめたものです。
 
 > 更新: 2026-02-06  
-> 直近コミット: commit-0068（/match 入力統一 + RPG全体化 + flipTraces日本語 + Nyanoリアクション）
+> 直近コミット: commit-0070（/overlay 視認性改善: HUD常設 + flip理由/進行/投票/strictAllowed 可視化）
 
 ---
 
@@ -75,7 +75,8 @@ Nyano NFT を “カード” として使い、オンチェーン文脈に強�
 ### 3-4. /overlay
 OBSに貼る前提の表示。  
 - streamer_bus の state を購読して表示
-- ここは次のP0で「視認性」「flip理由」「進行」「投票状態」を磨く予定
+- ✅ 常設HUD（turn/tiles/flip理由/strictAllowed/vote/sync）を実装済み
+- 次の改善: 配信テンプレ化（サイズ/余白プリセット）と、情報の優先順位調整
 
 ---
 
@@ -95,6 +96,11 @@ OBSに貼る前提の表示。
   - P1-1: flipTraces の日本語説明（配信用 readout も含む）
   - P1-2: Nyano リアクション（glow/badge/吹き出し）
 
+- **commit-0070**
+  - P0-1: /overlay 視認性改善（HUD常設: 進行/flip理由/投票/strictAllowed/sync）
+  - /match & /replay: overlay publish に lastTurnSummary.flips（flipTraces）を追加
+  - winner が draw のときの表示/型崩れを修正（overlay & result）
+
 ### 4-2. いま “できること”
 - ローカルでカードを読み込み、対局を成立させ、ログ/リプレイを観戦できる
 - 配信画面から nyano-warudo へ snapshot を送れる
@@ -105,10 +111,11 @@ OBSに貼る前提の表示。
 ## 5. 次の実装計画（Roadmap / TODO）
 
 ### P0（配信/体験の土台を固める）
-1. **/overlay の視認性改善（最優先）**
+1. **/overlay の視認性改善（DONE）**
    - 進行（turn/tiles）・flip理由（flipTraces）・投票状態・strictAllowed hash を常時表示
    - `flipTraceDescribe.ts` の `flipTracesReadout()` を overlay に適用
    - `NyanoReactionBadge` を overlay に追加（小さくても感情が伝わる）
+   - ✅ HUD: flip理由（readout）/ turn・tiles / strictAllowed（件数+hash）/ vote状態 / sync
 
 ### P1（観戦で“面白い”を強化）
 2. **TurnLog の flipTraces を日本語版に統合**

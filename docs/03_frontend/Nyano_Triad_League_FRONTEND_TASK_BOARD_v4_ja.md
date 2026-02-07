@@ -1,11 +1,12 @@
 # Nyano Triad League Frontend タスクボード v4 (JA)
 
 更新: 2026-02-06  
-前提: commit-0068 を取り込んだ状態
+前提: commit-0070 を取り込んだ状態（/overlay 視認性改善まで反映済み）
 
 ---
 
 ## Done（済）
+- [x] P0-1: /overlay 視認性改善（HUD: turn/tiles/flip理由/strictAllowed/vote + NyanoReactionBadge）
 - [x] /replay: Auto Play + speed（play/pause）
 - [x] engine: TurnSummary に flipTraces を付与
 - [x] /match & /replay: `ui=rpg` で BoardViewRPG を試せる
@@ -18,8 +19,8 @@
 
 ---
 
-## P0（次にやる：配信/運用の土台）
-### P0-1: /overlay 視認性改善（最優先）
+## P0（済：配信/運用の土台）
+### P0-1: /overlay 視認性改善（DONE）
 - 進行: turn/tiles を常設表示
 - 理由: flipTracesReadout で “なぜ” を表示
 - 投票: strictAllowed 件数 + hash + 残り秒 + 同期状態
