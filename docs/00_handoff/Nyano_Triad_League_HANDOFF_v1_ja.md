@@ -3,8 +3,8 @@
 このドキュメントは、別スレッド/別担当者が **Triad League を迷子にならずに継続開発できる** ように、
 目的・仕様・現状・次の実装計画・重要ファイルをまとめたものです。
 
-> 更新: 2026-02-06  
-> 直近コミット: commit-0072（TurnLog: flipTraces 日本語説明統合 + summary表示）
+> 更新: 2026-02-07  
+> 直近コミット: commit-0073（/replay: NyanoReaction step再現 + neutral perspective修正）
 
 ---
 
@@ -125,8 +125,10 @@ OBSに貼る前提の表示。
 2. **TurnLog の flipTraces を日本語版に統合（DONE）**
    - badges と詳細パネルを `flipTraceShort/Full` の出力に差し替え
    - `flipTracesSummary()` を turn header に追加
-3. **/replay にも NyanoReaction を追加**
+3. **/replay にも NyanoReaction を追加（DONE）**
    - step で “そのターンの反応” を再現（配信素材として強い）
+   - spectator視点（neutral）で advantage/disadvantage が偏らないよう補正
+   - winner=draw の表示崩れを回避（デバッグ表示の整合）
 
 ### P2（nyano-warudo / Twitch 連携）
 4. **投票開始時点でも state_json を送る（DONE）**

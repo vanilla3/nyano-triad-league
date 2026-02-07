@@ -1,7 +1,7 @@
 # Nyano Triad League Frontend タスクボード v4 (JA)
 
-更新: 2026-02-06  
-前提: commit-0071 を取り込んだ状態（vote start の state_json 自動送信まで反映済み）
+更新: 2026-02-07  
+前提: commit-0073 を取り込んだ状態（/replay NyanoReaction step再現まで反映済み）
 
 ---
 
@@ -13,6 +13,7 @@
 - [x] /match & /replay: ScoreBar（tiles と進行）
 - [x] TurnLog: flipTraces の表示基盤（badges + 詳細パネル）
 - [x] P1-1: TurnLog を日本語説明に寄せる（flipTraceDescribe: short/full/summary 統合）
+- [x] P1-2: /replay に NyanoReaction（step再現）を追加（neutral補正含む）
 - [x] /match: 入力盤面を BoardView/BoardViewRPG に統一（selectableCells/onCellSelect）
 - [x] /match?ui=rpg: Hand/Log/Result もRPG UIへ
 - [x] flipTraces 日本語化ユーティリティ（配信 readout を含む）
