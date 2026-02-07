@@ -8,6 +8,7 @@ import { NyanoImage } from "@/components/NyanoImage";
 import { useToast } from "@/components/Toast";
 import { EVENTS, getEventStatus, type EventV1 } from "@/lib/events";
 import { postNyanoWarudoSnapshot } from "@/lib/nyano_warudo_bridge";
+import { formatViewerMoveText } from "@/lib/triad_viewer_command";
 import { publishStreamCommand, makeStreamCommandId, publishStreamVoteState, readStoredOverlayState, subscribeOverlayState, type OverlayStateV1 } from "@/lib/streamer_bus";
 
 function origin(): string {
@@ -102,12 +103,17 @@ function parseCellAny(raw: string): number | null {
 }
 
 function toViewerMoveText(m: ParsedMove): string {
-  const cardHuman = (m.cardIndex + 1).toString();
-  const cellCoord = cellIndexToCoord(m.cell);
-  const wm = typeof m.warningMarkCell === "number" ? ` wm=${cellIndexToCoord(m.warningMarkCell)}` : "";
-  // canonical: "#triad A<cardSlot>-><cell>"
-  return `#triad A${cardHuman}->${cellCoord}${wm}`;
+  return formatViewerMoveText({
+    side: 0,
+    slot: m.cardIndex + 1,
+    cell: m.cell,
+    warningMarkCell: typeof m.warningMarkCell === "number" ? m.warningMarkCell : null,
+  });
 }
+
+const VIEWER_CMD_EXAMPLE = formatViewerMoveText({ side: 0, slot: 2, cell: 4, warningMarkCell: 2 });
+// => #triad A2->B2 wm=C1
+
 
 
 type ParsedMove = {
@@ -459,7 +465,7 @@ function buildStateJsonContent(state: OverlayStateV1 | null, controlled: 0 | 1):
     turn,
     toPlay: toPlay === 0 ? "A" : toPlay === 1 ? "B" : null,
     controlledSide: controlled === 0 ? "A" : "B",
-    viewerCommandFormat: "#triad A2->B2 wm=C1",
+    viewerCommandFormat: VIEWER_CMD_EXAMPLE,
 
     // Protocol snapshot (best-effort)
     protocolV1: (state as any)?.protocolV1 ?? null,
@@ -514,7 +520,7 @@ function buildAiPrompt(state: OverlayStateV1 | null, controlled: 0 | 1): string 
   lines.push("");
   lines.push("Viewer command format:");
   lines.push("- #triad A<slot>-><cell> wm=<cell> (wm optional)");
-  lines.push("  examples: #triad A2->B2   /   #triad A3->C3 wm=A1");
+  lines.push(`  examples: ${VIEWER_CMD_EXAMPLE}   /   ${formatViewerMoveText({ side: 0, slot: 3, cell: 8, warningMarkCell: 0 })}`);
   lines.push("");
   lines.push("Board (A1..C3): each cell = owner+slot (tokenId if known)");
   // render grid
@@ -540,7 +546,7 @@ function buildAiPrompt(state: OverlayStateV1 | null, controlled: 0 | 1): string 
   for (const cell of emptyCells) {
     for (const cardIndex of remain) {
       if (printed >= max) break;
-      lines.push(`- #triad A${cardIndex + 1}->${cellIndexToCoord(cell)}`);
+      lines.push(`- ${formatViewerMoveText({ side: 0, slot: cardIndex + 1, cell })}`);
       printed += 1;
     }
     if (printed >= max) break;
@@ -720,7 +726,7 @@ const remainingWarningMarks = React.useMemo(() => {
 
     const counts = new Map<string, { move: ParsedMove; count: number }>();
     for (const mv of entries) {
-      const k = JSON.stringify(mv);
+      const k = toViewerMoveText(mv);
       const prev = counts.get(k);
       if (prev) prev.count += 1;
       else counts.set(k, { move: mv, count: 1 });
@@ -867,12 +873,19 @@ React.useEffect(() => {
     const entries = Object.values(votesByUser);
     const map = new Map<string, { move: ParsedMove; count: number }>();
     for (const mv of entries) {
-      const k = JSON.stringify(mv);
+      const k = toViewerMoveText(mv);
       const prev = map.get(k);
       if (prev) prev.count += 1;
       else map.set(k, { move: mv, count: 1 });
     }
-    return Array.from(map.values()).sort((a, b) => b.count - a.count);
+    return Array.from(map.values()).sort((a, b) => {
+      if (b.count !== a.count) return b.count - a.count;
+      if (a.move.cell !== b.move.cell) return a.move.cell - b.move.cell;
+      if (a.move.cardIndex !== b.move.cardIndex) return a.move.cardIndex - b.move.cardIndex;
+      const aw = typeof a.move.warningMarkCell === "number" ? a.move.warningMarkCell : 999;
+      const bw = typeof b.move.warningMarkCell === "number" ? b.move.warningMarkCell : 999;
+      return aw - bw;
+    });
   }, [votesByUser]);
 
   const timeLeft = React.useMemo(() => {
