@@ -171,6 +171,16 @@ function pickReactionKind(input: NyanoReactionInput): ReactionKind {
 
   // Score-based reactions
   const diff = input.tilesA - input.tilesB;
+
+  // Neutral perspective: avoid "ピンチ" / "優勢" bias.
+  // Use absolute diff for a simple "someone is leading" feel.
+  if (input.perspective === null) {
+    const abs = Math.abs(diff);
+    if (abs >= 2) return "advantage";
+    if (input.tilesA > 0 && input.tilesA === input.tilesB) return "draw_state";
+    return "idle";
+  }
+
   const perspectiveDiff = input.perspective === 1 ? -diff : diff;
 
   if (perspectiveDiff >= 2) return "advantage";
