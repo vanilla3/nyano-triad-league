@@ -1,12 +1,13 @@
 import React from "react";
 import type { BoardState, TurnSummary } from "@nyano/triad-engine";
 import { FlipTraceBadges, FlipTraceDetailList } from "@/components/FlipTraceBadges";
+import { flipTracesSummary } from "@/components/flipTraceDescribe";
 
-const cellRC = (cell: number): string => {
-  const r = Math.floor(cell / 3);
-  const c = cell % 3;
-  return `${r},${c}`;
-};
+const CELL_COORDS = ["A1", "B1", "C1", "A2", "B2", "C2", "A3", "B3", "C3"] as const;
+
+function cellCoord(cell: number): string {
+  return CELL_COORDS[cell] ?? String(cell);
+}
 
 type Owner = 0 | 1;
 
@@ -73,8 +74,9 @@ function dirFromPlaced(placedCell: number, neighborCell: number): EdgeDir | null
 
 function formatCells(cells: number[]): string {
   if (cells.length === 0) return "—";
-  if (cells.length <= 4) return cells.join(",");
-  return `${cells.slice(0, 4).join(",")}…(+${cells.length - 4})`;
+  const coords = cells.map(cellCoord);
+  if (coords.length <= 4) return coords.join(",");
+  return `${coords.slice(0, 4).join(",")}…(+${coords.length - 4})`;
 }
 
 function edgeExpr(base: number, triadPlus: number, warningDebuff: number): { text: string; effective: number } {
@@ -216,7 +218,7 @@ function computeDelta(boardPrev: BoardState, boardNow: BoardState, turn: TurnSum
 
 function formatFlipLine(f: FlipDetail): string {
   const dir = f.dirFromPlaced ? ` ${f.dirFromPlaced}` : "";
-  return `cell ${f.cell}${dir} (#${f.tokenId.toString()}) ${ownerLabel(f.from)}→${ownerLabel(f.to)}`;
+  return `${cellCoord(f.cell)}${dir} (#${f.tokenId.toString()}) ${ownerLabel(f.from)}→${ownerLabel(f.to)}`;
 }
 
 export function TurnLog(props: {
@@ -254,20 +256,19 @@ export function TurnLog(props: {
           >
             <div className="flex items-center justify-between gap-3">
               <div className="font-medium">
-                Turn {t.turnIndex + 1} · {t.player === 0 ? "A" : "B"} · cell {t.cell} ({cellRC(t.cell)}) · cardIndex{" "}
-                {t.cardIndex}
+                Turn {t.turnIndex + 1} · {t.player === 0 ? "A" : "B"} · {cellCoord(t.cell)} (cell {t.cell}) · card {t.cardIndex + 1}
               </div>
               <div className="text-xs text-surface-500">token #{t.tokenId.toString()}</div>
             </div>
 
             <div className="mt-1 flex flex-wrap gap-2 text-xs text-surface-600">
-              <span className="badge">flips: {t.flipCount}</span>
+              <span className="badge">奪取: {flipTracesSummary(t.flipTraces ?? [])}</span>
               <FlipTraceBadges flipTraces={t.flipTraces} />
 
               {d ? (
                 <>
-                  <span className="badge">placed: {d.placedCell ?? "—"}</span>
-                  <span className="badge badge-amber">flipped cells: {formatCells(d.flippedCells)}</span>
+                  <span className="badge">placed: {d.placedCell === null ? "—" : cellCoord(d.placedCell)}</span>
+                  <span className="badge badge-amber">flipped: {formatCells(d.flippedCells)}</span>
                 </>
               ) : null}
 
@@ -286,45 +287,41 @@ export function TurnLog(props: {
             </div>
 
             {selected ? (
-  <div className="mt-2 grid gap-2">
-    {t.flipTraces && t.flipTraces.length ? (
-      <div className="rounded-lg border border-surface-200 bg-white p-2 text-xs text-surface-700">
-        <div className="font-medium">Flip traces (after modifiers)</div>
-        <FlipTraceDetailList flipTraces={t.flipTraces} />
-      </div>
-    ) : null}
+              <div className="mt-2 grid gap-2">
+                {t.flipTraces && t.flipTraces.length ? (
+                  <div className="rounded-lg border border-surface-200 bg-white p-2 text-xs text-surface-700">
+                    <div className="font-medium">奪取理由（補正後）</div>
+                    <FlipTraceDetailList flipTraces={t.flipTraces} />
+                  </div>
+                ) : null}
 
-    {d ? (
-      <div className="rounded-lg border border-surface-200 bg-white p-2 text-xs text-surface-700">
-        <div className="font-medium">Δ (board diff)</div>
-        <div className="mt-1 grid gap-1 font-mono">
-          <div>
-            placed: cell {d.placedCell ?? "—"}{" "}
-            {d.placedTokenId !== null ? `(#${d.placedTokenId.toString()})` : ""}{" "}
-            {d.placedOwner !== null ? `by ${ownerLabel(d.placedOwner)}` : ""}
-          </div>
-          <div>flipped: {d.flipped.length}</div>
+                {d ? (
+                  <div className="rounded-lg border border-surface-200 bg-white p-2 text-xs text-surface-700">
+                    <div className="font-medium">Δ (board diff)</div>
+                    <div className="mt-1 grid gap-1 font-mono">
+                      <div>
+                        placed: {d.placedCell === null ? "—" : `${cellCoord(d.placedCell)} (cell ${d.placedCell})`} {" "}
+                        {d.placedTokenId !== null ? `(#${d.placedTokenId.toString()})` : ""}{" "}
+                        {d.placedOwner !== null ? `by ${ownerLabel(d.placedOwner)}` : ""}
+                      </div>
+                      <div>flipped: {d.flipped.length}</div>
 
-          {d.flipped.length ? (
-            <div className="mt-1 grid gap-1">
-              {d.flipped.map((f) => (
-                <div
-                  key={`${t.turnIndex}-${f.cell}`}
-                  className="rounded-md border border-surface-200 bg-surface-50 px-2 py-1"
-                >
-                  <div className="font-mono">{formatFlipLine(f)}</div>
-                  <div className="mt-0.5 text-surface-600">{f.explain}</div>
-                </div>
-              ))}
-            </div>
-          ) : null}
-        </div>
-      </div>
-    ) : null}
-  </div>
-) : null}
-
-                </div>
+                      {d.flipped.length ? (
+                        <div className="mt-1 grid gap-1">
+                          {d.flipped.map((f) => (
+                            <div
+                              key={`${t.turnIndex}-${f.cell}`}
+                              className="rounded-md border border-surface-200 bg-surface-50 px-2 py-1"
+                            >
+                              <div className="font-mono">{formatFlipLine(f)}</div>
+                              <div className="mt-0.5 text-surface-600">{f.explain}</div>
+                            </div>
+                          ))}
+                        </div>
+                      ) : null}
+                    </div>
+                  </div>
+                ) : null}
               </div>
             ) : null}
           </button>
