@@ -12,6 +12,7 @@
 - [x] /match & /replay: `ui=rpg` で BoardViewRPG を試せる
 - [x] /match & /replay: ScoreBar（tiles と進行）
 - [x] TurnLog: flipTraces の表示基盤（badges + 詳細パネル）
+- [x] P1-1: TurnLog を日本語説明に寄せる（flipTraceDescribe: short/full/summary 統合）
 - [x] /match: 入力盤面を BoardView/BoardViewRPG に統一（selectableCells/onCellSelect）
 - [x] /match?ui=rpg: Hand/Log/Result もRPG UIへ
 - [x] flipTraces 日本語化ユーティリティ（配信 readout を含む）
@@ -33,7 +34,7 @@
 ---
 
 ## P1（観戦で面白くする）
-### P1-1: TurnLog を日本語説明に寄せる
+### P1-1: TurnLog を日本語説明に寄せる（DONE）
 - badges: flipTraceShort()
 - 詳細: flipTraceFull()
 - summary: flipTracesSummary() を turn header に表示
@@ -56,5 +57,5 @@
 
 ## 依頼しやすい作業単位（協力者向け）
 - UI/CSSだけで完結: P0-1 overlay視認性、P1-2 replay演出
-- 型/engine理解が必要: P1-1 flipTracesの日本語統合
+- 型/engine理解が必要: P2-2 視聴者提案フォーマット固定（正規表現/集計/エラー文言）
 - 配信連携はPRを小さく: P2は “送信タイミング1箇所” から

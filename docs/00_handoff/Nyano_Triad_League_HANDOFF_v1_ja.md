@@ -4,7 +4,7 @@
 目的・仕様・現状・次の実装計画・重要ファイルをまとめたものです。
 
 > 更新: 2026-02-06  
-> 直近コミット: commit-0071（投票開始時点で state_json 自動送信: strictAllowed lock）
+> 直近コミット: commit-0072（TurnLog: flipTraces 日本語説明統合 + summary表示）
 
 ---
 
@@ -122,8 +122,9 @@ OBSに貼る前提の表示。
    - ✅ HUD: flip理由（readout）/ turn・tiles / strictAllowed（件数+hash）/ vote状態 / sync
 
 ### P1（観戦で“面白い”を強化）
-2. **TurnLog の flipTraces を日本語版に統合**
+2. **TurnLog の flipTraces を日本語版に統合（DONE）**
    - badges と詳細パネルを `flipTraceShort/Full` の出力に差し替え
+   - `flipTracesSummary()` を turn header に追加
 3. **/replay にも NyanoReaction を追加**
    - step で “そのターンの反応” を再現（配信素材として強い）
 
