@@ -4,7 +4,7 @@
 目的・仕様・現状・次の実装計画・重要ファイルをまとめたものです。
 
 > 更新: 2026-02-06  
-> 直近コミット: commit-0070（/overlay 視認性改善: HUD常設 + flip理由/進行/投票/strictAllowed 可視化）
+> 直近コミット: commit-0071（投票開始時点で state_json 自動送信: strictAllowed lock）
 
 ---
 
@@ -101,6 +101,10 @@ OBSに貼る前提の表示。
   - /match & /replay: overlay publish に lastTurnSummary.flips（flipTraces）を追加
   - winner が draw のときの表示/型崩れを修正（overlay & result）
 
+- **commit-0071**
+  - P2-1: vote start 時点で state_json を送信（strictAllowed lock / 荒れ防止）
+  - Nyano Warudo Bridge の送信トグルを細分化（state_json と ai_prompt を分離）+ localStorage 保存
+
 ### 4-2. いま “できること”
 - ローカルでカードを読み込み、対局を成立させ、ログ/リプレイを観戦できる
 - 配信画面から nyano-warudo へ snapshot を送れる
@@ -124,7 +128,7 @@ OBSに貼る前提の表示。
    - step で “そのターンの反応” を再現（配信素材として強い）
 
 ### P2（nyano-warudo / Twitch 連携）
-4. **投票開始時点でも state_json を送る**
+4. **投票開始時点でも state_json を送る（DONE）**
    - strictAllowed（合法手 allowlist）が投票中にズレないようにする（荒れ防止）
 5. **視聴者提案フォーマットを確定**
    - 例: `#triad A2->B2`（座標式）を固定し、正規表現・UI例・集計に繋げる

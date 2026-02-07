@@ -285,9 +285,31 @@ const [warudoBaseUrl, setWarudoBaseUrl] = React.useState<string>(() => {
   const env = (import.meta as any)?.env?.VITE_NYANO_WARUDO_BASE_URL as string | undefined;
   return (saved ?? env ?? "").toString();
 });
-const [autoSendPromptOnVoteStart, setAutoSendPromptOnVoteStart] = React.useState<boolean>(false);
-const [autoResendStateDuringVoteOpen, setAutoResendStateDuringVoteOpen] = React.useState<boolean>(false);
-const [autoSendStateOnVoteEnd, setAutoSendStateOnVoteEnd] = React.useState<boolean>(false);
+function readBoolSetting(key: string, fallback: boolean): boolean {
+  try {
+    const v = localStorage.getItem(key);
+    if (v === null) return fallback;
+    const s = v.trim().toLowerCase();
+    if (s === "1" || s === "true" || s === "yes" || s === "on") return true;
+    if (s === "0" || s === "false" || s === "no" || s === "off") return false;
+    return fallback;
+  } catch {
+    return fallback;
+  }
+}
+
+const [autoSendStateOnVoteStart, setAutoSendStateOnVoteStart] = React.useState<boolean>(() =>
+  readBoolSetting("nyanoWarudo.autoSendStateOnVoteStart", true)
+);
+const [autoSendPromptOnVoteStart, setAutoSendPromptOnVoteStart] = React.useState<boolean>(() =>
+  readBoolSetting("nyanoWarudo.autoSendPromptOnVoteStart", false)
+);
+const [autoResendStateDuringVoteOpen, setAutoResendStateDuringVoteOpen] = React.useState<boolean>(() =>
+  readBoolSetting("nyanoWarudo.autoResendStateDuringVoteOpen", false)
+);
+const [autoSendStateOnVoteEnd, setAutoSendStateOnVoteEnd] = React.useState<boolean>(() =>
+  readBoolSetting("nyanoWarudo.autoSendStateOnVoteEnd", false)
+);
 const [lastBridgePayload, setLastBridgePayload] = React.useState<string>("");
 const [lastBridgeResult, setLastBridgeResult] = React.useState<string>("");
 
@@ -299,6 +321,18 @@ React.useEffect(() => {
     // ignore
   }
 }, [warudoBaseUrl]);
+
+React.useEffect(() => {
+  // persist toggles too (avoid stream ops mistakes after refresh)
+  try {
+    localStorage.setItem("nyanoWarudo.autoSendStateOnVoteStart", autoSendStateOnVoteStart ? "1" : "0");
+    localStorage.setItem("nyanoWarudo.autoSendPromptOnVoteStart", autoSendPromptOnVoteStart ? "1" : "0");
+    localStorage.setItem("nyanoWarudo.autoResendStateDuringVoteOpen", autoResendStateDuringVoteOpen ? "1" : "0");
+    localStorage.setItem("nyanoWarudo.autoSendStateOnVoteEnd", autoSendStateOnVoteEnd ? "1" : "0");
+  } catch {
+    // ignore
+  }
+}, [autoSendStateOnVoteStart, autoSendPromptOnVoteStart, autoResendStateDuringVoteOpen, autoSendStateOnVoteEnd]);
 
 function computeEmptyCells(state: OverlayStateV1 | null): number[] {
   if (!state) return [];
@@ -665,17 +699,20 @@ const remainingWarningMarks = React.useMemo(() => {
     const sec = Math.max(5, Math.min(60, Math.floor(voteSeconds || 15)));
     const now = Date.now();
     setVoteOpen(true);
-    if (autoSendPromptOnVoteStart) {
-      // best-effort (do not block stream ops)
-      // IMPORTANT: Send state_json first so nyano-warudo strictAllowed can lock an up-to-date allowlist during the vote.
+
+    // best-effort (do not block stream ops)
+    // IMPORTANT: Send state_json at vote start so nyano-warudo strictAllowed can lock an up-to-date allowlist during the vote.
+    if (autoSendStateOnVoteStart) {
       sendNyanoWarudo("state_json", { silent: true }).catch(() => {});
+    }
+    if (autoSendPromptOnVoteStart) {
       sendNyanoWarudo("ai_prompt", { silent: true }).catch(() => {});
     }
     setVoteTurn(liveTurn);
     setVoteEndsAtMs(now + sec * 1000);
     resetVotes();
     toast.success("Vote", `Started (${sec}s) for turn ${liveTurn}`);
-  }, [canVoteNow, voteSeconds, liveTurn, resetVotes, toast, autoSendPromptOnVoteStart, sendNyanoWarudo]);
+  }, [canVoteNow, voteSeconds, liveTurn, resetVotes, toast, autoSendStateOnVoteStart, autoSendPromptOnVoteStart, sendNyanoWarudo]);
 
   const pickWinner = React.useCallback((): ParsedMove | null => {
     const entries = Object.values(votesByUser);
@@ -1066,14 +1103,6 @@ return (
                 <div className="mt-2 grid gap-2">
                   <label className="text-[11px] text-slate-600">Controlled side</label>
 
-<label className="flex items-center gap-2 text-xs text-slate-700">
-  <input
-    type="checkbox"
-    checked={autoResendStateDuringVoteOpen}
-    onChange={(e) => setAutoResendStateDuringVoteOpen(e.target.checked)}
-  />
-  vote open → refresh state_json on state updates (strictAllowed)
-</label>
                   <select
                     className="rounded-lg border border-slate-200 bg-white px-2 py-1 text-xs"
                     value={String(controlledSide)}
@@ -1187,15 +1216,34 @@ return (
         ※ CORSで失敗する場合は nyano-warudo 側で localhost を許可してください。
       </div>
 
-      <div className="mt-2 grid grid-cols-2 gap-2">
+      <div className="mt-2 grid gap-2">
+        <label className="flex items-center gap-2 text-xs text-slate-700">
+          <input
+            type="checkbox"
+            checked={autoSendStateOnVoteStart}
+            onChange={(e) => setAutoSendStateOnVoteStart(e.target.checked)}
+          />
+          vote start → state_json (strictAllowed lock)
+        </label>
+
         <label className="flex items-center gap-2 text-xs text-slate-700">
           <input
             type="checkbox"
             checked={autoSendPromptOnVoteStart}
             onChange={(e) => setAutoSendPromptOnVoteStart(e.target.checked)}
           />
-          vote start → state_json + ai_prompt
+          vote start → ai_prompt (optional)
         </label>
+
+        <label className="flex items-center gap-2 text-xs text-slate-700">
+          <input
+            type="checkbox"
+            checked={autoResendStateDuringVoteOpen}
+            onChange={(e) => setAutoResendStateDuringVoteOpen(e.target.checked)}
+          />
+          vote open → refresh state_json on state updates
+        </label>
+
         <label className="flex items-center gap-2 text-xs text-slate-700">
           <input
             type="checkbox"
@@ -1206,9 +1254,9 @@ return (
         </label>
       </div>
 
-<div className="mt-1 text-[11px] text-slate-500">
-  strictAllowed 用に、投票開始時点で state_json（合法手 allowlist）も送ります。
-</div>
+      <div className="mt-1 text-[11px] text-slate-500">
+        ※ state_json は投票開始の瞬間に送ると、strictAllowed（合法手 allowlist）が投票中にズレにくくなります。
+      </div>
 
       <div className="mt-2 flex flex-wrap items-center gap-2">
         <button className="btn btn-sm btn-primary" onClick={() => sendNyanoWarudo("ai_prompt")}>

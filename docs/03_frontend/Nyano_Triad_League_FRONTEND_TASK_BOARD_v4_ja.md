@@ -1,7 +1,7 @@
 # Nyano Triad League Frontend タスクボード v4 (JA)
 
 更新: 2026-02-06  
-前提: commit-0070 を取り込んだ状態（/overlay 視認性改善まで反映済み）
+前提: commit-0071 を取り込んだ状態（vote start の state_json 自動送信まで反映済み）
 
 ---
 
@@ -44,9 +44,9 @@
 ---
 
 ## P2（nyano-warudo / Twitch）
-### P2-1: 投票開始時点でも state_json を送る（strictAllowedをフル活用）
-- “投票開始の瞬間” に allowlist を確定させて送る
-- 投票中の allowlist 変化で荒れないようにする
+### P2-1: 投票開始時点でも state_json を送る（DONE / strictAllowedをフル活用）
+- “投票開始の瞬間” に state_json（allowlist）を送ることで、投票中の strictAllowed がズレにくくなる
+- `/stream` の Nyano Warudo Bridge に `vote start → state_json` を追加（既定ON、設定はlocalStorageに保持）
 
 ### P2-2: 視聴者提案フォーマット固定
 - 例: `#triad A2->B2`（座標式）
