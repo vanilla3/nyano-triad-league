@@ -1,6 +1,7 @@
 import React from "react";
 import type { PlayerIndex } from "@nyano/triad-engine";
-import { NyanoImage } from "./NyanoImage";
+import { NyanoAvatar } from "./NyanoAvatar";
+import type { ExpressionName } from "@/lib/expression_map";
 
 /* ═══════════════════════════════════════════════════════════════════════════
    TYPES
@@ -21,6 +22,8 @@ export interface GameResultOverlayProps {
   show: boolean;
   /** Handler for dismissing */
   onDismiss?: () => void;
+  /** Handler for rematch (same conditions) */
+  onRematch?: () => void;
   /** Handler for replay */
   onReplay?: () => void;
   /** Handler for sharing */
@@ -73,6 +76,7 @@ export function GameResultOverlay({
   perspective = null,
   show,
   onDismiss,
+  onRematch,
   onReplay,
   onShare,
 }: GameResultOverlayProps) {
@@ -107,6 +111,7 @@ export function GameResultOverlay({
       textClass: "text-white",
       accentColor: "#10B981",
       showConfetti: true,
+      expression: "happy" as ExpressionName,
     },
     defeat: {
       title: "Defeat",
@@ -115,6 +120,7 @@ export function GameResultOverlay({
       textClass: "text-white",
       accentColor: "#78716C",
       showConfetti: false,
+      expression: "sadTears" as ExpressionName,
     },
     draw: {
       title: "Draw!",
@@ -123,6 +129,7 @@ export function GameResultOverlay({
       textClass: "text-white",
       accentColor: "#F59E0B",
       showConfetti: true,
+      expression: "calm" as ExpressionName,
     },
     neutral: {
       title: result.winner === "draw" ? "Draw!" : `Player ${result.winner === 0 ? "A" : "B"} Wins!`,
@@ -136,6 +143,7 @@ export function GameResultOverlay({
       textClass: "text-white",
       accentColor: result.winner === 0 ? "#0EA5E9" : result.winner === 1 ? "#F43F5E" : "#F59E0B",
       showConfetti: true,
+      expression: "playful" as ExpressionName,
     },
   };
 
@@ -172,12 +180,13 @@ export function GameResultOverlay({
           {/* Nyano mascot */}
           <div className="flex justify-center mb-4">
             <div className="relative">
-              <NyanoImage
+              <NyanoAvatar
+                expression={config.expression}
                 size={96}
                 className={[
                   "border-4 border-white/30",
                   state === "victory" && "animate-bounce-subtle",
-                ].join(" ")}
+                ].filter(Boolean).join(" ")}
               />
               {state === "victory" && (
                 <div className="absolute -top-2 -right-2 text-2xl animate-bounce">🎉</div>
@@ -246,9 +255,14 @@ export function GameResultOverlay({
 
         {/* Actions */}
         <div className="bg-surface-50 px-6 py-4 flex gap-3">
+          {onRematch && (
+            <button className="btn btn-secondary flex-1" onClick={onRematch}>
+              🔄 Rematch
+            </button>
+          )}
           {onReplay && (
             <button className="btn btn-secondary flex-1" onClick={onReplay}>
-              🔄 Play Again
+              📼 Replay
             </button>
           )}
           {onShare && (
@@ -256,7 +270,7 @@ export function GameResultOverlay({
               📤 Share
             </button>
           )}
-          {!onReplay && !onShare && onDismiss && (
+          {!onRematch && !onReplay && !onShare && onDismiss && (
             <button className="btn btn-primary flex-1" onClick={onDismiss}>
               Close
             </button>

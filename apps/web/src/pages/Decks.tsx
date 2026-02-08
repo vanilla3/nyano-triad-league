@@ -4,6 +4,7 @@ import type { CardData } from "@nyano/triad-engine";
 import { fetchNyanoCards } from "@/lib/nyano_rpc";
 import { deleteDeck, exportDecksJson, importDecksJson, listDecks, upsertDeck, type DeckV1 } from "@/lib/deck_store";
 import { CardMini } from "@/components/CardMini";
+import { EmptyState } from "@/components/EmptyState";
 import { useToast } from "@/components/Toast";
 
 function parseTokenIds(text: string): bigint[] {
@@ -220,7 +221,12 @@ export function DecksPage() {
 
         <div className="card-bd grid gap-3">
           {decks.length === 0 ? (
-            <div className="text-sm text-slate-600">まだデッキがありません。上で作成してください。</div>
+            <EmptyState
+              expression="calm"
+              title="デッキがまだありません"
+              description="上のフォームでtokenIdを5つ入力してデッキを作成してください。"
+              action={{ label: "Quick Play (デッキ不要)", to: "/match?mode=guest&opp=vs_nyano_ai&ai=normal&rk=v2" }}
+            />
           ) : (
             decks.map((d) => (
               <div key={d.id} className="rounded-lg border border-slate-200 bg-white p-3">

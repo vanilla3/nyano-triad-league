@@ -27,9 +27,11 @@ import { getEventById, getEventStatus, type EventV1 } from "@/lib/events";
 import { stringifyWithBigInt } from "@/lib/json";
 import { fetchMintedTokenIds, fetchNyanoCards } from "@/lib/nyano_rpc";
 import { publishOverlayState, subscribeStreamCommand, type StreamCommandV1 } from "@/lib/streamer_bus";
-import { pickAiMove as pickAiMoveNew, type AiDifficulty } from "@/lib/ai/nyano_ai";
+import { pickAiMove as pickAiMoveNew, type AiDifficulty, type AiReasonCode } from "@/lib/ai/nyano_ai";
+import { AiNotesList } from "@/components/AiReasonDisplay";
 import { NyanoAvatar } from "@/components/NyanoAvatar";
 import { MiniTutorial } from "@/components/MiniTutorial";
+import { SkeletonBoard, SkeletonHand } from "@/components/Skeleton";
 import { fetchGameIndex } from "@/lib/nyano/gameIndex";
 import { generateBalancedDemoPair, buildCardDataFromIndex } from "@/lib/demo_decks";
 
@@ -276,7 +278,8 @@ export function MatchPage() {
   const lastStreamCmdIdRef = React.useRef<string>("");
   const [error, setError] = React.useState<string | null>(null);
 
-  const [aiNotes, setAiNotes] = React.useState<Record<number, string>>({});
+  type AiNoteEntry = { reason: string; reasonCode: AiReasonCode };
+  const [aiNotes, setAiNotes] = React.useState<Record<number, AiNoteEntry>>({});
 
   const resetMatch = React.useCallback(() => {
     setTurns([]);
@@ -292,6 +295,27 @@ export function MatchPage() {
     } catch {
       // ignore
     }
+  }, []);
+
+  /** Rematch: reset game state but keep the same decks/cards */
+  const handleRematch = React.useCallback(() => {
+    setTurns([]);
+    setDraftCell(null);
+    setDraftCardIndex(null);
+    setDraftWarningMarkCell(null);
+    setSelectedTurnIndex(0);
+    setAiNotes({});
+    setSalt(randomSalt());
+    setDeadline(Math.floor(Date.now() / 1000) + 24 * 3600);
+    setShowResultOverlay(false);
+    setError(null);
+    setStatus(null);
+    try {
+      boardAnim.clear();
+    } catch {
+      // ignore
+    }
+    // Cards and deck tokens are NOT reset — same decks reused
   }, []);
 
   React.useEffect(() => {
@@ -664,7 +688,7 @@ export function MatchPage() {
         board: boardNow,
         lastMove,
         lastTurnSummary,
-        aiNote: lastIndex >= 0 ? aiNotes[lastIndex] : undefined,
+        aiNote: lastIndex >= 0 ? aiNotes[lastIndex]?.reason : undefined,
         status: sim.full
           ? {
               finished: turns.length >= 9,
@@ -803,7 +827,7 @@ export function MatchPage() {
 
     const tid = effectiveDeckBTokens[move.cardIndex];
     const note = `Nyano chose cell ${move.cell}, cardIndex ${move.cardIndex}${tid !== undefined ? ` (#${tid.toString()})` : ""} — ${move.reason}`;
-    setAiNotes((prev) => ({ ...prev, [turns.length]: note }));
+    setAiNotes((prev) => ({ ...prev, [turns.length]: { reason: note, reasonCode: move.reasonCode } }));
     setStatus(note);
 
     commitTurn({
@@ -975,6 +999,7 @@ export function MatchPage() {
             show={showResultOverlay && turns.length >= 9}
             result={gameResult}
             onDismiss={() => setShowResultOverlay(false)}
+            onRematch={handleRematch}
             onReplay={() => { void openReplay(); }}
             onShare={() => { void copyShareUrl(); }}
           />
@@ -983,6 +1008,7 @@ export function MatchPage() {
             show={showResultOverlay && turns.length >= 9}
             result={gameResult}
             onDismiss={() => setShowResultOverlay(false)}
+            onRematch={handleRematch}
             onReplay={() => { void openReplay(); }}
             onShare={() => { void copyShareUrl(); }}
           />
@@ -1228,7 +1254,11 @@ export function MatchPage() {
           {!cards ? (
             <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-8 text-center text-sm text-slate-600">
               {loading ? (
-                "Loading cards…"
+                <div className="grid gap-4 py-4">
+                  <SkeletonBoard className="max-w-[280px] mx-auto" />
+                  <SkeletonHand className="max-w-[400px] mx-auto" />
+                  <div className="text-center text-xs text-surface-400">Loading cards...</div>
+                </div>
               ) : isGuestMode ? (
                 <button className="btn btn-primary" onClick={() => void loadCardsFromIndex()}>Start Guest Match</button>
               ) : (
@@ -1239,6 +1269,35 @@ export function MatchPage() {
             <div className="grid gap-6 lg:grid-cols-[1fr_300px]">
               {/* ── Left: Board + Hand ── */}
               <div className="grid gap-4">
+                {/* Guest deck preview */}
+                {isGuestMode && cards && (
+                  <details open={turns.length === 0} className="rounded-lg border border-surface-200 bg-surface-50 p-3">
+                    <summary className="cursor-pointer text-sm font-medium text-surface-700">
+                      Deck Preview
+                    </summary>
+                    <div className="mt-2 grid gap-3 md:grid-cols-2">
+                      <div>
+                        <div className="text-xs font-medium text-player-a-600 mb-1">Your Deck (A)</div>
+                        <div className="flex flex-wrap gap-1">
+                          {guestDeckATokens.map((tid, i) => {
+                            const c = cards.get(tid);
+                            return c ? <CardMini key={i} card={c} owner={0} /> : null;
+                          })}
+                        </div>
+                      </div>
+                      <div>
+                        <div className="text-xs font-medium text-player-b-600 mb-1">Nyano Deck (B)</div>
+                        <div className="flex flex-wrap gap-1">
+                          {guestDeckBTokens.map((tid, i) => {
+                            const c = cards.get(tid);
+                            return c ? <CardMini key={i} card={c} owner={1} /> : null;
+                          })}
+                        </div>
+                      </div>
+                    </div>
+                  </details>
+                )}
+
                 {/* ScoreBar */}
                 {sim.ok && (
                   <ScoreBar
@@ -1493,15 +1552,18 @@ export function MatchPage() {
                     <div className="text-sm font-medium text-nyano-800">Ready for the real thing?</div>
                     <div className="flex flex-wrap gap-2">
                       <Link className="btn btn-primary no-underline text-xs" to="/decks">Create Your Own Deck</Link>
+                      <button className="btn btn-primary text-xs" onClick={handleRematch}>
+                        Rematch (same decks)
+                      </button>
                       <button className="btn text-xs" onClick={() => { resetMatch(); void loadCardsFromIndex(); }}>
-                        Play Again (new decks)
+                        New Decks
                       </button>
                     </div>
                   </div>
                 )}
 
                 {/* AI debug notes (collapsed) */}
-                {Object.keys(aiNotes).length > 0 ? (
+                {Object.keys(aiNotes).length > 0 && (
                   <details className={
                     isRpg
                       ? "rounded-lg p-2 text-xs"
@@ -1509,16 +1571,12 @@ export function MatchPage() {
                   }
                   style={isRpg ? { background: "rgba(0,0,0,0.3)", color: "var(--rpg-text-dim, #8A7E6B)" } : undefined}
                   >
-                    <summary className="cursor-pointer font-medium">Nyano decisions ({Object.keys(aiNotes).length})</summary>
-                    <div className="mt-2 grid gap-1 font-mono">
-                      {Object.entries(aiNotes)
-                        .sort((a, b) => Number(a[0]) - Number(b[0]))
-                        .map(([k, v]) => (
-                          <div key={k}>turn {k}: {v}</div>
-                        ))}
+                    <summary className="cursor-pointer font-medium">Nyano AI ({Object.keys(aiNotes).length})</summary>
+                    <div className="mt-2">
+                      <AiNotesList notes={aiNotes} />
                     </div>
                   </details>
-                ) : null}
+                )}
               </div>
             </div>
           )}

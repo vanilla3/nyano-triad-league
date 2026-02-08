@@ -567,6 +567,7 @@ export interface GameResultOverlayRPGProps {
   perspective?: PlayerIndex | null;
   show: boolean;
   onDismiss?: () => void;
+  onRematch?: () => void;
   onReplay?: () => void;
   onShare?: () => void;
 }
@@ -576,6 +577,7 @@ export function GameResultOverlayRPG({
   perspective = null,
   show,
   onDismiss,
+  onRematch,
   onReplay,
   onShare,
 }: GameResultOverlayRPGProps) {
@@ -637,9 +639,14 @@ export function GameResultOverlayRPG({
         )}
 
         <div className="rpg-result__actions">
-          {onReplay && (
-            <button className="rpg-result__btn rpg-result__btn--primary" onClick={onReplay}>
+          {onRematch && (
+            <button className="rpg-result__btn rpg-result__btn--primary" onClick={onRematch}>
               ⚔ Rematch
+            </button>
+          )}
+          {onReplay && (
+            <button className="rpg-result__btn" onClick={onReplay}>
+              📼 Replay
             </button>
           )}
           {onShare && (
