@@ -1,4 +1,5 @@
 import type { OverlayStateV1 } from "@/lib/streamer_bus";
+import { formatViewerMoveText } from "@/lib/triad_viewer_command";
 
 /**
  * triad_vote_utils.ts
@@ -77,10 +78,13 @@ export type ViewerMove = {
 };
 
 export function toViewerMoveText(m: ViewerMove): string {
-  const cardHuman = (m.cardIndex + 1).toString();
-  const cellCoord = cellIndexToCoord(m.cell);
-  const wm = typeof m.warningMarkCell === "number" ? ` wm=${cellIndexToCoord(m.warningMarkCell)}` : "";
-  return `#triad A${cardHuman}->${cellCoord}${wm}`;
+  // Delegate to triad_viewer_command to keep #triad formatting single-source.
+  return formatViewerMoveText({
+    side: 0,
+    slot: m.cardIndex + 1,
+    cell: m.cell,
+    warningMarkCell: m.warningMarkCell ?? null,
+  });
 }
 
 // ---------------------------------------------------------------------------
