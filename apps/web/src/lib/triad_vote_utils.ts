@@ -109,8 +109,8 @@ export function computeEmptyCells(state: OverlayStateV1 | null): number[] {
   }
 
   // Fallback: derive from board occupancy.
-  if (Array.isArray((state as any).board)) {
-    const b = (state as any).board as any[];
+  if (Array.isArray(state.board)) {
+    const b = state.board;
     return Array.from({ length: 9 }, (_, i) => i).filter((i) => b[i] == null);
   }
 
@@ -118,7 +118,7 @@ export function computeEmptyCells(state: OverlayStateV1 | null): number[] {
 }
 
 function computeUsedCardIndicesFromProtocolV1(state: OverlayStateV1 | null, side: PlayerSide): number[] {
-  const p = (state as any)?.protocolV1 as any;
+  const p = state?.protocolV1;
   if (!p?.header || !Array.isArray(p.turns)) return [];
   const firstPlayer = typeof p.header.firstPlayer === "number" ? (p.header.firstPlayer as PlayerSide) : null;
   if (firstPlayer === null) return [];
@@ -148,11 +148,11 @@ export function computeRemainingCardIndices(state: OverlayStateV1 | null, side: 
 export function computeWarningMarksUsed(state: OverlayStateV1 | null, side: PlayerSide): number {
   if (!state) return 0;
 
-  const v = side === 0 ? (state as any).warningMarksUsedA : (state as any).warningMarksUsedB;
+  const v = side === 0 ? state.warningMarksUsedA : state.warningMarksUsedB;
   if (typeof v === "number" && Number.isFinite(v)) return v;
 
   // Fallback: derive from protocolV1
-  const p = (state as any)?.protocolV1 as any;
+  const p = state?.protocolV1;
   if (!p?.header || !Array.isArray(p.turns)) return 0;
   const firstPlayer = typeof p.header.firstPlayer === "number" ? (p.header.firstPlayer as PlayerSide) : null;
   if (firstPlayer === null) return 0;

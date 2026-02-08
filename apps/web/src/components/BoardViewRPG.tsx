@@ -129,8 +129,8 @@ function AmbientParticles({ count = 8 }: { count?: number }) {
             bottom: p.bottom,
             width: p.size,
             height: p.size,
-            ["--duration" as any]: p.duration,
-            ["--delay" as any]: p.delay,
+            "--duration": p.duration,
+            "--delay": p.delay,
           }}
         />
       ))}
