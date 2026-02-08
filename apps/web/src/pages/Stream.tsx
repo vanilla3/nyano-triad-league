@@ -309,7 +309,7 @@ function buildAiPrompt(state: OverlayStateV1 | null, controlled: 0 | 1): string 
   const turn = typeof state?.turn === "number" ? Number(state!.turn) : null;
   const toPlay = computeToPlay(state);
 
-  const strict = computeStrictAllowed(state);
+  const _strict = computeStrictAllowed(state);
   const emptyCells = computeEmptyCells(state);
   const remain = toPlay !== null ? computeRemainingCardIndices(state, toPlay) : [];
   const wUsed = toPlay !== null ? computeWarningMarksUsed(state, toPlay) : 0;
@@ -470,11 +470,11 @@ const canVoteNow =
   liveCurrent === controlledSide;
 
 // Best-effort "legal move" hints from the host (/match) via overlay bus.
-const remainingCellsLive = React.useMemo(() => computeEmptyCells(live), [live?.updatedAtMs]);
+const _remainingCellsLive = React.useMemo(() => computeEmptyCells(live), [live?.updatedAtMs]);
 
-const remainingCardsLive = React.useMemo(() => computeRemainingCardIndices(live, controlledSide), [live?.updatedAtMs, controlledSide]);
+const _remainingCardsLive = React.useMemo(() => computeRemainingCardIndices(live, controlledSide), [live?.updatedAtMs, controlledSide]);
 
-const remainingWarningMarks = React.useMemo(() => computeWarningMarksRemaining(live, controlledSide), [live?.updatedAtMs, controlledSide]);
+const _remainingWarningMarks = React.useMemo(() => computeWarningMarksRemaining(live, controlledSide), [live?.updatedAtMs, controlledSide]);
 
   const resetVotes = React.useCallback(() => {
     setVotesByUser({});
@@ -720,7 +720,7 @@ function buildMoveText(cell: number, cardIndex: number, wm: number | null): stri
   return base;
 }
 
-const applyPickerToChatText = React.useCallback(() => {
+const _applyPickerToChatText = React.useCallback(() => {
   if (pickCell === null || pickCardIndex === null) {
     toast.warn("Picker", "Select a cell and a card first.");
     return;
@@ -731,7 +731,7 @@ const applyPickerToChatText = React.useCallback(() => {
   toast.success("Picker", "Filled chat command");
 }, [pickCell, pickCardIndex, pickWarningMarkCell, toast]);
 
-const addVoteFromPicker = React.useCallback(() => {
+const _addVoteFromPicker = React.useCallback(() => {
   if (!voteOpen) {
     toast.warn("Vote", "Start vote first.");
     return;
@@ -748,7 +748,7 @@ const addVoteFromPicker = React.useCallback(() => {
   toast.success("Vote", "Added vote from picker");
 }, [voteOpen, pickCell, pickCardIndex, pickWarningMarkCell, userName, toast]);
 
-const clearPicker = React.useCallback(() => {
+const _clearPicker = React.useCallback(() => {
   setPickCell(null);
   setPickCardIndex(null);
   setPickWarningMarkCell(null);

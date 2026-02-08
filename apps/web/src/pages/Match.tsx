@@ -20,20 +20,17 @@ import { CardMini } from "@/components/CardMini";
 import { TurnLog } from "@/components/TurnLog";
 import { GameResultOverlay, type GameResult } from "@/components/GameResultOverlay";
 import { NyanoReaction, type NyanoReactionInput } from "@/components/NyanoReaction";
-import { flipTracesSummary, flipTracesReadout } from "@/components/flipTraceDescribe";
+import { flipTracesSummary } from "@/components/flipTraceDescribe";
 import { base64UrlEncodeUtf8, tryGzipCompressUtf8ToBase64Url } from "@/lib/base64url";
 import { getDeck, listDecks, type DeckV1 } from "@/lib/deck_store";
 import { getEventById, getEventStatus, type EventV1 } from "@/lib/events";
 import { stringifyWithBigInt } from "@/lib/json";
-import { fetchMintedTokenIds, fetchNyanoCards, getNyanoAddress, getRpcUrl } from "@/lib/nyano_rpc";
+import { fetchMintedTokenIds, fetchNyanoCards } from "@/lib/nyano_rpc";
 import { publishOverlayState, subscribeStreamCommand, type StreamCommandV1 } from "@/lib/streamer_bus";
-import { pickAiMove as pickAiMoveNew, type AiDifficulty, type AiMoveResult } from "@/lib/ai/nyano_ai";
-import { ErrorAlert } from "@/components/ErrorAlert";
+import { pickAiMove as pickAiMoveNew, type AiDifficulty } from "@/lib/ai/nyano_ai";
 import { NyanoAvatar } from "@/components/NyanoAvatar";
-import { AiNotesList } from "@/components/AiReasonDisplay";
 import { MiniTutorial } from "@/components/MiniTutorial";
-import { reactionToExpression, type ReactionKind } from "@/lib/expression_map";
-import { fetchGameIndex, getFromGameIndex, type GameIndexV1 } from "@/lib/nyano/gameIndex";
+import { fetchGameIndex } from "@/lib/nyano/gameIndex";
 import { generateBalancedDemoPair, buildCardDataFromIndex } from "@/lib/demo_decks";
 
 type RulesetKey = "v1" | "v2";
@@ -67,11 +64,6 @@ function randomSalt(): `0x${string}` {
 
 function turnPlayer(firstPlayer: PlayerIndex, turnIndex: number): PlayerIndex {
   return ((firstPlayer + (turnIndex % 2)) % 2) as PlayerIndex;
-}
-
-function shortAddr(a: string): string {
-  if (!a.startsWith("0x") || a.length < 10) return a;
-  return `${a.slice(0, 6)}…${a.slice(-4)}`;
 }
 
 function looksLikeRpcError(message: string): boolean {
@@ -266,7 +258,7 @@ export function MatchPage() {
 
   const [loading, setLoading] = React.useState(false);
   const [cards, setCards] = React.useState<Map<bigint, CardData> | null>(null);
-  const [owners, setOwners] = React.useState<Map<bigint, `0x${string}`> | null>(null);
+  const [_owners, setOwners] = React.useState<Map<bigint, `0x${string}`> | null>(null);
 
   const [playerA, setPlayerA] = React.useState<`0x${string}`>("0x0000000000000000000000000000000000000000");
   const [playerB, setPlayerB] = React.useState<`0x${string}`>("0x0000000000000000000000000000000000000000");
@@ -370,7 +362,7 @@ export function MatchPage() {
     return new Set(availableCells);
   }, [cards, turns.length, isAiTurn, availableCells]);
 
-  const availableCardIndexes = React.useMemo(() => {
+  const _availableCardIndexes = React.useMemo(() => {
     const out: number[] = [];
     for (let i = 0; i < 5; i++) if (!currentUsed.has(i)) out.push(i);
     return out;

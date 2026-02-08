@@ -281,7 +281,7 @@ export function NyanoReaction({ input, turnIndex = 0, rpg = false, className = "
 
 /* ── Badge-only variant (compact, for overlay / inline) ── */
 
-export function NyanoReactionBadge({ input, turnIndex = 0 }: { input: NyanoReactionInput; turnIndex?: number }) {
+export function NyanoReactionBadge({ input, turnIndex: _turnIndex = 0 }: { input: NyanoReactionInput; turnIndex?: number }) {
   const kind = pickReactionKind(input);
   const cfg = REACTIONS[kind];
 
