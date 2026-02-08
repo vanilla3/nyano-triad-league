@@ -13,7 +13,8 @@
     "typecheck": "pnpm -C apps/web typecheck",
     "dev:web": "pnpm -C apps/web dev",
     "build:web": "pnpm -C packages/triad-engine build && pnpm -C apps/web build",
-    "test:engine": "pnpm -C packages/triad-engine test"
+    "test:engine": "pnpm -C packages/triad-engine test",
+    "build:game-index": "node scripts/build_game_index_v1.mjs"
   },
   "devDependencies": {
     "sharp": "^0.34.5"

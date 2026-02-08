@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { pickAiMove, predictedImmediateFlips, type AiMoveArgs } from "../nyano_ai";
+import { pickAiMove, predictedImmediateFlips, pickWarningMarkCell, type AiMoveArgs } from "../nyano_ai";
 import type { CardData, PlayerIndex, BoardCell } from "@nyano/triad-engine";
 
 // ── Test helpers ──
@@ -338,5 +338,50 @@ describe("predictedImmediateFlips", () => {
     const myCard = makeCard({ tokenId: 1n, edges: { up: 5, right: 5, down: 5, left: 5 }, jankenHand: 0 });
     const flips = predictedImmediateFlips(board, 1, myCard, 1);
     expect(flips).toBe(0); // Tied edge, paper beats rock
+  });
+});
+
+describe("pickWarningMarkCell", () => {
+  it("places mark adjacent to opponent card, not own card", () => {
+    const board: (BoardCell | null)[] = Array(9).fill(null);
+    const oppCard = makeCard({ tokenId: 100n, edges: { up: 5, right: 5, down: 5, left: 5 } });
+    const myCard = makeCard({ tokenId: 1n, edges: { up: 5, right: 5, down: 5, left: 5 } });
+
+    // AI (player 1) owns cell 0; opponent (player 0) owns cell 4 (center)
+    board[0] = makeBoardCell(myCard, 1);
+    board[4] = makeBoardCell(oppCard, 0);
+
+    // placedCell=0 (just placed by AI), usedCells={0, 4}
+    const result = pickWarningMarkCell(board, new Set([0, 4]), 0, 1);
+    expect(result).toBeDefined();
+    // Should pick a cell adjacent to opponent (cell 4), not adjacent to own (cell 0)
+    // Cells adjacent to center (4): 1, 3, 5, 7
+    // Cell 1 is adjacent to BOTH own card(0) and opp card(4) — adjacent to center
+    // Cell 3 is adjacent to opp card(4)
+    // Cell 5 is adjacent to opp card(4)
+    // Cell 7 is adjacent to opp card(4)
+    // All of 1, 3, 5, 7 have adjacentOppCards=1 (adjacent to opponent at center)
+    // Corners (none of these are corners) so tie on cornerBonus too
+    // Result should be one of cells adjacent to opponent
+    expect([1, 3, 5, 7]).toContain(result);
+  });
+
+  it("prefers corners when adjacent-opponent count is tied", () => {
+    const board: (BoardCell | null)[] = Array(9).fill(null);
+    // No cards on board — all empty cells score 0 for adjacentOppCards
+    // Corners (0, 2, 6, 8) get +1 bonus, should win tiebreak
+    const result = pickWarningMarkCell(board, new Set<number>(), -1, 1);
+    expect(result).toBeDefined();
+    expect([0, 2, 6, 8]).toContain(result);
+  });
+
+  it("returns undefined when no empty cells available", () => {
+    const card = makeCard({ tokenId: 1n, edges: { up: 5, right: 5, down: 5, left: 5 } });
+    const board: (BoardCell | null)[] = Array(9).fill(null).map(() =>
+      makeBoardCell(card, 0),
+    );
+    // All cells are occupied
+    const result = pickWarningMarkCell(board, new Set([0, 1, 2, 3, 4, 5, 6, 7, 8]), -1, 1);
+    expect(result).toBeUndefined();
   });
 });
