@@ -1,8 +1,12 @@
 # commit-0080 TODO update
 
 ## Done
-- [x] P2-2-3: `#triad` 生成の単一ソース化（vote_utils → triad_viewer_command）
+- [x] `#triad` の formatter を単一ソース化（triad_vote_utils → triad_viewer_command）
+- [x] StreamOperationsHUD の strictAllowed を toPlay 基準へ修正
+- [x] /stream の allowlist hash 算出を共有関数へ寄せる
+- [x] ロードマップに進捗と CI/pnpm の注意点を追記
 
-## Next
-- [ ] P2-2-4: strictAllowed hash の算出を warudo / overlay で完全一致に固定（入力文字列も含めて）
-- [ ] P3: /stream の受理（parse）も triad_viewer_command に寄せ、票の受理/正規化/集計を一本化
+## Next（価値が出やすい順）
+- [ ] CI: pnpm の二重指定エラー修正（pnpm/action-setup の version と packageManager を single source に統一）
+- [ ] P3: /stream の受理判定（parse/normalize）を triad_viewer_command に統一（票割れ根絶）
+- [ ] overlay: 視認性最終調整（フォント/余白/視線誘導、OBSテンプレ）

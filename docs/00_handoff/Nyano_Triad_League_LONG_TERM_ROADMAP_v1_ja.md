@@ -1,11 +1,30 @@
 # Nyano Triad League LONG TERM ROADMAP v1（超長期計画・作業指針）
 
-最終更新: 2026-02-08
+最終更新: 2026-02-08（commit-0082: strictAllowed 整合）
 
 このドキュメントは、移行先作業者が **チャットを追わずに**「次に何を作り、何に注意し、どの順で改善すべきか」を把握できるようにするための **超長期ロードマップ**です。
 “細部の実装”よりも、まず **品質の柱・変更の原則・作業の安全策**を共有し、迷いと手戻りを減らすことを優先します。
 
 ---
+
+## 0-1. 現状（コミットマップ / 作業の現在地）
+
+**反映済み（apply/0070-0071）**
+- commit-0070: docs update（overlay HUD）
+- commit-0071: vote start → state_json 送信（strictAllowed lock）
+- commit-0072: TurnLog flipTraces の JP describe 統合
+- commit-0073: /replay NyanoReaction の step 再現
+- commit-0074: docs sync（最新コミットの反映）
+- commit-0075: viewer command spec+parser lib（triad_viewer_command.ts）
+- commit-0076: /stream 票集計キーを canonical #triad に統一
+- commit-0078: long-term roadmap doc 追加
+- commit-0079: パッチ共有の標準をロードマップへ追加
+- commit-0081: CI の pnpm バージョン二重指定を解消（packageManager を正に）
+- commit-0082: strictAllowed を単一ソース化（HUD/overlay/stream の allowlist/hash を一致させる）
+
+**次にやる（高優先）**
+- commit-0083: /stream の受理（parse/normalize）を triad_viewer_command に寄せ、票割れと曖昧さを根絶
+- commit-0084: overlay の「常時HUD」視認性を詰める（縮尺/余白/コントラスト/情報の優先順位）
 
 ## 0. 北極星（North Star）
 
@@ -196,6 +215,16 @@
 - 失敗時の切り分け
   - `git apply --include=docs/...` で docs だけ先に取り込む（作業の待ちを減らす）
   - `git apply --reject` で `.rej` を出し、当たらない箇所を局所化
+
+### 5-6. CI / pnpm バージョン管理の標準（再現性と安定運用）
+- **single source of truth**: ルートの `package.json#packageManager` を正とする（例: `pnpm@9.0.0`）
+- GitHub Actions の `pnpm/action-setup@v4` では **`version:` を指定しない**
+  - `version:` と `packageManager:` が同時に存在すると action が失敗する（ERR_PNPM_BAD_PM_VERSION 互換）
+- `pnpm install --frozen-lockfile` を基本（lock 無しは install）
+- CI が落ちたらまず確認する順
+  - (1) `packageManager` と workflow の pnpm 設定が二重指定になっていないか
+  - (2) Node version（推奨: 20）
+  - (3) lockfile の更新漏れ（`pnpm-lock.yaml`）
 
 ---
 

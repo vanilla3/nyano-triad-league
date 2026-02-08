@@ -78,12 +78,11 @@ export type ViewerMove = {
 };
 
 export function toViewerMoveText(m: ViewerMove): string {
-  // Delegate to triad_viewer_command to keep #triad formatting single-source.
   return formatViewerMoveText({
     side: 0,
     slot: m.cardIndex + 1,
     cell: m.cell,
-    warningMarkCell: m.warningMarkCell ?? null,
+    warningMarkCell: typeof m.warningMarkCell === "number" ? m.warningMarkCell : null,
   });
 }
 
