@@ -20,9 +20,8 @@ import {
   cellIndexToCoord,
   computeEmptyCells,
   computeRemainingCardIndices,
-  computeWarningMarksRemaining,
-  fnv1a32Hex,
-  toViewerMoveText,
+  computeStrictAllowed,
+  computeToPlay,
 } from "@/lib/triad_vote_utils";
 
 /* ─────────────────────────────────────────────────────────────
@@ -58,36 +57,19 @@ export function StreamOperationsHUD({
 }: StreamOpsHUDProps) {
   // ── Computed state ──
   const turn = typeof live?.turn === "number" ? live.turn : null;
-  const firstPlayer =
-    typeof live?.firstPlayer === "number" ? (live.firstPlayer as 0 | 1) : null;
-  const toPlay =
-    firstPlayer !== null && turn !== null
-      ? (((firstPlayer + (turn % 2)) % 2) as 0 | 1)
-      : null;
+  const toPlay = computeToPlay(live);
   const isControlledTurn = toPlay === controlledSide;
   const mode = live?.mode ?? null;
 
   // ── Allowlist computation ──
+  const strictAllowed = React.useMemo(() => computeStrictAllowed(live), [live?.updatedAtMs]);
+
   const emptyCells = computeEmptyCells(live);
-  // strictAllowed should reflect the *actual* side-to-play (not always controlledSide).
-  const allowlistSide: 0 | 1 = toPlay !== null ? toPlay : controlledSide;
-  const remainCards = computeRemainingCardIndices(live, allowlistSide);
-  const wmRemaining = computeWarningMarksRemaining(live, allowlistSide);
+  const remainCards = toPlay !== null ? computeRemainingCardIndices(live, toPlay) : [];
 
-  const legalMoves = React.useMemo(() => {
-    const moves: string[] = [];
-    for (const cell of emptyCells) {
-      for (const ci of remainCards) {
-        moves.push(toViewerMoveText({ cell, cardIndex: ci }));
-      }
-    }
-    return moves.sort();
-  }, [emptyCells, remainCards]);
-
-  const allowlistHash = React.useMemo(
-    () => fnv1a32Hex(legalMoves.join("\n")),
-    [legalMoves]
-  );
+  const allowlistHash = strictAllowed?.hash ?? "—";
+  const strictCount = strictAllowed?.count ?? 0;
+  const wmRemaining = strictAllowed?.warningMark.remaining ?? 0;
 
   // ── Vote timer ──
   const [timeLeft, setTimeLeft] = React.useState<number | null>(null);
@@ -204,13 +186,13 @@ export function StreamOperationsHUD({
           {/* Allowlist */}
           <HUDCell
             label="strictAllowed"
-            primary={`${legalMoves.length} moves`}
+            primary={`${strictCount} moves`}
             secondary={
               <span className="font-mono text-[10px]" title={allowlistHash}>
                 hash {allowlistHash}
               </span>
             }
-            accentColor={legalMoves.length > 0 ? "emerald" : "surface"}
+            accentColor={strictCount > 0 ? "emerald" : "surface"}
           />
 
           {/* Vote Status */}
