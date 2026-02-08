@@ -6,6 +6,9 @@ type Props = {
   className?: string;
   alt?: string;
   title?: string;
+  variant?: string;
+  glow?: boolean;
+  animated?: boolean;
 };
 
 /**

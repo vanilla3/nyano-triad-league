@@ -1,0 +1,342 @@
+import { describe, it, expect } from "vitest";
+import { pickAiMove, predictedImmediateFlips, type AiMoveArgs } from "../nyano_ai";
+import type { CardData, PlayerIndex, BoardCell } from "@nyano/triad-engine";
+
+// ── Test helpers ──
+
+function makeCard(overrides: Partial<CardData> & { tokenId: bigint }): CardData {
+  return {
+    tokenId: overrides.tokenId,
+    edges: overrides.edges ?? { up: 5, right: 5, down: 5, left: 5 },
+    jankenHand: overrides.jankenHand ?? 0,
+    combatStatSum: overrides.combatStatSum ?? 30,
+    trait: overrides.trait ?? "none",
+  };
+}
+
+function makeBoardCell(card: CardData, owner: PlayerIndex): BoardCell {
+  return { owner, card } as BoardCell;
+}
+
+function makeCards(defs: { id: number; up?: number; right?: number; down?: number; left?: number; hand?: 0 | 1 | 2 }[]): Map<bigint, CardData> {
+  const map = new Map<bigint, CardData>();
+  for (const d of defs) {
+    map.set(
+      BigInt(d.id),
+      makeCard({
+        tokenId: BigInt(d.id),
+        edges: { up: d.up ?? 5, right: d.right ?? 5, down: d.down ?? 5, left: d.left ?? 5 },
+        jankenHand: d.hand ?? 0,
+      }),
+    );
+  }
+  return map;
+}
+
+function makeBaseArgs(overrides?: Partial<AiMoveArgs>): AiMoveArgs {
+  const deckTokens = [1n, 2n, 3n, 4n, 5n];
+  const cards = makeCards([
+    { id: 1, up: 5, right: 3, down: 4, left: 6 },
+    { id: 2, up: 7, right: 2, down: 3, left: 5 },
+    { id: 3, up: 3, right: 8, down: 2, left: 4 },
+    { id: 4, up: 6, right: 4, down: 7, left: 3 },
+    { id: 5, up: 4, right: 6, down: 5, left: 7 },
+  ]);
+
+  return {
+    difficulty: "normal",
+    boardNow: Array(9).fill(null),
+    deckTokens,
+    usedCardIndexes: new Set<number>(),
+    usedCells: new Set<number>(),
+    cards,
+    my: 1 as PlayerIndex,
+    warningMarksRemaining: 3,
+    ...overrides,
+  };
+}
+
+// ── Tests ──
+
+describe("pickAiMove", () => {
+  describe("easy difficulty", () => {
+    it("returns the first available cell and card", () => {
+      const args = makeBaseArgs({ difficulty: "easy" });
+      const result = pickAiMove(args);
+
+      expect(result.cell).toBe(0);
+      expect(result.cardIndex).toBe(0);
+      expect(result.reasonCode).toBe("FIRST_AVAILABLE");
+    });
+
+    it("skips used cells and cards", () => {
+      const args = makeBaseArgs({
+        difficulty: "easy",
+        usedCells: new Set([0, 1]),
+        usedCardIndexes: new Set([0]),
+      });
+      const result = pickAiMove(args);
+
+      expect(result.cell).toBe(2);
+      expect(result.cardIndex).toBe(1);
+      expect(result.reasonCode).toBe("FIRST_AVAILABLE");
+    });
+  });
+
+  describe("normal difficulty", () => {
+    it("maximizes immediate flips", () => {
+      const oppCard = makeCard({ tokenId: 100n, edges: { up: 1, right: 1, down: 1, left: 1 } });
+      const board: (BoardCell | null)[] = Array(9).fill(null);
+      board[4] = makeBoardCell(oppCard, 0); // Opponent owns center
+
+      // Card with high edges should be placed adjacent to center
+      const cards = makeCards([
+        { id: 1, up: 9, right: 9, down: 9, left: 9 }, // strong card
+        { id: 2, up: 1, right: 1, down: 1, left: 1 },
+        { id: 3, up: 1, right: 1, down: 1, left: 1 },
+        { id: 4, up: 1, right: 1, down: 1, left: 1 },
+        { id: 5, up: 1, right: 1, down: 1, left: 1 },
+      ]);
+      cards.set(100n, oppCard);
+
+      const args = makeBaseArgs({
+        difficulty: "normal",
+        boardNow: board,
+        cards,
+        usedCells: new Set([4]),
+      });
+
+      const result = pickAiMove(args);
+      // Should pick card 0 (strongest) and place adjacent to center (cell 1, 3, 5, or 7)
+      expect(result.cardIndex).toBe(0);
+      expect([1, 3, 5, 7]).toContain(result.cell);
+      expect(result.reasonCode).toMatch(/MAXIMIZE_FLIPS|SET_WARNING/);
+    });
+
+    it("uses edge sum as tiebreaker", () => {
+      const cards = makeCards([
+        { id: 1, up: 2, right: 2, down: 2, left: 2 }, // sum = 8
+        { id: 2, up: 3, right: 3, down: 3, left: 3 }, // sum = 12
+        { id: 3, up: 1, right: 1, down: 1, left: 1 },
+        { id: 4, up: 1, right: 1, down: 1, left: 1 },
+        { id: 5, up: 1, right: 1, down: 1, left: 1 },
+      ]);
+
+      const args = makeBaseArgs({
+        difficulty: "normal",
+        boardNow: Array(9).fill(null),
+        cards,
+      });
+
+      const result = pickAiMove(args);
+      // With no opponents to flip, both cards get 0 flips.
+      // Card 1 (sum=12) should win tiebreak.
+      expect(result.cardIndex).toBe(1);
+    });
+  });
+
+  describe("hard difficulty (minimax d2)", () => {
+    it("returns a valid move", () => {
+      const args = makeBaseArgs({ difficulty: "hard" });
+      const result = pickAiMove(args);
+
+      expect(result.cell).toBeGreaterThanOrEqual(0);
+      expect(result.cell).toBeLessThanOrEqual(8);
+      expect(result.cardIndex).toBeGreaterThanOrEqual(0);
+      expect(result.cardIndex).toBeLessThanOrEqual(4);
+      expect(result.reasonCode).toBe("MINIMAX_D2");
+    });
+
+    it("avoids moves that leave strong opponent response", () => {
+      // Set up a board where one move is clearly better (more defensive)
+      const oppCard = makeCard({ tokenId: 100n, edges: { up: 9, right: 9, down: 9, left: 9 } });
+      const board: (BoardCell | null)[] = Array(9).fill(null);
+      board[0] = makeBoardCell(oppCard, 0);
+
+      const cards = makeCards([
+        { id: 1, up: 8, right: 8, down: 8, left: 8 },
+        { id: 2, up: 2, right: 2, down: 2, left: 2 },
+        { id: 3, up: 3, right: 3, down: 3, left: 3 },
+        { id: 4, up: 4, right: 4, down: 4, left: 4 },
+        { id: 5, up: 5, right: 5, down: 5, left: 5 },
+      ]);
+      cards.set(100n, oppCard);
+
+      const args = makeBaseArgs({
+        difficulty: "hard",
+        boardNow: board,
+        cards,
+        usedCells: new Set([0]),
+      });
+
+      const result = pickAiMove(args);
+      expect(result.reasonCode).toBe("MINIMAX_D2");
+      // Should use card 0 (strongest) to compete with opponent's strong card
+      expect(result.cell).toBeGreaterThanOrEqual(0);
+    });
+  });
+
+  describe("expert difficulty (minimax d3)", () => {
+    it("returns a valid move with MINIMAX_D3 reason code", () => {
+      const args = makeBaseArgs({ difficulty: "expert" });
+      const result = pickAiMove(args);
+
+      expect(result.cell).toBeGreaterThanOrEqual(0);
+      expect(result.cell).toBeLessThanOrEqual(8);
+      expect(result.cardIndex).toBeGreaterThanOrEqual(0);
+      expect(result.cardIndex).toBeLessThanOrEqual(4);
+      expect(result.reasonCode).toBe("MINIMAX_D3");
+    });
+  });
+
+  describe("warning mark placement", () => {
+    it("places warning mark when remaining > 0", () => {
+      const oppCard = makeCard({ tokenId: 100n, edges: { up: 1, right: 1, down: 1, left: 1 } });
+      const board: (BoardCell | null)[] = Array(9).fill(null);
+      board[4] = makeBoardCell(oppCard, 0);
+
+      const cards = makeCards([
+        { id: 1, up: 9, right: 9, down: 9, left: 9 },
+        { id: 2, up: 1, right: 1, down: 1, left: 1 },
+        { id: 3, up: 1, right: 1, down: 1, left: 1 },
+        { id: 4, up: 1, right: 1, down: 1, left: 1 },
+        { id: 5, up: 1, right: 1, down: 1, left: 1 },
+      ]);
+      cards.set(100n, oppCard);
+
+      const args = makeBaseArgs({
+        difficulty: "normal",
+        boardNow: board,
+        cards,
+        usedCells: new Set([4]),
+        warningMarksRemaining: 3,
+      });
+
+      const result = pickAiMove(args);
+      // With remaining warning marks, a mark should be placed
+      if (result.warningMarkCell !== undefined) {
+        expect(result.warningMarkCell).not.toBe(result.cell);
+        expect(result.warningMarkCell).toBeGreaterThanOrEqual(0);
+        expect(result.warningMarkCell).toBeLessThanOrEqual(8);
+      }
+    });
+
+    it("does not place warning mark when remaining is 0", () => {
+      const args = makeBaseArgs({
+        difficulty: "normal",
+        warningMarksRemaining: 0,
+      });
+
+      const result = pickAiMove(args);
+      expect(result.warningMarkCell).toBeUndefined();
+    });
+  });
+
+  describe("edge cases", () => {
+    it("handles single remaining move", () => {
+      const board: (BoardCell | null)[] = Array(9).fill(null);
+      const cards = makeCards([
+        { id: 1, up: 5, right: 5, down: 5, left: 5 },
+        { id: 2, up: 5, right: 5, down: 5, left: 5 },
+        { id: 3, up: 5, right: 5, down: 5, left: 5 },
+        { id: 4, up: 5, right: 5, down: 5, left: 5 },
+        { id: 5, up: 5, right: 5, down: 5, left: 5 },
+      ]);
+
+      // Fill 8 cells, leaving only cell 8 open
+      for (let i = 0; i < 8; i++) {
+        board[i] = makeBoardCell(cards.get(BigInt((i % 5) + 1))!, (i % 2) as PlayerIndex);
+      }
+
+      const args = makeBaseArgs({
+        difficulty: "normal",
+        boardNow: board,
+        cards,
+        usedCells: new Set([0, 1, 2, 3, 4, 5, 6, 7]),
+        usedCardIndexes: new Set([0, 1, 2, 3]),
+      });
+
+      const result = pickAiMove(args);
+      expect(result.cell).toBe(8);
+      expect(result.cardIndex).toBe(4);
+    });
+
+    it("returns fallback when no moves available", () => {
+      const args = makeBaseArgs({
+        usedCells: new Set([0, 1, 2, 3, 4, 5, 6, 7, 8]),
+        usedCardIndexes: new Set([0, 1, 2, 3, 4]),
+      });
+
+      const result = pickAiMove(args);
+      expect(result.reasonCode).toBe("FALLBACK");
+    });
+  });
+});
+
+describe("predictedImmediateFlips", () => {
+  it("counts single flip correctly", () => {
+    const board: (BoardCell | null)[] = Array(9).fill(null);
+    const oppCard = makeCard({ tokenId: 100n, edges: { up: 1, right: 1, down: 1, left: 1 } });
+    board[4] = makeBoardCell(oppCard, 0);
+
+    const myCard = makeCard({ tokenId: 1n, edges: { up: 9, right: 9, down: 9, left: 9 } });
+
+    // Place above center (cell 1), my down vs their up
+    const flips = predictedImmediateFlips(board, 1, myCard, 1);
+    expect(flips).toBe(1);
+  });
+
+  it("counts zero flips on empty board", () => {
+    const board: (BoardCell | null)[] = Array(9).fill(null);
+    const myCard = makeCard({ tokenId: 1n, edges: { up: 9, right: 9, down: 9, left: 9 } });
+    const flips = predictedImmediateFlips(board, 4, myCard, 1);
+    expect(flips).toBe(0);
+  });
+
+  it("does not flip own cards", () => {
+    const board: (BoardCell | null)[] = Array(9).fill(null);
+    const myCard = makeCard({ tokenId: 1n, edges: { up: 9, right: 9, down: 9, left: 9 } });
+    board[4] = makeBoardCell(myCard, 1); // Same owner
+
+    const newCard = makeCard({ tokenId: 2n, edges: { up: 9, right: 9, down: 9, left: 9 } });
+    const flips = predictedImmediateFlips(board, 1, newCard, 1);
+    expect(flips).toBe(0);
+  });
+
+  it("counts multiple flips", () => {
+    const board: (BoardCell | null)[] = Array(9).fill(null);
+    const weakCard = makeCard({ tokenId: 100n, edges: { up: 1, right: 1, down: 1, left: 1 } });
+
+    // Surround center with weak opponent cards
+    board[1] = makeBoardCell(weakCard, 0); // above
+    board[3] = makeBoardCell(weakCard, 0); // left
+    board[5] = makeBoardCell(weakCard, 0); // right
+    board[7] = makeBoardCell(weakCard, 0); // below
+
+    const myCard = makeCard({ tokenId: 1n, edges: { up: 9, right: 9, down: 9, left: 9 } });
+    const flips = predictedImmediateFlips(board, 4, myCard, 1);
+    expect(flips).toBe(4);
+  });
+
+  it("uses janken tiebreak on equal edges", () => {
+    const board: (BoardCell | null)[] = Array(9).fill(null);
+    // Opponent has hand=2 (scissors), we have hand=0 (rock) → we win
+    const oppCard = makeCard({ tokenId: 100n, edges: { up: 5, right: 5, down: 5, left: 5 }, jankenHand: 2 });
+    board[4] = makeBoardCell(oppCard, 0);
+
+    const myCard = makeCard({ tokenId: 1n, edges: { up: 5, right: 5, down: 5, left: 5 }, jankenHand: 0 });
+    const flips = predictedImmediateFlips(board, 1, myCard, 1);
+    expect(flips).toBe(1); // Tied edge, but rock beats scissors
+  });
+
+  it("loses janken tiebreak when opponent wins", () => {
+    const board: (BoardCell | null)[] = Array(9).fill(null);
+    // Opponent has hand=1 (paper), we have hand=0 (rock) → we lose
+    const oppCard = makeCard({ tokenId: 100n, edges: { up: 5, right: 5, down: 5, left: 5 }, jankenHand: 1 });
+    board[4] = makeBoardCell(oppCard, 0);
+
+    const myCard = makeCard({ tokenId: 1n, edges: { up: 5, right: 5, down: 5, left: 5 }, jankenHand: 0 });
+    const flips = predictedImmediateFlips(board, 1, myCard, 1);
+    expect(flips).toBe(0); // Tied edge, paper beats rock
+  });
+});

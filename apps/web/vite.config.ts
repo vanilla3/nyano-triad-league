@@ -15,4 +15,8 @@ export default defineConfig({
       allow: [monorepoRoot],
     },
   },
+  test: {
+    globals: true,
+    environment: "node",
+  },
 });

@@ -324,9 +324,6 @@ export function TurnLog(props: {
   </div>
 ) : null}
 
-                </div>
-              </div>
-            ) : null}
           </button>
         );
       })}

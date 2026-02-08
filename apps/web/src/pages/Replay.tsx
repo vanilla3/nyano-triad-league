@@ -751,7 +751,7 @@ const buildShareLink = async (): Promise<string> => {
                       </button>
                       <button
                         className="btn btn-sm btn-primary"
-                        onClick={() => copyWithToast("share link", buildShareLink())}
+                        onClick={async () => copyWithToast("share link", await buildShareLink())}
                       >
                         Share
                       </button>
@@ -825,7 +825,7 @@ const buildShareLink = async (): Promise<string> => {
 <button
   className="btn"
   onClick={() => setIsPlaying((p) => !p)}
-  disabled={!res.ok || stepMax === 0}
+  disabled={!sim.ok || stepMax === 0}
   title="auto play"
 >
   {isPlaying ? "pause" : "play"}
@@ -837,7 +837,7 @@ const buildShareLink = async (): Promise<string> => {
     className="rounded-md border border-surface-300 bg-white px-2 py-1 text-xs"
     value={playbackSpeed}
     onChange={(e) => setPlaybackSpeed(Number(e.target.value))}
-    disabled={!res.ok || stepMax === 0}
+    disabled={!sim.ok || stepMax === 0}
   >
     <option value={0.5}>0.5x</option>
     <option value={1}>1x</option>

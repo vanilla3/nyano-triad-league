@@ -63,7 +63,7 @@ function normalizeWinner(w: unknown): "A" | "B" | "DRAW" | null {
 
 function winnerForScoreBar(state: OverlayStateV1 | null): PlayerIndex | "draw" | null {
   if (!state?.status?.finished) return null;
-  const w = state.status.winner;
+  const w: string | number | undefined = state.status.winner as string | number | undefined;
   if (w === "A" || w === 0 || w === "0") return 0;
   if (w === "B" || w === 1 || w === "1") return 1;
   if (typeof w === "string" && w.trim().toLowerCase() === "draw") return "draw";

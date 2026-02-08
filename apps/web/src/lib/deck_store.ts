@@ -26,7 +26,7 @@ function normalizeDeck(d: any): DeckV1 | null {
   if (typeof d.id !== "string") return null;
   if (typeof d.name !== "string") return null;
   if (!Array.isArray(d.tokenIds)) return null;
-  const tokenIds = d.tokenIds.map(String).filter((s) => s.length > 0);
+  const tokenIds = d.tokenIds.map(String).filter((s: string) => s.length > 0);
   if (tokenIds.length !== 5) return null;
 
   return {

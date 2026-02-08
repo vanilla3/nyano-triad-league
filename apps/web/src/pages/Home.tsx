@@ -20,7 +20,10 @@ export function HomePage() {
           </p>
 
           <div className="flex flex-wrap items-center gap-3 pt-2">
-            <Link to="/arena" className="btn btn-primary no-underline">
+            <Link to="/match?mode=guest&opp=vs_nyano_ai&ai=normal&rk=v2" className="btn btn-primary no-underline">
+              Quick Play
+            </Link>
+            <Link to="/arena" className="btn no-underline">
               Arena（ゲーム導線）
             </Link>
             <Link to="/decks" className="btn no-underline">

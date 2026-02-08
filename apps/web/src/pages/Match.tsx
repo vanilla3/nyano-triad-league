@@ -27,10 +27,18 @@ import { getEventById, getEventStatus, type EventV1 } from "@/lib/events";
 import { stringifyWithBigInt } from "@/lib/json";
 import { fetchMintedTokenIds, fetchNyanoCards, getNyanoAddress, getRpcUrl } from "@/lib/nyano_rpc";
 import { publishOverlayState, subscribeStreamCommand, type StreamCommandV1 } from "@/lib/streamer_bus";
+import { pickAiMove as pickAiMoveNew, type AiDifficulty, type AiMoveResult } from "@/lib/ai/nyano_ai";
+import { ErrorAlert } from "@/components/ErrorAlert";
+import { NyanoAvatar } from "@/components/NyanoAvatar";
+import { AiNotesList } from "@/components/AiReasonDisplay";
+import { MiniTutorial } from "@/components/MiniTutorial";
+import { reactionToExpression, type ReactionKind } from "@/lib/expression_map";
+import { fetchGameIndex, getFromGameIndex, type GameIndexV1 } from "@/lib/nyano/gameIndex";
+import { generateBalancedDemoPair, buildCardDataFromIndex } from "@/lib/demo_decks";
 
 type RulesetKey = "v1" | "v2";
 type OpponentMode = "pvp" | "vs_nyano_ai";
-type AiDifficulty = "easy" | "normal";
+type DataMode = "fast" | "verified";
 
 type SimOk = {
   ok: true;
@@ -134,95 +142,7 @@ async function copyToClipboard(text: string): Promise<void> {
   await navigator.clipboard.writeText(text);
 }
 
-function jankenWins(a: number, b: number): boolean {
-  if (a === b) return false;
-  return (a === 0 && b === 2) || (a === 1 && b === 0) || (a === 2 && b === 1);
-}
-
-function predictedImmediateFlips(board: any[], cell: number, placed: CardData, my: PlayerIndex): number {
-  const r = Math.floor(cell / 3);
-  const c = cell % 3;
-
-  const myHand = Number(placed.jankenHand);
-  const edge = (dir: "up" | "right" | "down" | "left") => Number(placed.edges[dir]);
-
-  const trySide = (nr: number, nc: number, myDir: "up" | "right" | "down" | "left", theirDir: "up" | "right" | "down" | "left") => {
-    if (nr < 0 || nr > 2 || nc < 0 || nc > 2) return 0;
-    const idx = nr * 3 + nc;
-    const other = board[idx];
-    if (!other) return 0;
-    if (other.owner === my) return 0;
-
-    const myEdge = edge(myDir);
-    const theirEdge = Number(other.card.edges[theirDir]);
-
-    if (myEdge > theirEdge) return 1;
-    if (myEdge < theirEdge) return 0;
-
-    const theirHand = Number(other.card.jankenHand);
-    return jankenWins(myHand, theirHand) ? 1 : 0;
-  };
-
-  let flips = 0;
-  flips += trySide(r - 1, c, "up", "down");
-  flips += trySide(r + 1, c, "down", "up");
-  flips += trySide(r, c - 1, "left", "right");
-  flips += trySide(r, c + 1, "right", "left");
-  return flips;
-}
-
-function edgeSum(card: CardData): number {
-  return Number(card.edges.up) + Number(card.edges.right) + Number(card.edges.down) + Number(card.edges.left);
-}
-
-function pickAiMove(args: {
-  difficulty: AiDifficulty;
-  boardNow: any[];
-  deckTokens: bigint[];
-  usedCardIndexes: Set<number>;
-  usedCells: Set<number>;
-  cards: Map<bigint, CardData>;
-  my: PlayerIndex;
-}): { cell: number; cardIndex: number; reason: string } {
-  const availableCells: number[] = [];
-  for (let c = 0; c < 9; c++) if (!args.usedCells.has(c)) availableCells.push(c);
-
-  const availableIdx: number[] = [];
-  for (let i = 0; i < 5; i++) if (!args.usedCardIndexes.has(i)) availableIdx.push(i);
-
-  if (availableCells.length === 0 || availableIdx.length === 0) {
-    return { cell: 0, cardIndex: 0, reason: "fallback" };
-  }
-
-  if (args.difficulty === "easy") {
-    return { cell: availableCells[0], cardIndex: availableIdx[0], reason: "easy: pick smallest cell & cardIndex" };
-  }
-
-  let best: { cell: number; cardIndex: number; flips: number; sum: number } | null = null;
-
-  for (const cell of availableCells) {
-    for (const idx of availableIdx) {
-      const tid = args.deckTokens[idx];
-      const card = tid !== undefined ? args.cards.get(tid) : undefined;
-      if (!card) continue;
-
-      const flips = predictedImmediateFlips(args.boardNow, cell, card, args.my);
-      const sum = edgeSum(card);
-      if (!best) {
-        best = { cell, cardIndex: idx, flips, sum };
-        continue;
-      }
-
-      if (flips > best.flips) best = { cell, cardIndex: idx, flips, sum };
-      else if (flips === best.flips && sum > best.sum) best = { cell, cardIndex: idx, flips, sum };
-      else if (flips === best.flips && sum === best.sum && cell < best.cell) best = { cell, cardIndex: idx, flips, sum };
-      else if (flips === best.flips && sum === best.sum && cell === best.cell && idx < best.cardIndex) best = { cell, cardIndex: idx, flips, sum };
-    }
-  }
-
-  if (best) return { cell: best.cell, cardIndex: best.cardIndex, reason: `normal: maximize immediate flips=${best.flips} (tie → edgeSum=${best.sum})` };
-  return { cell: availableCells[0], cardIndex: availableIdx[0], reason: "fallback" };
-}
+// AI logic has been extracted to @/lib/ai/nyano_ai.ts
 
 function parseOpponentMode(v: string | null): OpponentMode {
   if (!v) return "pvp";
@@ -237,6 +157,8 @@ function parseRulesetKey(v: string | null): RulesetKey {
 
 function parseAiDifficulty(v: string | null): AiDifficulty {
   if (v === "easy") return "easy";
+  if (v === "hard") return "hard";
+  if (v === "expert") return "expert";
   return "normal";
 }
 
@@ -297,6 +219,10 @@ export function MatchPage() {
   const ui = (searchParams.get("ui") || "").toLowerCase();
   const isRpg = ui === "rpg";
   const decks = React.useMemo(() => listDecks(), []);
+
+  const isGuestMode = searchParams.get("mode") === "guest";
+  const dataModeParam = (searchParams.get("dm") ?? "fast") as DataMode;
+  const [dataMode, setDataMode] = React.useState<DataMode>(isGuestMode ? "fast" : dataModeParam);
 
   const eventId = searchParams.get("event") ?? "";
   const event: EventV1 | null = React.useMemo(() => (eventId ? getEventById(eventId) : null), [eventId]);
@@ -411,6 +337,14 @@ export function MatchPage() {
     return parseDeckTokenIds(deckB);
   }, [deckB, event, eventNyanoDeckOverride]);
 
+  // Guest mode: store generated deck tokenIds so they persist across resets
+  const [guestDeckATokens, setGuestDeckATokens] = React.useState<bigint[]>([]);
+  const [guestDeckBTokens, setGuestDeckBTokens] = React.useState<bigint[]>([]);
+
+  // Effective deck tokens: guest mode uses generated decks, normal mode uses selected decks
+  const effectiveDeckATokens = isGuestMode && guestDeckATokens.length === 5 ? guestDeckATokens : deckATokens;
+  const effectiveDeckBTokens = isGuestMode && guestDeckBTokens.length === 5 ? guestDeckBTokens : deckBTokens;
+
   const ruleset: RulesetConfigV1 = rulesetKey === "v1" ? ONCHAIN_CORE_TACTICS_RULESET_CONFIG_V1 : ONCHAIN_CORE_TACTICS_SHADOW_RULESET_CONFIG_V2;
   const rulesetId = React.useMemo(() => computeRulesetIdV1(ruleset), [ruleset]);
 
@@ -420,7 +354,7 @@ export function MatchPage() {
   const currentPlayer = turnPlayer(firstPlayer, currentTurnIndex);
   const isAiTurn = isVsNyanoAi && currentPlayer === aiPlayer;
 
-  const currentDeckTokens = currentPlayer === 0 ? deckATokens : deckBTokens;
+  const currentDeckTokens = currentPlayer === 0 ? effectiveDeckATokens : effectiveDeckBTokens;
   const currentUsed = currentPlayer === 0 ? used.usedA : used.usedB;
   const currentWarnRemaining = currentPlayer === 0 ? Math.max(0, 3 - warnUsed.A) : Math.max(0, 3 - warnUsed.B);
 
@@ -442,9 +376,59 @@ export function MatchPage() {
     return out;
   }, [currentUsed]);
 
-  const canLoad = Boolean(deckA && deckATokens.length === 5 && deckBTokens.length === 5);
+  const canLoad = isGuestMode || Boolean(deckA && deckATokens.length === 5 && deckBTokens.length === 5);
 
-  const loadCards = async () => {
+  const loadCardsFromIndex = async () => {
+    setError(null);
+    setStatus(null);
+    setLoading(true);
+
+    try {
+      const index = await fetchGameIndex();
+      if (!index) {
+        setError("Game Index の読み込みに失敗しました。ネットワーク接続を確認してください。");
+        return;
+      }
+
+      if (isGuestMode) {
+        // Generate balanced demo pair
+        const pair = generateBalancedDemoPair(index);
+        const aTokens = pair.deckA.tokenIds.map((x) => BigInt(x));
+        const bTokens = pair.deckB.tokenIds.map((x) => BigInt(x));
+        setGuestDeckATokens(aTokens);
+        setGuestDeckBTokens(bTokens);
+
+        const allTokenIds = [...pair.deckA.tokenIds, ...pair.deckB.tokenIds];
+        const cardMap = buildCardDataFromIndex(index, allTokenIds);
+        setCards(cardMap);
+        setOwners(null);
+        setPlayerA("0x0000000000000000000000000000000000000001" as `0x${string}`);
+        setPlayerB("0x0000000000000000000000000000000000000002" as `0x${string}`);
+        setStatus(`Guest mode: loaded ${cardMap.size} cards from game index`);
+      } else {
+        // Fast mode for normal play
+        const allTokenIds = [...deckATokens, ...deckBTokens].map((t) => t.toString());
+        const cardMap = buildCardDataFromIndex(index, allTokenIds);
+
+        if (cardMap.size < allTokenIds.length) {
+          const missing = allTokenIds.filter((id) => !cardMap.has(BigInt(id)));
+          setError(`Game Index に存在しない tokenId: ${missing.join(", ")}. Verified mode をお試しください。`);
+          return;
+        }
+
+        setCards(cardMap);
+        setOwners(null);
+        setStatus(`Fast mode: loaded ${cardMap.size} cards from game index`);
+      }
+    } catch (e: any) {
+      const msg = e?.message ?? String(e);
+      setError(`Game Index load failed: ${msg}`);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const loadCardsFromRpc = async () => {
     setError(null);
     setStatus(null);
 
@@ -496,7 +480,7 @@ export function MatchPage() {
       if (a0 !== undefined) setPlayerA(ownersByTokenId.get(a0) ?? playerA);
       if (b0 !== undefined) setPlayerB(ownersByTokenId.get(b0) ?? playerB);
 
-      setStatus(`loaded ${bundles.size} cards from mainnet`);
+      setStatus(`Verified: loaded ${bundles.size} cards from mainnet`);
     } catch (e: any) {
       const msg = e?.message ?? String(e);
       setError(msg);
@@ -511,9 +495,24 @@ export function MatchPage() {
     }
   };
 
+  const loadCards = () => {
+    if (isGuestMode || dataMode === "fast") {
+      return loadCardsFromIndex();
+    }
+    return loadCardsFromRpc();
+  };
+
+  // Auto-load cards in guest mode
+  React.useEffect(() => {
+    if (isGuestMode && !cards && !loading) {
+      void loadCardsFromIndex();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isGuestMode]);
+
   const sim: SimState = React.useMemo(() => {
     if (!cards) return { ok: false, error: "カードが未ロードです（Load Cards を実行してください）" };
-    if (deckATokens.length !== 5 || deckBTokens.length !== 5) return { ok: false, error: "Deck A/B は 5 枚必要です" };
+    if (effectiveDeckATokens.length !== 5 || effectiveDeckBTokens.length !== 5) return { ok: false, error: "Deck A/B は 5 枚必要です" };
 
     try {
       const fullTurns = fillTurns(turns, firstPlayer);
@@ -525,8 +524,8 @@ export function MatchPage() {
           seasonId,
           playerA,
           playerB,
-          deckA: deckATokens,
-          deckB: deckBTokens,
+          deckA: effectiveDeckATokens,
+          deckB: effectiveDeckBTokens,
           firstPlayer,
           deadline,
           salt,
@@ -544,7 +543,7 @@ export function MatchPage() {
     } catch (e: any) {
       return { ok: false, error: e?.message ?? String(e) };
     }
-  }, [cards, deckATokens, deckBTokens, turns, firstPlayer, ruleset, rulesetId, seasonId, playerA, playerB, deadline, salt]);
+  }, [cards, effectiveDeckATokens, effectiveDeckBTokens, turns, firstPlayer, ruleset, rulesetId, seasonId, playerA, playerB, deadline, salt]);
 
   const matchId = sim.ok ? sim.full.matchId : null;
 
@@ -662,8 +661,8 @@ export function MatchPage() {
         playerB,
         rulesetId,
         seasonId,
-        deckA: deckATokens.map((t) => t.toString()),
-        deckB: deckBTokens.map((t) => t.toString()),
+        deckA: effectiveDeckATokens.map((t) => t.toString()),
+        deckB: effectiveDeckBTokens.map((t) => t.toString()),
         protocolV1,
         usedCells: Array.from(used.cells).sort((a, b) => a - b),
         usedCardIndicesA: Array.from(used.usedA).sort((a, b) => a - b),
@@ -698,8 +697,8 @@ export function MatchPage() {
     playerB,
     rulesetId,
     seasonId,
-    deckATokens,
-    deckBTokens,
+    effectiveDeckATokens,
+    effectiveDeckBTokens,
     aiNotes,
   ]);
 
@@ -799,23 +798,28 @@ export function MatchPage() {
     if (turns.length >= 9) return;
     if (currentPlayer !== aiPlayer) return;
 
-    const move = pickAiMove({
+    const move = pickAiMoveNew({
       difficulty: aiDifficulty,
       boardNow: boardNow as any,
-      deckTokens: deckBTokens,
+      deckTokens: effectiveDeckBTokens,
       usedCardIndexes: used.usedB,
       usedCells: used.cells,
       cards,
       my: aiPlayer,
+      warningMarksRemaining: Math.max(0, 3 - warnUsed.B),
     });
 
-    const tid = deckBTokens[move.cardIndex];
+    const tid = effectiveDeckBTokens[move.cardIndex];
     const note = `Nyano chose cell ${move.cell}, cardIndex ${move.cardIndex}${tid !== undefined ? ` (#${tid.toString()})` : ""} — ${move.reason}`;
     setAiNotes((prev) => ({ ...prev, [turns.length]: note }));
     setStatus(note);
 
-    commitTurn({ cell: move.cell, cardIndex: move.cardIndex });
-  }, [isVsNyanoAi, cards, turns.length, currentPlayer, aiPlayer, aiDifficulty, boardNow, deckBTokens, used.usedB, used.cells, commitTurn]);
+    commitTurn({
+      cell: move.cell,
+      cardIndex: move.cardIndex,
+      warningMarkCell: move.warningMarkCell,
+    });
+  }, [isVsNyanoAi, cards, turns.length, currentPlayer, aiPlayer, aiDifficulty, boardNow, effectiveDeckBTokens, used.usedB, used.cells, commitTurn]);
 
   React.useEffect(() => {
     if (!isVsNyanoAi || !aiAutoPlay) return;
@@ -1035,7 +1039,26 @@ export function MatchPage() {
         </section>
       ) : null}
 
-      {/* ── Match Setup (collapsible after cards are loaded) ── */}
+      {/* ── Guest mode banner ── */}
+      {isGuestMode && (
+        <section className="rounded-2xl border border-nyano-200 bg-nyano-50 p-4">
+          <div className="flex items-center gap-3">
+            <NyanoAvatar size={48} expression="playful" />
+            <div>
+              <div className="font-semibold text-nyano-800">Guest Quick Play</div>
+              <div className="text-xs text-nyano-600">
+                ランダムデッキでお試しプレイ中。自分のデッキで遊ぶには <Link className="font-medium underline" to="/decks">Decks</Link> でデッキを作成してください。
+              </div>
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* ── Mini Tutorial (guest mode, first visit only) ── */}
+      {isGuestMode && <MiniTutorial />}
+
+      {/* ── Match Setup (collapsed in guest mode, collapsible after cards are loaded) ── */}
+      {!isGuestMode && (
       <CollapsibleSection
         title="Match Setup"
         subtitle="デッキ選択・ルールセット・対戦設定"
@@ -1095,6 +1118,8 @@ export function MatchPage() {
                 <select className="input" value={aiDifficulty} disabled={isEvent} onChange={(e) => setParam("ai", e.target.value)}>
                   <option value="easy">Easy（最小手）</option>
                   <option value="normal">Normal（即時flip最大）</option>
+                  <option value="hard">Hard（minimax d2）</option>
+                  <option value="expert">Expert（alpha-beta d3）</option>
                 </select>
               </div>
 
@@ -1142,9 +1167,21 @@ export function MatchPage() {
           </div>
         </div>
 
+        <div className="grid gap-2">
+          <div className="grid gap-2">
+            <div className="text-xs font-medium text-slate-600">Data Mode</div>
+            <div className="flex items-center gap-2">
+              <select className="input w-auto" value={dataMode} onChange={(e) => setDataMode(e.target.value as DataMode)}>
+                <option value="fast">Fast (Game Index)</option>
+                <option value="verified">Verified (on-chain RPC)</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
         <div className="flex flex-wrap items-center gap-2">
           <button className="btn btn-primary" disabled={!canLoad || loading} onClick={loadCards}>
-            {loading ? "Loading…" : "Load Cards"}
+            {loading ? "Loading…" : dataMode === "fast" ? "Load Cards (Fast)" : "Load Cards (Verified)"}
           </button>
           <button className="btn" onClick={resetMatch}>Reset Match</button>
           <button className="btn" onClick={() => setSalt(randomSalt())}>New Salt</button>
@@ -1170,6 +1207,7 @@ export function MatchPage() {
           </div>
         ) : null}
       </CollapsibleSection>
+      )}
 
       {/* ═══════════════════════════════════════════════════════════════════
          GAME ARENA — unified play section (P0-1 / P0-2)
@@ -1184,6 +1222,12 @@ export function MatchPage() {
             <div className="text-xs text-slate-500">
               warning marks left: {currentWarnRemaining}
               {streamMode ? " · stream mode ON" : ""}
+              {isGuestMode ? " · guest" : ""}
+              {!isGuestMode && (
+                <span className={`ml-1 rounded-full border px-1.5 py-0.5 text-[10px] font-medium ${dataMode === "fast" ? "border-amber-200 bg-amber-50 text-amber-700" : "border-emerald-200 bg-emerald-50 text-emerald-700"}`}>
+                  {dataMode === "fast" ? "Fast (index)" : "Verified (on-chain)"}
+                </span>
+              )}
             </div>
           </div>
         )}
@@ -1191,7 +1235,13 @@ export function MatchPage() {
         <div className={isRpg ? "p-4" : "card-bd"}>
           {!cards ? (
             <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-8 text-center text-sm text-slate-600">
-              まずは Match Setup でデッキを選択し、<strong>Load Cards</strong> を実行してください
+              {loading ? (
+                "Loading cards…"
+              ) : isGuestMode ? (
+                <button className="btn btn-primary" onClick={() => void loadCardsFromIndex()}>Start Guest Match</button>
+              ) : (
+                <>まずは Match Setup でデッキを選択し、<strong>Load Cards</strong> を実行してください</>
+              )}
             </div>
           ) : (
             <div className="grid gap-6 lg:grid-cols-[1fr_300px]">
@@ -1210,7 +1260,7 @@ export function MatchPage() {
                 {/* AI turn notice */}
                 {isAiTurn && (
                   <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900">
-                    Nyano の手番です。{aiAutoPlay ? "自動で進みます…" : ""Nyano Move" を押してください。"}
+                    Nyano の手番です。{aiAutoPlay ? "自動で進みます…" : "\"Nyano Move\" を押してください。"}
                   </div>
                 )}
 
@@ -1259,7 +1309,7 @@ export function MatchPage() {
                   <LastMoveFeedback
                     placedCell={boardAnim.placedCell}
                     flippedCells={boardAnim.flippedCells}
-                    by={turns.length > 0 ? (turnPlayer(firstPlayer as any, turns.length - 1) === 0 ? "A" : "B") : "A"}
+                    turnPlayer={turns.length > 0 ? (turnPlayer(firstPlayer as any, turns.length - 1) === 0 ? "A" : "B") : "A"}
                   />
                 )}
 
@@ -1444,6 +1494,19 @@ export function MatchPage() {
                     </button>
                   </div>
                 </div>
+
+                {/* Guest mode post-game CTA */}
+                {isGuestMode && turns.length >= 9 && (
+                  <div className="grid gap-2 rounded-lg border border-nyano-200 bg-nyano-50 p-3">
+                    <div className="text-sm font-medium text-nyano-800">Ready for the real thing?</div>
+                    <div className="flex flex-wrap gap-2">
+                      <Link className="btn btn-primary no-underline text-xs" to="/decks">Create Your Own Deck</Link>
+                      <button className="btn text-xs" onClick={() => { resetMatch(); void loadCardsFromIndex(); }}>
+                        Play Again (new decks)
+                      </button>
+                    </div>
+                  </div>
+                )}
 
                 {/* AI debug notes (collapsed) */}
                 {Object.keys(aiNotes).length > 0 ? (
