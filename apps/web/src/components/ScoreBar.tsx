@@ -27,6 +27,8 @@ export function ScoreBar(props: {
   labelA?: string;
   labelB?: string;
   className?: string;
+  /** Size variant: "sm" (default), "md", "lg" (overlay-friendly). */
+  size?: "sm" | "md" | "lg";
 }) {
   const {
     board,
@@ -36,6 +38,7 @@ export function ScoreBar(props: {
     labelA = "A",
     labelB = "B",
     className = "",
+    size = "sm",
   } = props;
 
   const tiles = React.useMemo(() => countTiles(board), [board]);
@@ -43,24 +46,30 @@ export function ScoreBar(props: {
 
   const showWinner = winner !== null && moveCount >= maxMoves;
 
+  const tileBadgeCls = size === "lg" ? "badge badge-lg" : "badge";
+  const tileNumCls = size === "lg" ? "font-bold text-base" : "font-bold";
+  const moveTextCls = size === "lg" ? "text-sm font-semibold text-surface-600" : "text-xs font-semibold text-surface-600";
+  const barH = size === "lg" ? "h-3" : "h-2";
+  const winnerBadgeCls = size === "lg" ? "badge badge-lg" : "badge";
+
   return (
     <div className={["flex items-center justify-between gap-3", className].join(" ")}>
       <div className="flex items-center gap-2">
-        <span className="badge badge-sky">
-          {labelA}: <span className="font-bold">{tiles.a}</span>
+        <span className={[tileBadgeCls, "badge-sky"].join(" ")}>
+          {labelA}: <span className={tileNumCls}>{tiles.a}</span>
         </span>
-        <span className="badge badge-rose">
-          {labelB}: <span className="font-bold">{tiles.b}</span>
+        <span className={[tileBadgeCls, "badge-rose"].join(" ")}>
+          {labelB}: <span className={tileNumCls}>{tiles.b}</span>
         </span>
       </div>
 
       <div className="flex min-w-[140px] flex-1 flex-col items-center gap-1">
-        <div className="text-xs font-semibold text-surface-600">
+        <div className={moveTextCls}>
           moves {Math.min(moveCount, maxMoves)}/{maxMoves}
         </div>
-        <div className="h-2 w-full max-w-[220px] overflow-hidden rounded-full bg-surface-100">
+        <div className={[barH, "w-full max-w-[220px] overflow-hidden rounded-full bg-surface-100"].join(" ")}>
           <div
-            className="h-2 rounded-full bg-nyano-400 transition-[width]"
+            className={[barH, "rounded-full bg-nyano-400 transition-[width]"].join(" ")}
             style={{ width: `${Math.round(progress * 100)}%` }}
             aria-label="progress"
           />
@@ -69,11 +78,11 @@ export function ScoreBar(props: {
 
       <div className="flex items-center justify-end">
         {showWinner ? (
-          <span className={["badge", winner === "draw" ? "badge-violet" : winner === 0 ? "badge-sky" : "badge-rose"].join(" ")}>
+          <span className={[winnerBadgeCls, winner === "draw" ? "badge-violet" : winner === 0 ? "badge-sky" : "badge-rose"].join(" ")}>
             {winnerLabel(winner)}
           </span>
         ) : (
-          <span className="badge">—</span>
+          <span className={winnerBadgeCls}>—</span>
         )}
       </div>
     </div>

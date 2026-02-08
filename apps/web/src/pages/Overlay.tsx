@@ -4,7 +4,8 @@ import { Link, useSearchParams } from "react-router-dom";
 import { CardMini } from "@/components/CardMini";
 import { NyanoReactionBadge, type NyanoReactionInput } from "@/components/NyanoReaction";
 import { ScoreBar } from "@/components/ScoreBar";
-import { flipTracesReadout } from "@/components/flipTraceDescribe";
+import { FlipTraceBadges } from "@/components/FlipTraceBadges";
+import { flipTracesReadout, flipTracesSummary } from "@/components/flipTraceDescribe";
 import {
   cellIndexToCoord,
   computeStrictAllowed,
@@ -306,7 +307,7 @@ export function OverlayPage() {
   const voteTurnOk = voteState?.status === "open" && typeof state?.turn === "number" && voteTurn !== null ? voteTurn === state.turn : null;
   const voteSideOk = voteState?.status === "open" && toPlay !== null && voteSide !== null ? voteSide === toPlay : null;
 
-  const layoutClass = controls ? "grid gap-4 md:grid-cols-[1fr,360px]" : "grid gap-3 p-4 md:grid-cols-[1fr,360px]";
+  const layoutClass = controls ? "grid gap-4 md:grid-cols-[1fr,360px]" : "grid gap-4 p-4 md:grid-cols-[1fr,380px]";
 
   return (
     <div className={rootClass}>
@@ -343,8 +344,8 @@ export function OverlayPage() {
 
         <div className={layoutClass}>
           {/* Board */}
-          <div className={controls ? "rounded-3xl border border-slate-200 bg-white/75 p-3 shadow-sm" : "rounded-3xl border border-slate-200 bg-white/70 p-3 shadow-sm"}>
-            <div className="grid grid-cols-3 gap-2">
+          <div className={controls ? "rounded-3xl border border-slate-200 bg-white/75 p-3 shadow-sm" : "rounded-3xl border border-slate-200 bg-white/90 p-3 shadow-sm"}>
+            <div className={controls ? "grid grid-cols-3 gap-2" : "grid grid-cols-3 gap-3"}>
               {Array.from({ length: 9 }, (_, i) => {
                 const cell = board[i];
                 const owner = cell?.owner;
@@ -355,11 +356,9 @@ export function OverlayPage() {
 
                 return (
                   <div key={i} className={cellClass(i)} title={`Cell ${i} (${cellIndexToCoord(i)})`}>
-                    {controls ? (
-                      <div className="absolute left-2 top-2 rounded-full bg-white/80 px-2 py-0.5 text-[10px] font-semibold text-slate-500">
-                        {cellIndexToCoord(i)}
-                      </div>
-                    ) : null}
+                    <div className="absolute left-2 top-2 rounded-full bg-white/80 px-2 py-0.5 text-xs font-semibold text-slate-500">
+                      {cellIndexToCoord(i)}
+                    </div>
 
                     {isLast ? (
                       <div className="absolute right-2 top-2 rounded-full bg-rose-500/90 px-2 py-0.5 text-[10px] font-semibold text-white">✨</div>
@@ -384,18 +383,22 @@ export function OverlayPage() {
 
           {/* Right-side HUD */}
           <div className="space-y-3">
-            <div className="rounded-2xl border border-slate-200 bg-white/70 px-4 py-3 shadow-sm">
+            <div className={controls ? "rounded-2xl border border-slate-200 bg-white/70 px-4 py-3 shadow-sm" : "rounded-2xl border border-slate-200 bg-white/90 px-4 py-3 shadow-sm"}>
               <div className="flex items-center justify-between gap-2">
-                <div className="text-xs font-semibold text-slate-800">✨ Now Playing</div>
+                <div className={controls ? "text-xs font-semibold text-slate-800" : "text-sm font-semibold text-slate-800"}>Now Playing</div>
                 <div className="flex items-center gap-2">
                   {reactionInput ? <NyanoReactionBadge input={reactionInput} turnIndex={typeof state?.turn === "number" ? state.turn : 0} /> : null}
                   {modeBadge}
                 </div>
               </div>
-              <div className="mt-1 text-sm text-slate-700">{title}</div>
-              <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-slate-500">
+              <div className={controls ? "mt-1 text-sm text-slate-700" : "mt-1 text-base font-semibold text-slate-800"}>{title}</div>
+              <div className={controls ? "mt-1 flex flex-wrap items-center gap-2 text-xs text-slate-500" : "mt-1 flex flex-wrap items-center gap-2 text-sm text-slate-600"}>
                 <span>{sub}</span>
-                {toPlayLabel ? <span className="badge badge-sky">Next: {toPlayLabel}</span> : null}
+                {toPlayLabel ? (
+                  <span className={toPlay === 0 ? "to-play-pill to-play-pill-a" : "to-play-pill to-play-pill-b"}>
+                    Next: {toPlayLabel}
+                  </span>
+                ) : null}
               </div>
 
               <div className="mt-2">
@@ -405,18 +408,19 @@ export function OverlayPage() {
                   maxMoves={9}
                   winner={winnerForScoreBar(state)}
                   className="!justify-between"
+                  size={controls ? "sm" : "lg"}
                 />
               </div>
 
-              {matchIdShort ? <div className="mt-1 text-[11px] text-slate-400">match: {matchIdShort}</div> : null}
+              {matchIdShort ? <div className={controls ? "mt-1 text-[11px] text-slate-400" : "mt-1 text-xs text-slate-400"}>match: {matchIdShort}</div> : null}
             </div>
 
             {/* strictAllowed HUD (always visible) */}
-            <div className="rounded-2xl border border-slate-200 bg-white/70 px-4 py-3 shadow-sm">
+            <div className={controls ? "rounded-2xl border border-slate-200 bg-white/70 px-4 py-3 shadow-sm" : "rounded-2xl border border-slate-200 bg-white/90 px-4 py-3 shadow-sm"}>
               <div className="flex items-center justify-between gap-2">
-                <div className="text-xs font-semibold text-slate-800">🔒 strictAllowed</div>
+                <div className={controls ? "text-xs font-semibold text-slate-800" : "text-sm font-semibold text-slate-800"}>strictAllowed</div>
                 {strictAllowed ? (
-                  <span className="badge badge-slate">{strictAllowed.count}</span>
+                  <span className={controls ? "badge badge-slate" : "badge badge-lg badge-slate"}>{strictAllowed.count}</span>
                 ) : (
                   <span className="badge">—</span>
                 )}
@@ -424,7 +428,7 @@ export function OverlayPage() {
 
               {strictAllowed ? (
                 <>
-                  <div className="mt-1 text-xs text-slate-600">
+                  <div className={controls ? "mt-1 text-xs text-slate-600" : "mt-1 text-sm text-slate-600"}>
                     toPlay: <span className="font-mono">{sideLabel(strictAllowed.toPlay)}</span> · moves:{" "}
                     <span className="font-mono">{strictAllowed.count}</span>
                     {typeof strictAllowed.warningMark?.remaining === "number" ? (
@@ -435,7 +439,7 @@ export function OverlayPage() {
                     ) : null}
                   </div>
 
-                  <div className="mt-1 text-[11px] text-slate-500">
+                  <div className={controls ? "mt-1 text-[11px] text-slate-500" : "mt-1 text-xs text-slate-500"}>
                     hash: <span className="font-mono">{strictAllowed.hash}</span>
                   </div>
 
@@ -452,23 +456,28 @@ export function OverlayPage() {
 
             {/* Vote status (always visible when vote=1) */}
             {voteEnabled ? (
-              <div className="rounded-2xl border border-slate-200 bg-white/70 px-4 py-3 shadow-sm">
+              <div className={controls ? "rounded-2xl border border-slate-200 bg-white/70 px-4 py-3 shadow-sm" : "rounded-2xl border border-slate-200 bg-white/90 px-4 py-3 shadow-sm"}>
                 <div className="flex items-center justify-between gap-2">
-                  <div className="text-xs font-semibold text-slate-800">🗳️ Chat voting</div>
+                  <div className={controls ? "text-xs font-semibold text-slate-800" : "text-sm font-semibold text-slate-800"}>Chat voting</div>
                   {voteState?.status === "open" ? (
-                    <span className="badge badge-emerald">OPEN · {voteRemainingSec ?? "?"}s</span>
+                    <span className={controls ? "badge badge-emerald" : "badge badge-lg badge-emerald"}>OPEN</span>
                   ) : (
                     <span className="badge">CLOSED</span>
                   )}
                 </div>
 
-                <div className="mt-1 text-xs text-slate-600">
+                {/* Vote countdown (OBS-friendly) */}
+                {voteState?.status === "open" && voteRemainingSec !== null ? (
+                  <div className={controls ? "mt-1 text-xs text-emerald-600 font-semibold" : "mt-2 text-lg text-emerald-600 font-bold tabular-nums"}>{voteRemainingSec}s remaining</div>
+                ) : null}
+
+                <div className={controls ? "mt-1 text-xs text-slate-600" : "mt-1 text-sm text-slate-600"}>
                   controls:{" "}
                   <span className="font-mono">{voteState?.controlledSide === 1 ? "B" : voteState?.controlledSide === 0 ? "A" : "—"}</span>
                   {" "}· turn:{" "}
                   <span className="font-mono">{voteState?.status === "open" ? (voteTurn ?? "?") : "—"}</span>
                   {" "}· votes:{" "}
-                  <span className="font-mono">{typeof voteState?.totalVotes === "number" ? voteState.totalVotes : 0}</span>
+                  <span className="font-mono font-bold">{typeof voteState?.totalVotes === "number" ? voteState.totalVotes : 0}</span>
                 </div>
 
                 {/* Sync badges */}
@@ -491,7 +500,7 @@ export function OverlayPage() {
                 {voteState?.status === "open" && Array.isArray(voteState.top) && voteState.top.length > 0 ? (
                   <div className="mt-2 space-y-1">
                     {voteState.top.slice(0, 3).map((x, i) => (
-                      <div key={i} className="flex items-center justify-between gap-2 text-xs">
+                      <div key={i} className={controls ? "flex items-center justify-between gap-2 text-xs" : "flex items-center justify-between gap-2 text-sm"}>
                         <span className="font-mono">
                           {toViewerMoveText({
                             cell: x.move.cell,
@@ -499,24 +508,24 @@ export function OverlayPage() {
                             ...(typeof x.move.warningMarkCell === "number" ? { warningMarkCell: x.move.warningMarkCell } : {}),
                           })}
                         </span>
-                        <span className="badge badge-sky">{x.count}</span>
+                        <span className={controls ? "badge badge-sky" : "badge badge-lg badge-sky"}>{x.count}</span>
                       </div>
                     ))}
                   </div>
                 ) : null}
 
-                {voteState?.note ? <div className="mt-2 text-[11px] text-slate-500">{voteState.note}</div> : null}
+                {voteState?.note ? <div className={controls ? "mt-2 text-[11px] text-slate-500" : "mt-2 text-xs text-slate-500"}>{voteState.note}</div> : null}
               </div>
             ) : null}
 
             {state?.lastMove ? (
-              <div className="rounded-2xl border border-slate-200 bg-white/70 px-4 py-3 shadow-sm">
+              <div className={controls ? "rounded-2xl border border-slate-200 bg-white/70 px-4 py-3 shadow-sm" : "rounded-2xl border border-slate-200 bg-white/90 px-4 py-3 shadow-sm"}>
                 <div className="flex items-center justify-between gap-2">
-                  <div className="text-xs font-semibold text-slate-800">Last move</div>
-                  {state?.updatedAtMs ? <span className="text-[11px] text-slate-400">{ageLabel(state.updatedAtMs)}</span> : null}
+                  <div className={controls ? "text-xs font-semibold text-slate-800" : "text-sm font-semibold text-slate-800"}>Last move</div>
+                  {state?.updatedAtMs ? <span className={controls ? "text-[11px] text-slate-400" : "text-xs text-slate-400"}>{ageLabel(state.updatedAtMs)}</span> : null}
                 </div>
 
-                <div className="mt-1 text-sm text-slate-700">
+                <div className={controls ? "mt-1 text-sm text-slate-700" : "mt-1 text-base text-slate-800"}>
                   Turn {state.lastMove.turnIndex + 1}:{" "}
                   <span className="font-semibold">{state.lastMove.by === 0 ? "A" : "B"}</span>{" "}
                   <span className="font-mono">
@@ -529,7 +538,7 @@ export function OverlayPage() {
                 </div>
 
                 {/* flipTracesReadout (P0) */}
-                {flipReadout ? <div className="mt-1 text-xs text-slate-600">{flipReadout}</div> : null}
+                {flipReadout ? <div className={controls ? "mt-1 text-xs text-slate-600" : "mt-1 text-sm text-slate-600"}>{flipReadout}</div> : null}
 
                 <div className="mt-2 flex flex-wrap items-center gap-2">
                   <span className="badge badge-sky">{flipBadgeLabel}</span>
@@ -552,9 +561,9 @@ export function OverlayPage() {
                   {lastTurnSummary?.warningTriggered ? <span className="badge badge-amber">TRIGGERED MARK</span> : null}
                   {typeof lastTurnSummary?.warningPlaced === "number" ? <span className="badge badge-amber">PLACED MARK</span> : null}
 
-                  {flipStats && flipStats.chain > 0 ? <span className="badge badge-slate">CHAIN×{flipStats.chain}</span> : null}
-                  {flipStats && flipStats.diag > 0 ? <span className="badge badge-sky">DIAG×{flipStats.diag}</span> : null}
-                  {flipStats && flipStats.janken > 0 ? <span className="badge badge-rose">JANKEN×{flipStats.janken}</span> : null}
+                  {lastTurnSummary && Array.isArray(lastTurnSummary.flips) && lastTurnSummary.flips.length > 0 ? (
+                    <FlipTraceBadges flipTraces={lastTurnSummary.flips as any} limit={4} />
+                  ) : null}
                 </div>
 
                 {typeof state.lastMove.warningMarkCell === "number" ? (
@@ -570,18 +579,14 @@ export function OverlayPage() {
                 ) : null}
 
                 {lastFlippedCells.length > 0 ? (
-                  <div className="mt-1 text-[11px] text-slate-500">
+                  <div className={controls ? "mt-1 text-[11px] text-slate-500" : "mt-1 text-xs text-slate-500"}>
                     flipped: <span className="font-mono">{lastFlippedCells.map(cellIndexToCoord).join(", ")}</span>
                   </div>
                 ) : null}
 
-                {flipStats ? (
-                  <div className="mt-1 text-[11px] text-slate-500">
-                    Why: {flipStats.chain > 0 ? `chain×${flipStats.chain}` : null}
-                    {flipStats.chain > 0 && (flipStats.diag > 0 || flipStats.janken > 0) ? " · " : null}
-                    {flipStats.diag > 0 ? `diag×${flipStats.diag}` : null}
-                    {flipStats.diag > 0 && flipStats.janken > 0 ? " · " : null}
-                    {flipStats.janken > 0 ? `janken×${flipStats.janken}` : null}
+                {lastTurnSummary && Array.isArray(lastTurnSummary.flips) && lastTurnSummary.flips.length > 0 ? (
+                  <div className={controls ? "mt-1 text-[11px] text-slate-500" : "mt-1 text-xs text-slate-500"}>
+                    {flipTracesSummary(lastTurnSummary.flips as any)}
                   </div>
                 ) : null}
 

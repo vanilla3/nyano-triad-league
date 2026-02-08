@@ -1,13 +1,26 @@
 import React from "react";
 import { Link } from "react-router-dom";
 
-import { StreamOperationsHUD } from "@/components/StreamOperationsHUD";
+import { StreamOperationsHUD, type ExternalResult } from "@/components/StreamOperationsHUD";
 
 import { CopyField } from "@/components/CopyField";
 import { NyanoImage } from "@/components/NyanoImage";
 import { useToast } from "@/components/Toast";
 import { EVENTS, getEventStatus, type EventV1 } from "@/lib/events";
 import { postNyanoWarudoSnapshot } from "@/lib/nyano_warudo_bridge";
+import { formatViewerMoveText, parseChatMoveLoose } from "@/lib/triad_viewer_command";
+import {
+  cellIndexToCoord,
+  computeEmptyCells,
+  computeRemainingCardIndices,
+  computeStrictAllowed,
+  computeToPlay,
+  computeWarningMarksUsed,
+  computeWarningMarksRemaining,
+  fnv1a32Hex,
+  toViewerMoveText,
+  type ViewerMove,
+} from "@/lib/triad_vote_utils";
 import { publishStreamCommand, makeStreamCommandId, publishStreamVoteState, readStoredOverlayState, subscribeOverlayState, type OverlayStateV1 } from "@/lib/streamer_bus";
 
 function origin(): string {
@@ -36,172 +49,12 @@ function ageLabel(updatedAtMs?: number): string {
 
 
 
-function fnv1a32Hex(input: string): string {
-  // Non-cryptographic stable hash for allowlists (for strictAllowed dedupe).
-  // FNV-1a 32-bit
-  let h = 0x811c9dc5;
-  for (let i = 0; i < input.length; i++) {
-    h ^= input.charCodeAt(i);
-    // 32-bit multiply: h *= 16777619
-    h = (h + ((h << 1) + (h << 4) + (h << 7) + (h << 8) + (h << 24))) >>> 0;
-  }
-  return "0x" + h.toString(16).padStart(8, "0");
-}
 
-function currentPlayer(firstPlayer?: 0 | 1, turn?: number): 0 | 1 | null {
-  if (typeof firstPlayer !== "number") return null;
-  if (typeof turn !== "number") return null;
-  return ((firstPlayer + (turn % 2)) % 2) as 0 | 1;
-}
+const VIEWER_CMD_EXAMPLE = formatViewerMoveText({ side: 0, slot: 2, cell: 4, warningMarkCell: 2 });
+// => #triad A2->B2 wm=C1
 
-// Board coordinates:
-//   A1 B1 C1
-//   A2 B2 C2
-//   A3 B3 C3
-function cellCoordToIndex(coord: string): number | null {
-  const t = coord.trim().toUpperCase();
-  const m = t.match(/^([ABC])([123])$/);
-  if (!m) return null;
-  const col = m[1] === "A" ? 0 : m[1] === "B" ? 1 : 2;
-  const row = Number(m[2]) - 1; // 0..2
-  return row * 3 + col; // 0..8
-}
-
-function cellIndexToCoord(cell: number): string {
-  const c = Math.max(0, Math.min(8, cell));
-  const row = Math.floor(c / 3); // 0..2
-  const col = c % 3; // 0..2
-  const colCh = col === 0 ? "A" : col === 1 ? "B" : "C";
-  return `${colCh}${row + 1}`;
-}
-
-function parseCardIndexHuman(raw: string): number | null {
-  const t = raw.trim().replace(/^#/, "");
-  // allow: "0..4" (dev), "1..5" (viewer), "A1..A5" (viewer hand slot)
-  const m = t.match(/^A?([0-9]+)$/i);
-  if (!m) return null;
-  const n = Number(m[1]);
-  if (!Number.isFinite(n)) return null;
-
-  // viewer-friendly 1..5 → 0..4
-  if (n >= 1 && n <= 5) return n - 1;
-  if (n >= 0 && n <= 4) return n;
-  return null;
-}
-
-function parseCellAny(raw: string): number | null {
-  const t = raw.trim();
-  if (/^\d$/.test(t)) {
-    const n = Number(t);
-    if (n >= 0 && n <= 8) return n;
-    return null;
-  }
-  const c = cellCoordToIndex(t);
-  if (c === null) return null;
-  return c;
-}
-
-function toViewerMoveText(m: ParsedMove): string {
-  const cardHuman = (m.cardIndex + 1).toString();
-  const cellCoord = cellIndexToCoord(m.cell);
-  const wm = typeof m.warningMarkCell === "number" ? ` wm=${cellIndexToCoord(m.warningMarkCell)}` : "";
-  // canonical: "#triad A<cardSlot>-><cell>"
-  return `#triad A${cardHuman}->${cellCoord}${wm}`;
-}
-
-
-type ParsedMove = {
-  cell: number;
-  cardIndex: number;
-  warningMarkCell?: number | null;
-};
-
-function parseChatMove(text: string): ParsedMove | null {
-  const raw = text.trim();
-  if (!raw) return null;
-
-  // Supported formats:
-  //  1) Legacy numeric:
-  //     - "!move 4 2"
-  //     - "4 2 wm=6"
-  //  2) Viewer-friendly coordinate:
-  //     - "#triad B2 3"          (cellCoord cardSlot)
-  //     - "#triad A2->B2"       (cardSlot -> cellCoord)  ※ A2 means "hand slot 2"
-  //     - "#triad 3->B2"        (cardSlot -> cellCoord)
-  //     - "#triad B2 3 wm=C1"   (wm accepts coord too)
-  //
-  // Notes:
-  //   - cardSlot is 1..5 (viewer) or 0..4 (dev)
-  //   - cellCoord is A1..C3, or 0..8
-  //   - warning mark is optional (wm=... / w ...)
-
-  // strip prefixes
-  const t = raw
-    .replace(/^(?:#|!)(?:triad|move|m)\s+/i, "")
-    .trim()
-    .replace(/　/g, " ") // fullwidth space
-    .replace(/[→➡⇒➔⟶⟹⮕]/g, "->")
-    .replace(/[‐‑‒–—−]/g, "-") // hyphen variants
-    .replace(/＝/g, "=");
-
-  // Extract optional wm first (accept coord or digit)
-  let main = t;
-  let wm: number | null = null;
-  const wmRe = /\s+(?:wm|w)\s*=?\s*([A-C][1-3]|\d)\s*$/i;
-  const wmM = main.match(wmRe);
-  if (wmM) {
-    const c = parseCellAny(wmM[1]);
-    if (c === null) return null;
-    wm = c;
-    main = main.replace(wmRe, "").trim();
-  }
-
-  // Arrow style: "<card>-><cell>"
-  const arrow = main.match(/^(.*?)\s*->\s*([A-C][1-3]|\d)\s*$/i);
-  if (arrow) {
-    const cardIndex = parseCardIndexHuman(arrow[1]);
-    const cell = parseCellAny(arrow[2]);
-    if (cardIndex === null || cell === null) return null;
-    return { cell, cardIndex, warningMarkCell: wm };
-  }
-
-  // Space style: "<cell> <card>" or "<card> <cell>"
-  const parts = main.split(/\s+/).filter(Boolean);
-  if (parts.length >= 2) {
-    // 1) cell first
-    const cell = parseCellAny(parts[0]);
-    const cardIndex = parseCardIndexHuman(parts[1]);
-    if (cell !== null && cardIndex !== null) return { cell, cardIndex, warningMarkCell: wm };
-
-    // 2) swap (card first) - allows: "#triad 3 B2"
-    const cardIndex2 = parseCardIndexHuman(parts[0]);
-    const cell2 = parseCellAny(parts[1]);
-    if (cell2 !== null && cardIndex2 !== null) return { cell: cell2, cardIndex: cardIndex2, warningMarkCell: wm };
-
-    return null;
-  }
-
-  // Fallback legacy numeric without prefix:
-  const legacy = raw.match(/^(?<cell>\d)\s+(?<card>\d)(?:\s+(?:wm|w)\s*=?\s*(?<wm>\d))?$/i);
-  if (legacy && (legacy as any).groups) {
-    const cell = Number((legacy as any).groups.cell);
-    const cardIndex = Number((legacy as any).groups.card);
-    if (!Number.isFinite(cell) || cell < 0 || cell > 8) return null;
-    if (!Number.isFinite(cardIndex) || cardIndex < 0 || cardIndex > 4) return null;
-    const wmRaw = (legacy as any).groups.wm;
-    const w = typeof wmRaw === "string" && wmRaw.length > 0 ? Number(wmRaw) : null;
-    if (w !== null && (!Number.isFinite(w) || w < 0 || w > 8)) return null;
-    return { cell, cardIndex, warningMarkCell: w };
-  }
-
-  return null;
-}
-
-function moveKey(m: ParsedMove): string {
-  const wm = typeof m.warningMarkCell === "number" ? ` wm=${m.warningMarkCell}` : "";
-  const legacy = `cell ${m.cell} · card ${m.cardIndex}${wm}`;
-  const viewer = toViewerMoveText(m);
-  return `${legacy}  (${viewer})`;
+function moveKey(m: ViewerMove): string {
+  return toViewerMoveText(m);
 }
 
 
@@ -285,11 +138,34 @@ const [warudoBaseUrl, setWarudoBaseUrl] = React.useState<string>(() => {
   const env = (import.meta as any)?.env?.VITE_NYANO_WARUDO_BASE_URL as string | undefined;
   return (saved ?? env ?? "").toString();
 });
-const [autoSendPromptOnVoteStart, setAutoSendPromptOnVoteStart] = React.useState<boolean>(false);
-const [autoResendStateDuringVoteOpen, setAutoResendStateDuringVoteOpen] = React.useState<boolean>(false);
-const [autoSendStateOnVoteEnd, setAutoSendStateOnVoteEnd] = React.useState<boolean>(false);
+function readBoolSetting(key: string, fallback: boolean): boolean {
+  try {
+    const v = localStorage.getItem(key);
+    if (v === null) return fallback;
+    const s = v.trim().toLowerCase();
+    if (s === "1" || s === "true" || s === "yes" || s === "on") return true;
+    if (s === "0" || s === "false" || s === "no" || s === "off") return false;
+    return fallback;
+  } catch {
+    return fallback;
+  }
+}
+
+const [autoSendStateOnVoteStart, setAutoSendStateOnVoteStart] = React.useState<boolean>(() =>
+  readBoolSetting("nyanoWarudo.autoSendStateOnVoteStart", true)
+);
+const [autoSendPromptOnVoteStart, setAutoSendPromptOnVoteStart] = React.useState<boolean>(() =>
+  readBoolSetting("nyanoWarudo.autoSendPromptOnVoteStart", false)
+);
+const [autoResendStateDuringVoteOpen, setAutoResendStateDuringVoteOpen] = React.useState<boolean>(() =>
+  readBoolSetting("nyanoWarudo.autoResendStateDuringVoteOpen", false)
+);
+const [autoSendStateOnVoteEnd, setAutoSendStateOnVoteEnd] = React.useState<boolean>(() =>
+  readBoolSetting("nyanoWarudo.autoSendStateOnVoteEnd", false)
+);
 const [lastBridgePayload, setLastBridgePayload] = React.useState<string>("");
 const [lastBridgeResult, setLastBridgeResult] = React.useState<string>("");
+const [lastExternalResult, setLastExternalResult] = React.useState<ExternalResult | null>(null);
 
 React.useEffect(() => {
   // persist for convenience (stream ops)
@@ -300,62 +176,17 @@ React.useEffect(() => {
   }
 }, [warudoBaseUrl]);
 
-function computeEmptyCells(state: OverlayStateV1 | null): number[] {
-  if (!state) return [];
-  if (Array.isArray(state.usedCells)) {
-    const used = new Set(state.usedCells);
-    return Array.from({ length: 9 }, (_, i) => i).filter((i) => !used.has(i));
+React.useEffect(() => {
+  // persist toggles too (avoid stream ops mistakes after refresh)
+  try {
+    localStorage.setItem("nyanoWarudo.autoSendStateOnVoteStart", autoSendStateOnVoteStart ? "1" : "0");
+    localStorage.setItem("nyanoWarudo.autoSendPromptOnVoteStart", autoSendPromptOnVoteStart ? "1" : "0");
+    localStorage.setItem("nyanoWarudo.autoResendStateDuringVoteOpen", autoResendStateDuringVoteOpen ? "1" : "0");
+    localStorage.setItem("nyanoWarudo.autoSendStateOnVoteEnd", autoSendStateOnVoteEnd ? "1" : "0");
+  } catch {
+    // ignore
   }
-  if (Array.isArray(state.board)) {
-    const b = state.board as any[];
-    return Array.from({ length: 9 }, (_, i) => i).filter((i) => b[i] == null);
-  }
-  return Array.from({ length: 9 }, (_, i) => i);
-}
-
-function computeUsedCardIndices(state: OverlayStateV1 | null, side: 0 | 1): number[] {
-  if (!state) return [];
-  const arr = side === 0 ? state.usedCardIndicesA : state.usedCardIndicesB;
-  if (Array.isArray(arr)) return arr.map((x) => Number(x)).filter((n) => Number.isFinite(n));
-
-  // fallback: derive from protocolV1
-  const p = (state as any).protocolV1 as any;
-  if (!p?.header || !Array.isArray(p.turns)) return [];
-  const firstPlayer = typeof p.header.firstPlayer === "number" ? (p.header.firstPlayer as 0 | 1) : null;
-  if (firstPlayer === null) return [];
-  const used: number[] = [];
-  for (let i = 0; i < p.turns.length; i++) {
-    const by = ((firstPlayer + (i % 2)) % 2) as 0 | 1;
-    if (by !== side) continue;
-    const ci = Number(p.turns[i]?.cardIndex);
-    if (Number.isFinite(ci)) used.push(ci);
-  }
-  return used;
-}
-
-function computeWarningMarksUsed(state: OverlayStateV1 | null, side: 0 | 1): number {
-  if (!state) return 0;
-  const v = side === 0 ? state.warningMarksUsedA : state.warningMarksUsedB;
-  if (typeof v === "number" && Number.isFinite(v)) return v;
-
-  // fallback: derive from protocolV1
-  const p = (state as any).protocolV1 as any;
-  if (!p?.header || !Array.isArray(p.turns)) return 0;
-  const firstPlayer = typeof p.header.firstPlayer === "number" ? (p.header.firstPlayer as 0 | 1) : null;
-  if (firstPlayer === null) return 0;
-  let used = 0;
-  for (let i = 0; i < p.turns.length; i++) {
-    const by = ((firstPlayer + (i % 2)) % 2) as 0 | 1;
-    if (by !== side) continue;
-    if (typeof p.turns[i]?.warningMarkCell === "number") used += 1;
-  }
-  return used;
-}
-
-function computeRemainingCardIndices(state: OverlayStateV1 | null, side: 0 | 1): number[] {
-  const used = new Set(computeUsedCardIndices(state, side));
-  return [0, 1, 2, 3, 4].filter((i) => !used.has(i));
-}
+}, [autoSendStateOnVoteStart, autoSendPromptOnVoteStart, autoResendStateDuringVoteOpen, autoSendStateOnVoteEnd]);
 
 function bestEffortBoardToProtocolBoard(state: OverlayStateV1 | null): Array<any | null> {
   // For nyano-warudo display/aggregation: keep it simple.
@@ -388,32 +219,42 @@ function bestEffortBoardToProtocolBoard(state: OverlayStateV1 | null): Array<any
 
 function buildStateJsonContent(state: OverlayStateV1 | null, controlled: 0 | 1): any {
   const now = Date.now();
-  const first = typeof state?.firstPlayer === "number" ? (state!.firstPlayer as 0 | 1) : null;
   const turn = typeof state?.turn === "number" ? Number(state!.turn) : null;
-  const toPlay = first !== null && turn !== null ? ((first + (turn % 2)) % 2) as 0 | 1 : null;
+  const toPlay = computeToPlay(state);
 
+  const strict = computeStrictAllowed(state);
   const emptyCells = computeEmptyCells(state);
-  const remainA = computeRemainingCardIndices(state, 0);
-  const remainB = computeRemainingCardIndices(state, 1);
-  const remainToPlay = toPlay === 0 ? remainA : toPlay === 1 ? remainB : [];
-
-  const wUsed = toPlay === 0 ? computeWarningMarksUsed(state, 0) : toPlay === 1 ? computeWarningMarksUsed(state, 1) : 0;
-  const wRemain = Math.max(0, 3 - wUsed);
-  const wmCandidates = wRemain > 0 ? emptyCells.map(cellIndexToCoord) : [];
 
   const legalMoves: any[] = [];
-  for (const cell of emptyCells) {
-    for (const cardIndex of remainToPlay) {
-      legalMoves.push({
-        cell,
-        cardIndex,
-        viewer: toViewerMoveText({ cell, cardIndex }),
-      });
+  if (strict) {
+    for (const txt of strict.allowlist) {
+      // Parse each canonical viewer command text back into components
+      const parts = txt.match(/#triad\s*A(\d)->([A-C][1-3])/i);
+      if (parts) {
+        const cardIndex = Number(parts[1]) - 1;
+        const cellCoord = parts[2];
+        const cell = cellCoord ? (() => {
+          const col = cellCoord[0] === "A" ? 0 : cellCoord[0] === "B" ? 1 : 2;
+          const row = Number(cellCoord[1]) - 1;
+          return row * 3 + col;
+        })() : 0;
+        legalMoves.push({ cell, cardIndex, viewer: txt });
+      }
+    }
+  } else {
+    // Fallback: compute manually
+    const remainToPlay = toPlay !== null ? computeRemainingCardIndices(state, toPlay) : [];
+    for (const cell of emptyCells) {
+      for (const cardIndex of remainToPlay) {
+        legalMoves.push({ cell, cardIndex, viewer: toViewerMoveText({ cell, cardIndex }) });
+      }
     }
   }
 
-  const allowlist = legalMoves.map((m) => String(m.viewer)).sort();
-  const allowlistHash = fnv1a32Hex(allowlist.join("\n"));
+  const usedA = computeRemainingCardIndices(state, 0);
+  const usedB = computeRemainingCardIndices(state, 1);
+  const remainA = new Set(usedA);
+  const remainB = new Set(usedB);
 
   return {
     protocol: "triad_league_state_json_v1",
@@ -425,7 +266,7 @@ function buildStateJsonContent(state: OverlayStateV1 | null, controlled: 0 | 1):
     turn,
     toPlay: toPlay === 0 ? "A" : toPlay === 1 ? "B" : null,
     controlledSide: controlled === 0 ? "A" : "B",
-    viewerCommandFormat: "#triad A2->B2 wm=C1",
+    viewerCommandFormat: VIEWER_CMD_EXAMPLE,
 
     // Protocol snapshot (best-effort)
     protocolV1: (state as any)?.protocolV1 ?? null,
@@ -436,36 +277,43 @@ function buildStateJsonContent(state: OverlayStateV1 | null, controlled: 0 | 1):
     // Hand slots (tokenIds only, stable)
     hands: {
       A: Array.isArray(state?.deckA)
-        ? state!.deckA.map((t, i) => ({ slot: i, tokenId: String(t), used: computeUsedCardIndices(state, 0).includes(i) }))
+        ? state!.deckA.map((t, i) => ({ slot: i, tokenId: String(t), used: !remainA.has(i) }))
         : [],
       B: Array.isArray(state?.deckB)
-        ? state!.deckB.map((t, i) => ({ slot: i, tokenId: String(t), used: computeUsedCardIndices(state, 1).includes(i) }))
+        ? state!.deckB.map((t, i) => ({ slot: i, tokenId: String(t), used: !remainB.has(i) }))
         : [],
     },
 
     // Turn-local legal action space
     legalMoves,
-    strictAllowed: {
-      allowlist,
-      hash: allowlistHash,
+    strictAllowed: strict ? {
+      allowlist: strict.allowlist,
+      hash: strict.hash,
+    } : {
+      allowlist: legalMoves.map((m) => String(m.viewer)).sort(),
+      hash: fnv1a32Hex(legalMoves.map((m) => String(m.viewer)).sort().join("\n")),
     },
-    warningMark: {
-      used: wUsed,
-      remaining: wRemain,
-      candidates: wmCandidates,
+    warningMark: strict ? {
+      used: strict.warningMark.used,
+      remaining: strict.warningMark.remaining,
+      candidates: strict.warningMark.candidates,
+    } : {
+      used: toPlay !== null ? computeWarningMarksUsed(state, toPlay) : 0,
+      remaining: toPlay !== null ? computeWarningMarksRemaining(state, toPlay) : 0,
+      candidates: [],
     },
   };
 }
 
 function buildAiPrompt(state: OverlayStateV1 | null, controlled: 0 | 1): string {
-  const first = typeof state?.firstPlayer === "number" ? (state!.firstPlayer as 0 | 1) : null;
   const turn = typeof state?.turn === "number" ? Number(state!.turn) : null;
-  const toPlay = first !== null && turn !== null ? ((first + (turn % 2)) % 2) as 0 | 1 : null;
+  const toPlay = computeToPlay(state);
 
+  const strict = computeStrictAllowed(state);
   const emptyCells = computeEmptyCells(state);
-  const remain = computeRemainingCardIndices(state, toPlay === 1 ? 1 : 0);
-  const wUsed = computeWarningMarksUsed(state, toPlay === 1 ? 1 : 0);
-  const wRemain = Math.max(0, 3 - wUsed);
+  const remain = toPlay !== null ? computeRemainingCardIndices(state, toPlay) : [];
+  const wUsed = toPlay !== null ? computeWarningMarksUsed(state, toPlay) : 0;
+  const wRemain = toPlay !== null ? computeWarningMarksRemaining(state, toPlay) : 0;
 
   const boardMini = bestEffortBoardToProtocolBoard(state);
 
@@ -480,7 +328,7 @@ function buildAiPrompt(state: OverlayStateV1 | null, controlled: 0 | 1): string 
   lines.push("");
   lines.push("Viewer command format:");
   lines.push("- #triad A<slot>-><cell> wm=<cell> (wm optional)");
-  lines.push("  examples: #triad A2->B2   /   #triad A3->C3 wm=A1");
+  lines.push(`  examples: ${VIEWER_CMD_EXAMPLE}   /   ${formatViewerMoveText({ side: 0, slot: 3, cell: 8, warningMarkCell: 0 })}`);
   lines.push("");
   lines.push("Board (A1..C3): each cell = owner+slot (tokenId if known)");
   // render grid
@@ -506,7 +354,7 @@ function buildAiPrompt(state: OverlayStateV1 | null, controlled: 0 | 1): string 
   for (const cell of emptyCells) {
     for (const cardIndex of remain) {
       if (printed >= max) break;
-      lines.push(`- #triad A${cardIndex + 1}->${cellIndexToCoord(cell)}`);
+      lines.push(`- ${formatViewerMoveText({ side: 0, slot: cardIndex + 1, cell })}`);
       printed += 1;
     }
     if (printed >= max) break;
@@ -543,6 +391,12 @@ const sendNyanoWarudo = React.useCallback(
 
     const summary = `ok=${res.ok} status=${res.status} ${res.text ? `\n${res.text}` : ""}`;
     setLastBridgeResult(summary);
+    setLastExternalResult({
+      kind: "warudo",
+      ok: res.ok,
+      message: res.ok ? `${kind} sent` : `${kind} failed (${res.status})`,
+      timestampMs: Date.now(),
+    });
     if (!opts?.silent) {
       if (res.ok) toast.success("Nyano Warudo", `Sent ${kind}`);
       else toast.error("Nyano Warudo", `Failed to send ${kind}`);
@@ -604,11 +458,10 @@ const downloadAiPrompt = React.useCallback(() => {
   const [pickCardIndex, setPickCardIndex] = React.useState<number | null>(null);
   const [pickWarningMarkCell, setPickWarningMarkCell] = React.useState<number | null>(null);
 
-  const [votesByUser, setVotesByUser] = React.useState<Record<string, ParsedMove>>({});
+  const [votesByUser, setVotesByUser] = React.useState<Record<string, ViewerMove>>({});
 
   const liveTurn = typeof live?.turn === "number" ? live.turn : null;
-  const liveFirst = typeof live?.firstPlayer === "number" ? (live.firstPlayer as 0 | 1) : null;
-  const liveCurrent = currentPlayer(liveFirst ?? undefined, liveTurn ?? undefined);
+  const liveCurrent = computeToPlay(live);
 
 const canVoteNow =
   live?.mode === "live" &&
@@ -617,41 +470,11 @@ const canVoteNow =
   liveCurrent === controlledSide;
 
 // Best-effort "legal move" hints from the host (/match) via overlay bus.
-const usedCellsLive = React.useMemo(() => {
-  const arr = Array.isArray((live as any)?.usedCells) ? ((live as any).usedCells as number[]) : null;
-  if (arr && arr.length >= 0) return new Set(arr.filter((x) => Number.isFinite(x)));
-  // fallback: derive from board occupancy
-  const b: any[] = Array.isArray((live as any)?.board) ? ((live as any).board as any[]) : [];
-  const s = new Set<number>();
-  for (let i = 0; i < 9; i++) if (b[i]?.card) s.add(i);
-  return s;
-}, [live?.updatedAtMs]);
+const remainingCellsLive = React.useMemo(() => computeEmptyCells(live), [live?.updatedAtMs]);
 
-const remainingCellsLive = React.useMemo(() => {
-  const out: number[] = [];
-  for (let c = 0; c < 9; c++) if (!usedCellsLive.has(c)) out.push(c);
-  return out;
-}, [usedCellsLive]);
+const remainingCardsLive = React.useMemo(() => computeRemainingCardIndices(live, controlledSide), [live?.updatedAtMs, controlledSide]);
 
-const usedCardsLive = React.useMemo(() => {
-  const a = Array.isArray((live as any)?.usedCardIndicesA) ? ((live as any).usedCardIndicesA as number[]) : [];
-  const b = Array.isArray((live as any)?.usedCardIndicesB) ? ((live as any).usedCardIndicesB as number[]) : [];
-  const s = controlledSide === 0 ? a : b;
-  return new Set(s.filter((x) => Number.isFinite(x)));
-}, [live?.updatedAtMs, controlledSide]);
-
-const remainingCardsLive = React.useMemo(() => {
-  const out: number[] = [];
-  for (let i = 0; i < 5; i++) if (!usedCardsLive.has(i)) out.push(i);
-  return out;
-}, [usedCardsLive]);
-
-const remainingWarningMarks = React.useMemo(() => {
-  const usedA = typeof (live as any)?.warningMarksUsedA === "number" ? (live as any).warningMarksUsedA : 0;
-  const usedB = typeof (live as any)?.warningMarksUsedB === "number" ? (live as any).warningMarksUsedB : 0;
-  const used = controlledSide === 0 ? usedA : usedB;
-  return Math.max(0, 3 - used);
-}, [live?.updatedAtMs, controlledSide]);
+const remainingWarningMarks = React.useMemo(() => computeWarningMarksRemaining(live, controlledSide), [live?.updatedAtMs, controlledSide]);
 
   const resetVotes = React.useCallback(() => {
     setVotesByUser({});
@@ -665,25 +488,28 @@ const remainingWarningMarks = React.useMemo(() => {
     const sec = Math.max(5, Math.min(60, Math.floor(voteSeconds || 15)));
     const now = Date.now();
     setVoteOpen(true);
-    if (autoSendPromptOnVoteStart) {
-      // best-effort (do not block stream ops)
-      // IMPORTANT: Send state_json first so nyano-warudo strictAllowed can lock an up-to-date allowlist during the vote.
+
+    // best-effort (do not block stream ops)
+    // IMPORTANT: Send state_json at vote start so nyano-warudo strictAllowed can lock an up-to-date allowlist during the vote.
+    if (autoSendStateOnVoteStart) {
       sendNyanoWarudo("state_json", { silent: true }).catch(() => {});
+    }
+    if (autoSendPromptOnVoteStart) {
       sendNyanoWarudo("ai_prompt", { silent: true }).catch(() => {});
     }
     setVoteTurn(liveTurn);
     setVoteEndsAtMs(now + sec * 1000);
     resetVotes();
     toast.success("Vote", `Started (${sec}s) for turn ${liveTurn}`);
-  }, [canVoteNow, voteSeconds, liveTurn, resetVotes, toast, autoSendPromptOnVoteStart, sendNyanoWarudo]);
+  }, [canVoteNow, voteSeconds, liveTurn, resetVotes, toast, autoSendStateOnVoteStart, autoSendPromptOnVoteStart, sendNyanoWarudo]);
 
-  const pickWinner = React.useCallback((): ParsedMove | null => {
+  const pickWinner = React.useCallback((): ViewerMove | null => {
     const entries = Object.values(votesByUser);
     if (entries.length === 0) return null;
 
-    const counts = new Map<string, { move: ParsedMove; count: number }>();
+    const counts = new Map<string, { move: ViewerMove; count: number }>();
     for (const mv of entries) {
-      const k = JSON.stringify(mv);
+      const k = toViewerMoveText(mv);
       const prev = counts.get(k);
       if (prev) prev.count += 1;
       else counts.set(k, { move: mv, count: 1 });
@@ -817,25 +643,33 @@ React.useEffect(() => {
   }, [voteOpen, voteTurn, liveTurn, resetVotes]);
 
   const addVoteFromChat = React.useCallback(() => {
-    const mv = parseChatMove(chatText);
-    if (!mv) {
-      toast.error("Vote", "Could not parse. Example: !move 4 2 wm=6");
+    const parsed = parseChatMoveLoose(chatText, controlledSide);
+    if (!parsed) {
+      toast.error("Vote", "Could not parse. Example: #triad A2->B2 or !move 4 2");
       return;
     }
+    const mv: ViewerMove = { cell: parsed.cell, cardIndex: parsed.cardIndex, warningMarkCell: parsed.warningMarkCell };
     const u = userName.trim() || "viewer";
     setVotesByUser((prev) => ({ ...prev, [u]: mv }));
-  }, [chatText, userName, toast]);
+  }, [chatText, userName, controlledSide, toast]);
 
   const counts = React.useMemo(() => {
     const entries = Object.values(votesByUser);
-    const map = new Map<string, { move: ParsedMove; count: number }>();
+    const map = new Map<string, { move: ViewerMove; count: number }>();
     for (const mv of entries) {
-      const k = JSON.stringify(mv);
+      const k = toViewerMoveText(mv);
       const prev = map.get(k);
       if (prev) prev.count += 1;
       else map.set(k, { move: mv, count: 1 });
     }
-    return Array.from(map.values()).sort((a, b) => b.count - a.count);
+    return Array.from(map.values()).sort((a, b) => {
+      if (b.count !== a.count) return b.count - a.count;
+      if (a.move.cell !== b.move.cell) return a.move.cell - b.move.cell;
+      if (a.move.cardIndex !== b.move.cardIndex) return a.move.cardIndex - b.move.cardIndex;
+      const aw = typeof a.move.warningMarkCell === "number" ? a.move.warningMarkCell : 999;
+      const bw = typeof b.move.warningMarkCell === "number" ? b.move.warningMarkCell : 999;
+      return aw - bw;
+    });
   }, [votesByUser]);
 
   const timeLeft = React.useMemo(() => {
@@ -929,6 +763,7 @@ return (
         voteEndsAtMs={voteEndsAtMs}
         totalVotes={Object.keys(votesByUser).length}
         voteTurn={voteTurn}
+        lastExternalResult={lastExternalResult}
       />
       <div className="card">
         <div className="card-hd">
@@ -1066,14 +901,6 @@ return (
                 <div className="mt-2 grid gap-2">
                   <label className="text-[11px] text-slate-600">Controlled side</label>
 
-<label className="flex items-center gap-2 text-xs text-slate-700">
-  <input
-    type="checkbox"
-    checked={autoResendStateDuringVoteOpen}
-    onChange={(e) => setAutoResendStateDuringVoteOpen(e.target.checked)}
-  />
-  vote open → refresh state_json on state updates (strictAllowed)
-</label>
                   <select
                     className="rounded-lg border border-slate-200 bg-white px-2 py-1 text-xs"
                     value={String(controlledSide)}
@@ -1187,15 +1014,34 @@ return (
         ※ CORSで失敗する場合は nyano-warudo 側で localhost を許可してください。
       </div>
 
-      <div className="mt-2 grid grid-cols-2 gap-2">
+      <div className="mt-2 grid gap-2">
+        <label className="flex items-center gap-2 text-xs text-slate-700">
+          <input
+            type="checkbox"
+            checked={autoSendStateOnVoteStart}
+            onChange={(e) => setAutoSendStateOnVoteStart(e.target.checked)}
+          />
+          vote start → state_json (strictAllowed lock)
+        </label>
+
         <label className="flex items-center gap-2 text-xs text-slate-700">
           <input
             type="checkbox"
             checked={autoSendPromptOnVoteStart}
             onChange={(e) => setAutoSendPromptOnVoteStart(e.target.checked)}
           />
-          vote start → state_json + ai_prompt
+          vote start → ai_prompt (optional)
         </label>
+
+        <label className="flex items-center gap-2 text-xs text-slate-700">
+          <input
+            type="checkbox"
+            checked={autoResendStateDuringVoteOpen}
+            onChange={(e) => setAutoResendStateDuringVoteOpen(e.target.checked)}
+          />
+          vote open → refresh state_json on state updates
+        </label>
+
         <label className="flex items-center gap-2 text-xs text-slate-700">
           <input
             type="checkbox"
@@ -1206,9 +1052,9 @@ return (
         </label>
       </div>
 
-<div className="mt-1 text-[11px] text-slate-500">
-  strictAllowed 用に、投票開始時点で state_json（合法手 allowlist）も送ります。
-</div>
+      <div className="mt-1 text-[11px] text-slate-500">
+        ※ state_json は投票開始の瞬間に送ると、strictAllowed（合法手 allowlist）が投票中にズレにくくなります。
+      </div>
 
       <div className="mt-2 flex flex-wrap items-center gap-2">
         <button className="btn btn-sm btn-primary" onClick={() => sendNyanoWarudo("ai_prompt")}>

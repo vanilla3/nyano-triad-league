@@ -3,8 +3,8 @@
 このドキュメントは、別スレッド/別担当者が **Triad League を迷子にならずに継続開発できる** ように、
 目的・仕様・現状・次の実装計画・重要ファイルをまとめたものです。
 
-> 更新: 2026-02-06  
-> 直近コミット: commit-0068（/match 入力統一 + RPG全体化 + flipTraces日本語 + Nyanoリアクション）
+> 更新: 2026-02-07  
+> 直近コミット: commit-0073（/replay: NyanoReaction step再現 + neutral perspective修正）
 
 ---
 
@@ -75,7 +75,8 @@ Nyano NFT を “カード” として使い、オンチェーン文脈に強�
 ### 3-4. /overlay
 OBSに貼る前提の表示。  
 - streamer_bus の state を購読して表示
-- ここは次のP0で「視認性」「flip理由」「進行」「投票状態」を磨く予定
+- ✅ 常設HUD（turn/tiles/flip理由/strictAllowed/vote/sync）を実装済み
+- 次の改善: 配信テンプレ化（サイズ/余白プリセット）と、情報の優先順位調整
 
 ---
 
@@ -95,6 +96,15 @@ OBSに貼る前提の表示。
   - P1-1: flipTraces の日本語説明（配信用 readout も含む）
   - P1-2: Nyano リアクション（glow/badge/吹き出し）
 
+- **commit-0070**
+  - P0-1: /overlay 視認性改善（HUD常設: 進行/flip理由/投票/strictAllowed/sync）
+  - /match & /replay: overlay publish に lastTurnSummary.flips（flipTraces）を追加
+  - winner が draw のときの表示/型崩れを修正（overlay & result）
+
+- **commit-0071**
+  - P2-1: vote start 時点で state_json を送信（strictAllowed lock / 荒れ防止）
+  - Nyano Warudo Bridge の送信トグルを細分化（state_json と ai_prompt を分離）+ localStorage 保存
+
 ### 4-2. いま “できること”
 - ローカルでカードを読み込み、対局を成立させ、ログ/リプレイを観戦できる
 - 配信画面から nyano-warudo へ snapshot を送れる
@@ -105,19 +115,23 @@ OBSに貼る前提の表示。
 ## 5. 次の実装計画（Roadmap / TODO）
 
 ### P0（配信/体験の土台を固める）
-1. **/overlay の視認性改善（最優先）**
+1. **/overlay の視認性改善（DONE）**
    - 進行（turn/tiles）・flip理由（flipTraces）・投票状態・strictAllowed hash を常時表示
    - `flipTraceDescribe.ts` の `flipTracesReadout()` を overlay に適用
    - `NyanoReactionBadge` を overlay に追加（小さくても感情が伝わる）
+   - ✅ HUD: flip理由（readout）/ turn・tiles / strictAllowed（件数+hash）/ vote状態 / sync
 
 ### P1（観戦で“面白い”を強化）
-2. **TurnLog の flipTraces を日本語版に統合**
+2. **TurnLog の flipTraces を日本語版に統合（DONE）**
    - badges と詳細パネルを `flipTraceShort/Full` の出力に差し替え
-3. **/replay にも NyanoReaction を追加**
+   - `flipTracesSummary()` を turn header に追加
+3. **/replay にも NyanoReaction を追加（DONE）**
    - step で “そのターンの反応” を再現（配信素材として強い）
+   - spectator視点（neutral）で advantage/disadvantage が偏らないよう補正
+   - winner=draw の表示崩れを回避（デバッグ表示の整合）
 
 ### P2（nyano-warudo / Twitch 連携）
-4. **投票開始時点でも state_json を送る**
+4. **投票開始時点でも state_json を送る（DONE）**
    - strictAllowed（合法手 allowlist）が投票中にズレないようにする（荒れ防止）
 5. **視聴者提案フォーマットを確定**
    - 例: `#triad A2->B2`（座標式）を固定し、正規表現・UI例・集計に繋げる

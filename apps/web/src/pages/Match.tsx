@@ -1260,7 +1260,7 @@ export function MatchPage() {
                 {/* AI turn notice */}
                 {isAiTurn && (
                   <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900">
-                    Nyano の手番です。{aiAutoPlay ? "自動で進みます…" : "\"Nyano Move\" を押してください。"}
+                    Nyano の手番です。{aiAutoPlay ? "自動で進みます…" : "「Nyano Move」を押してください。"}
                   </div>
                 )}
 

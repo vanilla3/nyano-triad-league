@@ -18,6 +18,7 @@ import { ScoreBar } from "@/components/ScoreBar";
 import { CardMini } from "@/components/CardMini";
 import { TurnLog } from "@/components/TurnLog";
 import { GameResultBanner } from "@/components/GameResultOverlay";
+import { NyanoReaction, type NyanoReactionInput } from "@/components/NyanoReaction";
 import {
   base64UrlEncodeUtf8,
   safeBase64UrlDecodeUtf8,
@@ -94,6 +95,39 @@ function computeDelta(boardPrev: any, boardNow: any): { placedCell: number | nul
     }
   }
   return { placedCell, flippedCells };
+}
+
+function buildNyanoReactionInput(res: MatchResultWithHistory, step: number): NyanoReactionInput | null {
+  // Nyano reaction is based on the *last executed turn* at the given step.
+  // step: 0 = initial, 1 = after turn 1, ... 9 = finished
+  if (step <= 0) return null;
+  if (!res.turns || res.turns.length === 0) return null;
+
+  const lastIdx = Math.min(step - 1, res.turns.length - 1);
+  const last = res.turns[lastIdx];
+  const boardNow = res.boardHistory?.[step] ?? res.board;
+
+  // Count current tiles
+  let tilesA = 0;
+  let tilesB = 0;
+  for (const cell of boardNow) {
+    if (!cell) continue;
+    if (cell.owner === 0) tilesA++;
+    else tilesB++;
+  }
+
+  return {
+    flipCount: Number(last.flipCount ?? 0),
+    hasChain: Boolean(last.flipTraces?.some((t) => t.isChain)),
+    comboEffect: (last.comboEffect ?? "none") as any,
+    warningTriggered: Boolean(last.warningTriggered),
+    tilesA,
+    tilesB,
+    // Replay is a spectator experience: keep neutral perspective.
+    perspective: null,
+    finished: step >= 9,
+    winner: step >= 9 ? res.winner : null,
+  };
 }
 
 function rulesetLabelFromConfig(cfg: RulesetConfigV1): string {
@@ -423,19 +457,21 @@ protocolV1: {
     const boardNow = res.boardHistory[step];
     const boardPrev = step === 0 ? res.boardHistory[0] : res.boardHistory[step - 1];
     const { placedCell, flippedCells } = step === 0 ? { placedCell: null, flippedCells: [] } : computeDelta(boardPrev, boardNow);
+    const nyanoReactionInput = buildNyanoReactionInput(res, step);
 
     return (
       <div className="grid gap-3">
         <div className="flex items-center justify-between">
           <div className="text-sm font-semibold">{label}</div>
           <div className="text-xs text-slate-500">
-            winner: {res.winner === 0 ? "A" : "B"}
+            winner: {res.winner === "draw" ? "draw" : res.winner === 0 ? "A" : "B"}
           </div>
         </div>
 
-<div className="mt-2">
-  <ScoreBar board={boardNow as any} moveCount={step} maxMoves={9} winner={res.winner} />
-</div>
+        <div className="mt-2 grid gap-2">
+          <ScoreBar board={boardNow as any} moveCount={step} maxMoves={9} winner={res.winner} />
+          {nyanoReactionInput ? <NyanoReaction input={nyanoReactionInput} turnIndex={step} rpg={isRpg} /> : null}
+        </div>
 
 {isRpg ? (
   <BoardViewRPG
