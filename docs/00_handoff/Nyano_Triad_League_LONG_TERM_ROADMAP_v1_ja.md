@@ -186,6 +186,17 @@
 - [ ] /match /stream /overlay のどれかに影響するなら、簡易動作確認手順が書いてある
 - [ ] 破壊的変更が無い（あるなら V2 を作って段階移行）
 
+### 5-5. パッチ共有の標準（手戻りと待ちを消す）
+- 共有する側は「受け手が *コピペ一発で適用* できる」ことを最優先にする
+  - **SHA256** を必ず添える（取り違え防止）
+  - `git apply --check` が通ることを確認してから共有
+- 推奨フロー（Windows cmd 前提）
+  - 受け手: `..\_patches` に集約 → `certutil -hashfile ... SHA256` → `git apply --check` → `git apply` → `git add` → `git commit`
+  - 共有者: `git diff` / `git format-patch` を **手で編集しない**（diff が壊れる原因になる）
+- 失敗時の切り分け
+  - `git apply --include=docs/...` で docs だけ先に取り込む（作業の待ちを減らす）
+  - `git apply --reject` で `.rej` を出し、当たらない箇所を局所化
+
 ---
 
 ## 6. よくある落とし穴（必読）
