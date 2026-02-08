@@ -1,7 +1,12 @@
 import React from "react";
 import { Link } from "react-router-dom";
 
+const DIFFICULTIES = ["easy", "normal", "hard", "expert"] as const;
+
 export function ArenaPage() {
+  const [difficulty, setDifficulty] = React.useState<string>("normal");
+  const quickPlayUrl = `/match?mode=guest&opp=vs_nyano_ai&ai=${difficulty}&rk=v2`;
+
   return (
     <div className="grid gap-6">
       <section className="card">
@@ -19,8 +24,24 @@ export function ArenaPage() {
             <div className="rounded-xl border-2 border-nyano-300 bg-nyano-50 p-4">
               <div className="font-semibold text-nyano-800">Quick Play</div>
               <div className="mt-1 text-xs text-nyano-600">デッキ不要でいますぐ対戦。ランダムデッキ vs Nyano AI</div>
+              <div className="mt-2 flex flex-wrap gap-1">
+                {DIFFICULTIES.map((d) => (
+                  <button
+                    key={d}
+                    onClick={() => setDifficulty(d)}
+                    className={[
+                      "px-2 py-0.5 rounded-full text-xs font-medium transition-all",
+                      difficulty === d
+                        ? "bg-nyano-500 text-white"
+                        : "bg-white text-nyano-700 border border-nyano-200 hover:bg-nyano-100",
+                    ].join(" ")}
+                  >
+                    {d.charAt(0).toUpperCase() + d.slice(1)}
+                  </button>
+                ))}
+              </div>
               <div className="mt-3">
-                <Link className="btn btn-primary no-underline" to="/match?mode=guest&opp=vs_nyano_ai&ai=normal&rk=v2">
+                <Link className="btn btn-primary no-underline" to={quickPlayUrl}>
                   Play Now
                 </Link>
               </div>

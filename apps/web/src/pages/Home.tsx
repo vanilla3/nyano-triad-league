@@ -208,8 +208,12 @@ function ToolCard({ title, description, icon, path }: ToolCardProps) {
    MAIN HOME PAGE COMPONENT
    ═══════════════════════════════════════════════════════════════════════════ */
 
+const DIFFICULTIES = ["easy", "normal", "hard", "expert"] as const;
+
 export function HomePage() {
   const heroExpression = useHeroExpression();
+  const [difficulty, setDifficulty] = React.useState<string>("normal");
+  const quickPlayUrl = `/match?mode=guest&opp=vs_nyano_ai&ai=${difficulty}&rk=v2`;
 
   return (
     <div className="min-h-screen bg-surface-50">
@@ -243,10 +247,29 @@ export function HomePage() {
               デッキを組んで、対戦し、勝利を共有しよう。
             </p>
 
+            {/* Difficulty selector */}
+            <div className="flex items-center justify-center gap-2 mb-4">
+              <span className="text-sm text-surface-500">Difficulty:</span>
+              {DIFFICULTIES.map((d) => (
+                <button
+                  key={d}
+                  onClick={() => setDifficulty(d)}
+                  className={[
+                    "px-3 py-1 rounded-full text-sm font-medium transition-all",
+                    difficulty === d
+                      ? "bg-nyano-500 text-white shadow-glow-nyano"
+                      : "bg-surface-100 text-surface-600 hover:bg-surface-200",
+                  ].join(" ")}
+                >
+                  {d.charAt(0).toUpperCase() + d.slice(1)}
+                </button>
+              ))}
+            </div>
+
             {/* CTA buttons */}
             <div className="flex flex-wrap items-center justify-center gap-3">
               <Link
-                to="/match?mode=guest&opp=vs_nyano_ai&ai=normal&rk=v2"
+                to={quickPlayUrl}
                 className="btn btn-primary btn-lg"
               >
                 🎮 Quick Play
