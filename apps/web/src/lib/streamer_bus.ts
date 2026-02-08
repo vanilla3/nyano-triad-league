@@ -111,6 +111,13 @@ aiNote?: string;
   };
 
   error?: string;
+
+  /** External integration status (compatible extension, added commit-0084). */
+  externalStatus?: {
+    lastOk?: boolean;
+    lastMessage?: string;
+    lastTimestampMs?: number;
+  };
 };
 
 const CHANNEL_NAME = "nyano-triad-league.overlay.v1";

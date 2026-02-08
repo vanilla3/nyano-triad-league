@@ -32,6 +32,13 @@ import {
    MAIN HUD COMPONENT
    ───────────────────────────────────────────────────────────── */
 
+export type ExternalResult = {
+  kind: "warudo" | "rpc" | "bus";
+  ok: boolean;
+  message: string;
+  timestampMs: number;
+};
+
 export interface StreamOpsHUDProps {
   /** Live overlay state from /match or /replay */
   live: OverlayStateV1 | null;
@@ -45,6 +52,8 @@ export interface StreamOpsHUDProps {
   totalVotes: number;
   /** Current vote round's turn number */
   voteTurn: number | null;
+  /** Last external integration result (warudo/rpc) */
+  lastExternalResult?: ExternalResult | null;
 }
 
 export function StreamOperationsHUD({
@@ -54,6 +63,7 @@ export function StreamOperationsHUD({
   voteEndsAtMs,
   totalVotes,
   voteTurn,
+  lastExternalResult,
 }: StreamOpsHUDProps) {
   // ── Computed state ──
   const turn = typeof live?.turn === "number" ? live.turn : null;
@@ -248,6 +258,11 @@ export function StreamOperationsHUD({
             </span>
           </span>
         </div>
+
+        {/* External integration status (warudo/rpc) */}
+        {lastExternalResult && (
+          <ExternalStatusRow result={lastExternalResult} />
+        )}
       </div>
     </div>
   );
@@ -294,6 +309,28 @@ function HUDCell({
         {primary}
       </span>
       <span className="text-[11px] text-surface-500">{secondary}</span>
+    </div>
+  );
+}
+
+function ExternalStatusRow({ result }: { result: ExternalResult }) {
+  const ageSec = Math.max(0, Math.floor((Date.now() - result.timestampMs) / 1000));
+  const ageText = ageSec < 2 ? "just now" : ageSec < 60 ? `${ageSec}s ago` : `${Math.floor(ageSec / 60)}m ago`;
+
+  return (
+    <div className={[
+      "flex items-center gap-2 px-4 py-1.5 border-t text-xs",
+      result.ok
+        ? "border-emerald-100 bg-emerald-50/50 text-emerald-700"
+        : "border-red-100 bg-red-50/50 text-red-700",
+    ].join(" ")}>
+      <div className={[
+        "w-2 h-2 rounded-full shrink-0",
+        result.ok ? "bg-emerald-500" : "bg-red-500 animate-pulse",
+      ].join(" ")} />
+      <span className="font-mono font-medium">{result.kind}</span>
+      <span className="truncate">{result.ok ? "OK" : result.message}</span>
+      <span className="ml-auto shrink-0 text-surface-400">{ageText}</span>
     </div>
   );
 }

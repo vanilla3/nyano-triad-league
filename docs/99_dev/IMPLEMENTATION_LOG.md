@@ -184,3 +184,55 @@
 - `pnpm -C packages/triad-engine test`
 - `pnpm -C packages/triad-engine build`
 - 仕様差分：`docs/02_protocol/*` / `docs/99_dev/*` の更新確認
+
+
+## 2026-02-08 — commit-0083: /stream parser統一（票割れゼロ）
+
+### Why
+- Stream.tsx に 9 個の重複関数があり、triad_vote_utils / triad_viewer_command と同じ計算を独自実装していた。
+- `parseChatMove()` が独自パース実装で、`parseViewerMoveTextLoose()` と異なる正規化をするため票割れが発生していた。
+
+### What
+- `triad_viewer_command.ts` に `parseChatMoveLoose()` を追加。canonical / legacy / shorthand 全てを `formatViewerMoveText()` で同一キーに正規化。
+- Stream.tsx から 9 個の重複関数を削除、triad_vote_utils / triad_viewer_command の import に置換。
+- `parseChatMove()` を `parseChatMoveLoose()` に置換。`ParsedMove` 型 → `ViewerMove` に統一。
+- `buildStateJsonContent()` / `buildAiPrompt()` を `computeStrictAllowed()` / `computeToPlay()` に切替。
+- Match.tsx のスマートクォート（U+201C/U+201D）ビルドエラーを修正。
+
+### Verify
+- `pnpm build:web` 成功
+
+
+## 2026-02-08 — commit-0084: エラー表示常設 + flip理由表示統一
+
+### Why
+- 外部連携（warudo等）の成功/失敗が一時的な toast でしか表示されず、ストリーマーが見逃しやすかった。
+- Overlay の flip 理由表示が手動の flipStats 集計で、TurnLog の FlipTraceBadges と一致しなかった。
+
+### What
+- StreamOperationsHUD に `ExternalResult` 型と `ExternalStatusRow` コンポーネントを追加。
+- Stream.tsx に `lastExternalResult` state を追加、`sendNyanoWarudo()` で記録。
+- `OverlayStateV1` に `externalStatus` フィールドを追加（互換拡張）。
+- Overlay.tsx の手動 flipStats バッジ → `FlipTraceBadges` コンポーネントに置換。
+- Overlay.tsx の手動 "Why:" セクション → `flipTracesSummary()` に統一。
+
+### Verify
+- `pnpm build:web` 成功
+
+
+## 2026-02-08 — commit-0085: Overlay HUD 視認性 + UI クオリティアップ
+
+### Why
+- OBS controls=0 モードで 720p/1080p 表示時に文字が小さすぎて判読困難だった。
+- パネル背景の透過が強く、配信映像と重なると文字が見えにくかった。
+
+### What
+- ScoreBar に `size` prop を追加（"sm" | "md" | "lg"）。
+- Overlay OBS モードのフォント階層を一律引き上げ（10px→12px, 11px→12px, xs→sm, sm→base）。
+- パネル背景 `bg-white/70` → `bg-white/90`（OBS モード）。
+- toPlay 表示を `to-play-pill` コンポーネント化（プレイヤーカラー付き）。
+- セル座標ラベルを常時表示に変更。ボード gap を OBS モードで拡大。
+- index.css に `vote-countdown-inline`, `to-play-pill` CSS コンポーネントを追加。
+
+### Verify
+- `pnpm build:web` 成功
