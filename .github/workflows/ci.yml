@@ -31,6 +31,33 @@ jobs:
           git diff --exit-code
 
 
+  web:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          run_install: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "pnpm"
+      - run: |
+          if [ -f pnpm-lock.yaml ]; then
+            pnpm install --frozen-lockfile
+          else
+            pnpm install
+          fi
+      - run: pnpm -C packages/triad-engine build
+      - run: pnpm -C apps/web typecheck
+      - run: pnpm -C apps/web lint
+      - run: pnpm -C apps/web test
+      - run: pnpm -C apps/web build
+      - name: Install Playwright browsers
+        run: npx playwright install chromium --with-deps
+      - name: E2E tests
+        run: pnpm -C apps/web e2e
+
   contracts:
     runs-on: ubuntu-latest
     steps:

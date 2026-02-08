@@ -315,7 +315,7 @@ function minimax(
 // Warning mark selection
 // ────────────────────────────────────────────────────────────
 
-function pickWarningMarkCell(
+export function pickWarningMarkCell(
   board: (BoardCell | null)[],
   usedCells: Set<number>,
   placedCell: number,
@@ -336,7 +336,7 @@ function pickWarningMarkCell(
       if (nr < 0 || nr > 2 || nc < 0 || nc > 2) return;
       const idx = nr * 3 + nc;
       const bc = board[idx];
-      if (bc && bc.owner === my) adjacentOppCards++;
+      if (bc && bc.owner !== my) adjacentOppCards++;
     };
 
     check(r - 1, c);
