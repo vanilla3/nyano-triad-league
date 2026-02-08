@@ -7,6 +7,31 @@
 
 ---
 
+## 現在の進捗（コミットマップ / 迷子防止）
+
+このセクションは、移行先作業者が **チャットを追わずに**「いま何ができていて、次に何をすべきか」を最短で把握するための索引です。
+基本ルール: 仕様（契約）に関わる変更は、必ず `docs/99_dev/commit-XXXX_IMPLEMENTATION_LOG.md` と `commit-XXXX_TODO_update.md` に残します。
+
+### 直近の完了（apply/0070-0071 ブランチ）
+- commit-0070: overlay HUD に関する docs 更新（P0の土台）
+- commit-0071: vote start 時点で state_json を送信（strictAllowed lock）
+- commit-0072: TurnLog の flipTraces を日本語要約（説明性の底上げ）
+- commit-0073: Replay に NyanoReaction（演出・読みやすさ）
+- commit-0074: docs の最新同期（commit-0073 反映）
+- commit-0075: viewer command spec + parser lib（`triad_viewer_command.ts`）追加
+- commit-0076: /stream 投票集計キーを canonical #triad に正規化
+- commit-0078: 超長期ロードマップ v1 追加
+- commit-0079: パッチ共有標準（SHA256 / git apply）を明文化
+
+### いま入れる（次のコミット候補）
+- commit-0080: strictAllowed allowlist/hash の **完全単一ソース化**
+  - `triad_vote_utils.toViewerMoveText()` → `triad_viewer_command.formatViewerMoveText()` に委譲（票割れ/微差を根絶）
+  - StreamOperationsHUD の strictAllowed が `toPlay` と一致するよう修正（運営表示のズレ潰し）
+  - /stream 側 allowlist hash を `fnv1a32Hex` 共有に寄せる（ハッシュ計算の分岐を減らす）
+- commit-0081: CI の pnpm バージョン二重指定エラー修正（ビルド停止を解消）
+
+---
+
 ## 0. 北極星（North Star）
 
 - **配信イベントが、運営人数が薄くても成立する**
@@ -197,6 +222,13 @@
   - `git apply --include=docs/...` で docs だけ先に取り込む（作業の待ちを減らす）
   - `git apply --reject` で `.rej` を出し、当たらない箇所を局所化
 
+
+### 5-6. CI / DevOps（ビルドが止まると運営も止まる）
+- **pnpm のバージョンは single source にする**（二重指定を禁止）
+  - `package.json` に `"packageManager": "pnpm@9.0.0"` を置くなら、GitHub Actions の `pnpm/action-setup@v4` では `version:` を **指定しない**
+  - 逆に、Actions 側で `version:` を固定するなら `packageManager` を削除する
+- 失敗例（今回のCIエラー）: `Multiple versions of pnpm specified`
+- 目標: CI は “壊れない” だけでなく “壊れても原因が一目で分かる” こと（ログと docs を整備）
 ---
 
 ## 6. よくある落とし穴（必読）

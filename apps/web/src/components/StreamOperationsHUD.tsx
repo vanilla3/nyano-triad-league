@@ -69,8 +69,10 @@ export function StreamOperationsHUD({
 
   // ── Allowlist computation ──
   const emptyCells = computeEmptyCells(live);
-  const remainCards = computeRemainingCardIndices(live, controlledSide);
-  const wmRemaining = computeWarningMarksRemaining(live, controlledSide);
+  // strictAllowed should reflect the *actual* side-to-play (not always controlledSide).
+  const allowlistSide: 0 | 1 = toPlay !== null ? toPlay : controlledSide;
+  const remainCards = computeRemainingCardIndices(live, allowlistSide);
+  const wmRemaining = computeWarningMarksRemaining(live, allowlistSide);
 
   const legalMoves = React.useMemo(() => {
     const moves: string[] = [];

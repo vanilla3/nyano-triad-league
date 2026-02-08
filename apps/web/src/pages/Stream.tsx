@@ -9,6 +9,7 @@ import { useToast } from "@/components/Toast";
 import { EVENTS, getEventStatus, type EventV1 } from "@/lib/events";
 import { postNyanoWarudoSnapshot } from "@/lib/nyano_warudo_bridge";
 import { formatViewerMoveText } from "@/lib/triad_viewer_command";
+import { fnv1a32Hex } from "@/lib/triad_vote_utils";
 import { publishStreamCommand, makeStreamCommandId, publishStreamVoteState, readStoredOverlayState, subscribeOverlayState, type OverlayStateV1 } from "@/lib/streamer_bus";
 
 function origin(): string {
@@ -37,17 +38,6 @@ function ageLabel(updatedAtMs?: number): string {
 
 
 
-function fnv1a32Hex(input: string): string {
-  // Non-cryptographic stable hash for allowlists (for strictAllowed dedupe).
-  // FNV-1a 32-bit
-  let h = 0x811c9dc5;
-  for (let i = 0; i < input.length; i++) {
-    h ^= input.charCodeAt(i);
-    // 32-bit multiply: h *= 16777619
-    h = (h + ((h << 1) + (h << 4) + (h << 7) + (h << 8) + (h << 24))) >>> 0;
-  }
-  return "0x" + h.toString(16).padStart(8, "0");
-}
 
 function currentPlayer(firstPlayer?: 0 | 1, turn?: number): 0 | 1 | null {
   if (typeof firstPlayer !== "number") return null;
