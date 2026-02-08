@@ -196,15 +196,15 @@ function bestEffortBoardToProtocolBoard(state: OverlayStateV1 | null): Array<any
   const deckA = Array.isArray(state.deckA) ? state.deckA.map(String) : [];
   const deckB = Array.isArray(state.deckB) ? state.deckB.map(String) : [];
 
-  const b = state.board as any[];
+  const b = state.board;
   for (let i = 0; i < 9; i++) {
     const cell = b[i];
     if (!cell) continue;
-    const ownerRaw = (cell as any).owner;
-    const owner = ownerRaw === 0 || ownerRaw === "0" || ownerRaw === "A" ? "A" : ownerRaw === 1 || ownerRaw === "1" || ownerRaw === "B" ? "B" : null;
+    const ownerRaw = cell.owner;
+    const owner: "A" | "B" | null = ownerRaw === 0 ? "A" : ownerRaw === 1 ? "B" : null;
     if (!owner) continue;
 
-    const tokenId = (cell as any)?.card?.tokenId != null ? String((cell as any).card.tokenId) : null;
+    const tokenId = cell.card?.tokenId != null ? String(cell.card.tokenId) : null;
     const deck = owner === "A" ? deckA : deckB;
     const slot = tokenId ? deck.findIndex((x) => x === tokenId) : -1;
 
@@ -262,14 +262,14 @@ function buildStateJsonContent(state: OverlayStateV1 | null, controlled: 0 | 1):
     eventId: state?.eventId ?? null,
     eventTitle: state?.eventTitle ?? null,
     mode: state?.mode ?? null,
-    status: (state as any).status ?? null,
+    status: state?.status ?? null,
     turn,
     toPlay: toPlay === 0 ? "A" : toPlay === 1 ? "B" : null,
     controlledSide: controlled === 0 ? "A" : "B",
     viewerCommandFormat: VIEWER_CMD_EXAMPLE,
 
     // Protocol snapshot (best-effort)
-    protocolV1: (state as any)?.protocolV1 ?? null,
+    protocolV1: state?.protocolV1 ?? null,
 
     // Board in a minimal & stable shape
     board: bestEffortBoardToProtocolBoard(state),
@@ -424,14 +424,14 @@ const downloadTranscript = React.useCallback(() => {
     toast.warn("Download", "No live state yet.");
     return;
   }
-  const protocolV1 = (state as any)?.protocolV1 ?? null;
+  const protocolV1 = state?.protocolV1 ?? null;
   const content = JSON.stringify(
     {
       protocol: "triad_league_transcript_v1",
       exportedAtMs: Date.now(),
       eventId: state.eventId ?? null,
       eventTitle: state.eventTitle ?? null,
-      result: (state as any).status ?? null,
+      result: state?.status ?? null,
       protocolV1,
     },
     null,

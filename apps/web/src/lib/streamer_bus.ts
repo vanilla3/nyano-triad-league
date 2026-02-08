@@ -7,6 +7,19 @@
  * - Degrade gracefully if BroadcastChannel is not available.
  */
 
+/** Lightweight board cell for overlay transport (no engine import). */
+export interface BoardCellLite {
+  owner: 0 | 1;
+  card: {
+    tokenId: bigint | string | number;
+    edges: { up: number; right: number; down: number; left: number };
+    jankenHand: 0 | 1 | 2;
+    trait?: string;
+    combatStatSum?: number;
+  };
+  state?: { forestShield?: number };
+}
+
 export type OverlayStateV1 = {
   version: 1;
   updatedAtMs: number;
@@ -61,8 +74,8 @@ protocolV1?: {
   warningMarksUsedA?: number;
   warningMarksUsedB?: number;
 
-  /** Engine board cell objects (kept as 'unknown' to avoid tight coupling). */
-  board?: unknown;
+  /** Engine board cell objects for overlay transport. */
+  board?: (BoardCellLite | null)[];
 
   lastMove?: {
     turnIndex: number;
@@ -120,6 +133,10 @@ aiNote?: string;
   };
 };
 
+function hasBroadcastChannel(): boolean {
+  return typeof BroadcastChannel !== "undefined";
+}
+
 const CHANNEL_NAME = "nyano-triad-league.overlay.v1";
 const STORAGE_KEY = "nyano_triad_league.overlay_state_v1";
 
@@ -155,7 +172,7 @@ export function publishOverlayState(state: OverlayStateV1): void {
 
   // broadcast
   try {
-    if (typeof (window as any).BroadcastChannel !== "undefined") {
+    if (hasBroadcastChannel()) {
       const bc = new BroadcastChannel(CHANNEL_NAME);
       bc.postMessage({ type: "overlay_state_v1", state });
       bc.close();
@@ -176,7 +193,7 @@ export function publishOverlayState(state: OverlayStateV1): void {
 export function subscribeOverlayState(onState: (s: OverlayStateV1) => void): () => void {
   // First, try BroadcastChannel
   try {
-    if (typeof (window as any).BroadcastChannel !== "undefined") {
+    if (hasBroadcastChannel()) {
       const bc = new BroadcastChannel(CHANNEL_NAME);
       bc.onmessage = (ev: MessageEvent) => {
         const data: any = ev.data;
@@ -268,7 +285,7 @@ export function publishStreamVoteState(state: StreamVoteStateV1): void {
 
   // broadcast
   try {
-    if (typeof (window as any).BroadcastChannel !== "undefined") {
+    if (hasBroadcastChannel()) {
       const bc = new BroadcastChannel(VOTE_CHANNEL_NAME);
       bc.postMessage({ type: "stream_vote_state_v1", state });
       bc.close();
@@ -289,7 +306,7 @@ export function publishStreamVoteState(state: StreamVoteStateV1): void {
 export function subscribeStreamVoteState(onState: (s: StreamVoteStateV1) => void): () => void {
   // BroadcastChannel
   try {
-    if (typeof (window as any).BroadcastChannel !== "undefined") {
+    if (hasBroadcastChannel()) {
       const bc = new BroadcastChannel(VOTE_CHANNEL_NAME);
       bc.onmessage = (ev: MessageEvent) => {
         const data: any = ev.data;
@@ -378,7 +395,7 @@ export function publishStreamCommand(cmd: StreamCommandV1): void {
 
   // broadcast
   try {
-    if (typeof (window as any).BroadcastChannel !== "undefined") {
+    if (hasBroadcastChannel()) {
       const bc = new BroadcastChannel(CMD_CHANNEL_NAME);
       bc.postMessage({ type: "stream_command_v1", cmd });
       bc.close();
@@ -399,7 +416,7 @@ export function publishStreamCommand(cmd: StreamCommandV1): void {
 export function subscribeStreamCommand(onCmd: (c: StreamCommandV1) => void): () => void {
   // BroadcastChannel
   try {
-    if (typeof (window as any).BroadcastChannel !== "undefined") {
+    if (hasBroadcastChannel()) {
       const bc = new BroadcastChannel(CMD_CHANNEL_NAME);
       bc.onmessage = (ev: MessageEvent) => {
         const data: any = ev.data;

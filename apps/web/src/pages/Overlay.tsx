@@ -18,10 +18,11 @@ import {
   readStoredStreamVoteState,
   subscribeOverlayState,
   subscribeStreamVoteState,
+  type BoardCellLite,
   type OverlayStateV1,
   type StreamVoteStateV1,
 } from "@/lib/streamer_bus";
-import type { PlayerIndex } from "@nyano/triad-engine";
+import type { CardData, PlayerIndex } from "@nyano/triad-engine";
 
 function nowMs() {
   return Date.now();
@@ -79,22 +80,22 @@ function shortId(id: string | undefined): string | null {
 
 type Owner = 0 | 1 | null;
 
-function readOwnersFromBoard(board: any[]): Owner[] {
+function readOwnersFromBoard(board: (BoardCellLite | null)[]): Owner[] {
   const out: Owner[] = Array.from({ length: 9 }, () => null);
   for (let i = 0; i < 9; i++) {
-    const o = (board[i] as any)?.owner;
-    out[i] = o === 0 || o === 1 ? (o as 0 | 1) : null;
+    const o = board[i]?.owner;
+    out[i] = o === 0 || o === 1 ? o : null;
   }
   return out;
 }
 
-function countTilesFromBoard(board: any[]): { a: number; b: number } {
+function countTilesFromBoard(board: (BoardCellLite | null)[]): { a: number; b: number } {
   let a = 0;
   let b = 0;
   for (const cell of board) {
     if (!cell) continue;
-    if ((cell as any).owner === 0) a += 1;
-    if ((cell as any).owner === 1) b += 1;
+    if (cell.owner === 0) a += 1;
+    if (cell.owner === 1) b += 1;
   }
   return { a, b };
 }
@@ -102,10 +103,10 @@ function countTilesFromBoard(board: any[]): { a: number; b: number } {
 type LastTurnSummary = NonNullable<OverlayStateV1["lastTurnSummary"]>;
 
 function safeLastTurnSummary(state: OverlayStateV1 | null): LastTurnSummary | null {
-  const s = (state as any)?.lastTurnSummary;
+  const s = state?.lastTurnSummary;
   if (!s) return null;
   if (typeof s.flipCount !== "number") return null;
-  return s as LastTurnSummary;
+  return s;
 }
 
 function sideLabel(side: PlayerSide | null): "A" | "B" | null {
@@ -147,8 +148,8 @@ export function OverlayPage() {
     "text-slate-900",
   ].join(" ");
 
-  const board: any[] = Array.isArray((state as any)?.board)
-    ? ((state as any).board as any[])
+  const board: (BoardCellLite | null)[] = Array.isArray(state?.board)
+    ? state.board
     : Array.from({ length: 9 }, () => null);
 
   const title = state?.eventTitle ? state.eventTitle : "Nyano Triad League";
@@ -203,7 +204,7 @@ export function OverlayPage() {
       const cells = Array.from(
         new Set(
           flips
-            .map((f) => Number((f as any).to))
+            .map((f) => Number(f.to))
             .filter((n) => Number.isFinite(n))
         )
       ).sort((a, b) => a - b);
@@ -269,9 +270,9 @@ export function OverlayPage() {
 
   const flipReadout = React.useMemo(() => {
     if (!state?.lastMove) return null;
-    const traces = Array.isArray(lastTurnSummary?.flips) ? (lastTurnSummary!.flips as any[]) : [];
+    const traces = Array.isArray(lastTurnSummary?.flips) ? lastTurnSummary!.flips : [];
     const byLabel = state.lastMove.by === 0 ? "A" : "B";
-    return flipTracesReadout(traces as any, byLabel, state.lastMove.cell);
+    return flipTracesReadout(traces, byLabel, state.lastMove.cell);
   }, [state?.updatedAtMs]);
 
   const reactionInput = React.useMemo<NyanoReactionInput | null>(() => {
@@ -292,7 +293,7 @@ export function OverlayPage() {
     return {
       flipCount,
       hasChain,
-      comboEffect: (lastTurnSummary?.comboEffect ?? "none") as any,
+      comboEffect: lastTurnSummary?.comboEffect ?? "none",
       warningTriggered: Boolean(lastTurnSummary?.warningTriggered),
       tilesA: tiles.a,
       tilesB: tiles.b,
@@ -370,7 +371,7 @@ export function OverlayPage() {
 
                     {card ? (
                       <div className="h-full w-full">
-                        <CardMini card={card} owner={owner} />
+                        <CardMini card={card as CardData} owner={owner as PlayerIndex} />
                       </div>
                     ) : (
                       <div className="flex h-full w-full items-center justify-center text-xs text-slate-400">…</div>
@@ -562,7 +563,7 @@ export function OverlayPage() {
                   {typeof lastTurnSummary?.warningPlaced === "number" ? <span className="badge badge-amber">PLACED MARK</span> : null}
 
                   {lastTurnSummary && Array.isArray(lastTurnSummary.flips) && lastTurnSummary.flips.length > 0 ? (
-                    <FlipTraceBadges flipTraces={lastTurnSummary.flips as any} limit={4} />
+                    <FlipTraceBadges flipTraces={lastTurnSummary.flips} limit={4} />
                   ) : null}
                 </div>
 
@@ -586,7 +587,7 @@ export function OverlayPage() {
 
                 {lastTurnSummary && Array.isArray(lastTurnSummary.flips) && lastTurnSummary.flips.length > 0 ? (
                   <div className={controls ? "mt-1 text-[11px] text-slate-500" : "mt-1 text-xs text-slate-500"}>
-                    {flipTracesSummary(lastTurnSummary.flips as any)}
+                    {flipTracesSummary(lastTurnSummary.flips)}
                   </div>
                 ) : null}
 
