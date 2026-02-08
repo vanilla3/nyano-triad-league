@@ -1,6 +1,6 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import { NyanoImage, NyanoHeroBanner } from "@/components/NyanoImage";
+import { NyanoImage } from "@/components/NyanoImage";
 
 /* ═══════════════════════════════════════════════════════════════════════════
    HOME PAGE - REDESIGNED

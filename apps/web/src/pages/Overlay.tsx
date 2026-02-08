@@ -242,7 +242,7 @@ export function OverlayPage() {
       ? Math.max(0, Math.ceil((voteState.endsAtMs - nowMs()) / 1000))
       : null;
 
-  const flipStats = React.useMemo(() => {
+  const _flipStats = React.useMemo(() => {
     const flips = Array.isArray(lastTurnSummary?.flips) ? lastTurnSummary!.flips : null;
     if (!flips) return null;
     const chain = flips.filter((f: any) => Boolean(f.isChain)).length;

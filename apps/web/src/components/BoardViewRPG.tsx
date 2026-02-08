@@ -210,13 +210,13 @@ function CellCard({ card, owner }: { card: CardData; owner: PlayerIndex }) {
 /** Single board cell */
 function RPGCell({
   cell,
-  index,
+  index: _index,
   coord,
-  isSelected,
+  isSelected: _isSelected,
   isPlaced,
   isFlipped,
   flipDelayClass,
-  isFocus,
+  isFocus: _isFocus,
   isSelectable,
   warningMark,
   onSelect,

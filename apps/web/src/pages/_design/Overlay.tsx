@@ -15,7 +15,6 @@ type TurnSummary = {
   ignoreWarningMark?: boolean;
 };
 import { NyanoImage } from "@/components/NyanoImage";
-import { BoardViewMini } from "@/components/BoardView";
 import { TurnLogCompact } from "@/components/TurnLogCompact";
 
 /* ═══════════════════════════════════════════════════════════════════════════

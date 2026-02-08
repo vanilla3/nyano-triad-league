@@ -362,16 +362,7 @@ export function pickWarningMarkCell(
 // ────────────────────────────────────────────────────────────
 
 export function pickAiMove(args: AiMoveArgs): AiMoveResult {
-  const {
-    difficulty,
-    boardNow,
-    deckTokens,
-    usedCardIndexes,
-    usedCells,
-    cards,
-    my,
-    warningMarksRemaining,
-  } = args;
+  const { difficulty, usedCardIndexes, usedCells } = args;
 
   const availableCells: number[] = [];
   for (let c = 0; c < 9; c++) if (!usedCells.has(c)) availableCells.push(c);
