@@ -64,7 +64,7 @@ export async function gzipDecompressUtf8FromBase64Url(b64url: string): Promise<s
   const input = base64UrlDecodeBytes(b64url);
   const ds = new DecompressionStreamCtor("gzip");
 
-  const stream = new Response(input).body;
+  const stream = new Response(input as BlobPart).body;
   if (!stream) throw new Error("no response body stream");
 
   const outBuf = await new Response(stream.pipeThrough(ds)).arrayBuffer();

@@ -365,7 +365,9 @@ export function CardNyanoCompact({
    ═══════════════════════════════════════════════════════════════════════════ */
 
 export interface CardSlotProps {
-  index: number;
+  index?: number;
+  empty?: boolean;
+  label?: string;
   selected?: boolean;
   disabled?: boolean;
   onClick?: () => void;

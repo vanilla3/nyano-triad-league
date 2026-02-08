@@ -327,11 +327,11 @@ export async function fetchNyanoCard(tokenId: bigint): Promise<NyanoCardBundle> 
         }
 
         const [owner, handRaw, traitRaw, statsRaw, triadRaw] = await Promise.all([
-          client.readContract({ address: addr, abi: ABI, functionName: "ownerOf", args: [tokenId] }) as Promise<`0x${string}`>,
-          client.readContract({ address: addr, abi: ABI, functionName: "getJankenHand", args: [tokenId] }) as Promise<bigint>,
-          client.readContract({ address: addr, abi: ABI, functionName: "getTrait", args: [tokenId] }) as Promise<[bigint, bigint, bigint]>,
-          client.readContract({ address: addr, abi: ABI, functionName: "getCombatStats", args: [tokenId] }) as Promise<[bigint, bigint, bigint, bigint, bigint, bigint]>,
-          client.readContract({ address: addr, abi: ABI, functionName: "getTriad", args: [tokenId] }) as Promise<[bigint, bigint, bigint, bigint]>,
+          client.readContract({ address: addr, abi: ABI, functionName: "ownerOf", args: [tokenId] }) as unknown as Promise<`0x${string}`>,
+          client.readContract({ address: addr, abi: ABI, functionName: "getJankenHand", args: [tokenId] }) as unknown as Promise<bigint>,
+          client.readContract({ address: addr, abi: ABI, functionName: "getTrait", args: [tokenId] }) as unknown as Promise<[bigint, bigint, bigint]>,
+          client.readContract({ address: addr, abi: ABI, functionName: "getCombatStats", args: [tokenId] }) as unknown as Promise<[bigint, bigint, bigint, bigint, bigint, bigint]>,
+          client.readContract({ address: addr, abi: ABI, functionName: "getTriad", args: [tokenId] }) as unknown as Promise<[bigint, bigint, bigint, bigint]>,
         ]);
 
         const hand = toHand(handRaw);

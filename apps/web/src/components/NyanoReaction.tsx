@@ -1,32 +1,21 @@
 import React from "react";
 import type { ComboEffectName, PlayerIndex } from "@nyano/triad-engine";
+import { NyanoAvatar } from "./NyanoAvatar";
+import { reactionToExpression, type ReactionKind } from "@/lib/expression_map";
 
 /* ═══════════════════════════════════════════════════════════════════════════
    NyanoReaction.tsx
 
    ゲームイベントに応じた Nyano のリアクション表示。
-   表情差分なしでも glow / badge / ひとこと吹き出しで成立させる。
+   NyanoAvatar で表情画像を表示し、glow / badge / ひとこと吹き出しで装飾。
 
    commit-0068: P1-2 対応
+   M03-4: expression image integration
    ═══════════════════════════════════════════════════════════════════════════ */
 
 /* ── Reaction Data ── */
 
-type ReactionKind =
-  | "idle"
-  | "flip_single"
-  | "flip_multi"
-  | "chain"
-  | "fever"
-  | "momentum"
-  | "domination"
-  | "warning_triggered"
-  | "advantage"
-  | "disadvantage"
-  | "draw_state"
-  | "victory"
-  | "defeat"
-  | "game_draw";
+// ReactionKind is imported from @/lib/expression_map
 
 interface ReactionConfig {
   emoji: string;
@@ -239,7 +228,7 @@ export function NyanoReaction({ input, turnIndex = 0, rpg = false, className = "
           fontFamily: "'Nunito', system-ui, sans-serif",
         }}
       >
-        <span style={{ fontSize: 20 }}>{cfg.emoji}</span>
+        <NyanoAvatar size={32} expression={reactionToExpression(kind)} alt={cfg.emoji} />
         {cfg.badge && (
           <span style={{
             fontSize: 11,
@@ -276,7 +265,7 @@ export function NyanoReaction({ input, turnIndex = 0, rpg = false, className = "
         border: `1px solid ${cfg.glow}`,
       }}
     >
-      <span className="text-lg">{cfg.emoji}</span>
+      <NyanoAvatar size={28} expression={reactionToExpression(kind)} alt={cfg.emoji} />
       {cfg.badge && (
         <span
           className="rounded px-1.5 py-0.5 text-xs font-bold text-white"
@@ -307,7 +296,7 @@ export function NyanoReactionBadge({ input, turnIndex = 0 }: { input: NyanoReact
         boxShadow: `0 0 6px ${cfg.glow}`,
       }}
     >
-      {cfg.emoji} {cfg.badge}
+      <NyanoAvatar size={16} expression={reactionToExpression(kind)} alt={cfg.emoji} /> {cfg.badge}
     </span>
   );
 }

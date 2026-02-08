@@ -262,7 +262,7 @@ export function BoardView({
           const isSelectable = !disabled && selectableSet.has(idx);
           const isPlaced = placedCell === idx;
           const isFlipped = flippedSet.has(idx);
-          const flipIndex = isFlipped ? flippedCells.indexOf(idx) : -1;
+          const flipIndex = isFlipped ? (flippedCells ?? []).indexOf(idx) : -1;
           const flipDelayClass = flipIndex > 0 ? `flip-delay-${Math.min(flipIndex, 3)}` : undefined;
           const isFocus = focus === idx;
           const isSelected = effectiveSelected === idx;

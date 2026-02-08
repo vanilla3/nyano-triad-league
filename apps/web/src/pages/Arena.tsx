@@ -16,6 +16,16 @@ export function ArenaPage() {
           </p>
 
           <div className="grid gap-3 md:grid-cols-4">
+            <div className="rounded-xl border-2 border-nyano-300 bg-nyano-50 p-4">
+              <div className="font-semibold text-nyano-800">Quick Play</div>
+              <div className="mt-1 text-xs text-nyano-600">デッキ不要でいますぐ対戦。ランダムデッキ vs Nyano AI</div>
+              <div className="mt-3">
+                <Link className="btn btn-primary no-underline" to="/match?mode=guest&opp=vs_nyano_ai&ai=normal&rk=v2">
+                  Play Now
+                </Link>
+              </div>
+            </div>
+
             <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
               <div className="font-medium">1) Decks</div>
               <div className="mt-1 text-xs text-slate-600">Nyano tokenId 5枚でデッキを保存</div>

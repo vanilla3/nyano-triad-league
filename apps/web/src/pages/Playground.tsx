@@ -408,7 +408,7 @@ export function PlaygroundPage() {
                       <div className="grid gap-3">
                         <div>
                           <div className="text-xs font-medium text-slate-600">transcript</div>
-                          <pre className="mt-1 overflow-x-auto rounded-xl border border-slate-200 bg-white/70 p-3 text-xs">{transcriptJson}</pre>
+                          <pre className="mt-1 overflow-x-auto rounded-xl border border-slate-200 bg-white/70 p-3 text-xs">{stringifyWithBigInt(sim.transcript)}</pre>
                         </div>
                         <div>
                           <div className="text-xs font-medium text-slate-600">result</div>
