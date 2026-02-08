@@ -950,3 +950,72 @@
     animation: live-dot 2s ease-in-out infinite;
   }
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   OVERLAY BOOST (OBS controls=0)
+   Font hierarchy and contrast adjustments for 720p/1080p readability.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+@layer components {
+  /* Vote countdown with progress bar */
+  .vote-countdown-inline {
+    @apply relative overflow-hidden rounded-full;
+    @apply h-6;
+    @apply bg-surface-100;
+  }
+
+  .vote-countdown-inline-bar {
+    @apply absolute inset-y-0 left-0;
+    @apply rounded-full;
+    transition: width 1s linear;
+  }
+
+  .vote-countdown-inline-text {
+    @apply relative z-10 flex h-full items-center justify-center;
+    @apply text-xs font-bold;
+  }
+
+  /* toPlay indicator pill */
+  .to-play-pill {
+    @apply inline-flex items-center gap-1.5;
+    @apply px-3 py-1 rounded-full;
+    @apply text-sm font-bold;
+    @apply shadow-sm;
+  }
+
+  .to-play-pill-a {
+    @apply bg-player-a-100 text-player-a-700 border border-player-a-300;
+  }
+
+  .to-play-pill-b {
+    @apply bg-player-b-100 text-player-b-700 border border-player-b-300;
+  }
+
+  /* Card frame enhancement for overlay board cells */
+  .overlay-cell-a {
+    @apply border-player-a-400;
+    box-shadow:
+      inset 0 0 0 1px rgba(14, 165, 233, 0.15),
+      0 2px 8px -2px rgba(14, 165, 233, 0.25);
+  }
+
+  .overlay-cell-b {
+    @apply border-player-b-400;
+    box-shadow:
+      inset 0 0 0 1px rgba(244, 63, 94, 0.15),
+      0 2px 8px -2px rgba(244, 63, 94, 0.25);
+  }
+
+  .overlay-cell-empty {
+    @apply border-surface-200;
+    background: linear-gradient(135deg, rgba(255,255,255,0.9) 0%, rgba(250,250,249,0.95) 100%);
+  }
+
+  /* Overlay panel with subtle gradient border */
+  .overlay-hud-panel {
+    @apply rounded-2xl px-4 py-3 shadow-sm;
+    background: rgba(255, 255, 255, 0.92);
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    backdrop-filter: blur(4px);
+  }
+}
