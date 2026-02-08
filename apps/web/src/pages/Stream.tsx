@@ -135,7 +135,7 @@ function safeFileStem(): string {
 // Nyano Warudo bridge (Triad League → nyano-warudo)
 const [warudoBaseUrl, setWarudoBaseUrl] = React.useState<string>(() => {
   const saved = localStorage.getItem("nyanoWarudo.baseUrl");
-  const env = (import.meta as any)?.env?.VITE_NYANO_WARUDO_BASE_URL as string | undefined;
+  const env = import.meta.env?.VITE_NYANO_WARUDO_BASE_URL as string | undefined;
   return (saved ?? env ?? "").toString();
 });
 function readBoolSetting(key: string, fallback: boolean): boolean {

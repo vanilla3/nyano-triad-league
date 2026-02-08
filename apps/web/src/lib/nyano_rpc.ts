@@ -38,7 +38,7 @@ export type NyanoCardBundle = {
 
 function env<T extends string>(key: string): T | undefined {
   // Vite injects import.meta.env at build time
-  return (import.meta as any).env?.[key] as T | undefined;
+  return (import.meta.env as Record<string, unknown>)?.[key] as T | undefined;
 }
 
 const LS_RPC_USER = "nytl.rpc.user";
