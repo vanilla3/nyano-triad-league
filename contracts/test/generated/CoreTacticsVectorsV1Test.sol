@@ -404,7 +404,6 @@ contract CoreTacticsVectorsV1Test {
         require(r.tieScoreB == 5, "tieScoreB mismatch");
     }
 
-
     function test_vector_fever_ignores_warning_mark_on_next_card_allows_flip() public {
         MockNyanoPeace nyano = new MockNyanoPeace();
         TriadEngineV1Harness h = new TriadEngineV1Harness();
