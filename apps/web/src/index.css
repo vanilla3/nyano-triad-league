@@ -949,6 +949,55 @@
   .animate-live-dot {
     animation: live-dot 2s ease-in-out infinite;
   }
+
+  /* ═══════════════════════════════════════════════════════════════════════
+     M08: LANDING PAGE & VISUAL POLISH
+     ═══════════════════════════════════════════════════════════════════════ */
+
+  /* Floating animation (hero mascot bobbing) */
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-8px); }
+  }
+
+  .animate-float {
+    animation: float 3s ease-in-out infinite;
+  }
+
+  /* Animated gradient text (hero title) */
+  @keyframes gradient-x {
+    0%, 100% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+  }
+
+  .text-gradient-animated {
+    background: linear-gradient(
+      90deg,
+      var(--nyano-primary) 0%,
+      #F43F5E 25%,
+      #8B5CF6 50%,
+      var(--nyano-primary) 75%,
+      #0EA5E9 100%
+    );
+    background-size: 200% auto;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    animation: gradient-x 6s linear infinite;
+  }
+
+  /* Skeleton shimmer base (loading placeholders) */
+  .skeleton-base {
+    @apply bg-surface-200 rounded-xl relative overflow-hidden;
+  }
+
+  .skeleton-base::after {
+    content: '';
+    @apply absolute inset-0;
+    background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.4) 50%, transparent 100%);
+    background-size: 200% 100%;
+    animation: shimmer 2s linear infinite;
+  }
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════

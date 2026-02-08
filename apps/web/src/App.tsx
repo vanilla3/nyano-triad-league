@@ -1,5 +1,6 @@
 import React from "react";
-import { NavLink, Outlet } from "react-router-dom";
+import { NavLink } from "react-router-dom";
+import { AnimatedOutlet } from "@/components/AnimatedOutlet";
 import { ToastProvider } from "./components/Toast";
 
 const NavItem = (props: { to: string; label: string; emoji?: string }) => {
@@ -65,7 +66,7 @@ export function AppLayout() {
       </header>
 
       <main className="container-page">
-        <Outlet />
+        <AnimatedOutlet />
       </main>
 
       <footer className="border-t border-slate-200/70 bg-white/60 backdrop-blur">

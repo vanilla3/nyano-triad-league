@@ -4,8 +4,8 @@ test("Home → Quick Play loads the match board", async ({ page }) => {
   // Navigate to Home
   await page.goto("/");
 
-  // Verify we're on the home page (nav bar visible)
-  await expect(page.locator("text=Nyano Triad League")).toBeVisible();
+  // Verify we're on the home page (hero title visible)
+  await expect(page.locator("text=Quick Play").first()).toBeVisible();
 
   // Click the Quick Play button
   const quickPlayLink = page.locator("a", { hasText: "Quick Play" }).first();
