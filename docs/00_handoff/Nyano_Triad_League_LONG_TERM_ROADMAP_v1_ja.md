@@ -1,36 +1,30 @@
 # Nyano Triad League LONG TERM ROADMAP v1（超長期計画・作業指針）
 
-最終更新: 2026-02-08
+最終更新: 2026-02-08（commit-0082: strictAllowed 整合）
 
 このドキュメントは、移行先作業者が **チャットを追わずに**「次に何を作り、何に注意し、どの順で改善すべきか」を把握できるようにするための **超長期ロードマップ**です。
 “細部の実装”よりも、まず **品質の柱・変更の原則・作業の安全策**を共有し、迷いと手戻りを減らすことを優先します。
 
 ---
 
-## 現在の進捗（コミットマップ / 迷子防止）
+## 0-1. 現状（コミットマップ / 作業の現在地）
 
-このセクションは、移行先作業者が **チャットを追わずに**「いま何ができていて、次に何をすべきか」を最短で把握するための索引です。
-基本ルール: 仕様（契約）に関わる変更は、必ず `docs/99_dev/commit-XXXX_IMPLEMENTATION_LOG.md` と `commit-XXXX_TODO_update.md` に残します。
+**反映済み（apply/0070-0071）**
+- commit-0070: docs update（overlay HUD）
+- commit-0071: vote start → state_json 送信（strictAllowed lock）
+- commit-0072: TurnLog flipTraces の JP describe 統合
+- commit-0073: /replay NyanoReaction の step 再現
+- commit-0074: docs sync（最新コミットの反映）
+- commit-0075: viewer command spec+parser lib（triad_viewer_command.ts）
+- commit-0076: /stream 票集計キーを canonical #triad に統一
+- commit-0078: long-term roadmap doc 追加
+- commit-0079: パッチ共有の標準をロードマップへ追加
+- commit-0081: CI の pnpm バージョン二重指定を解消（packageManager を正に）
+- commit-0082: strictAllowed を単一ソース化（HUD/overlay/stream の allowlist/hash を一致させる）
 
-### 直近の完了（apply/0070-0071 ブランチ）
-- commit-0070: overlay HUD に関する docs 更新（P0の土台）
-- commit-0071: vote start 時点で state_json を送信（strictAllowed lock）
-- commit-0072: TurnLog の flipTraces を日本語要約（説明性の底上げ）
-- commit-0073: Replay に NyanoReaction（演出・読みやすさ）
-- commit-0074: docs の最新同期（commit-0073 反映）
-- commit-0075: viewer command spec + parser lib（`triad_viewer_command.ts`）追加
-- commit-0076: /stream 投票集計キーを canonical #triad に正規化
-- commit-0078: 超長期ロードマップ v1 追加
-- commit-0079: パッチ共有標準（SHA256 / git apply）を明文化
-
-### いま入れる（次のコミット候補）
-- commit-0080: strictAllowed allowlist/hash の **完全単一ソース化**
-  - `triad_vote_utils.toViewerMoveText()` → `triad_viewer_command.formatViewerMoveText()` に委譲（票割れ/微差を根絶）
-  - StreamOperationsHUD の strictAllowed が `toPlay` と一致するよう修正（運営表示のズレ潰し）
-  - /stream 側 allowlist hash を `fnv1a32Hex` 共有に寄せる（ハッシュ計算の分岐を減らす）
-- commit-0081: CI の pnpm バージョン二重指定エラー修正（ビルド停止を解消）
-
----
+**次にやる（高優先）**
+- commit-0083: /stream の受理（parse/normalize）を triad_viewer_command に寄せ、票割れと曖昧さを根絶
+- commit-0084: overlay の「常時HUD」視認性を詰める（縮尺/余白/コントラスト/情報の優先順位）
 
 ## 0. 北極星（North Star）
 
@@ -222,13 +216,16 @@
   - `git apply --include=docs/...` で docs だけ先に取り込む（作業の待ちを減らす）
   - `git apply --reject` で `.rej` を出し、当たらない箇所を局所化
 
+### 5-6. CI / pnpm バージョン管理の標準（再現性と安定運用）
+- **single source of truth**: ルートの `package.json#packageManager` を正とする（例: `pnpm@9.0.0`）
+- GitHub Actions の `pnpm/action-setup@v4` では **`version:` を指定しない**
+  - `version:` と `packageManager:` が同時に存在すると action が失敗する（ERR_PNPM_BAD_PM_VERSION 互換）
+- `pnpm install --frozen-lockfile` を基本（lock 無しは install）
+- CI が落ちたらまず確認する順
+  - (1) `packageManager` と workflow の pnpm 設定が二重指定になっていないか
+  - (2) Node version（推奨: 20）
+  - (3) lockfile の更新漏れ（`pnpm-lock.yaml`）
 
-### 5-6. CI / DevOps（ビルドが止まると運営も止まる）
-- **pnpm のバージョンは single source にする**（二重指定を禁止）
-  - `package.json` に `"packageManager": "pnpm@9.0.0"` を置くなら、GitHub Actions の `pnpm/action-setup@v4` では `version:` を **指定しない**
-  - 逆に、Actions 側で `version:` を固定するなら `packageManager` を削除する
-- 失敗例（今回のCIエラー）: `Multiple versions of pnpm specified`
-- 目標: CI は “壊れない” だけでなく “壊れても原因が一目で分かる” こと（ログと docs を整備）
 ---
 
 ## 6. よくある落とし穴（必読）
