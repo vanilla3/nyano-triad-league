@@ -3,7 +3,7 @@ import { useToast } from "@/components/Toast";
 import { Disclosure } from "@/components/Disclosure";
 import { Link, useSearchParams } from "react-router-dom";
 
-import type { CardData, MatchResultWithHistory, RulesetConfigV1, TranscriptV1 } from "@nyano/triad-engine";
+import type { CardData, MatchResultWithHistory, RulesetConfigV1, TranscriptV1, TurnSummary } from "@nyano/triad-engine";
 import {
   simulateMatchV1WithHistory,
   ONCHAIN_CORE_TACTICS_RULESET_CONFIG_V1,
@@ -124,7 +124,7 @@ function buildNyanoReactionInput(res: MatchResultWithHistory, step: number): Nya
   return {
     flipCount: Number(last.flipCount ?? 0),
     hasChain: Boolean(last.flipTraces?.some((t) => t.isChain)),
-    comboEffect: (last.comboEffect ?? "none") as any,
+    comboEffect: last.comboEffect ?? "none",
     warningTriggered: Boolean(last.warningTriggered),
     tilesA,
     tilesB,
@@ -172,7 +172,7 @@ function rulesetLabelFromConfig(cfg: RulesetConfigV1): string {
 
 function pickDefaultMode(rulesetId: string): Mode {
   try {
-    const rulesets = (OFFICIAL as any).rulesets as Array<{ rulesetId: string; engineId: number }>;
+    const rulesets = (OFFICIAL as { rulesets: Array<{ rulesetId: string; engineId: number }> }).rulesets;
     const hit = rulesets.find((r) => r.rulesetId.toLowerCase() === rulesetId.toLowerCase());
     if (!hit) return "compare";
     return hit.engineId === 2 ? "v2" : "v1";
@@ -245,41 +245,41 @@ export function ReplayPage() {
         const transcript = sim.transcript;
 
         const lastIndex = step - 1;
-        const last = lastIndex >= 0 ? res.turns[lastIndex] : null;
+        const last: TurnSummary | null = lastIndex >= 0 ? (res.turns[lastIndex] ?? null) : null;
 
         const lastMove =
-          last && typeof (last as any).cell === "number"
+          last && typeof last.cell === "number"
             ? {
                 turnIndex: lastIndex,
                 by: turnPlayer(transcript.header.firstPlayer as 0 | 1, lastIndex),
-                cell: Number((last as any).cell),
-                cardIndex: Number((last as any).cardIndex ?? 0),
-                warningMarkCell: typeof (last as any).warningMarkCell === "number" ? Number((last as any).warningMarkCell) : null,
+                cell: last.cell,
+                cardIndex: last.cardIndex,
+                warningMarkCell: typeof last.warningPlaced === "number" ? last.warningPlaced : null,
               }
             : undefined;
 
 const lastTurnSummary =
   last
     ? {
-        flipCount: Number((last as any).flipCount ?? 0),
-        comboCount: Number((last as any).comboCount ?? 0),
-        comboEffect: (((last as any).comboEffect ?? "none") as "none" | "momentum" | "domination" | "fever"),
-        triadPlus: Number((last as any).appliedBonus?.triadPlus ?? 0),
-        ignoreWarningMark: Boolean((last as any).appliedBonus?.ignoreWarningMark),
-        warningTriggered: Boolean((last as any).warningTriggered),
-        warningPlaced: typeof (last as any).warningPlaced === "number" ? Number((last as any).warningPlaced) : null,
-        flips: Array.isArray((last as any).flipTraces)
-          ? (last as any).flipTraces.map((f: any) => ({
-              from: Number(f.from),
-              to: Number(f.to),
-              isChain: Boolean(f.isChain),
-              kind: f.kind === "diag" ? "diag" : "ortho",
-              dir: typeof f.dir === "string" ? f.dir : undefined,
-              vert: typeof f.vert === "string" ? f.vert : undefined,
-              horiz: typeof f.horiz === "string" ? f.horiz : undefined,
-              aVal: Number(f.aVal ?? 0),
-              dVal: Number(f.dVal ?? 0),
-              tieBreak: Boolean(f.tieBreak),
+        flipCount: last.flipCount,
+        comboCount: last.comboCount,
+        comboEffect: last.comboEffect ?? "none",
+        triadPlus: last.appliedBonus?.triadPlus ?? 0,
+        ignoreWarningMark: Boolean(last.appliedBonus?.ignoreWarningMark),
+        warningTriggered: Boolean(last.warningTriggered),
+        warningPlaced: typeof last.warningPlaced === "number" ? last.warningPlaced : null,
+        flips: last.flipTraces
+          ? last.flipTraces.map((f) => ({
+              from: f.from,
+              to: f.to,
+              isChain: f.isChain,
+              kind: f.kind,
+              dir: f.dir as "up" | "right" | "down" | "left" | undefined,
+              vert: f.vert as "up" | "down" | undefined,
+              horiz: f.horiz as "left" | "right" | undefined,
+              aVal: f.aVal,
+              dVal: f.dVal,
+              tieBreak: f.tieBreak,
             }))
           : undefined,
       }
@@ -547,7 +547,7 @@ protocolV1: {
   const boardAdvantages: BoardAdvantage[] = React.useMemo(
     () => {
       if (!sim.ok) return [];
-      return sim.current.boardHistory.map((b) => assessBoardAdvantage(b as any));
+      return sim.current.boardHistory.map((b) => assessBoardAdvantage(b));
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [sim.ok, sim.ok ? sim.current : null],
@@ -578,7 +578,7 @@ protocolV1: {
               className="flex-shrink-0"
             />
             <div className="flex-1">
-              <ScoreBar board={boardNow as any} moveCount={step} maxMoves={9} winner={res.winner} />
+              <ScoreBar board={boardNow} moveCount={step} maxMoves={9} winner={res.winner} />
               {boardAdvantages[step] && (
                 <div className="mt-1 flex items-center gap-1.5">
                   <span className="text-[10px] text-slate-400">形勢</span>
@@ -592,7 +592,7 @@ protocolV1: {
 
 {isRpg ? (
   <BoardViewRPG
-    board={boardNow as any}
+    board={boardNow}
     focusCell={focusTurnIndex !== null ? res.turns[focusTurnIndex]?.cell : null}
     placedCell={placedCell}
     flippedCells={flippedCells}

@@ -138,4 +138,82 @@ describe("postNyanoWarudoSnapshot", () => {
     const result = await postNyanoWarudoSnapshot("https://base", makeReq());
     expect(result).toEqual({ ok: true, status: 200, text: "" });
   });
+
+  it("accepts optional AbortSignal", async () => {
+    const controller = new AbortController();
+    mockFetch.mockResolvedValue(mockResponse(true, 200, "OK"));
+    const result = await postNyanoWarudoSnapshot("https://base", makeReq(), { signal: controller.signal });
+    expect(result.ok).toBe(true);
+    // Verify signal was passed through
+    const [, opts] = mockFetch.mock.calls[0];
+    expect(opts.signal).toBe(controller.signal);
+  });
+});
+
+/* ------------------------------------------------------------------ */
+/* Retry behavior                                                      */
+/* ------------------------------------------------------------------ */
+
+describe("postNyanoWarudoSnapshot retry", () => {
+  it("retries on 500 and succeeds on second attempt", async () => {
+    mockFetch
+      .mockResolvedValueOnce(mockResponse(false, 500, "Server Error"))
+      .mockResolvedValueOnce(mockResponse(true, 200, "OK"));
+
+    const result = await postNyanoWarudoSnapshot("https://base", makeReq());
+    expect(result).toEqual({ ok: true, status: 200, text: "OK" });
+    expect(mockFetch).toHaveBeenCalledTimes(2);
+  });
+
+  it("does not retry on 4xx errors", async () => {
+    mockFetch.mockResolvedValueOnce(mockResponse(false, 400, "Bad Request"));
+
+    const result = await postNyanoWarudoSnapshot("https://base", makeReq());
+    expect(result).toEqual({ ok: false, status: 400, text: "Bad Request" });
+    expect(mockFetch).toHaveBeenCalledTimes(1);
+  });
+
+  it("does not retry on 404 errors", async () => {
+    mockFetch.mockResolvedValueOnce(mockResponse(false, 404, "Not Found"));
+
+    const result = await postNyanoWarudoSnapshot("https://base", makeReq());
+    expect(result).toEqual({ ok: false, status: 404, text: "Not Found" });
+    expect(mockFetch).toHaveBeenCalledTimes(1);
+  });
+
+  it("retries on network error and succeeds", async () => {
+    mockFetch
+      .mockRejectedValueOnce(new Error("Connection refused"))
+      .mockResolvedValueOnce(mockResponse(true, 200, "OK"));
+
+    const result = await postNyanoWarudoSnapshot("https://base", makeReq());
+    expect(result).toEqual({ ok: true, status: 200, text: "OK" });
+    expect(mockFetch).toHaveBeenCalledTimes(2);
+  });
+
+  it("returns error after exhausting all retries (network)", async () => {
+    mockFetch
+      .mockRejectedValueOnce(new Error("fail1"))
+      .mockRejectedValueOnce(new Error("fail2"))
+      .mockRejectedValueOnce(new Error("fail3"));
+
+    const result = await postNyanoWarudoSnapshot("https://base", makeReq());
+    expect(result.ok).toBe(false);
+    expect(result.status).toBe(0);
+    expect(result.text).toBe("fail3");
+    expect(mockFetch).toHaveBeenCalledTimes(3); // 1 initial + 2 retries
+  });
+
+  it("returns last 500 response after exhausting all retries", async () => {
+    mockFetch
+      .mockResolvedValueOnce(mockResponse(false, 500, "Error 1"))
+      .mockResolvedValueOnce(mockResponse(false, 502, "Error 2"))
+      .mockResolvedValueOnce(mockResponse(false, 503, "Error 3"));
+
+    const result = await postNyanoWarudoSnapshot("https://base", makeReq());
+    expect(result.ok).toBe(false);
+    expect(result.status).toBe(503);
+    expect(result.text).toBe("Error 3");
+    expect(mockFetch).toHaveBeenCalledTimes(3);
+  });
 });

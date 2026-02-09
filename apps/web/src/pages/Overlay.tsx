@@ -11,7 +11,7 @@ import { AdvantageBar } from "@/components/AdvantageBar";
 import { MoveQualityTip } from "@/components/MoveQualityTip";
 import { generateMoveTip } from "@/lib/ai/move_tips";
 import type { AiReasonCode } from "@/lib/ai/nyano_ai";
-import { assessBoardAdvantage } from "@/lib/ai/board_advantage";
+import { assessBoardAdvantage, type AdvantageLevel, type BoardAdvantage } from "@/lib/ai/board_advantage";
 import { ScoreBar } from "@/components/ScoreBar";
 import { FlipTraceBadges, FlipTraceDetailList } from "@/components/FlipTraceBadges";
 import { flipTracesReadout, flipTracesSummary } from "@/components/flipTraceDescribe";
@@ -559,7 +559,7 @@ export function OverlayPage() {
                       <div className="text-xs font-semibold text-slate-700">Flip traces</div>
                       <div className="text-xs text-slate-500">(debug)</div>
                     </div>
-                    <FlipTraceDetailList flipTraces={lastTurnSummary.flips as any} />
+                    <FlipTraceDetailList flipTraces={lastTurnSummary.flips as unknown as import("@nyano/triad-engine").FlipTraceV1[]} />
                   </div>
                 ) : null}
               </div>
@@ -596,7 +596,7 @@ export function OverlayPage() {
 
               <div className="mt-2">
                 <ScoreBar
-                  board={board as any}
+                  board={board as unknown as import("@nyano/triad-engine").BoardState}
                   moveCount={typeof state?.turn === "number" ? state.turn : 0}
                   maxMoves={9}
                   winner={winnerForScoreBar(state)}
@@ -610,16 +610,16 @@ export function OverlayPage() {
 
             {/* 2.5 Advantage indicator (hidden in minimal density) — Tier 2: Secondary */}
             {density !== "minimal" && (() => {
-              const adv = state?.advantage
+              const adv: BoardAdvantage | null = state?.advantage
                 ? {
                     scoreA: state.advantage.scoreA,
-                    levelA: state.advantage.levelA as any,
-                    levelB: (undefined as any), // not needed for badge display
+                    levelA: state.advantage.levelA as AdvantageLevel,
+                    levelB: "even" as AdvantageLevel,
                     labelJa: state.advantage.labelJa,
                     badgeColor: state.advantage.badgeColor,
                   }
                 : board.some((c) => c !== null)
-                  ? assessBoardAdvantage(board as any)
+                  ? assessBoardAdvantage(board as unknown as import("@nyano/triad-engine").BoardState)
                   : null;
               if (!adv) return null;
               if (controls) {
