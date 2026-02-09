@@ -2,7 +2,7 @@ import React from "react";
 import { useToast } from "@/components/Toast";
 import { Link, useSearchParams } from "react-router-dom";
 
-import type { CardData, MatchResultWithHistory, PlayerIndex, RulesetConfigV1, TranscriptV1, Turn } from "@nyano/triad-engine";
+import type { BoardState, CardData, MatchResultWithHistory, PlayerIndex, RulesetConfigV1, TranscriptV1, Turn, TurnSummary } from "@nyano/triad-engine";
 import {
   computeRulesetIdV1,
   ONCHAIN_CORE_TACTICS_RULESET_CONFIG_V1,
@@ -54,7 +54,7 @@ type SimOk = {
 
 type SimState = { ok: false; error: string } | SimOk;
 
-const EMPTY_BOARD = Array.from({ length: 9 }, () => null) as any;
+const EMPTY_BOARD: BoardState = Array.from({ length: 9 }, () => null);
 
 function toHexBytes32(bytes: Uint8Array): `0x${string}` {
   return ("0x" + Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join("")) as `0x${string}`;
@@ -629,7 +629,7 @@ export function MatchPage() {
   }, [turns.length, sim.ok, matchId]);
 
   const boardNow = sim.ok ? sim.previewHistory[turns.length] ?? EMPTY_BOARD : EMPTY_BOARD;
-  const boardAnim = useBoardFlipAnimation(boardNow as any[], sim.ok);
+  const boardAnim = useBoardFlipAnimation(boardNow, sim.ok);
 
   // --- Overlay state publishing (unchanged) ---
   React.useEffect(() => {
@@ -657,34 +657,34 @@ export function MatchPage() {
               turnIndex: lastIndex,
               by: turnPlayer(firstPlayer, lastIndex),
               cell: Number(last.cell),
-              cardIndex: Number((last as any).cardIndex ?? 0),
-              warningMarkCell: typeof (last as any).warningMarkCell === "number" ? Number((last as any).warningMarkCell) : null,
+              cardIndex: Number(last.cardIndex ?? 0),
+              warningMarkCell: typeof last.warningMarkCell === "number" ? Number(last.warningMarkCell) : null,
             }
           : undefined;
 
-      const lastSummary = lastIndex >= 0 ? (sim.previewTurns[lastIndex] as any) : null;
+      const lastSummary: TurnSummary | null = lastIndex >= 0 ? (sim.previewTurns[lastIndex] ?? null) : null;
       const lastTurnSummary =
         lastSummary
           ? {
               flipCount: Number(lastSummary.flipCount ?? 0),
               comboCount: Number(lastSummary.comboCount ?? 0),
-              comboEffect: (lastSummary.comboEffect ?? "none") as "none" | "momentum" | "domination" | "fever",
+              comboEffect: lastSummary.comboEffect ?? "none",
               triadPlus: Number(lastSummary.appliedBonus?.triadPlus ?? 0),
               ignoreWarningMark: Boolean(lastSummary.appliedBonus?.ignoreWarningMark),
               warningTriggered: Boolean(lastSummary.warningTriggered),
               warningPlaced: typeof lastSummary.warningPlaced === "number" ? Number(lastSummary.warningPlaced) : null,
-              flips: Array.isArray(lastSummary.flipTraces)
-                ? lastSummary.flipTraces.map((f: any) => ({
-                    from: Number(f.from),
-                    to: Number(f.to),
-                    isChain: Boolean(f.isChain),
-                    kind: f.kind === "diag" ? "diag" : "ortho",
-                    dir: typeof f.dir === "string" ? f.dir : undefined,
-                    vert: typeof f.vert === "string" ? f.vert : undefined,
-                    horiz: typeof f.horiz === "string" ? f.horiz : undefined,
-                    aVal: Number(f.aVal ?? 0),
-                    dVal: Number(f.dVal ?? 0),
-                    tieBreak: Boolean(f.tieBreak),
+              flips: lastSummary.flipTraces
+                ? lastSummary.flipTraces.map((f) => ({
+                    from: f.from,
+                    to: f.to,
+                    isChain: f.isChain,
+                    kind: f.kind,
+                    dir: f.dir as "up" | "right" | "down" | "left" | undefined,
+                    vert: f.vert as "up" | "down" | undefined,
+                    horiz: f.horiz as "left" | "right" | undefined,
+                    aVal: f.aVal,
+                    dVal: f.dVal,
+                    tieBreak: f.tieBreak,
                   }))
                 : undefined,
             }
@@ -740,7 +740,7 @@ export function MatchPage() {
         aiReasonCode: lastIndex >= 0 ? aiNotes[lastIndex]?.reasonCode : undefined,
         rpcStatus: rpcStatusRef.current,
         advantage: (() => {
-          const adv = assessBoardAdvantage(boardNow as any);
+          const adv = assessBoardAdvantage(boardNow);
           return { scoreA: adv.scoreA, levelA: adv.levelA, labelJa: adv.labelJa, badgeColor: adv.badgeColor };
         })(),
         status: sim.full
@@ -875,7 +875,7 @@ export function MatchPage() {
 
     const move = pickAiMoveNew({
       difficulty: aiDifficulty,
-      boardNow: boardNow as any,
+      boardNow,
       deckTokens: effectiveDeckBTokens,
       usedCardIndexes: used.usedB,
       usedCells: used.cells,
@@ -1002,14 +1002,14 @@ export function MatchPage() {
     let tilesB = 0;
     for (const cell of boardNow) {
       if (!cell) continue;
-      if ((cell as any).owner === 0) tilesA++;
+      if (cell.owner === 0) tilesA++;
       else tilesB++;
     }
 
     return {
       flipCount: lastSummary ? Number(lastSummary.flipCount ?? 0) : 0,
-      hasChain: lastSummary?.flipTraces ? lastSummary.flipTraces.some((t: any) => t.isChain) : false,
-      comboEffect: (lastSummary?.comboEffect ?? "none") as any,
+      hasChain: lastSummary?.flipTraces ? lastSummary.flipTraces.some((t) => t.isChain) : false,
+      comboEffect: lastSummary?.comboEffect ?? "none",
       warningTriggered: Boolean(lastSummary?.warningTriggered),
       tilesA,
       tilesB,
@@ -1144,7 +1144,7 @@ export function MatchPage() {
         <div className="grid gap-3 md:grid-cols-2">
           <div className="grid gap-2">
             <div className="text-xs font-medium text-slate-600">Deck A</div>
-            <select className="input" value={deckAId} onChange={(e) => setParam("a", e.target.value)}>
+            <select className="input" value={deckAId} onChange={(e) => setParam("a", e.target.value)} aria-label="Deck A">
               <option value="">Select…</option>
               {decks.map((d) => (
                 <option key={d.id} value={d.id}>{d.name}</option>
@@ -1167,7 +1167,7 @@ export function MatchPage() {
               </div>
             ) : (
               <>
-                <select className="input" value={deckBId} onChange={(e) => setParam("b", e.target.value)}>
+                <select className="input" value={deckBId} onChange={(e) => setParam("b", e.target.value)} aria-label="Deck B">
                   <option value="">Select…</option>
                   {decks.map((d) => (
                     <option key={d.id} value={d.id}>{d.name}</option>
@@ -1182,7 +1182,7 @@ export function MatchPage() {
         <div className="grid gap-3 md:grid-cols-3">
           <div className="grid gap-2">
             <div className="text-xs font-medium text-slate-600">Opponent</div>
-            <select className="input" value={opponentMode} disabled={isEvent} onChange={(e) => setParam("opp", e.target.value)}>
+            <select className="input" value={opponentMode} disabled={isEvent} onChange={(e) => setParam("opp", e.target.value)} aria-label="Opponent mode">
               <option value="pvp">Human vs Human（両方手動）</option>
               <option value="vs_nyano_ai">Vs Nyano（AIがBを操作）</option>
             </select>
@@ -1192,7 +1192,7 @@ export function MatchPage() {
             <>
               <div className="grid gap-2">
                 <div className="text-xs font-medium text-slate-600">AI Difficulty</div>
-                <select className="input" value={aiDifficulty} disabled={isEvent} onChange={(e) => setParam("ai", e.target.value)}>
+                <select className="input" value={aiDifficulty} disabled={isEvent} onChange={(e) => setParam("ai", e.target.value)} aria-label="AI difficulty">
                   <option value="easy">Easy（最小手）</option>
                   <option value="normal">Normal（即時flip最大）</option>
                   <option value="hard">Hard（minimax d2）</option>
@@ -1203,7 +1203,7 @@ export function MatchPage() {
               <div className="grid gap-2">
                 <div className="text-xs font-medium text-slate-600">AI Auto</div>
                 <label className="flex items-center gap-2 text-xs text-slate-700">
-                  <input type="checkbox" checked={aiAutoPlay} onChange={(e) => setParam("auto", e.target.checked ? "1" : "0")} />
+                  <input type="checkbox" checked={aiAutoPlay} onChange={(e) => setParam("auto", e.target.checked ? "1" : "0")} aria-label="AI auto play" />
                   Nyano turn を自動で進める
                 </label>
               </div>
@@ -1215,11 +1215,11 @@ export function MatchPage() {
           <div className="grid gap-2">
             <div className="text-xs font-medium text-slate-600">Stream mode</div>
             <label className="flex items-center gap-2 text-xs text-slate-700">
-              <input type="checkbox" checked={streamMode} onChange={(e) => setParam("stream", e.target.checked ? "1" : "0")} />
+              <input type="checkbox" checked={streamMode} onChange={(e) => setParam("stream", e.target.checked ? "1" : "0")} aria-label="Stream mode" />
               /stream からの投票結果を反映
             </label>
             {streamMode ? (
-              <select className="input" value={streamCtrlParam} onChange={(e) => setParam("ctrl", e.target.value)}>
+              <select className="input" value={streamCtrlParam} onChange={(e) => setParam("ctrl", e.target.value)} aria-label="Chat controlled side">
                 <option value="A">Chat controls A</option>
                 <option value="B">Chat controls B</option>
               </select>
@@ -1228,7 +1228,7 @@ export function MatchPage() {
 
           <div className="grid gap-2">
             <div className="text-xs font-medium text-slate-600">Ruleset</div>
-            <select className="input" value={rulesetKey} disabled={isEvent} onChange={(e) => setParam("rk", e.target.value)}>
+            <select className="input" value={rulesetKey} disabled={isEvent} onChange={(e) => setParam("rk", e.target.value)} aria-label="Ruleset">
               <option value="v1">v1 (core+tactics)</option>
               <option value="v2">v2 (shadow ignores warning mark)</option>
             </select>
@@ -1237,7 +1237,7 @@ export function MatchPage() {
 
           <div className="grid gap-2">
             <div className="text-xs font-medium text-slate-600">First Player</div>
-            <select className="input" value={String(firstPlayer)} disabled={isEvent} onChange={(e) => setParam("fp", e.target.value)}>
+            <select className="input" value={String(firstPlayer)} disabled={isEvent} onChange={(e) => setParam("fp", e.target.value)} aria-label="First player">
               <option value="0">A first</option>
               <option value="1">B first</option>
             </select>
@@ -1248,7 +1248,7 @@ export function MatchPage() {
           <div className="grid gap-2">
             <div className="text-xs font-medium text-slate-600">Data Mode</div>
             <div className="flex items-center gap-2">
-              <select className="input w-auto" value={dataMode} onChange={(e) => setDataMode(e.target.value as DataMode)}>
+              <select className="input w-auto" value={dataMode} onChange={(e) => setDataMode(e.target.value as DataMode)} aria-label="Data mode">
                 <option value="fast">Fast (Game Index)</option>
                 <option value="verified">Verified (on-chain RPC)</option>
               </select>
@@ -1360,7 +1360,7 @@ export function MatchPage() {
                 {/* ScoreBar */}
                 {sim.ok && (
                   <ScoreBar
-                    board={boardNow as any}
+                    board={boardNow}
                     moveCount={turns.length}
                     maxMoves={9}
                     winner={turns.length >= 9 ? sim.full.winner : null}
@@ -1385,7 +1385,7 @@ export function MatchPage() {
                 {sim.ok ? (
                   isRpg ? (
                     <BoardViewRPG
-                      board={boardNow as any}
+                      board={boardNow}
                       selectedCell={draftCell}
                       placedCell={boardAnim.placedCell}
                       flippedCells={boardAnim.flippedCells}
@@ -1398,7 +1398,7 @@ export function MatchPage() {
                     />
                   ) : (
                     <BoardView
-                      board={boardNow as any}
+                      board={boardNow}
                       selectedCell={draftCell}
                       placedCell={boardAnim.placedCell}
                       flippedCells={boardAnim.flippedCells}
@@ -1410,7 +1410,7 @@ export function MatchPage() {
                   )
                 ) : (
                   <div className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-xs text-rose-900">
-                    engine error: {(sim as any).error}
+                    engine error: {!sim.ok ? sim.error : "unknown"}
                   </div>
                 )}
 
@@ -1419,7 +1419,7 @@ export function MatchPage() {
                   <LastMoveFeedback
                     placedCell={boardAnim.placedCell}
                     flippedCells={boardAnim.flippedCells}
-                    turnPlayer={turns.length > 0 ? (turnPlayer(firstPlayer as any, turns.length - 1) === 0 ? "A" : "B") : "A"}
+                    turnPlayer={turns.length > 0 ? (turnPlayer(firstPlayer, turns.length - 1) === 0 ? "A" : "B") : "A"}
                   />
                 )}
 
@@ -1478,6 +1478,7 @@ export function MatchPage() {
                             key={idx}
                             disabled={usedHere || turns.length >= 9 || isAiTurn}
                             onClick={() => setDraftCardIndex(idx)}
+                            aria-label={`Card slot ${idx + 1}${usedHere ? " (used)" : ""}${selected ? " (selected)" : ""}`}
                             className={[
                               "w-[120px] rounded-xl border p-2",
                               selected ? "border-slate-900 ring-2 ring-nyano-400/60" : "border-slate-200",
@@ -1508,6 +1509,7 @@ export function MatchPage() {
                           setDraftWarningMarkCell(v === "" ? null : Number(v));
                         }}
                         disabled={turns.length >= 9 || isAiTurn || currentWarnRemaining <= 0}
+                        aria-label="Warning mark cell"
                       >
                         <option value="">None</option>
                         {availableCells
@@ -1523,6 +1525,7 @@ export function MatchPage() {
                         className={isRpg ? "rpg-result__btn rpg-result__btn--primary" : "btn btn-primary"}
                         onClick={commitMove}
                         disabled={turns.length >= 9 || isAiTurn || draftCell === null || draftCardIndex === null}
+                        aria-label="Commit move"
                       >
                         Commit Move
                       </button>
@@ -1530,11 +1533,12 @@ export function MatchPage() {
                         className={isRpg ? "rpg-result__btn" : "btn"}
                         onClick={undoMove}
                         disabled={turns.length === 0}
+                        aria-label="Undo last move"
                       >
                         Undo
                       </button>
                       {isVsNyanoAi && !aiAutoPlay && isAiTurn ? (
-                        <button className={isRpg ? "rpg-result__btn rpg-result__btn--primary" : "btn btn-primary"} onClick={doAiMove}>
+                        <button className={isRpg ? "rpg-result__btn rpg-result__btn--primary" : "btn btn-primary"} onClick={doAiMove} aria-label="Nyano AI move">
                           Nyano Move
                         </button>
                       ) : null}
