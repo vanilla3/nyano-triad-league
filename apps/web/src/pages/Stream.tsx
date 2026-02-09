@@ -7,6 +7,7 @@ import { CopyField } from "@/components/CopyField";
 import { NyanoImage } from "@/components/NyanoImage";
 import { useToast } from "@/components/Toast";
 import { EVENTS, getEventStatus, type EventV1 } from "@/lib/events";
+import { readBoolSetting, readNumberSetting, readStringSetting } from "@/lib/local_settings";
 import { postNyanoWarudoSnapshot } from "@/lib/nyano_warudo_bridge";
 import { formatViewerMoveText, parseChatMoveLoose, parseViewerMoveText } from "@/lib/triad_viewer_command";
 import {
@@ -21,7 +22,7 @@ import {
   toViewerMoveText,
   type ViewerMove,
 } from "@/lib/triad_vote_utils";
-import { publishStreamCommand, makeStreamCommandId, publishStreamVoteState, readStoredOverlayState, subscribeOverlayState, type OverlayStateV1 } from "@/lib/streamer_bus";
+import { publishOverlayState, publishStreamCommand, makeStreamCommandId, publishStreamVoteState, readStoredOverlayState, subscribeOverlayState, type OverlayStateV1 } from "@/lib/streamer_bus";
 
 function origin(): string {
   if (typeof window === "undefined") return "";
@@ -120,15 +121,15 @@ function safeFileStem(): string {
   }, []);
 
   // chat vote console (prototype)
-  const [controlledSide, setControlledSide] = React.useState<0 | 1>(0); // A by default
-  const [voteSeconds, setVoteSeconds] = React.useState<number>(15);
-  const [autoStartEachTurn, setAutoStartEachTurn] = React.useState<boolean>(false);
+  const [controlledSide, setControlledSide] = React.useState<0 | 1>(() => readNumberSetting("stream.controlledSide", 0, 0, 1) as 0 | 1);
+  const [voteSeconds, setVoteSeconds] = React.useState<number>(() => readNumberSetting("stream.voteSeconds", 15, 5, 120));
+  const [autoStartEachTurn, setAutoStartEachTurn] = React.useState<boolean>(() => readBoolSetting("stream.autoStartEachTurn", false));
 
   const [voteOpen, setVoteOpen] = React.useState<boolean>(false);
   const [voteTurn, setVoteTurn] = React.useState<number | null>(null);
   const [voteEndsAtMs, setVoteEndsAtMs] = React.useState<number | null>(null);
 
-  const [userName, setUserName] = React.useState<string>("viewer");
+  const [userName, setUserName] = React.useState<string>(() => readStringSetting("stream.userName", "viewer"));
   const [chatText, setChatText] = React.useState<string>("#triad A2->B2");
 
 
@@ -138,19 +139,6 @@ const [warudoBaseUrl, setWarudoBaseUrl] = React.useState<string>(() => {
   const env = import.meta.env?.VITE_NYANO_WARUDO_BASE_URL as string | undefined;
   return (saved ?? env ?? "").toString();
 });
-function readBoolSetting(key: string, fallback: boolean): boolean {
-  try {
-    const v = localStorage.getItem(key);
-    if (v === null) return fallback;
-    const s = v.trim().toLowerCase();
-    if (s === "1" || s === "true" || s === "yes" || s === "on") return true;
-    if (s === "0" || s === "false" || s === "no" || s === "off") return false;
-    return fallback;
-  } catch {
-    return fallback;
-  }
-}
-
 const [autoSendStateOnVoteStart, setAutoSendStateOnVoteStart] = React.useState<boolean>(() =>
   readBoolSetting("nyanoWarudo.autoSendStateOnVoteStart", true)
 );
@@ -187,6 +175,17 @@ React.useEffect(() => {
     // ignore
   }
 }, [autoSendStateOnVoteStart, autoSendPromptOnVoteStart, autoResendStateDuringVoteOpen, autoSendStateOnVoteEnd]);
+
+React.useEffect(() => {
+  try {
+    localStorage.setItem("stream.controlledSide", String(controlledSide));
+    localStorage.setItem("stream.voteSeconds", String(voteSeconds));
+    localStorage.setItem("stream.autoStartEachTurn", autoStartEachTurn ? "1" : "0");
+    localStorage.setItem("stream.userName", userName);
+  } catch {
+    // ignore
+  }
+}, [controlledSide, voteSeconds, autoStartEachTurn, userName]);
 
 function bestEffortBoardToProtocolBoard(state: OverlayStateV1 | null): Array<any | null> {
   // For nyano-warudo display/aggregation: keep it simple.
@@ -389,6 +388,20 @@ const sendNyanoWarudo = React.useCallback(
       message: res.ok ? `${kind} sent` : `${kind} failed (${res.status})`,
       timestampMs: Date.now(),
     });
+    // Propagate warudo errors to overlay state so /overlay can display them
+    if (!res.ok) {
+      const current = readStoredOverlayState();
+      if (current) {
+        publishOverlayState({
+          ...current,
+          externalStatus: {
+            lastOk: false,
+            lastMessage: `Warudo ${kind} failed (${res.status})`,
+            lastTimestampMs: Date.now(),
+          },
+        });
+      }
+    }
     if (!opts?.silent) {
       if (res.ok) toast.success("Nyano Warudo", `Sent ${kind}`);
       else toast.error("Nyano Warudo", `Failed to send ${kind}`);
