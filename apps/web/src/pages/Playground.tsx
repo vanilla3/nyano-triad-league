@@ -160,7 +160,7 @@ export function PlaygroundPage() {
     } catch (e: any) {
       return { ok: false, error: e?.message ?? String(e) };
     }
-  }, [vectorKey, caseIndex]);
+  }, [vectorKey, caseIndex, cases]);
 
   // clamp step if URL provides out-of-range values
   React.useEffect(() => {

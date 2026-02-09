@@ -1,13 +1,13 @@
 import React from "react";
 import { Link } from "react-router-dom";
 
-import { StreamOperationsHUD, type ExternalResult } from "@/components/StreamOperationsHUD";
+import { StreamOperationsHUD, computeConnectionHealth, type ExternalResult, type OpsLogEntry } from "@/components/StreamOperationsHUD";
 
 import { CopyField } from "@/components/CopyField";
 import { NyanoImage } from "@/components/NyanoImage";
 import { useToast } from "@/components/Toast";
 import { EVENTS, getEventStatus, type EventV1 } from "@/lib/events";
-import { readBoolSetting, readNumberSetting, readStringSetting, writeBoolSetting, writeNumberSetting, writeStringSetting } from "@/lib/local_settings";
+import { readBoolSetting, readNumberSetting, readStringSetting, readStreamLock, writeBoolSetting, writeNumberSetting, writeStreamLock, writeStringSetting } from "@/lib/local_settings";
 import { postNyanoWarudoSnapshot } from "@/lib/nyano_warudo_bridge";
 import { formatViewerMoveText, parseChatMoveLoose, parseViewerMoveText } from "@/lib/triad_viewer_command";
 import {
@@ -125,6 +125,10 @@ function safeFileStem(): string {
   const [voteSeconds, setVoteSeconds] = React.useState<number>(() => readNumberSetting("stream.voteSeconds", 15, 5, 120));
   const [autoStartEachTurn, setAutoStartEachTurn] = React.useState<boolean>(() => readBoolSetting("stream.autoStartEachTurn", false));
 
+  // ── Settings lock (persisted) ──
+  const [settingsLocked, setSettingsLocked] = React.useState<boolean>(() => readStreamLock());
+  React.useEffect(() => { writeStreamLock(settingsLocked); }, [settingsLocked]);
+
   const [voteOpen, setVoteOpen] = React.useState<boolean>(false);
   const [voteTurn, setVoteTurn] = React.useState<number | null>(null);
   const [voteEndsAtMs, setVoteEndsAtMs] = React.useState<number | null>(null);
@@ -153,6 +157,22 @@ const [autoSendStateOnVoteEnd, setAutoSendStateOnVoteEnd] = React.useState<boole
 const [lastBridgePayload, setLastBridgePayload] = React.useState<string>("");
 const [lastBridgeResult, setLastBridgeResult] = React.useState<string>("");
 const [lastExternalResult, setLastExternalResult] = React.useState<ExternalResult | null>(null);
+
+// ── Ops log (capped at 20 entries) ──
+const MAX_OPS_LOG = 20;
+const [opsLog, setOpsLog] = React.useState<OpsLogEntry[]>([]);
+const appendOpsLog = React.useCallback((level: OpsLogEntry["level"], source: string, message: string) => {
+  setOpsLog((prev) => {
+    const next = [...prev, { timestampMs: Date.now(), level, source, message }];
+    return next.length > MAX_OPS_LOG ? next.slice(-MAX_OPS_LOG) : next;
+  });
+}, []);
+
+// ── Connection health (derived) ──
+const connectionHealth = React.useMemo(
+  () => computeConnectionHealth(live, warudoBaseUrl, lastExternalResult),
+  [live, warudoBaseUrl, lastExternalResult],
+);
 
 React.useEffect(() => {
   // persist for convenience (stream ops)
@@ -389,12 +409,14 @@ const sendNyanoWarudo = React.useCallback(
         });
       }
     }
+    appendOpsLog(res.ok ? "info" : "error", "warudo", res.ok ? `Sent ${kind}` : `Failed ${kind} (${res.status})`);
     if (!opts?.silent) {
       if (res.ok) toast.success("Nyano Warudo", `Sent ${kind}`);
       else toast.error("Nyano Warudo", `Failed to send ${kind}`);
     }
   },
-  [live, controlledSide, warudoBaseUrl, toast]
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- buildAiPrompt/buildStateJsonContent are stable module-level fns
+  [live, controlledSide, warudoBaseUrl, toast, appendOpsLog]
 );
 
 
@@ -408,6 +430,7 @@ const downloadStateJson = React.useCallback(() => {
   const content = JSON.stringify(contentObj, null, 2);
   setLastBridgePayload(content);
   downloadTextFile(`triad_state_json_${safeFileStem()}.json`, content, "application/json");
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- downloadTextFile/safeFileStem/buildStateJsonContent are stable inner/module fns
 }, [live, controlledSide, toast]);
 
 const downloadTranscript = React.useCallback(() => {
@@ -431,6 +454,7 @@ const downloadTranscript = React.useCallback(() => {
   );
   setLastBridgePayload(content);
   downloadTextFile(`triad_transcript_${safeFileStem()}.json`, content, "application/json");
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- downloadTextFile/safeFileStem are stable inner fns
 }, [live, toast]);
 
 const downloadAiPrompt = React.useCallback(() => {
@@ -442,6 +466,7 @@ const downloadAiPrompt = React.useCallback(() => {
   const content = buildAiPrompt(state, controlledSide);
   setLastBridgePayload(content);
   downloadTextFile(`triad_ai_prompt_${safeFileStem()}.txt`, content, "text/plain");
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- downloadTextFile/safeFileStem/buildAiPrompt are stable inner/module fns
 }, [live, controlledSide, toast]);
 
 
@@ -462,14 +487,23 @@ const canVoteNow =
   liveCurrent === controlledSide;
 
 // Best-effort "legal move" hints from the host (/match) via overlay bus.
-const _remainingCellsLive = React.useMemo(() => computeEmptyCells(live), [live?.updatedAtMs]);
+const _remainingCellsLive = React.useMemo(() => computeEmptyCells(live), [live]);
 
-const _remainingCardsLive = React.useMemo(() => computeRemainingCardIndices(live, controlledSide), [live?.updatedAtMs, controlledSide]);
+const _remainingCardsLive = React.useMemo(() => computeRemainingCardIndices(live, controlledSide), [live, controlledSide]);
 
-const _remainingWarningMarks = React.useMemo(() => computeWarningMarksRemaining(live, controlledSide), [live?.updatedAtMs, controlledSide]);
+const _remainingWarningMarks = React.useMemo(() => computeWarningMarksRemaining(live, controlledSide), [live, controlledSide]);
+
+  // ── Vote audit trail ──
+  const [voteAudit, setVoteAudit] = React.useState<{
+    attempts: number; accepted: number; duplicates: number; rateLimited: number;
+  }>({ attempts: 0, accepted: 0, duplicates: 0, rateLimited: 0 });
+  const rateLimitMapRef = React.useRef<Map<string, number>>(new Map());
+  const RATE_LIMIT_MS = 2000;
 
   const resetVotes = React.useCallback(() => {
     setVotesByUser({});
+    setVoteAudit({ attempts: 0, accepted: 0, duplicates: 0, rateLimited: 0 });
+    rateLimitMapRef.current.clear();
   }, []);
 
   const startVote = React.useCallback(() => {
@@ -493,7 +527,8 @@ const _remainingWarningMarks = React.useMemo(() => computeWarningMarksRemaining(
     setVoteEndsAtMs(now + sec * 1000);
     resetVotes();
     toast.success("Vote", `Started (${sec}s) for turn ${liveTurn}`);
-  }, [canVoteNow, voteSeconds, liveTurn, resetVotes, toast, autoSendStateOnVoteStart, autoSendPromptOnVoteStart, sendNyanoWarudo]);
+    appendOpsLog("info", "vote", `Started (${sec}s) turn ${liveTurn}`);
+  }, [canVoteNow, voteSeconds, liveTurn, resetVotes, toast, autoSendStateOnVoteStart, autoSendPromptOnVoteStart, sendNyanoWarudo, appendOpsLog]);
 
   const pickWinner = React.useCallback((): ViewerMove | null => {
     const entries = Object.values(votesByUser);
@@ -557,11 +592,12 @@ if (autoSendStateOnVoteEnd) {
 }
 
     toast.success("Sent", moveKey(mv));
+    appendOpsLog("info", "vote", `Finalized: ${moveKey(mv)}`);
     setVoteOpen(false);
     setVoteTurn(null);
     setVoteEndsAtMs(null);
     resetVotes();
-  }, [voteOpen, pickWinner, canVoteNow, liveTurn, controlledSide, resetVotes, toast, autoSendStateOnVoteEnd, sendNyanoWarudo]);
+  }, [voteOpen, pickWinner, canVoteNow, liveTurn, controlledSide, resetVotes, toast, autoSendStateOnVoteEnd, sendNyanoWarudo, appendOpsLog]);
 
 // keep nyano-warudo strictAllowed allowlist fresh during an open vote (optional)
 const resendTimerRef = React.useRef<number | null>(null);
@@ -596,6 +632,7 @@ React.useEffect(() => {
     if (resendTimerRef.current) window.clearTimeout(resendTimerRef.current);
     resendTimerRef.current = null;
   };
+// eslint-disable-next-line react-hooks/exhaustive-deps -- intentional: updatedAtMs triggers resend; live is accessed via sendNyanoWarudo closure
 }, [autoResendStateDuringVoteOpen, voteOpen, live?.updatedAtMs, controlledSide, sendNyanoWarudo]);
 
   // timer tick
@@ -642,8 +679,29 @@ React.useEffect(() => {
     }
     const mv: ViewerMove = { cell: parsed.cell, cardIndex: parsed.cardIndex, warningMarkCell: parsed.warningMarkCell };
     const u = userName.trim() || "viewer";
-    setVotesByUser((prev) => ({ ...prev, [u]: mv }));
-  }, [chatText, userName, controlledSide, toast]);
+    const now = Date.now();
+
+    // Rate limit: same user within RATE_LIMIT_MS
+    const lastVoteAt = rateLimitMapRef.current.get(u);
+    if (lastVoteAt && now - lastVoteAt < RATE_LIMIT_MS) {
+      setVoteAudit((prev) => ({ ...prev, attempts: prev.attempts + 1, rateLimited: prev.rateLimited + 1 }));
+      toast.warn("Vote", `Rate limited: ${u} (wait ${Math.ceil((RATE_LIMIT_MS - (now - lastVoteAt)) / 1000)}s)`);
+      return;
+    }
+
+    // Duplicate check (same user, overwrite is allowed but track it)
+    setVotesByUser((prev) => {
+      const isDuplicate = u in prev;
+      setVoteAudit((a) => ({
+        attempts: a.attempts + 1,
+        accepted: a.accepted + 1,
+        duplicates: isDuplicate ? a.duplicates + 1 : a.duplicates,
+        rateLimited: a.rateLimited,
+      }));
+      return { ...prev, [u]: mv };
+    });
+    rateLimitMapRef.current.set(u, now);
+  }, [chatText, userName, controlledSide, toast, RATE_LIMIT_MS]);
 
   const counts = React.useMemo(() => {
     const entries = Object.values(votesByUser);
@@ -754,7 +812,18 @@ return (
         totalVotes={Object.keys(votesByUser).length}
         voteTurn={voteTurn}
         lastExternalResult={lastExternalResult}
+        connectionHealth={connectionHealth}
+        opsLog={opsLog}
+        settingsLocked={settingsLocked}
       />
+      <div className="flex justify-end">
+        <button
+          className={settingsLocked ? "btn btn-sm btn-error" : "btn btn-sm btn-primary"}
+          onClick={() => setSettingsLocked((v) => !v)}
+        >
+          {settingsLocked ? "🔒 設定ロック中 (解除)" : "🔓 設定をロック"}
+        </button>
+      </div>
       <div className="card">
         <div className="card-hd">
           <div>
@@ -778,6 +847,7 @@ return (
                   className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm"
                   value={eventId}
                   onChange={(ev) => setEventId(ev.target.value)}
+                  disabled={settingsLocked}
                 >
                   {EVENTS.map((x) => (
                     <option key={x.id} value={x.id}>
@@ -895,6 +965,7 @@ return (
                     className="rounded-lg border border-slate-200 bg-white px-2 py-1 text-xs"
                     value={String(controlledSide)}
                     onChange={(e) => setControlledSide((Number(e.target.value) === 1 ? 1 : 0) as 0 | 1)}
+                    disabled={settingsLocked}
                   >
                     <option value="0">A</option>
                     <option value="1">B</option>
@@ -908,11 +979,12 @@ return (
                     max={60}
                     value={voteSeconds}
                     onChange={(e) => setVoteSeconds(Number(e.target.value))}
+                    disabled={settingsLocked}
                   />
 
                   <label className="text-[11px] text-slate-600">Auto start each turn</label>
                   <label className="flex items-center gap-2 text-xs text-slate-700">
-                    <input type="checkbox" checked={autoStartEachTurn} onChange={(e) => setAutoStartEachTurn(e.target.checked)} />
+                    <input type="checkbox" checked={autoStartEachTurn} onChange={(e) => setAutoStartEachTurn(e.target.checked)} disabled={settingsLocked} />
                     enable
                   </label>
                 </div>
@@ -1046,6 +1118,11 @@ return (
                 <div className="mt-2 text-[11px] text-slate-500">
                   tie-break: cell→cardIndex→wm（小さい方が勝ち）
                 </div>
+                {voteAudit.attempts > 0 && (
+                  <div className="mt-1 text-[10px] text-slate-400">
+                    {voteAudit.attempts} attempts · {voteAudit.accepted} accepted · {voteAudit.duplicates} dup · {voteAudit.rateLimited} rate-limited
+                  </div>
+                )}
               </div>
             </div>
 
@@ -1063,6 +1140,7 @@ return (
         value={warudoBaseUrl}
         onChange={(e) => setWarudoBaseUrl(e.target.value)}
         placeholder="http://localhost:8787"
+        disabled={settingsLocked}
       />
       <div className="text-[11px] text-slate-500">
         ※ CORSで失敗する場合は nyano-warudo 側で localhost を許可してください。
@@ -1074,6 +1152,7 @@ return (
             type="checkbox"
             checked={autoSendStateOnVoteStart}
             onChange={(e) => setAutoSendStateOnVoteStart(e.target.checked)}
+            disabled={settingsLocked}
           />
           vote start → state_json (strictAllowed lock)
         </label>
@@ -1083,6 +1162,7 @@ return (
             type="checkbox"
             checked={autoSendPromptOnVoteStart}
             onChange={(e) => setAutoSendPromptOnVoteStart(e.target.checked)}
+            disabled={settingsLocked}
           />
           vote start → ai_prompt (optional)
         </label>
@@ -1092,6 +1172,7 @@ return (
             type="checkbox"
             checked={autoResendStateDuringVoteOpen}
             onChange={(e) => setAutoResendStateDuringVoteOpen(e.target.checked)}
+            disabled={settingsLocked}
           />
           vote open → refresh state_json on state updates
         </label>
@@ -1101,6 +1182,7 @@ return (
             type="checkbox"
             checked={autoSendStateOnVoteEnd}
             onChange={(e) => setAutoSendStateOnVoteEnd(e.target.checked)}
+            disabled={settingsLocked}
           />
           vote end → state_json
         </label>

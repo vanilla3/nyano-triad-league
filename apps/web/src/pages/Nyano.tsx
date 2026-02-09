@@ -75,7 +75,7 @@ export function NyanoPage() {
   const [rpcProbing, setRpcProbing] = React.useState(false);
   const [rpcProbe, setRpcProbe] = React.useState<{ ok: boolean; chainId?: string; error?: string } | null>(null);
 
-  const rpcCandidates = React.useMemo(() => getRpcCandidates(), [userOverride, rpcUrl]);
+  const rpcCandidates = React.useMemo(() => getRpcCandidates(), []);
 
   const copyWithToast = async (label: string, text: string) => {
     await navigator.clipboard.writeText(text);

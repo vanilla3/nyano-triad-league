@@ -36,6 +36,7 @@ const ANIM_DURATION_MS = 900;
 /**
  * Hook that tracks board state transitions and exposes animation info.
  */
+// eslint-disable-next-line react-refresh/only-export-components -- hook export alongside component is intentional
 export function useBoardFlipAnimation(
   boardNow: any[],
   simReady: boolean
