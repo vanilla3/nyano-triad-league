@@ -5,7 +5,7 @@ test("Home page loads with hero, Quick Play, and Settings", async ({ page }) => 
   page.on("pageerror", (err) => errors.push(err.message));
 
   await page.goto("/");
-  await expect(page.locator("text=Quick Play").first()).toBeVisible({ timeout: 10_000 });
+  await expect(page.locator("text=すぐ遊ぶ").first()).toBeVisible({ timeout: 10_000 });
   await expect(page.getByText("Settings")).toBeVisible();
 
   await page.waitForTimeout(1000);
