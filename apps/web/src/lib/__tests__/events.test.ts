@@ -1,5 +1,5 @@
-import { describe, it, expect } from "vitest";
-import { getEventById, getEventStatus, formatEventPeriod, type EventV1 } from "../events";
+import { describe, it, expect, vi, afterEach } from "vitest";
+import { EVENTS, getEventById, getEventStatus, formatEventPeriod, fetchEventConfig, type EventV1 } from "../events";
 
 /* ------------------------------------------------------------------ */
 /* Helper                                                              */
@@ -100,5 +100,80 @@ describe("formatEventPeriod", () => {
   it('"start → end" when both dates', () => {
     const e = makeEvent({ startAt: "2025-06-01", endAt: "2025-12-31" });
     expect(formatEventPeriod(e)).toBe("2025-06-01 → 2025-12-31");
+  });
+});
+
+/* ------------------------------------------------------------------ */
+/* EVENTS (hardcoded array)                                            */
+/* ------------------------------------------------------------------ */
+
+describe("EVENTS", () => {
+  it("has at least 1 entry", () => {
+    expect(EVENTS.length).toBeGreaterThanOrEqual(1);
+  });
+
+  it("every event has required fields", () => {
+    for (const e of EVENTS) {
+      expect(typeof e.id).toBe("string");
+      expect(e.id.length).toBeGreaterThan(0);
+      expect(typeof e.title).toBe("string");
+      expect(typeof e.kind).toBe("string");
+      expect(Array.isArray(e.nyanoDeckTokenIds)).toBe(true);
+      expect(e.nyanoDeckTokenIds.length).toBe(5);
+    }
+  });
+});
+
+/* ------------------------------------------------------------------ */
+/* fetchEventConfig                                                    */
+/* ------------------------------------------------------------------ */
+
+describe("fetchEventConfig", () => {
+  const originalFetch = globalThis.fetch;
+
+  afterEach(() => {
+    globalThis.fetch = originalFetch;
+  });
+
+  it("returns hardcoded EVENTS on network error", async () => {
+    globalThis.fetch = vi.fn().mockRejectedValue(new Error("network error"));
+    const result = await fetchEventConfig();
+    expect(result.length).toBe(EVENTS.length);
+    expect(result[0].id).toBe(EVENTS[0].id);
+  });
+
+  it("returns hardcoded EVENTS on 404 response", async () => {
+    globalThis.fetch = vi.fn().mockResolvedValue({ ok: false, status: 404 });
+    const result = await fetchEventConfig();
+    expect(result.length).toBe(EVENTS.length);
+  });
+
+  it("returns hardcoded EVENTS on non-array response", async () => {
+    globalThis.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve({ not: "an array" }),
+    });
+    const result = await fetchEventConfig();
+    expect(result.length).toBe(EVENTS.length);
+  });
+
+  it("returns hardcoded EVENTS when all entries are invalid", async () => {
+    globalThis.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve([{ bad: true }, { also: "bad" }]),
+    });
+    const result = await fetchEventConfig();
+    expect(result.length).toBe(EVENTS.length);
+  });
+
+  it("returns fetched events on valid response", async () => {
+    const mockEvents: EventV1[] = [makeEvent({ id: "fetched-event", title: "Fetched" })];
+    globalThis.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve(mockEvents),
+    });
+    const result = await fetchEventConfig();
+    expect(result.length).toBe(1);
+    expect(result[0].id).toBe("fetched-event");
   });
 });

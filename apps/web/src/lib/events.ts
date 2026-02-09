@@ -48,6 +48,31 @@ export function getEventById(id: string): EventV1 | null {
   return EVENTS.find((e) => e.id === id) ?? null;
 }
 
+/**
+ * Fetch event configuration from /game/events.json.
+ * Falls back to the hardcoded EVENTS array on fetch failure, bad JSON, or non-array response.
+ */
+export async function fetchEventConfig(): Promise<EventV1[]> {
+  try {
+    const res = await fetch("/game/events.json");
+    if (!res.ok) return [...EVENTS];
+    const json: unknown = await res.json();
+    if (!Array.isArray(json)) return [...EVENTS];
+    // Basic shape validation: each entry must have at minimum id, title, kind
+    const valid = json.filter(
+      (e: unknown): e is EventV1 =>
+        typeof e === "object" &&
+        e !== null &&
+        typeof (e as Record<string, unknown>).id === "string" &&
+        typeof (e as Record<string, unknown>).title === "string" &&
+        typeof (e as Record<string, unknown>).kind === "string",
+    );
+    return valid.length > 0 ? valid : [...EVENTS];
+  } catch {
+    return [...EVENTS];
+  }
+}
+
 function parseIsoMs(s: string | undefined): number | null {
   if (!s) return null;
   const t = Date.parse(s);

@@ -6,7 +6,10 @@ import { StreamOperationsHUD, computeConnectionHealth, type ExternalResult, type
 import { CopyField } from "@/components/CopyField";
 import { NyanoImage } from "@/components/NyanoImage";
 import { useToast } from "@/components/Toast";
-import { EVENTS, getEventStatus, type EventV1 } from "@/lib/events";
+import { EVENTS, fetchEventConfig, getEventStatus, type EventV1 } from "@/lib/events";
+import { executeRecovery, recoveryActionLabel } from "@/lib/stream_recovery";
+import { WarudoBridgePanel } from "@/components/stream/WarudoBridgePanel";
+import { VoteControlPanel } from "@/components/stream/VoteControlPanel";
 import { readBoolSetting, readNumberSetting, readStringSetting, readStreamLock, writeBoolSetting, writeNumberSetting, writeStreamLock, writeStringSetting } from "@/lib/local_settings";
 import { postNyanoWarudoSnapshot } from "@/lib/nyano_warudo_bridge";
 import { formatViewerMoveText, parseChatMoveLoose, parseViewerMoveText } from "@/lib/triad_viewer_command";
@@ -62,8 +65,21 @@ function moveKey(m: ViewerMove): string {
 export function StreamPage() {
   const toast = useToast();
 
+  const [events, setEvents] = React.useState<EventV1[]>(EVENTS);
   const [eventId, setEventId] = React.useState<string>(() => pickDefaultEvent(EVENTS));
-  const e = React.useMemo(() => EVENTS.find((x) => x.id === eventId) ?? null, [eventId]);
+  const e = React.useMemo(() => events.find((x) => x.id === eventId) ?? null, [eventId, events]);
+
+  // Fetch event config on mount (falls back to hardcoded EVENTS)
+  React.useEffect(() => {
+    fetchEventConfig().then((fetched) => {
+      setEvents(fetched);
+      // If current eventId doesn't exist in fetched list, switch to first active
+      if (!fetched.find((x) => x.id === eventId)) {
+        setEventId(pickDefaultEvent(fetched));
+      }
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- run once on mount
+  }, []);
 
   // viewer link (safe)
   const matchUrl = e ? `${origin()}/match?event=${encodeURIComponent(e.id)}` : `${origin()}/match`;
@@ -802,6 +818,25 @@ const _clearPicker = React.useCallback(() => {
   setPickWarningMarkCell(null);
 }, []);
 
+const copyViewerInstructions = React.useCallback(() => {
+  const side = controlledSide === 0 ? "A" : "B";
+  const instructions = [
+    `【Nyano Triad League 投票コマンド】`,
+    ``,
+    `フォーマット: #triad ${side}<スロット>-><セル>`,
+    `例: #triad ${side}2->B2`,
+    ``,
+    `Warning Mark付き: #triad ${side}2->B2 wm=C1`,
+    ``,
+    `スロット: ${side}1~${side}5 (手持ちカード番号)`,
+    `セル: A1 B1 C1 / A2 B2 C2 / A3 B3 C3`,
+    ``,
+    `投票は制限時間内に1人1票。最多票の手が採用されます！`,
+  ].join("\n");
+  navigator.clipboard.writeText(instructions);
+  toast.success("Copied", "Viewer instructions copied to clipboard");
+}, [controlledSide, toast]);
+
 return (
     <div className="space-y-6">
       <StreamOperationsHUD
@@ -820,6 +855,7 @@ return (
         <button
           className={settingsLocked ? "btn btn-sm btn-error" : "btn btn-sm btn-primary"}
           onClick={() => setSettingsLocked((v) => !v)}
+          aria-label={settingsLocked ? "Unlock settings" : "Lock settings"}
         >
           {settingsLocked ? "🔒 設定ロック中 (解除)" : "🔓 設定をロック"}
         </button>
@@ -848,8 +884,9 @@ return (
                   value={eventId}
                   onChange={(ev) => setEventId(ev.target.value)}
                   disabled={settingsLocked}
+                  aria-label="Event"
                 >
-                  {EVENTS.map((x) => (
+                  {events.map((x) => (
                     <option key={x.id} value={x.id}>
                       {x.title}
                     </option>
@@ -931,7 +968,7 @@ return (
                 </div>
               </div>
 
-              <div className="text-xs text-slate-500">
+              <div className="text-xs text-slate-500" role="status" aria-live="polite">
                 live: <span className="font-mono">{live?.mode ?? "—"}</span> · updated: <span className="font-mono">{ageLabel(live?.updatedAtMs)}</span>
               </div>
             </div>
@@ -955,284 +992,52 @@ return (
                 ) : null}
               </div>
 
-              <div className="rounded-xl border border-slate-200 bg-white px-3 py-2">
-                <div className="text-[11px] font-semibold text-slate-700">Vote control</div>
-
-                <div className="mt-2 grid gap-2">
-                  <label className="text-[11px] text-slate-600">Controlled side</label>
-
-                  <select
-                    className="rounded-lg border border-slate-200 bg-white px-2 py-1 text-xs"
-                    value={String(controlledSide)}
-                    onChange={(e) => setControlledSide((Number(e.target.value) === 1 ? 1 : 0) as 0 | 1)}
-                    disabled={settingsLocked}
-                  >
-                    <option value="0">A</option>
-                    <option value="1">B</option>
-                  </select>
-
-                  <label className="text-[11px] text-slate-600">Vote seconds</label>
-                  <input
-                    className="rounded-lg border border-slate-200 bg-white px-2 py-1 text-xs"
-                    type="number"
-                    min={5}
-                    max={60}
-                    value={voteSeconds}
-                    onChange={(e) => setVoteSeconds(Number(e.target.value))}
-                    disabled={settingsLocked}
-                  />
-
-                  <label className="text-[11px] text-slate-600">Auto start each turn</label>
-                  <label className="flex items-center gap-2 text-xs text-slate-700">
-                    <input type="checkbox" checked={autoStartEachTurn} onChange={(e) => setAutoStartEachTurn(e.target.checked)} disabled={settingsLocked} />
-                    enable
-                  </label>
-                </div>
-
-                <div className="mt-3 flex flex-wrap items-center gap-2">
-                  <button className="btn btn-sm btn-primary" onClick={startVote} disabled={!canVoteNow}>
-                    Start vote
-                  </button>
-                  <button className="btn btn-sm" onClick={finalizeVote} disabled={!voteOpen}>
-                    End & send
-                  </button>
-                  <button className="btn btn-sm" onClick={resetVotes}>
-                    Clear votes
-                  </button>
-                  {voteOpen ? (
-                    <span className="badge badge-emerald">OPEN · {timeLeft ?? "?"}s</span>
-                  ) : (
-                    <span className="badge">CLOSED</span>
-                  )}
-                </div>
-
-                <div className="mt-2 text-[11px] text-slate-500">
-                  ※ <span className="font-mono">/match</span> は <span className="font-mono">stream=1</span>（Host link）で開いてください。
-                </div>
-              </div>
-            </div>
-
-            {/* RM06-020: Viewer command help callout */}
-            <div className="mt-3 rounded-xl border border-emerald-200 bg-emerald-50/60 px-4 py-3">
-              <div className="flex items-center justify-between gap-2">
-                <div className="text-xs font-semibold text-emerald-800">Viewer Command Guide</div>
-                <button
-                  className="btn btn-sm"
-                  onClick={() => {
-                    const side = controlledSide === 0 ? "A" : "B";
-                    const instructions = [
-                      `【Nyano Triad League 投票コマンド】`,
-                      ``,
-                      `フォーマット: #triad ${side}<スロット>-><セル>`,
-                      `例: #triad ${side}2->B2`,
-                      ``,
-                      `Warning Mark付き: #triad ${side}2->B2 wm=C1`,
-                      ``,
-                      `スロット: ${side}1~${side}5 (手持ちカード番号)`,
-                      `セル: A1 B1 C1 / A2 B2 C2 / A3 B3 C3`,
-                      ``,
-                      `投票は制限時間内に1人1票。最多票の手が採用されます！`,
-                    ].join("\n");
-                    navigator.clipboard.writeText(instructions);
-                    toast.success("Copied", "Viewer instructions copied to clipboard");
-                  }}
-                >
-                  Copy Viewer Instructions
-                </button>
-              </div>
-              <div className="mt-2 grid gap-1.5 text-xs text-emerald-700">
-                <div>
-                  <span className="font-mono font-semibold">#triad {controlledSide === 0 ? "A" : "B"}2-&gt;B2</span>{" "}
-                  — Card slot 2 to cell B2
-                </div>
-                <div>
-                  <span className="font-mono font-semibold">#triad {controlledSide === 0 ? "A" : "B"}3-&gt;C1 wm=A1</span>{" "}
-                  — Card slot 3 to cell C1, warning mark on A1
-                </div>
-              </div>
-              <div className="mt-2 text-[11px] text-emerald-600">
-                <span className="font-semibold">Common mistakes:</span>{" "}
-                Wrong side letter (use {controlledSide === 0 ? "A" : "B"}) · Slot out of range (1-5) · Cell already occupied · Missing <span className="font-mono">#triad</span> prefix
-              </div>
-            </div>
-
-            <div className="mt-3 grid gap-3 md:grid-cols-2">
-              <div className="rounded-xl border border-slate-200 bg-white px-3 py-2">
-                <div className="text-[11px] font-semibold text-slate-700">Simulated chat input</div>
-                <div className="mt-2 grid grid-cols-3 gap-2">
-                  <input
-                    className="rounded-lg border border-slate-200 bg-white px-2 py-1 text-xs"
-                    value={userName}
-                    onChange={(e) => setUserName(e.target.value)}
-                    placeholder="viewer"
-                  />
-                  <input
-                    className="col-span-2 rounded-lg border border-slate-200 bg-white px-2 py-1 text-xs font-mono"
-                    value={chatText}
-                    onChange={(e) => setChatText(e.target.value)}
-                    placeholder="#triad A2->B2 wm=C3"
-                  />
-                </div>
-                {/* RM06-020: Real-time validation feedback */}
-                {chatText.trim().length > 0 && (() => {
-                  const parsed = parseChatMoveLoose(chatText, controlledSide);
-                  if (parsed) {
-                    const moveText = toViewerMoveText({ cell: parsed.cell, cardIndex: parsed.cardIndex, warningMarkCell: parsed.warningMarkCell });
-                    return (
-                      <div className="mt-1 flex items-center gap-1.5 text-[11px] text-emerald-600">
-                        <span className="inline-flex h-4 w-4 items-center justify-center rounded-full bg-emerald-100 text-[10px] font-bold text-emerald-700">&#x2713;</span>
-                        <span>Valid: <span className="font-mono font-semibold">{moveText}</span> (cell {cellIndexToCoord(parsed.cell)}, slot {parsed.cardIndex + 1}{typeof parsed.warningMarkCell === "number" ? `, wm=${cellIndexToCoord(parsed.warningMarkCell)}` : ""})</span>
-                      </div>
-                    );
-                  }
-                  return (
-                    <div className="mt-1 flex items-center gap-1.5 text-[11px] text-red-500">
-                      <span className="inline-flex h-4 w-4 items-center justify-center rounded-full bg-red-100 text-[10px] font-bold text-red-600">&#x2717;</span>
-                      <span>Invalid command. Use format: <span className="font-mono">#triad {controlledSide === 0 ? "A" : "B"}2-&gt;B2</span></span>
-                    </div>
-                  );
-                })()}
-
-                <div className="mt-2 flex items-center gap-2">
-                  <button className="btn btn-sm btn-primary" onClick={addVoteFromChat} disabled={!voteOpen}>
-                    Add vote
-                  </button>
-                  <div className="text-[11px] text-slate-500">example: <span className="font-mono">{"#triad A2->B2"}</span> / <span className="font-mono">{"#triad A3->C1 wm=A1"}</span></div>
-                </div>
-              </div>
-
-              <div className="rounded-xl border border-slate-200 bg-white px-3 py-2">
-                <div className="text-[11px] font-semibold text-slate-700">Top votes</div>
-                {counts.length === 0 ? (
-                  <div className="mt-2 text-xs text-slate-500">No votes yet.</div>
-                ) : (
-                  <div className="mt-2 space-y-1">
-                    {counts.slice(0, 5).map((x, i) => (
-                      <div key={i} className="flex items-center justify-between gap-2 text-xs">
-                        <span className="font-mono">{moveKey(x.move)}</span>
-                        <span className="badge badge-sky">{x.count}</span>
-                      </div>
-                    ))}
-                  </div>
-                )}
-                <div className="mt-2 text-[11px] text-slate-500">
-                  tie-break: cell→cardIndex→wm（小さい方が勝ち）
-                </div>
-                {voteAudit.attempts > 0 && (
-                  <div className="mt-1 text-[10px] text-slate-400">
-                    {voteAudit.attempts} attempts · {voteAudit.accepted} accepted · {voteAudit.duplicates} dup · {voteAudit.rateLimited} rate-limited
-                  </div>
-                )}
-              </div>
+              <VoteControlPanel
+                controlledSide={controlledSide}
+                onChangeControlledSide={setControlledSide}
+                voteSeconds={voteSeconds}
+                onChangeVoteSeconds={setVoteSeconds}
+                autoStartEachTurn={autoStartEachTurn}
+                onChangeAutoStartEachTurn={setAutoStartEachTurn}
+                settingsLocked={settingsLocked}
+                canVoteNow={canVoteNow}
+                voteOpen={voteOpen}
+                timeLeft={timeLeft}
+                onStartVote={startVote}
+                onFinalizeVote={finalizeVote}
+                onResetVotes={resetVotes}
+                userName={userName}
+                onChangeUserName={setUserName}
+                chatText={chatText}
+                onChangeChatText={setChatText}
+                onAddVoteFromChat={addVoteFromChat}
+                counts={counts}
+                voteAudit={voteAudit}
+                onCopyViewerInstructions={copyViewerInstructions}
+              />
             </div>
 
 
-<div className="mt-3 grid gap-3 md:grid-cols-2">
-  <div className="rounded-xl border border-slate-200 bg-white px-3 py-2">
-    <div className="flex items-center justify-between gap-2">
-      <div className="text-[11px] font-semibold text-slate-700">Nyano Warudo Bridge</div>
-      <div className="text-[11px] text-slate-500 font-mono">POST /v1/snapshots</div>
-    </div>
-    <div className="mt-2 space-y-2">
-      <label className="text-[11px] text-slate-600">nyano-warudo Base URL</label>
-      <input
-        className="w-full rounded-lg border border-slate-200 bg-white px-2 py-1 text-xs font-mono"
-        value={warudoBaseUrl}
-        onChange={(e) => setWarudoBaseUrl(e.target.value)}
-        placeholder="http://localhost:8787"
-        disabled={settingsLocked}
-      />
-      <div className="text-[11px] text-slate-500">
-        ※ CORSで失敗する場合は nyano-warudo 側で localhost を許可してください。
-      </div>
-
-      <div className="mt-2 grid gap-2">
-        <label className="flex items-center gap-2 text-xs text-slate-700">
-          <input
-            type="checkbox"
-            checked={autoSendStateOnVoteStart}
-            onChange={(e) => setAutoSendStateOnVoteStart(e.target.checked)}
-            disabled={settingsLocked}
-          />
-          vote start → state_json (strictAllowed lock)
-        </label>
-
-        <label className="flex items-center gap-2 text-xs text-slate-700">
-          <input
-            type="checkbox"
-            checked={autoSendPromptOnVoteStart}
-            onChange={(e) => setAutoSendPromptOnVoteStart(e.target.checked)}
-            disabled={settingsLocked}
-          />
-          vote start → ai_prompt (optional)
-        </label>
-
-        <label className="flex items-center gap-2 text-xs text-slate-700">
-          <input
-            type="checkbox"
-            checked={autoResendStateDuringVoteOpen}
-            onChange={(e) => setAutoResendStateDuringVoteOpen(e.target.checked)}
-            disabled={settingsLocked}
-          />
-          vote open → refresh state_json on state updates
-        </label>
-
-        <label className="flex items-center gap-2 text-xs text-slate-700">
-          <input
-            type="checkbox"
-            checked={autoSendStateOnVoteEnd}
-            onChange={(e) => setAutoSendStateOnVoteEnd(e.target.checked)}
-            disabled={settingsLocked}
-          />
-          vote end → state_json
-        </label>
-      </div>
-
-      <div className="mt-1 text-[11px] text-slate-500">
-        ※ state_json は投票開始の瞬間に送ると、strictAllowed（合法手 allowlist）が投票中にズレにくくなります。
-      </div>
-
-      <div className="mt-2 flex flex-wrap items-center gap-2">
-        <button className="btn btn-sm btn-primary" onClick={() => sendNyanoWarudo("ai_prompt")}>
-          Send ai_prompt
-        </button>
-        <button className="btn btn-sm" onClick={() => sendNyanoWarudo("state_json")}>
-          Send state_json
-        </button>
-      </div>
-
-<div className="mt-2 rounded-lg border border-slate-200 bg-slate-50 px-2 py-2">
-  <div className="text-[11px] font-semibold text-slate-700">Samples (share to nyano-warudo)</div>
-  <div className="mt-1 text-[11px] text-slate-500">
-    “実戦の1ゲーム分サンプル” を渡す用途。payload は右の欄にも残ります。
-  </div>
-  <div className="mt-2 flex flex-wrap items-center gap-2">
-    <button className="btn btn-sm" onClick={downloadStateJson}>
-      Download state_json
-    </button>
-    <button className="btn btn-sm" onClick={downloadTranscript}>
-      Download transcript
-    </button>
-    <button className="btn btn-sm" onClick={downloadAiPrompt}>
-      Download ai_prompt
-    </button>
-  </div>
-</div>
-
-      <div className="mt-2 text-[11px] text-slate-500">
-        viewer cmd format: <span className="font-mono">#triad A2-&gt;B2 wm=C1</span>
-      </div>
-    </div>
-  </div>
-
-  <div className="rounded-xl border border-slate-200 bg-white px-3 py-2">
-    <div className="text-[11px] font-semibold text-slate-700">Last payload / result</div>
-    <div className="mt-2 space-y-2">
-      <CopyField label="payload (content)" value={lastBridgePayload || "—"} />
-      <CopyField label="result" value={lastBridgeResult || "—"} />
-    </div>
-  </div>
-</div>
+            <WarudoBridgePanel
+              warudoBaseUrl={warudoBaseUrl}
+              onChangeBaseUrl={setWarudoBaseUrl}
+              autoSendStateOnVoteStart={autoSendStateOnVoteStart}
+              onChangeAutoSendStateOnVoteStart={setAutoSendStateOnVoteStart}
+              autoSendPromptOnVoteStart={autoSendPromptOnVoteStart}
+              onChangeAutoSendPromptOnVoteStart={setAutoSendPromptOnVoteStart}
+              autoResendStateDuringVoteOpen={autoResendStateDuringVoteOpen}
+              onChangeAutoResendStateDuringVoteOpen={setAutoResendStateDuringVoteOpen}
+              autoSendStateOnVoteEnd={autoSendStateOnVoteEnd}
+              onChangeAutoSendStateOnVoteEnd={setAutoSendStateOnVoteEnd}
+              settingsLocked={settingsLocked}
+              onSendAiPrompt={() => sendNyanoWarudo("ai_prompt")}
+              onSendStateJson={() => sendNyanoWarudo("state_json")}
+              onDownloadStateJson={downloadStateJson}
+              onDownloadTranscript={downloadTranscript}
+              onDownloadAiPrompt={downloadAiPrompt}
+              lastBridgePayload={lastBridgePayload}
+              lastBridgeResult={lastBridgeResult}
+            />
 
             <div className="mt-3 text-[11px] text-slate-500">
               ここで確立した「command bus」は、次の段階で Twitch Bridge（EventSub/IRC）に置き換え可能です。
@@ -1241,47 +1046,59 @@ return (
         </div>
       </div>
 
-      {/* ── Recovery Procedures (Phase 1 — operator guide) ── */}
-      <details className="card rounded-2xl border border-amber-200 bg-amber-50/50 px-4 py-3">
-        <summary className="text-xs font-semibold text-amber-800 cursor-pointer">
-          Recovery Procedures (トラブルシューティング)
-        </summary>
-        <div className="mt-2 grid gap-3 text-xs text-amber-900">
-          <div>
-            <div className="font-semibold">Overlay shows &quot;Data stale&quot;</div>
-            <ol className="list-decimal pl-4 mt-1 space-y-0.5">
-              <li>Check Match tab is still open and connected</li>
-              <li>Refresh Match tab (state auto-recovers from localStorage)</li>
-              <li>If RPC errors persist, check blockchain RPC endpoint</li>
-            </ol>
-          </div>
-          <div>
-            <div className="font-semibold">Vote not appearing in overlay</div>
-            <ol className="list-decimal pl-4 mt-1 space-y-0.5">
-              <li>Verify Stream tab and Overlay tab are on the same origin</li>
-              <li>Check browser console for BroadcastChannel errors</li>
-              <li>Refresh both tabs (vote state resets)</li>
-            </ol>
-          </div>
-          <div>
-            <div className="font-semibold">Warudo bridge not responding</div>
-            <ol className="list-decimal pl-4 mt-1 space-y-0.5">
-              <li>Check base URL is correct (no trailing slash)</li>
-              <li>Click &quot;Send state&quot; manually to test connectivity</li>
-              <li>Check nyano-warudo server logs for CORS or timeout errors</li>
-            </ol>
-          </div>
-          <div>
-            <div className="font-semibold">Full reset procedure</div>
-            <ol className="list-decimal pl-4 mt-1 space-y-0.5">
-              <li>Close all Nyano tabs</li>
-              <li>Open Match tab → load decks → start new match</li>
-              <li>Open Overlay tab → verify board appears</li>
-              <li>Open Stream tab → configure side + vote timer → test vote</li>
-            </ol>
-          </div>
+      {/* ── Recovery / Troubleshooting (Phase 2 — one-click + guide) ── */}
+      <div className="card rounded-2xl border border-amber-200 bg-amber-50/50 px-4 py-3">
+        <div className="text-xs font-semibold text-amber-800 mb-2">Recovery (リカバリー)</div>
+        <div className="flex flex-wrap gap-2 mb-3">
+          {(["clear_overlay", "clear_votes", "full_reset"] as const).map((action) => (
+            <button
+              key={action}
+              className={`btn btn-sm ${action === "full_reset" ? "btn-error" : "btn-outline"}`}
+              aria-label={recoveryActionLabel(action)}
+              onClick={() => {
+                const result = executeRecovery(action);
+                const label = recoveryActionLabel(action);
+                appendOpsLog("warn", "recovery", `${label}: cleared ${result.cleared.length} key(s)`);
+                toast.success(label, `Cleared ${result.cleared.length} key(s)`);
+                if (action === "full_reset") {
+                  setSettingsLocked(false);
+                }
+              }}
+            >
+              {recoveryActionLabel(action)}
+            </button>
+          ))}
         </div>
-      </details>
+        <details>
+          <summary className="text-xs text-amber-700 cursor-pointer">Troubleshooting guide</summary>
+          <div className="mt-2 grid gap-3 text-xs text-amber-900">
+            <div>
+              <div className="font-semibold">Overlay shows &quot;Data stale&quot;</div>
+              <ol className="list-decimal pl-4 mt-1 space-y-0.5">
+                <li>Check Match tab is still open and connected</li>
+                <li>Refresh Match tab (state auto-recovers from localStorage)</li>
+                <li>If RPC errors persist, check blockchain RPC endpoint</li>
+              </ol>
+            </div>
+            <div>
+              <div className="font-semibold">Vote not appearing in overlay</div>
+              <ol className="list-decimal pl-4 mt-1 space-y-0.5">
+                <li>Verify Stream tab and Overlay tab are on the same origin</li>
+                <li>Check browser console for BroadcastChannel errors</li>
+                <li>Refresh both tabs (vote state resets)</li>
+              </ol>
+            </div>
+            <div>
+              <div className="font-semibold">Warudo bridge not responding</div>
+              <ol className="list-decimal pl-4 mt-1 space-y-0.5">
+                <li>Check base URL is correct (no trailing slash)</li>
+                <li>Click &quot;Send state&quot; manually to test connectivity</li>
+                <li>Check nyano-warudo server logs for CORS or timeout errors</li>
+              </ol>
+            </div>
+          </div>
+        </details>
+      </div>
 
       <div className="card">
         <div className="card-hd">

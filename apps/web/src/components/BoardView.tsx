@@ -1,5 +1,5 @@
 import React from "react";
-import type { BoardState, PlayerIndex } from "@nyano/triad-engine";
+import type { BoardCell as BoardCellEngine, BoardState, PlayerIndex } from "@nyano/triad-engine";
 import { CardNyanoCompact, CardSlot } from "./CardNyano";
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -62,8 +62,8 @@ function calcScore(board: BoardState): { a: number; b: number } {
   let b = 0;
   for (const cell of board) {
     if (!cell) continue;
-    if ((cell as any).owner === 0) a++;
-    if ((cell as any).owner === 1) b++;
+    if (cell.owner === 0) a++;
+    if (cell.owner === 1) b++;
   }
   return { a, b };
 }
@@ -79,7 +79,7 @@ function toSelectableSet(v?: Set<number> | readonly number[] | null): Set<number
    ═══════════════════════════════════════════════════════════════════════════ */
 
 interface BoardCellProps {
-  cell: any | null; // BoardState cell
+  cell: BoardCellEngine | null;
   index: number;
   coord: string;
   isSelected: boolean;
@@ -271,7 +271,7 @@ export function BoardView({
           return (
             <BoardCell
               key={idx}
-              cell={cell as any}
+              cell={cell}
               index={idx}
               coord={coord}
               isSelected={!!isSelected}
