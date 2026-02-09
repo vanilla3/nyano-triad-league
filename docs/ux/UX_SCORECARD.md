@@ -10,25 +10,25 @@
 | # | チェック項目 | 測定方法 | 目標 | 現状 |
 |---|-------------|---------|------|------|
 | A-1 | 初見が30秒以内に1手目を置ける | `first_place_ms` テレメトリ | < 30,000ms | 未計測 |
-| A-2 | 画面内に "次にやること" が常に1行で表示されている | 目視 | Yes | No |
+| A-2 | 画面内に "次にやること" が常に1行で表示されている | 目視 | Yes | ✅ Yes (Mint: ActionPrompt) |
 | A-3 | スコア（タイル数）が常時見えている | 目視 | Yes | Yes |
-| A-4 | 現在のターン（誰の番か）が一目で分かる | 目視 | Yes | 部分的 |
+| A-4 | 現在のターン（誰の番か）が一目で分かる | 目視 | Yes | ✅ Yes (Mint: ScoreBar turn indicator) |
 
 ## B: "説明なしで触れる" (Direct Manipulation)
 
 | # | チェック項目 | 測定方法 | 目標 | 現状 |
 |---|-------------|---------|------|------|
 | B-1 | Home から試合開始まで10秒以内 | ストップウォッチ | < 10s | 未計測 |
-| B-2 | 置けるセルが "見れば分かる"（形・色で区別） | 無説明テスト | Yes | 部分的 |
-| B-3 | カード選択 → セル選択の2ステップが直感的 | 無説明テスト | Yes | 部分的 |
+| B-2 | 置けるセルが "見れば分かる"（形・色で区別） | 無説明テスト | Yes | ✅ Yes (Mint: puffy+breathe vs flat) |
+| B-3 | カード選択 → セル選択の2ステップが直感的 | 無説明テスト | Yes | ✅ Yes (Mint: HandDisplayMint + ActionPrompt) |
 | B-4 | モバイルで誤タップなく操作できる | `invalid_action_count` | < 2回/試合 | 未計測 |
 
 ## C: "見れば分かるデザイン" (Design follows Function)
 
 | # | チェック項目 | 測定方法 | 目標 | 現状 |
 |---|-------------|---------|------|------|
-| C-1 | 置けないセルが "押せない" と分かる外見 | 無説明テスト | Yes | No |
-| C-2 | 置けない理由がインラインで短く出る | 目視 | Yes | No (Toast) |
+| C-1 | 置けないセルが "押せない" と分かる外見 | 無説明テスト | Yes | ✅ Yes (Mint: flat+sunken vs selectable) |
+| C-2 | 置けない理由がインラインで短く出る | 目視 | Yes | ✅ Yes (Mint: InlineError pill, auto-dismiss) |
 | C-3 | カードの強さ（辺の数字）が直感的に読める | 無説明テスト | Yes | Yes |
 | C-4 | プレイヤーA/Bが色で明確に区別できる | 目視 | Yes | Yes |
 
@@ -36,10 +36,10 @@
 
 | # | チェック項目 | 測定方法 | 目標 | 現状 |
 |---|-------------|---------|------|------|
-| D-1 | フリップの因果（どの方向が勝ったか）が矢印/ラインで分かる | 観戦テスト | Yes | No |
-| D-2 | 連鎖フリップが視覚的に追える | 観戦テスト | Yes | 部分的 |
-| D-3 | 効果音で "通った/通らない" が画面を見なくても分かる | 音声テスト | Yes | No (無音) |
-| D-4 | NyanoのAI理由が短いバッジ/表情で分かる | 目視 | Yes | 部分的 |
+| D-1 | フリップの因果（どの方向が勝ったか）が矢印/ラインで分かる | 観戦テスト | Yes | ✅ Yes (Mint: FlipArrowOverlay SVG) |
+| D-2 | 連鎖フリップが視覚的に追える | 観戦テスト | Yes | ✅ Yes (Mint: chain=violet, staged anim) |
+| D-3 | 効果音で "通った/通らない" が画面を見なくても分かる | 音声テスト | Yes | ✅ Yes (Mint: sfx.ts Web Audio) |
+| D-4 | NyanoのAI理由が短いバッジ/表情で分かる | 目視 | Yes | ✅ Yes (Mint: NyanoReaction mint + aiReasonCode) |
 
 ## E: "身近なメタファー" (Familiar Metaphor)
 
@@ -52,17 +52,29 @@
 
 | # | チェック項目 | 測定方法 | 目標 | 現状 |
 |---|-------------|---------|------|------|
-| F-1 | 高度情報（AI解析/ログ/配信HUD）がDrawer/折りたたみに隠れている | 目視 | Yes | No |
-| F-2 | 初心者が迷わないUI密度になっている | 無説明テスト | Yes | No |
+| F-1 | 高度情報（AI解析/ログ/配信HUD）がDrawer/折りたたみに隠れている | 目視 | Yes | ✅ Yes (Mint: MatchDrawerMint) |
+| F-2 | 初心者が迷わないUI密度になっている | 無説明テスト | Yes | ✅ Yes (Mint: density toggle シンプル/ふつう/すべて) |
 | F-3 | 上級者は必要な情報にアクセスできる | レビュー | Yes | Yes |
 
 ## G: アクセシビリティ・パフォーマンス
 
 | # | チェック項目 | 測定方法 | 目標 | 現状 |
 |---|-------------|---------|------|------|
-| G-1 | `prefers-reduced-motion` で演出が控えめになる | ブラウザ設定 | Yes | No |
-| G-2 | ミュート設定で音が完全に消える | UI設定 | Yes | N/A (無音) |
+| G-1 | `prefers-reduced-motion` で演出が控えめになる | ブラウザ設定 | Yes | ✅ Yes (Mint: all animations + SFX) |
+| G-2 | ミュート設定で音が完全に消える | UI設定 | Yes | ✅ Yes (Mint: 🔊/🔇 toggle + localStorage) |
 | G-3 | LCP < 2.5s | Lighthouse | Yes | 未計測 |
+
+---
+
+## 実装状況サマリ
+
+| Phase | 内容 | 状態 |
+|-------|------|------|
+| Phase 0 | Mint UI 基盤 (CSS vars, keyframes, theme) | ✅ 完了 |
+| Phase 1 | Home リデザイン (すぐ遊ぶ CTA) | ✅ 完了 |
+| Phase 2 | 盤面/手札/結果画面 (BoardViewMint, HandDisplayMint, GameResultOverlayMint) | ✅ 完了 |
+| Phase 3 | フィードバック+演出 (FlipArrowOverlay, sfx.ts, NyanoReaction mint) | ✅ 完了 |
+| Phase 4 | Progressive Disclosure (MatchDrawerMint, UI Density Toggle) | ✅ 完了 |
 
 ---
 

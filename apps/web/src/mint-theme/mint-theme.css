@@ -608,6 +608,211 @@
 }
 
 
+/* ═══════════════════════════════════════════════════════════════════════════
+   Flip Arrow Overlay (NIN-UX-030, D-1/D-2)
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+@keyframes mint-arrow-appear {
+  0% { opacity: 0; transform: scale(0.8); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+.mint-arrow-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+  z-index: 10;
+}
+
+.mint-arrow-line {
+  filter: drop-shadow(0 0 3px var(--mint-flip-glow));
+}
+
+.mint-arrow-line--chain {
+  filter: drop-shadow(0 0 4px var(--mint-chain-glow));
+}
+
+/* ── Board inner: relative positioning for arrow overlay ── */
+.mint-board-inner {
+  position: relative;
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   NyanoReaction Mint (NIN-UX-032, D-4)
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.mint-nyano-reaction {
+  font-family: 'Nunito', system-ui, sans-serif;
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   SFX Mute Toggle (NIN-UX-031, D-3)
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.mint-sfx-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 1px solid var(--mint-accent-muted);
+  background: var(--mint-surface);
+  cursor: pointer;
+  font-size: 16px;
+  transition: background 0.2s, border-color 0.2s;
+  padding: 0;
+  line-height: 1;
+}
+
+.mint-sfx-toggle:hover {
+  background: var(--mint-surface-dim);
+  border-color: var(--mint-accent);
+}
+
+.mint-sfx-toggle--muted {
+  opacity: 0.5;
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Match Drawer Mint (NIN-UX-040, F-1)
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.mint-drawer-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  background: rgba(0, 0, 0, 0.25);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s ease;
+}
+
+.mint-drawer-backdrop--open {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.mint-drawer {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 50;
+  width: 360px;
+  max-width: 90vw;
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-left: 1px solid var(--mint-accent-muted);
+  box-shadow: -4px 0 24px rgba(0, 0, 0, 0.08);
+  transform: translateX(100%);
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  display: flex;
+  flex-direction: column;
+  font-family: 'Nunito', system-ui, sans-serif;
+}
+
+.mint-drawer--open {
+  transform: translateX(0);
+}
+
+.mint-drawer__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--mint-accent-muted);
+  flex-shrink: 0;
+}
+
+.mint-drawer__title {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--mint-text-primary);
+}
+
+.mint-drawer__close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 1px solid var(--mint-accent-muted);
+  background: var(--mint-surface);
+  cursor: pointer;
+  font-size: 14px;
+  color: var(--mint-text-secondary);
+  transition: background 0.2s;
+  padding: 0;
+}
+
+.mint-drawer__close:hover {
+  background: var(--mint-surface-dim);
+}
+
+.mint-drawer__body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px 20px;
+  display: grid;
+  gap: 16px;
+  align-content: start;
+}
+
+/* Drawer toggle button */
+.mint-drawer-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 12px;
+  border: 1px solid var(--mint-accent-muted);
+  background: var(--mint-surface);
+  cursor: pointer;
+  font-size: 18px;
+  color: var(--mint-text-secondary);
+  transition: background 0.2s, border-color 0.2s;
+  padding: 0;
+  line-height: 1;
+}
+
+.mint-drawer-toggle:hover {
+  background: var(--mint-surface-dim);
+  border-color: var(--mint-accent);
+}
+
+/* ── Mobile: Bottom sheet ── */
+@media (max-width: 640px) {
+  .mint-drawer {
+    top: auto;
+    right: 0;
+    left: 0;
+    bottom: 0;
+    width: 100%;
+    max-width: 100%;
+    height: 60vh;
+    border-left: none;
+    border-top: 1px solid var(--mint-accent-muted);
+    border-radius: 20px 20px 0 0;
+    transform: translateY(100%);
+    box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.1);
+  }
+
+  .mint-drawer--open {
+    transform: translateY(0);
+  }
+}
+
+
 /* ── Reduced Motion ──────────────────────────────────────────────────── */
 
 @media (prefers-reduced-motion: reduce) {
@@ -620,8 +825,17 @@
   .mint-hand-card,
   .mint-confirm-bar,
   .mint-result-overlay,
-  .mint-result-panel {
+  .mint-result-panel,
+  .mint-arrow-overlay,
+  .mint-nyano-reaction,
+  .mint-drawer,
+  .mint-drawer-backdrop {
     animation: none !important;
     transition-duration: 0s !important;
+  }
+
+  .mint-arrow-overlay g {
+    opacity: 1 !important;
+    animation: none !important;
   }
 }

@@ -103,3 +103,23 @@ export function readStreamLock(): boolean {
 export function writeStreamLock(locked: boolean): void {
   writeBoolSetting("stream.settingsLocked", locked);
 }
+
+// ---------------------------------------------------------------------------
+// UI Density (NIN-UX-041)
+// ---------------------------------------------------------------------------
+
+export type UiDensity = "minimal" | "standard" | "full";
+
+const DENSITY_KEY = "nytl.ui.density";
+const VALID_DENSITIES: Set<string> = new Set(["minimal", "standard", "full"]);
+
+/** Read UI density preference (defaults to "minimal" for Mint, "full" otherwise). */
+export function readUiDensity(fallback: UiDensity = "minimal"): UiDensity {
+  const v = readStringSetting(DENSITY_KEY, fallback);
+  return VALID_DENSITIES.has(v) ? (v as UiDensity) : fallback;
+}
+
+/** Write UI density preference. */
+export function writeUiDensity(density: UiDensity): void {
+  writeStringSetting(DENSITY_KEY, density);
+}
