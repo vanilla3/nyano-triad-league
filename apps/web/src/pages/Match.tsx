@@ -40,6 +40,10 @@ import { fetchGameIndex } from "@/lib/nyano/gameIndex";
 import { generateBalancedDemoPair, buildCardDataFromIndex } from "@/lib/demo_decks";
 import { QrCode } from "@/components/QrCode";
 import { createTelemetryTracker } from "@/lib/telemetry";
+import { createSfxEngine, type SfxEngine } from "@/lib/sfx";
+import { readUiDensity, writeUiDensity, type UiDensity } from "@/lib/local_settings";
+import type { FlipTraceArrow } from "@/components/FlipArrowOverlay";
+import { MatchDrawerMint, DrawerToggleButton } from "@/components/MatchDrawerMint";
 
 type RulesetKey = "v1" | "v2";
 type OpponentMode = "pvp" | "vs_nyano_ai";
@@ -245,6 +249,20 @@ export function MatchPage() {
     return () => { telemetry.flush(); };
   }, [telemetry]);
 
+  // ── SFX Engine (NIN-UX-031) ──
+  const sfx = React.useMemo<SfxEngine | null>(() => (isMint ? createSfxEngine() : null), [isMint]);
+  const [sfxMuted, setSfxMuted] = React.useState(() => sfx?.isMuted() ?? false);
+  React.useEffect(() => {
+    return () => { sfx?.dispose(); };
+  }, [sfx]);
+
+  const handleSfxToggle = React.useCallback(() => {
+    if (!sfx) return;
+    const next = !sfx.isMuted();
+    sfx.setMuted(next);
+    setSfxMuted(next);
+  }, [sfx]);
+
   const isGuestMode = searchParams.get("mode") === "guest";
   const dataModeParam = (searchParams.get("dm") ?? "fast") as DataMode;
   const [dataMode, setDataMode] = React.useState<DataMode>(isGuestMode ? "fast" : dataModeParam);
@@ -315,6 +333,18 @@ export function MatchPage() {
   type AiNoteEntry = { reason: string; reasonCode: AiReasonCode };
   const [aiNotes, setAiNotes] = React.useState<Record<number, AiNoteEntry>>({});
   const [guestDeckSaved, setGuestDeckSaved] = React.useState(false);
+
+  // F-1: Mint drawer state
+  const [drawerOpen, setDrawerOpen] = React.useState(false);
+
+  // F-2: UI Density toggle (minimal/standard/full)
+  const [density, setDensity] = React.useState<UiDensity>(() =>
+    isMint ? readUiDensity("minimal") : "full"
+  );
+  const handleDensityChange = React.useCallback((d: UiDensity) => {
+    setDensity(d);
+    writeUiDensity(d);
+  }, []);
 
   const resetMatch = React.useCallback(() => {
     setTurns([]);
@@ -1050,6 +1080,53 @@ export function MatchPage() {
     return flipTracesSummary(lastSummary.flipTraces);
   }, [sim, turns.length]);
 
+  // D-1/D-2: Extract FlipTraceArrow[] for Mint arrow overlay
+  const lastFlipTraces: readonly FlipTraceArrow[] | null = React.useMemo(() => {
+    if (!isMint || !sim.ok || turns.length === 0) return null;
+    const lastSummary = sim.previewTurns[turns.length - 1];
+    if (!lastSummary?.flipTraces || lastSummary.flipTraces.length === 0) return null;
+    return lastSummary.flipTraces.map((f: any) => ({
+      from: Number(f.from),
+      to: Number(f.to),
+      isChain: Boolean(f.isChain),
+      kind: f.kind === "diag" ? "diag" as const : "ortho" as const,
+      aVal: Number(f.aVal ?? 0),
+      dVal: Number(f.dVal ?? 0),
+      tieBreak: Boolean(f.tieBreak),
+    }));
+  }, [isMint, sim, turns.length]);
+
+  // D-3: SFX trigger on board animation changes
+  const prevFlipCountRef = React.useRef(0);
+  React.useEffect(() => {
+    if (!sfx || !boardAnim.isAnimating) return;
+    const flipCount = boardAnim.flippedCells.length;
+    if (boardAnim.placedCell !== null && prevFlipCountRef.current === 0) {
+      sfx.play("card_place");
+    }
+    if (flipCount > 0 && flipCount !== prevFlipCountRef.current) {
+      const hasChain = lastFlipTraces?.some((t) => t.isChain) ?? false;
+      sfx.play(hasChain ? "chain_flip" : "flip");
+    }
+    prevFlipCountRef.current = flipCount;
+  }, [sfx, boardAnim.isAnimating, boardAnim.placedCell, boardAnim.flippedCells.length, lastFlipTraces]);
+
+  // D-3: SFX on game end
+  React.useEffect(() => {
+    if (!sfx || turns.length < 9 || !sim.ok) return;
+    const winner = sim.full.winner;
+    if (winner === "draw") return; // no fanfare for draw
+    // Perspective = player A → victory if A wins, defeat if B wins
+    if (winner === 0) sfx.play("victory_fanfare");
+    else sfx.play("defeat_sad");
+  }, [sfx, turns.length, sim]);
+
+  // D-3: SFX error buzz on validation error
+  React.useEffect(() => {
+    if (!sfx || !error) return;
+    sfx.play("error_buzz");
+  }, [sfx, error]);
+
   // P0-2: Build TurnLogRPG entries from sim
   const rpgLogEntries: TurnLogEntry[] = React.useMemo(() => {
     if (!sim.ok) return [];
@@ -1357,7 +1434,7 @@ export function MatchPage() {
               )}
             </div>
           ) : (
-            <div className="grid gap-6 lg:grid-cols-[1fr_300px]">
+            <div className={isMint ? "grid gap-6" : "grid gap-6 lg:grid-cols-[1fr_300px]"}>
               {/* ── Left: Board + Hand ── */}
               <div className="grid gap-4">
                 {/* Guest deck preview */}
@@ -1391,12 +1468,30 @@ export function MatchPage() {
 
                 {/* ScoreBar */}
                 {sim.ok && (
-                  <ScoreBar
-                    board={boardNow as any}
-                    moveCount={turns.length}
-                    maxMoves={9}
-                    winner={turns.length >= 9 ? sim.full.winner : null}
-                  />
+                  <div className={isMint ? "flex items-center gap-2" : ""}>
+                    <div className={isMint ? "flex-1" : ""}>
+                      <ScoreBar
+                        board={boardNow as any}
+                        moveCount={turns.length}
+                        maxMoves={9}
+                        winner={turns.length >= 9 ? sim.full.winner : null}
+                      />
+                    </div>
+                    {/* D-3: SFX Mute Toggle (Mint only) */}
+                    {isMint && sfx && (
+                      <button
+                        className={[
+                          "mint-sfx-toggle",
+                          sfxMuted && "mint-sfx-toggle--muted",
+                        ].filter(Boolean).join(" ")}
+                        onClick={handleSfxToggle}
+                        title={sfxMuted ? "サウンド ON" : "サウンド OFF"}
+                        aria-label={sfxMuted ? "Unmute sound effects" : "Mute sound effects"}
+                      >
+                        {sfxMuted ? "🔇" : "🔊"}
+                      </button>
+                    )}
+                  </div>
                 )}
 
                 {/* AI turn notice */}
@@ -1434,6 +1529,8 @@ export function MatchPage() {
                       }
                       inlineError={error}
                       onDismissError={() => setError(null)}
+                      flipTraces={density !== "minimal" ? lastFlipTraces : null}
+                      isFlipAnimating={boardAnim.isAnimating}
                     />
                   ) : isRpg ? (
                     <BoardViewRPG
@@ -1475,25 +1572,33 @@ export function MatchPage() {
                   />
                 )}
 
-                {/* P1-1: Flip summary in Japanese */}
-                {lastFlipSummaryText && (
+                {/* P1-1: Flip summary in Japanese (density >= standard) */}
+                {(!isMint || density !== "minimal") && lastFlipSummaryText && (
                   <div className={
-                    isRpg
-                      ? "rounded-lg px-3 py-2 text-xs font-semibold"
-                      : "rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900"
+                    isMint
+                      ? "rounded-xl border px-3 py-2 text-xs font-semibold"
+                      : isRpg
+                        ? "rounded-lg px-3 py-2 text-xs font-semibold"
+                        : "rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900"
                   }
-                  style={isRpg ? { background: "rgba(245,166,35,0.15)", color: "#F5A623", border: "1px solid rgba(245,166,35,0.3)" } : undefined}
+                  style={
+                    isMint ? { background: "var(--mint-warning-bg)", color: "var(--mint-flip)", borderColor: "rgba(245,158,11,0.2)" }
+                    : isRpg ? { background: "rgba(245,166,35,0.15)", color: "#F5A623", border: "1px solid rgba(245,166,35,0.3)" }
+                    : undefined
+                  }
                   >
                     ⚔ {lastFlipSummaryText}
                   </div>
                 )}
 
-                {/* P1-2: Nyano Reaction */}
-                {nyanoReactionInput && (
+                {/* P1-2: Nyano Reaction (density >= standard) */}
+                {(!isMint || density !== "minimal") && nyanoReactionInput && (
                   <NyanoReaction
                     input={nyanoReactionInput}
                     turnIndex={turns.length}
                     rpg={isRpg}
+                    mint={isMint}
+                    aiReasonCode={turns.length > 0 ? aiNotes[turns.length - 1]?.reasonCode : undefined}
                   />
                 )}
 
@@ -1615,6 +1720,73 @@ export function MatchPage() {
               </div>
 
               {/* ── Right: Turn Log + Info ── */}
+              {/* Mint mode: content lives in slide-out drawer */}
+              {isMint ? (
+                <>
+                  <DrawerToggleButton onClick={() => setDrawerOpen(true)} />
+                  <MatchDrawerMint open={drawerOpen} onClose={() => setDrawerOpen(false)}>
+                    {/* F-2: Density toggle */}
+                    <div className="flex items-center gap-1 rounded-xl p-1" style={{ background: "var(--mint-surface-dim)" }}>
+                      {(["minimal", "standard", "full"] as const).map((d) => (
+                        <button
+                          key={d}
+                          className="flex-1 rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors"
+                          style={{
+                            background: density === d ? "var(--mint-accent)" : "transparent",
+                            color: density === d ? "white" : "var(--mint-text-secondary)",
+                          }}
+                          onClick={() => handleDensityChange(d)}
+                        >
+                          {d === "minimal" ? "シンプル" : d === "standard" ? "ふつう" : "すべて"}
+                        </button>
+                      ))}
+                    </div>
+
+                    {/* TurnLog */}
+                    {sim.ok ? (
+                      <TurnLog
+                        turns={sim.previewTurns}
+                        boardHistory={sim.previewHistory}
+                        selectedTurnIndex={Math.min(selectedTurnIndex, Math.max(0, sim.previewTurns.length - 1))}
+                        onSelect={(i) => setSelectedTurnIndex(i)}
+                      />
+                    ) : (
+                      <div className="text-xs" style={{ color: "var(--mint-text-hint)" }}>—</div>
+                    )}
+
+                    {/* Winner / Match info */}
+                    {turns.length === 9 && sim.ok ? (
+                      <div className="rounded-xl border p-3 text-xs" style={{ background: "var(--mint-surface-dim)", borderColor: "var(--mint-accent-muted)", color: "var(--mint-text-primary)" }}>
+                        <div>winner: <span className="font-medium">{sim.full.winner}</span> (tiles A/B = {sim.full.tiles.A}/{sim.full.tiles.B})</div>
+                        <div className="font-mono mt-1 truncate" style={{ color: "var(--mint-text-secondary)" }}>matchId: {sim.full.matchId}</div>
+                      </div>
+                    ) : (
+                      <div className="rounded-xl border px-3 py-2 text-xs" style={{ background: "var(--mint-surface-dim)", borderColor: "var(--mint-accent-muted)", color: "var(--mint-text-secondary)" }}>
+                        9手確定後に勝敗が確定します
+                      </div>
+                    )}
+
+                    {/* Share buttons */}
+                    <div className="grid gap-2">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <button className="btn" onClick={copyTranscriptJson} disabled={!sim.ok}>Copy JSON</button>
+                        <button className="btn" onClick={copyShareUrl} disabled={!canFinalize}>Share URL</button>
+                        <button className="btn" onClick={openReplay} disabled={!canFinalize}>Replay</button>
+                      </div>
+                    </div>
+
+                    {/* AI debug notes */}
+                    {Object.keys(aiNotes).length > 0 && (
+                      <details className="rounded-xl border p-3 text-xs" style={{ background: "var(--mint-surface)", borderColor: "var(--mint-accent-muted)", color: "var(--mint-text-primary)" }}>
+                        <summary className="cursor-pointer font-medium">Nyano AI ({Object.keys(aiNotes).length})</summary>
+                        <div className="mt-2">
+                          <AiNotesList notes={aiNotes} />
+                        </div>
+                      </details>
+                    )}
+                  </MatchDrawerMint>
+                </>
+              ) : (
               <div className="grid gap-4 content-start">
                 {/* P0-2: RPG or standard Turn Log */}
                 {isRpg ? (
@@ -1741,6 +1913,7 @@ export function MatchPage() {
                   </details>
                 )}
               </div>
+              )}
             </div>
           )}
         </div>

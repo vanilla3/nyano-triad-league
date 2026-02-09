@@ -1,6 +1,7 @@
 import React from "react";
 import type { BoardState, PlayerIndex } from "@nyano/triad-engine";
 import { CardNyanoCompact } from "./CardNyano";
+import { FlipArrowOverlay, type FlipTraceArrow } from "./FlipArrowOverlay";
 import "../mint-theme/mint-theme.css";
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -43,6 +44,10 @@ export interface BoardViewMintProps {
   inlineError?: string | null;
   /** Callback to dismiss inline error */
   onDismissError?: () => void;
+  /** Flip traces for causality arrow overlay (NIN-UX-030) */
+  flipTraces?: readonly FlipTraceArrow[] | null;
+  /** Whether board flip animation is running */
+  isFlipAnimating?: boolean;
 }
 
 // ── Helpers ────────────────────────────────────────────────────────────
@@ -236,7 +241,10 @@ export function BoardViewMint({
   gamePhase = "idle",
   inlineError = null,
   onDismissError,
+  flipTraces = null,
+  isFlipAnimating = false,
 }: BoardViewMintProps) {
+  const gridRef = React.useRef<HTMLDivElement>(null);
   const selectableSet = toSelectableSet(selectableCells);
   const score = calcScore(board);
 
@@ -284,7 +292,7 @@ export function BoardViewMint({
       {/* ── Board Grid ── */}
       <div className="mint-board-frame">
         <div className="mint-board-inner">
-          <div className="mint-grid">
+          <div className="mint-grid" ref={gridRef}>
             {board.map((cell, idx) => {
               const coord = CELL_COORDS[idx] ?? String(idx);
               const isSelectable = !disabled && selectableSet.has(idx);
@@ -316,6 +324,15 @@ export function BoardViewMint({
               );
             })}
           </div>
+
+          {/* ── Flip Causality Arrows (NIN-UX-030) ── */}
+          {flipTraces && flipTraces.length > 0 && (
+            <FlipArrowOverlay
+              traces={flipTraces}
+              gridRef={gridRef}
+              isAnimating={isFlipAnimating}
+            />
+          )}
         </div>
       </div>
 

@@ -143,6 +143,8 @@ export interface NyanoReactionProps {
   turnIndex?: number;
   /** RPG mode styling */
   rpg?: boolean;
+  /** Mint mode styling (Nintendo-level soft UI) */
+  mint?: boolean;
   /** Display language for dialogue */
   lang?: DialogueLanguage;
   /** AI reason code for reason-aware dialogue (RM04-030) */
@@ -154,6 +156,7 @@ export function NyanoReaction({
   input,
   turnIndex = 0,
   rpg = false,
+  mint = false,
   lang,
   aiReasonCode,
   className = "",
@@ -244,7 +247,67 @@ export function NyanoReaction({
     );
   }
 
-  // Default (non-RPG) style
+  // Mint (Nintendo-soft) style — frosted white, rounded, accent glow
+  if (mint) {
+    return (
+      <div
+        className={`mint-nyano-reaction ${className}`}
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: 8,
+          padding: "8px 14px",
+          borderRadius: 16,
+          background: "rgba(255,255,255,0.85)",
+          backdropFilter: "blur(8px)",
+          WebkitBackdropFilter: "blur(8px)",
+          border: "1px solid var(--mint-accent-muted, #A7F3D0)",
+          boxShadow: `0 2px 12px ${cfg.glow}, 0 0 0 1px rgba(16,185,129,0.08)`,
+          opacity: visible ? 1 : 0,
+          transform: visible ? "translateY(0)" : "translateY(6px)",
+          transition: "opacity 0.3s ease, transform 0.3s ease",
+          fontFamily: "'Nunito', system-ui, sans-serif",
+        }}
+      >
+        <NyanoAvatar size={32} expression={reactionToExpression(kind)} alt={cfg.emoji} />
+        {cfg.badge && (
+          <span style={{
+            fontSize: 11,
+            fontWeight: 700,
+            padding: "2px 8px",
+            borderRadius: 8,
+            background: `linear-gradient(135deg, ${cfg.glow}, transparent)`,
+            border: `1px solid ${cfg.glow}`,
+            color: "var(--mint-text-primary, #1F2937)",
+          }}>
+            {cfg.badge}
+          </span>
+        )}
+        <span style={{
+          fontSize: 13,
+          color: "var(--mint-text-primary, #1F2937)",
+          fontWeight: 600,
+        }}>
+          {line}
+        </span>
+        {aiReasonCode && (
+          <span style={{
+            fontSize: 10,
+            fontWeight: 600,
+            padding: "1px 6px",
+            borderRadius: 6,
+            background: "var(--mint-accent-muted, #A7F3D0)",
+            color: "var(--mint-text-accent, #059669)",
+            marginLeft: "auto",
+          }}>
+            {aiReasonCode}
+          </span>
+        )}
+      </div>
+    );
+  }
+
+  // Default (non-RPG, non-Mint) style
   return (
     <div
       className={[
