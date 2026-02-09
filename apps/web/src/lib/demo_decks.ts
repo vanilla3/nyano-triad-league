@@ -158,3 +158,7 @@ export function buildCardDataFromIndex(
 
   return cards;
 }
+
+// ── Exports for testing ──────────────────────────────────────────────
+/** @internal – exported for unit tests only */
+export { sampleWithout as _sampleWithout, tokenScore as _tokenScore };

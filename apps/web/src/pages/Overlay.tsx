@@ -6,7 +6,9 @@ import { NyanoReactionBadge, pickReactionKind, type NyanoReactionInput } from "@
 import { NyanoAvatar } from "@/components/NyanoAvatar";
 import { reactionToExpression } from "@/lib/expression_map";
 import { AiReasonBadge } from "@/components/AiReasonDisplay";
+import { AdvantageBadge } from "@/components/AdvantageBadge";
 import type { AiReasonCode } from "@/lib/ai/nyano_ai";
+import { assessBoardAdvantage } from "@/lib/ai/board_advantage";
 import { ScoreBar } from "@/components/ScoreBar";
 import { FlipTraceBadges, FlipTraceDetailList } from "@/components/FlipTraceBadges";
 import { flipTracesReadout, flipTracesSummary } from "@/components/flipTraceDescribe";
@@ -516,6 +518,28 @@ export function OverlayPage() {
 
               {matchIdShort ? <div className={controls ? "mt-1 text-xs text-slate-400" : "mt-1 text-xs text-slate-400"}>match: {matchIdShort}</div> : null}
             </div>
+
+            {/* 2.5 Advantage indicator */}
+            {(() => {
+              const adv = state?.advantage
+                ? {
+                    scoreA: state.advantage.scoreA,
+                    levelA: state.advantage.levelA as any,
+                    levelB: (undefined as any), // not needed for badge display
+                    labelJa: state.advantage.labelJa,
+                    badgeColor: state.advantage.badgeColor,
+                  }
+                : board.some((c) => c !== null)
+                  ? assessBoardAdvantage(board as any)
+                  : null;
+              if (!adv) return null;
+              return (
+                <div className="flex items-center gap-2">
+                  <span className={controls ? "text-xs text-slate-500" : "text-sm text-slate-500"}>形勢</span>
+                  <AdvantageBadge advantage={adv} size={controls ? "sm" : "md"} showScore />
+                </div>
+              );
+            })()}
 
             {/* 3. AI callout */}
             {state?.aiNote ? (

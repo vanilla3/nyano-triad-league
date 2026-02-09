@@ -132,6 +132,14 @@ aiReasonCode?: string;
     lastMessage?: string;
     lastTimestampMs?: number;
   };
+
+  /** Board advantage assessment (added M16, Phase 1 spectator experience). */
+  advantage?: {
+    scoreA: number;
+    levelA: string;
+    labelJa: string;
+    badgeColor: string;
+  };
 };
 
 function hasBroadcastChannel(): boolean {

@@ -3,6 +3,8 @@ import type { BoardState, TurnSummary } from "@nyano/triad-engine";
 import { FlipTraceBadges, FlipTraceDetailList } from "@/components/FlipTraceBadges";
 import { flipTracesSummary } from "@/components/flipTraceDescribe";
 import type { MoveAnnotation, MoveQuality } from "@/lib/ai/replay_annotations";
+import type { BoardAdvantage } from "@/lib/ai/board_advantage";
+import { AdvantageBadge } from "@/components/AdvantageBadge";
 
 const CELL_COORDS = ["A1", "B1", "C1", "A2", "B2", "C2", "A3", "B3", "C3"] as const;
 
@@ -239,6 +241,8 @@ export function TurnLog(props: {
   onSelect: (turnIndex: number) => void;
   /** Optional: AI-derived quality annotations per turn */
   annotations?: MoveAnnotation[];
+  /** Optional: board advantage per board state (boardHistory indices 0..9) */
+  boardAdvantages?: BoardAdvantage[];
 }) {
   const deltas = React.useMemo(() => {
     if (!props.boardHistory) return null;
@@ -274,6 +278,9 @@ export function TurnLog(props: {
                   <span className={`rounded-md border px-1.5 py-0.5 text-[10px] font-medium ${QUALITY_COLORS[annotation.quality]}`}>
                     {annotation.quality} ({annotation.delta > 0 ? "+" : ""}{annotation.delta.toFixed(0)})
                   </span>
+                )}
+                {props.boardAdvantages?.[t.turnIndex + 1] && (
+                  <AdvantageBadge advantage={props.boardAdvantages[t.turnIndex + 1]} size="sm" />
                 )}
               </div>
               <div className="text-xs text-surface-500">token #{t.tokenId.toString()}</div>
