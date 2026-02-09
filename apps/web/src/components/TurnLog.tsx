@@ -2,8 +2,18 @@ import React from "react";
 import type { BoardState, TurnSummary } from "@nyano/triad-engine";
 import { FlipTraceBadges, FlipTraceDetailList } from "@/components/FlipTraceBadges";
 import { flipTracesSummary } from "@/components/flipTraceDescribe";
+import type { MoveAnnotation, MoveQuality } from "@/lib/ai/replay_annotations";
 
 const CELL_COORDS = ["A1", "B1", "C1", "A2", "B2", "C2", "A3", "B3", "C3"] as const;
+
+const QUALITY_COLORS: Record<MoveQuality, string> = {
+  Excellent: "bg-green-100 text-green-700 border-green-200",
+  Great: "bg-blue-100 text-blue-700 border-blue-200",
+  Good: "bg-teal-100 text-teal-700 border-teal-200",
+  Neutral: "bg-slate-100 text-slate-500 border-slate-200",
+  Questionable: "bg-amber-100 text-amber-700 border-amber-200",
+  Blunder: "bg-red-100 text-red-700 border-red-200",
+};
 
 function cellCoord(cell: number): string {
   return CELL_COORDS[cell] ?? String(cell);
@@ -227,6 +237,8 @@ export function TurnLog(props: {
   boardHistory?: BoardState[];
   selectedTurnIndex: number;
   onSelect: (turnIndex: number) => void;
+  /** Optional: AI-derived quality annotations per turn */
+  annotations?: MoveAnnotation[];
 }) {
   const deltas = React.useMemo(() => {
     if (!props.boardHistory) return null;
@@ -244,6 +256,7 @@ export function TurnLog(props: {
       {props.turns.map((t) => {
         const selected = props.selectedTurnIndex === t.turnIndex;
         const d = deltas ? deltas[t.turnIndex] : null;
+        const annotation = props.annotations?.find((a) => a.turnIndex === t.turnIndex);
 
         return (
           <button
@@ -255,8 +268,13 @@ export function TurnLog(props: {
             onClick={() => props.onSelect(t.turnIndex)}
           >
             <div className="flex items-center justify-between gap-3">
-              <div className="font-medium">
-                Turn {t.turnIndex + 1} · {t.player === 0 ? "A" : "B"} · {cellCoord(t.cell)} (cell {t.cell}) · card {t.cardIndex + 1}
+              <div className="flex items-center gap-2 font-medium">
+                <span>Turn {t.turnIndex + 1} · {t.player === 0 ? "A" : "B"} · {cellCoord(t.cell)} (cell {t.cell}) · card {t.cardIndex + 1}</span>
+                {annotation && (
+                  <span className={`rounded-md border px-1.5 py-0.5 text-[10px] font-medium ${QUALITY_COLORS[annotation.quality]}`}>
+                    {annotation.quality} ({annotation.delta > 0 ? "+" : ""}{annotation.delta.toFixed(0)})
+                  </span>
+                )}
               </div>
               <div className="text-xs text-surface-500">token #{t.tokenId.toString()}</div>
             </div>
