@@ -8,7 +8,7 @@ import { NyanoImage } from "@/components/NyanoImage";
 import { useToast } from "@/components/Toast";
 import { EVENTS, getEventStatus, type EventV1 } from "@/lib/events";
 import { postNyanoWarudoSnapshot } from "@/lib/nyano_warudo_bridge";
-import { formatViewerMoveText, parseChatMoveLoose } from "@/lib/triad_viewer_command";
+import { formatViewerMoveText, parseChatMoveLoose, parseViewerMoveText } from "@/lib/triad_viewer_command";
 import {
   cellIndexToCoord,
   computeEmptyCells,
@@ -129,7 +129,7 @@ function safeFileStem(): string {
   const [voteEndsAtMs, setVoteEndsAtMs] = React.useState<number | null>(null);
 
   const [userName, setUserName] = React.useState<string>("viewer");
-  const [chatText, setChatText] = React.useState<string>("!move 4 2");
+  const [chatText, setChatText] = React.useState<string>("#triad A2->B2");
 
 
 // Nyano Warudo bridge (Triad League → nyano-warudo)
@@ -228,17 +228,9 @@ function buildStateJsonContent(state: OverlayStateV1 | null, controlled: 0 | 1):
   const legalMoves: any[] = [];
   if (strict) {
     for (const txt of strict.allowlist) {
-      // Parse each canonical viewer command text back into components
-      const parts = txt.match(/#triad\s*A(\d)->([A-C][1-3])/i);
-      if (parts) {
-        const cardIndex = Number(parts[1]) - 1;
-        const cellCoord = parts[2];
-        const cell = cellCoord ? (() => {
-          const col = cellCoord[0] === "A" ? 0 : cellCoord[0] === "B" ? 1 : 2;
-          const row = Number(cellCoord[1]) - 1;
-          return row * 3 + col;
-        })() : 0;
-        legalMoves.push({ cell, cardIndex, viewer: txt });
+      const parsed = parseViewerMoveText(txt);
+      if (parsed) {
+        legalMoves.push({ cell: parsed.cell, cardIndex: parsed.cardIndex, viewer: txt });
       }
     }
   } else {
@@ -714,10 +706,8 @@ React.useEffect(() => {
 }, [voteOpen, voteEndsAtMs, voteTurn, votesByUser, counts, controlledSide, live?.eventId, live?.eventTitle, liveTurn, canVoteNow]);
 
 
-function buildMoveText(cell: number, cardIndex: number, wm: number | null): string {
-  const base = `!move ${cell} ${cardIndex}`;
-  if (typeof wm === "number") return `${base} wm=${wm}`;
-  return base;
+function buildMoveText(cell: number, cardIndex: number, wm: number | null, side: 0 | 1 = 0): string {
+  return formatViewerMoveText({ side, slot: cardIndex + 1, cell, warningMarkCell: wm ?? undefined });
 }
 
 const _applyPickerToChatText = React.useCallback(() => {
@@ -726,10 +716,10 @@ const _applyPickerToChatText = React.useCallback(() => {
     return;
   }
   const wm = pickWarningMarkCell;
-  const txt = buildMoveText(pickCell, pickCardIndex, wm);
+  const txt = buildMoveText(pickCell, pickCardIndex, wm, controlledSide);
   setChatText(txt);
   toast.success("Picker", "Filled chat command");
-}, [pickCell, pickCardIndex, pickWarningMarkCell, toast]);
+}, [pickCell, pickCardIndex, pickWarningMarkCell, controlledSide, toast]);
 
 const _addVoteFromPicker = React.useCallback(() => {
   if (!voteOpen) {
@@ -964,14 +954,14 @@ return (
                     className="col-span-2 rounded-lg border border-slate-200 bg-white px-2 py-1 text-xs font-mono"
                     value={chatText}
                     onChange={(e) => setChatText(e.target.value)}
-                    placeholder="!move 4 2 wm=6"
+                    placeholder="#triad A2->B2 wm=C3"
                   />
                 </div>
                 <div className="mt-2 flex items-center gap-2">
                   <button className="btn btn-sm btn-primary" onClick={addVoteFromChat} disabled={!voteOpen}>
                     Add vote
                   </button>
-                  <div className="text-[11px] text-slate-500">example: <span className="font-mono">!move 4 2</span> / <span className="font-mono">4 2 wm=6</span></div>
+                  <div className="text-[11px] text-slate-500">example: <span className="font-mono">{"#triad A2->B2"}</span> / <span className="font-mono">{"#triad A3->C1 wm=A1"}</span></div>
                 </div>
               </div>
 

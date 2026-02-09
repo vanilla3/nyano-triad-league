@@ -219,3 +219,54 @@ describe("parseChatMoveLoose", () => {
     expect(rB!.normalizedText).toMatch(/^#triad B/);
   });
 });
+
+/* ------------------------------------------------------------------ */
+/* format → parse roundtrip                                            */
+/* ------------------------------------------------------------------ */
+
+describe("format → parse roundtrip", () => {
+  it("side A basic roundtrip", () => {
+    const text = formatViewerMoveText({ side: 0, slot: 2, cell: 4 });
+    const parsed = parseViewerMoveText(text);
+    expect(parsed).not.toBeNull();
+    expect(parsed!.side).toBe(0);
+    expect(parsed!.slot).toBe(2);
+    expect(parsed!.cardIndex).toBe(1);
+    expect(parsed!.cell).toBe(4);
+    expect(parsed!.warningMarkCell).toBeNull();
+  });
+
+  it("side B with warning mark roundtrip", () => {
+    const text = formatViewerMoveText({ side: 1, slot: 3, cell: 0, warningMarkCell: 8 });
+    const parsed = parseViewerMoveText(text);
+    expect(parsed).not.toBeNull();
+    expect(parsed!.side).toBe(1);
+    expect(parsed!.slot).toBe(3);
+    expect(parsed!.cardIndex).toBe(2);
+    expect(parsed!.cell).toBe(0);
+    expect(parsed!.warningMarkCell).toBe(8);
+  });
+
+  it("all 9 cells roundtrip", () => {
+    for (let cell = 0; cell < 9; cell++) {
+      const text = formatViewerMoveText({ side: 0, slot: 1, cell });
+      const parsed = parseViewerMoveText(text);
+      expect(parsed).not.toBeNull();
+      expect(parsed!.cell).toBe(cell);
+    }
+  });
+
+  it("canonical format is parse-stable", () => {
+    const cases = [
+      { side: 0 as const, slot: 1, cell: 0 },
+      { side: 1 as const, slot: 5, cell: 8, warningMarkCell: 4 },
+      { side: 0 as const, slot: 3, cell: 6 },
+    ];
+    for (const c of cases) {
+      const text = formatViewerMoveText(c);
+      const parsed = parseViewerMoveText(text);
+      expect(parsed).not.toBeNull();
+      expect(parsed!.normalizedText).toBe(text);
+    }
+  });
+});
