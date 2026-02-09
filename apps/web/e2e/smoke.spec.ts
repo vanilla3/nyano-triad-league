@@ -49,4 +49,24 @@ test.describe("Page smoke tests", () => {
       page.getByText("No signal yet").or(page.getByText("Now Playing")).first(),
     ).toBeVisible({ timeout: 10_000 });
   });
+
+  test("/events loads", async ({ page }) => {
+    await page.goto("/events");
+    await expect(page.getByRole("main").getByText("Events", { exact: true })).toBeVisible({ timeout: 10_000 });
+  });
+
+  test("/playground loads", async ({ page }) => {
+    await page.goto("/playground");
+    await expect(page.getByText("Nyano Lab")).toBeVisible({ timeout: 10_000 });
+  });
+
+  test("/stream loads", async ({ page }) => {
+    await page.goto("/stream");
+    await expect(page.getByText("Nyano Stream Studio")).toBeVisible({ timeout: 10_000 });
+  });
+
+  test("/nyano loads", async ({ page }) => {
+    await page.goto("/nyano");
+    await expect(page.getByText("Nyano Inspector")).toBeVisible({ timeout: 10_000 });
+  });
 });
