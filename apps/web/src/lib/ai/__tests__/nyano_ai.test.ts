@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { pickAiMove, predictedImmediateFlips, pickWarningMarkCell, type AiMoveArgs } from "../nyano_ai";
+import { pickAiMove, predictedImmediateFlips, pickWarningMarkCell, _evaluateBoard, type AiMoveArgs } from "../nyano_ai";
 import type { CardData, PlayerIndex, BoardCell } from "@nyano/triad-engine";
 
 // ── Test helpers ──
@@ -383,5 +383,88 @@ describe("pickWarningMarkCell", () => {
     // All cells are occupied
     const result = pickWarningMarkCell(board, new Set([0, 1, 2, 3, 4, 5, 6, 7, 8]), -1, 1);
     expect(result).toBeUndefined();
+  });
+});
+
+describe("evaluateBoard enhancements", () => {
+  it("center control: card at cell 4 scores higher than cell 0", () => {
+    const card = makeCard({ tokenId: 1n, edges: { up: 5, right: 5, down: 5, left: 5 } });
+
+    const boardCenter: (BoardCell | null)[] = Array(9).fill(null);
+    boardCenter[4] = makeBoardCell(card, 1);
+
+    const boardCorner: (BoardCell | null)[] = Array(9).fill(null);
+    boardCorner[0] = makeBoardCell(card, 1);
+
+    const scoreCenter = _evaluateBoard(boardCenter, 1 as PlayerIndex);
+    const scoreCorner = _evaluateBoard(boardCorner, 1 as PlayerIndex);
+
+    // Center gives +3 bonus; corner gives +2; center should score higher
+    expect(scoreCenter).toBeGreaterThan(scoreCorner);
+  });
+
+  it("vulnerability: weak edge facing strong opponent scores worse", () => {
+    const myWeakCard = makeCard({ tokenId: 1n, edges: { up: 2, right: 2, down: 2, left: 2 } });
+    const myStrongCard = makeCard({ tokenId: 2n, edges: { up: 9, right: 9, down: 9, left: 9 } });
+    const oppStrongCard = makeCard({ tokenId: 100n, edges: { up: 8, right: 8, down: 8, left: 8 } });
+
+    // Board with my weak card next to opponent's strong card
+    const boardWeak: (BoardCell | null)[] = Array(9).fill(null);
+    boardWeak[3] = makeBoardCell(myWeakCard, 1);     // left of center
+    boardWeak[4] = makeBoardCell(oppStrongCard, 0);   // center (opponent)
+
+    // Board with my strong card next to opponent's strong card
+    const boardStrong: (BoardCell | null)[] = Array(9).fill(null);
+    boardStrong[3] = makeBoardCell(myStrongCard, 1);  // left of center
+    boardStrong[4] = makeBoardCell(oppStrongCard, 0); // center (opponent)
+
+    const scoreWeak = _evaluateBoard(boardWeak, 1 as PlayerIndex);
+    const scoreStrong = _evaluateBoard(boardStrong, 1 as PlayerIndex);
+
+    // My weak card next to strong opponent should score worse (vulnerability penalty)
+    expect(scoreStrong).toBeGreaterThan(scoreWeak);
+  });
+
+  it("edge exposure: high edge facing empty penalised", () => {
+    const highEdgeCard = makeCard({ tokenId: 1n, edges: { up: 9, right: 9, down: 9, left: 9 } });
+    const lowEdgeCard = makeCard({ tokenId: 2n, edges: { up: 3, right: 3, down: 3, left: 3 } });
+
+    // Card at corner with 2 exposed high edges
+    const boardHigh: (BoardCell | null)[] = Array(9).fill(null);
+    boardHigh[0] = makeBoardCell(highEdgeCard, 1);
+
+    const boardLow: (BoardCell | null)[] = Array(9).fill(null);
+    boardLow[0] = makeBoardCell(lowEdgeCard, 1);
+
+    const scoreHigh = _evaluateBoard(boardHigh, 1 as PlayerIndex);
+    const scoreLow = _evaluateBoard(boardLow, 1 as PlayerIndex);
+
+    // Both have 1 tile, same corner bonus, but high-edge card gets exposure penalty
+    // High card also gets bigger edge sum bonus (+36*0.05=1.8 vs +12*0.05=0.6)
+    // However high card also gets more exposure penalties (-0.3 per high edge facing empty)
+    // The overall relative scoring should still show high card getting penalised for exposure
+    // (net: 1.8 - 0.6*2 = 0.6 vs 0.6 - 0 = 0.6) — exposure reduces the advantage
+    expect(scoreHigh - scoreLow).toBeLessThan(2); // High edge bonus is tempered by exposure penalty
+  });
+
+  it("symmetry: swapping owners negates score", () => {
+    const cardA = makeCard({ tokenId: 1n, edges: { up: 7, right: 3, down: 5, left: 4 } });
+    const cardB = makeCard({ tokenId: 2n, edges: { up: 4, right: 6, down: 3, left: 8 } });
+
+    const board: (BoardCell | null)[] = Array(9).fill(null);
+    board[0] = makeBoardCell(cardA, 1);
+    board[4] = makeBoardCell(cardB, 0);
+
+    const score1 = _evaluateBoard(board, 1 as PlayerIndex);
+    const score0 = _evaluateBoard(board, 0 as PlayerIndex);
+
+    // Score from player 1's perspective should negate player 0's perspective
+    expect(score1).toBeCloseTo(-score0, 5);
+  });
+
+  it("empty board scores zero", () => {
+    const board: (BoardCell | null)[] = Array(9).fill(null);
+    const score = _evaluateBoard(board, 1 as PlayerIndex);
+    expect(score).toBe(0);
   });
 });

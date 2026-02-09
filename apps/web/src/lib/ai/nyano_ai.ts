@@ -101,37 +101,72 @@ export function predictedImmediateFlips(
 // Board evaluation for minimax
 // ────────────────────────────────────────────────────────────
 
-function countTiles(board: (BoardCell | null)[], player: PlayerIndex): number {
-  let count = 0;
-  for (const cell of board) {
-    if (cell && cell.owner === player) count++;
-  }
-  return count;
-}
+type EdgeDir = "up" | "right" | "down" | "left";
 
 /**
  * Board evaluation function: positive = good for `my`, negative = bad.
- * Score = (myTiles - opponentTiles) + small bonus for edge/corner control.
+ *
+ * Single-pass evaluation with 5 heuristics:
+ * 1. Tile difference (primary signal) — ×10
+ * 2. Edge sum bonus (both sides, reduced weight) — ×0.05
+ * 3. Center control (cell 4 has 4 adjacencies) — ±3
+ * 4. Corner control — ±2
+ * 5. Vulnerability / edge exposure — penalty for weak edges facing strong opponents
  */
 function evaluateBoard(board: (BoardCell | null)[], my: PlayerIndex): number {
   const opp = (1 - my) as PlayerIndex;
-  const myTiles = countTiles(board, my);
-  const oppTiles = countTiles(board, opp);
+  let myTiles = 0;
+  let oppTiles = 0;
+  let score = 0;
 
-  let score = (myTiles - oppTiles) * 10;
+  const dirs: [number, number, EdgeDir, EdgeDir][] = [
+    [-1, 0, "up", "down"],
+    [1, 0, "down", "up"],
+    [0, -1, "left", "right"],
+    [0, 1, "right", "left"],
+  ];
 
-  // Corner control bonus
-  const corners = [0, 2, 6, 8];
-  for (const c of corners) {
-    if (board[c]?.owner === my) score += 2;
-    else if (board[c]?.owner === opp) score -= 2;
+  for (let i = 0; i < 9; i++) {
+    const cell = board[i];
+    if (!cell) continue;
+    const isMine = cell.owner === my;
+    if (isMine) myTiles++;
+    else oppTiles++;
+
+    // Edge sum bonus (both sides, reduced weight)
+    const es = edgeSum(cell.card);
+    score += isMine ? es * 0.05 : -es * 0.05;
+
+    // Center control bonus (cell 4 has 4 adjacencies)
+    if (i === 4) score += isMine ? 3 : -3;
+
+    // Vulnerability analysis: check each neighbor
+    const r = Math.floor(i / 3);
+    const c = i % 3;
+    for (const [dr, dc, myDir, theirDir] of dirs) {
+      const nr = r + dr;
+      const nc = c + dc;
+      if (nr < 0 || nr > 2 || nc < 0 || nc > 2) continue;
+      const neighbor = board[nr * 3 + nc];
+      const myEdge = Number(cell.card.edges[myDir]);
+      if (!neighbor) {
+        // Exposed high edge facing empty → wasted offense
+        if (myEdge >= 7) score += isMine ? -0.3 : 0.3;
+      } else if (neighbor.owner !== cell.owner) {
+        // Adjacent to enemy: vulnerable if their edge > mine
+        const theirEdge = Number(neighbor.card.edges[theirDir]);
+        if (theirEdge > myEdge) score += isMine ? -1.5 : 1.5;
+      }
+    }
   }
 
-  // Edge sum bonus for placed cards
-  for (const cell of board) {
-    if (cell && cell.owner === my) {
-      score += edgeSum(cell.card) * 0.1;
-    }
+  // Tile difference (primary signal)
+  score += (myTiles - oppTiles) * 10;
+
+  // Corner control
+  for (const ci of [0, 2, 6, 8]) {
+    if (board[ci]?.owner === my) score += 2;
+    else if (board[ci]?.owner === opp) score -= 2;
   }
 
   return score;
@@ -523,3 +558,6 @@ export function reasonCodeLabel(code: AiReasonCode): string {
     case "FALLBACK": return "Fallback";
   }
 }
+
+/** @internal Exported for unit testing only. */
+export { evaluateBoard as _evaluateBoard };
