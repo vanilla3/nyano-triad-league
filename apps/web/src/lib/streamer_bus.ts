@@ -114,6 +114,7 @@ lastTurnSummary?: {
 };
 
 aiNote?: string;
+aiReasonCode?: string;
 
   status?: {
     finished?: boolean;

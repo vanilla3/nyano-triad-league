@@ -1,6 +1,8 @@
 import React from "react";
 import { Link } from "react-router-dom";
+import { useToast } from "@/components/Toast";
 import { NyanoAvatar } from "@/components/NyanoAvatar";
+import { resetTutorialSeen } from "@/components/MiniTutorial";
 import type { ExpressionName } from "@/lib/expression_map";
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -212,6 +214,7 @@ const DIFFICULTIES = ["easy", "normal", "hard", "expert"] as const;
 
 export function HomePage() {
   const heroExpression = useHeroExpression();
+  const toast = useToast();
   const [difficulty, setDifficulty] = React.useState<string>("normal");
   const quickPlayUrl = `/match?mode=guest&opp=vs_nyano_ai&ai=${difficulty}&rk=v2`;
 
@@ -352,6 +355,24 @@ export function HomePage() {
             </div>
           </div>
         </div>
+      </section>
+
+      {/* ─── Settings ────────────────────────────────────────────── */}
+      <section className="max-w-5xl mx-auto px-4 py-4">
+        <details className="text-sm text-surface-600">
+          <summary className="cursor-pointer text-xs font-medium text-surface-500">Settings</summary>
+          <div className="mt-2 flex flex-wrap gap-3">
+            <button
+              className="btn text-xs"
+              onClick={() => {
+                resetTutorialSeen();
+                toast.success("Tutorial reset", "The tutorial will appear on your next guest match.");
+              }}
+            >
+              Reset Tutorial
+            </button>
+          </div>
+        </details>
       </section>
 
       {/* ─── Footer hint ──────────────────────────────────────────── */}

@@ -1,6 +1,8 @@
 import React from "react";
 import type { AiReasonCode } from "@/lib/ai/nyano_ai";
 import { reasonCodeLabel } from "@/lib/ai/nyano_ai";
+import { NyanoAvatar } from "./NyanoAvatar";
+import type { ExpressionName } from "@/lib/expression_map";
 
 type Props = {
   reasonCode: AiReasonCode;
@@ -19,9 +21,20 @@ const BADGE_COLORS: Record<AiReasonCode, string> = {
   FALLBACK: "bg-gray-100 text-gray-500 border-gray-200",
 };
 
+const REASON_TO_EXPRESSION: Record<AiReasonCode, ExpressionName> = {
+  FIRST_AVAILABLE: "playful",
+  MAXIMIZE_FLIPS: "laugh",
+  BLOCK_CORNER: "sad",
+  SET_WARNING: "anger",
+  MINIMAX_D2: "calm",
+  MINIMAX_D3: "calm",
+  FALLBACK: "playful",
+};
+
 export function AiReasonDisplay({ reasonCode, reason, turnIndex, className = "" }: Props) {
   const [expanded, setExpanded] = React.useState(false);
   const badgeColor = BADGE_COLORS[reasonCode] ?? BADGE_COLORS.FALLBACK;
+  const expression = REASON_TO_EXPRESSION[reasonCode] ?? "calm";
 
   return (
     <div className={`text-xs ${className}`}>
@@ -30,6 +43,7 @@ export function AiReasonDisplay({ reasonCode, reason, turnIndex, className = "" 
         onClick={() => setExpanded(!expanded)}
         title={reason}
       >
+        <NyanoAvatar size={18} expression={expression} className="flex-shrink-0" />
         <span className="text-surface-500">Turn {turnIndex + 1}:</span>
         <span className={`rounded-md border px-1.5 py-0.5 font-medium ${badgeColor}`}>
           {reasonCodeLabel(reasonCode)}
@@ -38,11 +52,21 @@ export function AiReasonDisplay({ reasonCode, reason, turnIndex, className = "" 
       </button>
 
       {expanded && (
-        <div className="mt-1 rounded-md border border-surface-200 bg-surface-50 px-2 py-1 text-surface-600">
+        <div className="mt-1 ml-6 rounded-md border border-surface-200 bg-surface-50 px-2 py-1 text-surface-600">
           {reason}
         </div>
       )}
     </div>
+  );
+}
+
+/** Standalone badge — no expand/collapse. Used by Overlay. */
+export function AiReasonBadge({ reasonCode }: { reasonCode: AiReasonCode }) {
+  const badgeColor = BADGE_COLORS[reasonCode] ?? BADGE_COLORS.FALLBACK;
+  return (
+    <span className={`rounded-md border px-1.5 py-0.5 text-[10px] font-medium ${badgeColor}`}>
+      {reasonCodeLabel(reasonCode)}
+    </span>
   );
 }
 

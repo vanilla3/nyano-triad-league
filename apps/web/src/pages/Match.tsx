@@ -22,7 +22,7 @@ import { GameResultOverlay, type GameResult } from "@/components/GameResultOverl
 import { NyanoReaction, type NyanoReactionInput } from "@/components/NyanoReaction";
 import { flipTracesSummary } from "@/components/flipTraceDescribe";
 import { base64UrlEncodeUtf8, tryGzipCompressUtf8ToBase64Url } from "@/lib/base64url";
-import { getDeck, listDecks, type DeckV1 } from "@/lib/deck_store";
+import { getDeck, listDecks, upsertDeck, type DeckV1 } from "@/lib/deck_store";
 import { getEventById, getEventStatus, type EventV1 } from "@/lib/events";
 import { stringifyWithBigInt } from "@/lib/json";
 import { fetchMintedTokenIds, fetchNyanoCards } from "@/lib/nyano_rpc";
@@ -280,6 +280,7 @@ export function MatchPage() {
 
   type AiNoteEntry = { reason: string; reasonCode: AiReasonCode };
   const [aiNotes, setAiNotes] = React.useState<Record<number, AiNoteEntry>>({});
+  const [guestDeckSaved, setGuestDeckSaved] = React.useState(false);
 
   const resetMatch = React.useCallback(() => {
     setTurns([]);
@@ -288,6 +289,7 @@ export function MatchPage() {
     setDraftWarningMarkCell(null);
     setSelectedTurnIndex(0);
     setAiNotes({});
+    setGuestDeckSaved(false);
     setSalt(randomSalt());
     setDeadline(Math.floor(Date.now() / 1000) + 24 * 3600);
     try {
@@ -305,6 +307,7 @@ export function MatchPage() {
     setDraftWarningMarkCell(null);
     setSelectedTurnIndex(0);
     setAiNotes({});
+    setGuestDeckSaved(false);
     setSalt(randomSalt());
     setDeadline(Math.floor(Date.now() / 1000) + 24 * 3600);
     setShowResultOverlay(false);
@@ -317,6 +320,13 @@ export function MatchPage() {
     }
     // Cards and deck tokens are NOT reset — same decks reused
   }, []);
+
+  const handleSaveGuestDeck = () => {
+    if (guestDeckATokens.length !== 5) return;
+    upsertDeck({ name: "Guest Deck", tokenIds: guestDeckATokens });
+    setGuestDeckSaved(true);
+    toast.success("Deck saved!", "Find it on the Decks page.");
+  };
 
   React.useEffect(() => {
     resetMatch();
@@ -689,6 +699,7 @@ export function MatchPage() {
         lastMove,
         lastTurnSummary,
         aiNote: lastIndex >= 0 ? aiNotes[lastIndex]?.reason : undefined,
+        aiReasonCode: lastIndex >= 0 ? aiNotes[lastIndex]?.reasonCode : undefined,
         status: sim.full
           ? {
               finished: turns.length >= 9,
@@ -1557,6 +1568,21 @@ export function MatchPage() {
                       </button>
                       <button className="btn text-xs" onClick={() => { resetMatch(); void loadCardsFromIndex(); }}>
                         New Decks
+                      </button>
+                      <button
+                        className="btn text-xs"
+                        onClick={handleSaveGuestDeck}
+                        disabled={guestDeckSaved}
+                      >
+                        {guestDeckSaved ? "Deck Saved" : "Save My Deck"}
+                      </button>
+                    </div>
+                    <div className="flex flex-wrap gap-2 border-t border-nyano-200 pt-2">
+                      <button className="btn text-xs" onClick={copyShareUrl} disabled={!canFinalize}>
+                        Share URL
+                      </button>
+                      <button className="btn text-xs" onClick={openReplay} disabled={!canFinalize}>
+                        Replay
                       </button>
                     </div>
                   </div>
