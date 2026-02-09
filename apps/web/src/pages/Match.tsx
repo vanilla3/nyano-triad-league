@@ -320,6 +320,7 @@ export function MatchPage() {
     } catch {
       // ignore
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- boardAnim is declared later (forward ref); stable hook return
   }, []);
 
   /** Rematch: reset game state but keep the same decks/cards */
@@ -342,6 +343,7 @@ export function MatchPage() {
       // ignore
     }
     // Cards and deck tokens are NOT reset — same decks reused
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- boardAnim is declared later (forward ref); stable hook return
   }, []);
 
   const handleSaveGuestDeck = () => {
@@ -768,6 +770,11 @@ export function MatchPage() {
     effectiveDeckATokens,
     effectiveDeckBTokens,
     aiNotes,
+    used.cells,
+    used.usedA,
+    used.usedB,
+    warnUsed.A,
+    warnUsed.B,
   ]);
 
   const commitTurn = React.useCallback(
@@ -887,7 +894,7 @@ export function MatchPage() {
       cardIndex: move.cardIndex,
       warningMarkCell: move.warningMarkCell,
     });
-  }, [isVsNyanoAi, cards, turns.length, currentPlayer, aiPlayer, aiDifficulty, boardNow, effectiveDeckBTokens, used.usedB, used.cells, commitTurn]);
+  }, [isVsNyanoAi, cards, turns.length, currentPlayer, aiPlayer, aiDifficulty, boardNow, effectiveDeckBTokens, used.usedB, used.cells, commitTurn, warnUsed.B]);
 
   React.useEffect(() => {
     if (!isVsNyanoAi || !aiAutoPlay) return;

@@ -85,6 +85,7 @@ export function ToastProvider(props: { children: React.ReactNode }) {
   );
 }
 
+// eslint-disable-next-line react-refresh/only-export-components -- hook export alongside component is intentional
 export function useToast(): ToastApi {
   const ctx = React.useContext(ToastContext);
   // allow usage without provider in tests / isolated renders (no-op)

@@ -89,3 +89,17 @@ export function writeStringSetting(key: string, value: string): void {
     // ignore
   }
 }
+
+// ---------------------------------------------------------------------------
+// Stream-specific shortcuts
+// ---------------------------------------------------------------------------
+
+/** Read the stream settings lock state. */
+export function readStreamLock(): boolean {
+  return readBoolSetting("stream.settingsLocked", false);
+}
+
+/** Write the stream settings lock state. */
+export function writeStreamLock(locked: boolean): void {
+  writeBoolSetting("stream.settingsLocked", locked);
+}

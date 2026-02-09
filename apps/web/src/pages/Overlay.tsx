@@ -241,7 +241,7 @@ export function OverlayPage() {
     ) : null;
 
   const winnerLabel = normalizeWinner(state?.status?.winner);
-  const tiles = React.useMemo(() => countTilesFromBoard(board), [state?.updatedAtMs]);
+  const tiles = React.useMemo(() => countTilesFromBoard(board), [board]);
   const matchIdShort = state?.status?.finished && state?.status?.matchId ? shortId(state.status.matchId) : null;
 
   const sub =
@@ -251,10 +251,10 @@ export function OverlayPage() {
         ? `Turn ${state.turn}/9 · tiles A:${tiles.a}/B:${tiles.b}`
         : "Waiting…";
 
-  const toPlay = React.useMemo(() => computeToPlay(state), [state?.updatedAtMs]);
+  const toPlay = React.useMemo(() => computeToPlay(state), [state]);
   const toPlayLabel = sideLabel(toPlay);
 
-  const strictAllowed = React.useMemo(() => computeStrictAllowed(state), [state?.updatedAtMs]);
+  const strictAllowed = React.useMemo(() => computeStrictAllowed(state), [state]);
 
   const lastCell = typeof state?.lastMove?.cell === "number" ? state.lastMove.cell : null;
   const markCell = typeof state?.lastMove?.warningMarkCell === "number" ? state.lastMove.warningMarkCell : null;
@@ -303,7 +303,7 @@ export function OverlayPage() {
     }
     setLastFlipCount(flips.length);
     setLastFlippedCells(flips);
-  }, [state?.updatedAtMs]);
+  }, [state, board]); // eslint-disable-line react-hooks/exhaustive-deps -- intentional: recompute when state changes
 
   const cellClass = (i: number): string => {
     const base = "relative aspect-square rounded-2xl border p-2 shadow-sm";
@@ -338,7 +338,7 @@ export function OverlayPage() {
       ortho: Math.max(0, total - diag),
       janken,
     };
-  }, [state?.updatedAtMs]);
+  }, [lastTurnSummary]);
 
   const flipCountLabel =
     typeof lastTurnSummary?.flipCount === "number" ? lastTurnSummary.flipCount : typeof lastFlipCount === "number" ? lastFlipCount : null;
@@ -353,12 +353,12 @@ export function OverlayPage() {
     const traces = Array.isArray(lastTurnSummary?.flips) ? lastTurnSummary!.flips : [];
     const byLabel = state.lastMove.by === 0 ? "A" : "B";
     return flipTracesReadout(traces, byLabel, state.lastMove.cell);
-  }, [state?.updatedAtMs]);
+  }, [lastTurnSummary, state?.lastMove]);
 
   // Phase 1: Move quality tip (heuristic)
   const moveTip = React.useMemo(() => {
     return generateMoveTip(lastTurnSummary, state?.lastMove ?? null);
-  }, [state?.updatedAtMs]);
+  }, [lastTurnSummary, state?.lastMove]);
 
   const reactionInput = React.useMemo<NyanoReactionInput | null>(() => {
     if (!state) return null;
@@ -386,7 +386,7 @@ export function OverlayPage() {
       finished,
       winner,
     };
-  }, [state?.updatedAtMs, lastTurnSummary, lastFlipCount, tiles.a, tiles.b]);
+  }, [state, lastTurnSummary, lastFlipCount, tiles.a, tiles.b]);
 
   const voteTurn = typeof voteState?.turn === "number" ? voteState.turn : null;
   const voteSide = typeof voteState?.controlledSide === "number" ? (voteState.controlledSide as PlayerSide) : null;

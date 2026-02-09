@@ -88,6 +88,7 @@ export interface NyanoReactionInput {
   winner?: PlayerIndex | "draw" | null;
 }
 
+// eslint-disable-next-line react-refresh/only-export-components -- utility fn export alongside component is intentional
 export function pickReactionKind(input: NyanoReactionInput): ReactionKind {
   // Game end states take priority
   if (input.finished && input.winner != null) {

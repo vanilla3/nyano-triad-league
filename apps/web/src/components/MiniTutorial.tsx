@@ -18,6 +18,7 @@ function markTutorialSeen(): void {
   }
 }
 
+// eslint-disable-next-line react-refresh/only-export-components -- utility fn export alongside component is intentional
 export function resetTutorialSeen(): void {
   try {
     localStorage.removeItem(STORAGE_KEY);
