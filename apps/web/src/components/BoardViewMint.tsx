@@ -1,5 +1,5 @@
 import React from "react";
-import type { BoardState, PlayerIndex } from "@nyano/triad-engine";
+import type { BoardCell, BoardState, PlayerIndex } from "@nyano/triad-engine";
 import { CardNyanoCompact } from "./CardNyano";
 import { FlipArrowOverlay, type FlipTraceArrow } from "./FlipArrowOverlay";
 import "../mint-theme/mint-theme.css";
@@ -65,8 +65,8 @@ function calcScore(board: BoardState): { a: number; b: number } {
   let b = 0;
   for (const cell of board) {
     if (!cell) continue;
-    if ((cell as any).owner === 0) a++;
-    if ((cell as any).owner === 1) b++;
+    if (cell.owner === 0) a++;
+    if (cell.owner === 1) b++;
   }
   return { a, b };
 }
@@ -85,7 +85,7 @@ const PROMPTS: Record<string, { ja: string; en: string }> = {
 // ── MintCell ───────────────────────────────────────────────────────────
 
 interface MintCellProps {
-  cell: any | null;
+  cell: BoardCell | null;
   index: number;
   coord: string;
   isSelected: boolean;
@@ -307,7 +307,7 @@ export function BoardViewMint({
               return (
                 <MintCell
                   key={idx}
-                  cell={cell as any}
+                  cell={cell}
                   index={idx}
                   coord={coord}
                   isSelected={!!isSel}

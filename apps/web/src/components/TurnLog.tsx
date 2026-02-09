@@ -1,5 +1,5 @@
 import React from "react";
-import type { BoardState, TurnSummary } from "@nyano/triad-engine";
+import type { BoardState, CardData, TurnSummary } from "@nyano/triad-engine";
 import { FlipTraceBadges, FlipTraceDetailList } from "@/components/FlipTraceBadges";
 import { flipTracesReadout, flipTracesSummary } from "@/components/flipTraceDescribe";
 import type { MoveAnnotation } from "@/lib/ai/replay_annotations";
@@ -96,8 +96,8 @@ function edgeExpr(base: number, triadPlus: number, warningDebuff: number): { tex
 function explainFlip(args: {
   placedCell: number;
   flipCell: number;
-  placedCard: any;
-  otherCard: any;
+  placedCard: CardData;
+  otherCard: CardData;
   triadPlus: number;
   warningDebuff: number;
   warningTriggered: boolean;
@@ -110,8 +110,8 @@ function explainFlip(args: {
 
   const opp = oppositeDir(dir);
 
-  const placedEdgeBase = Number((args.placedCard.edges as any)[dir]);
-  const otherEdgeBase = Number((args.otherCard.edges as any)[opp]);
+  const placedEdgeBase = Number(args.placedCard.edges[dir]);
+  const otherEdgeBase = Number(args.otherCard.edges[opp]);
 
   const ex = edgeExpr(placedEdgeBase, args.triadPlus, args.warningDebuff);
 
