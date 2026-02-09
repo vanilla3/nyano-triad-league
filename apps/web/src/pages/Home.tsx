@@ -210,13 +210,18 @@ function ToolCard({ title, description, icon, path }: ToolCardProps) {
    MAIN HOME PAGE COMPONENT
    ═══════════════════════════════════════════════════════════════════════════ */
 
-const DIFFICULTIES = ["easy", "normal", "hard", "expert"] as const;
+const DIFFICULTIES = [
+  { key: "easy", ja: "はじめて", en: "Easy" },
+  { key: "normal", ja: "ふつう", en: "Normal" },
+  { key: "hard", ja: "つよい", en: "Hard" },
+  { key: "expert", ja: "めっちゃつよい", en: "Expert" },
+] as const;
 
 export function HomePage() {
   const heroExpression = useHeroExpression();
   const toast = useToast();
   const [difficulty, setDifficulty] = React.useState<string>("normal");
-  const quickPlayUrl = `/match?mode=guest&opp=vs_nyano_ai&ai=${difficulty}&rk=v2`;
+  const quickPlayUrl = `/match?mode=guest&opp=vs_nyano_ai&ai=${difficulty}&rk=v2&ui=mint`;
 
   return (
     <div className="min-h-screen bg-surface-50">
@@ -250,37 +255,49 @@ export function HomePage() {
               デッキを組んで、対戦し、勝利を共有しよう。
             </p>
 
-            {/* Difficulty selector */}
-            <div className="flex items-center justify-center gap-2 mb-4">
-              <span className="text-sm text-surface-500">Difficulty:</span>
+            {/* Difficulty selector (NIN-UX-020: friendly labels) */}
+            <div className="flex flex-wrap items-center justify-center gap-2 mb-5">
               {DIFFICULTIES.map((d) => (
                 <button
-                  key={d}
-                  onClick={() => setDifficulty(d)}
+                  key={d.key}
+                  onClick={() => setDifficulty(d.key)}
                   className={[
-                    "px-3 py-1 rounded-full text-sm font-medium transition-all",
-                    difficulty === d
-                      ? "bg-nyano-500 text-white shadow-glow-nyano"
+                    "px-4 py-2 rounded-2xl text-sm font-bold font-display transition-all",
+                    difficulty === d.key
+                      ? "bg-nyano-500 text-white shadow-glow-nyano scale-105"
                       : "bg-surface-100 text-surface-600 hover:bg-surface-200",
                   ].join(" ")}
                 >
-                  {d.charAt(0).toUpperCase() + d.slice(1)}
+                  {d.ja}
+                  <span className="ml-1 text-xs opacity-70">({d.en})</span>
                 </button>
               ))}
             </div>
 
-            {/* CTA buttons */}
-            <div className="flex flex-wrap items-center justify-center gap-3">
+            {/* CTA — big play button (NIN-UX-020: "10 seconds to start") */}
+            <div className="flex flex-col items-center gap-3">
               <Link
                 to={quickPlayUrl}
-                className="btn btn-primary btn-lg"
+                className={[
+                  "inline-flex items-center gap-3",
+                  "px-10 py-4 rounded-3xl",
+                  "bg-gradient-to-r from-emerald-500 to-emerald-600",
+                  "text-white text-xl font-bold font-display",
+                  "shadow-lg hover:shadow-xl hover:scale-105",
+                  "transition-all duration-200",
+                ].join(" ")}
               >
-                🎮 Quick Play
+                🎮 すぐ遊ぶ
               </Link>
-              <Link to="/arena" className="btn btn-secondary btn-lg">
+              <span className="text-xs text-surface-400">ゲストモードですぐに対戦できます</span>
+            </div>
+
+            {/* Secondary actions */}
+            <div className="flex flex-wrap items-center justify-center gap-3 mt-4">
+              <Link to="/arena" className="btn btn-secondary">
                 ⚔️ Arena
               </Link>
-              <Link to="/decks" className="btn btn-secondary btn-lg">
+              <Link to="/decks" className="btn btn-secondary">
                 🃏 Build Deck
               </Link>
             </div>
@@ -288,26 +305,36 @@ export function HomePage() {
         </div>
       </section>
 
-      {/* ─── Features Section ─────────────────────────────────────── */}
-      <section className="max-w-5xl mx-auto px-4 py-12">
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 animate-stagger">
-          {FEATURES.map((feature) => (
-            <FeatureCard key={feature.path} {...feature} />
-          ))}
-        </div>
-      </section>
-
-      {/* ─── Tools Section ────────────────────────────────────────── */}
+      {/* ─── Features & Tools (Progressive Disclosure — collapsed) ── */}
       <section className="max-w-5xl mx-auto px-4 py-8">
-        <div className="mb-4">
-          <h2 className="text-lg font-bold font-display text-surface-700">Tools</h2>
-          <p className="text-sm text-surface-500">検証・設定用のツール</p>
-        </div>
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4 animate-stagger">
-          {TOOLS.map((tool) => (
-            <ToolCard key={tool.path} {...tool} />
-          ))}
-        </div>
+        <details className="group">
+          <summary className="flex items-center gap-2 cursor-pointer text-surface-500 hover:text-surface-700 transition-colors">
+            <span className="text-sm font-medium">もっと見る — モード・ツール</span>
+            <span className="text-xs group-open:rotate-90 transition-transform">▶</span>
+          </summary>
+
+          {/* Features */}
+          <div className="mt-6">
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 animate-stagger">
+              {FEATURES.map((feature) => (
+                <FeatureCard key={feature.path} {...feature} />
+              ))}
+            </div>
+          </div>
+
+          {/* Tools */}
+          <div className="mt-8">
+            <div className="mb-4">
+              <h2 className="text-lg font-bold font-display text-surface-700">Tools</h2>
+              <p className="text-sm text-surface-500">検証・設定用のツール</p>
+            </div>
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4 animate-stagger">
+              {TOOLS.map((tool) => (
+                <ToolCard key={tool.path} {...tool} />
+              ))}
+            </div>
+          </div>
+        </details>
       </section>
 
       {/* ─── Info Section ─────────────────────────────────────────── */}

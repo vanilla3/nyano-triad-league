@@ -13,6 +13,9 @@ import {
 import { BoardView } from "@/components/BoardView";
 import { BoardViewRPG, HandDisplayRPG, GameResultOverlayRPG, TurnLogRPG } from "@/components/BoardViewRPG";
 import type { TurnLogEntry } from "@/components/BoardViewRPG";
+import { BoardViewMint } from "@/components/BoardViewMint";
+import { HandDisplayMint } from "@/components/HandDisplayMint";
+import { GameResultOverlayMint } from "@/components/GameResultOverlayMint";
 import { ScoreBar } from "@/components/ScoreBar";
 import { LastMoveFeedback, useBoardFlipAnimation } from "@/components/BoardFlipAnimator";
 import { NyanoImage } from "@/components/NyanoImage";
@@ -36,6 +39,7 @@ import { SkeletonBoard, SkeletonHand } from "@/components/Skeleton";
 import { fetchGameIndex } from "@/lib/nyano/gameIndex";
 import { generateBalancedDemoPair, buildCardDataFromIndex } from "@/lib/demo_decks";
 import { QrCode } from "@/components/QrCode";
+import { createTelemetryTracker } from "@/lib/telemetry";
 
 type RulesetKey = "v1" | "v2";
 type OpponentMode = "pvp" | "vs_nyano_ai";
@@ -232,7 +236,14 @@ export function MatchPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const ui = (searchParams.get("ui") || "").toLowerCase();
   const isRpg = ui === "rpg";
+  const isMint = ui === "mint";
   const decks = React.useMemo(() => listDecks(), []);
+
+  // ── Telemetry (NIN-UX-003) ──
+  const telemetry = React.useMemo(() => createTelemetryTracker(), []);
+  React.useEffect(() => {
+    return () => { telemetry.flush(); };
+  }, [telemetry]);
 
   const isGuestMode = searchParams.get("mode") === "guest";
   const dataModeParam = (searchParams.get("dm") ?? "fast") as DataMode;
@@ -784,53 +795,63 @@ export function MatchPage() {
 
       if (turns.length >= 9) {
         setError("すでに 9 手が確定しています（Reset してください）");
+        telemetry.recordInvalidAction();
         return;
       }
 
       if (next.cell < 0 || next.cell > 8) {
         setError("cell は 0..8 です");
+        telemetry.recordInvalidAction();
         return;
       }
       if (used.cells.has(next.cell)) {
         setError(`cell ${next.cell} はすでに使用済みです`);
+        telemetry.recordInvalidAction();
         return;
       }
 
       if (next.cardIndex < 0 || next.cardIndex > 4) {
         setError("cardIndex は 0..4 です");
+        telemetry.recordInvalidAction();
         return;
       }
       if (currentUsed.has(next.cardIndex)) {
         setError(`cardIndex ${next.cardIndex} はすでに使用済みです`);
+        telemetry.recordInvalidAction();
         return;
       }
 
       if (next.warningMarkCell !== undefined) {
         if (currentWarnRemaining <= 0) {
           setError("warning mark の使用回数上限（3回）に達しています");
+          telemetry.recordInvalidAction();
           return;
         }
         if (next.warningMarkCell === next.cell) {
           setError("warningMarkCell は placed cell と同じにできません");
+          telemetry.recordInvalidAction();
           return;
         }
         if (next.warningMarkCell < 0 || next.warningMarkCell > 8) {
           setError("warningMarkCell は 0..8 です");
+          telemetry.recordInvalidAction();
           return;
         }
         if (used.cells.has(next.warningMarkCell)) {
           setError(`warningMarkCell ${next.warningMarkCell} はすでに使用済み cell です`);
+          telemetry.recordInvalidAction();
           return;
         }
       }
 
+      telemetry.recordPlace();
       setTurns((prev) => [...prev, next]);
       setDraftCell(null);
       setDraftCardIndex(null);
       setDraftWarningMarkCell(null);
       setSelectedTurnIndex(Math.max(0, turns.length));
     },
-    [turns.length, used.cells, currentUsed, currentWarnRemaining]
+    [turns.length, used.cells, currentUsed, currentWarnRemaining, telemetry]
   );
 
   const commitMove = () => {
@@ -838,10 +859,12 @@ export function MatchPage() {
 
     if (draftCell === null) {
       setError("cell を選択してください（盤面をクリック）");
+      telemetry.recordInvalidAction();
       return;
     }
     if (draftCardIndex === null) {
       setError("card を選択してください");
+      telemetry.recordInvalidAction();
       return;
     }
 
@@ -1053,7 +1076,16 @@ export function MatchPage() {
     <div className="grid gap-6">
       {/* ── Result Overlay ── */}
       {gameResult && (
-        isRpg ? (
+        isMint ? (
+          <GameResultOverlayMint
+            show={showResultOverlay && turns.length >= 9}
+            result={gameResult}
+            onDismiss={() => setShowResultOverlay(false)}
+            onRematch={handleRematch}
+            onReplay={() => { void openReplay(); }}
+            onShare={() => { void copyShareUrl(); }}
+          />
+        ) : isRpg ? (
           <GameResultOverlayRPG
             show={showResultOverlay && turns.length >= 9}
             result={gameResult}
@@ -1383,7 +1415,27 @@ export function MatchPage() {
                     - onCellSelect = handleCellSelect
                     ──────────────────────────────────────────── */}
                 {sim.ok ? (
-                  isRpg ? (
+                  isMint ? (
+                    <BoardViewMint
+                      board={boardNow as any}
+                      selectedCell={draftCell}
+                      placedCell={boardAnim.placedCell}
+                      flippedCells={boardAnim.flippedCells}
+                      selectableCells={selectableCells}
+                      onCellSelect={(cell) => { telemetry.recordInteraction(); handleCellSelect(cell); }}
+                      currentPlayer={currentPlayer}
+                      showCoordinates
+                      showActionPrompt
+                      gamePhase={
+                        turns.length >= 9 ? "game_over"
+                          : isAiTurn ? "ai_turn"
+                          : draftCardIndex !== null ? "select_cell"
+                          : "select_card"
+                      }
+                      inlineError={error}
+                      onDismissError={() => setError(null)}
+                    />
+                  ) : isRpg ? (
                     <BoardViewRPG
                       board={boardNow as any}
                       selectedCell={draftCell}
@@ -1449,14 +1501,28 @@ export function MatchPage() {
                     P0-2: Hand Display (RPG or standard)
                     ──────────────────────────────────────────── */}
                 <div className="grid gap-3">
-                  <div className={isRpg ? "text-xs font-bold uppercase tracking-wider" : "text-xs font-medium text-slate-600"}
+                  <div className={
+                    isMint ? "text-xs font-semibold text-mint-text-secondary"
+                    : isRpg ? "text-xs font-bold uppercase tracking-wider"
+                    : "text-xs font-medium text-slate-600"
+                  }
                     style={isRpg ? { fontFamily: "'Cinzel', serif", color: "var(--rpg-text-gold, #E8D48B)" } : undefined}
                   >
                     {currentPlayer === 0 ? "Player A" : "Player B"} Hand
                     {draftCell !== null && <span className={isRpg ? "" : " text-slate-400"}> · placing on cell {draftCell}</span>}
                   </div>
 
-                  {isRpg && currentHandCards.length > 0 ? (
+                  {isMint && currentHandCards.length > 0 ? (
+                    /* Mint Hand Display */
+                    <HandDisplayMint
+                      cards={currentHandCards}
+                      owner={currentPlayer}
+                      usedIndices={currentUsed}
+                      selectedIndex={draftCardIndex}
+                      onSelect={(idx) => { telemetry.recordInteraction(); setDraftCardIndex(idx); }}
+                      disabled={turns.length >= 9 || isAiTurn}
+                    />
+                  ) : isRpg && currentHandCards.length > 0 ? (
                     /* P0-2: RPG Hand Display */
                     <HandDisplayRPG
                       cards={currentHandCards}

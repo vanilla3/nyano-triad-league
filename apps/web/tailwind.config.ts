@@ -1,5 +1,6 @@
 import type { Config } from "tailwindcss";
 import { rpgAnimations, rpgColors, rpgFontFamily, rpgKeyframes } from "./rpg-theme/rpg-tailwind-extend";
+import { mintAnimations, mintColors, mintKeyframes } from "./mint-theme/mint-tailwind-extend";
 
 /**
  * Nyano Triad League - Tailwind Configuration
@@ -85,6 +86,7 @@ export default {
         defeat: "#EF4444",    // Red - loss
         draw: "#6B7280",      // Gray - draw
         ...rpgColors,
+        ...mintColors,
       },
       
       // ═══════════════════════════════════════════════════════════════
@@ -198,8 +200,9 @@ export default {
         "shimmer": "shimmer 2s linear infinite",
         "spin-slow": "spin 2s linear infinite",
         ...rpgAnimations,
+        ...mintAnimations,
       },
-      
+
       keyframes: {
         "card-flip": {
           "0%": { transform: "rotateY(0deg) scale(1)" },
@@ -256,6 +259,7 @@ export default {
           "100%": { backgroundPosition: "200% 0" },
         },
         ...rpgKeyframes,
+        ...mintKeyframes,
       },
       
       // ═══════════════════════════════════════════════════════════════

@@ -1,0 +1,379 @@
+import React from "react";
+import type { BoardState, PlayerIndex } from "@nyano/triad-engine";
+import { CardNyanoCompact } from "./CardNyano";
+import "../mint-theme/mint-theme.css";
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   BOARD VIEW MINT — Nintendo-level UX Board (NIN-UX-010/011/012/021)
+
+   Features:
+   - Selectable cells: puffy + breathe glow (NIN-UX-010)
+   - Non-selectable cells: flat + sunken
+   - Action prompt: 1-line instruction always visible (NIN-UX-011)
+   - Inline error: short hint near board, not Toast (NIN-UX-012)
+   - Mode visualization: place=green, warning=amber (NIN-UX-021)
+
+   Backwards compatible with BoardViewProps.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+// ── Types ──────────────────────────────────────────────────────────────
+
+export interface BoardViewMintProps {
+  board: BoardState;
+  selectedCell?: number | null;
+  focusCell?: number | null;
+  placedCell?: number | null;
+  flippedCells?: readonly number[] | null;
+  warningMarks?: readonly { cell: number; owner: PlayerIndex }[] | null;
+  onCellSelect?: (cell: number) => void;
+  onClickCell?: (cell: number) => void;
+  selectableCells?: Set<number> | readonly number[] | null;
+  currentPlayer?: PlayerIndex | null;
+  disabled?: boolean;
+  size?: "sm" | "md" | "lg";
+  showCoordinates?: boolean;
+  className?: string;
+
+  // ── Mint-specific ──
+  /** Show the action prompt bar below the board */
+  showActionPrompt?: boolean;
+  /** Current game phase for prompt text & mode visualization */
+  gamePhase?: "select_card" | "select_cell" | "warning" | "ai_turn" | "game_over" | "idle";
+  /** Inline error message (replaces toast for invalid actions) */
+  inlineError?: string | null;
+  /** Callback to dismiss inline error */
+  onDismissError?: () => void;
+}
+
+// ── Helpers ────────────────────────────────────────────────────────────
+
+const CELL_COORDS = ["A1", "B1", "C1", "A2", "B2", "C2", "A3", "B3", "C3"] as const;
+
+function toSelectableSet(v?: Set<number> | readonly number[] | null): Set<number> {
+  if (!v) return new Set();
+  if (v instanceof Set) return v;
+  return new Set(Array.from(v));
+}
+
+function calcScore(board: BoardState): { a: number; b: number } {
+  let a = 0;
+  let b = 0;
+  for (const cell of board) {
+    if (!cell) continue;
+    if ((cell as any).owner === 0) a++;
+    if ((cell as any).owner === 1) b++;
+  }
+  return { a, b };
+}
+
+// ── Prompt messages ────────────────────────────────────────────────────
+
+const PROMPTS: Record<string, { ja: string; en: string }> = {
+  select_card: { ja: "カードを選んでください", en: "Choose a card" },
+  select_cell: { ja: "置きたいマスをタップ", en: "Tap a cell to place" },
+  warning: { ja: "警戒マークを置くマスをタップ", en: "Tap a cell for warning mark" },
+  ai_turn: { ja: "にゃーのの番…", en: "Nyano is thinking..." },
+  game_over: { ja: "対戦終了！", en: "Game over!" },
+  idle: { ja: "準備中…", en: "Getting ready..." },
+};
+
+// ── MintCell ───────────────────────────────────────────────────────────
+
+interface MintCellProps {
+  cell: any | null;
+  index: number;
+  coord: string;
+  isSelected: boolean;
+  isPlaced: boolean;
+  isFlipped: boolean;
+  flipDelayClass?: string;
+  isFocus: boolean;
+  isSelectable: boolean;
+  warningMark?: PlayerIndex | null;
+  onSelect?: () => void;
+  showCoordinates: boolean;
+  isWarningMode: boolean;
+}
+
+function MintCell({
+  cell,
+  coord,
+  isSelected,
+  isPlaced,
+  isFlipped,
+  flipDelayClass,
+  isFocus,
+  isSelectable,
+  warningMark,
+  onSelect,
+  showCoordinates,
+  isWarningMode,
+}: MintCellProps) {
+  const hasCard = !!cell?.card;
+  const owner = hasCard ? (cell.owner as PlayerIndex) : null;
+
+  const classes = ["mint-cell"];
+
+  if (hasCard) {
+    classes.push(owner === 0 ? "mint-cell--owner-a" : "mint-cell--owner-b");
+  } else if (isSelectable) {
+    classes.push("mint-cell--selectable");
+    if (isWarningMode) classes.push("mint-cell--warning-mode");
+  } else {
+    classes.push("mint-cell--flat");
+  }
+
+  if (isSelected && !hasCard) classes.push("mint-cell--selected");
+  if (isPlaced) classes.push("mint-cell--placed");
+  if (isFlipped) {
+    classes.push("mint-cell--flipped");
+    if (flipDelayClass) classes.push(flipDelayClass);
+  }
+  if (isFocus && !isPlaced) classes.push("mint-cell--focus");
+
+  return (
+    <div
+      className={classes.join(" ")}
+      onClick={isSelectable && !hasCard ? onSelect : undefined}
+    >
+      {/* Coordinate label */}
+      {showCoordinates && (
+        <div className="mint-cell__coord">{coord}</div>
+      )}
+
+      {/* Warning mark indicator */}
+      {typeof warningMark === "number" && (
+        <div
+          className={[
+            "mint-cell__warning",
+            warningMark === 0 ? "mint-cell__warning--a" : "mint-cell__warning--b",
+          ].join(" ")}
+          title={`Warning: ${warningMark === 0 ? "A" : "B"}`}
+        >
+          !
+        </div>
+      )}
+
+      {/* Card or empty slot */}
+      {hasCard ? (
+        <CardNyanoCompact
+          card={cell.card}
+          owner={cell.owner}
+          isPlaced={isPlaced}
+          isFlipped={isFlipped}
+        />
+      ) : (
+        <div className="mint-cell__empty-label">
+          {isSelectable ? (isWarningMode ? "⚠" : "＋") : ""}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── Action Prompt (NIN-UX-011) ─────────────────────────────────────────
+
+function ActionPrompt({
+  gamePhase,
+  isWarningMode,
+}: {
+  gamePhase: string;
+  isWarningMode: boolean;
+}) {
+  const prompt = PROMPTS[gamePhase] ?? PROMPTS.idle;
+  const isAi = gamePhase === "ai_turn";
+
+  return (
+    <div className={["mint-prompt", isWarningMode && "mint-prompt--warning"].filter(Boolean).join(" ")}>
+      <div className={["mint-prompt__text", isAi && "mint-prompt__text--ai"].filter(Boolean).join(" ")}>
+        {prompt.ja}
+        <span style={{ marginLeft: 8, fontSize: 12, opacity: 0.6 }}>{prompt.en}</span>
+      </div>
+    </div>
+  );
+}
+
+// ── Inline Error (NIN-UX-012) ──────────────────────────────────────────
+
+function InlineError({
+  message,
+  onDismiss,
+}: {
+  message: string;
+  onDismiss?: () => void;
+}) {
+  // Auto-dismiss after 3 seconds
+  React.useEffect(() => {
+    const t = setTimeout(() => { onDismiss?.(); }, 3000);
+    return () => clearTimeout(t);
+  }, [message, onDismiss]);
+
+  return (
+    <div className="mint-error-pill" role="alert">
+      <span className="mint-error-pill__icon">✕</span>
+      {message}
+    </div>
+  );
+}
+
+// ── Main Board ─────────────────────────────────────────────────────────
+
+export function BoardViewMint({
+  board,
+  selectedCell,
+  focusCell,
+  placedCell = null,
+  flippedCells = [],
+  warningMarks = [],
+  selectableCells,
+  onCellSelect,
+  onClickCell,
+  currentPlayer,
+  disabled = false,
+  showCoordinates = false,
+  className = "",
+  showActionPrompt = true,
+  gamePhase = "idle",
+  inlineError = null,
+  onDismissError,
+}: BoardViewMintProps) {
+  const selectableSet = toSelectableSet(selectableCells);
+  const score = calcScore(board);
+
+  const focus = typeof focusCell === "number" ? focusCell : null;
+  const selected = typeof selectedCell === "number" ? selectedCell : null;
+  const effectiveSelected = selected ?? focus;
+
+  const flippedSet = new Set<number>(Array.from(flippedCells ?? []));
+  const warnMap = new Map<number, PlayerIndex>();
+  for (const w of warningMarks ?? []) {
+    if (w && Number.isFinite(w.cell)) warnMap.set(w.cell, w.owner);
+  }
+
+  const isWarningMode = gamePhase === "warning";
+
+  const handleSelect = (cell: number) => {
+    if (disabled) return;
+    const fn = onCellSelect ?? onClickCell;
+    if (fn) fn(cell);
+  };
+
+  return (
+    <div className={["grid gap-3", className].join(" ")}>
+      {/* ── Score Bar ── */}
+      <div className="mint-scorebar">
+        <div className="mint-scorebar__player">
+          <div className="mint-scorebar__dot mint-scorebar__dot--a" />
+          <span className="mint-scorebar__label mint-scorebar__label--a">A</span>
+          <span className="mint-scorebar__count">{score.a}</span>
+        </div>
+
+        <div className="mint-scorebar__turn">
+          {typeof currentPlayer === "number"
+            ? `${currentPlayer === 0 ? "A" : "B"} のターン`
+            : "—"}
+        </div>
+
+        <div className="mint-scorebar__player">
+          <span className="mint-scorebar__count">{score.b}</span>
+          <span className="mint-scorebar__label mint-scorebar__label--b">B</span>
+          <div className="mint-scorebar__dot mint-scorebar__dot--b" />
+        </div>
+      </div>
+
+      {/* ── Board Grid ── */}
+      <div className="mint-board-frame">
+        <div className="mint-board-inner">
+          <div className="mint-grid">
+            {board.map((cell, idx) => {
+              const coord = CELL_COORDS[idx] ?? String(idx);
+              const isSelectable = !disabled && selectableSet.has(idx);
+              const isPlaced = placedCell === idx;
+              const isFlipped = flippedSet.has(idx);
+              const flipIndex = isFlipped ? (flippedCells ?? []).indexOf(idx) : -1;
+              const flipDelay = flipIndex > 0 ? `mint-cell--flip-delay-${Math.min(flipIndex, 3)}` : undefined;
+              const isFocus = focus === idx;
+              const isSel = effectiveSelected === idx;
+              const warning = warnMap.get(idx) ?? null;
+
+              return (
+                <MintCell
+                  key={idx}
+                  cell={cell as any}
+                  index={idx}
+                  coord={coord}
+                  isSelected={!!isSel}
+                  isPlaced={!!isPlaced}
+                  isFlipped={!!isFlipped}
+                  flipDelayClass={flipDelay}
+                  isFocus={!!isFocus}
+                  isSelectable={isSelectable}
+                  warningMark={warning}
+                  onSelect={() => handleSelect(idx)}
+                  showCoordinates={showCoordinates}
+                  isWarningMode={isWarningMode}
+                />
+              );
+            })}
+          </div>
+        </div>
+      </div>
+
+      {/* ── Action Prompt (NIN-UX-011) ── */}
+      {showActionPrompt && (
+        <ActionPrompt gamePhase={gamePhase} isWarningMode={isWarningMode} />
+      )}
+
+      {/* ── Inline Error (NIN-UX-012) ── */}
+      {inlineError && (
+        <div className="flex justify-center">
+          <InlineError message={inlineError} onDismiss={onDismissError} />
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── Mini Board (overlay) ───────────────────────────────────────────────
+
+export function BoardViewMintMini({
+  board,
+  placedCell,
+  flippedCells,
+}: {
+  board: BoardState;
+  placedCell?: number | null;
+  flippedCells?: number[];
+}) {
+  return (
+    <div className="grid grid-cols-3 gap-1 rounded-2xl p-2"
+      style={{ background: "var(--mint-bg)", border: "1px solid var(--mint-accent-muted)" }}
+    >
+      {board.map((cell, idx) => (
+        <div
+          key={idx}
+          className={[
+            "relative w-14 h-14 rounded-xl border flex items-center justify-center",
+            cell?.owner === 0 ? "border-player-a-300 bg-player-a-50" : "",
+            cell?.owner === 1 ? "border-player-b-300 bg-player-b-50" : "",
+            !cell ? "border-surface-200 bg-white" : "",
+            placedCell === idx ? "ring-2 ring-flip/60" : "",
+            flippedCells?.includes(idx) ? "ring-2 ring-chain/60" : "",
+          ].join(" ")}
+        >
+          {cell?.card ? (
+            <div className="text-center text-2xs font-display font-bold text-surface-700">
+              {Number(cell.card.edges.up)}
+              <br />
+              {Number(cell.card.edges.left)} {Number(cell.card.edges.right)}
+              <br />
+              {Number(cell.card.edges.down)}
+            </div>
+          ) : (
+            <div className="text-3xs text-surface-300">&bull;</div>
+          )}
+        </div>
+      ))}
+    </div>
+  );
+}
