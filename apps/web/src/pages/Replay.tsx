@@ -33,6 +33,7 @@ import { hasEventAttempt, upsertEventAttempt, type EventAttemptV1 } from "@/lib/
 import { fetchNyanoCards } from "@/lib/nyano_rpc";
 import { publishOverlayState } from "@/lib/streamer_bus";
 import { parseTranscriptV1Json } from "@/lib/transcript_import";
+import { annotateReplayMoves } from "@/lib/ai/replay_annotations";
 
 type Mode = "auto" | "v1" | "v2" | "compare";
 
@@ -511,6 +512,12 @@ protocolV1: {
     () => (sim.ok ? detectHighlights(sim.current) : []),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [sim.ok, sim.ok ? sim.current : null],
+  );
+
+  const annotations = React.useMemo(
+    () => sim.ok ? annotateReplayMoves(sim.current, sim.transcript.header.firstPlayer as 0 | 1) : [],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [sim.ok, sim.ok ? sim.current : null, sim.ok ? sim.transcript : null],
   );
 
   const renderReplay = (label: string, res: MatchResultWithHistory) => {
@@ -1075,6 +1082,7 @@ const buildShareLink = async (): Promise<string> => {
                   boardHistory={sim.current.boardHistory}
                   selectedTurnIndex={focusTurnIndex ?? -1}
                   onSelect={(t) => setStep(t + 1)}
+                  annotations={annotations}
                 />
               </div>
             </div>
