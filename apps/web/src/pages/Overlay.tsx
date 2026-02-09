@@ -7,6 +7,9 @@ import { NyanoAvatar } from "@/components/NyanoAvatar";
 import { reactionToExpression } from "@/lib/expression_map";
 import { AiReasonBadge } from "@/components/AiReasonDisplay";
 import { AdvantageBadge } from "@/components/AdvantageBadge";
+import { AdvantageBar } from "@/components/AdvantageBar";
+import { MoveQualityTip } from "@/components/MoveQualityTip";
+import { generateMoveTip } from "@/lib/ai/move_tips";
 import type { AiReasonCode } from "@/lib/ai/nyano_ai";
 import { assessBoardAdvantage } from "@/lib/ai/board_advantage";
 import { ScoreBar } from "@/components/ScoreBar";
@@ -352,6 +355,11 @@ export function OverlayPage() {
     return flipTracesReadout(traces, byLabel, state.lastMove.cell);
   }, [state?.updatedAtMs]);
 
+  // Phase 1: Move quality tip (heuristic)
+  const moveTip = React.useMemo(() => {
+    return generateMoveTip(lastTurnSummary, state?.lastMove ?? null);
+  }, [state?.updatedAtMs]);
+
   const reactionInput = React.useMemo<NyanoReactionInput | null>(() => {
     if (!state) return null;
 
@@ -420,6 +428,13 @@ export function OverlayPage() {
           </div>
         ) : null}
 
+        {/* Stale data warning banner (Phase 0 stability) */}
+        {state?.updatedAtMs && (Date.now() - state.updatedAtMs > 10_000) ? (
+          <div className="mb-3 rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-xs font-semibold text-amber-700 animate-pulse">
+            ⚠ Data stale ({ageLabel(state.updatedAtMs)}) — check Match tab connection
+          </div>
+        ) : null}
+
         <div className={layoutClass}>
           {/* Board */}
           <div className={controls ? "rounded-3xl border border-slate-200 bg-white/75 p-3 shadow-sm" : "rounded-3xl border border-slate-200 bg-white/90 p-3 shadow-sm"}>
@@ -461,9 +476,9 @@ export function OverlayPage() {
 
           {/* Right-side HUD — panel order: Last move → Now Playing → AI → Vote → strictAllowed → Errors */}
           <div className="space-y-3">
-            {/* 1. Last move (P0 for stream viewers) */}
+            {/* 1. Last move (P0 for stream viewers) — Tier 1: Primary */}
             {state?.lastMove ? (
-              <div className={controls ? "rounded-2xl border border-slate-200 bg-white/70 px-4 py-3 shadow-sm" : "rounded-2xl border-l-4 border-l-rose-400 border border-slate-200 bg-white/90 px-4 py-3 shadow-sm"}>
+              <div className={controls ? "rounded-2xl border border-slate-200 bg-white/70 px-4 py-3 shadow-sm" : "rounded-2xl border border-slate-200 ol-panel-primary px-4 py-3 shadow-sm"}>
                 <div className="flex items-center justify-between gap-2">
                   <div className={controls ? "text-xs font-semibold text-slate-800" : "text-sm font-semibold text-slate-800"}>Last move</div>
                   {state?.updatedAtMs ? <span className={controls ? "text-xs text-slate-400" : "text-xs text-slate-400"}>{ageLabel(state.updatedAtMs)}</span> : null}
@@ -508,6 +523,9 @@ export function OverlayPage() {
                   {lastTurnSummary && Array.isArray(lastTurnSummary.flips) && lastTurnSummary.flips.length > 0 ? (
                     <FlipTraceBadges flipTraces={lastTurnSummary.flips} limit={controls ? 4 : 6} />
                   ) : null}
+
+                  {/* Phase 1: Move quality tip */}
+                  {moveTip ? <MoveQualityTip tip={moveTip} size={controls ? "sm" : "md"} /> : null}
                 </div>
 
                 {typeof state.lastMove.warningMarkCell === "number" ? (
@@ -547,8 +565,8 @@ export function OverlayPage() {
               </div>
             ) : null}
 
-            {/* 2. Now Playing */}
-            <div className={controls ? "rounded-2xl border border-slate-200 bg-white/70 px-4 py-3 shadow-sm" : "rounded-2xl border border-slate-200 bg-white/90 px-4 py-3 shadow-sm"}>
+            {/* 2. Now Playing — Tier 1: Primary */}
+            <div className={controls ? "rounded-2xl border border-slate-200 bg-white/70 px-4 py-3 shadow-sm" : "rounded-2xl border border-slate-200 ol-panel-primary px-4 py-3 shadow-sm"}>
               <div className="flex items-center justify-between gap-2">
                 <div className="flex items-center gap-2">
                   {reactionInput ? (
@@ -590,7 +608,7 @@ export function OverlayPage() {
               {matchIdShort ? <div className={controls ? "mt-1 text-xs text-slate-400" : "mt-1 text-xs text-slate-400"}>match: {matchIdShort}</div> : null}
             </div>
 
-            {/* 2.5 Advantage indicator (hidden in minimal density) */}
+            {/* 2.5 Advantage indicator (hidden in minimal density) — Tier 2: Secondary */}
             {density !== "minimal" && (() => {
               const adv = state?.advantage
                 ? {
@@ -604,12 +622,15 @@ export function OverlayPage() {
                   ? assessBoardAdvantage(board as any)
                   : null;
               if (!adv) return null;
-              return (
-                <div className="flex items-center gap-2">
-                  <span className={controls ? "text-xs text-slate-500" : "text-sm text-slate-500"}>形勢</span>
-                  <AdvantageBadge advantage={adv} size={controls ? "sm" : "md"} showScore />
-                </div>
-              );
+              if (controls) {
+                return (
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-slate-500">形勢</span>
+                    <AdvantageBadge advantage={adv} size="sm" showScore />
+                  </div>
+                );
+              }
+              return <AdvantageBar advantage={adv} size={density === "full" ? "lg" : "md"} />;
             })()}
 
             {/* 3. AI callout (hidden in minimal density) */}
@@ -626,8 +647,9 @@ export function OverlayPage() {
             ) : null}
 
             {/* 4. Vote status (visible when vote=1) */}
+            {/* 4. Vote status — Tier 2: Secondary */}
             {voteEnabled ? (
-              <div className={controls ? "rounded-2xl border border-slate-200 bg-white/70 px-4 py-3 shadow-sm" : "rounded-2xl border border-slate-200 bg-white/90 px-4 py-3 shadow-sm"}>
+              <div className={controls ? "rounded-2xl border border-slate-200 bg-white/70 px-4 py-3 shadow-sm" : "rounded-2xl border border-slate-200 ol-panel-secondary px-4 py-3 shadow-sm"}>
                 <div className="flex items-center justify-between gap-2">
                   <div className={controls ? "text-xs font-semibold text-slate-800" : "text-sm font-semibold text-slate-800"}>Chat voting</div>
                   {voteState?.status === "open" ? (
@@ -689,8 +711,8 @@ export function OverlayPage() {
               </div>
             ) : null}
 
-            {/* 5. strictAllowed HUD (operator/debug — hidden in minimal density) */}
-            {density !== "minimal" ? <div className={controls ? "rounded-2xl border border-slate-200 bg-white/70 px-4 py-3 shadow-sm" : "rounded-2xl border border-slate-200 bg-white/90 px-4 py-3 shadow-sm"}>
+            {/* 5. strictAllowed HUD (operator/debug — hidden in minimal density) — Tier 3: Tertiary */}
+            {density !== "minimal" ? <div className={controls ? "rounded-2xl border border-slate-200 bg-white/70 px-4 py-3 shadow-sm" : "rounded-2xl border border-slate-200 ol-panel-tertiary px-4 py-3 shadow-sm"}>
               <div className="flex items-center justify-between gap-2">
                 <div className={controls ? "text-xs font-semibold text-slate-800" : "text-sm font-semibold text-slate-800"}>strictAllowed</div>
                 {strictAllowed ? (
@@ -750,6 +772,17 @@ export function OverlayPage() {
               </div>
             ) : null}
 
+            {/* 7.5. RPC connection error (Phase 0 stability) */}
+            {state?.rpcStatus && !state.rpcStatus.ok ? (
+              <div className="callout callout-error">
+                <div className="flex items-center gap-2">
+                  <div className="h-2 w-2 shrink-0 rounded-full bg-red-500 animate-pulse" />
+                  <div className="text-xs font-semibold">RPC Error</div>
+                </div>
+                <div className="mt-1 text-sm">{state.rpcStatus.message ?? "RPC connection failed"}</div>
+              </div>
+            ) : null}
+
             {!state ? (
               <div className="callout callout-muted">
                 <div className="text-xs font-semibold">No signal yet</div>
@@ -801,6 +834,42 @@ export function OverlayPage() {
                     </li>
                   </ul>
                 </div>
+
+                {/* OBS Scene Templates (Phase 1) */}
+                <details className="rounded-2xl border border-slate-200 bg-white/70 px-4 py-3 shadow-sm">
+                  <summary className="text-xs font-semibold text-slate-800 cursor-pointer select-none">
+                    OBS Scene Templates
+                  </summary>
+                  <div className="mt-2 grid gap-3 text-xs text-slate-600">
+                    <div>
+                      <div className="font-semibold text-slate-700">720p Stream (1280x720)</div>
+                      <ul className="list-disc pl-4 mt-1 space-y-0.5">
+                        <li>Theme: <code className="font-mono bg-slate-100 px-1 rounded">720p-standard</code> or <code className="font-mono bg-slate-100 px-1 rounded">720p-minimal</code></li>
+                        <li>Browser Source: 400x720 (right side)</li>
+                        <li>URL: <code className="font-mono bg-slate-100 px-1 rounded text-[10px]">/overlay?controls=0&theme=720p-standard&bg=transparent</code></li>
+                      </ul>
+                    </div>
+                    <div>
+                      <div className="font-semibold text-slate-700">1080p Stream (1920x1080)</div>
+                      <ul className="list-disc pl-4 mt-1 space-y-0.5">
+                        <li>Theme: <code className="font-mono bg-slate-100 px-1 rounded">1080p-standard</code> or <code className="font-mono bg-slate-100 px-1 rounded">1080p-full</code></li>
+                        <li>Browser Source: 500x1080 (right side)</li>
+                        <li>URL: <code className="font-mono bg-slate-100 px-1 rounded text-[10px]">/overlay?controls=0&theme=1080p-standard&bg=transparent</code></li>
+                      </ul>
+                    </div>
+                    <div>
+                      <div className="font-semibold text-slate-700">Full Screen Overlay</div>
+                      <ul className="list-disc pl-4 mt-1 space-y-0.5">
+                        <li>Browser Source: 1920x1080</li>
+                        <li>URL: <code className="font-mono bg-slate-100 px-1 rounded text-[10px]">/overlay?controls=0&theme=1080p-full&bg=transparent&vote=0</code></li>
+                      </ul>
+                    </div>
+                    <div className="text-[10px] text-slate-400 border-t border-slate-100 pt-2">
+                      Add <code className="font-mono bg-slate-100 px-1 rounded">vote=0</code> to hide voting panel.
+                      Use <code className="font-mono bg-slate-100 px-1 rounded">bg=transparent</code> for chroma-key.
+                    </div>
+                  </div>
+                </details>
               </div>
             ) : null}
           </div>

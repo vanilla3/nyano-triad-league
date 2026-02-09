@@ -97,10 +97,12 @@ export function StreamOperationsHUD({
     return () => window.clearInterval(t);
   }, [voteOpen, voteEndsAtMs]);
 
-  // ── Sync status ──
+  // ── Sync status (3-tier: fresh / delayed / stale) ──
   const age =
     live?.updatedAtMs ? Math.floor((Date.now() - live.updatedAtMs) / 1000) : null;
   const isFresh = age !== null && age < 5;
+  const isDelayed = age !== null && age >= 5 && age < 10;
+  const isStale = age !== null && age >= 10;
 
   return (
     <div className="relative rounded-2xl overflow-hidden">
@@ -143,12 +145,17 @@ export function StreamOperationsHUD({
                   "w-2 h-2 rounded-full",
                   isFresh
                     ? "bg-emerald-500 animate-pulse"
-                    : age !== null
+                    : isDelayed
                       ? "bg-amber-500"
-                      : "bg-surface-300",
+                      : isStale
+                        ? "bg-red-500 animate-pulse"
+                        : "bg-surface-300",
                 ].join(" ")}
               />
-              <span className="text-surface-500 font-mono">
+              <span className={[
+                "font-mono",
+                isStale ? "text-red-600 font-semibold" : "text-surface-500",
+              ].join(" ")}>
                 {age !== null ? (age < 2 ? "live" : `${age}s`) : "—"}
               </span>
             </div>

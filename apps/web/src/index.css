@@ -148,6 +148,25 @@
   font-size: var(--ol-font);
 }
 
+/* ── Overlay Panel Hierarchy (Phase 1 spectator experience) ────────────── */
+
+.ol-panel-primary {
+  border-left: 4px solid theme('colors.rose.400');
+  background: rgba(255, 255, 255, 0.95);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.ol-panel-secondary {
+  border-left: 3px solid theme('colors.slate.300');
+  background: rgba(255, 255, 255, 0.90);
+}
+
+.ol-panel-tertiary {
+  border-left: 2px solid transparent;
+  background: rgba(255, 255, 255, 0.75);
+  opacity: 0.85;
+}
+
 /* ═══════════════════════════════════════════════════════════════════════════
    BASE STYLES
    ═══════════════════════════════════════════════════════════════════════════ */
