@@ -133,7 +133,7 @@ export interface NyanoReactionInput {
   winner?: PlayerIndex | "draw" | null;
 }
 
-function pickReactionKind(input: NyanoReactionInput): ReactionKind {
+export function pickReactionKind(input: NyanoReactionInput): ReactionKind {
   // Game end states take priority
   if (input.finished && input.winner != null) {
     if (input.winner === "draw") return "game_draw";

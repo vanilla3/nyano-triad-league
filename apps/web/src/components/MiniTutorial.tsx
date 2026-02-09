@@ -18,6 +18,14 @@ function markTutorialSeen(): void {
   }
 }
 
+export function resetTutorialSeen(): void {
+  try {
+    localStorage.removeItem(STORAGE_KEY);
+  } catch {
+    // ignore
+  }
+}
+
 type Props = {
   onDismiss?: () => void;
 };
@@ -57,6 +65,12 @@ export function MiniTutorial({ onDismiss }: Props) {
           onClick={dismiss}
         >
           Got it!
+        </button>
+        <button
+          className="mt-2 w-full text-center text-xs text-surface-400 hover:text-surface-600 underline"
+          onClick={dismiss}
+        >
+          Skip tutorial
         </button>
       </div>
     </div>

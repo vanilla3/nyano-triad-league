@@ -2,7 +2,11 @@ import React from "react";
 import { Link, useSearchParams } from "react-router-dom";
 
 import { CardMini } from "@/components/CardMini";
-import { NyanoReactionBadge, type NyanoReactionInput } from "@/components/NyanoReaction";
+import { NyanoReactionBadge, pickReactionKind, type NyanoReactionInput } from "@/components/NyanoReaction";
+import { NyanoAvatar } from "@/components/NyanoAvatar";
+import { reactionToExpression } from "@/lib/expression_map";
+import { AiReasonBadge } from "@/components/AiReasonDisplay";
+import type { AiReasonCode } from "@/lib/ai/nyano_ai";
 import { ScoreBar } from "@/components/ScoreBar";
 import { FlipTraceBadges } from "@/components/FlipTraceBadges";
 import { flipTracesReadout, flipTracesSummary } from "@/components/flipTraceDescribe";
@@ -386,7 +390,17 @@ export function OverlayPage() {
           <div className="space-y-3">
             <div className={controls ? "rounded-2xl border border-slate-200 bg-white/70 px-4 py-3 shadow-sm" : "rounded-2xl border border-slate-200 bg-white/90 px-4 py-3 shadow-sm"}>
               <div className="flex items-center justify-between gap-2">
-                <div className={controls ? "text-xs font-semibold text-slate-800" : "text-sm font-semibold text-slate-800"}>Now Playing</div>
+                <div className="flex items-center gap-2">
+                  {reactionInput ? (
+                    <NyanoAvatar
+                      size={controls ? 28 : 36}
+                      expression={reactionToExpression(pickReactionKind(reactionInput))}
+                    />
+                  ) : (
+                    <NyanoAvatar size={controls ? 28 : 36} expression="calm" />
+                  )}
+                  <div className={controls ? "text-xs font-semibold text-slate-800" : "text-sm font-semibold text-slate-800"}>Now Playing</div>
+                </div>
                 <div className="flex items-center gap-2">
                   {reactionInput ? <NyanoReactionBadge input={reactionInput} turnIndex={typeof state?.turn === "number" ? state.turn : 0} /> : null}
                   {modeBadge}
@@ -628,7 +642,12 @@ export function OverlayPage() {
 
             {state?.aiNote ? (
               <div className="callout callout-info">
-                <div className="text-xs font-semibold">Nyano says</div>
+                <div className="flex items-center gap-2">
+                  <div className="text-xs font-semibold">Nyano says</div>
+                  {state.aiReasonCode ? (
+                    <AiReasonBadge reasonCode={state.aiReasonCode as AiReasonCode} />
+                  ) : null}
+                </div>
                 <div className="mt-1 text-sm">{state.aiNote}</div>
               </div>
             ) : null}
