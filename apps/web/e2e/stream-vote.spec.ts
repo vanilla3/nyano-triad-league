@@ -79,7 +79,7 @@ test.describe("Stream vote flow", () => {
     await expect(startBtn).toBeVisible();
     await expect(startBtn).toBeDisabled();
 
-    // CLOSED badge should be visible
-    await expect(page.getByText("CLOSED")).toBeVisible();
+    // CLOSED badge should be visible (use .first() as multiple elements may match)
+    await expect(page.getByText("CLOSED").first()).toBeVisible();
   });
 });
