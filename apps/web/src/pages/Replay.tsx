@@ -475,6 +475,32 @@ protocolV1: {
     setSearchParams(next, { replace: true });
   }, [mode, step, searchParams, setSearchParams]);
 
+  const highlights = React.useMemo(
+    () => (sim.ok ? detectHighlights(sim.current) : []),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [sim.ok, sim.ok ? sim.current : null],
+  );
+
+  // Highlight jump helpers
+  const jumpToNextHighlight = React.useCallback(() => {
+    if (highlights.length === 0) return;
+    const next = highlights.find(h => h.step > step);
+    setIsPlaying(false);
+    setStep(next ? next.step : highlights[0].step);
+  }, [highlights, step]);
+
+  const jumpToPrevHighlight = React.useCallback(() => {
+    if (highlights.length === 0) return;
+    const prev = [...highlights].reverse().find(h => h.step < step);
+    setIsPlaying(false);
+    setStep(prev ? prev.step : highlights[highlights.length - 1].step);
+  }, [highlights, step]);
+
+  const currentHighlightIdx = React.useMemo(() => {
+    if (highlights.length === 0) return -1;
+    return highlights.findIndex(h => h.step === step);
+  }, [highlights, step]);
+
   // keyboard
   React.useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -485,10 +511,12 @@ protocolV1: {
       if (e.key === " ") { e.preventDefault(); setIsPlaying((p) => !p); }
       if (e.key === "Home") { e.preventDefault(); setIsPlaying(false); setStep(0); }
       if (e.key === "End") { e.preventDefault(); setIsPlaying(false); setStep(stepMax); }
+      if (e.key === "[") { e.preventDefault(); jumpToPrevHighlight(); }
+      if (e.key === "]") { e.preventDefault(); jumpToNextHighlight(); }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [stepMax]);
+  }, [stepMax, jumpToNextHighlight, jumpToPrevHighlight]);
 
   // Autoplay timer
   React.useEffect(() => {
@@ -509,12 +537,6 @@ protocolV1: {
 
   const compare = sim.ok && (mode === "compare" || (mode === "auto" && pickDefaultMode(sim.transcript.header.rulesetId) === "compare"));
   const diverged = sim.ok ? !boardEquals(sim.v1.boardHistory[step], sim.v2.boardHistory[step]) : false;
-
-  const highlights = React.useMemo(
-    () => (sim.ok ? detectHighlights(sim.current) : []),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [sim.ok, sim.ok ? sim.current : null],
-  );
 
   const annotations = React.useMemo(
     () => sim.ok ? annotateReplayMoves(sim.current, sim.transcript.header.firstPlayer as 0 | 1) : [],
@@ -1031,11 +1053,36 @@ const buildShareLink = async (): Promise<string> => {
                   </div>
                   <div className="text-xs text-slate-600">{step === 0 ? "initial" : `after turn ${step}`}</div>
                   {highlights.length > 0 && (
-                    <div className="flex flex-wrap gap-2 text-[10px] text-slate-500">
-                      <span className="flex items-center gap-1"><span className="inline-block w-2 h-2 rounded-full bg-amber-500" /> Big Flip</span>
-                      <span className="flex items-center gap-1"><span className="inline-block w-2 h-2 rounded-full bg-purple-500" /> Chain</span>
-                      <span className="flex items-center gap-1"><span className="inline-block w-2 h-2 rounded-full bg-red-500" /> Combo</span>
-                      <span className="flex items-center gap-1"><span className="inline-block w-2 h-2 rounded-full bg-orange-500" /> Warning</span>
+                    <div className="flex flex-wrap items-center gap-3">
+                      <div className="flex items-center gap-1.5">
+                        <button
+                          className="rounded border border-slate-300 bg-white px-2 py-0.5 text-xs font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-40"
+                          onClick={jumpToPrevHighlight}
+                          disabled={highlights.length === 0}
+                          title="Previous highlight ([)"
+                        >
+                          ⏮
+                        </button>
+                        <span className="text-[10px] font-medium text-slate-600">
+                          {currentHighlightIdx >= 0
+                            ? `${currentHighlightIdx + 1}/${highlights.length}`
+                            : `${highlights.length} highlights`}
+                        </span>
+                        <button
+                          className="rounded border border-slate-300 bg-white px-2 py-0.5 text-xs font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-40"
+                          onClick={jumpToNextHighlight}
+                          disabled={highlights.length === 0}
+                          title="Next highlight (])"
+                        >
+                          ⏭
+                        </button>
+                      </div>
+                      <div className="flex flex-wrap gap-2 text-[10px] text-slate-500">
+                        <span className="flex items-center gap-1"><span className="inline-block w-2 h-2 rounded-full bg-amber-500" /> Big Flip</span>
+                        <span className="flex items-center gap-1"><span className="inline-block w-2 h-2 rounded-full bg-purple-500" /> Chain</span>
+                        <span className="flex items-center gap-1"><span className="inline-block w-2 h-2 rounded-full bg-red-500" /> Combo</span>
+                        <span className="flex items-center gap-1"><span className="inline-block w-2 h-2 rounded-full bg-orange-500" /> Warning</span>
+                      </div>
                     </div>
                   )}
                 </div>

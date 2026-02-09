@@ -1,3 +1,5 @@
+export type DeckOrigin = "guest" | "manual" | "imported" | "recommended";
+
 export type DeckV1 = {
   id: string;
   name: string;
@@ -5,6 +7,14 @@ export type DeckV1 = {
   tokenIds: string[];
   createdAt: string;
   updatedAt: string;
+  /** How this deck was created (optional, backward-compatible) */
+  origin?: DeckOrigin;
+  /** AI difficulty when created as guest deck */
+  difficulty?: string;
+  /** Ruleset key when created */
+  rulesetKey?: string;
+  /** Free-form memo / description */
+  memo?: string;
 };
 
 const KEY = "nyano_triad_decks_v1";
@@ -29,13 +39,21 @@ function normalizeDeck(d: any): DeckV1 | null {
   const tokenIds = d.tokenIds.map(String).filter((s: string) => s.length > 0);
   if (tokenIds.length !== 5) return null;
 
-  return {
+  const deck: DeckV1 = {
     id: d.id,
     name: d.name,
     tokenIds,
     createdAt: typeof d.createdAt === "string" ? d.createdAt : nowIso(),
     updatedAt: typeof d.updatedAt === "string" ? d.updatedAt : nowIso(),
   };
+
+  // Preserve optional metadata (backward-compatible)
+  if (typeof d.origin === "string") deck.origin = d.origin as DeckOrigin;
+  if (typeof d.difficulty === "string") deck.difficulty = d.difficulty;
+  if (typeof d.rulesetKey === "string") deck.rulesetKey = d.rulesetKey;
+  if (typeof d.memo === "string") deck.memo = d.memo;
+
+  return deck;
 }
 
 function loadAll(): DeckV1[] {
@@ -65,7 +83,15 @@ export function getDeck(id: string): DeckV1 | null {
   return loadAll().find((d) => d.id === id) ?? null;
 }
 
-export function upsertDeck(input: { id?: string; name: string; tokenIds: bigint[] }): DeckV1 {
+export function upsertDeck(input: {
+  id?: string;
+  name: string;
+  tokenIds: bigint[];
+  origin?: DeckOrigin;
+  difficulty?: string;
+  rulesetKey?: string;
+  memo?: string;
+}): DeckV1 {
   const decks = loadAll();
 
   const tokenIds = input.tokenIds.map((t) => t.toString());
@@ -80,6 +106,19 @@ export function upsertDeck(input: { id?: string; name: string; tokenIds: bigint[
     createdAt: existing?.createdAt ?? now,
     updatedAt: now,
   };
+
+  // Carry through optional metadata
+  if (input.origin) next.origin = input.origin;
+  else if (existing?.origin) next.origin = existing.origin;
+
+  if (input.difficulty) next.difficulty = input.difficulty;
+  else if (existing?.difficulty) next.difficulty = existing.difficulty;
+
+  if (input.rulesetKey) next.rulesetKey = input.rulesetKey;
+  else if (existing?.rulesetKey) next.rulesetKey = existing.rulesetKey;
+
+  if (input.memo) next.memo = input.memo;
+  else if (existing?.memo) next.memo = existing.memo;
 
   const filtered = decks.filter((d) => d.id !== id);
   saveAll([next, ...filtered]);

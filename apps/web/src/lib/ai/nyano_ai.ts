@@ -546,16 +546,29 @@ function pickMinimaxMove(args: AiMoveArgs, depth: number): AiMoveResult {
   };
 }
 
-/** Human-readable label for a reason code. */
+/** Human-readable short label for a reason code (Japanese). */
 export function reasonCodeLabel(code: AiReasonCode): string {
   switch (code) {
-    case "FIRST_AVAILABLE": return "First Available";
-    case "MAXIMIZE_FLIPS": return "Max Flips";
-    case "BLOCK_CORNER": return "Block Corner";
-    case "SET_WARNING": return "Set Warning";
-    case "MINIMAX_D2": return "Minimax (d2)";
-    case "MINIMAX_D3": return "Minimax (d3)";
-    case "FALLBACK": return "Fallback";
+    case "FIRST_AVAILABLE": return "初手";
+    case "MAXIMIZE_FLIPS": return "最大フリップ";
+    case "BLOCK_CORNER": return "角ブロック";
+    case "SET_WARNING": return "罠設置";
+    case "MINIMAX_D2": return "2手先読み";
+    case "MINIMAX_D3": return "3手先読み";
+    case "FALLBACK": return "デフォルト";
+  }
+}
+
+/** Longer explanation for a reason code (for tooltips/detail views). */
+export function reasonCodeDetail(code: AiReasonCode): string {
+  switch (code) {
+    case "FIRST_AVAILABLE": return "最初に見つけた空きセルにカードを配置（easy）";
+    case "MAXIMIZE_FLIPS": return "このターンで最も多くの相手カードを奪う手を選択";
+    case "BLOCK_CORNER": return "相手が有利になる角の位置をブロック";
+    case "SET_WARNING": return "次のターンに備えて警戒マークを戦略的に配置";
+    case "MINIMAX_D2": return "自分の手と相手の最善応手を2手先まで読んで選択（hard）";
+    case "MINIMAX_D3": return "3手先までアルファ・ベータ探索で最善手を探索（expert）";
+    case "FALLBACK": return "特別な戦略なし、有効な手からランダムに選択";
   }
 }
 

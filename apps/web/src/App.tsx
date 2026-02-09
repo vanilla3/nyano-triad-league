@@ -1,6 +1,7 @@
 import React from "react";
 import { NavLink } from "react-router-dom";
 import { AnimatedOutlet } from "@/components/AnimatedOutlet";
+import { AppErrorBoundary } from "@/components/EmptyState";
 import { ToastProvider } from "./components/Toast";
 
 const NavItem = (props: { to: string; label: string; emoji?: string }) => {
@@ -66,7 +67,9 @@ export function AppLayout() {
       </header>
 
       <main className="container-page">
-        <AnimatedOutlet />
+        <AppErrorBoundary fallbackTitle="ページの読み込みに失敗しました">
+          <AnimatedOutlet />
+        </AppErrorBoundary>
       </main>
 
       <footer className="border-t border-slate-200/70 bg-white/60 backdrop-blur">

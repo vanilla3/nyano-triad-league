@@ -28,7 +28,55 @@ import {
   type OverlayStateV1,
   type StreamVoteStateV1,
 } from "@/lib/streamer_bus";
+import { readStringSetting, writeStringSetting } from "@/lib/local_settings";
 import type { CardData, PlayerIndex } from "@nyano/triad-engine";
+
+// ── Overlay Theme System ──────────────────────────────────────────────
+
+export type OverlayTheme = "720p-minimal" | "720p-standard" | "1080p-standard" | "1080p-full";
+
+const OVERLAY_THEMES: OverlayTheme[] = ["720p-minimal", "720p-standard", "1080p-standard", "1080p-full"];
+
+const THEME_LABELS: Record<OverlayTheme, string> = {
+  "720p-minimal": "720p Minimal",
+  "720p-standard": "720p Standard",
+  "1080p-standard": "1080p Standard",
+  "1080p-full": "1080p Full",
+};
+
+type ThemeDensity = "minimal" | "standard" | "full";
+
+function themeDensity(theme: OverlayTheme): ThemeDensity {
+  if (theme === "720p-minimal") return "minimal";
+  if (theme === "1080p-full") return "full";
+  return "standard";
+}
+
+function themeAvatarSize(theme: OverlayTheme): number {
+  switch (theme) {
+    case "720p-minimal": return 22;
+    case "720p-standard": return 26;
+    case "1080p-standard": return 32;
+    case "1080p-full": return 38;
+  }
+}
+
+function themeBoardGap(theme: OverlayTheme): string {
+  switch (theme) {
+    case "720p-minimal": return "gap-1.5";
+    case "720p-standard": return "gap-2";
+    case "1080p-standard": return "gap-3";
+    case "1080p-full": return "gap-3";
+  }
+}
+
+function resolveTheme(param: string | null, stored: string): OverlayTheme {
+  if (param && OVERLAY_THEMES.includes(param as OverlayTheme)) return param as OverlayTheme;
+  if (OVERLAY_THEMES.includes(stored as OverlayTheme)) return stored as OverlayTheme;
+  return "1080p-standard";
+}
+
+const SETTINGS_KEY_OVERLAY_THEME = "nyano.overlay.theme";
 
 function nowMs() {
   return Date.now();
@@ -128,6 +176,27 @@ export function OverlayPage() {
   const transparent = isTransparentBg(bg);
   const voteEnabled = searchParams.get("vote") !== "0";
 
+  // Theme: URL param takes priority, then localStorage, then default
+  const themeParam = searchParams.get("theme");
+  const [theme, setTheme] = React.useState<OverlayTheme>(() =>
+    resolveTheme(themeParam, readStringSetting(SETTINGS_KEY_OVERLAY_THEME, "1080p-standard")),
+  );
+
+  // Re-resolve when URL param changes
+  React.useEffect(() => {
+    const resolved = resolveTheme(themeParam, readStringSetting(SETTINGS_KEY_OVERLAY_THEME, "1080p-standard"));
+    setTheme(resolved);
+  }, [themeParam]);
+
+  const handleThemeChange = (t: OverlayTheme) => {
+    setTheme(t);
+    writeStringSetting(SETTINGS_KEY_OVERLAY_THEME, t);
+  };
+
+  const density = themeDensity(theme);
+  const avatarSize = themeAvatarSize(theme);
+  const boardGap = themeBoardGap(theme);
+
   const [state, setState] = React.useState<OverlayStateV1 | null>(() => readStoredOverlayState());
   const [voteState, setVoteState] = React.useState<StreamVoteStateV1 | null>(() => readStoredStreamVoteState());
   const [_tick, setTick] = React.useState(0);
@@ -148,10 +217,12 @@ export function OverlayPage() {
     return subscribeStreamVoteState((s) => setVoteState(s));
   }, []);
 
+  const themeClass = `overlay-theme-${theme}`;
   const rootClass = [
     "min-h-screen",
     transparent ? "bg-transparent" : "bg-gradient-to-b from-rose-50 via-white to-sky-50",
     "text-slate-900",
+    themeClass,
   ].join(" ");
 
   const board: (BoardCellLite | null)[] = Array.isArray(state?.board)
@@ -352,7 +423,7 @@ export function OverlayPage() {
         <div className={layoutClass}>
           {/* Board */}
           <div className={controls ? "rounded-3xl border border-slate-200 bg-white/75 p-3 shadow-sm" : "rounded-3xl border border-slate-200 bg-white/90 p-3 shadow-sm"}>
-            <div className={controls ? "grid grid-cols-3 gap-2" : "grid grid-cols-3 gap-3"}>
+            <div className={controls ? "grid grid-cols-3 gap-2" : `grid grid-cols-3 ${boardGap}`}>
               {Array.from({ length: 9 }, (_, i) => {
                 const cell = board[i];
                 const owner = cell?.owner;
@@ -451,13 +522,13 @@ export function OverlayPage() {
                   </div>
                 ) : null}
 
-                {lastFlippedCells.length > 0 ? (
+                {density !== "minimal" && lastFlippedCells.length > 0 ? (
                   <div className="mt-1 text-xs text-slate-500">
                     flipped: <span className="font-mono">{lastFlippedCells.map(cellIndexToCoord).join(", ")}</span>
                   </div>
                 ) : null}
 
-                {lastTurnSummary && Array.isArray(lastTurnSummary.flips) && lastTurnSummary.flips.length > 0 ? (
+                {density !== "minimal" && lastTurnSummary && Array.isArray(lastTurnSummary.flips) && lastTurnSummary.flips.length > 0 ? (
                   <div className="mt-1 text-xs text-slate-500">
                     {flipTracesSummary(lastTurnSummary.flips)}
                   </div>
@@ -482,11 +553,11 @@ export function OverlayPage() {
                 <div className="flex items-center gap-2">
                   {reactionInput ? (
                     <NyanoAvatar
-                      size={controls ? 28 : 36}
+                      size={controls ? 28 : avatarSize}
                       expression={reactionToExpression(pickReactionKind(reactionInput))}
                     />
                   ) : (
-                    <NyanoAvatar size={controls ? 28 : 36} expression="calm" />
+                    <NyanoAvatar size={controls ? 28 : avatarSize} expression="calm" />
                   )}
                   <div className={controls ? "text-xs font-semibold text-slate-800" : "text-sm font-semibold text-slate-800"}>Now Playing</div>
                 </div>
@@ -519,8 +590,8 @@ export function OverlayPage() {
               {matchIdShort ? <div className={controls ? "mt-1 text-xs text-slate-400" : "mt-1 text-xs text-slate-400"}>match: {matchIdShort}</div> : null}
             </div>
 
-            {/* 2.5 Advantage indicator */}
-            {(() => {
+            {/* 2.5 Advantage indicator (hidden in minimal density) */}
+            {density !== "minimal" && (() => {
               const adv = state?.advantage
                 ? {
                     scoreA: state.advantage.scoreA,
@@ -541,8 +612,8 @@ export function OverlayPage() {
               );
             })()}
 
-            {/* 3. AI callout */}
-            {state?.aiNote ? (
+            {/* 3. AI callout (hidden in minimal density) */}
+            {density !== "minimal" && state?.aiNote ? (
               <div className="callout callout-info">
                 <div className="flex items-center gap-2">
                   <div className="text-xs font-semibold">Nyano says</div>
@@ -618,8 +689,8 @@ export function OverlayPage() {
               </div>
             ) : null}
 
-            {/* 5. strictAllowed HUD (operator/debug) */}
-            <div className={controls ? "rounded-2xl border border-slate-200 bg-white/70 px-4 py-3 shadow-sm" : "rounded-2xl border border-slate-200 bg-white/90 px-4 py-3 shadow-sm"}>
+            {/* 5. strictAllowed HUD (operator/debug — hidden in minimal density) */}
+            {density !== "minimal" ? <div className={controls ? "rounded-2xl border border-slate-200 bg-white/70 px-4 py-3 shadow-sm" : "rounded-2xl border border-slate-200 bg-white/90 px-4 py-3 shadow-sm"}>
               <div className="flex items-center justify-between gap-2">
                 <div className={controls ? "text-xs font-semibold text-slate-800" : "text-sm font-semibold text-slate-800"}>strictAllowed</div>
                 {strictAllowed ? (
@@ -655,7 +726,7 @@ export function OverlayPage() {
               ) : (
                 <div className="mt-1 text-xs text-slate-500">Waiting for host…</div>
               )}
-            </div>
+            </div> : null}
 
             {/* 6. Error callout */}
             {state?.error ? (
@@ -691,17 +762,45 @@ export function OverlayPage() {
             ) : null}
 
             {controls ? (
-              <div className="rounded-2xl border border-slate-200 bg-white/70 px-4 py-3 text-xs text-slate-500 shadow-sm">
-                Tips:
-                <ul className="mt-1 list-disc pl-4">
-                  <li>
-                    OBS BrowserSource: use <span className="font-mono">/overlay?controls=0</span> (and optionally{" "}
-                    <span className="font-mono">bg=transparent</span>)
-                  </li>
-                  <li>
-                    Vote UI: toggle by <span className="font-mono">vote=0</span>
-                  </li>
-                </ul>
+              <div className="space-y-3">
+                {/* Theme picker */}
+                <div className="rounded-2xl border border-slate-200 bg-white/70 px-4 py-3 shadow-sm">
+                  <div className="text-xs font-semibold text-slate-800">Theme</div>
+                  <div className="mt-2 flex flex-wrap gap-1.5">
+                    {OVERLAY_THEMES.map((t) => (
+                      <button
+                        key={t}
+                        className={`rounded-lg border px-2.5 py-1 text-[11px] font-medium transition-colors ${
+                          theme === t
+                            ? "border-nyano-400 bg-nyano-50 text-nyano-700"
+                            : "border-slate-200 bg-white text-slate-600 hover:border-slate-300"
+                        }`}
+                        onClick={() => handleThemeChange(t)}
+                      >
+                        {THEME_LABELS[t]}
+                      </button>
+                    ))}
+                  </div>
+                  <div className="mt-1.5 text-[10px] text-slate-400">
+                    OBS URL: <span className="font-mono">/overlay?controls=0&theme={theme}</span>
+                  </div>
+                </div>
+
+                <div className="rounded-2xl border border-slate-200 bg-white/70 px-4 py-3 text-xs text-slate-500 shadow-sm">
+                  Tips:
+                  <ul className="mt-1 list-disc pl-4">
+                    <li>
+                      OBS BrowserSource: use <span className="font-mono">/overlay?controls=0&theme={theme}</span> (and optionally{" "}
+                      <span className="font-mono">bg=transparent</span>)
+                    </li>
+                    <li>
+                      Vote UI: toggle by <span className="font-mono">vote=0</span>
+                    </li>
+                    <li>
+                      Density: <span className="font-mono">{density}</span> — {density === "minimal" ? "hides advantage/AI badges" : density === "full" ? "all badges, larger text" : "balanced view"}
+                    </li>
+                  </ul>
+                </div>
               </div>
             ) : null}
           </div>

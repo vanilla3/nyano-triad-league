@@ -131,6 +131,52 @@ export function getAllTokenIds(index: GameIndexV1 | null | undefined): string[] 
   return Object.keys(index.tokens);
 }
 
+// ── Card Search / Filter ──────────────────────────────────────────────
+
+export type CardFilter = {
+  hand?: JankenHand;
+  minEdgeSum?: number;
+  traitSearch?: string;
+};
+
+export type CardSearchResult = {
+  tokenId: string;
+  params: IndexTokenGameParams;
+  edgeSum: number;
+};
+
+/**
+ * Search/filter cards in the game index.
+ * Returns results sorted by edge sum (descending).
+ */
+export function searchCards(
+  index: GameIndexV1 | null | undefined,
+  filter: CardFilter,
+): CardSearchResult[] {
+  if (!index || index.v !== 1) return [];
+
+  const allIds = Object.keys(index.tokens);
+  const results: CardSearchResult[] = [];
+
+  for (const id of allIds) {
+    const p = getFromGameIndex(index, id);
+    if (!p) continue;
+
+    // Hand filter
+    if (filter.hand !== undefined && p.hand !== filter.hand) continue;
+
+    // Edge sum filter
+    const edgeSum = p.triad.up + p.triad.right + p.triad.down + p.triad.left;
+    if (filter.minEdgeSum !== undefined && edgeSum < filter.minEdgeSum) continue;
+
+    results.push({ tokenId: id, params: p, edgeSum });
+  }
+
+  // Sort by edge sum descending
+  results.sort((a, b) => b.edgeSum - a.edgeSum);
+  return results;
+}
+
 /**
  * Fetch index from /game/index.v1.json.
  * Includes a tiny localStorage cache for faster repeat loads.

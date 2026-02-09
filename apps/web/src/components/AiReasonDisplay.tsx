@@ -1,6 +1,6 @@
 import React from "react";
 import type { AiReasonCode } from "@/lib/ai/nyano_ai";
-import { reasonCodeLabel } from "@/lib/ai/nyano_ai";
+import { reasonCodeLabel, reasonCodeDetail } from "@/lib/ai/nyano_ai";
 import { NyanoAvatar } from "./NyanoAvatar";
 import type { ExpressionName } from "@/lib/expression_map";
 
@@ -64,7 +64,10 @@ export function AiReasonDisplay({ reasonCode, reason, turnIndex, className = "" 
 export function AiReasonBadge({ reasonCode }: { reasonCode: AiReasonCode }) {
   const badgeColor = BADGE_COLORS[reasonCode] ?? BADGE_COLORS.FALLBACK;
   return (
-    <span className={`rounded-md border px-1.5 py-0.5 text-[10px] font-medium ${badgeColor}`}>
+    <span
+      className={`rounded-md border px-1.5 py-0.5 text-[10px] font-medium ${badgeColor}`}
+      title={reasonCodeDetail(reasonCode)}
+    >
       {reasonCodeLabel(reasonCode)}
     </span>
   );

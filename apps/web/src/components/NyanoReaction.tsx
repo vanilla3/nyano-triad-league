@@ -2,6 +2,8 @@ import React from "react";
 import type { ComboEffectName, PlayerIndex } from "@nyano/triad-engine";
 import { NyanoAvatar } from "./NyanoAvatar";
 import { reactionToExpression, type ReactionKind } from "@/lib/expression_map";
+import type { AiReasonCode } from "@/lib/ai/nyano_ai";
+import { pickDialogue, pickReasonDialogue, detectLanguage, type DialogueLanguage } from "@/lib/nyano_dialogue";
 
 /* ═══════════════════════════════════════════════════════════════════════════
    NyanoReaction.tsx
@@ -9,107 +11,60 @@ import { reactionToExpression, type ReactionKind } from "@/lib/expression_map";
    ゲームイベントに応じた Nyano のリアクション表示。
    NyanoAvatar で表情画像を表示し、glow / badge / ひとこと吹き出しで装飾。
 
-   commit-0068: P1-2 対応
-   M03-4: expression image integration
+   RM03-010: Dialogue system integration (JP/EN)
+   RM03-011: Emotion continuity (expression smoothing)
+   RM04-030: AI reason → dialogue connection
    ═══════════════════════════════════════════════════════════════════════════ */
 
-/* ── Reaction Data ── */
-
-// ReactionKind is imported from @/lib/expression_map
+/* ── Reaction Visual Config ── */
 
 interface ReactionConfig {
   emoji: string;
   glow: string;
   badge: string;
-  lines: string[];
 }
 
 const REACTIONS: Record<ReactionKind, ReactionConfig> = {
-  idle: {
-    emoji: "🐱",
-    glow: "rgba(255,138,80,0.2)",
-    badge: "",
-    lines: ["にゃ〜ん", "さぁ、勝負だにゃ！", "…考え中にゃ"],
-  },
-  flip_single: {
-    emoji: "😼",
-    glow: "rgba(245,166,35,0.4)",
-    badge: "⚔",
-    lines: ["1枚ゲットにゃ！", "奪ったにゃ！", "もらったにゃ♪"],
-  },
-  flip_multi: {
-    emoji: "😸",
-    glow: "rgba(245,166,35,0.5)",
-    badge: "⚔⚔",
-    lines: ["まとめて奪取にゃ！", "ごっそりにゃ！", "すごいにゃ！"],
-  },
-  chain: {
-    emoji: "🙀",
-    glow: "rgba(155,89,255,0.5)",
-    badge: "✦",
-    lines: ["連鎖にゃ！！", "チェーンきたにゃ！", "つながったにゃ！"],
-  },
-  fever: {
-    emoji: "😻",
-    glow: "rgba(255,69,0,0.6)",
-    badge: "🔥",
-    lines: ["フィーバーにゃー！！", "止まらないにゃ！", "全開にゃ！！"],
-  },
-  momentum: {
-    emoji: "😼",
-    glow: "rgba(56,161,232,0.4)",
-    badge: "⚡",
-    lines: ["勢いに乗ってきたにゃ！", "モメンタムにゃ！"],
-  },
-  domination: {
-    emoji: "😸",
-    glow: "rgba(232,70,106,0.5)",
-    badge: "👑",
-    lines: ["圧倒的にゃ！", "ドミネーションにゃ！"],
-  },
-  warning_triggered: {
-    emoji: "😿",
-    glow: "rgba(239,68,68,0.4)",
-    badge: "⚠",
-    lines: ["罠にかかったにゃ…", "警戒マーク踏んだにゃ…", "にゃっ！？"],
-  },
-  advantage: {
-    emoji: "😸",
-    glow: "rgba(16,185,129,0.4)",
-    badge: "✨",
-    lines: ["リードにゃ！", "いい調子にゃ♪", "優勢にゃ！"],
-  },
-  disadvantage: {
-    emoji: "😿",
-    glow: "rgba(99,102,241,0.3)",
-    badge: "💧",
-    lines: ["ピンチにゃ…", "巻き返すにゃ！", "まだまだにゃ…"],
-  },
-  draw_state: {
-    emoji: "🐱",
-    glow: "rgba(168,162,158,0.3)",
-    badge: "⚖",
-    lines: ["互角にゃ…", "いい勝負にゃ！", "どっちが勝つにゃ？"],
-  },
-  victory: {
-    emoji: "😻",
-    glow: "rgba(16,185,129,0.6)",
-    badge: "🏆",
-    lines: ["勝ったにゃー！！", "やったにゃ！", "にゃんと！勝利にゃ！"],
-  },
-  defeat: {
-    emoji: "😿",
-    glow: "rgba(239,68,68,0.4)",
-    badge: "💔",
-    lines: ["負けたにゃ…", "次は勝つにゃ！", "くやしいにゃ…"],
-  },
-  game_draw: {
-    emoji: "🐱",
-    glow: "rgba(168,162,158,0.4)",
-    badge: "🤝",
-    lines: ["引き分けにゃ！", "いい勝負だったにゃ！"],
-  },
+  idle:               { emoji: "🐱", glow: "rgba(255,138,80,0.2)",  badge: "" },
+  flip_single:        { emoji: "😼", glow: "rgba(245,166,35,0.4)",  badge: "⚔" },
+  flip_multi:         { emoji: "😸", glow: "rgba(245,166,35,0.5)",  badge: "⚔⚔" },
+  chain:              { emoji: "🙀", glow: "rgba(155,89,255,0.5)",  badge: "✦" },
+  fever:              { emoji: "😻", glow: "rgba(255,69,0,0.6)",    badge: "🔥" },
+  momentum:           { emoji: "😼", glow: "rgba(56,161,232,0.4)",  badge: "⚡" },
+  domination:         { emoji: "😸", glow: "rgba(232,70,106,0.5)",  badge: "👑" },
+  warning_triggered:  { emoji: "😿", glow: "rgba(239,68,68,0.4)",   badge: "⚠" },
+  advantage:          { emoji: "😸", glow: "rgba(16,185,129,0.4)",  badge: "✨" },
+  disadvantage:       { emoji: "😿", glow: "rgba(99,102,241,0.3)",  badge: "💧" },
+  draw_state:         { emoji: "🐱", glow: "rgba(168,162,158,0.3)", badge: "⚖" },
+  victory:            { emoji: "😻", glow: "rgba(16,185,129,0.6)",  badge: "🏆" },
+  defeat:             { emoji: "😿", glow: "rgba(239,68,68,0.4)",   badge: "💔" },
+  game_draw:          { emoji: "🐱", glow: "rgba(168,162,158,0.4)", badge: "🤝" },
 };
+
+/* ── Emotion Continuity (RM03-011) ── */
+
+// Similar emotional state groups — don't flicker between these
+const EMOTION_GROUPS: ReactionKind[][] = [
+  ["advantage", "momentum", "domination"],
+  ["disadvantage", "warning_triggered"],
+  ["idle", "draw_state"],
+];
+
+// Game-ending states always override immediately
+const PRIORITY_STATES: Set<ReactionKind> = new Set([
+  "victory", "defeat", "game_draw", "fever", "chain",
+]);
+
+const MIN_HOLD_MS = 2000;
+
+function shouldSmooth(current: ReactionKind, prev: ReactionKind): boolean {
+  if (PRIORITY_STATES.has(current)) return false;
+  if (current === prev) return false;
+  for (const group of EMOTION_GROUPS) {
+    if (group.includes(current) && group.includes(prev)) return true;
+  }
+  return false;
+}
 
 /* ── Determine Reaction Kind ── */
 
@@ -179,10 +134,6 @@ export function pickReactionKind(input: NyanoReactionInput): ReactionKind {
   return "idle";
 }
 
-function pickLine(lines: string[], seed: number): string {
-  return lines[seed % lines.length];
-}
-
 /* ── Component ── */
 
 export interface NyanoReactionProps {
@@ -191,13 +142,53 @@ export interface NyanoReactionProps {
   turnIndex?: number;
   /** RPG mode styling */
   rpg?: boolean;
+  /** Display language for dialogue */
+  lang?: DialogueLanguage;
+  /** AI reason code for reason-aware dialogue (RM04-030) */
+  aiReasonCode?: AiReasonCode;
   className?: string;
 }
 
-export function NyanoReaction({ input, turnIndex = 0, rpg = false, className = "" }: NyanoReactionProps) {
-  const kind = pickReactionKind(input);
+export function NyanoReaction({
+  input,
+  turnIndex = 0,
+  rpg = false,
+  lang,
+  aiReasonCode,
+  className = "",
+}: NyanoReactionProps) {
+  const rawKind = pickReactionKind(input);
+  const detectedLang = React.useMemo(() => lang ?? detectLanguage(), [lang]);
+
+  // Emotion continuity: smooth rapid transitions between similar states
+  const prevKindRef = React.useRef<ReactionKind>("idle");
+  const lastChangeRef = React.useRef<number>(0);
+
+  const kind = React.useMemo(() => {
+    const now = Date.now();
+    const elapsed = now - lastChangeRef.current;
+
+    if (shouldSmooth(rawKind, prevKindRef.current) && elapsed < MIN_HOLD_MS) {
+      return prevKindRef.current;
+    }
+
+    if (rawKind !== prevKindRef.current) {
+      prevKindRef.current = rawKind;
+      lastChangeRef.current = now;
+    }
+    return rawKind;
+  }, [rawKind]);
+
   const cfg = REACTIONS[kind];
-  const line = pickLine(cfg.lines, turnIndex);
+
+  // Pick dialogue: AI reason dialogue takes priority if available
+  const line = React.useMemo(() => {
+    if (aiReasonCode) {
+      const reasonLine = pickReasonDialogue(aiReasonCode, turnIndex, detectedLang);
+      if (reasonLine) return reasonLine;
+    }
+    return pickDialogue(kind, turnIndex, detectedLang);
+  }, [kind, turnIndex, detectedLang, aiReasonCode]);
 
   const [visible, setVisible] = React.useState(false);
 
