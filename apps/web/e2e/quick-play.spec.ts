@@ -5,10 +5,10 @@ test("Home → Quick Play loads the match board", async ({ page }) => {
   await page.goto("/");
 
   // Verify we're on the home page (hero title visible)
-  await expect(page.locator("text=Quick Play").first()).toBeVisible();
+  await expect(page.locator("text=すぐ遊ぶ").first()).toBeVisible();
 
   // Click the Quick Play button
-  const quickPlayLink = page.locator("a", { hasText: "Quick Play" }).first();
+  const quickPlayLink = page.locator("a", { hasText: "すぐ遊ぶ" }).first();
   await expect(quickPlayLink).toBeVisible();
   await quickPlayLink.click();
 
