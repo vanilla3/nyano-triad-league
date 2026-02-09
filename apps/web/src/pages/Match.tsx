@@ -2,7 +2,7 @@ import React from "react";
 import { useToast } from "@/components/Toast";
 import { Link, useSearchParams } from "react-router-dom";
 
-import type { BoardState, CardData, MatchResultWithHistory, PlayerIndex, RulesetConfigV1, TranscriptV1, Turn, TurnSummary } from "@nyano/triad-engine";
+import type { BoardState, CardData, FlipTraceV1, MatchResultWithHistory, PlayerIndex, RulesetConfigV1, TranscriptV1, Turn, TurnSummary } from "@nyano/triad-engine";
 import {
   computeRulesetIdV1,
   ONCHAIN_CORE_TACTICS_RULESET_CONFIG_V1,
@@ -1085,7 +1085,7 @@ export function MatchPage() {
     if (!isMint || !sim.ok || turns.length === 0) return null;
     const lastSummary = sim.previewTurns[turns.length - 1];
     if (!lastSummary?.flipTraces || lastSummary.flipTraces.length === 0) return null;
-    return lastSummary.flipTraces.map((f: any) => ({
+    return lastSummary.flipTraces.map((f: FlipTraceV1) => ({
       from: Number(f.from),
       to: Number(f.to),
       isChain: Boolean(f.isChain),
@@ -1512,7 +1512,7 @@ export function MatchPage() {
                 {sim.ok ? (
                   isMint ? (
                     <BoardViewMint
-                      board={boardNow as any}
+                      board={boardNow}
                       selectedCell={draftCell}
                       placedCell={boardAnim.placedCell}
                       flippedCells={boardAnim.flippedCells}

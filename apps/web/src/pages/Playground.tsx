@@ -299,12 +299,7 @@ export function PlaygroundPage() {
             </div>
 
             {(() => {
-              const notesRaw: any = (vf as any).notes;
-              const notes: string[] = Array.isArray(notesRaw)
-                ? notesRaw
-                : typeof notesRaw === "string"
-                  ? [notesRaw]
-                  : [];
+              const notes = vf.notes;
               if (notes.length === 0) return <div className="mt-2 text-xs text-slate-500">no notes</div>;
               return (
                 <ul className="mt-2 list-disc pl-6 text-xs text-slate-600">

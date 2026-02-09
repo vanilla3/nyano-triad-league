@@ -1,6 +1,6 @@
 import React from "react";
 import { useToast } from "@/components/Toast";
-import OFFICIAL from "@root/rulesets/official_onchain_rulesets.json";
+import OFFICIAL_RAW from "@root/rulesets/official_onchain_rulesets.json";
 
 type OfficialRuleset = {
   name: string;
@@ -10,13 +10,20 @@ type OfficialRuleset = {
   uri: string;
 };
 
+interface OfficialRulesetsJson {
+  rulesets: OfficialRuleset[];
+  notes: string[];
+}
+
+const OFFICIAL = OFFICIAL_RAW as OfficialRulesetsJson;
+
 function safeLower(s: string): string {
   return (s ?? "").toLowerCase();
 }
 
 export function RulesetsPage() {
-  const rulesets = (OFFICIAL as any).rulesets as OfficialRuleset[];
-  const notes = ((OFFICIAL as any).notes as any) ?? [];
+  const rulesets = OFFICIAL.rulesets;
+  const notes = OFFICIAL.notes ?? [];
 
   const [q, setQ] = React.useState<string>("");
   const toast = useToast();

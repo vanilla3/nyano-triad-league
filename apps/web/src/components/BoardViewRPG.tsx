@@ -443,7 +443,7 @@ export function BoardViewRPG({
                 return (
                   <RPGCell
                     key={idx}
-                    cell={cell as any}
+                    cell={cell}
                     index={idx}
                     coord={coord}
                     isSelected={!!isSelected}

@@ -22,7 +22,7 @@ export function CardMini({ card, owner, subtle = false, onClick, title, classNam
   const inner = (
     <CardNyanoCompact
       card={card}
-      owner={owner as any}
+      owner={owner}
       className={[
         "transition-all duration-150",
         subtle ? "opacity-80 hover:opacity-100" : "",

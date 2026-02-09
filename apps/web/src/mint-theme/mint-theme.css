@@ -113,17 +113,6 @@
   100% { transform: rotateY(360deg) scale(1); }
 }
 
-@keyframes mint-card-lift {
-  0% { transform: translateY(0); }
-  100% { transform: translateY(-6px); }
-}
-
-@keyframes mint-prompt-pulse {
-  0%, 100% { border-color: var(--mint-prompt-border); }
-  50% { border-color: var(--mint-accent-light); }
-}
-
-
 /* ── Board Frame ─────────────────────────────────────────────────────── */
 
 .mint-board-frame {
