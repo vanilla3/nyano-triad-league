@@ -1,7 +1,15 @@
 /**
  * triad_viewer_command.ts
  *
- * Viewer command specification + parser/normalizer for chat voting.
+ * ── SINGLE SOURCE OF TRUTH ──
+ * All viewer vote/command parsing for Nyano Triad League.
+ *
+ * Consumers:
+ *   - Stream.tsx (vote input, chat simulation)
+ *   - Overlay.tsx (vote display validation)
+ *
+ * If you need to parse viewer commands, import from THIS module.
+ * Do NOT create parallel parsers elsewhere.
  *
  * Canonical format (case-insensitive):
  *   #triad A<slot>-><cell> wm=<cell>
@@ -10,6 +18,14 @@
  * Examples:
  *   #triad A2->B2
  *   #triad A2->B2 wm=C1
+ *
+ * Exports:
+ *   - cellIndexToCoord / cellCoordToIndex — board coordinate mapping
+ *   - formatViewerMoveText — canonical "#triad" format builder
+ *   - parseViewerMoveText — strict parser
+ *   - parseViewerMoveTextLoose — extracts from noisy chat text
+ *   - normalizeViewerMoveText — loose → canonical
+ *   - parseChatMoveLoose — legacy "!move" + arrow shorthand
  *
  * Notes:
  * - This module is intentionally self-contained (no app imports) so it can be used in /stream,

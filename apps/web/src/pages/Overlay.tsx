@@ -630,12 +630,16 @@ export function OverlayPage() {
                   </div>
                 );
               }
-              return <AdvantageBar advantage={adv} size={density === "full" ? "lg" : "md"} />;
+              return (
+                <div className="ol-panel-secondary rounded-2xl px-3 py-2">
+                  <AdvantageBar advantage={adv} size={density === "full" ? "lg" : "md"} />
+                </div>
+              );
             })()}
 
-            {/* 3. AI callout (hidden in minimal density) */}
+            {/* 3. AI callout (hidden in minimal density) — Tier 2: Secondary */}
             {density !== "minimal" && state?.aiNote ? (
-              <div className="callout callout-info">
+              <div className={controls ? "callout callout-info" : "callout callout-info ol-panel-secondary"}>
                 <div className="flex items-center gap-2">
                   <div className="text-xs font-semibold">Nyano says</div>
                   {state.aiReasonCode ? (
