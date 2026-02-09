@@ -298,6 +298,9 @@ export function MatchPage() {
   const lastStreamCmdIdRef = React.useRef<string>("");
   const [error, setError] = React.useState<string | null>(null);
 
+  // RPC status tracking for overlay propagation (Phase 0 stability)
+  const rpcStatusRef = React.useRef<{ ok: boolean; message?: string; timestampMs: number } | undefined>(undefined);
+
   type AiNoteEntry = { reason: string; reasonCode: AiReasonCode };
   const [aiNotes, setAiNotes] = React.useState<Record<number, AiNoteEntry>>({});
   const [guestDeckSaved, setGuestDeckSaved] = React.useState(false);
@@ -538,9 +541,11 @@ export function MatchPage() {
       if (b0 !== undefined) setPlayerB(ownersByTokenId.get(b0) ?? playerB);
 
       setStatus(`Verified: loaded ${bundles.size} cards from mainnet`);
+      rpcStatusRef.current = { ok: true, timestampMs: Date.now() };
     } catch (e: any) {
       const msg = e?.message ?? String(e);
       setError(msg);
+      rpcStatusRef.current = { ok: false, message: msg, timestampMs: Date.now() };
 
       if (msg.includes("存在しない tokenId")) {
         toast.warn("カード読込失敗", "存在しない tokenId が含まれています。/nyano で確認してください。");
@@ -731,6 +736,7 @@ export function MatchPage() {
         lastTurnSummary,
         aiNote: lastIndex >= 0 ? aiNotes[lastIndex]?.reason : undefined,
         aiReasonCode: lastIndex >= 0 ? aiNotes[lastIndex]?.reasonCode : undefined,
+        rpcStatus: rpcStatusRef.current,
         advantage: (() => {
           const adv = assessBoardAdvantage(boardNow as any);
           return { scoreA: adv.scoreA, levelA: adv.levelA, labelJa: adv.labelJa, badgeColor: adv.badgeColor };

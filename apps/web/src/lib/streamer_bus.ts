@@ -126,6 +126,13 @@ aiReasonCode?: string;
 
   error?: string;
 
+  /** RPC connection status (Phase 0 stability — propagated from Match.tsx). */
+  rpcStatus?: {
+    ok: boolean;
+    message?: string;
+    timestampMs: number;
+  };
+
   /** External integration status (compatible extension, added commit-0084). */
   externalStatus?: {
     lastOk?: boolean;

@@ -1,7 +1,7 @@
 import React from "react";
 import type { BoardState, TurnSummary } from "@nyano/triad-engine";
 import { FlipTraceBadges, FlipTraceDetailList } from "@/components/FlipTraceBadges";
-import { flipTracesSummary } from "@/components/flipTraceDescribe";
+import { flipTracesReadout, flipTracesSummary } from "@/components/flipTraceDescribe";
 import type { MoveAnnotation } from "@/lib/ai/replay_annotations";
 import { QUALITY_DISPLAY } from "@/lib/ai/replay_annotations";
 import type { BoardAdvantage } from "@/lib/ai/board_advantage";
@@ -308,6 +308,13 @@ export function TurnLog(props: {
 
             {selected ? (
               <div className="mt-2 grid gap-2">
+                {/* Narrative readout — matches Overlay flipTracesReadout (Phase 0 consistency) */}
+                {t.flipTraces && t.flipTraces.length > 0 && (
+                  <div className="text-xs text-surface-500 italic">
+                    {flipTracesReadout(t.flipTraces, t.player === 0 ? "A" : "B", t.cell)}
+                  </div>
+                )}
+
                 {t.flipTraces && t.flipTraces.length ? (
                   <div className="rounded-lg border border-surface-200 bg-white p-2 text-xs text-surface-700">
                     <div className="font-medium">奪取理由（補正後）</div>
