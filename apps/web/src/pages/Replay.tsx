@@ -18,7 +18,9 @@ import { ScoreBar } from "@/components/ScoreBar";
 import { CardMini } from "@/components/CardMini";
 import { TurnLog } from "@/components/TurnLog";
 import { GameResultBanner } from "@/components/GameResultOverlay";
-import { NyanoReaction, type NyanoReactionInput } from "@/components/NyanoReaction";
+import { NyanoReaction, pickReactionKind, type NyanoReactionInput } from "@/components/NyanoReaction";
+import { NyanoAvatar } from "@/components/NyanoAvatar";
+import { reactionToExpression } from "@/lib/expression_map";
 import {
   base64UrlEncodeUtf8,
   safeBase64UrlDecodeUtf8,
@@ -128,6 +130,36 @@ function buildNyanoReactionInput(res: MatchResultWithHistory, step: number): Nya
     finished: step >= 9,
     winner: step >= 9 ? res.winner : null,
   };
+}
+
+type StepHighlight = {
+  step: number;
+  kind: "big_flip" | "chain" | "combo" | "warning";
+  label: string;
+};
+
+function detectHighlights(res: MatchResultWithHistory): StepHighlight[] {
+  const highlights: StepHighlight[] = [];
+  for (let i = 0; i < res.turns.length; i++) {
+    const t = res.turns[i];
+    const s = i + 1;
+    const flipCount = Number(t.flipCount ?? 0);
+    const hasChain = Boolean(t.flipTraces?.some((f) => f.isChain));
+    const comboEffect = (t.comboEffect ?? "none") as string;
+    const warningTriggered = Boolean(t.warningTriggered);
+
+    if (flipCount >= 3) {
+      highlights.push({ step: s, kind: "big_flip", label: `${flipCount} flips` });
+    } else if (hasChain) {
+      highlights.push({ step: s, kind: "chain", label: "Chain" });
+    } else if (comboEffect !== "none") {
+      highlights.push({ step: s, kind: "combo", label: comboEffect });
+    }
+    if (warningTriggered) {
+      highlights.push({ step: s, kind: "warning", label: "Warning!" });
+    }
+  }
+  return highlights;
 }
 
 function rulesetLabelFromConfig(cfg: RulesetConfigV1): string {
@@ -443,15 +475,43 @@ protocolV1: {
   // keyboard
   React.useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "ArrowLeft") setStep((s) => Math.max(0, s - 1));
-      if (e.key === "ArrowRight") setStep((s) => Math.min(stepMax, s + 1));
+      const tag = (e.target as HTMLElement)?.tagName;
+      if (tag === "TEXTAREA" || tag === "INPUT" || tag === "SELECT") return;
+      if (e.key === "ArrowLeft") { setIsPlaying(false); setStep((s) => Math.max(0, s - 1)); }
+      if (e.key === "ArrowRight") { setIsPlaying(false); setStep((s) => Math.min(stepMax, s + 1)); }
+      if (e.key === " ") { e.preventDefault(); setIsPlaying((p) => !p); }
+      if (e.key === "Home") { e.preventDefault(); setIsPlaying(false); setStep(0); }
+      if (e.key === "End") { e.preventDefault(); setIsPlaying(false); setStep(stepMax); }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [stepMax]);
 
+  // Autoplay timer
+  React.useEffect(() => {
+    if (!isPlaying || !sim.ok) return;
+    const ms = 1000 / playbackSpeed;
+    const timer = window.setInterval(() => {
+      setStep((s) => {
+        const next = s + 1;
+        if (next > stepMax) {
+          setIsPlaying(false);
+          return s;
+        }
+        return next;
+      });
+    }, ms);
+    return () => window.clearInterval(timer);
+  }, [isPlaying, playbackSpeed, stepMax, sim.ok]);
+
   const compare = sim.ok && (mode === "compare" || (mode === "auto" && pickDefaultMode(sim.transcript.header.rulesetId) === "compare"));
   const diverged = sim.ok ? !boardEquals(sim.v1.boardHistory[step], sim.v2.boardHistory[step]) : false;
+
+  const highlights = React.useMemo(
+    () => (sim.ok ? detectHighlights(sim.current) : []),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [sim.ok, sim.ok ? sim.current : null],
+  );
 
   const renderReplay = (label: string, res: MatchResultWithHistory) => {
     const boardNow = res.boardHistory[step];
@@ -469,7 +529,18 @@ protocolV1: {
         </div>
 
         <div className="mt-2 grid gap-2">
-          <ScoreBar board={boardNow as any} moveCount={step} maxMoves={9} winner={res.winner} />
+          <div className="flex items-center gap-3">
+            <NyanoAvatar
+              size={48}
+              expression={nyanoReactionInput
+                ? reactionToExpression(pickReactionKind(nyanoReactionInput))
+                : "calm"}
+              className="flex-shrink-0"
+            />
+            <div className="flex-1">
+              <ScoreBar board={boardNow as any} moveCount={step} maxMoves={9} winner={res.winner} />
+            </div>
+          </div>
           {nyanoReactionInput ? <NyanoReaction input={nyanoReactionInput} turnIndex={step} rpg={isRpg} /> : null}
         </div>
 
@@ -740,7 +811,9 @@ const buildShareLink = async (): Promise<string> => {
             {!sim.ok && sim.error ? <div className="text-sm text-rose-700">Error: {sim.error}</div> : null}
 
             <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500">
-              <span className="kbd">←</span>/<span className="kbd">→</span> で step 移動
+              <span className="kbd">←</span>/<span className="kbd">→</span> step
+              <span className="kbd">Space</span> play/pause
+              <span className="kbd">Home</span>/<span className="kbd">End</span> jump
             </div>
           </div>
         </div>
@@ -907,8 +980,40 @@ const buildShareLink = async (): Promise<string> => {
                 )}
 
                 <div className="grid gap-2">
-                  <input type="range" min={0} max={stepMax} value={step} onChange={(e) => { setIsPlaying(false); setStep(Number(e.target.value)); }} />
+                  <div className="relative">
+                    <input
+                      type="range"
+                      min={0}
+                      max={stepMax}
+                      value={step}
+                      onChange={(e) => { setIsPlaying(false); setStep(Number(e.target.value)); }}
+                      className="w-full"
+                    />
+                    {stepMax > 0 && highlights.map((h, i) => (
+                      <button
+                        key={i}
+                        className={[
+                          "absolute -translate-x-1/2 w-2.5 h-2.5 rounded-full border border-white shadow-sm",
+                          h.kind === "big_flip" ? "bg-amber-500" :
+                          h.kind === "chain" ? "bg-purple-500" :
+                          h.kind === "combo" ? "bg-red-500" :
+                          "bg-orange-500",
+                        ].join(" ")}
+                        style={{ left: `${(h.step / stepMax) * 100}%`, top: "-4px" }}
+                        title={`Turn ${h.step}: ${h.label}`}
+                        onClick={() => { setIsPlaying(false); setStep(h.step); }}
+                      />
+                    ))}
+                  </div>
                   <div className="text-xs text-slate-600">{step === 0 ? "initial" : `after turn ${step}`}</div>
+                  {highlights.length > 0 && (
+                    <div className="flex flex-wrap gap-2 text-[10px] text-slate-500">
+                      <span className="flex items-center gap-1"><span className="inline-block w-2 h-2 rounded-full bg-amber-500" /> Big Flip</span>
+                      <span className="flex items-center gap-1"><span className="inline-block w-2 h-2 rounded-full bg-purple-500" /> Chain</span>
+                      <span className="flex items-center gap-1"><span className="inline-block w-2 h-2 rounded-full bg-red-500" /> Combo</span>
+                      <span className="flex items-center gap-1"><span className="inline-block w-2 h-2 rounded-full bg-orange-500" /> Warning</span>
+                    </div>
+                  )}
                 </div>
 
                 <div className="rounded-lg border border-slate-200 bg-white p-3 text-sm">
