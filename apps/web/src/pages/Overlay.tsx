@@ -8,7 +8,7 @@ import { reactionToExpression } from "@/lib/expression_map";
 import { AiReasonBadge } from "@/components/AiReasonDisplay";
 import type { AiReasonCode } from "@/lib/ai/nyano_ai";
 import { ScoreBar } from "@/components/ScoreBar";
-import { FlipTraceBadges } from "@/components/FlipTraceBadges";
+import { FlipTraceBadges, FlipTraceDetailList } from "@/components/FlipTraceBadges";
 import { flipTracesReadout, flipTracesSummary } from "@/components/flipTraceDescribe";
 import {
   cellIndexToCoord,
@@ -386,8 +386,95 @@ export function OverlayPage() {
             </div>
           </div>
 
-          {/* Right-side HUD */}
+          {/* Right-side HUD — panel order: Last move → Now Playing → AI → Vote → strictAllowed → Errors */}
           <div className="space-y-3">
+            {/* 1. Last move (P0 for stream viewers) */}
+            {state?.lastMove ? (
+              <div className={controls ? "rounded-2xl border border-slate-200 bg-white/70 px-4 py-3 shadow-sm" : "rounded-2xl border-l-4 border-l-rose-400 border border-slate-200 bg-white/90 px-4 py-3 shadow-sm"}>
+                <div className="flex items-center justify-between gap-2">
+                  <div className={controls ? "text-xs font-semibold text-slate-800" : "text-sm font-semibold text-slate-800"}>Last move</div>
+                  {state?.updatedAtMs ? <span className={controls ? "text-xs text-slate-400" : "text-xs text-slate-400"}>{ageLabel(state.updatedAtMs)}</span> : null}
+                </div>
+
+                <div className={controls ? "mt-1 text-sm text-slate-700" : "mt-1 text-lg font-bold text-slate-800"}>
+                  Turn {state.lastMove.turnIndex + 1}:{" "}
+                  <span className="font-semibold">{state.lastMove.by === 0 ? "A" : "B"}</span>{" "}
+                  <span className="font-mono">
+                    {toViewerMoveText({
+                      cell: state.lastMove.cell,
+                      cardIndex: state.lastMove.cardIndex,
+                      ...(typeof state.lastMove.warningMarkCell === "number" ? { warningMarkCell: state.lastMove.warningMarkCell } : {}),
+                    })}
+                  </span>
+                </div>
+
+                {/* flipTracesReadout (P0) */}
+                {flipReadout ? <div className={controls ? "mt-1 text-xs text-slate-600" : "mt-1 text-sm text-slate-600"}>{flipReadout}</div> : null}
+
+                <div className="mt-2 flex flex-wrap items-center gap-2">
+                  <span className="badge badge-sky">{flipBadgeLabel}</span>
+                  {typeof state.lastMove.warningMarkCell === "number" ? <span className="badge badge-amber">MARK</span> : null}
+                  {flipCountLabel === 0 ? <span className="badge">NO FLIP</span> : null}
+                  {swingBadge}
+
+                  {lastTurnSummary && lastTurnSummary.comboEffect !== "none" ? (
+                    <span className="badge badge-emerald">COMBO: {String(lastTurnSummary.comboEffect).toUpperCase()}</span>
+                  ) : null}
+                  {lastTurnSummary && typeof lastTurnSummary.comboCount === "number" && lastTurnSummary.comboCount > 0 ? (
+                    <span className="badge">combo×{lastTurnSummary.comboCount}</span>
+                  ) : null}
+
+                  {lastTurnSummary && typeof lastTurnSummary.triadPlus === "number" && lastTurnSummary.triadPlus > 0 ? (
+                    <span className="badge badge-emerald">PLUS +{lastTurnSummary.triadPlus}</span>
+                  ) : null}
+
+                  {lastTurnSummary?.ignoreWarningMark ? <span className="badge badge-nyano">IGNORE MARK</span> : null}
+                  {lastTurnSummary?.warningTriggered ? <span className="badge badge-amber">TRIGGERED MARK</span> : null}
+                  {typeof lastTurnSummary?.warningPlaced === "number" ? <span className="badge badge-amber">PLACED MARK</span> : null}
+
+                  {lastTurnSummary && Array.isArray(lastTurnSummary.flips) && lastTurnSummary.flips.length > 0 ? (
+                    <FlipTraceBadges flipTraces={lastTurnSummary.flips} limit={controls ? 4 : 6} />
+                  ) : null}
+                </div>
+
+                {typeof state.lastMove.warningMarkCell === "number" ? (
+                  <div className="mt-1 text-xs text-slate-500">
+                    warning mark → <span className="font-mono">{cellIndexToCoord(state.lastMove.warningMarkCell)}</span>
+                  </div>
+                ) : null}
+
+                {typeof lastTurnSummary?.warningPlaced === "number" ? (
+                  <div className="mt-1 text-xs text-slate-500">
+                    placed warning mark → <span className="font-mono">{cellIndexToCoord(lastTurnSummary.warningPlaced)}</span>
+                  </div>
+                ) : null}
+
+                {lastFlippedCells.length > 0 ? (
+                  <div className="mt-1 text-xs text-slate-500">
+                    flipped: <span className="font-mono">{lastFlippedCells.map(cellIndexToCoord).join(", ")}</span>
+                  </div>
+                ) : null}
+
+                {lastTurnSummary && Array.isArray(lastTurnSummary.flips) && lastTurnSummary.flips.length > 0 ? (
+                  <div className="mt-1 text-xs text-slate-500">
+                    {flipTracesSummary(lastTurnSummary.flips)}
+                  </div>
+                ) : null}
+
+                {/* WS4: Unified flip trace detail (controls mode only) */}
+                {controls && lastTurnSummary && Array.isArray(lastTurnSummary.flips) && lastTurnSummary.flips.length > 0 ? (
+                  <div className="mt-3 rounded-xl border border-slate-200 bg-white/60 px-3 py-2">
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="text-xs font-semibold text-slate-700">Flip traces</div>
+                      <div className="text-xs text-slate-500">(debug)</div>
+                    </div>
+                    <FlipTraceDetailList flipTraces={lastTurnSummary.flips as any} />
+                  </div>
+                ) : null}
+              </div>
+            ) : null}
+
+            {/* 2. Now Playing */}
             <div className={controls ? "rounded-2xl border border-slate-200 bg-white/70 px-4 py-3 shadow-sm" : "rounded-2xl border border-slate-200 bg-white/90 px-4 py-3 shadow-sm"}>
               <div className="flex items-center justify-between gap-2">
                 <div className="flex items-center gap-2">
@@ -427,49 +514,23 @@ export function OverlayPage() {
                 />
               </div>
 
-              {matchIdShort ? <div className={controls ? "mt-1 text-[11px] text-slate-400" : "mt-1 text-xs text-slate-400"}>match: {matchIdShort}</div> : null}
+              {matchIdShort ? <div className={controls ? "mt-1 text-xs text-slate-400" : "mt-1 text-xs text-slate-400"}>match: {matchIdShort}</div> : null}
             </div>
 
-            {/* strictAllowed HUD (always visible) */}
-            <div className={controls ? "rounded-2xl border border-slate-200 bg-white/70 px-4 py-3 shadow-sm" : "rounded-2xl border border-slate-200 bg-white/90 px-4 py-3 shadow-sm"}>
-              <div className="flex items-center justify-between gap-2">
-                <div className={controls ? "text-xs font-semibold text-slate-800" : "text-sm font-semibold text-slate-800"}>strictAllowed</div>
-                {strictAllowed ? (
-                  <span className={controls ? "badge badge-slate" : "badge badge-lg badge-slate"}>{strictAllowed.count}</span>
-                ) : (
-                  <span className="badge">—</span>
-                )}
-              </div>
-
-              {strictAllowed ? (
-                <>
-                  <div className={controls ? "mt-1 text-xs text-slate-600" : "mt-1 text-sm text-slate-600"}>
-                    toPlay: <span className="font-mono">{sideLabel(strictAllowed.toPlay)}</span> · moves:{" "}
-                    <span className="font-mono">{strictAllowed.count}</span>
-                    {typeof strictAllowed.warningMark?.remaining === "number" ? (
-                      <>
-                        {" "}· WM:{" "}
-                        <span className="font-mono">{strictAllowed.warningMark.remaining}</span>
-                      </>
-                    ) : null}
-                  </div>
-
-                  <div className={controls ? "mt-1 text-[11px] text-slate-500" : "mt-1 text-xs text-slate-500"}>
-                    hash: <span className="font-mono">{strictAllowed.hash}</span>
-                  </div>
-
-                  {controls && strictAllowed.warningMark.remaining > 0 ? (
-                    <div className="mt-1 text-[11px] text-slate-500">
-                      WM candidates: <span className="font-mono">{strictAllowed.warningMark.candidates.join(", ")}</span>
-                    </div>
+            {/* 3. AI callout */}
+            {state?.aiNote ? (
+              <div className="callout callout-info">
+                <div className="flex items-center gap-2">
+                  <div className="text-xs font-semibold">Nyano says</div>
+                  {state.aiReasonCode ? (
+                    <AiReasonBadge reasonCode={state.aiReasonCode as AiReasonCode} />
                   ) : null}
-                </>
-              ) : (
-                <div className="mt-1 text-xs text-slate-500">Waiting for host…</div>
-              )}
-            </div>
+                </div>
+                <div className="mt-1 text-sm">{state.aiNote}</div>
+              </div>
+            ) : null}
 
-            {/* Vote status (always visible when vote=1) */}
+            {/* 4. Vote status (visible when vote=1) */}
             {voteEnabled ? (
               <div className={controls ? "rounded-2xl border border-slate-200 bg-white/70 px-4 py-3 shadow-sm" : "rounded-2xl border border-slate-200 bg-white/90 px-4 py-3 shadow-sm"}>
                 <div className="flex items-center justify-between gap-2">
@@ -529,133 +590,68 @@ export function OverlayPage() {
                   </div>
                 ) : null}
 
-                {voteState?.note ? <div className={controls ? "mt-2 text-[11px] text-slate-500" : "mt-2 text-xs text-slate-500"}>{voteState.note}</div> : null}
+                {voteState?.note ? <div className={controls ? "mt-2 text-xs text-slate-500" : "mt-2 text-xs text-slate-500"}>{voteState.note}</div> : null}
               </div>
             ) : null}
 
-            {state?.lastMove ? (
-              <div className={controls ? "rounded-2xl border border-slate-200 bg-white/70 px-4 py-3 shadow-sm" : "rounded-2xl border border-slate-200 bg-white/90 px-4 py-3 shadow-sm"}>
-                <div className="flex items-center justify-between gap-2">
-                  <div className={controls ? "text-xs font-semibold text-slate-800" : "text-sm font-semibold text-slate-800"}>Last move</div>
-                  {state?.updatedAtMs ? <span className={controls ? "text-[11px] text-slate-400" : "text-xs text-slate-400"}>{ageLabel(state.updatedAtMs)}</span> : null}
-                </div>
+            {/* 5. strictAllowed HUD (operator/debug) */}
+            <div className={controls ? "rounded-2xl border border-slate-200 bg-white/70 px-4 py-3 shadow-sm" : "rounded-2xl border border-slate-200 bg-white/90 px-4 py-3 shadow-sm"}>
+              <div className="flex items-center justify-between gap-2">
+                <div className={controls ? "text-xs font-semibold text-slate-800" : "text-sm font-semibold text-slate-800"}>strictAllowed</div>
+                {strictAllowed ? (
+                  <span className={controls ? "badge badge-slate" : "badge badge-lg badge-slate"}>{strictAllowed.count}</span>
+                ) : (
+                  <span className="badge">—</span>
+                )}
+              </div>
 
-                <div className={controls ? "mt-1 text-sm text-slate-700" : "mt-1 text-base text-slate-800"}>
-                  Turn {state.lastMove.turnIndex + 1}:{" "}
-                  <span className="font-semibold">{state.lastMove.by === 0 ? "A" : "B"}</span>{" "}
-                  <span className="font-mono">
-                    {toViewerMoveText({
-                      cell: state.lastMove.cell,
-                      cardIndex: state.lastMove.cardIndex,
-                      ...(typeof state.lastMove.warningMarkCell === "number" ? { warningMarkCell: state.lastMove.warningMarkCell } : {}),
-                    })}
-                  </span>
-                </div>
-
-                {/* flipTracesReadout (P0) */}
-                {flipReadout ? <div className={controls ? "mt-1 text-xs text-slate-600" : "mt-1 text-sm text-slate-600"}>{flipReadout}</div> : null}
-
-                <div className="mt-2 flex flex-wrap items-center gap-2">
-                  <span className="badge badge-sky">{flipBadgeLabel}</span>
-                  {typeof state.lastMove.warningMarkCell === "number" ? <span className="badge badge-amber">MARK</span> : null}
-                  {flipCountLabel === 0 ? <span className="badge">NO FLIP</span> : null}
-                  {swingBadge}
-
-                  {lastTurnSummary && lastTurnSummary.comboEffect !== "none" ? (
-                    <span className="badge badge-emerald">COMBO: {String(lastTurnSummary.comboEffect).toUpperCase()}</span>
-                  ) : null}
-                  {lastTurnSummary && typeof lastTurnSummary.comboCount === "number" && lastTurnSummary.comboCount > 0 ? (
-                    <span className="badge">combo×{lastTurnSummary.comboCount}</span>
-                  ) : null}
-
-                  {lastTurnSummary && typeof lastTurnSummary.triadPlus === "number" && lastTurnSummary.triadPlus > 0 ? (
-                    <span className="badge badge-emerald">PLUS +{lastTurnSummary.triadPlus}</span>
-                  ) : null}
-
-                  {lastTurnSummary?.ignoreWarningMark ? <span className="badge badge-nyano">IGNORE MARK</span> : null}
-                  {lastTurnSummary?.warningTriggered ? <span className="badge badge-amber">TRIGGERED MARK</span> : null}
-                  {typeof lastTurnSummary?.warningPlaced === "number" ? <span className="badge badge-amber">PLACED MARK</span> : null}
-
-                  {lastTurnSummary && Array.isArray(lastTurnSummary.flips) && lastTurnSummary.flips.length > 0 ? (
-                    <FlipTraceBadges flipTraces={lastTurnSummary.flips} limit={4} />
-                  ) : null}
-                </div>
-
-                {typeof state.lastMove.warningMarkCell === "number" ? (
-                  <div className="mt-1 text-xs text-slate-500">
-                    warning mark → <span className="font-mono">{cellIndexToCoord(state.lastMove.warningMarkCell)}</span>
+              {strictAllowed ? (
+                <>
+                  <div className={controls ? "mt-1 text-xs text-slate-600" : "mt-1 text-sm text-slate-600"}>
+                    toPlay: <span className="font-mono">{sideLabel(strictAllowed.toPlay)}</span> · moves:{" "}
+                    <span className="font-mono">{strictAllowed.count}</span>
+                    {typeof strictAllowed.warningMark?.remaining === "number" ? (
+                      <>
+                        {" "}· WM:{" "}
+                        <span className="font-mono">{strictAllowed.warningMark.remaining}</span>
+                      </>
+                    ) : null}
                   </div>
-                ) : null}
 
-                {typeof lastTurnSummary?.warningPlaced === "number" ? (
-                  <div className="mt-1 text-xs text-slate-500">
-                    placed warning mark → <span className="font-mono">{cellIndexToCoord(lastTurnSummary.warningPlaced)}</span>
+                  <div className={controls ? "mt-1 text-xs text-slate-500" : "mt-1 text-xs text-slate-500"}>
+                    hash: <span className="font-mono">{strictAllowed.hash}</span>
                   </div>
-                ) : null}
 
-                {lastFlippedCells.length > 0 ? (
-                  <div className={controls ? "mt-1 text-[11px] text-slate-500" : "mt-1 text-xs text-slate-500"}>
-                    flipped: <span className="font-mono">{lastFlippedCells.map(cellIndexToCoord).join(", ")}</span>
-                  </div>
-                ) : null}
-
-                {lastTurnSummary && Array.isArray(lastTurnSummary.flips) && lastTurnSummary.flips.length > 0 ? (
-                  <div className={controls ? "mt-1 text-[11px] text-slate-500" : "mt-1 text-xs text-slate-500"}>
-                    {flipTracesSummary(lastTurnSummary.flips)}
-                  </div>
-                ) : null}
-
-                {controls && lastTurnSummary && Array.isArray(lastTurnSummary.flips) && lastTurnSummary.flips.length > 0 ? (
-                  <div className="mt-3 rounded-xl border border-slate-200 bg-white/60 px-3 py-2">
-                    <div className="flex items-center justify-between gap-2">
-                      <div className="text-[11px] font-semibold text-slate-700">Flip traces</div>
-                      <div className="text-[11px] text-slate-500">（実況・デバッグ用 / OBSでは通常非表示）</div>
+                  {controls && strictAllowed.warningMark.remaining > 0 ? (
+                    <div className="mt-1 text-xs text-slate-500">
+                      WM candidates: <span className="font-mono">{strictAllowed.warningMark.candidates.join(", ")}</span>
                     </div>
-                    <div className="mt-2 space-y-1">
-                      {lastTurnSummary.flips.slice(0, 8).map((f: any, i: number) => (
-                        <div key={i} className="flex flex-wrap items-center justify-between gap-2 text-xs">
-                          <span className="font-mono">
-                            {cellIndexToCoord(f.to)} ← {cellIndexToCoord(f.from)}{" "}
-                            {f.kind === "ortho"
-                              ? f.dir
-                                ? `(${f.dir})`
-                                : ""
-                              : f.vert && f.horiz
-                                ? `(${f.vert}+${f.horiz})`
-                                : "(diag)"}
-                          </span>
-                          <div className="flex flex-wrap items-center gap-2">
-                            <span className="badge badge-slate">
-                              a:{f.aVal} / d:{f.dVal}
-                            </span>
-                            {f.isChain ? <span className="badge">CHAIN</span> : <span className="badge">DIRECT</span>}
-                            {f.tieBreak ? <span className="badge badge-rose">JANKEN</span> : null}
-                            {f.kind === "diag" ? <span className="badge badge-sky">DIAG</span> : null}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                ) : null}
-              </div>
-            ) : null}
-
-            {state?.aiNote ? (
-              <div className="callout callout-info">
-                <div className="flex items-center gap-2">
-                  <div className="text-xs font-semibold">Nyano says</div>
-                  {state.aiReasonCode ? (
-                    <AiReasonBadge reasonCode={state.aiReasonCode as AiReasonCode} />
                   ) : null}
-                </div>
-                <div className="mt-1 text-sm">{state.aiNote}</div>
-              </div>
-            ) : null}
+                </>
+              ) : (
+                <div className="mt-1 text-xs text-slate-500">Waiting for host…</div>
+              )}
+            </div>
 
+            {/* 6. Error callout */}
             {state?.error ? (
-              <div className="callout callout-warn">
-                <div className="text-xs font-semibold">Overlay notice</div>
+              <div className="callout callout-error">
+                <div className="flex items-center gap-2">
+                  <div className="h-2 w-2 shrink-0 rounded-full bg-red-500 animate-pulse" />
+                  <div className="text-xs font-semibold">Error</div>
+                </div>
                 <div className="mt-1 whitespace-pre-wrap text-sm">{state.error}</div>
+              </div>
+            ) : null}
+
+            {/* 7. External integration error */}
+            {state?.externalStatus && state.externalStatus.lastOk === false ? (
+              <div className="callout callout-error">
+                <div className="flex items-center gap-2">
+                  <div className="h-2 w-2 shrink-0 rounded-full bg-red-500 animate-pulse" />
+                  <div className="text-xs font-semibold">Integration error</div>
+                </div>
+                <div className="mt-1 text-sm">{state.externalStatus.lastMessage ?? "Unknown error"}</div>
               </div>
             ) : null}
 
