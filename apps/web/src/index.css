@@ -98,6 +98,56 @@
   --surface-overlay: rgba(255, 255, 255, 0.85);
 }
 
+/* ── Overlay Theme Presets ─────────────────────────────────────────────── */
+
+.overlay-theme-720p-minimal {
+  --ol-font: 11px;
+  --ol-font-lg: 13px;
+  --ol-card: 56px;
+  --ol-gap: 6px;
+  --ol-pad: 8px;
+  --ol-radius: 12px;
+  --ol-avatar: 22px;
+  --ol-badge-font: 9px;
+  font-size: var(--ol-font);
+}
+
+.overlay-theme-720p-standard {
+  --ol-font: 12px;
+  --ol-font-lg: 14px;
+  --ol-card: 64px;
+  --ol-gap: 8px;
+  --ol-pad: 10px;
+  --ol-radius: 14px;
+  --ol-avatar: 26px;
+  --ol-badge-font: 10px;
+  font-size: var(--ol-font);
+}
+
+.overlay-theme-1080p-standard {
+  --ol-font: 13px;
+  --ol-font-lg: 15px;
+  --ol-card: 80px;
+  --ol-gap: 10px;
+  --ol-pad: 14px;
+  --ol-radius: 16px;
+  --ol-avatar: 32px;
+  --ol-badge-font: 10px;
+  font-size: var(--ol-font);
+}
+
+.overlay-theme-1080p-full {
+  --ol-font: 16px;
+  --ol-font-lg: 18px;
+  --ol-card: 96px;
+  --ol-gap: 12px;
+  --ol-pad: 16px;
+  --ol-radius: 20px;
+  --ol-avatar: 38px;
+  --ol-badge-font: 11px;
+  font-size: var(--ol-font);
+}
+
 /* ═══════════════════════════════════════════════════════════════════════════
    BASE STYLES
    ═══════════════════════════════════════════════════════════════════════════ */

@@ -953,6 +953,50 @@ return (
               </div>
             </div>
 
+            {/* RM06-020: Viewer command help callout */}
+            <div className="mt-3 rounded-xl border border-emerald-200 bg-emerald-50/60 px-4 py-3">
+              <div className="flex items-center justify-between gap-2">
+                <div className="text-xs font-semibold text-emerald-800">Viewer Command Guide</div>
+                <button
+                  className="btn btn-sm"
+                  onClick={() => {
+                    const side = controlledSide === 0 ? "A" : "B";
+                    const instructions = [
+                      `【Nyano Triad League 投票コマンド】`,
+                      ``,
+                      `フォーマット: #triad ${side}<スロット>-><セル>`,
+                      `例: #triad ${side}2->B2`,
+                      ``,
+                      `Warning Mark付き: #triad ${side}2->B2 wm=C1`,
+                      ``,
+                      `スロット: ${side}1~${side}5 (手持ちカード番号)`,
+                      `セル: A1 B1 C1 / A2 B2 C2 / A3 B3 C3`,
+                      ``,
+                      `投票は制限時間内に1人1票。最多票の手が採用されます！`,
+                    ].join("\n");
+                    navigator.clipboard.writeText(instructions);
+                    toast.success("Copied", "Viewer instructions copied to clipboard");
+                  }}
+                >
+                  Copy Viewer Instructions
+                </button>
+              </div>
+              <div className="mt-2 grid gap-1.5 text-xs text-emerald-700">
+                <div>
+                  <span className="font-mono font-semibold">#triad {controlledSide === 0 ? "A" : "B"}2-&gt;B2</span>{" "}
+                  — Card slot 2 to cell B2
+                </div>
+                <div>
+                  <span className="font-mono font-semibold">#triad {controlledSide === 0 ? "A" : "B"}3-&gt;C1 wm=A1</span>{" "}
+                  — Card slot 3 to cell C1, warning mark on A1
+                </div>
+              </div>
+              <div className="mt-2 text-[11px] text-emerald-600">
+                <span className="font-semibold">Common mistakes:</span>{" "}
+                Wrong side letter (use {controlledSide === 0 ? "A" : "B"}) · Slot out of range (1-5) · Cell already occupied · Missing <span className="font-mono">#triad</span> prefix
+              </div>
+            </div>
+
             <div className="mt-3 grid gap-3 md:grid-cols-2">
               <div className="rounded-xl border border-slate-200 bg-white px-3 py-2">
                 <div className="text-[11px] font-semibold text-slate-700">Simulated chat input</div>
@@ -970,6 +1014,26 @@ return (
                     placeholder="#triad A2->B2 wm=C3"
                   />
                 </div>
+                {/* RM06-020: Real-time validation feedback */}
+                {chatText.trim().length > 0 && (() => {
+                  const parsed = parseChatMoveLoose(chatText, controlledSide);
+                  if (parsed) {
+                    const moveText = toViewerMoveText({ cell: parsed.cell, cardIndex: parsed.cardIndex, warningMarkCell: parsed.warningMarkCell });
+                    return (
+                      <div className="mt-1 flex items-center gap-1.5 text-[11px] text-emerald-600">
+                        <span className="inline-flex h-4 w-4 items-center justify-center rounded-full bg-emerald-100 text-[10px] font-bold text-emerald-700">&#x2713;</span>
+                        <span>Valid: <span className="font-mono font-semibold">{moveText}</span> (cell {cellIndexToCoord(parsed.cell)}, slot {parsed.cardIndex + 1}{typeof parsed.warningMarkCell === "number" ? `, wm=${cellIndexToCoord(parsed.warningMarkCell)}` : ""})</span>
+                      </div>
+                    );
+                  }
+                  return (
+                    <div className="mt-1 flex items-center gap-1.5 text-[11px] text-red-500">
+                      <span className="inline-flex h-4 w-4 items-center justify-center rounded-full bg-red-100 text-[10px] font-bold text-red-600">&#x2717;</span>
+                      <span>Invalid command. Use format: <span className="font-mono">#triad {controlledSide === 0 ? "A" : "B"}2-&gt;B2</span></span>
+                    </div>
+                  );
+                })()}
+
                 <div className="mt-2 flex items-center gap-2">
                   <button className="btn btn-sm btn-primary" onClick={addVoteFromChat} disabled={!voteOpen}>
                     Add vote

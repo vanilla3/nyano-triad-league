@@ -4,8 +4,11 @@ import type { CardData } from "@nyano/triad-engine";
 import { fetchNyanoCards } from "@/lib/nyano_rpc";
 import { deleteDeck, exportDecksJson, importDecksJson, listDecks, upsertDeck, type DeckV1 } from "@/lib/deck_store";
 import { CardMini } from "@/components/CardMini";
+import { CardBrowser } from "@/components/CardBrowser";
 import { EmptyState } from "@/components/EmptyState";
 import { useToast } from "@/components/Toast";
+import { fetchGameIndex, type GameIndexV1 } from "@/lib/nyano/gameIndex";
+import { generateRecommendedDeck, strategyLabel, type DeckStrategy } from "@/lib/demo_decks";
 
 function parseTokenIds(text: string): bigint[] {
   const parts = text
@@ -35,6 +38,8 @@ function toCardsMap(bundles: Map<bigint, any>): Map<bigint, CardData> {
   return m;
 }
 
+const STRATEGIES: DeckStrategy[] = ["balanced", "aggressive", "defensive", "janken_mix"];
+
 export function DecksPage() {
   const [decks, setDecks] = React.useState<DeckV1[]>(() => listDecks());
 
@@ -47,6 +52,18 @@ export function DecksPage() {
 
   const [previewLoading, setPreviewLoading] = React.useState(false);
   const [previewCards, setPreviewCards] = React.useState<Map<bigint, CardData> | null>(null);
+
+  // Game index for CardBrowser and recommended decks
+  const [gameIndex, setGameIndex] = React.useState<GameIndexV1 | null>(null);
+  const [indexLoading, setIndexLoading] = React.useState(false);
+
+  React.useEffect(() => {
+    setIndexLoading(true);
+    fetchGameIndex().then((idx) => {
+      setGameIndex(idx);
+      setIndexLoading(false);
+    }).catch(() => setIndexLoading(false));
+  }, []);
 
   const refresh = () => setDecks(listDecks());
 
@@ -205,6 +222,68 @@ export function DecksPage() {
         </div>
       </section>
 
+      {/* RM02-101: Quick Deck (Recommended Presets) */}
+      {gameIndex && (
+        <section className="card">
+          <div className="card-hd">
+            <div className="text-base font-semibold">Quick Deck</div>
+            <div className="text-xs text-slate-500">戦略別のおすすめデッキをワンタップで生成・保存できます</div>
+          </div>
+          <div className="card-bd">
+            <div className="flex flex-wrap gap-2">
+              {STRATEGIES.map((s) => (
+                <button
+                  key={s}
+                  className="btn btn-sm"
+                  onClick={() => {
+                    const deck = generateRecommendedDeck(gameIndex, s);
+                    upsertDeck({
+                      name: deck.name,
+                      tokenIds: deck.tokenIds.map((t) => BigInt(t)),
+                      origin: deck.origin,
+                      memo: deck.memo,
+                    });
+                    refresh();
+                    toast.success("Deck created", `${strategyLabel(s)} Deck`);
+                  }}
+                >
+                  {strategyLabel(s)}
+                </button>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* RM02-100: Card Browser */}
+      <section className="card">
+        <div className="card-hd">
+          <div className="text-base font-semibold">Card Browser</div>
+          <div className="text-xs text-slate-500">カードを検索・フィルタリングして、クリックでtokenIdをデッキフォームに追加できます</div>
+        </div>
+        <div className="card-bd">
+          {indexLoading ? (
+            <div className="py-8 text-center text-sm text-slate-400">Loading game index...</div>
+          ) : gameIndex ? (
+            <CardBrowser
+              index={gameIndex}
+              onSelect={(tokenId) => {
+                setTokenText((prev) => {
+                  const existing = prev.trim();
+                  if (!existing) return tokenId;
+                  return `${existing}, ${tokenId}`;
+                });
+                toast.info("Added", `Token #${tokenId} added to form`);
+              }}
+            />
+          ) : (
+            <div className="py-8 text-center text-sm text-slate-400">
+              Game index not available. Place <span className="font-mono">index.v1.json</span> in <span className="font-mono">/game/</span> directory.
+            </div>
+          )}
+        </div>
+      </section>
+
       <section className="card">
         <div className="card-hd flex flex-wrap items-center justify-between gap-2">
           <div>
@@ -231,10 +310,29 @@ export function DecksPage() {
             decks.map((d) => (
               <div key={d.id} className="rounded-lg border border-slate-200 bg-white p-3">
                 <div className="flex flex-wrap items-center justify-between gap-2">
-                  <div className="font-medium">{d.name}</div>
+                  <div className="flex items-center gap-2">
+                    <span className="font-medium">{d.name}</span>
+                    {d.origin && (
+                      <span className={[
+                        "rounded-full px-1.5 py-0.5 text-[10px] font-semibold",
+                        d.origin === "guest" ? "bg-nyano-100 text-nyano-700" :
+                        d.origin === "recommended" ? "bg-sky-100 text-sky-700" :
+                        d.origin === "imported" ? "bg-emerald-100 text-emerald-700" :
+                        "bg-slate-100 text-slate-600",
+                      ].join(" ")}>
+                        {d.origin}
+                      </span>
+                    )}
+                    {d.difficulty && (
+                      <span className="rounded-full bg-purple-100 px-1.5 py-0.5 text-[10px] font-semibold text-purple-700">
+                        {d.difficulty}
+                      </span>
+                    )}
+                  </div>
                   <div className="text-xs text-slate-500">updated: {d.updatedAt}</div>
                 </div>
 
+                {d.memo && <div className="mt-0.5 text-xs text-slate-400">{d.memo}</div>}
                 <div className="mt-1 text-xs text-slate-600 font-mono">{d.tokenIds.join(", ")}</div>
 
                 <div className="mt-3 flex flex-wrap items-center gap-2">

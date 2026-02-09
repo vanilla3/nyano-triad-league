@@ -159,6 +159,102 @@ export function buildCardDataFromIndex(
   return cards;
 }
 
+// ── Recommended Deck Presets ─────────────────────────────────────────
+
+export type DeckStrategy = "balanced" | "aggressive" | "defensive" | "janken_mix";
+
+const STRATEGY_LABELS: Record<DeckStrategy, string> = {
+  balanced: "バランス型",
+  aggressive: "攻撃重視",
+  defensive: "防御重視",
+  janken_mix: "じゃんけん混合",
+};
+
+export function strategyLabel(strategy: DeckStrategy): string {
+  return STRATEGY_LABELS[strategy];
+}
+
+/**
+ * Generate a recommended deck based on a given strategy.
+ */
+export function generateRecommendedDeck(
+  index: GameIndexV1,
+  strategy: DeckStrategy,
+): DeckV1 {
+  const allIds = getAllTokenIds(index);
+  const entries: { id: string; params: IndexTokenGameParams; score: number }[] = [];
+
+  for (const id of allIds) {
+    const p = getFromGameIndex(index, id);
+    if (p) entries.push({ id, params: p, score: tokenScore(p) });
+  }
+
+  let picked: string[];
+  const now = new Date().toISOString();
+
+  switch (strategy) {
+    case "aggressive": {
+      // Top edge-sum cards, favor Rock (hand=0)
+      entries.sort((a, b) => b.score - a.score);
+      const rockFirst = entries.filter((e) => e.params.hand === 0);
+      const others = entries.filter((e) => e.params.hand !== 0);
+      const pool = [...rockFirst, ...others];
+      picked = sampleWithout(pool.slice(0, 20), 5).map((e) => e.id);
+      break;
+    }
+    case "defensive": {
+      // Highest minimum-edge cards (defensive = no weak side)
+      const withMinEdge = entries.map((e) => ({
+        ...e,
+        minEdge: Math.min(e.params.triad.up, e.params.triad.right, e.params.triad.down, e.params.triad.left),
+      }));
+      withMinEdge.sort((a, b) => b.minEdge - a.minEdge || b.score - a.score);
+      picked = sampleWithout(withMinEdge.slice(0, 20), 5).map((e) => e.id);
+      break;
+    }
+    case "janken_mix": {
+      // Diversified hands for tie-break advantage
+      const byHand: Record<number, typeof entries> = { 0: [], 1: [], 2: [] };
+      for (const e of entries) byHand[e.params.hand].push(e);
+      for (const h of [0, 1, 2]) byHand[h].sort((a, b) => b.score - a.score);
+
+      // Pick 2-2-1 distribution, from each hand
+      const ids: string[] = [];
+      const counts = [2, 2, 1];
+      for (let h = 0; h < 3; h++) {
+        const pool = byHand[h].slice(0, 10);
+        ids.push(...sampleWithout(pool, counts[h]).map((e) => e.id));
+      }
+      picked = ids.slice(0, 5);
+      break;
+    }
+    case "balanced":
+    default: {
+      // Use existing balanced logic (middle range)
+      const midStart = Math.max(0, Math.floor(entries.length * 0.3));
+      const midEnd = Math.min(entries.length, Math.floor(entries.length * 0.7));
+      const midRange = entries.slice(midStart, midEnd);
+      picked = sampleWithout(midRange, 5).map((e) => e.id);
+      break;
+    }
+  }
+
+  // Ensure we have 5
+  while (picked.length < 5 && entries.length > 0) {
+    picked.push(entries[Math.floor(Math.random() * entries.length)].id);
+  }
+
+  return {
+    id: `rec-${strategy}-${Date.now()}`,
+    name: `${STRATEGY_LABELS[strategy]} Deck`,
+    tokenIds: picked.slice(0, 5),
+    createdAt: now,
+    updatedAt: now,
+    origin: "recommended",
+    memo: STRATEGY_LABELS[strategy],
+  };
+}
+
 // ── Exports for testing ──────────────────────────────────────────────
 /** @internal – exported for unit tests only */
 export { sampleWithout as _sampleWithout, tokenScore as _tokenScore };

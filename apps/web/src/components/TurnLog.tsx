@@ -2,20 +2,12 @@ import React from "react";
 import type { BoardState, TurnSummary } from "@nyano/triad-engine";
 import { FlipTraceBadges, FlipTraceDetailList } from "@/components/FlipTraceBadges";
 import { flipTracesSummary } from "@/components/flipTraceDescribe";
-import type { MoveAnnotation, MoveQuality } from "@/lib/ai/replay_annotations";
+import type { MoveAnnotation } from "@/lib/ai/replay_annotations";
+import { QUALITY_DISPLAY } from "@/lib/ai/replay_annotations";
 import type { BoardAdvantage } from "@/lib/ai/board_advantage";
 import { AdvantageBadge } from "@/components/AdvantageBadge";
 
 const CELL_COORDS = ["A1", "B1", "C1", "A2", "B2", "C2", "A3", "B3", "C3"] as const;
-
-const QUALITY_COLORS: Record<MoveQuality, string> = {
-  Excellent: "bg-green-100 text-green-700 border-green-200",
-  Great: "bg-blue-100 text-blue-700 border-blue-200",
-  Good: "bg-teal-100 text-teal-700 border-teal-200",
-  Neutral: "bg-slate-100 text-slate-500 border-slate-200",
-  Questionable: "bg-amber-100 text-amber-700 border-amber-200",
-  Blunder: "bg-red-100 text-red-700 border-red-200",
-};
 
 function cellCoord(cell: number): string {
   return CELL_COORDS[cell] ?? String(cell);
@@ -275,8 +267,11 @@ export function TurnLog(props: {
               <div className="flex items-center gap-2 font-medium">
                 <span>Turn {t.turnIndex + 1} · {t.player === 0 ? "A" : "B"} · {cellCoord(t.cell)} (cell {t.cell}) · card {t.cardIndex + 1}</span>
                 {annotation && (
-                  <span className={`rounded-md border px-1.5 py-0.5 text-[10px] font-medium ${QUALITY_COLORS[annotation.quality]}`}>
-                    {annotation.quality} ({annotation.delta > 0 ? "+" : ""}{annotation.delta.toFixed(0)})
+                  <span
+                    className={`rounded-md border px-1.5 py-0.5 text-[10px] font-medium ${QUALITY_DISPLAY[annotation.quality].color}`}
+                    title={`${QUALITY_DISPLAY[annotation.quality].en} (delta: ${annotation.delta > 0 ? "+" : ""}${annotation.delta.toFixed(0)})`}
+                  >
+                    {QUALITY_DISPLAY[annotation.quality].ja} ({annotation.delta > 0 ? "+" : ""}{annotation.delta.toFixed(0)})
                   </span>
                 )}
                 {props.boardAdvantages?.[t.turnIndex + 1] && (

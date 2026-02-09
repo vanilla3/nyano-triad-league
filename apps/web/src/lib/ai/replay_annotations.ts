@@ -14,6 +14,22 @@ import { _evaluateBoard } from "./nyano_ai";
 
 export type MoveQuality = "Excellent" | "Great" | "Good" | "Neutral" | "Questionable" | "Blunder";
 
+export type QualityDisplayInfo = {
+  ja: string;
+  en: string;
+  color: string;
+};
+
+/** Japanese-friendly display labels and Tailwind color classes for each quality level. */
+export const QUALITY_DISPLAY: Record<MoveQuality, QualityDisplayInfo> = {
+  Excellent:    { ja: "最高",   en: "Excellent",    color: "bg-green-100 text-green-700 border-green-200" },
+  Great:        { ja: "好手",   en: "Great",        color: "bg-blue-100 text-blue-700 border-blue-200" },
+  Good:         { ja: "堅実",   en: "Good",         color: "bg-teal-100 text-teal-700 border-teal-200" },
+  Neutral:      { ja: "普通",   en: "Neutral",      color: "bg-slate-100 text-slate-500 border-slate-200" },
+  Questionable: { ja: "疑問手", en: "Questionable",  color: "bg-amber-100 text-amber-700 border-amber-200" },
+  Blunder:      { ja: "悪手",   en: "Blunder",      color: "bg-red-100 text-red-700 border-red-200" },
+};
+
 export type MoveAnnotation = {
   turnIndex: number;
   player: 0 | 1;

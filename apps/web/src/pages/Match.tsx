@@ -35,6 +35,7 @@ import { MiniTutorial } from "@/components/MiniTutorial";
 import { SkeletonBoard, SkeletonHand } from "@/components/Skeleton";
 import { fetchGameIndex } from "@/lib/nyano/gameIndex";
 import { generateBalancedDemoPair, buildCardDataFromIndex } from "@/lib/demo_decks";
+import { QrCode } from "@/components/QrCode";
 
 type RulesetKey = "v1" | "v2";
 type OpponentMode = "pvp" | "vs_nyano_ai";
@@ -170,6 +171,24 @@ function parseBool01(v: string | null, defaultValue: boolean): boolean {
   if (v === "1") return true;
   if (v === "0") return false;
   return defaultValue;
+}
+
+/** Lazy QR code for share URL — avoids computing gzip in render */
+function ShareQrCode({ sim, event }: { sim: SimState; event: EventV1 | null }) {
+  const [url, setUrl] = React.useState<string | null>(null);
+  React.useEffect(() => {
+    if (!sim.ok) return;
+    const json = stringifyWithBigInt(sim.transcript, 0);
+    void (async () => {
+      const z = await tryGzipCompressUtf8ToBase64Url(json);
+      const origin = window.location.origin;
+      const qp = `&step=9${event ? `&event=${encodeURIComponent(event.id)}` : ""}`;
+      setUrl(z ? `${origin}/replay?z=${z}${qp}` : `${origin}/replay?t=${base64UrlEncodeUtf8(json)}${qp}`);
+    })();
+  }, [sim, event]);
+
+  if (!url) return <div className="text-xs text-slate-400">Generating...</div>;
+  return <QrCode value={url} size={160} />;
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -324,7 +343,18 @@ export function MatchPage() {
 
   const handleSaveGuestDeck = () => {
     if (guestDeckATokens.length !== 5) return;
-    upsertDeck({ name: "Guest Deck", tokenIds: guestDeckATokens });
+    const ts = new Date();
+    const datePart = ts.toLocaleDateString("ja-JP", { year: "numeric", month: "2-digit", day: "2-digit" });
+    const timePart = ts.toLocaleTimeString("ja-JP", { hour: "2-digit", minute: "2-digit" });
+    const label = `Guest Deck ${datePart} ${timePart}`;
+    upsertDeck({
+      name: label,
+      tokenIds: guestDeckATokens,
+      origin: "guest",
+      difficulty: aiDifficulty,
+      rulesetKey,
+      memo: `${aiDifficulty} / ${rulesetKey}`,
+    });
     setGuestDeckSaved(true);
     toast.success("Deck saved!", "Find it on the Decks page.");
   };
@@ -1582,13 +1612,36 @@ export function MatchPage() {
                         {guestDeckSaved ? "Deck Saved" : "Save My Deck"}
                       </button>
                     </div>
-                    <div className="flex flex-wrap gap-2 border-t border-nyano-200 pt-2">
-                      <button className="btn text-xs" onClick={copyShareUrl} disabled={!canFinalize}>
-                        Share URL
-                      </button>
-                      <button className="btn text-xs" onClick={openReplay} disabled={!canFinalize}>
-                        Replay
-                      </button>
+                    <div className="grid gap-2 border-t border-nyano-200 pt-2">
+                      <div className="flex flex-wrap gap-2">
+                        <button className="btn text-xs" onClick={copyShareUrl} disabled={!canFinalize}>
+                          Share URL
+                        </button>
+                        <button className="btn text-xs" onClick={async () => {
+                          if (!sim.ok) return;
+                          const json = stringifyWithBigInt(sim.transcript, 0);
+                          const z = await tryGzipCompressUtf8ToBase64Url(json);
+                          const origin = window.location.origin;
+                          const qp = `&step=9${event ? `&event=${encodeURIComponent(event.id)}` : ""}`;
+                          const url = z ? `${origin}/replay?z=${z}${qp}` : `${origin}/replay?t=${base64UrlEncodeUtf8(json)}${qp}`;
+                          const msg = `Nyano Triad で対戦したにゃ！\n${url}`;
+                          await copyToClipboard(msg);
+                          toast.success("Copied", "share template");
+                        }} disabled={!canFinalize}>
+                          Share Template
+                        </button>
+                        <button className="btn text-xs" onClick={openReplay} disabled={!canFinalize}>
+                          Replay
+                        </button>
+                      </div>
+                      {canFinalize && (
+                        <details className="text-xs">
+                          <summary className="cursor-pointer text-sky-600 hover:text-sky-700 font-medium">QR Code</summary>
+                          <div className="mt-2 flex justify-center">
+                            <ShareQrCode sim={sim} event={event} />
+                          </div>
+                        </details>
+                      )}
                     </div>
                   </div>
                 )}
