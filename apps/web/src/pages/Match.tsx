@@ -28,6 +28,7 @@ import { stringifyWithBigInt } from "@/lib/json";
 import { fetchMintedTokenIds, fetchNyanoCards } from "@/lib/nyano_rpc";
 import { publishOverlayState, subscribeStreamCommand, type StreamCommandV1 } from "@/lib/streamer_bus";
 import { pickAiMove as pickAiMoveNew, type AiDifficulty, type AiReasonCode } from "@/lib/ai/nyano_ai";
+import { assessBoardAdvantage } from "@/lib/ai/board_advantage";
 import { AiNotesList } from "@/components/AiReasonDisplay";
 import { NyanoAvatar } from "@/components/NyanoAvatar";
 import { MiniTutorial } from "@/components/MiniTutorial";
@@ -700,6 +701,10 @@ export function MatchPage() {
         lastTurnSummary,
         aiNote: lastIndex >= 0 ? aiNotes[lastIndex]?.reason : undefined,
         aiReasonCode: lastIndex >= 0 ? aiNotes[lastIndex]?.reasonCode : undefined,
+        advantage: (() => {
+          const adv = assessBoardAdvantage(boardNow as any);
+          return { scoreA: adv.scoreA, levelA: adv.levelA, labelJa: adv.labelJa, badgeColor: adv.badgeColor };
+        })(),
         status: sim.full
           ? {
               finished: turns.length >= 9,

@@ -34,6 +34,8 @@ import { fetchNyanoCards } from "@/lib/nyano_rpc";
 import { publishOverlayState } from "@/lib/streamer_bus";
 import { parseTranscriptV1Json } from "@/lib/transcript_import";
 import { annotateReplayMoves } from "@/lib/ai/replay_annotations";
+import { assessBoardAdvantage, type BoardAdvantage } from "@/lib/ai/board_advantage";
+import { AdvantageBadge } from "@/components/AdvantageBadge";
 
 type Mode = "auto" | "v1" | "v2" | "compare";
 
@@ -520,6 +522,15 @@ protocolV1: {
     [sim.ok, sim.ok ? sim.current : null, sim.ok ? sim.transcript : null],
   );
 
+  const boardAdvantages: BoardAdvantage[] = React.useMemo(
+    () => {
+      if (!sim.ok) return [];
+      return sim.current.boardHistory.map((b) => assessBoardAdvantage(b as any));
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [sim.ok, sim.ok ? sim.current : null],
+  );
+
   const renderReplay = (label: string, res: MatchResultWithHistory) => {
     const boardNow = res.boardHistory[step];
     const boardPrev = step === 0 ? res.boardHistory[0] : res.boardHistory[step - 1];
@@ -546,6 +557,12 @@ protocolV1: {
             />
             <div className="flex-1">
               <ScoreBar board={boardNow as any} moveCount={step} maxMoves={9} winner={res.winner} />
+              {boardAdvantages[step] && (
+                <div className="mt-1 flex items-center gap-1.5">
+                  <span className="text-[10px] text-slate-400">形勢</span>
+                  <AdvantageBadge advantage={boardAdvantages[step]} size="sm" showScore />
+                </div>
+              )}
             </div>
           </div>
           {nyanoReactionInput ? <NyanoReaction input={nyanoReactionInput} turnIndex={step} rpg={isRpg} /> : null}
@@ -1083,6 +1100,7 @@ const buildShareLink = async (): Promise<string> => {
                   selectedTurnIndex={focusTurnIndex ?? -1}
                   onSelect={(t) => setStep(t + 1)}
                   annotations={annotations}
+                  boardAdvantages={boardAdvantages}
                 />
               </div>
             </div>
