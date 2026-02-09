@@ -7,7 +7,7 @@ import { CopyField } from "@/components/CopyField";
 import { NyanoImage } from "@/components/NyanoImage";
 import { useToast } from "@/components/Toast";
 import { EVENTS, getEventStatus, type EventV1 } from "@/lib/events";
-import { readBoolSetting, readNumberSetting, readStringSetting } from "@/lib/local_settings";
+import { readBoolSetting, readNumberSetting, readStringSetting, writeBoolSetting, writeNumberSetting, writeStringSetting } from "@/lib/local_settings";
 import { postNyanoWarudoSnapshot } from "@/lib/nyano_warudo_bridge";
 import { formatViewerMoveText, parseChatMoveLoose, parseViewerMoveText } from "@/lib/triad_viewer_command";
 import {
@@ -135,9 +135,8 @@ function safeFileStem(): string {
 
 // Nyano Warudo bridge (Triad League → nyano-warudo)
 const [warudoBaseUrl, setWarudoBaseUrl] = React.useState<string>(() => {
-  const saved = localStorage.getItem("nyanoWarudo.baseUrl");
   const env = import.meta.env?.VITE_NYANO_WARUDO_BASE_URL as string | undefined;
-  return (saved ?? env ?? "").toString();
+  return readStringSetting("nyanoWarudo.baseUrl", env ?? "");
 });
 const [autoSendStateOnVoteStart, setAutoSendStateOnVoteStart] = React.useState<boolean>(() =>
   readBoolSetting("nyanoWarudo.autoSendStateOnVoteStart", true)
@@ -157,34 +156,22 @@ const [lastExternalResult, setLastExternalResult] = React.useState<ExternalResul
 
 React.useEffect(() => {
   // persist for convenience (stream ops)
-  try {
-    localStorage.setItem("nyanoWarudo.baseUrl", warudoBaseUrl);
-  } catch {
-    // ignore
-  }
+  writeStringSetting("nyanoWarudo.baseUrl", warudoBaseUrl);
 }, [warudoBaseUrl]);
 
 React.useEffect(() => {
   // persist toggles too (avoid stream ops mistakes after refresh)
-  try {
-    localStorage.setItem("nyanoWarudo.autoSendStateOnVoteStart", autoSendStateOnVoteStart ? "1" : "0");
-    localStorage.setItem("nyanoWarudo.autoSendPromptOnVoteStart", autoSendPromptOnVoteStart ? "1" : "0");
-    localStorage.setItem("nyanoWarudo.autoResendStateDuringVoteOpen", autoResendStateDuringVoteOpen ? "1" : "0");
-    localStorage.setItem("nyanoWarudo.autoSendStateOnVoteEnd", autoSendStateOnVoteEnd ? "1" : "0");
-  } catch {
-    // ignore
-  }
+  writeBoolSetting("nyanoWarudo.autoSendStateOnVoteStart", autoSendStateOnVoteStart);
+  writeBoolSetting("nyanoWarudo.autoSendPromptOnVoteStart", autoSendPromptOnVoteStart);
+  writeBoolSetting("nyanoWarudo.autoResendStateDuringVoteOpen", autoResendStateDuringVoteOpen);
+  writeBoolSetting("nyanoWarudo.autoSendStateOnVoteEnd", autoSendStateOnVoteEnd);
 }, [autoSendStateOnVoteStart, autoSendPromptOnVoteStart, autoResendStateDuringVoteOpen, autoSendStateOnVoteEnd]);
 
 React.useEffect(() => {
-  try {
-    localStorage.setItem("stream.controlledSide", String(controlledSide));
-    localStorage.setItem("stream.voteSeconds", String(voteSeconds));
-    localStorage.setItem("stream.autoStartEachTurn", autoStartEachTurn ? "1" : "0");
-    localStorage.setItem("stream.userName", userName);
-  } catch {
-    // ignore
-  }
+  writeNumberSetting("stream.controlledSide", controlledSide);
+  writeNumberSetting("stream.voteSeconds", voteSeconds);
+  writeBoolSetting("stream.autoStartEachTurn", autoStartEachTurn);
+  writeStringSetting("stream.userName", userName);
 }, [controlledSide, voteSeconds, autoStartEachTurn, userName]);
 
 function bestEffortBoardToProtocolBoard(state: OverlayStateV1 | null): Array<any | null> {
@@ -1171,6 +1158,48 @@ return (
           </div>
         </div>
       </div>
+
+      {/* ── Recovery Procedures (Phase 1 — operator guide) ── */}
+      <details className="card rounded-2xl border border-amber-200 bg-amber-50/50 px-4 py-3">
+        <summary className="text-xs font-semibold text-amber-800 cursor-pointer">
+          Recovery Procedures (トラブルシューティング)
+        </summary>
+        <div className="mt-2 grid gap-3 text-xs text-amber-900">
+          <div>
+            <div className="font-semibold">Overlay shows &quot;Data stale&quot;</div>
+            <ol className="list-decimal pl-4 mt-1 space-y-0.5">
+              <li>Check Match tab is still open and connected</li>
+              <li>Refresh Match tab (state auto-recovers from localStorage)</li>
+              <li>If RPC errors persist, check blockchain RPC endpoint</li>
+            </ol>
+          </div>
+          <div>
+            <div className="font-semibold">Vote not appearing in overlay</div>
+            <ol className="list-decimal pl-4 mt-1 space-y-0.5">
+              <li>Verify Stream tab and Overlay tab are on the same origin</li>
+              <li>Check browser console for BroadcastChannel errors</li>
+              <li>Refresh both tabs (vote state resets)</li>
+            </ol>
+          </div>
+          <div>
+            <div className="font-semibold">Warudo bridge not responding</div>
+            <ol className="list-decimal pl-4 mt-1 space-y-0.5">
+              <li>Check base URL is correct (no trailing slash)</li>
+              <li>Click &quot;Send state&quot; manually to test connectivity</li>
+              <li>Check nyano-warudo server logs for CORS or timeout errors</li>
+            </ol>
+          </div>
+          <div>
+            <div className="font-semibold">Full reset procedure</div>
+            <ol className="list-decimal pl-4 mt-1 space-y-0.5">
+              <li>Close all Nyano tabs</li>
+              <li>Open Match tab → load decks → start new match</li>
+              <li>Open Overlay tab → verify board appears</li>
+              <li>Open Stream tab → configure side + vote timer → test vote</li>
+            </ol>
+          </div>
+        </div>
+      </details>
 
       <div className="card">
         <div className="card-hd">
