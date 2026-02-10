@@ -33,6 +33,7 @@ import { stringifyWithBigInt } from "@/lib/json";
 import { fetchMintedTokenIds, fetchNyanoCards } from "@/lib/nyano_rpc";
 import { publishOverlayState, subscribeStreamCommand, type StreamCommandV1 } from "@/lib/streamer_bus";
 import { pickAiMove as pickAiMoveNew, type AiDifficulty, type AiReasonCode } from "@/lib/ai/nyano_ai";
+import { generateMoveTip } from "@/lib/ai/move_tips";
 import { assessBoardAdvantage } from "@/lib/ai/board_advantage";
 import { AiNotesList } from "@/components/AiReasonDisplay";
 import { NyanoAvatar } from "@/components/NyanoAvatar";
@@ -651,6 +652,41 @@ export function MatchPage() {
       return { ok: false, error: e?.message ?? String(e) };
     }
   }, [cards, effectiveDeckATokens, effectiveDeckBTokens, turns, firstPlayer, ruleset, rulesetId, seasonId, playerA, playerB, deadline, salt]);
+
+  // P1-120: Move tip for BattleHudMint (same data shapes as publishOverlayState)
+  const moveTip = React.useMemo(() => {
+    if (!sim.ok || turns.length === 0) return null;
+    const lastIdx = turns.length - 1;
+    const last = turns[lastIdx];
+    const lastSummary = sim.previewTurns[lastIdx];
+    if (!last || !lastSummary) return null;
+
+    const summaryLite = {
+      flipCount: Number(lastSummary.flipCount ?? 0),
+      comboCount: Number(lastSummary.comboCount ?? 0),
+      comboEffect: (lastSummary.comboEffect ?? "none") as "fever" | "momentum" | "domination" | "none",
+      triadPlus: Number(lastSummary.appliedBonus?.triadPlus ?? 0),
+      ignoreWarningMark: Boolean(lastSummary.appliedBonus?.ignoreWarningMark),
+      warningTriggered: Boolean(lastSummary.warningTriggered),
+      warningPlaced: typeof lastSummary.warningPlaced === "number"
+        ? Number(lastSummary.warningPlaced) : null,
+      flips: lastSummary.flipTraces?.map((f) => ({
+        from: f.from, to: f.to, isChain: f.isChain,
+        kind: f.kind, dir: f.dir as "up" | "right" | "down" | "left" | undefined,
+        vert: f.vert as "up" | "down" | undefined,
+        horiz: f.horiz as "left" | "right" | undefined,
+        aVal: f.aVal, dVal: f.dVal, tieBreak: f.tieBreak,
+      })),
+    };
+    const moveLite = {
+      turnIndex: lastIdx,
+      by: turnPlayer(firstPlayer, lastIdx) as 0 | 1,
+      cell: Number(last.cell),
+      cardIndex: Number(last.cardIndex ?? 0),
+    };
+    return generateMoveTip(summaryLite, moveLite);
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- sim already depends on turns
+  }, [sim, turns.length, firstPlayer]);
 
   const matchId = sim.ok ? sim.full.matchId : null;
 
@@ -1484,6 +1520,8 @@ export function MatchPage() {
                               : draftCardIndex !== null ? "select_cell"
                               : "select_card"
                           }
+                          moveTip={moveTip}
+                          aiReasonCode={turns.length > 0 ? aiNotes[turns.length - 1]?.reasonCode : undefined}
                         />
                       </div>
                       {/* D-3: SFX Mute Toggle */}

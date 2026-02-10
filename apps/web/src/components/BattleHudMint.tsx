@@ -1,13 +1,27 @@
 import React from "react";
 import type { BoardCell, PlayerIndex } from "@nyano/triad-engine";
 import { assessBoardAdvantage } from "@/lib/ai/board_advantage";
+import type { MoveTip } from "@/lib/ai/move_tips";
+import { reasonCodeLabel, type AiReasonCode } from "@/lib/ai/nyano_ai";
 
 /* ═══════════════════════════════════════════════════════════════════════════
    BattleHudMint — Frosted-glass battle HUD for Mint duel mode (P3-300)
 
-   Displays: Turn counter + progress bar, advantage badge, phase + player dot.
+   Displays: Turn counter + progress bar, advantage badge, move tip,
+   AI reason badge, phase + player dot.
    Replaces ScoreBar in mint mode. Pure presentational component.
    ═══════════════════════════════════════════════════════════════════════════ */
+
+const TIP_ICONS: Record<string, string> = {
+  warning_dodge: "🛡️",
+  warning_triggered: "⚠️",
+  warning_trap: "🪤",
+  domination_combo: "👑",
+  big_swing: "💥",
+  chain_combo: "⛓️",
+  corner_control: "📐",
+  center_hold: "🎯",
+};
 
 export interface BattleHudMintProps {
   board: (BoardCell | null)[];
@@ -15,6 +29,8 @@ export interface BattleHudMintProps {
   maxTurns: number;
   currentPlayer: PlayerIndex;
   gamePhase: "select_card" | "select_cell" | "ai_turn" | "game_over";
+  moveTip?: MoveTip | null;
+  aiReasonCode?: AiReasonCode | null;
 }
 
 const PHASE_LABELS: Record<BattleHudMintProps["gamePhase"], string> = {
@@ -30,6 +46,8 @@ export function BattleHudMint({
   maxTurns,
   currentPlayer,
   gamePhase,
+  moveTip,
+  aiReasonCode,
 }: BattleHudMintProps) {
   const adv = assessBoardAdvantage(board);
   const progress = Math.round((turnCount / maxTurns) * 100);
@@ -59,6 +77,34 @@ export function BattleHudMint({
       >
         {adv.labelJa}
       </div>
+
+      {/* Move tip badge (P1-120) */}
+      {moveTip && (
+        <div
+          className={[
+            "mint-battle-hud__tip",
+            `mint-battle-hud__tip--${moveTip.key}`,
+          ].join(" ")}
+          title={moveTip.labelEn}
+        >
+          <span className="mint-battle-hud__tip-icon">
+            {TIP_ICONS[moveTip.key] ?? "💡"}
+          </span>
+          <span className="mint-battle-hud__tip-label">
+            {moveTip.labelJa}
+          </span>
+        </div>
+      )}
+
+      {/* AI reason badge (P3-312) */}
+      {aiReasonCode && (
+        <div className="mint-battle-hud__ai-reason" title={reasonCodeLabel(aiReasonCode)}>
+          <span className="mint-battle-hud__ai-reason-icon">🐱</span>
+          <span className="mint-battle-hud__ai-reason-label">
+            {reasonCodeLabel(aiReasonCode)}
+          </span>
+        </div>
+      )}
 
       {/* Phase indicator */}
       <div className="mint-battle-hud__phase">
