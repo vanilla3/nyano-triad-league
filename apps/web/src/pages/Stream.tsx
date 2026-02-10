@@ -10,7 +10,8 @@ import { executeRecovery, recoveryActionLabel } from "@/lib/stream_recovery";
 import { WarudoBridgePanel } from "@/components/stream/WarudoBridgePanel";
 import { VoteControlPanel } from "@/components/stream/VoteControlPanel";
 import { StreamSharePanel } from "@/components/stream/StreamSharePanel";
-import { readBoolSetting, readNumberSetting, readStringSetting, readStreamLock, readStreamLockTimestamp, writeBoolSetting, writeNumberSetting, writeStreamLock, writeStreamLockTimestamp, writeStringSetting } from "@/lib/local_settings";
+import { readBoolSetting, readNumberSetting, readStringSetting, readStreamLock, readStreamLockTimestamp, readAntiSpamRateLimitMs, readAntiSpamMaxVoteChanges, writeBoolSetting, writeNumberSetting, writeStreamLock, writeStreamLockTimestamp, writeAntiSpamRateLimitMs, writeAntiSpamMaxVoteChanges, writeStringSetting } from "@/lib/local_settings";
+import { validateUsername, checkRateLimit, checkVoteChangeLimit, DEFAULT_ANTI_SPAM_CONFIG, type AntiSpamConfig } from "@/lib/anti_spam";
 import { postNyanoWarudoSnapshot } from "@/lib/nyano_warudo_bridge";
 import { formatViewerMoveText, parseChatMoveLoose, parseViewerMoveText } from "@/lib/triad_viewer_command";
 import {
@@ -535,15 +536,39 @@ const _remainingWarningMarks = React.useMemo(() => computeWarningMarksRemaining(
 
   // ── Vote audit trail ──
   const [voteAudit, setVoteAudit] = React.useState<{
-    attempts: number; accepted: number; duplicates: number; rateLimited: number; illegal: number;
-  }>({ attempts: 0, accepted: 0, duplicates: 0, rateLimited: 0, illegal: 0 });
+    attempts: number; accepted: number; duplicates: number; rateLimited: number; illegal: number; usernameRejected: number; changeExceeded: number;
+  }>({ attempts: 0, accepted: 0, duplicates: 0, rateLimited: 0, illegal: 0, usernameRejected: 0, changeExceeded: 0 });
   const rateLimitMapRef = React.useRef<Map<string, number>>(new Map());
-  const RATE_LIMIT_MS = 2000;
+  const voteChangeCountRef = React.useRef<Map<string, number>>(new Map());
+
+  // ── Anti-spam configuration (persisted) ──
+  const [antiSpamRateLimitMs, setAntiSpamRateLimitMs] = React.useState<number>(() => readAntiSpamRateLimitMs());
+  const [antiSpamMaxVoteChanges, setAntiSpamMaxVoteChanges] = React.useState<number>(() => readAntiSpamMaxVoteChanges());
+  const antiSpamConfig = React.useMemo<AntiSpamConfig>(() => ({
+    ...DEFAULT_ANTI_SPAM_CONFIG,
+    rateLimitMs: antiSpamRateLimitMs,
+    maxVoteChangesPerRound: antiSpamMaxVoteChanges,
+  }), [antiSpamRateLimitMs, antiSpamMaxVoteChanges]);
+
+  // Persist anti-spam settings (P2-SPAM)
+  React.useEffect(() => {
+    writeAntiSpamRateLimitMs(antiSpamRateLimitMs);
+    writeAntiSpamMaxVoteChanges(antiSpamMaxVoteChanges);
+  }, [antiSpamRateLimitMs, antiSpamMaxVoteChanges]);
+
+  // Apply event's voteTimeSeconds as default when event changes (P2-SPAM)
+  React.useEffect(() => {
+    if (e?.voteTimeSeconds && e.voteTimeSeconds > 0) {
+      setVoteSeconds(e.voteTimeSeconds);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- only when event changes
+  }, [e?.id]);
 
   const resetVotes = React.useCallback(() => {
     setVotesByUser({});
-    setVoteAudit({ attempts: 0, accepted: 0, duplicates: 0, rateLimited: 0, illegal: 0 });
+    setVoteAudit({ attempts: 0, accepted: 0, duplicates: 0, rateLimited: 0, illegal: 0, usernameRejected: 0, changeExceeded: 0 });
     rateLimitMapRef.current.clear();
+    voteChangeCountRef.current.clear();
   }, []);
 
   const startVote = React.useCallback(() => {
@@ -721,11 +746,27 @@ React.useEffect(() => {
     const u = userName.trim() || "viewer";
     const now = Date.now();
 
-    // Rate limit: same user within RATE_LIMIT_MS
-    const lastVoteAt = rateLimitMapRef.current.get(u);
-    if (lastVoteAt && now - lastVoteAt < RATE_LIMIT_MS) {
+    // Username validation (P2-SPAM)
+    const usernameCheck = validateUsername(u, antiSpamConfig);
+    if (!usernameCheck.ok && usernameCheck.reason === "invalid_username") {
+      setVoteAudit((prev) => ({ ...prev, attempts: prev.attempts + 1, usernameRejected: prev.usernameRejected + 1 }));
+      toast.warn("Vote", `Invalid username: ${u} (${usernameCheck.detail})`);
+      return;
+    }
+
+    // Rate limit: per-user configurable cooldown (P2-SPAM)
+    const rlCheck = checkRateLimit(u, now, rateLimitMapRef.current, antiSpamConfig);
+    if (!rlCheck.ok && rlCheck.reason === "rate_limited") {
       setVoteAudit((prev) => ({ ...prev, attempts: prev.attempts + 1, rateLimited: prev.rateLimited + 1 }));
-      toast.warn("Vote", `Rate limited: ${u} (wait ${Math.ceil((RATE_LIMIT_MS - (now - lastVoteAt)) / 1000)}s)`);
+      toast.warn("Vote", `Rate limited: ${u} (wait ${Math.ceil(rlCheck.waitMs / 1000)}s)`);
+      return;
+    }
+
+    // Vote change limit: per-user per-round cap (P2-SPAM)
+    const vcCheck = checkVoteChangeLimit(u, voteChangeCountRef.current, antiSpamConfig);
+    if (!vcCheck.ok && vcCheck.reason === "max_changes_exceeded") {
+      setVoteAudit((prev) => ({ ...prev, attempts: prev.attempts + 1, changeExceeded: prev.changeExceeded + 1 }));
+      toast.warn("Vote", `Vote change limit reached: ${u} (max ${vcCheck.limit})`);
       return;
     }
 
@@ -750,11 +791,14 @@ React.useEffect(() => {
         duplicates: isDuplicate ? a.duplicates + 1 : a.duplicates,
         rateLimited: a.rateLimited,
         illegal: a.illegal,
+        usernameRejected: a.usernameRejected,
+        changeExceeded: a.changeExceeded,
       }));
       return { ...prev, [u]: mv };
     });
     rateLimitMapRef.current.set(u, now);
-  }, [chatText, userName, controlledSide, toast, RATE_LIMIT_MS, live]);
+    voteChangeCountRef.current.set(u, (voteChangeCountRef.current.get(u) ?? 0) + 1);
+  }, [chatText, userName, controlledSide, toast, antiSpamConfig, live]);
 
   const counts = React.useMemo(() => {
     const entries = Object.values(votesByUser);
@@ -1041,6 +1085,10 @@ return (
                 counts={counts}
                 voteAudit={voteAudit}
                 onCopyViewerInstructions={copyViewerInstructions}
+                antiSpamRateLimitMs={antiSpamRateLimitMs}
+                onChangeAntiSpamRateLimitMs={setAntiSpamRateLimitMs}
+                antiSpamMaxVoteChanges={antiSpamMaxVoteChanges}
+                onChangeAntiSpamMaxVoteChanges={setAntiSpamMaxVoteChanges}
               />
             </div>
 

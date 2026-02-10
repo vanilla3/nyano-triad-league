@@ -1,0 +1,140 @@
+{
+  "schema": "nyano-triad-league.web-golden-vectors.v1",
+  "cases": [
+    {
+      "name": "basic_default_ruleset",
+      "description": "10 cards (no traits), standard turn order, firstPlayer=0, DEFAULT_RULESET",
+      "rulesetKey": "full",
+      "transcript": {
+        "header": {
+          "version": 1,
+          "seasonId": 0,
+          "firstPlayer": 0,
+          "deadline": 9999999999
+        },
+        "turns": [
+          { "cell": 4, "cardIndex": 0 },
+          { "cell": 0, "cardIndex": 0 },
+          { "cell": 2, "cardIndex": 1 },
+          { "cell": 6, "cardIndex": 1 },
+          { "cell": 8, "cardIndex": 2 },
+          { "cell": 1, "cardIndex": 2 },
+          { "cell": 3, "cardIndex": 3 },
+          { "cell": 5, "cardIndex": 3 },
+          { "cell": 7, "cardIndex": 4 }
+        ]
+      },
+      "cards": [
+        { "tokenId": "1", "edges": [7,3,5,4], "jankenHand": 0 },
+        { "tokenId": "2", "edges": [4,6,3,5], "jankenHand": 1 },
+        { "tokenId": "3", "edges": [5,5,5,5], "jankenHand": 2 },
+        { "tokenId": "4", "edges": [8,2,4,6], "jankenHand": 0 },
+        { "tokenId": "5", "edges": [3,7,6,3], "jankenHand": 1 },
+        { "tokenId": "6", "edges": [4,5,6,3], "jankenHand": 2 },
+        { "tokenId": "7", "edges": [6,4,3,7], "jankenHand": 0 },
+        { "tokenId": "8", "edges": [3,8,4,5], "jankenHand": 1 },
+        { "tokenId": "9", "edges": [5,3,7,4], "jankenHand": 2 },
+        { "tokenId": "10", "edges": [4,6,5,6], "jankenHand": 0 }
+      ],
+      "deckA": ["1","2","3","4","5"],
+      "deckB": ["6","7","8","9","10"],
+      "expected": {
+        "matchId": "0x3236bc41c548ddb85aa23fbd577c3fedfe56e8dae0d3a0c2c44f89cd011f66c5",
+        "winner": 0,
+        "tilesA": 8,
+        "tilesB": 1,
+        "tieBreak": "none"
+      }
+    },
+    {
+      "name": "shadow_trait_v2_ruleset",
+      "description": "Cards with shadow trait, same turn order, v2 ruleset (shadow enabled)",
+      "rulesetKey": "v2",
+      "transcript": {
+        "header": {
+          "version": 1,
+          "seasonId": 0,
+          "firstPlayer": 0,
+          "deadline": 9999999999
+        },
+        "turns": [
+          { "cell": 4, "cardIndex": 0 },
+          { "cell": 0, "cardIndex": 0 },
+          { "cell": 2, "cardIndex": 1 },
+          { "cell": 6, "cardIndex": 1 },
+          { "cell": 8, "cardIndex": 2 },
+          { "cell": 1, "cardIndex": 2 },
+          { "cell": 3, "cardIndex": 3 },
+          { "cell": 5, "cardIndex": 3 },
+          { "cell": 7, "cardIndex": 4 }
+        ]
+      },
+      "cards": [
+        { "tokenId": "11", "edges": [7,3,5,4], "jankenHand": 0, "trait": "shadow" },
+        { "tokenId": "12", "edges": [4,6,3,5], "jankenHand": 1 },
+        { "tokenId": "13", "edges": [5,5,5,5], "jankenHand": 2 },
+        { "tokenId": "14", "edges": [8,2,4,6], "jankenHand": 0 },
+        { "tokenId": "15", "edges": [3,7,6,3], "jankenHand": 1 },
+        { "tokenId": "16", "edges": [4,5,6,3], "jankenHand": 2 },
+        { "tokenId": "17", "edges": [6,4,3,7], "jankenHand": 0 },
+        { "tokenId": "18", "edges": [3,8,4,5], "jankenHand": 1 },
+        { "tokenId": "19", "edges": [5,3,7,4], "jankenHand": 2, "trait": "shadow" },
+        { "tokenId": "20", "edges": [4,6,5,6], "jankenHand": 0 }
+      ],
+      "deckA": ["11","12","13","14","15"],
+      "deckB": ["16","17","18","19","20"],
+      "expected": {
+        "matchId": "0x2d0e8a546df5e3d50026c45e4c2449f1c577182c110b65d5b09a459e4e2f9a77",
+        "winner": 0,
+        "tilesA": 8,
+        "tilesB": 1,
+        "tieBreak": "none"
+      }
+    },
+    {
+      "name": "first_player_1_asymmetric",
+      "description": "Same cards/turns as basic but firstPlayer=1, changes who plays which turns",
+      "rulesetKey": "full",
+      "transcript": {
+        "header": {
+          "version": 1,
+          "seasonId": 0,
+          "firstPlayer": 1,
+          "deadline": 9999999999
+        },
+        "turns": [
+          { "cell": 4, "cardIndex": 0 },
+          { "cell": 0, "cardIndex": 0 },
+          { "cell": 2, "cardIndex": 1 },
+          { "cell": 6, "cardIndex": 1 },
+          { "cell": 8, "cardIndex": 2 },
+          { "cell": 1, "cardIndex": 2 },
+          { "cell": 3, "cardIndex": 3 },
+          { "cell": 5, "cardIndex": 3 },
+          { "cell": 7, "cardIndex": 4 }
+        ]
+      },
+      "cards": [
+        { "tokenId": "1", "edges": [7,3,5,4], "jankenHand": 0 },
+        { "tokenId": "2", "edges": [4,6,3,5], "jankenHand": 1 },
+        { "tokenId": "3", "edges": [5,5,5,5], "jankenHand": 2 },
+        { "tokenId": "4", "edges": [8,2,4,6], "jankenHand": 0 },
+        { "tokenId": "5", "edges": [3,7,6,3], "jankenHand": 1 },
+        { "tokenId": "6", "edges": [4,5,6,3], "jankenHand": 2 },
+        { "tokenId": "7", "edges": [6,4,3,7], "jankenHand": 0 },
+        { "tokenId": "8", "edges": [3,8,4,5], "jankenHand": 1 },
+        { "tokenId": "9", "edges": [5,3,7,4], "jankenHand": 2 },
+        { "tokenId": "10", "edges": [4,6,5,6], "jankenHand": 0 }
+      ],
+      "deckA": ["1","2","3","4","5"],
+      "deckB": ["6","7","8","9","10"],
+      "expected": {
+        "matchId": "0xbafab10c88db89738a99f7a1955dd9dbc502c0503a9a078c3cd3876f6ae59033",
+        "winner": 0,
+        "tilesA": 5,
+        "tilesB": 4,
+        "tieBreak": "none"
+      }
+    }
+  ]
+}

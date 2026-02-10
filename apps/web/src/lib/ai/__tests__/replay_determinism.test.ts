@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import {
   simulateMatchV1WithHistory,
+  verifyReplayV1,
   DEFAULT_RULESET_CONFIG_V1,
 } from "@nyano/triad-engine";
 import type {
@@ -271,5 +272,39 @@ describe("Golden snapshots (P3-302)", () => {
         "A",
       ]
     `);
+  });
+});
+
+/* ═══════════════════════════════════════════════════════════════════
+   verifyReplayV1 agreement (P3-303)
+   Confirm that the verification function agrees with simulation,
+   and rejects tampered transcripts.
+   ═══════════════════════════════════════════════════════════════════ */
+
+describe("verifyReplayV1 agreement (P3-303)", () => {
+  function runMatch() {
+    return simulateMatchV1WithHistory(TRANSCRIPT, CARD_MAP, DEFAULT_RULESET_CONFIG_V1);
+  }
+
+  it("agrees with simulateMatchV1WithHistory on correct transcript", () => {
+    const result = runMatch();
+    const verify = verifyReplayV1(
+      TRANSCRIPT,
+      CARD_MAP,
+      result.matchId as `0x${string}`,
+      DEFAULT_RULESET_CONFIG_V1,
+    );
+    expect(verify.ok).toBe(true);
+  });
+
+  it("rejects when given an incorrect matchId", () => {
+    const fakeMatchId = `0x${"ff".repeat(32)}` as `0x${string}`;
+    const verify = verifyReplayV1(
+      TRANSCRIPT,
+      CARD_MAP,
+      fakeMatchId,
+      DEFAULT_RULESET_CONFIG_V1,
+    );
+    expect(verify.ok).toBe(false);
   });
 });

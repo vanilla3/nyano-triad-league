@@ -9,6 +9,7 @@
     "firstPlayer": 0,
     "aiDifficulty": "normal",
     "nyanoDeckTokenIds": ["1", "2", "3", "4", "5"],
-    "tags": ["always", "ai", "shareable"]
+    "tags": ["always", "ai", "shareable"],
+    "deckRestriction": "none"
   }
 ]

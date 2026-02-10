@@ -3,6 +3,7 @@ import { useToast } from "@/components/Toast";
 import { Link } from "react-router-dom";
 
 import { EVENTS, formatEventPeriod, getEventStatus } from "@/lib/events";
+import { parseDeckRestriction } from "@/lib/deck_restriction";
 import { clearEventAttempts, deleteEventAttempt, listEventAttempts } from "@/lib/event_attempts";
 
 function StatusBadge(props: { status: string }) {
@@ -94,6 +95,13 @@ export function EventsPage() {
                     <div className="mt-1 font-mono text-xs">{e.aiDifficulty}</div>
                   </div>
                 </div>
+
+                {e.deckRestriction && (
+                  <div className="flex items-center gap-2">
+                    <span className="badge badge-sky">{parseDeckRestriction(e.deckRestriction).label}</span>
+                    <span className="text-[11px] text-slate-500">{parseDeckRestriction(e.deckRestriction).description}</span>
+                  </div>
+                )}
 
                 <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-700">
                   Nyano deck tokenIds: <span className="font-mono">{e.nyanoDeckTokenIds.join(", ")}</span>

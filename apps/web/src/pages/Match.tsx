@@ -8,6 +8,7 @@ import {
   simulateMatchV1WithHistory,
 } from "@nyano/triad-engine";
 import { resolveRulesetOrThrow, type RulesetKey } from "@/lib/ruleset_registry";
+import { parseDeckRestriction, validateDeckAgainstRestriction } from "@/lib/deck_restriction";
 
 import { BoardView } from "@/components/BoardView";
 import { BoardViewRPG, HandDisplayRPG, GameResultOverlayRPG, TurnLogRPG } from "@/components/BoardViewRPG";
@@ -519,6 +520,17 @@ export function MatchPage() {
           const missing = allTokenIds.filter((id) => !cardMap.has(BigInt(id)));
           setError(`Game Index に存在しない tokenId: ${missing.join(", ")}. Verified mode をお試しください。`);
           return;
+        }
+
+        // Deck restriction check (P2-DECK-RESTRICT)
+        if (event?.deckRestriction) {
+          const rule = parseDeckRestriction(event.deckRestriction);
+          const playerTokenIds = deckATokens.map((t) => t.toString());
+          const validation = validateDeckAgainstRestriction(playerTokenIds, rule);
+          if (!validation.valid) {
+            setError(`Deck restriction violation (${rule.label}): ${validation.violations.join("; ")}`);
+            return;
+          }
         }
 
         setCards(cardMap);
