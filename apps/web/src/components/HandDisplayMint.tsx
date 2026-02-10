@@ -35,7 +35,7 @@ export function HandDisplayMint({
   const preview = useCardPreview();
 
   return (
-    <div className="mint-hand">
+    <div className="mint-hand" role="listbox" aria-label={`Player ${owner === 0 ? "A" : "B"} hand`}>
       {cards.map((card, idx) => {
         const isUsed = usedIndices.has(idx);
         const isSelected = selectedIndex === idx;
@@ -53,6 +53,10 @@ export function HandDisplayMint({
         return (
           <button
             key={idx}
+            role="option"
+            aria-selected={isSelected}
+            aria-disabled={isDisabled}
+            aria-label={`Card ${idx + 1}: edges ${card.edges.up}/${card.edges.right}/${card.edges.down}/${card.edges.left}${isUsed ? " (used)" : ""}`}
             className={classes}
             disabled={isDisabled}
             data-hand-card={idx}
