@@ -46,6 +46,19 @@ describe("resolveTokenImageUrl", () => {
       "https://meta.nyano.ai/999999999999999",
     );
   });
+
+  it("resolves Arweave subdomain URL pattern correctly", () => {
+    const config: MetadataConfig = {
+      baseUrlPattern:
+        "https://m3c2ncchjkvsn3lc5ccd4kdsm74cdssuvxbuuaefwy43cyt4oixa.arweave.net/ZsWmiEdKqybtYuiEPihyZ_ghylStw0oAhbY5sWJ8ci4/{id}.png",
+    };
+    expect(resolveTokenImageUrl(1n, config)).toBe(
+      "https://m3c2ncchjkvsn3lc5ccd4kdsm74cdssuvxbuuaefwy43cyt4oixa.arweave.net/ZsWmiEdKqybtYuiEPihyZ_ghylStw0oAhbY5sWJ8ci4/1.png",
+    );
+    expect(resolveTokenImageUrl(9999n, config)).toBe(
+      "https://m3c2ncchjkvsn3lc5ccd4kdsm74cdssuvxbuuaefwy43cyt4oixa.arweave.net/ZsWmiEdKqybtYuiEPihyZ_ghylStw0oAhbY5sWJ8ci4/9999.png",
+    );
+  });
 });
 
 describe("getMetadataConfig", () => {
@@ -108,5 +121,22 @@ describe("getMetadataConfig", () => {
     delete import.meta.env.VITE_NYANO_METADATA_BASE;
     const result = getMetadataConfig({ imageBaseUrl: 42 });
     expect(result).toBeNull();
+  });
+
+  it("extracts imageBaseUrl from real GameIndex metadata shape", () => {
+    delete import.meta.env.VITE_NYANO_METADATA_BASE;
+    // Matches actual /game/index.v1.json metadata structure
+    const realMeta = {
+      mode: "local",
+      dir: "public/nft-metadata",
+      base: "https://arweave.net/cOk7m-gDfwPlzbAtZKYE-z9Gy91cbgj1NKIYIlWDG3M",
+      ext: ".json",
+      imageBaseUrl:
+        "https://m3c2ncchjkvsn3lc5ccd4kdsm74cdssuvxbuuaefwy43cyt4oixa.arweave.net/ZsWmiEdKqybtYuiEPihyZ_ghylStw0oAhbY5sWJ8ci4/{id}.png",
+    };
+    const result = getMetadataConfig(realMeta);
+    expect(result).not.toBeNull();
+    expect(result!.baseUrlPattern).toContain("{id}");
+    expect(result!.baseUrlPattern).toContain("arweave.net");
   });
 });

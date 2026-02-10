@@ -186,7 +186,7 @@ export async function fetchGameIndex(opts?: { force?: boolean }): Promise<GameIn
 
   if (!force && typeof window !== "undefined") {
     const cached = safeReadJsonFromStorage(STORAGE_KEY);
-    if (cached && cached.v === 1 && cached.tokens) {
+    if (cached && cached.v === 1 && cached.tokens && cached.metadata) {
       return cached as GameIndexV1;
     }
   }

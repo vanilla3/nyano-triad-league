@@ -19,7 +19,7 @@ export function useNyanoTokenMetadata(tokenId: bigint | null) {
   const config = getMetadataConfig(gameIndex?.metadata);
 
   return useQuery({
-    queryKey: ["nyano", "tokenMeta", tokenId?.toString() ?? "null"],
+    queryKey: ["nyano", "tokenMeta", tokenId?.toString() ?? "null", config?.baseUrlPattern ?? ""],
     enabled: tokenId !== null && config !== null,
     queryFn: async (): Promise<NyanoTokenMetadata | null> => {
       if (!tokenId || !config) return null;
