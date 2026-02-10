@@ -458,7 +458,7 @@ export function OverlayPage() {
               <Link className="btn btn-sm no-underline" to="/stream">
                 Stream Studio
               </Link>
-              <Link className="btn btn-sm no-underline" to="/match">
+              <Link className="btn btn-sm no-underline" to="/match?ui=mint">
                 Match
               </Link>
               <Link className="btn btn-sm no-underline" to="/replay">

@@ -1,6 +1,8 @@
 import React from "react";
 import type { BoardCell, BoardState, PlayerIndex } from "@nyano/triad-engine";
 import { CardNyanoDuel } from "./CardNyanoDuel";
+import { CardPreviewPanel } from "./CardPreviewPanel";
+import { useCardPreview } from "@/hooks/useCardPreview";
 import { FlipArrowOverlay, type FlipTraceArrow } from "./FlipArrowOverlay";
 import "../mint-theme/mint-theme.css";
 
@@ -96,6 +98,13 @@ interface MintCellProps {
   isSelectable: boolean;
   warningMark?: PlayerIndex | null;
   onSelect?: () => void;
+  /** Long-press / right-click inspect handlers for cards on board */
+  inspectHandlers?: {
+    onTouchStart: (e: React.TouchEvent) => void;
+    onTouchEnd: () => void;
+    onTouchMove: () => void;
+    onContextMenu: (e: React.MouseEvent) => void;
+  };
   showCoordinates: boolean;
   isWarningMode: boolean;
 }
@@ -111,6 +120,7 @@ function MintCell({
   isSelectable,
   warningMark,
   onSelect,
+  inspectHandlers,
   showCoordinates,
   isWarningMode,
 }: MintCellProps) {
@@ -140,6 +150,7 @@ function MintCell({
     <div
       className={classes.join(" ")}
       onClick={isSelectable && !hasCard ? onSelect : undefined}
+      {...(hasCard && inspectHandlers ? inspectHandlers : {})}
     >
       {/* Coordinate label */}
       {showCoordinates && (
@@ -247,6 +258,7 @@ export function BoardViewMint({
   const gridRef = React.useRef<HTMLDivElement>(null);
   const selectableSet = toSelectableSet(selectableCells);
   const score = calcScore(board);
+  const inspect = useCardPreview();
 
   const focus = typeof focusCell === "number" ? focusCell : null;
   const selected = typeof selectedCell === "number" ? selectedCell : null;
@@ -304,6 +316,11 @@ export function BoardViewMint({
               const isSel = effectiveSelected === idx;
               const warning = warnMap.get(idx) ?? null;
 
+              // Inspect handlers for placed cards (long-press / right-click)
+              const cellInspect = cell?.card
+                ? inspect.longPressHandlers(cell.card, cell.owner)
+                : undefined;
+
               return (
                 <MintCell
                   key={idx}
@@ -318,6 +335,7 @@ export function BoardViewMint({
                   isSelectable={isSelectable}
                   warningMark={warning}
                   onSelect={() => handleSelect(idx)}
+                  inspectHandlers={cellInspect}
                   showCoordinates={showCoordinates}
                   isWarningMode={isWarningMode}
                 />
@@ -346,6 +364,17 @@ export function BoardViewMint({
         <div className="flex justify-center">
           <InlineError message={inlineError} onDismiss={onDismissError} />
         </div>
+      )}
+
+      {/* ── Board Card Inspect (Phase 1-010) ── */}
+      {inspect.state.visible && inspect.state.card && inspect.state.anchorRect && (
+        <CardPreviewPanel
+          card={inspect.state.card}
+          owner={inspect.state.owner!}
+          anchorRect={inspect.state.anchorRect}
+          position={inspect.state.position}
+          onClose={inspect.hide}
+        />
       )}
     </div>
   );

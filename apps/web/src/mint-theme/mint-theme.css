@@ -100,17 +100,35 @@
   100% { opacity: 1; }
 }
 
+/* Card placement: dramatic slam-down with bounce + flash */
 @keyframes mint-cell-place {
-  0% { transform: scale(0.8); opacity: 0; }
-  60% { transform: scale(1.06); opacity: 1; }
-  100% { transform: scale(1); }
+  0%   { transform: scale(0.5) translateY(-16px); opacity: 0; filter: brightness(1); }
+  30%  { transform: scale(1.12) translateY(0); opacity: 1; filter: brightness(1.4); }
+  50%  { transform: scale(0.96); filter: brightness(1.1); }
+  70%  { transform: scale(1.04); filter: brightness(1); }
+  100% { transform: scale(1); filter: brightness(1); }
 }
 
+/* Card flip: full 360 rotation with color burst */
 @keyframes mint-cell-flip {
-  0% { transform: rotateY(0deg) scale(1); }
-  40% { transform: rotateY(90deg) scale(1.04); }
-  70% { transform: rotateY(180deg) scale(1.02); }
-  100% { transform: rotateY(360deg) scale(1); }
+  0%   { transform: rotateY(0deg) scale(1); filter: brightness(1); }
+  25%  { transform: rotateY(90deg) scale(1.06); filter: brightness(0.7); }
+  50%  { transform: rotateY(180deg) scale(1.08); filter: brightness(1.5); }
+  75%  { transform: rotateY(270deg) scale(1.04); filter: brightness(1.2); }
+  100% { transform: rotateY(360deg) scale(1); filter: brightness(1); }
+}
+
+/* Shockwave ripple for placed cells */
+@keyframes mint-place-ripple {
+  0%   { transform: scale(0.8); opacity: 0.6; }
+  100% { transform: scale(2.2); opacity: 0; }
+}
+
+/* Glow burst for flipped cells */
+@keyframes mint-flip-burst {
+  0%   { box-shadow: 0 0 0 0 var(--mint-chain-glow); }
+  50%  { box-shadow: 0 0 24px 8px var(--mint-chain-glow); }
+  100% { box-shadow: 0 0 12px 2px var(--mint-chain-glow); }
 }
 
 /* ── Board Frame ─────────────────────────────────────────────────────── */
@@ -191,24 +209,36 @@
   animation: mint-glow-pulse 2s ease-in-out infinite !important;
 }
 
-/* Placed (just placed) */
+/* Placed (just placed) — dramatic slam with ripple ring */
 .mint-cell--placed {
-  animation: mint-cell-place 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards !important;
+  animation: mint-cell-place 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards !important;
   border-color: var(--mint-flip) !important;
-  box-shadow: 0 0 16px var(--mint-flip-glow) !important;
+  box-shadow:
+    0 0 20px var(--mint-flip-glow),
+    0 0 4px rgba(245, 158, 11, 0.6),
+    inset 0 0 8px rgba(245, 158, 11, 0.15) !important;
+}
+.mint-cell--placed::after {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  border-radius: 18px;
+  border: 2px solid var(--mint-flip);
+  animation: mint-place-ripple 0.6s ease-out forwards;
+  pointer-events: none;
 }
 
-/* Flipped */
+/* Flipped — dramatic rotation with glow burst */
 .mint-cell--flipped {
-  animation: mint-cell-flip 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards !important;
+  animation: mint-cell-flip 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards,
+             mint-flip-burst 0.6s ease-out forwards !important;
   border-color: var(--mint-chain) !important;
-  box-shadow: 0 0 16px var(--mint-chain-glow) !important;
 }
 
-/* Stagger flip delays */
-.mint-cell--flip-delay-1 { animation-delay: 0.15s !important; }
-.mint-cell--flip-delay-2 { animation-delay: 0.30s !important; }
-.mint-cell--flip-delay-3 { animation-delay: 0.45s !important; }
+/* Stagger flip delays — wider stagger for dramatic cascade */
+.mint-cell--flip-delay-1 { animation-delay: 0.2s !important; }
+.mint-cell--flip-delay-2 { animation-delay: 0.4s !important; }
+.mint-cell--flip-delay-3 { animation-delay: 0.6s !important; }
 
 /* Owner tints */
 .mint-cell--owner-a {
@@ -1499,17 +1529,60 @@
   100% { background-position: -50% -50%; }
 }
 
-/* Card placement / flip animations (reuse existing keyframes) */
+/* Card placement / flip animations (reuse enhanced keyframes) */
 .mint-duel-card--placed {
-  animation: mint-cell-place 0.35s ease-out;
+  animation: mint-cell-place 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 .mint-duel-card--flipped {
-  animation: mint-cell-flip 0.45s ease-in-out;
+  animation: mint-cell-flip 0.6s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 /* Hand variant: slightly taller aspect ratio */
 .mint-duel-card--hand {
   aspect-ratio: 3 / 4;
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   MINI-DUEL: CardMini "duel" variant — browser grid card with NFT art hero
+   Aspect ratio 3/4, responsive sizing, hover lift effect.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.card-mini-duel {
+  width: 100%;
+  aspect-ratio: 3 / 4;
+  border-radius: 14px;
+  overflow: hidden;
+  position: relative;
+}
+
+/* Browser grid: slightly smaller glass panel & edges for mini cards */
+.card-mini-duel .mint-duel-card__glass {
+  padding: 2px 3px;
+}
+.card-mini-duel .mint-duel-card__edge {
+  font-size: 10px;
+  font-weight: 700;
+}
+.card-mini-duel .mint-duel-card__janken {
+  font-size: 11px;
+}
+.card-mini-duel .mint-duel-card__token-id {
+  font-size: 7px;
+}
+
+/* Hover lift with spring feel */
+.card-mini-duel:hover {
+  transform: translateY(-2px) scale(1.03);
+  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* Deck preview: larger cards in 5-col grid */
+.deck-preview-grid .card-mini-duel .mint-duel-card__glass {
+  padding: 3px 4px;
+}
+.deck-preview-grid .card-mini-duel .mint-duel-card__edge {
+  font-size: 11px;
 }
 
 

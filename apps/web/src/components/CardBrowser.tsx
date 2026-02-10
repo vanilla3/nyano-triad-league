@@ -3,6 +3,8 @@ import type { GameIndexV1, JankenHand, CardSearchResult } from "@/lib/nyano/game
 import { searchCards } from "@/lib/nyano/gameIndex";
 import { buildCardDataFromIndex } from "@/lib/demo_decks";
 import { CardMini } from "@/components/CardMini";
+import { CardPreviewPanel } from "@/components/CardPreviewPanel";
+import { useCardPreview } from "@/hooks/useCardPreview";
 
 const HAND_OPTIONS: { value: JankenHand | -1; label: string }[] = [
   { value: -1, label: "All" },
@@ -23,6 +25,7 @@ export function CardBrowser({ index, onSelect, className = "" }: Props) {
   const [handFilter, setHandFilter] = React.useState<JankenHand | -1>(-1);
   const [minEdgeSum, setMinEdgeSum] = React.useState(0);
   const [visibleCount, setVisibleCount] = React.useState(PAGE_SIZE);
+  const inspect = useCardPreview();
 
   const results = React.useMemo<CardSearchResult[]>(() => {
     return searchCards(index, {
@@ -86,19 +89,24 @@ export function CardBrowser({ index, onSelect, className = "" }: Props) {
         <div className="mt-4 text-center text-sm text-slate-400">No cards match filters.</div>
       ) : (
         <>
-          <div className="mt-3 grid grid-cols-5 gap-2 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10">
+          <div className="mt-3 grid grid-cols-4 gap-2.5 sm:grid-cols-5 md:grid-cols-7 lg:grid-cols-9">
             {visibleResults.map((r) => {
               const card = cardDataMap.get(BigInt(r.tokenId));
               if (!card) return null;
+              const lp = inspect.longPressHandlers(card, 0);
               return (
                 <button
                   key={r.tokenId}
-                  className="group relative cursor-pointer rounded-lg transition-shadow hover:ring-2 hover:ring-nyano-400"
+                  className="group relative cursor-pointer rounded-xl transition-shadow hover:ring-2 hover:ring-emerald-400/60 hover:shadow-lg"
                   onClick={() => onSelect?.(r.tokenId)}
                   title={`#${r.tokenId} · edges ${r.edgeSum} · hand ${r.params.hand}`}
+                  onTouchStart={lp.onTouchStart}
+                  onTouchEnd={lp.onTouchEnd}
+                  onTouchMove={lp.onTouchMove}
+                  onContextMenu={lp.onContextMenu}
                 >
                   <CardMini card={card} owner={0} subtle />
-                  <div className="absolute bottom-0 left-0 right-0 rounded-b-lg bg-black/50 px-1 py-0.5 text-center text-[9px] font-mono text-white opacity-0 transition-opacity group-hover:opacity-100">
+                  <div className="absolute bottom-0 left-0 right-0 rounded-b-xl bg-gradient-to-t from-black/60 to-transparent px-1 py-0.5 text-center text-[9px] font-mono text-white/90 opacity-0 transition-opacity group-hover:opacity-100">
                     #{r.tokenId}
                   </div>
                 </button>
@@ -117,6 +125,17 @@ export function CardBrowser({ index, onSelect, className = "" }: Props) {
             </div>
           )}
         </>
+      )}
+
+      {/* Card Inspect Panel (long-press / right-click) */}
+      {inspect.state.visible && inspect.state.card && inspect.state.anchorRect && (
+        <CardPreviewPanel
+          card={inspect.state.card}
+          owner={inspect.state.owner!}
+          anchorRect={inspect.state.anchorRect}
+          position={inspect.state.position}
+          onClose={inspect.hide}
+        />
       )}
     </div>
   );
