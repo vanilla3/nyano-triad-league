@@ -226,7 +226,8 @@ export function OverlayPage() {
     transparent ? "bg-transparent" : "bg-gradient-to-b from-rose-50 via-white to-sky-50",
     "text-slate-900",
     themeClass,
-  ].join(" ");
+    transparent ? "ol-transparent-boost" : "",
+  ].filter(Boolean).join(" ");
 
   const board: (BoardCellLite | null)[] = Array.isArray(state?.board)
     ? state.board
@@ -484,7 +485,7 @@ export function OverlayPage() {
                   {state?.updatedAtMs ? <span className={controls ? "text-xs text-slate-400" : "text-xs text-slate-400"}>{ageLabel(state.updatedAtMs)}</span> : null}
                 </div>
 
-                <div className={controls ? "mt-1 text-sm text-slate-700" : "mt-1 text-lg font-bold text-slate-800"}>
+                <div className={controls ? "mt-1 text-sm text-slate-700" : "mt-1 font-bold text-slate-800"} style={controls ? undefined : { fontSize: "var(--ol-turn, 16px)" }}>
                   Turn {state.lastMove.turnIndex + 1}:{" "}
                   <span className="font-semibold">{state.lastMove.by === 0 ? "A" : "B"}</span>{" "}
                   <span className="font-mono">
@@ -496,8 +497,8 @@ export function OverlayPage() {
                   </span>
                 </div>
 
-                {/* flipTracesReadout (P0) */}
-                {flipReadout ? <div className={controls ? "mt-1 text-xs text-slate-600" : "mt-1 text-sm text-slate-600"}>{flipReadout}</div> : null}
+                {/* flipTracesReadout (P0) — P2-084: theme-scaled font */}
+                {flipReadout ? <div className={controls ? "mt-1 text-xs text-slate-600" : "mt-1 text-slate-600"} style={controls ? undefined : { fontSize: "var(--ol-font-lg, 15px)" }}>{flipReadout}</div> : null}
 
                 <div className="mt-2 flex flex-wrap items-center gap-2">
                   <span className="badge badge-sky">{flipBadgeLabel}</span>
@@ -586,7 +587,7 @@ export function OverlayPage() {
               </div>
               <div className={controls ? "mt-1 text-sm text-slate-700" : "mt-1 text-base font-semibold text-slate-800"}>{title}</div>
               <div className={controls ? "mt-1 flex flex-wrap items-center gap-2 text-xs text-slate-500" : "mt-1 flex flex-wrap items-center gap-2 text-sm text-slate-600"}>
-                <span>{sub}</span>
+                <span className={controls ? "" : "ol-turn-label"} style={controls ? undefined : { fontSize: "var(--ol-turn, 16px)" }}>{sub}</span>
                 {toPlayLabel ? (
                   <span className={toPlay === 0 ? "to-play-pill to-play-pill-a" : "to-play-pill to-play-pill-b"}>
                     Next: {toPlayLabel}
@@ -663,9 +664,21 @@ export function OverlayPage() {
                   )}
                 </div>
 
-                {/* Vote countdown (OBS-friendly) */}
+                {/* Vote countdown (OBS-friendly — P2-084 enhanced) */}
                 {voteState?.status === "open" && voteRemainingSec !== null ? (
-                  <div className={controls ? "mt-1 text-xs text-emerald-600 font-semibold" : "mt-2 text-lg text-emerald-600 font-bold tabular-nums"}>{voteRemainingSec}s remaining</div>
+                  <div
+                    className={
+                      controls
+                        ? "mt-1 text-xs text-emerald-600 font-semibold"
+                        : [
+                            "mt-2 ol-vote-countdown",
+                            voteRemainingSec <= 5 ? "ol-vote-countdown--urgent" : "",
+                          ].filter(Boolean).join(" ")
+                    }
+                    style={controls ? undefined : { fontSize: "var(--ol-countdown, 28px)" }}
+                  >
+                    {voteRemainingSec}s remaining
+                  </div>
                 ) : null}
 
                 <div className={controls ? "mt-1 text-xs text-slate-600" : "mt-1 text-sm text-slate-600"}>
@@ -715,12 +728,12 @@ export function OverlayPage() {
               </div>
             ) : null}
 
-            {/* 5. strictAllowed HUD (operator/debug — hidden in minimal density) — Tier 3: Tertiary */}
-            {density !== "minimal" ? <div className={controls ? "rounded-2xl border border-slate-200 bg-white/70 px-4 py-3 shadow-sm" : "rounded-2xl border border-slate-200 ol-panel-tertiary px-4 py-3 shadow-sm"}>
+            {/* 5. strictAllowed HUD (operator/debug — P2-084: hidden from OBS viewers) — Tier 3: Tertiary */}
+            {controls && density !== "minimal" ? <div className="rounded-2xl border border-slate-200 bg-white/70 px-4 py-3 shadow-sm">
               <div className="flex items-center justify-between gap-2">
-                <div className={controls ? "text-xs font-semibold text-slate-800" : "text-sm font-semibold text-slate-800"}>strictAllowed</div>
+                <div className="text-xs font-semibold text-slate-800">strictAllowed</div>
                 {strictAllowed ? (
-                  <span className={controls ? "badge badge-slate" : "badge badge-lg badge-slate"}>{strictAllowed.count}</span>
+                  <span className="badge badge-slate">{strictAllowed.count}</span>
                 ) : (
                   <span className="badge">—</span>
                 )}
@@ -728,7 +741,7 @@ export function OverlayPage() {
 
               {strictAllowed ? (
                 <>
-                  <div className={controls ? "mt-1 text-xs text-slate-600" : "mt-1 text-sm text-slate-600"}>
+                  <div className="mt-1 text-xs text-slate-600">
                     toPlay: <span className="font-mono">{sideLabel(strictAllowed.toPlay)}</span> · moves:{" "}
                     <span className="font-mono">{strictAllowed.count}</span>
                     {typeof strictAllowed.warningMark?.remaining === "number" ? (
@@ -739,11 +752,11 @@ export function OverlayPage() {
                     ) : null}
                   </div>
 
-                  <div className={controls ? "mt-1 text-xs text-slate-500" : "mt-1 text-xs text-slate-500"}>
+                  <div className="mt-1 text-xs text-slate-500">
                     hash: <span className="font-mono">{strictAllowed.hash}</span>
                   </div>
 
-                  {controls && strictAllowed.warningMark.remaining > 0 ? (
+                  {strictAllowed.warningMark.remaining > 0 ? (
                     <div className="mt-1 text-xs text-slate-500">
                       WM candidates: <span className="font-mono">{strictAllowed.warningMark.candidates.join(", ")}</span>
                     </div>
