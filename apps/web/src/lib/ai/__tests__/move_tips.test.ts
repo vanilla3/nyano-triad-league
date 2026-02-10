@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { generateMoveTip } from "../move_tips";
+import { generateMoveTip, generateMoveTipWithNarrative } from "../move_tips";
 import type { OverlayStateV1 } from "@/lib/streamer_bus";
 
 /* ═══════════════════════════════════════════════════════════════════
@@ -339,5 +339,93 @@ describe("generateMoveTip", () => {
       expect(centerTip!.key).toBe("center_hold");
       expect(cornerTip!.priority).toBeLessThan(centerTip!.priority);
     });
+  });
+});
+
+/* ═══════════════════════════════════════════════════════════════════
+   generateMoveTipWithNarrative — Phase 1 Explainability
+   ═══════════════════════════════════════════════════════════════════ */
+
+describe("generateMoveTipWithNarrative", () => {
+  it("returns null when base tip is null", () => {
+    expect(generateMoveTipWithNarrative(null, mkMove({ cell: 1 }), null)).toBeNull();
+  });
+
+  it("returns null when lastMove is null", () => {
+    expect(generateMoveTipWithNarrative(mkSummary(), null, null)).toBeNull();
+  });
+
+  it("big_swing + context → narrativeJa contains tile counts", () => {
+    const tip = generateMoveTipWithNarrative(
+      mkSummary({ flipCount: 3 }),
+      mkMove(),
+      { tilesA: 5, tilesB: 4 },
+    );
+    expect(tip).not.toBeNull();
+    expect(tip!.key).toBe("big_swing");
+    expect(tip!.narrativeJa).toBeDefined();
+    expect(tip!.narrativeJa).toContain("3");
+    expect(tip!.narrativeJa).toContain("5");
+    expect(tip!.narrativeJa).toContain("4");
+  });
+
+  it("big_swing + context=null → narrativeJa without tile counts", () => {
+    const tip = generateMoveTipWithNarrative(
+      mkSummary({ flipCount: 4 }),
+      mkMove(),
+      null,
+    );
+    expect(tip).not.toBeNull();
+    expect(tip!.key).toBe("big_swing");
+    expect(tip!.narrativeJa).toBeDefined();
+    expect(tip!.narrativeJa).toContain("4");
+  });
+
+  it("corner_control → strategic narrative", () => {
+    const tip = generateMoveTipWithNarrative(
+      mkSummary({ flipCount: 1 }),
+      mkMove({ cell: 0 }),
+      { tilesA: 3, tilesB: 2 },
+    );
+    expect(tip).not.toBeNull();
+    expect(tip!.key).toBe("corner_control");
+    expect(tip!.narrativeJa).toBeDefined();
+    expect(tip!.narrativeJa!.length).toBeGreaterThan(0);
+  });
+
+  it("center_hold → strategic narrative about center", () => {
+    const tip = generateMoveTipWithNarrative(
+      mkSummary({ flipCount: 1 }),
+      mkMove({ cell: 4 }),
+      null,
+    );
+    expect(tip).not.toBeNull();
+    expect(tip!.key).toBe("center_hold");
+    expect(tip!.narrativeJa).toBeDefined();
+  });
+
+  it("warning_dodge → narrative about trap avoidance", () => {
+    const tip = generateMoveTipWithNarrative(
+      mkSummary({ ignoreWarningMark: true }),
+      mkMove(),
+      null,
+    );
+    expect(tip).not.toBeNull();
+    expect(tip!.key).toBe("warning_dodge");
+    expect(tip!.narrativeJa).toBeDefined();
+  });
+
+  it("preserves all base tip fields", () => {
+    const tip = generateMoveTipWithNarrative(
+      mkSummary({ flipCount: 3 }),
+      mkMove(),
+      { tilesA: 5, tilesB: 4 },
+    );
+    expect(tip).not.toBeNull();
+    expect(tip!.key).toBe("big_swing");
+    expect(tip!.labelJa).toContain("大量奪取");
+    expect(tip!.labelEn).toContain("Big swing");
+    expect(typeof tip!.priority).toBe("number");
+    expect(tip!.narrativeJa).toBeDefined();
   });
 });

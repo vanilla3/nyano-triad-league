@@ -10,9 +10,9 @@ import { AiReasonBadge } from "@/components/AiReasonDisplay";
 import { AdvantageBadge } from "@/components/AdvantageBadge";
 import { AdvantageBar } from "@/components/AdvantageBar";
 import { MoveQualityTip } from "@/components/MoveQualityTip";
-import { generateMoveTip } from "@/lib/ai/move_tips";
+import { generateMoveTipWithNarrative } from "@/lib/ai/move_tips";
 import type { AiReasonCode } from "@/lib/ai/nyano_ai";
-import { assessBoardAdvantage, type AdvantageLevel, type BoardAdvantage } from "@/lib/ai/board_advantage";
+import { assessBoardAdvantageDetailed, type AdvantageLevel, type AdvantageReason } from "@/lib/ai/board_advantage";
 import { ScoreBar } from "@/components/ScoreBar";
 import { FlipTraceBadges, FlipTraceDetailList } from "@/components/FlipTraceBadges";
 import { flipTracesReadout, flipTracesSummary } from "@/components/flipTraceDescribe";
@@ -336,15 +336,22 @@ export function OverlayPage() {
 
   const cellClass = (i: number): string => {
     const base = "relative aspect-square rounded-2xl border p-1 shadow-sm overflow-hidden";
-    const neutral = "border-slate-200/50 bg-slate-900/5";
-    const last = "border-rose-400 bg-rose-500/10 ring-2 ring-rose-300";
-    const marked = "border-amber-400 bg-amber-500/10 ring-2 ring-amber-300";
-    const flipped = "border-sky-400 bg-sky-500/10 ring-2 ring-sky-300";
-
-    if (lastCell === i) return [base, last].join(" ");
-    if (markCell === i) return [base, marked].join(" ");
-    if (lastFlippedCells.includes(i)) return [base, flipped].join(" ");
-    return [base, neutral].join(" ");
+    const owner = board[i]?.owner;
+    // Owner-colored glow using existing CSS classes (Phase 1 Visual)
+    const ownerCls = owner === 0 ? "overlay-cell-a"
+                   : owner === 1 ? "overlay-cell-b"
+                   : "overlay-cell-empty";
+    // Last placed cell: pop-in animation
+    if (lastCell === i) return [base, ownerCls, "animate-cell-place"].join(" ");
+    // Warning mark: amber ring
+    if (markCell === i) return [base, ownerCls, "border-amber-400 ring-2 ring-amber-300"].join(" ");
+    // Flipped cells: 3D flip animation with staggered delay
+    const flipIdx = lastFlippedCells.indexOf(i);
+    if (flipIdx >= 0) {
+      const delay = flipIdx < 3 ? `flip-delay-${flipIdx + 1}` : "";
+      return [base, ownerCls, "animate-cell-flip", delay].filter(Boolean).join(" ");
+    }
+    return [base, ownerCls].join(" ");
   };
 
   const voteRemainingSec =
@@ -384,10 +391,14 @@ export function OverlayPage() {
     return flipTracesReadout(traces, byLabel, state.lastMove.cell);
   }, [lastTurnSummary, state?.lastMove]);
 
-  // Phase 1: Move quality tip (heuristic)
+  // Phase 1: Move quality tip with narrative (heuristic + context)
   const moveTip = React.useMemo(() => {
-    return generateMoveTip(lastTurnSummary, state?.lastMove ?? null);
-  }, [lastTurnSummary, state?.lastMove]);
+    return generateMoveTipWithNarrative(
+      lastTurnSummary,
+      state?.lastMove ?? null,
+      tiles.a > 0 || tiles.b > 0 ? { tilesA: tiles.a, tilesB: tiles.b } : null,
+    );
+  }, [lastTurnSummary, state?.lastMove, tiles.a, tiles.b]);
 
   const reactionInput = React.useMemo<NyanoReactionInput | null>(() => {
     if (!state) return null;
@@ -505,9 +516,20 @@ export function OverlayPage() {
 
           {/* Right-side HUD — panel order: Last move → Now Playing → AI → Vote → strictAllowed → Errors */}
           <div className="space-y-3">
-            {/* 1. Last move (P0 for stream viewers) — Tier 1: Primary */}
+            {/* 1. Last move (P0 for stream viewers) — Tier 1: Primary / Dramatic */}
             {state?.lastMove ? (
-              <div className={controls ? "rounded-2xl border border-slate-200 bg-white/70 px-4 py-3 shadow-sm" : "rounded-2xl border border-slate-200 ol-panel-primary px-4 py-3 shadow-sm"}>
+              <div className={controls
+                ? "rounded-2xl border border-slate-200 bg-white/70 px-4 py-3 shadow-sm"
+                : [
+                    "rounded-2xl border border-slate-200 px-4 py-3 shadow-sm",
+                    (lastTurnSummary && (
+                      (lastTurnSummary.flipCount ?? 0) >= 3 ||
+                      lastTurnSummary.comboEffect === "domination" ||
+                      lastTurnSummary.comboEffect === "fever" ||
+                      lastTurnSummary.warningTriggered
+                    )) ? "ol-panel-dramatic" : "ol-panel-primary",
+                  ].join(" ")
+              }>
                 <div className="flex items-center justify-between gap-2">
                   <div className={controls ? "text-xs font-semibold text-slate-800" : "text-sm font-semibold text-slate-800"}>Last move</div>
                   {state?.updatedAtMs ? <span className={controls ? "text-xs text-slate-400" : "text-xs text-slate-400"}>{ageLabel(state.updatedAtMs)}</span> : null}
@@ -639,16 +661,18 @@ export function OverlayPage() {
 
             {/* 2.5 Advantage indicator (hidden in minimal density) — Tier 2: Secondary */}
             {density !== "minimal" && (() => {
-              const adv: BoardAdvantage | null = state?.advantage
+              const adv = state?.advantage
                 ? {
                     scoreA: state.advantage.scoreA,
                     levelA: state.advantage.levelA as AdvantageLevel,
                     levelB: "even" as AdvantageLevel,
                     labelJa: state.advantage.labelJa,
                     badgeColor: state.advantage.badgeColor,
+                    reasons: [] as AdvantageReason[],
+                    topReason: null as AdvantageReason | null,
                   }
                 : board.some((c) => c !== null)
-                  ? assessBoardAdvantage(board as unknown as import("@nyano/triad-engine").BoardState)
+                  ? assessBoardAdvantageDetailed(board as unknown as import("@nyano/triad-engine").BoardState)
                   : null;
               if (!adv) return null;
               if (controls) {
@@ -661,7 +685,7 @@ export function OverlayPage() {
               }
               return (
                 <div className="ol-panel-secondary rounded-2xl px-3 py-2">
-                  <AdvantageBar advantage={adv} size={density === "full" ? "lg" : "md"} />
+                  <AdvantageBar advantage={adv} size={density === "full" ? "lg" : "md"} reasons={adv.reasons} />
                 </div>
               );
             })()}
