@@ -1,0 +1,14 @@
+[
+  {
+    "id": "nyano-open-challenge",
+    "title": "Nyano Open Challenge",
+    "description": "いつでも挑戦できる常設イベント。Nyano（AI）がB側を操作します。まずは off-chain（Replay共有）で盛り上げる前提。",
+    "kind": "nyano_ai_challenge",
+    "rulesetKey": "v2",
+    "seasonId": 1,
+    "firstPlayer": 0,
+    "aiDifficulty": "normal",
+    "nyanoDeckTokenIds": ["1", "2", "3", "4", "5"],
+    "tags": ["always", "ai", "shareable"]
+  }
+]
