@@ -14,6 +14,7 @@ export interface VoteAudit {
   accepted: number;
   duplicates: number;
   rateLimited: number;
+  illegal: number;
 }
 
 export interface VoteCountEntry {
@@ -242,7 +243,7 @@ export const VoteControlPanel: React.FC<VoteControlPanelProps> = React.memo(func
           </div>
           {voteAudit.attempts > 0 && (
             <div className="mt-1 text-[10px] text-slate-400" role="status" aria-live="polite">
-              {voteAudit.attempts} attempts · {voteAudit.accepted} accepted · {voteAudit.duplicates} dup · {voteAudit.rateLimited} rate-limited
+              {voteAudit.attempts} attempts · {voteAudit.accepted} accepted · {voteAudit.duplicates} dup · {voteAudit.rateLimited} rate-limited · {voteAudit.illegal} illegal
             </div>
           )}
         </div>

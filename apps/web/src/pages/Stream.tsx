@@ -512,14 +512,14 @@ const _remainingWarningMarks = React.useMemo(() => computeWarningMarksRemaining(
 
   // ── Vote audit trail ──
   const [voteAudit, setVoteAudit] = React.useState<{
-    attempts: number; accepted: number; duplicates: number; rateLimited: number;
-  }>({ attempts: 0, accepted: 0, duplicates: 0, rateLimited: 0 });
+    attempts: number; accepted: number; duplicates: number; rateLimited: number; illegal: number;
+  }>({ attempts: 0, accepted: 0, duplicates: 0, rateLimited: 0, illegal: 0 });
   const rateLimitMapRef = React.useRef<Map<string, number>>(new Map());
   const RATE_LIMIT_MS = 2000;
 
   const resetVotes = React.useCallback(() => {
     setVotesByUser({});
-    setVoteAudit({ attempts: 0, accepted: 0, duplicates: 0, rateLimited: 0 });
+    setVoteAudit({ attempts: 0, accepted: 0, duplicates: 0, rateLimited: 0, illegal: 0 });
     rateLimitMapRef.current.clear();
   }, []);
 
@@ -706,6 +706,18 @@ React.useEffect(() => {
       return;
     }
 
+    // Legality check: verify the move is in the current allowlist (P2-350)
+    const strict = computeStrictAllowed(live);
+    if (strict) {
+      // Compare without warningMark — allowlist entries are base moves only
+      const baseMoveText = toViewerMoveText({ cell: mv.cell, cardIndex: mv.cardIndex });
+      if (!strict.allowlist.includes(baseMoveText)) {
+        setVoteAudit((prev) => ({ ...prev, attempts: prev.attempts + 1, illegal: prev.illegal + 1 }));
+        toast.warn("Vote", `Illegal move: ${baseMoveText} — not in ${strict.count} legal moves`);
+        return;
+      }
+    }
+
     // Duplicate check (same user, overwrite is allowed but track it)
     setVotesByUser((prev) => {
       const isDuplicate = u in prev;
@@ -714,11 +726,12 @@ React.useEffect(() => {
         accepted: a.accepted + 1,
         duplicates: isDuplicate ? a.duplicates + 1 : a.duplicates,
         rateLimited: a.rateLimited,
+        illegal: a.illegal,
       }));
       return { ...prev, [u]: mv };
     });
     rateLimitMapRef.current.set(u, now);
-  }, [chatText, userName, controlledSide, toast, RATE_LIMIT_MS]);
+  }, [chatText, userName, controlledSide, toast, RATE_LIMIT_MS, live]);
 
   const counts = React.useMemo(() => {
     const entries = Object.values(votesByUser);

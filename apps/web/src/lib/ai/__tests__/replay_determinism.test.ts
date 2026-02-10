@@ -180,3 +180,96 @@ describe("Replay determinism", () => {
     expect(result.turns.length).toBe(9);
   });
 });
+
+/* ═══════════════════════════════════════════════════════════════════
+   Golden snapshots (P3-302)
+   Persist engine output so that any unintended change is caught in CI.
+   First run with `--update` fills values; subsequent runs compare.
+   ═══════════════════════════════════════════════════════════════════ */
+
+describe("Golden snapshots (P3-302)", () => {
+  function runMatch() {
+    return simulateMatchV1WithHistory(TRANSCRIPT, CARD_MAP, DEFAULT_RULESET_CONFIG_V1);
+  }
+
+  it("matchId is stable across engine versions", () => {
+    const result = runMatch();
+    expect(result.matchId).toMatchInlineSnapshot(`"0x3236bc41c548ddb85aa23fbd577c3fedfe56e8dae0d3a0c2c44f89cd011f66c5"`);
+  });
+
+  it("winner is stable", () => {
+    const result = runMatch();
+    expect(String(result.winner)).toMatchInlineSnapshot(`"0"`);
+  });
+
+  it("tile counts are stable", () => {
+    const result = runMatch();
+    expect(result.tiles).toMatchInlineSnapshot(`
+      {
+        "A": 8,
+        "B": 1,
+      }
+    `);
+  });
+
+  it("tieBreak method is stable", () => {
+    const result = runMatch();
+    expect(result.tieBreak).toMatchInlineSnapshot(`"none"`);
+  });
+
+  it("turn-by-turn flip counts are stable", () => {
+    const result = runMatch();
+    const flips = result.turns.map((t) => t.flipCount);
+    expect(flips).toMatchInlineSnapshot(`
+      [
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        3,
+        6,
+        7,
+      ]
+    `);
+  });
+
+  it("turn-by-turn combo effects are stable", () => {
+    const result = runMatch();
+    const combos = result.turns.map((t) => t.comboEffect);
+    expect(combos).toMatchInlineSnapshot(`
+      [
+        "none",
+        "none",
+        "none",
+        "none",
+        "none",
+        "none",
+        "domination",
+        "fever",
+        "fever",
+      ]
+    `);
+  });
+
+  it("final board owner layout is stable", () => {
+    const result = runMatch();
+    const finalOwners = result.boardHistory[9].map((cell) =>
+      cell ? (cell.owner === 0 ? "A" : "B") : null,
+    );
+    expect(finalOwners).toMatchInlineSnapshot(`
+      [
+        "A",
+        "A",
+        "A",
+        "A",
+        "A",
+        "B",
+        "A",
+        "A",
+        "A",
+      ]
+    `);
+  });
+});
