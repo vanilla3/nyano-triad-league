@@ -64,8 +64,8 @@ export function CardPreviewPanel({
   const janken = JANKEN_ICONS[card.jankenHand];
 
   return createPortal(
-    // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions
     <div
+      role="tooltip"
       className="mint-preview-panel"
       style={style}
       onClick={(e) => e.stopPropagation()}

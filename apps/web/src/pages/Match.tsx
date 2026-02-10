@@ -702,14 +702,12 @@ export function MatchPage() {
   const replayAnnotations = React.useMemo(() => {
     if (!sim.ok || turns.length < 9) return [];
     return annotateReplayMoves(sim.full, firstPlayer as 0 | 1);
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- sim already depends on turns
   }, [sim, turns.length, firstPlayer]);
 
   // P1-140: Board advantages for TurnLog AdvantageBadge
   const boardAdvantages = React.useMemo(() => {
     if (!sim.ok) return [];
     return sim.previewHistory.map((b) => assessBoardAdvantage(b));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sim]);
 
   React.useEffect(() => {
