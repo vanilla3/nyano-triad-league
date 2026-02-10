@@ -14,6 +14,7 @@ import { BoardView } from "@/components/BoardView";
 import { BoardViewRPG, HandDisplayRPG, GameResultOverlayRPG, TurnLogRPG } from "@/components/BoardViewRPG";
 import type { TurnLogEntry } from "@/components/BoardViewRPG";
 import { BoardViewMint } from "@/components/BoardViewMint";
+import { DuelStageMint } from "@/components/DuelStageMint";
 import { HandDisplayMint } from "@/components/HandDisplayMint";
 import { GameResultOverlayMint } from "@/components/GameResultOverlayMint";
 import { ScoreBar } from "@/components/ScoreBar";
@@ -1511,27 +1512,29 @@ export function MatchPage() {
                     ──────────────────────────────────────────── */}
                 {sim.ok ? (
                   isMint ? (
-                    <BoardViewMint
-                      board={boardNow}
-                      selectedCell={draftCell}
-                      placedCell={boardAnim.placedCell}
-                      flippedCells={boardAnim.flippedCells}
-                      selectableCells={selectableCells}
-                      onCellSelect={(cell) => { telemetry.recordInteraction(); handleCellSelect(cell); }}
-                      currentPlayer={currentPlayer}
-                      showCoordinates
-                      showActionPrompt
-                      gamePhase={
-                        turns.length >= 9 ? "game_over"
-                          : isAiTurn ? "ai_turn"
-                          : draftCardIndex !== null ? "select_cell"
-                          : "select_card"
-                      }
-                      inlineError={error}
-                      onDismissError={() => setError(null)}
-                      flipTraces={density !== "minimal" ? lastFlipTraces : null}
-                      isFlipAnimating={boardAnim.isAnimating}
-                    />
+                    <DuelStageMint>
+                      <BoardViewMint
+                        board={boardNow}
+                        selectedCell={draftCell}
+                        placedCell={boardAnim.placedCell}
+                        flippedCells={boardAnim.flippedCells}
+                        selectableCells={selectableCells}
+                        onCellSelect={(cell) => { telemetry.recordInteraction(); handleCellSelect(cell); }}
+                        currentPlayer={currentPlayer}
+                        showCoordinates
+                        showActionPrompt
+                        gamePhase={
+                          turns.length >= 9 ? "game_over"
+                            : isAiTurn ? "ai_turn"
+                            : draftCardIndex !== null ? "select_cell"
+                            : "select_card"
+                        }
+                        inlineError={error}
+                        onDismissError={() => setError(null)}
+                        flipTraces={density !== "minimal" ? lastFlipTraces : null}
+                        isFlipAnimating={boardAnim.isAnimating}
+                      />
+                    </DuelStageMint>
                   ) : isRpg ? (
                     <BoardViewRPG
                       board={boardNow}
