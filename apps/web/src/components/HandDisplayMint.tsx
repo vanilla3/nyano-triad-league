@@ -1,6 +1,8 @@
 import React from "react";
 import type { CardData, PlayerIndex } from "@nyano/triad-engine";
 import { CardNyanoDuel } from "./CardNyanoDuel";
+import { CardPreviewPanel } from "./CardPreviewPanel";
+import { useCardPreview } from "@/hooks/useCardPreview";
 
 /* ═══════════════════════════════════════════════════════════════════════════
    HAND DISPLAY MINT — Nintendo-level UX Hand (NIN-UX-022)
@@ -30,6 +32,7 @@ export function HandDisplayMint({
   onSelect,
   disabled = false,
 }: HandDisplayMintProps) {
+  const preview = useCardPreview();
 
   return (
     <div className="mint-hand">
@@ -51,6 +54,8 @@ export function HandDisplayMint({
             className={classes}
             disabled={isDisabled}
             onClick={() => { if (!isDisabled) onSelect?.(idx); }}
+            onPointerEnter={(e) => { if (!isUsed) preview.show(card, owner, e.currentTarget); }}
+            onPointerLeave={() => preview.hide()}
           >
             {/* Slot number badge */}
             <div
@@ -77,6 +82,17 @@ export function HandDisplayMint({
           </button>
         );
       })}
+
+      {/* Card preview popover (PREV-0501) */}
+      {preview.state.visible && preview.state.card && preview.state.anchorRect && (
+        <CardPreviewPanel
+          card={preview.state.card}
+          owner={preview.state.owner!}
+          anchorRect={preview.state.anchorRect}
+          position={preview.state.position}
+          onClose={preview.hide}
+        />
+      )}
     </div>
   );
 }
