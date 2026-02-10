@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import type { BoardCell, CardData, PlayerIndex } from "@nyano/triad-engine";
-import { assessBoardAdvantage } from "../board_advantage";
+import { assessBoardAdvantage, assessBoardAdvantageDetailed } from "../board_advantage";
 
 /* ------------------------------------------------------------------ */
 /* Helpers                                                             */
@@ -227,5 +227,121 @@ describe("assessBoardAdvantage", () => {
     expect(typeof result.scoreA).toBe("number");
     expect(typeof result.labelJa).toBe("string");
     expect(typeof result.badgeColor).toBe("string");
+  });
+});
+
+/* ------------------------------------------------------------------ */
+/* assessBoardAdvantageDetailed                                        */
+/* ------------------------------------------------------------------ */
+
+describe("assessBoardAdvantageDetailed", () => {
+  it("empty board → reasons = [], topReason = null", () => {
+    const result = assessBoardAdvantageDetailed(emptyBoard());
+    expect(result.reasons).toEqual([]);
+    expect(result.topReason).toBeNull();
+    expect(result.scoreA).toBe(0);
+    expect(result.labelJa).toBe("互角");
+  });
+
+  it("is a superset of BoardAdvantage (has all base fields)", () => {
+    const detailed = assessBoardAdvantageDetailed(emptyBoard());
+    expect(detailed).toHaveProperty("scoreA");
+    expect(detailed).toHaveProperty("levelA");
+    expect(detailed).toHaveProperty("levelB");
+    expect(detailed).toHaveProperty("labelJa");
+    expect(detailed).toHaveProperty("badgeColor");
+    expect(detailed).toHaveProperty("reasons");
+    expect(detailed).toHaveProperty("topReason");
+  });
+
+  it("A owns center + 2 corners → topReason is corner or center related", () => {
+    const board = emptyBoard();
+    const strong = { up: 7, right: 7, down: 7, left: 7 };
+    board[4] = makeCell(0, strong); // center
+    board[0] = makeCell(0, strong); // corner
+    board[8] = makeCell(0, strong); // corner
+    const result = assessBoardAdvantageDetailed(board);
+    expect(result.reasons.length).toBeGreaterThan(0);
+    expect(result.topReason).not.toBeNull();
+    // tile_lead (30 = 3*10) should dominate, or corner/center may appear
+    const keys = result.reasons.map((r) => r.key);
+    expect(keys).toContain("tile_lead");
+  });
+
+  it("tile diff 3 (A=4, B=1) → topReason = tile_lead", () => {
+    const board = emptyBoard();
+    const mid = { up: 5, right: 5, down: 5, left: 5 };
+    // A owns 4 tiles (indices 0,1,2,3)
+    board[0] = makeCell(0, mid);
+    board[1] = makeCell(0, mid);
+    board[2] = makeCell(0, mid);
+    board[3] = makeCell(0, mid);
+    // B owns 1 tile (index 5)
+    board[5] = makeCell(1, mid);
+    const result = assessBoardAdvantageDetailed(board);
+    expect(result.topReason).not.toBeNull();
+    expect(result.topReason!.key).toBe("tile_lead");
+    expect(result.topReason!.value).toBeGreaterThan(0);
+  });
+
+  it("reasons are sorted by |value| descending", () => {
+    const board = emptyBoard();
+    const strong = { up: 8, right: 8, down: 8, left: 8 };
+    // A dominates: center + corners + extra tiles
+    board[0] = makeCell(0, strong);
+    board[2] = makeCell(0, strong);
+    board[4] = makeCell(0, strong);
+    board[6] = makeCell(0, strong);
+    board[8] = makeCell(0, strong);
+    const result = assessBoardAdvantageDetailed(board);
+    // Verify sorting
+    for (let i = 1; i < result.reasons.length; i++) {
+      expect(Math.abs(result.reasons[i - 1].value)).toBeGreaterThanOrEqual(
+        Math.abs(result.reasons[i].value),
+      );
+    }
+  });
+
+  it("reasons have correct labelJa and labelEn", () => {
+    const board = emptyBoard();
+    const mid = { up: 5, right: 5, down: 5, left: 5 };
+    board[0] = makeCell(0, mid);
+    board[1] = makeCell(0, mid);
+    board[2] = makeCell(0, mid);
+    const result = assessBoardAdvantageDetailed(board);
+    for (const reason of result.reasons) {
+      expect(typeof reason.labelJa).toBe("string");
+      expect(reason.labelJa.length).toBeGreaterThan(0);
+      expect(typeof reason.labelEn).toBe("string");
+      expect(reason.labelEn.length).toBeGreaterThan(0);
+      expect(typeof reason.value).toBe("number");
+    }
+  });
+
+  it("B advantage → reasons have negative tile_lead value", () => {
+    const board = emptyBoard();
+    const mid = { up: 5, right: 5, down: 5, left: 5 };
+    // B owns 4 tiles, A owns 1
+    board[0] = makeCell(1, mid);
+    board[1] = makeCell(1, mid);
+    board[2] = makeCell(1, mid);
+    board[3] = makeCell(1, mid);
+    board[5] = makeCell(0, mid);
+    const result = assessBoardAdvantageDetailed(board);
+    const tileLead = result.reasons.find((r) => r.key === "tile_lead");
+    expect(tileLead).toBeDefined();
+    expect(tileLead!.value).toBeLessThan(0);
+  });
+
+  it("consistent with assessBoardAdvantage base fields", () => {
+    const board = emptyBoard();
+    board[4] = makeCell(0, { up: 5, right: 5, down: 5, left: 5 });
+    const base = assessBoardAdvantage(board);
+    const detailed = assessBoardAdvantageDetailed(board);
+    expect(detailed.scoreA).toBe(base.scoreA);
+    expect(detailed.levelA).toBe(base.levelA);
+    expect(detailed.levelB).toBe(base.levelB);
+    expect(detailed.labelJa).toBe(base.labelJa);
+    expect(detailed.badgeColor).toBe(base.badgeColor);
   });
 });

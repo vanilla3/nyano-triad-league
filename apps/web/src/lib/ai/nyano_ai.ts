@@ -621,3 +621,97 @@ export function computeCandidateMoves(
 
 /** @internal Exported for unit testing only. */
 export { evaluateBoard as _evaluateBoard };
+
+/* ------------------------------------------------------------------ */
+/* Detailed board evaluation — Phase 1 Explainability                  */
+/* ------------------------------------------------------------------ */
+
+/** Breakdown of board evaluation into individual heuristic components. */
+export type BoardEvalBreakdown = {
+  total: number;
+  /** (myTiles - oppTiles) × 10 */
+  tileDiff: number;
+  /** ±2 per corner owned */
+  cornerBonus: number;
+  /** ±3 for center control */
+  centerBonus: number;
+  /** Σ edgeSum × 0.05 per tile (mine positive, opp negative) */
+  edgeSumBonus: number;
+  /** Vulnerability/exposure penalty accumulation */
+  vulnerability: number;
+};
+
+/**
+ * Decomposed version of evaluateBoard for spectator display.
+ * Returns the same total as _evaluateBoard but with each component separated.
+ * @internal Exported for board_advantage.ts consumption.
+ */
+export function _evaluateBoardDetailed(
+  board: (BoardCell | null)[],
+  my: PlayerIndex,
+): BoardEvalBreakdown {
+  const opp = (1 - my) as PlayerIndex;
+  let myTiles = 0;
+  let oppTiles = 0;
+  let edgeSumBonus = 0;
+  let centerBonus = 0;
+  let vulnerability = 0;
+
+  const dirs: [number, number, EdgeDir, EdgeDir][] = [
+    [-1, 0, "up", "down"],
+    [1, 0, "down", "up"],
+    [0, -1, "left", "right"],
+    [0, 1, "right", "left"],
+  ];
+
+  for (let i = 0; i < 9; i++) {
+    const cell = board[i];
+    if (!cell) continue;
+    const isMine = cell.owner === my;
+    if (isMine) myTiles++;
+    else oppTiles++;
+
+    // Edge sum bonus
+    const es = edgeSum(cell.card);
+    edgeSumBonus += isMine ? es * 0.05 : -es * 0.05;
+
+    // Center control bonus
+    if (i === 4) centerBonus += isMine ? 3 : -3;
+
+    // Vulnerability analysis
+    const r = Math.floor(i / 3);
+    const c = i % 3;
+    for (const [dr, dc, myDir, theirDir] of dirs) {
+      const nr = r + dr;
+      const nc = c + dc;
+      if (nr < 0 || nr > 2 || nc < 0 || nc > 2) continue;
+      const neighbor = board[nr * 3 + nc];
+      const myEdge = Number(cell.card.edges[myDir]);
+      if (!neighbor) {
+        if (myEdge >= 7) vulnerability += isMine ? -0.3 : 0.3;
+      } else if (neighbor.owner !== cell.owner) {
+        const theirEdge = Number(neighbor.card.edges[theirDir]);
+        if (theirEdge > myEdge) vulnerability += isMine ? -1.5 : 1.5;
+      }
+    }
+  }
+
+  const tileDiff = (myTiles - oppTiles) * 10;
+
+  let cornerBonus_ = 0;
+  for (const ci of [0, 2, 6, 8]) {
+    if (board[ci]?.owner === my) cornerBonus_ += 2;
+    else if (board[ci]?.owner === opp) cornerBonus_ -= 2;
+  }
+
+  const total = tileDiff + cornerBonus_ + centerBonus + edgeSumBonus + vulnerability;
+
+  return {
+    total,
+    tileDiff,
+    cornerBonus: cornerBonus_,
+    centerBonus,
+    edgeSumBonus,
+    vulnerability,
+  };
+}

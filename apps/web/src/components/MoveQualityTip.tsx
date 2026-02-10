@@ -44,10 +44,13 @@ export function MoveQualityTip({ tip, size = "md" }: Props) {
   return (
     <span
       className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 font-medium ${textSize} ${style}`}
-      title={tip.labelEn}
+      title={tip.narrativeJa ?? tip.labelEn}
     >
       <span>{icon}</span>
       <span>{tip.labelJa}</span>
+      {tip.narrativeJa && size !== "sm" && (
+        <span className="text-[9px] opacity-70 font-normal ml-0.5">{tip.narrativeJa}</span>
+      )}
     </span>
   );
 }

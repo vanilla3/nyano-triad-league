@@ -118,16 +118,16 @@
 - [Operability]
   - [x] 重要トグルの永続化（localStorage）、初期値の運用最適化 — P0-PERSIST: stream.eventId 永続化
 
-### Phase 1（〜1ヶ月）: “観戦体験”の完成（分かる・気持ちいい）
+### Phase 1（〜1ヶ月）: "観戦体験"の完成（分かる・気持ちいい）
 - [Visual]
-  - [ ] overlay の情報設計を確定（視線誘導、余白、色、フォント、コントラスト）
-  - [ ] 主要情報のレイアウト固定（OBS シーンテンプレ）
+  - [x] overlay の情報設計を確定（視線誘導、余白、色、フォント、コントラスト） — Sprint 21: セルビジュアル強化(owner glow + flip animation)、ドラマティックパネル(ol-panel-dramatic)、パネル階層(primary/secondary/tertiary)
+  - [x] 主要情報のレイアウト固定（OBS シーンテンプレ） — Sprint 21: OBS_SCENE_TEMPLATES.md (720p/1080p presets, URL params, 透過BG)
 - [Explainability]
-  - [ ] 盤面の「優勢/不利」の根拠を短く出す（例: corner control、threat）
-  - [ ] 「なぜその手が強い/弱いか」tips（軽量なヒューリスティックでOK）
+  - [x] 盤面の「優勢/不利」の根拠を短く出す（例: corner control、threat） — Sprint 21: assessBoardAdvantageDetailed + AdvantageBar reason tags (tile_lead, corner_control, center_control, edge_superiority, vulnerability)
+  - [x] 「なぜその手が強い/弱いか」tips（軽量なヒューリスティックでOK） — Sprint 21: generateMoveTipWithNarrative + MoveQualityTip narrative display
 - [Stability]
   - [ ] Replay の完全再現性（turns + seed + deck）を担保
-  - [ ] “壊れた時の復旧手順” を docs 化（配信中の再起動手順）
+  - [x] "壊れた時の復旧手順" を docs 化（配信中の再起動手順） — Sprint 21: STREAM_RECOVERY_RUNBOOK.md (症状別トラブルシューティング + 配信前チェックリスト)
 
 ### Phase 2（1〜3ヶ月）: “運営が楽”になる（少人数運用の自動化）
 - [Operability]

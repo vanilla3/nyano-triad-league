@@ -32,6 +32,8 @@ export type MoveTip = {
   labelEn: string;
   /** Priority (lower = higher priority). Used internally for ordering. */
   priority: number;
+  /** Optional narrative explaining WHY this move matters (Phase 1 Explainability). */
+  narrativeJa?: string;
 };
 
 /* ------------------------------------------------------------------ */
@@ -142,4 +144,54 @@ export function generateMoveTip(
 
   // No noteworthy tip
   return null;
+}
+
+/* ------------------------------------------------------------------ */
+/* Narrative-enhanced tips — Phase 1 Explainability                    */
+/* ------------------------------------------------------------------ */
+
+/** Tile count context for narrative generation. */
+export type TipContext = {
+  tilesA: number;
+  tilesB: number;
+};
+
+const NARRATIVE_MAP: Record<MoveTipKey, (ctx: TipContext | null, flipCount: number) => string | undefined> = {
+  warning_dodge:     () => "罠を無効化して安全に配置",
+  warning_triggered: () => "相手の罠を踏んで辺の値が−1",
+  warning_trap:      () => "次にここに置く相手は辺−1のペナルティ",
+  domination_combo:  () => "支配コンボでまとめて奪取",
+  big_swing:         (ctx, fc) =>
+    ctx ? `${fc}枚奪取 → A ${ctx.tilesA}:${ctx.tilesB} B` : `${fc}枚を一度に奪取`,
+  chain_combo:       () => "直接フリップから連鎖が発生",
+  corner_control:    () => "角は隣接2辺で守りやすく攻めの起点に",
+  center_hold:       () => "中央は4方向へ攻撃できる最重要マス",
+  no_flip:           () => undefined,
+};
+
+/**
+ * Generate a move tip with an optional Japanese narrative explaining
+ * the strategic context of the move.
+ *
+ * @param summary  Last turn summary from overlay state.
+ * @param lastMove Last move details from overlay state.
+ * @param context  Optional tile count context for dynamic narratives.
+ * @returns Tip with narrativeJa, or null if nothing noteworthy.
+ */
+export function generateMoveTipWithNarrative(
+  summary: TurnSummaryLite | null,
+  lastMove: LastMoveLite | null,
+  context: TipContext | null,
+): MoveTip | null {
+  const tip = generateMoveTip(summary, lastMove);
+  if (!tip) return null;
+
+  const flipCount = summary?.flipCount ?? 0;
+  const narrativeFn = NARRATIVE_MAP[tip.key];
+  const narrativeJa = narrativeFn?.(context, flipCount);
+
+  if (narrativeJa) {
+    return { ...tip, narrativeJa };
+  }
+  return tip;
 }
