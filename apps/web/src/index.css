@@ -172,6 +172,17 @@
   text-shadow: var(--ol-text-shadow, none);
 }
 
+/* OBS-0401: Scale duel card internal elements per overlay theme */
+[class*="overlay-theme-"] .mint-duel-card__edge {
+  font-size: max(9px, calc(var(--ol-card, 80px) * 0.12));
+}
+[class*="overlay-theme-"] .mint-duel-card__janken {
+  font-size: max(11px, calc(var(--ol-card, 80px) * 0.15));
+}
+[class*="overlay-theme-"] .mint-duel-card__token-id {
+  font-size: max(7px, calc(var(--ol-card, 80px) * 0.08));
+}
+
 /* ── Overlay Panel Hierarchy (Phase 1 spectator experience) ────────────── */
 
 .ol-panel-primary {

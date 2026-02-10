@@ -3,7 +3,6 @@ import { Link } from "react-router-dom";
 
 import { StreamOperationsHUD, computeConnectionHealth, type ExternalResult, type OpsLogEntry } from "@/components/StreamOperationsHUD";
 
-import { CopyField } from "@/components/CopyField";
 import { NyanoImage } from "@/components/NyanoImage";
 import { useToast } from "@/components/Toast";
 import { EVENTS, fetchEventConfig, getEventStatus, type EventV1 } from "@/lib/events";

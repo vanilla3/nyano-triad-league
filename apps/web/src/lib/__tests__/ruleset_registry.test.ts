@@ -4,7 +4,6 @@ import {
   isValidRulesetKey,
   resolveRuleset,
   resolveRulesetOrThrow,
-  type RulesetKey,
 } from "../ruleset_registry";
 import {
   DEFAULT_RULESET_CONFIG_V1,

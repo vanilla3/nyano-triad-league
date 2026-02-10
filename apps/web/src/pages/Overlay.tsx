@@ -1,7 +1,8 @@
 import React from "react";
 import { Link, useSearchParams } from "react-router-dom";
 
-import { CardMini } from "@/components/CardMini";
+import { CardNyanoDuel } from "@/components/CardNyanoDuel";
+import "../mint-theme/mint-theme.css";
 import { NyanoReactionBadge, pickReactionKind, type NyanoReactionInput } from "@/components/NyanoReaction";
 import { NyanoAvatar } from "@/components/NyanoAvatar";
 import { reactionToExpression } from "@/lib/expression_map";
@@ -307,11 +308,11 @@ export function OverlayPage() {
   }, [state, board]); // eslint-disable-line react-hooks/exhaustive-deps -- intentional: recompute when state changes
 
   const cellClass = (i: number): string => {
-    const base = "relative aspect-square rounded-2xl border p-2 shadow-sm";
-    const neutral = "border-slate-200 bg-white/60";
-    const last = "border-rose-300 bg-rose-50/70 ring-2 ring-rose-200";
-    const marked = "border-amber-300 bg-amber-50/70 ring-2 ring-amber-200";
-    const flipped = "border-sky-300 bg-sky-50/70 ring-2 ring-sky-200";
+    const base = "relative aspect-square rounded-2xl border p-1 shadow-sm overflow-hidden";
+    const neutral = "border-slate-200/50 bg-slate-900/5";
+    const last = "border-rose-400 bg-rose-500/10 ring-2 ring-rose-300";
+    const marked = "border-amber-400 bg-amber-500/10 ring-2 ring-amber-300";
+    const flipped = "border-sky-400 bg-sky-500/10 ring-2 ring-sky-300";
 
     if (lastCell === i) return [base, last].join(" ");
     if (markCell === i) return [base, marked].join(" ");
@@ -464,7 +465,7 @@ export function OverlayPage() {
 
                     {card ? (
                       <div className="h-full w-full">
-                        <CardMini card={card as CardData} owner={owner as PlayerIndex} />
+                        <CardNyanoDuel card={card as CardData} owner={owner as PlayerIndex} />
                       </div>
                     ) : (
                       <div className="flex h-full w-full items-center justify-center text-xs text-slate-400">…</div>

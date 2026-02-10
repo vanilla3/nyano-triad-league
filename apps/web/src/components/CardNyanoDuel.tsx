@@ -1,7 +1,7 @@
 import React from "react";
 import type { CardData } from "@nyano/triad-engine";
 import { NyanoCardArt } from "./NyanoCardArt";
-import { JANKEN_ICONS, TRAIT_STYLES, OWNER_STYLES } from "./CardNyano";
+import { JANKEN_ICONS, TRAIT_STYLES } from "./CardNyano";
 
 /* ═══════════════════════════════════════════════════════════════════════════
    CARD-0101: CardNyanoDuel — Art-forward "duel" card skin
@@ -41,7 +41,6 @@ export function CardNyanoDuel({
   isFlipped = false,
   className = "",
 }: CardNyanoDuelProps) {
-  const ownerStyle = OWNER_STYLES[owner];
   const janken = JANKEN_ICONS[card.jankenHand];
   const trait = card.trait ?? "none";
   const traitStyle = TRAIT_STYLES[trait];
