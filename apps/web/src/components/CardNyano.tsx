@@ -6,13 +6,13 @@ import { NyanoCardArt } from "./NyanoCardArt";
    CONSTANTS & HELPERS
    ═══════════════════════════════════════════════════════════════════════════ */
 
-const JANKEN_ICONS: Record<0 | 1 | 2, { emoji: string; label: string; color: string }> = {
+export const JANKEN_ICONS: Record<0 | 1 | 2, { emoji: string; label: string; color: string }> = {
   0: { emoji: "✊", label: "Rock", color: "text-amber-600" },
   1: { emoji: "✋", label: "Paper", color: "text-emerald-600" },
   2: { emoji: "✌️", label: "Scissors", color: "text-violet-600" },
 };
 
-const TRAIT_STYLES: Record<TraitType, { bg: string; text: string; border: string; icon: string }> = {
+export const TRAIT_STYLES: Record<TraitType, { bg: string; text: string; border: string; icon: string }> = {
   none: { bg: "bg-surface-100", text: "text-surface-500", border: "border-surface-200", icon: "—" },
   cosmic: { bg: "bg-purple-100", text: "text-purple-700", border: "border-purple-200", icon: "✦" },
   light: { bg: "bg-amber-100", text: "text-amber-700", border: "border-amber-200", icon: "☀" },
@@ -26,7 +26,7 @@ const TRAIT_STYLES: Record<TraitType, { bg: string; text: string; border: string
   earth: { bg: "bg-orange-100", text: "text-orange-700", border: "border-orange-200", icon: "🪨" },
 };
 
-const OWNER_STYLES = {
+export const OWNER_STYLES = {
   0: {
     border: "border-player-a-400",
     bg: "bg-player-a-50",

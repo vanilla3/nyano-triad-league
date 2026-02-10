@@ -1,6 +1,6 @@
 import React from "react";
 import type { BoardCell, BoardState, PlayerIndex } from "@nyano/triad-engine";
-import { CardNyanoCompact } from "./CardNyano";
+import { CardNyanoDuel } from "./CardNyanoDuel";
 import { FlipArrowOverlay, type FlipTraceArrow } from "./FlipArrowOverlay";
 import "../mint-theme/mint-theme.css";
 
@@ -161,7 +161,7 @@ function MintCell({
 
       {/* Card or empty slot */}
       {hasCard ? (
-        <CardNyanoCompact
+        <CardNyanoDuel
           card={cell.card}
           owner={cell.owner}
           isPlaced={isPlaced}

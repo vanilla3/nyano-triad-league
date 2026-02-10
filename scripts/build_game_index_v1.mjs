@@ -42,6 +42,7 @@ function getRpcUrl() {
 }
 
 const RPC_URL = getRpcUrl();
+const IMAGE_BASE_URL = process.env.IMAGE_BASE_URL ?? null;
 
 // ── ABI selectors ──
 
@@ -182,6 +183,7 @@ async function buildIndex() {
       rpc: RPC_URL,
       contract: CONTRACT,
       generatedAt: new Date().toISOString(),
+      ...(IMAGE_BASE_URL ? { imageBaseUrl: IMAGE_BASE_URL } : {}),
     },
   };
 

@@ -1253,4 +1253,168 @@
   .mint-battle-hud__ai-reason {
     animation: none !important;
   }
+
+  /* CARD-0101: disable holo foil in reduced motion */
+  .mint-duel-card__foil {
+    animation: none !important;
+  }
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   CARD-0101: CardNyanoDuel — Art-forward "duel" card skin
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.mint-duel-card {
+  position: relative;
+  overflow: hidden;
+  border-radius: 14px;
+  border: 2px solid transparent;
+  /* dark fallback background for cards without NFT art */
+  background-color: #1a1a2e;
+  transition: box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+/* Owner glow — activated by parent .mint-cell--owner-X */
+.mint-cell--owner-a .mint-duel-card {
+  border-color: var(--mint-pa-light);
+  box-shadow: 0 0 12px var(--mint-pa-glow), 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+.mint-cell--owner-b .mint-duel-card {
+  border-color: var(--mint-pb-light);
+  box-shadow: 0 0 12px var(--mint-pb-glow), 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+/* Hand owner glow (no .mint-cell parent) */
+.mint-duel-card--owner-a {
+  border-color: var(--mint-pa-light);
+  box-shadow: 0 0 10px var(--mint-pa-glow), 0 2px 6px rgba(0, 0, 0, 0.15);
+}
+.mint-duel-card--owner-b {
+  border-color: var(--mint-pb-light);
+  box-shadow: 0 0 10px var(--mint-pb-glow), 0 2px 6px rgba(0, 0, 0, 0.15);
+}
+
+/* NFT art hero layer */
+.mint-duel-card__art {
+  position: absolute;
+  inset: 0;
+}
+
+/* Owner tint overlay */
+.mint-duel-card__tint {
+  position: absolute;
+  inset: 0;
+  opacity: 0.12;
+  pointer-events: none;
+}
+
+/* Glass bottom panel */
+.mint-duel-card__glass {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  background: rgba(0, 0, 0, 0.45);
+  padding: 3px 4px;
+}
+
+/* Edge cross layout inside glass panel (3x3 grid) */
+.mint-duel-card__edges {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: repeat(3, 1fr);
+  gap: 1px;
+}
+
+/* Edge number cells */
+.mint-duel-card__edge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1;
+  color: #e2e8f0;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
+}
+
+/* Strength-based coloring */
+.mint-duel-card__edge--high { color: #fbbf24; }   /* value ≥ 8: gold */
+.mint-duel-card__edge--mid  { color: #e2e8f0; }   /* value 4-7: silver */
+.mint-duel-card__edge--low  { color: #94a3b8; }   /* value ≤ 3: dim */
+
+/* Highlighted edge (flip winner) */
+.mint-duel-card__edge--highlight {
+  background: rgba(251, 191, 36, 0.3);
+  border-radius: 3px;
+  outline: 1px solid rgba(251, 191, 36, 0.6);
+}
+
+/* Center cell — janken */
+.mint-duel-card__janken {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  line-height: 1;
+}
+
+/* Trait accent bar at top */
+.mint-duel-card__trait {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+}
+
+/* Token ID label */
+.mint-duel-card__token-id {
+  position: absolute;
+  top: 3px;
+  left: 5px;
+  font-size: 8px;
+  font-family: var(--font-mono, monospace);
+  color: rgba(255, 255, 255, 0.6);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+  pointer-events: none;
+}
+
+/* Holo foil shimmer */
+.mint-duel-card__foil {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    135deg,
+    transparent 30%,
+    rgba(255, 255, 255, 0.06) 45%,
+    rgba(255, 255, 255, 0.1) 50%,
+    rgba(255, 255, 255, 0.06) 55%,
+    transparent 70%
+  );
+  background-size: 200% 200%;
+  animation: mint-holo-shift 4s ease-in-out infinite;
+  pointer-events: none;
+}
+
+@keyframes mint-holo-shift {
+  0%   { background-position: -50% -50%; }
+  50%  { background-position: 150% 150%; }
+  100% { background-position: -50% -50%; }
+}
+
+/* Card placement / flip animations (reuse existing keyframes) */
+.mint-duel-card--placed {
+  animation: mint-cell-place 0.35s ease-out;
+}
+.mint-duel-card--flipped {
+  animation: mint-cell-flip 0.45s ease-in-out;
+}
+
+/* Hand variant: slightly taller aspect ratio */
+.mint-duel-card--hand {
+  aspect-ratio: 3 / 4;
 }
