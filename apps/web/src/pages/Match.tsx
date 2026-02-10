@@ -20,6 +20,7 @@ import { HandDisplayMint } from "@/components/HandDisplayMint";
 import { GameResultOverlayMint } from "@/components/GameResultOverlayMint";
 import { ScoreBar } from "@/components/ScoreBar";
 import { LastMoveFeedback, useBoardFlipAnimation } from "@/components/BoardFlipAnimator";
+import { CardFlight, useCardFlight } from "@/components/CardFlight";
 import { NyanoImage } from "@/components/NyanoImage";
 import { CardMini } from "@/components/CardMini";
 import { TurnLog } from "@/components/TurnLog";
@@ -732,6 +733,7 @@ export function MatchPage() {
 
   const boardNow = sim.ok ? sim.previewHistory[turns.length] ?? EMPTY_BOARD : EMPTY_BOARD;
   const boardAnim = useBoardFlipAnimation(boardNow, sim.ok);
+  const cardFlight = useCardFlight();
 
   // --- Overlay state publishing (unchanged) ---
   React.useEffect(() => {
@@ -959,11 +961,27 @@ export function MatchPage() {
       return;
     }
 
-    commitTurn({
+    const move = {
       cell: draftCell,
       cardIndex: draftCardIndex,
       warningMarkCell: draftWarningMarkCell === null ? undefined : draftWarningMarkCell,
-    });
+    };
+
+    // Card flight animation (mint mode only)
+    if (isMint && !cardFlight.isFlying) {
+      const sourceEl = document.querySelector(`[data-hand-card="${draftCardIndex}"]`) as HTMLElement | null;
+      const targetEl = document.querySelector(`[data-board-cell="${draftCell}"]`) as HTMLElement | null;
+      const card = currentHandCards[draftCardIndex];
+      if (sourceEl && targetEl && card) {
+        cardFlight.launch(card, currentPlayer, sourceEl, targetEl, () => {
+          commitTurn(move);
+        });
+        return;
+      }
+    }
+
+    // Fallback: commit immediately (non-mint or elements not found)
+    commitTurn(move);
   };
 
   const undoMove = () => {
@@ -1643,6 +1661,9 @@ export function MatchPage() {
                     engine error: {!sim.ok ? sim.error : "unknown"}
                   </div>
                 )}
+
+                {/* FLIGHT-0100: Card flight animation portal */}
+                {cardFlight.state && <CardFlight {...cardFlight.state} />}
 
                 {/* Last move feedback */}
                 {boardAnim.isAnimating && (

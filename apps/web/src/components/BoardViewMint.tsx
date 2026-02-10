@@ -111,6 +111,7 @@ interface MintCellProps {
 
 function MintCell({
   cell,
+  index,
   coord,
   isSelected,
   isPlaced,
@@ -149,6 +150,7 @@ function MintCell({
   return (
     <div
       className={classes.join(" ")}
+      data-board-cell={index}
       onClick={isSelectable && !hasCard ? onSelect : undefined}
       {...(hasCard && inspectHandlers ? inspectHandlers : {})}
     >

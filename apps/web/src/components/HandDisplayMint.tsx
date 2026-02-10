@@ -55,6 +55,7 @@ export function HandDisplayMint({
             key={idx}
             className={classes}
             disabled={isDisabled}
+            data-hand-card={idx}
             onClick={() => { if (!isDisabled) onSelect?.(idx); }}
             onPointerEnter={(e) => { if (!isUsed) preview.show(card, owner, e.currentTarget); }}
             onPointerLeave={() => preview.hide()}
