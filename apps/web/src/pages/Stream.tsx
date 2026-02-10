@@ -10,6 +10,7 @@ import { EVENTS, fetchEventConfig, getEventStatus, type EventV1 } from "@/lib/ev
 import { executeRecovery, recoveryActionLabel } from "@/lib/stream_recovery";
 import { WarudoBridgePanel } from "@/components/stream/WarudoBridgePanel";
 import { VoteControlPanel } from "@/components/stream/VoteControlPanel";
+import { StreamSharePanel } from "@/components/stream/StreamSharePanel";
 import { readBoolSetting, readNumberSetting, readStringSetting, readStreamLock, writeBoolSetting, writeNumberSetting, writeStreamLock, writeStringSetting } from "@/lib/local_settings";
 import { postNyanoWarudoSnapshot } from "@/lib/nyano_warudo_bridge";
 import { formatViewerMoveText, parseChatMoveLoose, parseViewerMoveText } from "@/lib/triad_viewer_command";
@@ -874,62 +875,38 @@ return (
         </div>
 
         <div className="card-bd space-y-4">
-          <div className="grid gap-3 md:grid-cols-2">
-            <div className="rounded-2xl border border-slate-200 bg-white/70 px-4 py-3 shadow-sm">
-              <div className="text-xs font-semibold text-slate-800">Step 1 · Feature an Event</div>
-              <div className="mt-2 flex flex-col gap-2">
-                <label className="text-xs text-slate-600">Event</label>
-                <select
-                  className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm"
-                  value={eventId}
-                  onChange={(ev) => setEventId(ev.target.value)}
-                  disabled={settingsLocked}
-                  aria-label="Event"
-                >
-                  {events.map((x) => (
-                    <option key={x.id} value={x.id}>
-                      {x.title}
-                    </option>
-                  ))}
-                </select>
-
-                {e ? <div className="text-xs text-slate-500 mt-2">{e.description}</div> : null}
-
-                <div className="mt-3 flex flex-wrap items-center gap-2">
-                  <button className="btn btn-sm btn-primary" onClick={() => copy("Challenge link", matchUrl)}>
-                    Copy challenge link
-                  </button>
-                  <a className="btn btn-sm no-underline" href={matchUrl} target="_blank" rel="noreferrer noopener">
-                    Open (viewer)
-                  </a>
-                </div>
-
-                <div className="mt-2 flex flex-wrap items-center gap-2">
-                  <button className="btn btn-sm" onClick={() => copy("Host match (stream)", hostMatchUrl)}>
-                    Copy host match (stream)
-                  </button>
-                  <a className="btn btn-sm no-underline" href={hostMatchUrl} target="_blank" rel="noreferrer noopener">
-                    Open (host)
-                  </a>
-                </div>
-
-                <div className="text-[11px] text-slate-500">
-                  Host側は <span className="font-mono">stream=1</span> で投票結果を反映できます。
-                </div>
-              </div>
-            </div>
-
-            <div className="rounded-2xl border border-slate-200 bg-white/70 px-4 py-3 shadow-sm">
-              <div className="text-xs font-semibold text-slate-800">Step 2 · Add OBS Overlay</div>
-              <div className="mt-2 space-y-3">
-                <CopyField label="Overlay URL (no controls)" value={overlayUrl} href={overlayUrl} />
-                <CopyField label="Overlay URL (transparent)" value={overlayTransparentUrl} href={overlayTransparentUrl} />
-                <div className="text-xs text-slate-500">
-                  OBSのBrowser Sourceに貼るだけで、<span className="font-mono">/match</span> や <span className="font-mono">/replay</span> の進行が表示されます。
-                </div>
-              </div>
+          {/* Step 1 · Event Selection */}
+          <div className="rounded-2xl border border-slate-200 bg-white/70 px-4 py-3 shadow-sm">
+            <div className="text-xs font-semibold text-slate-800">Step 1 · Feature an Event</div>
+            <div className="mt-2 flex flex-col gap-2">
+              <label className="text-xs text-slate-600">Event</label>
+              <select
+                className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm"
+                value={eventId}
+                onChange={(ev) => setEventId(ev.target.value)}
+                disabled={settingsLocked}
+                aria-label="Event"
+              >
+                {events.map((x) => (
+                  <option key={x.id} value={x.id}>
+                    {x.title}
+                  </option>
+                ))}
+              </select>
+              {e ? <div className="text-xs text-slate-500 mt-2">{e.description}</div> : null}
             </div>
           </div>
+
+          {/* Step 2 · Share & QR Codes (P2-310) */}
+          <StreamSharePanel
+            matchUrl={matchUrl}
+            hostMatchUrl={hostMatchUrl}
+            overlayUrl={overlayUrl}
+            overlayTransparentUrl={overlayTransparentUrl}
+            replayBroadcastUrl={replayBroadcastUrl}
+            controlledSide={controlledSide}
+            eventTitle={e?.title}
+          />
 
           <div className="callout callout-info">
             <div className="text-xs font-semibold">配信の“最短”の回し方（暫定）</div>

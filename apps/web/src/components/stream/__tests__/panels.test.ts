@@ -33,3 +33,11 @@ describe("VoteControlPanel", () => {
     expect(name).toMatch(/^VoteControlPanel/);
   });
 });
+
+describe("StreamSharePanel", () => {
+  it("exports StreamSharePanel component", async () => {
+    const mod = await import("../StreamSharePanel");
+    expect(mod.StreamSharePanel).toBeDefined();
+    expect(typeof mod.StreamSharePanel).toBe("object"); // React.memo wraps as object
+  });
+});

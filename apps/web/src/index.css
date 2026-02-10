@@ -110,6 +110,9 @@
   --ol-avatar: 22px;
   --ol-badge-font: 9px;
   --ol-text-shadow: 0 1px 3px rgba(0,0,0,0.7);
+  --ol-countdown: 20px;
+  --ol-score: 16px;
+  --ol-turn: 14px;
   font-size: var(--ol-font);
 }
 
@@ -123,6 +126,9 @@
   --ol-avatar: 26px;
   --ol-badge-font: 10px;
   --ol-text-shadow: 0 1px 3px rgba(0,0,0,0.6);
+  --ol-countdown: 24px;
+  --ol-score: 18px;
+  --ol-turn: 15px;
   font-size: var(--ol-font);
 }
 
@@ -136,6 +142,9 @@
   --ol-avatar: 32px;
   --ol-badge-font: 10px;
   --ol-text-shadow: 0 1px 2px rgba(0,0,0,0.4);
+  --ol-countdown: 28px;
+  --ol-score: 22px;
+  --ol-turn: 16px;
   font-size: var(--ol-font);
 }
 
@@ -149,6 +158,9 @@
   --ol-avatar: 38px;
   --ol-badge-font: 11px;
   --ol-text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+  --ol-countdown: 36px;
+  --ol-score: 28px;
+  --ol-turn: 18px;
   font-size: var(--ol-font);
 }
 
@@ -1147,5 +1159,60 @@
     background: rgba(255, 255, 255, 0.92);
     border: 1px solid rgba(0, 0, 0, 0.08);
     backdrop-filter: blur(4px);
+  }
+
+  /* ── OBS Visibility Enhancements (P2-084) ─────────────────────────── */
+
+  /* Vote countdown — large, pulsing, high contrast for OBS viewers */
+  .ol-vote-countdown {
+    @apply font-display font-black tabular-nums;
+    @apply text-emerald-600;
+    text-shadow: 0 2px 6px rgba(16, 185, 129, 0.3);
+  }
+
+  .ol-vote-countdown--urgent {
+    @apply text-rose-600;
+    text-shadow: 0 2px 6px rgba(225, 29, 72, 0.4);
+    animation: ol-countdown-pulse 0.5s ease-in-out infinite alternate;
+  }
+
+  @keyframes ol-countdown-pulse {
+    0% { opacity: 1; transform: scale(1); }
+    100% { opacity: 0.85; transform: scale(1.04); }
+  }
+
+  /* Transparent BG mode — boost panel contrast for OBS chroma-key */
+  .ol-transparent-boost .ol-panel-primary,
+  .ol-transparent-boost .ol-panel-secondary {
+    background: rgba(255, 255, 255, 0.97);
+    backdrop-filter: blur(8px);
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+  }
+
+  .ol-transparent-boost .ol-panel-tertiary {
+    background: rgba(255, 255, 255, 0.92);
+    backdrop-filter: blur(6px);
+    opacity: 1;
+  }
+
+  /* Score emphasis for OBS readability */
+  .ol-score-big {
+    @apply font-display font-black tabular-nums;
+    letter-spacing: -0.02em;
+  }
+
+  .ol-score-big--a {
+    @apply text-player-a-600;
+    text-shadow: 0 1px 4px rgba(14, 165, 233, 0.25);
+  }
+
+  .ol-score-big--b {
+    @apply text-player-b-600;
+    text-shadow: 0 1px 4px rgba(244, 63, 94, 0.25);
+  }
+
+  /* Turn indicator scaling per theme */
+  .ol-turn-label {
+    @apply font-display font-bold;
   }
 }
