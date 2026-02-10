@@ -166,7 +166,7 @@ function parseCardIndexHuman(raw: string): number | null {
 /**
  * Parse a cell from either a digit "0".."8" or a coordinate "A1".."C3".
  */
-function parseCellAny(raw: string): number | null {
+export function parseCellAny(raw: string): number | null {
   const t = raw.trim();
   if (/^\d$/.test(t)) {
     const n = Number(t);

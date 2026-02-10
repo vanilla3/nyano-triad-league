@@ -243,4 +243,36 @@ describe("isValidEventV1 (P2-360)", () => {
     const e = { ...makeEvent(), seasonId: 1.5 };
     expect(isValidEventV1(e)).toBe(false);
   });
+
+  // ── New optional fields (Sprint 22) ──
+
+  it("accepts event with voteTimeSeconds", () => {
+    const e = makeEvent({ voteTimeSeconds: 30 });
+    expect(isValidEventV1(e)).toBe(true);
+  });
+
+  it("rejects voteTimeSeconds <= 0", () => {
+    const e = { ...makeEvent(), voteTimeSeconds: 0 };
+    expect(isValidEventV1(e)).toBe(false);
+  });
+
+  it("accepts event with maxAttempts", () => {
+    const e = makeEvent({ maxAttempts: 10 });
+    expect(isValidEventV1(e)).toBe(true);
+  });
+
+  it("rejects non-integer maxAttempts", () => {
+    const e = { ...makeEvent(), maxAttempts: 2.5 };
+    expect(isValidEventV1(e)).toBe(false);
+  });
+
+  it("accepts event with deckRestriction", () => {
+    const e = makeEvent({ deckRestriction: "mint_only" });
+    expect(isValidEventV1(e)).toBe(true);
+  });
+
+  it("rejects empty deckRestriction", () => {
+    const e = { ...makeEvent(), deckRestriction: "" };
+    expect(isValidEventV1(e)).toBe(false);
+  });
 });

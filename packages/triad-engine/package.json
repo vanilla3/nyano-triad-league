@@ -8,7 +8,7 @@
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "test": "pnpm run build && node --test test/*.test.js",
-    "lint": "echo \"(add lint later)\""
+    "lint": "tsc --noEmit"
   },
   "dependencies": {
     "ethers": "^6.13.0"

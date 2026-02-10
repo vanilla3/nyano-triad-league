@@ -6,6 +6,7 @@ import { Link, useSearchParams } from "react-router-dom";
 import type { CardData, MatchResultWithHistory, RulesetConfigV1, TranscriptV1, TurnSummary } from "@nyano/triad-engine";
 import {
   simulateMatchV1WithHistory,
+  verifyReplayV1,
   ONCHAIN_CORE_TACTICS_RULESET_CONFIG_V1,
   ONCHAIN_CORE_TACTICS_SHADOW_RULESET_CONFIG_V2,
 } from "@nyano/triad-engine";
@@ -214,6 +215,13 @@ export function ReplayPage() {
   const initialBroadcast = searchParams.get("broadcast") === "1";
   const [broadcastOverlay, setBroadcastOverlay] = React.useState<boolean>(initialBroadcast);
 
+  const [verifyStatus, setVerifyStatus] = React.useState<"idle" | "ok" | "mismatch">("idle");
+
+  const handleVerify = React.useCallback(() => {
+    if (!sim.ok) return;
+    const result = verifyReplayV1(sim.transcript, sim.cards, sim.current.matchId);
+    setVerifyStatus(result.ok ? "ok" : "mismatch");
+  }, [sim]);
 
   const copy = async (v: string) => {
     await navigator.clipboard.writeText(v);
@@ -365,6 +373,7 @@ protocolV1: {
   const load = async (override?: { text?: string; mode?: Mode; step?: number }) => {
     setLoading(true);
     setSim({ ok: false, error: "" });
+    setVerifyStatus("idle");
     try {
       const inputText = (override?.text ?? text).trim();
       if (!inputText) throw new Error("transcript JSON is empty");
@@ -899,6 +908,12 @@ const buildShareLink = async (): Promise<string> => {
                         Copy matchId
                       </button>
                       <button
+                        className={`btn btn-sm ${verifyStatus === "ok" ? "border-emerald-400 bg-emerald-50 text-emerald-700" : verifyStatus === "mismatch" ? "btn-danger" : ""}`}
+                        onClick={handleVerify}
+                      >
+                        {verifyStatus === "ok" ? "Verified" : verifyStatus === "mismatch" ? "Mismatch!" : "Verify"}
+                      </button>
+                      <button
                         className="btn btn-sm"
                         onClick={() => copyWithToast("transcript", stringifyWithBigInt(sim.transcript))}
                       >
@@ -1099,8 +1114,10 @@ const buildShareLink = async (): Promise<string> => {
                     <div>
                       <span className="font-medium">rulesetId</span>: <code>{sim.transcript.header.rulesetId}</code>
                     </div>
-                    <div>
+                    <div className="flex items-center gap-2">
                       <span className="font-medium">matchId</span>: <code>{sim.current.matchId}</code>
+                      {verifyStatus === "ok" && <span className="text-emerald-600 font-semibold" title="Replay verified">Verified</span>}
+                      {verifyStatus === "mismatch" && <span className="text-red-600 font-semibold" title="Replay mismatch">Mismatch</span>}
                     </div>
                   </div>
 
@@ -1110,6 +1127,12 @@ const buildShareLink = async (): Promise<string> => {
                     </button>
                     <button className="btn" onClick={() => copyWithToast("result", stringifyWithBigInt(sim.current))}>
                       Copy result JSON
+                    </button>
+                    <button
+                      className={`btn ${verifyStatus === "ok" ? "border-emerald-400 bg-emerald-50 text-emerald-700" : verifyStatus === "mismatch" ? "btn-danger" : ""}`}
+                      onClick={handleVerify}
+                    >
+                      {verifyStatus === "ok" ? "Verified" : verifyStatus === "mismatch" ? "Mismatch!" : "Verify Replay"}
                     </button>
                   </div>
 

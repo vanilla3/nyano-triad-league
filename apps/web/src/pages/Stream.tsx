@@ -10,7 +10,7 @@ import { executeRecovery, recoveryActionLabel } from "@/lib/stream_recovery";
 import { WarudoBridgePanel } from "@/components/stream/WarudoBridgePanel";
 import { VoteControlPanel } from "@/components/stream/VoteControlPanel";
 import { StreamSharePanel } from "@/components/stream/StreamSharePanel";
-import { readBoolSetting, readNumberSetting, readStringSetting, readStreamLock, writeBoolSetting, writeNumberSetting, writeStreamLock, writeStringSetting } from "@/lib/local_settings";
+import { readBoolSetting, readNumberSetting, readStringSetting, readStreamLock, readStreamLockTimestamp, writeBoolSetting, writeNumberSetting, writeStreamLock, writeStreamLockTimestamp, writeStringSetting } from "@/lib/local_settings";
 import { postNyanoWarudoSnapshot } from "@/lib/nyano_warudo_bridge";
 import { formatViewerMoveText, parseChatMoveLoose, parseViewerMoveText } from "@/lib/triad_viewer_command";
 import {
@@ -171,7 +171,17 @@ function safeFileStem(): string {
 
   // ── Settings lock (persisted) ──
   const [settingsLocked, setSettingsLocked] = React.useState<boolean>(() => readStreamLock());
-  React.useEffect(() => { writeStreamLock(settingsLocked); }, [settingsLocked]);
+  const [lockTimestamp, setLockTimestamp] = React.useState<number>(() => readStreamLockTimestamp());
+  React.useEffect(() => {
+    writeStreamLock(settingsLocked);
+    if (settingsLocked) {
+      const ts = Date.now();
+      setLockTimestamp(ts);
+      writeStreamLockTimestamp(ts);
+    } else {
+      writeStreamLockTimestamp(0);
+    }
+  }, [settingsLocked]);
 
   const [voteOpen, setVoteOpen] = React.useState<boolean>(false);
   const [voteTurn, setVoteTurn] = React.useState<number | null>(null);
@@ -880,10 +890,20 @@ return (
         lastError={lastError}
         onDismissError={() => setLastError(null)}
       />
-      <div className="flex justify-end">
+      <div className="flex items-center justify-end gap-3">
+        {settingsLocked && lockTimestamp > 0 && (
+          <span className="text-xs text-slate-500">
+            Locked {ageLabel(lockTimestamp)}
+          </span>
+        )}
         <button
           className={settingsLocked ? "btn btn-sm btn-error" : "btn btn-sm btn-primary"}
-          onClick={() => setSettingsLocked((v) => !v)}
+          onClick={() => {
+            if (settingsLocked) {
+              if (!window.confirm("配信中にロック解除しますか？\n設定変更による配信トラブルに注意してください。")) return;
+            }
+            setSettingsLocked((v) => !v);
+          }}
           aria-label={settingsLocked ? "Unlock settings" : "Lock settings"}
         >
           {settingsLocked ? "🔒 設定ロック中 (解除)" : "🔓 設定をロック"}
@@ -934,6 +954,9 @@ return (
             replayBroadcastUrl={replayBroadcastUrl}
             controlledSide={controlledSide}
             eventTitle={e?.title}
+            emptyCells={_remainingCellsLive}
+            remainingCards={_remainingCardsLive}
+            turn={liveTurn ?? undefined}
           />
 
           <div className="callout callout-info">

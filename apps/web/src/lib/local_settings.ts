@@ -104,6 +104,16 @@ export function writeStreamLock(locked: boolean): void {
   writeBoolSetting("stream.settingsLocked", locked);
 }
 
+/** Read the stream settings lock timestamp (ms since epoch, or 0 if not set). */
+export function readStreamLockTimestamp(): number {
+  return readNumberSetting("stream.settingsLockedAt", 0);
+}
+
+/** Write the stream settings lock timestamp. */
+export function writeStreamLockTimestamp(ts: number): void {
+  writeNumberSetting("stream.settingsLockedAt", ts);
+}
+
 // ---------------------------------------------------------------------------
 // UI Density (NIN-UX-041)
 // ---------------------------------------------------------------------------
