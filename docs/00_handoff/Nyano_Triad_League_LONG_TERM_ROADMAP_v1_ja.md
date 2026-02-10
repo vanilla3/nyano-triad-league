@@ -1,6 +1,6 @@
 # Nyano Triad League LONG TERM ROADMAP v1（超長期計画・作業指針）
 
-最終更新: 2026-02-08（commit-0082: strictAllowed 整合）
+最終更新: 2026-02-10（Sprint 20: Phase 0 全項目完了）
 
 このドキュメントは、移行先作業者が **チャットを追わずに**「次に何を作り、何に注意し、どの順で改善すべきか」を把握できるようにするための **超長期ロードマップ**です。
 “細部の実装”よりも、まず **品質の柱・変更の原則・作業の安全策**を共有し、迷いと手戻りを減らすことを優先します。
@@ -106,17 +106,17 @@
 
 > 重要: 各フェーズは **並行**して良いですが、依存関係（先に固めるべき契約）を崩さないこと。
 
-### Phase 0（いま〜2週間）: “イベントが壊れない”土台を固める
+### Phase 0（完了 ✅ Sprint 20）: "イベントが壊れない"土台を固める
 - [Stability]
-  - [ ] 投票開始時点で state_json を必ず送る（strictAllowed lock）
-  - [ ] strictAllowed hash の算出を **完全固定**（warudo と overlay が一致）
-  - [ ] エラー表示の常設（nyano-warudo POST 失敗、RPC revert 等）
+  - [x] 投票開始時点で state_json を必ず送る（strictAllowed lock）
+  - [x] strictAllowed hash の算出を **完全固定**（warudo と overlay が一致）
+  - [x] エラー表示の常設（nyano-warudo POST 失敗、RPC revert 等） — P0-ERR: Stream HUD LastErrorBanner + Overlay 30s sticky
 - [Explainability]
-  - [ ] TurnLog / Overlay の flip理由表示を統一（短文・長文・要約の階層）
+  - [x] TurnLog / Overlay の flip理由表示を統一（短文・長文・要約の階層） — P0-FLIP: TurnLog → flipTraceFull() 統一
 - [Participation]
-  - [ ] `#triad` の parser/normalize を /stream の受理にも統一（票割れゼロ）
+  - [x] `#triad` の parser/normalize を /stream の受理にも統一（票割れゼロ） — P0-PARSE: moveDisplay() に controlledSide 反映
 - [Operability]
-  - [ ] 重要トグルの永続化（localStorage）、初期値の運用最適化
+  - [x] 重要トグルの永続化（localStorage）、初期値の運用最適化 — P0-PERSIST: stream.eventId 永続化
 
 ### Phase 1（〜1ヶ月）: “観戦体験”の完成（分かる・気持ちいい）
 - [Visual]

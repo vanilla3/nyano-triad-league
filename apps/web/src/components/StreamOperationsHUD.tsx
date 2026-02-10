@@ -105,6 +105,12 @@ export type OpsLogEntry = {
   message: string;
 };
 
+/** Persistent error info displayed until explicitly dismissed (P0-ERR). */
+export type PersistentError = {
+  message: string;
+  timestampMs: number;
+};
+
 export interface StreamOpsHUDProps {
   /** Live overlay state from /match or /replay */
   live: OverlayStateV1 | null;
@@ -126,6 +132,10 @@ export interface StreamOpsHUDProps {
   opsLog?: OpsLogEntry[];
   /** Whether settings are locked */
   settingsLocked?: boolean;
+  /** Persistent error that stays until dismissed (P0-ERR) */
+  lastError?: PersistentError | null;
+  /** Callback to dismiss the persistent error */
+  onDismissError?: () => void;
 }
 
 export function StreamOperationsHUD({
@@ -139,6 +149,8 @@ export function StreamOperationsHUD({
   connectionHealth,
   opsLog,
   settingsLocked,
+  lastError,
+  onDismissError,
 }: StreamOpsHUDProps) {
   // ── Computed state ──
   const turn = typeof live?.turn === "number" ? live.turn : null;
@@ -241,6 +253,11 @@ export function StreamOperationsHUD({
             </span>
           </div>
         </div>
+
+        {/* Persistent error banner (P0-ERR) */}
+        {lastError && (
+          <LastErrorBanner error={lastError} onDismiss={onDismissError} />
+        )}
 
         {/* Main HUD grid */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-px bg-surface-100">
@@ -364,6 +381,30 @@ export function StreamOperationsHUD({
 /* ─────────────────────────────────────────────────────────────
    SUB-COMPONENTS
    ───────────────────────────────────────────────────────────── */
+
+function LastErrorBanner({ error, onDismiss }: { error: PersistentError; onDismiss?: () => void }) {
+  const ageSec = Math.max(0, Math.floor((Date.now() - error.timestampMs) / 1000));
+  const ageText = ageSec < 2 ? "just now" : ageSec < 60 ? `${ageSec}s ago` : `${Math.floor(ageSec / 60)}m ago`;
+
+  return (
+    <div className="flex items-center gap-2 px-4 py-2 bg-red-50 border-b border-red-200 text-xs text-red-800">
+      <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse shrink-0" />
+      <span className="font-semibold">Last Error</span>
+      <span className="truncate flex-1">{error.message}</span>
+      <span className="text-red-500 shrink-0">{ageText}</span>
+      {onDismiss && (
+        <button
+          type="button"
+          className="ml-1 px-1.5 py-0.5 rounded text-red-600 hover:bg-red-100 font-bold"
+          onClick={onDismiss}
+          title="Dismiss error"
+        >
+          ✕
+        </button>
+      )}
+    </div>
+  );
+}
 
 function HUDCell({
   label,

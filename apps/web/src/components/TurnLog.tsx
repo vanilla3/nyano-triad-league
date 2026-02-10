@@ -1,7 +1,7 @@
 import React from "react";
-import type { BoardState, CardData, TurnSummary } from "@nyano/triad-engine";
+import type { BoardState, TurnSummary } from "@nyano/triad-engine";
 import { FlipTraceBadges, FlipTraceDetailList } from "@/components/FlipTraceBadges";
-import { flipTracesReadout, flipTracesSummary } from "@/components/flipTraceDescribe";
+import { flipTraceFull, flipTracesReadout, flipTracesSummary } from "@/components/flipTraceDescribe";
 import type { MoveAnnotation } from "@/lib/ai/replay_annotations";
 import { QUALITY_DISPLAY } from "@/lib/ai/replay_annotations";
 import type { BoardAdvantage } from "@/lib/ai/board_advantage";
@@ -15,14 +15,11 @@ function cellCoord(cell: number): string {
 
 type Owner = 0 | 1;
 
-type EdgeDir = "up" | "right" | "down" | "left";
-
 type FlipDetail = {
   cell: number;
   tokenId: bigint;
   from: Owner;
   to: Owner;
-  dirFromPlaced: EdgeDir | null;
   explain: string;
 };
 
@@ -36,122 +33,11 @@ type TurnDelta = {
 
 const ownerLabel = (o: Owner): string => (o === 0 ? "A" : "B");
 
-const oppositeDir = (d: EdgeDir): EdgeDir => {
-  switch (d) {
-    case "up":
-      return "down";
-    case "down":
-      return "up";
-    case "left":
-      return "right";
-    case "right":
-      return "left";
-  }
-};
-
-const handName = (h: number): string => {
-  // 0..2 in Nyano: assumed Rock/Paper/Scissors (standard order)
-  if (h === 0) return "Rock";
-  if (h === 1) return "Paper";
-  if (h === 2) return "Scissors";
-  return `Hand(${h})`;
-};
-
-const jankenWins = (me: number, them: number): boolean => {
-  // Rock(0) > Scissors(2), Paper(1) > Rock(0), Scissors(2) > Paper(1)
-  if (me === them) return false;
-  if (me === 0 && them === 2) return true;
-  if (me === 1 && them === 0) return true;
-  if (me === 2 && them === 1) return true;
-  return false;
-};
-
-function dirFromPlaced(placedCell: number, neighborCell: number): EdgeDir | null {
-  if (neighborCell === placedCell - 3) return "up";
-  if (neighborCell === placedCell + 3) return "down";
-
-  if (neighborCell === placedCell - 1 && placedCell % 3 !== 0) return "left";
-  if (neighborCell === placedCell + 1 && placedCell % 3 !== 2) return "right";
-
-  return null;
-}
-
 function formatCells(cells: number[]): string {
   if (cells.length === 0) return "—";
   const coords = cells.map(cellCoord);
   if (coords.length <= 4) return coords.join(",");
   return `${coords.slice(0, 4).join(",")}…(+${coords.length - 4})`;
-}
-
-function edgeExpr(base: number, triadPlus: number, warningDebuff: number): { text: string; effective: number } {
-  const effective = base + triadPlus - warningDebuff;
-  const parts: string[] = [String(base)];
-  if (triadPlus) parts.push(`+${triadPlus}`);
-  if (warningDebuff) parts.push(`-${warningDebuff}`);
-
-  if (parts.length === 1) return { text: String(effective), effective };
-  return { text: `${parts.join(" ")} = ${effective}`, effective };
-}
-
-function explainFlip(args: {
-  placedCell: number;
-  flipCell: number;
-  placedCard: CardData;
-  otherCard: CardData;
-  triadPlus: number;
-  warningDebuff: number;
-  warningTriggered: boolean;
-  ignoreWarningMark: boolean;
-}): { dir: EdgeDir | null; explain: string } {
-  const dir = dirFromPlaced(args.placedCell, args.flipCell);
-  if (!dir) {
-    return { dir: null, explain: "non-adjacent flip (chain/extra rule); explanation TBD" };
-  }
-
-  const opp = oppositeDir(dir);
-
-  const placedEdgeBase = Number(args.placedCard.edges[dir]);
-  const otherEdgeBase = Number(args.otherCard.edges[opp]);
-
-  const ex = edgeExpr(placedEdgeBase, args.triadPlus, args.warningDebuff);
-
-  const warnTag =
-    args.warningTriggered && args.ignoreWarningMark
-      ? " (warning ignored)"
-      : args.warningTriggered && args.warningDebuff
-        ? " (warning -1)"
-        : "";
-
-  if (ex.effective > otherEdgeBase) {
-    return {
-      dir,
-      explain: `edge ${dir}: ${ex.text} > ${otherEdgeBase}${warnTag}`,
-    };
-  }
-
-  if (ex.effective < otherEdgeBase) {
-    // Not explained by direct edge-compare; may happen due to chain/extra rule.
-    return {
-      dir,
-      explain: `edge ${dir}: ${ex.text} < ${otherEdgeBase} → flip via chain/extra rule (not explained by edge-compare)${warnTag}`,
-    };
-  }
-
-  // tie -> janken tiebreak (if any)
-  const meHand = Number(args.placedCard.jankenHand);
-  const themHand = Number(args.otherCard.jankenHand);
-
-  if (jankenWins(meHand, themHand)) {
-    return {
-      dir,
-      explain: `edge tie (${ex.text} == ${otherEdgeBase}) → janken ${handName(meHand)} beats ${handName(themHand)}${warnTag}`,
-    };
-  }
-
-  return {
-    dir,
-    explain: `edge tie (${ex.text} == ${otherEdgeBase}) and janken not won → flip via chain/extra rule (not explained by edge-compare)${warnTag}`,
-  };
 }
 
 function computeDelta(boardPrev: BoardState, boardNow: BoardState, turn: TurnSummary): TurnDelta {
@@ -182,37 +68,22 @@ function computeDelta(boardPrev: BoardState, boardNow: BoardState, turn: TurnSum
     return { placedCell, placedTokenId, placedOwner, flippedCells, flipped };
   }
 
-  const placedCellObj = boardNow[placedCell];
-  const placedCard = placedCellObj?.card;
-
-  const triadPlus = Number(turn.appliedBonus?.triadPlus ?? 0);
-  const ignoreWarningMark = Boolean(turn.appliedBonus?.ignoreWarningMark);
-  const warningTriggered = Boolean(turn.warningTriggered);
-  const warningDebuff = warningTriggered && !ignoreWarningMark ? 1 : 0;
+  const traces = turn.flipTraces ?? [];
 
   for (const c of flippedCells) {
     const before = boardPrev[c];
     const after = boardNow[c];
+    if (!before || !after) continue;
 
-    if (!before || !after || !placedCard) continue;
-
-    const { dir, explain } = explainFlip({
-      placedCell,
-      flipCell: c,
-      placedCard,
-      otherCard: before.card,
-      triadPlus,
-      warningDebuff,
-      warningTriggered,
-      ignoreWarningMark,
-    });
+    // Match flipTrace by target cell index
+    const trace = traces.find((t) => t.to === c);
+    const explain = trace ? flipTraceFull(trace) : `${cellCoord(c)}: (trace not available)`;
 
     flipped.push({
       cell: c,
       tokenId: after.card.tokenId,
       from: before.owner as Owner,
       to: after.owner as Owner,
-      dirFromPlaced: dir,
       explain,
     });
   }
@@ -221,8 +92,7 @@ function computeDelta(boardPrev: BoardState, boardNow: BoardState, turn: TurnSum
 }
 
 function formatFlipLine(f: FlipDetail): string {
-  const dir = f.dirFromPlaced ? ` ${f.dirFromPlaced}` : "";
-  return `${cellCoord(f.cell)}${dir} (#${f.tokenId.toString()}) ${ownerLabel(f.from)}→${ownerLabel(f.to)}`;
+  return `${cellCoord(f.cell)} (#${f.tokenId.toString()}) ${ownerLabel(f.from)}→${ownerLabel(f.to)}`;
 }
 
 export function TurnLog(props: {
