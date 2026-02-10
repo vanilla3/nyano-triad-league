@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, afterEach } from "vitest";
-import { EVENTS, getEventById, getEventStatus, formatEventPeriod, fetchEventConfig, type EventV1 } from "../events";
+import { EVENTS, getEventById, getEventStatus, formatEventPeriod, fetchEventConfig, isValidEventV1, type EventV1 } from "../events";
 
 /* ------------------------------------------------------------------ */
 /* Helper                                                              */
@@ -175,5 +175,72 @@ describe("fetchEventConfig", () => {
     const result = await fetchEventConfig();
     expect(result.length).toBe(1);
     expect(result[0].id).toBe("fetched-event");
+  });
+});
+
+/* ------------------------------------------------------------------ */
+/* isValidEventV1 (P2-360)                                             */
+/* ------------------------------------------------------------------ */
+
+describe("isValidEventV1 (P2-360)", () => {
+  it("accepts a valid event", () => {
+    expect(isValidEventV1(makeEvent())).toBe(true);
+  });
+
+  it("accepts event with optional fields (startAt, endAt, tags)", () => {
+    const e = makeEvent({
+      startAt: "2025-06-01T00:00:00Z",
+      endAt: "2025-12-31T00:00:00Z",
+      tags: ["ai", "featured"],
+    });
+    expect(isValidEventV1(e)).toBe(true);
+  });
+
+  it("rejects empty id", () => {
+    expect(isValidEventV1(makeEvent({ id: "" }))).toBe(false);
+  });
+
+  it("rejects unknown rulesetKey", () => {
+    const e = { ...makeEvent(), rulesetKey: "v99" };
+    expect(isValidEventV1(e)).toBe(false);
+  });
+
+  it("rejects nyanoDeckTokenIds of wrong length", () => {
+    const e = { ...makeEvent(), nyanoDeckTokenIds: ["1", "2", "3"] };
+    expect(isValidEventV1(e)).toBe(false);
+  });
+
+  it("rejects firstPlayer: 2", () => {
+    const e = { ...makeEvent(), firstPlayer: 2 };
+    expect(isValidEventV1(e)).toBe(false);
+  });
+
+  it('rejects aiDifficulty "impossible"', () => {
+    const e = { ...makeEvent(), aiDifficulty: "impossible" };
+    expect(isValidEventV1(e)).toBe(false);
+  });
+
+  it("rejects null", () => {
+    expect(isValidEventV1(null)).toBe(false);
+  });
+
+  it("rejects non-object", () => {
+    expect(isValidEventV1("string")).toBe(false);
+  });
+
+  it("rejects missing description", () => {
+    const e = { ...makeEvent() };
+    delete (e as Record<string, unknown>).description;
+    expect(isValidEventV1(e)).toBe(false);
+  });
+
+  it('rejects wrong kind "other_challenge"', () => {
+    const e = { ...makeEvent(), kind: "other_challenge" };
+    expect(isValidEventV1(e)).toBe(false);
+  });
+
+  it("rejects non-integer seasonId", () => {
+    const e = { ...makeEvent(), seasonId: 1.5 };
+    expect(isValidEventV1(e)).toBe(false);
   });
 });

@@ -5,10 +5,9 @@ import { Link, useSearchParams } from "react-router-dom";
 import type { BoardState, CardData, FlipTraceV1, MatchResultWithHistory, PlayerIndex, RulesetConfigV1, TranscriptV1, Turn, TurnSummary } from "@nyano/triad-engine";
 import {
   computeRulesetIdV1,
-  ONCHAIN_CORE_TACTICS_RULESET_CONFIG_V1,
-  ONCHAIN_CORE_TACTICS_SHADOW_RULESET_CONFIG_V2,
   simulateMatchV1WithHistory,
 } from "@nyano/triad-engine";
+import { resolveRulesetOrThrow, type RulesetKey } from "@/lib/ruleset_registry";
 
 import { BoardView } from "@/components/BoardView";
 import { BoardViewRPG, HandDisplayRPG, GameResultOverlayRPG, TurnLogRPG } from "@/components/BoardViewRPG";
@@ -49,7 +48,6 @@ import { readUiDensity, writeUiDensity, type UiDensity } from "@/lib/local_setti
 import type { FlipTraceArrow } from "@/components/FlipArrowOverlay";
 import { MatchDrawerMint, DrawerToggleButton } from "@/components/MatchDrawerMint";
 
-type RulesetKey = "v1" | "v2";
 type OpponentMode = "pvp" | "vs_nyano_ai";
 type DataMode = "fast" | "verified";
 
@@ -452,7 +450,7 @@ export function MatchPage() {
   const effectiveDeckATokens = isGuestMode && guestDeckATokens.length === 5 ? guestDeckATokens : deckATokens;
   const effectiveDeckBTokens = isGuestMode && guestDeckBTokens.length === 5 ? guestDeckBTokens : deckBTokens;
 
-  const ruleset: RulesetConfigV1 = rulesetKey === "v1" ? ONCHAIN_CORE_TACTICS_RULESET_CONFIG_V1 : ONCHAIN_CORE_TACTICS_SHADOW_RULESET_CONFIG_V2;
+  const ruleset: RulesetConfigV1 = resolveRulesetOrThrow(rulesetKey);
   const rulesetId = React.useMemo(() => computeRulesetIdV1(ruleset), [ruleset]);
 
   const used = React.useMemo(() => computeUsed(turns, firstPlayer), [turns, firstPlayer]);

@@ -9,6 +9,7 @@ import {
   ONCHAIN_CORE_TACTICS_RULESET_CONFIG_V1,
   ONCHAIN_CORE_TACTICS_SHADOW_RULESET_CONFIG_V2,
 } from "@nyano/triad-engine";
+import { resolveRulesetOrThrow } from "@/lib/ruleset_registry";
 
 import { BoardView } from "@/components/BoardView";
 import { CardMini } from "@/components/CardMini";
@@ -41,9 +42,7 @@ function rulesetLabel(key: VectorKey): string {
 }
 
 function rulesetConfigForVector(key: VectorKey): RulesetConfigV1 {
-  return key === "core_tactics_shadow_v2"
-    ? ONCHAIN_CORE_TACTICS_SHADOW_RULESET_CONFIG_V2
-    : ONCHAIN_CORE_TACTICS_RULESET_CONFIG_V1;
+  return resolveRulesetOrThrow(key === "core_tactics_shadow_v2" ? "v2" : "v1");
 }
 
 function parseVectorKey(v: string | null): VectorKey {

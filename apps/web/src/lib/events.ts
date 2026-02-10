@@ -1,3 +1,5 @@
+import { isValidRulesetKey, type RulesetKey } from "./ruleset_registry";
+
 export type NyanoAiEventV1 = {
   id: string;
   title: string;
@@ -10,7 +12,7 @@ export type NyanoAiEventV1 = {
   /** ISO8601 string. If omitted, treated as no end. */
   endAt?: string;
 
-  rulesetKey: "v1" | "v2";
+  rulesetKey: RulesetKey;
   seasonId: number;
   firstPlayer: 0 | 1;
 
@@ -25,6 +27,52 @@ export type NyanoAiEventV1 = {
 export type EventV1 = NyanoAiEventV1;
 
 export type EventStatus = "upcoming" | "active" | "ended" | "always";
+
+/**
+ * Runtime validator for EventV1 shape.
+ * Rejects events with unknown rulesetKey, invalid firstPlayer, wrong deck length, etc.
+ */
+export function isValidEventV1(e: unknown): e is EventV1 {
+  if (typeof e !== "object" || e === null) return false;
+  const r = e as Record<string, unknown>;
+
+  // Required string fields
+  if (typeof r.id !== "string" || r.id.length === 0) return false;
+  if (typeof r.title !== "string") return false;
+  if (typeof r.description !== "string") return false;
+
+  // kind must be "nyano_ai_challenge"
+  if (r.kind !== "nyano_ai_challenge") return false;
+
+  // rulesetKey must be a valid registry key
+  if (!isValidRulesetKey(r.rulesetKey)) return false;
+
+  // seasonId must be an integer
+  if (typeof r.seasonId !== "number" || !Number.isInteger(r.seasonId)) return false;
+
+  // firstPlayer must be 0 or 1
+  if (r.firstPlayer !== 0 && r.firstPlayer !== 1) return false;
+
+  // aiDifficulty must be "easy" or "normal"
+  if (r.aiDifficulty !== "easy" && r.aiDifficulty !== "normal") return false;
+
+  // nyanoDeckTokenIds must be string[] of length 5
+  if (!Array.isArray(r.nyanoDeckTokenIds)) return false;
+  if (r.nyanoDeckTokenIds.length !== 5) return false;
+  if (!r.nyanoDeckTokenIds.every((t: unknown) => typeof t === "string")) return false;
+
+  // Optional fields: startAt/endAt must be string if present
+  if (r.startAt !== undefined && typeof r.startAt !== "string") return false;
+  if (r.endAt !== undefined && typeof r.endAt !== "string") return false;
+
+  // Optional: tags must be string[] if present
+  if (r.tags !== undefined) {
+    if (!Array.isArray(r.tags)) return false;
+    if (!r.tags.every((t: unknown) => typeof t === "string")) return false;
+  }
+
+  return true;
+}
 
 export const EVENTS: EventV1[] = [
   {
@@ -58,15 +106,7 @@ export async function fetchEventConfig(): Promise<EventV1[]> {
     if (!res.ok) return [...EVENTS];
     const json: unknown = await res.json();
     if (!Array.isArray(json)) return [...EVENTS];
-    // Basic shape validation: each entry must have at minimum id, title, kind
-    const valid = json.filter(
-      (e: unknown): e is EventV1 =>
-        typeof e === "object" &&
-        e !== null &&
-        typeof (e as Record<string, unknown>).id === "string" &&
-        typeof (e as Record<string, unknown>).title === "string" &&
-        typeof (e as Record<string, unknown>).kind === "string",
-    );
+    const valid = json.filter(isValidEventV1);
     return valid.length > 0 ? valid : [...EVENTS];
   } catch {
     return [...EVENTS];
