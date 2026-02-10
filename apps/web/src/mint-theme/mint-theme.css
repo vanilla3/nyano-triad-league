@@ -407,7 +407,17 @@
 .mint-hand-card--selected {
   transform: translateY(-6px) !important;
   border-color: var(--mint-accent) !important;
-  box-shadow: 0 0 16px var(--mint-cell-active-glow), 0 8px 20px rgba(0, 0, 0, 0.12) !important;
+  animation: mint-card-select-glow 1.5s ease-in-out infinite;
+}
+
+.mint-hand-card--a.mint-hand-card--selected {
+  --mint-select-ring: var(--mint-pa, #0EA5E9);
+  --mint-select-glow: var(--mint-pa-glow, rgba(14, 165, 233, 0.4));
+}
+
+.mint-hand-card--b.mint-hand-card--selected {
+  --mint-select-ring: var(--mint-pb, #F43F5E);
+  --mint-select-glow: var(--mint-pb-glow, rgba(244, 63, 94, 0.4));
 }
 
 .mint-hand-card--used {
@@ -1066,6 +1076,94 @@
 }
 
 
+/* ── Card Selection Glow (P1-130) ────────────────────────────────────── */
+
+@keyframes mint-card-select-glow {
+  0%, 100% {
+    box-shadow:
+      0 0 0 2px var(--mint-select-ring, var(--mint-accent)),
+      0 0 12px var(--mint-select-glow, var(--mint-cell-active-glow)),
+      0 8px 20px rgba(0, 0, 0, 0.12);
+  }
+  50% {
+    box-shadow:
+      0 0 0 3px var(--mint-select-ring, var(--mint-accent)),
+      0 0 24px var(--mint-select-glow, var(--mint-cell-active-glow)),
+      0 8px 20px rgba(0, 0, 0, 0.12);
+  }
+}
+
+
+/* ── Move Tip Badge (P1-120) ─────────────────────────────────────────── */
+
+.mint-battle-hud__tip {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+  background: rgba(16, 185, 129, 0.10);
+  color: #059669;
+  border: 1px solid rgba(167, 243, 208, 0.6);
+  animation: mint-slide-up 0.3s ease-out;
+}
+
+.mint-battle-hud__tip-icon { font-size: 12px; line-height: 1; }
+.mint-battle-hud__tip-label { font-size: 11px; }
+
+/* Contextual variants */
+.mint-battle-hud__tip--warning_dodge,
+.mint-battle-hud__tip--corner_control {
+  background: rgba(16, 185, 129, 0.12); color: #059669;
+  border-color: rgba(167, 243, 208, 0.5);
+}
+.mint-battle-hud__tip--warning_triggered {
+  background: rgba(245, 158, 11, 0.12); color: #D97706;
+  border-color: rgba(245, 158, 11, 0.3);
+}
+.mint-battle-hud__tip--warning_trap {
+  background: rgba(249, 115, 22, 0.10); color: #EA580C;
+  border-color: rgba(249, 115, 22, 0.25);
+}
+.mint-battle-hud__tip--big_swing,
+.mint-battle-hud__tip--domination_combo {
+  background: rgba(239, 68, 68, 0.10); color: #DC2626;
+  border-color: rgba(239, 68, 68, 0.25);
+}
+.mint-battle-hud__tip--chain_combo {
+  background: rgba(139, 92, 246, 0.10); color: #7C3AED;
+  border-color: rgba(139, 92, 246, 0.25);
+}
+.mint-battle-hud__tip--center_hold {
+  background: rgba(100, 116, 139, 0.08); color: #64748B;
+  border-color: rgba(100, 116, 139, 0.2);
+}
+
+
+/* ── AI Reason Badge (P3-312) ────────────────────────────────────────── */
+
+.mint-battle-hud__ai-reason {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 2px 7px;
+  border-radius: 8px;
+  font-size: 10px;
+  font-weight: 600;
+  white-space: nowrap;
+  background: rgba(139, 92, 246, 0.08);
+  color: #8B5CF6;
+  border: 1px solid rgba(139, 92, 246, 0.2);
+  animation: mint-slide-up 0.3s ease-out;
+}
+
+.mint-battle-hud__ai-reason-icon { font-size: 11px; line-height: 1; }
+.mint-battle-hud__ai-reason-label { font-size: 10px; }
+
+
 /* ── Reduced Motion ──────────────────────────────────────────────────── */
 
 @media (prefers-reduced-motion: reduce) {
@@ -1097,6 +1195,20 @@
   }
 
   .mint-compact-card::after {
+    animation: none !important;
+  }
+
+  /* P1-130: Static glow fallback for card selection */
+  .mint-hand-card--selected {
+    animation: none !important;
+    box-shadow: 0 0 0 2px var(--mint-select-ring, var(--mint-accent)),
+                0 0 16px var(--mint-select-glow, var(--mint-cell-active-glow)),
+                0 8px 20px rgba(0, 0, 0, 0.12) !important;
+  }
+
+  /* P1-120 / P3-312: Disable tip & reason badge entrance animation */
+  .mint-battle-hud__tip,
+  .mint-battle-hud__ai-reason {
     animation: none !important;
   }
 }
