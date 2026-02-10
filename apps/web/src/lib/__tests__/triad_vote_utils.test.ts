@@ -257,3 +257,42 @@ describe("computeStrictAllowed", () => {
     expect(result!.warningMark.candidates.length).toBe(9);
   });
 });
+
+// ── P2-2-3: toViewerMoveText display unification ──────────────────
+
+describe("toViewerMoveText display unification (P2-2-3)", () => {
+  it("formats cell+cardIndex matching overlay display", () => {
+    // cell 4 = B2, cardIndex 1 = slot A2 → "#triad A2->B2"
+    expect(toViewerMoveText({ cell: 4, cardIndex: 1 })).toBe("#triad A2->B2");
+  });
+
+  it("formats edge cell", () => {
+    // cell 0 = A1, cardIndex 0 = slot A1 → "#triad A1->A1"
+    expect(toViewerMoveText({ cell: 0, cardIndex: 0 })).toBe("#triad A1->A1");
+  });
+});
+
+// ── P2-2-4: computeStrictAllowed hash stability ───────────────────
+
+describe("computeStrictAllowed hash stability (P2-2-4)", () => {
+  it("hash format is 0x + 8 hex chars", () => {
+    const result = computeStrictAllowed(makeState({ turn: 0, firstPlayer: 0 }));
+    expect(result).not.toBeNull();
+    expect(result!.hash).toMatch(/^0x[0-9a-f]{8}$/);
+  });
+
+  it("deterministic — same state produces same hash", () => {
+    const s = makeState({ turn: 0, firstPlayer: 0 });
+    const r1 = computeStrictAllowed(s);
+    const r2 = computeStrictAllowed(s);
+    expect(r1!.hash).toBe(r2!.hash);
+  });
+
+  it("allowlist entries are all parseable #triad format", () => {
+    const result = computeStrictAllowed(makeState({ turn: 0, firstPlayer: 0 }));
+    expect(result).not.toBeNull();
+    for (const entry of result!.allowlist) {
+      expect(entry).toMatch(/^#triad A[1-5]->[ABC][1-3]$/);
+    }
+  });
+});

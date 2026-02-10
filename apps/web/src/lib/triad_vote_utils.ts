@@ -186,6 +186,16 @@ export type StrictAllowedComputed = {
   };
 };
 
+/**
+ * Compute the strict allowlist for the current game state.
+ *
+ * ── SINGLE SOURCE OF TRUTH for allowlist + hash ──
+ * All consumers (Stream, Overlay, StreamOperationsHUD, nyano-warudo bridge)
+ * MUST use this function. Do NOT recompute the hash elsewhere.
+ *
+ * The hash is FNV-1a 32-bit over the newline-joined sorted allowlist.
+ * Changing the hash input format is a BREAKING CHANGE for warudo integration.
+ */
 export function computeStrictAllowed(state: OverlayStateV1 | null): StrictAllowedComputed | null {
   if (!state) return null;
   if (typeof state.turn !== "number") return null;

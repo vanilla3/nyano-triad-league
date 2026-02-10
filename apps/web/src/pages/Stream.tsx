@@ -22,7 +22,6 @@ import {
   computeToPlay,
   computeWarningMarksUsed,
   computeWarningMarksRemaining,
-  fnv1a32Hex,
   toViewerMoveText,
   type ViewerMove,
 } from "@/lib/triad_vote_utils";
@@ -245,8 +244,8 @@ function buildStateJsonContent(state: OverlayStateV1 | null, controlled: 0 | 1):
   const turn = typeof state?.turn === "number" ? Number(state!.turn) : null;
   const toPlay = computeToPlay(state);
 
+  // SINGLE SOURCE OF TRUTH: computeStrictAllowed() is the only hash authority (P2-2-4)
   const strict = computeStrictAllowed(state);
-  const emptyCells = computeEmptyCells(state);
 
   const legalMoves: any[] = [];
   if (strict) {
@@ -254,14 +253,6 @@ function buildStateJsonContent(state: OverlayStateV1 | null, controlled: 0 | 1):
       const parsed = parseViewerMoveText(txt);
       if (parsed) {
         legalMoves.push({ cell: parsed.cell, cardIndex: parsed.cardIndex, viewer: txt });
-      }
-    }
-  } else {
-    // Fallback: compute manually
-    const remainToPlay = toPlay !== null ? computeRemainingCardIndices(state, toPlay) : [];
-    for (const cell of emptyCells) {
-      for (const cardIndex of remainToPlay) {
-        legalMoves.push({ cell, cardIndex, viewer: toViewerMoveText({ cell, cardIndex }) });
       }
     }
   }
@@ -299,24 +290,14 @@ function buildStateJsonContent(state: OverlayStateV1 | null, controlled: 0 | 1):
         : [],
     },
 
-    // Turn-local legal action space
+    // Turn-local legal action space (empty when no active game)
     legalMoves,
-    strictAllowed: strict ? {
-      allowlist: strict.allowlist,
-      hash: strict.hash,
-    } : {
-      allowlist: legalMoves.map((m) => String(m.viewer)).sort(),
-      hash: fnv1a32Hex(legalMoves.map((m) => String(m.viewer)).sort().join("\n")),
-    },
-    warningMark: strict ? {
-      used: strict.warningMark.used,
-      remaining: strict.warningMark.remaining,
-      candidates: strict.warningMark.candidates,
-    } : {
-      used: toPlay !== null ? computeWarningMarksUsed(state, toPlay) : 0,
-      remaining: toPlay !== null ? computeWarningMarksRemaining(state, toPlay) : 0,
-      candidates: [],
-    },
+    strictAllowed: strict
+      ? { allowlist: strict.allowlist, hash: strict.hash }
+      : null,
+    warningMark: strict
+      ? { used: strict.warningMark.used, remaining: strict.warningMark.remaining, candidates: strict.warningMark.candidates }
+      : null,
   };
 }
 
@@ -975,9 +956,8 @@ return (
                 </div>
                 {live?.lastMove ? (
                   <div className="mt-1 text-xs text-slate-700">
-                    Last: <span className="font-mono">{live.lastMove.by === 0 ? "A" : "B"}</span> cell{" "}
-                    <span className="font-mono">{live.lastMove.cell}</span> card{" "}
-                    <span className="font-mono">{live.lastMove.cardIndex}</span>
+                    Last: <span className="font-mono">{live.lastMove.by === 0 ? "A" : "B"}{" "}
+                    {toViewerMoveText({ cell: live.lastMove.cell, cardIndex: live.lastMove.cardIndex })}</span>
                   </div>
                 ) : null}
               </div>
