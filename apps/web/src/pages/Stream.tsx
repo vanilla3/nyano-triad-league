@@ -56,8 +56,14 @@ function ageLabel(updatedAtMs?: number): string {
 const VIEWER_CMD_EXAMPLE = formatViewerMoveText({ side: 0, slot: 2, cell: 4, warningMarkCell: 2 });
 // => #triad A2->B2 wm=C1
 
-function moveKey(m: ViewerMove): string {
-  return toViewerMoveText(m);
+/** Display-friendly move text reflecting the actual controlled side (P0-PARSE). */
+function moveDisplay(m: ViewerMove, side: 0 | 1): string {
+  return formatViewerMoveText({
+    side,
+    slot: m.cardIndex + 1,
+    cell: m.cell,
+    warningMarkCell: typeof m.warningMarkCell === "number" ? m.warningMarkCell : null,
+  });
 }
 
 
@@ -65,8 +71,17 @@ export function StreamPage() {
   const toast = useToast();
 
   const [events, setEvents] = React.useState<EventV1[]>(EVENTS);
-  const [eventId, setEventId] = React.useState<string>(() => pickDefaultEvent(EVENTS));
+  const [eventId, setEventId] = React.useState<string>(() => {
+    const stored = readStringSetting("stream.eventId", "");
+    if (stored && EVENTS.find((x) => x.id === stored)) return stored;
+    return pickDefaultEvent(EVENTS);
+  });
   const e = React.useMemo(() => events.find((x) => x.id === eventId) ?? null, [eventId, events]);
+
+  // Persist event selection (P0-PERSIST)
+  React.useEffect(() => {
+    writeStringSetting("stream.eventId", eventId);
+  }, [eventId]);
 
   // Fetch event config on mount (falls back to hardcoded EVENTS)
   React.useEffect(() => {
@@ -129,6 +144,20 @@ function safeFileStem(): string {
     return subscribeOverlayState((s) => setLive(s));
   }, []);
 
+
+  // ── Persistent error tracking (P0-ERR) ──
+  const [lastError, setLastError] = React.useState<{ message: string; timestampMs: number } | null>(null);
+
+  // Detect RPC/external errors from overlay state
+  React.useEffect(() => {
+    if (!live) return;
+    if (live.rpcStatus && !live.rpcStatus.ok) {
+      setLastError({ message: live.rpcStatus.message ?? "RPC connection failed", timestampMs: live.rpcStatus.timestampMs });
+    }
+    if (live.externalStatus && live.externalStatus.lastOk === false) {
+      setLastError({ message: live.externalStatus.lastMessage ?? "External integration error", timestampMs: live.externalStatus.lastTimestampMs ?? Date.now() });
+    }
+  }, [live?.rpcStatus, live?.externalStatus]); // eslint-disable-line react-hooks/exhaustive-deps -- only re-run on status change
 
   // Ensure the overlay is not stuck in OPEN state after refresh
   React.useEffect(() => {
@@ -392,6 +421,10 @@ const sendNyanoWarudo = React.useCallback(
       message: res.ok ? `${kind} sent` : `${kind} failed (${res.status})`,
       timestampMs: Date.now(),
     });
+    // Track persistent error for HUD (P0-ERR)
+    if (!res.ok) {
+      setLastError({ message: `Warudo ${kind} failed (${res.status})`, timestampMs: Date.now() });
+    }
     // Propagate warudo errors to overlay state so /overlay can display them
     if (!res.ok) {
       const current = readStoredOverlayState();
@@ -588,8 +621,8 @@ if (autoSendStateOnVoteEnd) {
   sendNyanoWarudo("state_json", { silent: true }).catch(() => {});
 }
 
-    toast.success("Sent", moveKey(mv));
-    appendOpsLog("info", "vote", `Finalized: ${moveKey(mv)}`);
+    toast.success("Sent", moveDisplay(mv, controlledSide));
+    appendOpsLog("info", "vote", `Finalized: ${moveDisplay(mv, controlledSide)}`);
     setVoteOpen(false);
     setVoteTurn(null);
     setVoteEndsAtMs(null);
@@ -844,6 +877,8 @@ return (
         connectionHealth={connectionHealth}
         opsLog={opsLog}
         settingsLocked={settingsLocked}
+        lastError={lastError}
+        onDismissError={() => setLastError(null)}
       />
       <div className="flex justify-end">
         <button
@@ -956,7 +991,7 @@ return (
                 {live?.lastMove ? (
                   <div className="mt-1 text-xs text-slate-700">
                     Last: <span className="font-mono">{live.lastMove.by === 0 ? "A" : "B"}{" "}
-                    {toViewerMoveText({ cell: live.lastMove.cell, cardIndex: live.lastMove.cardIndex })}</span>
+                    {moveDisplay({ cell: live.lastMove.cell, cardIndex: live.lastMove.cardIndex }, live.lastMove.by as 0 | 1)}</span>
                   </div>
                 ) : null}
               </div>

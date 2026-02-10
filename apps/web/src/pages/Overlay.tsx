@@ -205,6 +205,33 @@ export function OverlayPage() {
   const [voteState, setVoteState] = React.useState<StreamVoteStateV1 | null>(() => readStoredStreamVoteState());
   const [_tick, setTick] = React.useState(0);
 
+  // ── Sticky error display (P0-ERR): keep last error visible for 30s ──
+  const [stickyError, setStickyError] = React.useState<string | null>(null);
+  const stickyTimerRef = React.useRef<number | null>(null);
+
+  React.useEffect(() => {
+    if (!state) return;
+    let errorMsg: string | null = null;
+    if (state.externalStatus && state.externalStatus.lastOk === false) {
+      errorMsg = state.externalStatus.lastMessage ?? "External integration error";
+    } else if (state.rpcStatus && !state.rpcStatus.ok) {
+      errorMsg = state.rpcStatus.message ?? "RPC connection failed";
+    } else if (state.error) {
+      errorMsg = state.error;
+    }
+
+    if (errorMsg) {
+      setStickyError(errorMsg);
+      // Reset timer for 30s visibility
+      if (stickyTimerRef.current) window.clearTimeout(stickyTimerRef.current);
+      stickyTimerRef.current = window.setTimeout(() => setStickyError(null), 30_000);
+    }
+  }, [state?.externalStatus, state?.rpcStatus, state?.error]); // eslint-disable-line react-hooks/exhaustive-deps -- only re-run on error fields
+
+  React.useEffect(() => {
+    return () => { if (stickyTimerRef.current) window.clearTimeout(stickyTimerRef.current); };
+  }, []);
+
   React.useEffect(() => {
     // keep "age" and vote countdown fresh
     const needTick = controls || voteState?.status === "open";
@@ -767,6 +794,17 @@ export function OverlayPage() {
                 <div className="mt-1 text-xs text-slate-500">Waiting for host…</div>
               )}
             </div> : null}
+
+            {/* 5.5. Sticky error banner (P0-ERR): persists for 30s after last error */}
+            {stickyError && !state?.error && !(state?.externalStatus?.lastOk === false) && !(state?.rpcStatus && !state.rpcStatus.ok) ? (
+              <div className="callout callout-error opacity-80">
+                <div className="flex items-center gap-2">
+                  <div className="h-2 w-2 shrink-0 rounded-full bg-amber-500" />
+                  <div className="text-xs font-semibold">Last Error (fading)</div>
+                </div>
+                <div className="mt-1 text-sm">{stickyError}</div>
+              </div>
+            ) : null}
 
             {/* 6. Error callout */}
             {state?.error ? (
