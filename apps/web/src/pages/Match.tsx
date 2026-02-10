@@ -35,6 +35,7 @@ import { publishOverlayState, subscribeStreamCommand, type StreamCommandV1 } fro
 import { pickAiMove as pickAiMoveNew, type AiDifficulty, type AiReasonCode } from "@/lib/ai/nyano_ai";
 import { generateMoveTip } from "@/lib/ai/move_tips";
 import { assessBoardAdvantage } from "@/lib/ai/board_advantage";
+import { annotateReplayMoves } from "@/lib/ai/replay_annotations";
 import { AiNotesList } from "@/components/AiReasonDisplay";
 import { NyanoAvatar } from "@/components/NyanoAvatar";
 import { MiniTutorial } from "@/components/MiniTutorial";
@@ -699,6 +700,20 @@ export function MatchPage() {
       }
     : null;
 
+  // P1-140: Replay annotations for TurnLog enrichment (computed only after game completes)
+  const replayAnnotations = React.useMemo(() => {
+    if (!sim.ok || turns.length < 9) return [];
+    return annotateReplayMoves(sim.full, firstPlayer as 0 | 1);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- sim already depends on turns
+  }, [sim, turns.length, firstPlayer]);
+
+  // P1-140: Board advantages for TurnLog AdvantageBadge
+  const boardAdvantages = React.useMemo(() => {
+    if (!sim.ok) return [];
+    return sim.previewHistory.map((b) => assessBoardAdvantage(b));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sim]);
+
   React.useEffect(() => {
     if (turns.length >= 9 && sim.ok) {
       setShowResultOverlay(true);
@@ -1199,6 +1214,7 @@ export function MatchPage() {
             onRematch={handleRematch}
             onReplay={() => { void openReplay(); }}
             onShare={() => { void copyShareUrl(); }}
+            annotations={replayAnnotations}
           />
         ) : isRpg ? (
           <GameResultOverlayRPG
@@ -1810,6 +1826,8 @@ export function MatchPage() {
                         boardHistory={sim.previewHistory}
                         selectedTurnIndex={Math.min(selectedTurnIndex, Math.max(0, sim.previewTurns.length - 1))}
                         onSelect={(i) => setSelectedTurnIndex(i)}
+                        annotations={replayAnnotations}
+                        boardAdvantages={boardAdvantages}
                       />
                     ) : (
                       <div className="text-xs" style={{ color: "var(--mint-text-hint)" }}>—</div>
