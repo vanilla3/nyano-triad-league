@@ -235,3 +235,25 @@ a {
 [data-theme="classic"] .callout-nyano {
   @apply border-rose-200 bg-rose-50 text-rose-900;
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Skeleton shimmer (loading placeholders)
+   Extracted from index.css so Skeleton.tsx works globally.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+@keyframes shimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.skeleton-base {
+  @apply bg-slate-200 rounded-xl relative overflow-hidden;
+}
+
+.skeleton-base::after {
+  content: '';
+  @apply absolute inset-0;
+  background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.4) 50%, transparent 100%);
+  background-size: 200% 100%;
+  animation: shimmer 2s linear infinite;
+}

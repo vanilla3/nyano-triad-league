@@ -34,12 +34,12 @@ export function NyanoCardArt({ tokenId, size = "md", fill = false, className = "
     ? { width: "100%", height: "100%" }
     : { width: px, height: px };
 
-  // Loading skeleton
+  // Loading skeleton — matches card shape with shimmer
   if (isLoading) {
     return (
       <div
         className={[
-          "animate-pulse rounded-xl bg-surface-200",
+          "skeleton-base",
           fill && "w-full h-full",
           className,
         ].filter(Boolean).join(" ")}
@@ -107,9 +107,8 @@ function TokenImage({
   return (
     <div
       className={[
-        "overflow-hidden rounded-xl border border-surface-200 bg-surface-100",
-        "shadow-soft-sm",
-        fill && "w-full h-full",
+        "overflow-hidden bg-slate-900/20",
+        fill ? "w-full h-full" : "rounded-xl border border-surface-200 shadow-soft-sm",
         className,
       ].filter(Boolean).join(" ")}
       style={fill ? undefined : (sizeStyle as React.CSSProperties)}
