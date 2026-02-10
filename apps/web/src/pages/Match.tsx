@@ -1508,7 +1508,7 @@ export function MatchPage() {
                     <div className="mt-2 grid gap-3 md:grid-cols-2">
                       <div>
                         <div className="text-xs font-medium text-player-a-600 mb-1">Your Deck (A)</div>
-                        <div className="flex flex-wrap gap-1">
+                        <div className="deck-preview-grid grid grid-cols-5 gap-2">
                           {guestDeckATokens.map((tid, i) => {
                             const c = cards.get(tid);
                             return c ? <CardMini key={i} card={c} owner={0} /> : null;
@@ -1517,7 +1517,7 @@ export function MatchPage() {
                       </div>
                       <div>
                         <div className="text-xs font-medium text-player-b-600 mb-1">Nyano Deck (B)</div>
-                        <div className="flex flex-wrap gap-1">
+                        <div className="deck-preview-grid grid grid-cols-5 gap-2">
                           {guestDeckBTokens.map((tid, i) => {
                             const c = cards.get(tid);
                             return c ? <CardMini key={i} card={c} owner={1} /> : null;

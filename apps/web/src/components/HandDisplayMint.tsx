@@ -48,6 +48,8 @@ export function HandDisplayMint({
           isUsed && "mint-hand-card--used",
         ].filter(Boolean).join(" ");
 
+        const lp = !isUsed ? preview.longPressHandlers(card, owner) : undefined;
+
         return (
           <button
             key={idx}
@@ -56,6 +58,10 @@ export function HandDisplayMint({
             onClick={() => { if (!isDisabled) onSelect?.(idx); }}
             onPointerEnter={(e) => { if (!isUsed) preview.show(card, owner, e.currentTarget); }}
             onPointerLeave={() => preview.hide()}
+            onTouchStart={lp?.onTouchStart}
+            onTouchEnd={lp?.onTouchEnd}
+            onTouchMove={lp?.onTouchMove}
+            onContextMenu={lp?.onContextMenu}
           >
             {/* Slot number badge */}
             <div

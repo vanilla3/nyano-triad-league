@@ -96,10 +96,10 @@ export function StreamPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps -- run once on mount
   }, []);
 
-  // viewer link (safe)
-  const matchUrl = e ? `${origin()}/match?event=${encodeURIComponent(e.id)}` : `${origin()}/match`;
+  // viewer link (safe) — always include ui=mint for consistent high-quality experience
+  const matchUrl = e ? `${origin()}/match?event=${encodeURIComponent(e.id)}&ui=mint` : `${origin()}/match?ui=mint`;
   // host link (accepts /stream commands)
-  const hostMatchUrl = e ? `${origin()}/match?event=${encodeURIComponent(e.id)}&stream=1&ctrl=A` : `${origin()}/match?stream=1&ctrl=A`;
+  const hostMatchUrl = e ? `${origin()}/match?event=${encodeURIComponent(e.id)}&stream=1&ctrl=A&ui=mint` : `${origin()}/match?stream=1&ctrl=A&ui=mint`;
 
   const overlayUrl = `${origin()}/overlay?controls=0`;
   const overlayTransparentUrl = `${origin()}/overlay?controls=0&bg=transparent`;
@@ -1186,7 +1186,7 @@ return (
           <Link className="btn no-underline" to="/events">
             Events
           </Link>
-          <Link className="btn no-underline" to="/match">
+          <Link className="btn no-underline" to="/match?ui=mint">
             Match
           </Link>
           <Link className="btn no-underline" to="/replay">

@@ -491,7 +491,7 @@ export function PlaygroundPage() {
             <div className="card-bd grid gap-6 md:grid-cols-2">
               <div className="grid gap-2">
                 <div className="text-xs font-medium text-slate-600">playerA deck</div>
-                <div className="grid grid-cols-5 gap-2">
+                <div className="deck-preview-grid grid grid-cols-5 gap-2">
                   {sim.transcript.header.deckA.map((tid) => {
                     const card = sim.cards.get(tid);
                     return card ? <CardMini key={tid.toString()} card={card} owner={0} subtle /> : null;
@@ -501,7 +501,7 @@ export function PlaygroundPage() {
 
               <div className="grid gap-2">
                 <div className="text-xs font-medium text-slate-600">playerB deck</div>
-                <div className="grid grid-cols-5 gap-2">
+                <div className="deck-preview-grid grid grid-cols-5 gap-2">
                   {sim.transcript.header.deckB.map((tid) => {
                     const card = sim.cards.get(tid);
                     return card ? <CardMini key={tid.toString()} card={card} owner={1} subtle /> : null;

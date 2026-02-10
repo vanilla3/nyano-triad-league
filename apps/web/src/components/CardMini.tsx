@@ -1,12 +1,15 @@
 import React from "react";
 import type { CardData, PlayerIndex } from "@nyano/triad-engine";
 import { CardNyanoCompact } from "./CardNyano";
+import { CardNyanoDuel } from "./CardNyanoDuel";
 
 export type CardMiniProps = {
   card: CardData;
   owner: PlayerIndex;
   /** Slightly muted style (for lists / non-active cards) */
   subtle?: boolean;
+  /** Card display variant: "duel" (art-forward NFT hero) or "compact" (legacy grid) */
+  variant?: "duel" | "compact";
   /** Optional click handler */
   onClick?: () => void;
   /** Optional label (for accessibility / tooltip) */
@@ -15,11 +18,22 @@ export type CardMiniProps = {
 };
 
 /**
- * Legacy-friendly small card component.
- * Internally uses the newer Nyano card skin so the whole UI looks cohesive.
+ * Small card component supporting art-forward (duel) and compact (legacy) modes.
+ *
+ * Default `"duel"` variant renders NFT art as full-bleed hero with glass overlay,
+ * matching the premium mint-theme board card style.
  */
-export function CardMini({ card, owner, subtle = false, onClick, title, className = "" }: CardMiniProps) {
-  const inner = (
+export function CardMini({ card, owner, subtle = false, variant = "duel", onClick, title, className = "" }: CardMiniProps) {
+  const inner = variant === "duel" ? (
+    <div className={[
+      "card-mini-duel",
+      "transition-all duration-150",
+      subtle ? "opacity-85 hover:opacity-100" : "",
+      className,
+    ].filter(Boolean).join(" ")}>
+      <CardNyanoDuel card={card} owner={owner} />
+    </div>
+  ) : (
     <CardNyanoCompact
       card={card}
       owner={owner}

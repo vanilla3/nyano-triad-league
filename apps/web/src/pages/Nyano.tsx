@@ -309,8 +309,8 @@ export function NyanoPage() {
                 {it.ok ? (
                   <>
                     <div className="grid gap-3 sm:grid-cols-2">
-                      <div className="h-28">
-                        <CardMini card={it.data.card} owner={0} subtle />
+                      <div className="w-28">
+                        <CardMini card={it.data.card} owner={0} />
                       </div>
 
                       <div className="grid gap-2 text-sm text-slate-700">

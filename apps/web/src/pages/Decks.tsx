@@ -212,9 +212,9 @@ export function DecksPage() {
           {previewCards ? (
             <div className="grid gap-2">
               <div className="text-xs font-medium text-slate-600">Preview</div>
-              <div className="grid grid-cols-5 gap-2">
+              <div className="deck-preview-grid grid grid-cols-5 gap-3">
                 {Array.from(previewCards.values()).map((c) => (
-                  <CardMini key={c.tokenId.toString()} card={c} owner={0} subtle />
+                  <CardMini key={c.tokenId.toString()} card={c} owner={0} />
                 ))}
               </div>
             </div>
