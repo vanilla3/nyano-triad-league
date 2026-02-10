@@ -920,6 +920,152 @@
 }
 
 
+/* ── Holo / Foil Effect (P1-110) ─────────────────────────────────────── */
+
+@keyframes mint-holo-shift {
+  from { --mint-holo-angle: 0deg; }
+  to   { --mint-holo-angle: 360deg; }
+}
+
+@property --mint-holo-angle {
+  syntax: "<angle>";
+  inherits: false;
+  initial-value: 0deg;
+}
+
+.mint-compact-card::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: conic-gradient(
+    from var(--mint-holo-angle),
+    rgba(255, 0, 0, 0.06),
+    rgba(255, 165, 0, 0.06),
+    rgba(255, 255, 0, 0.06),
+    rgba(0, 255, 0, 0.06),
+    rgba(0, 0, 255, 0.06),
+    rgba(128, 0, 128, 0.06),
+    rgba(255, 0, 0, 0.06)
+  );
+  mix-blend-mode: color-dodge;
+  pointer-events: none;
+  z-index: 5;
+  animation: mint-holo-shift 8s linear infinite;
+}
+
+
+/* ── BattleHudMint (P3-300) ──────────────────────────────────────────── */
+
+.mint-battle-hud {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 16px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  font-size: 12px;
+}
+
+.mint-battle-hud__turn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.mint-battle-hud__turn-label {
+  font-family: var(--font-display, system-ui);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--mint-text-muted, #94a3b8);
+}
+
+.mint-battle-hud__turn-value {
+  font-family: var(--font-mono, monospace);
+  font-weight: 700;
+  font-size: 14px;
+  color: var(--mint-text-primary, #1e293b);
+}
+
+.mint-battle-hud__progress {
+  width: 40px;
+  height: 3px;
+  border-radius: 2px;
+  background: var(--mint-surface-200, #e2e8f0);
+  overflow: hidden;
+}
+
+.mint-battle-hud__progress-fill {
+  height: 100%;
+  border-radius: 2px;
+  background: var(--mint-accent, #10b981);
+  transition: width 0.3s ease;
+}
+
+.mint-battle-hud__advantage {
+  padding: 2px 8px;
+  border-radius: 8px;
+  font-weight: 700;
+  font-size: 11px;
+  white-space: nowrap;
+}
+
+.mint-battle-hud__advantage--emerald {
+  background: rgba(16, 185, 129, 0.15);
+  color: #059669;
+}
+
+.mint-battle-hud__advantage--red {
+  background: rgba(239, 68, 68, 0.15);
+  color: #dc2626;
+}
+
+.mint-battle-hud__advantage--slate {
+  background: rgba(100, 116, 139, 0.12);
+  color: #64748b;
+}
+
+.mint-battle-hud__advantage--amber {
+  background: rgba(245, 158, 11, 0.15);
+  color: #d97706;
+}
+
+.mint-battle-hud__phase {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: auto;
+}
+
+.mint-battle-hud__player-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.mint-battle-hud__player-dot--a {
+  background: var(--mint-pa-base, #3b82f6);
+  box-shadow: 0 0 4px var(--mint-pa-glow, rgba(59, 130, 246, 0.4));
+}
+
+.mint-battle-hud__player-dot--b {
+  background: var(--mint-pb-base, #ef4444);
+  box-shadow: 0 0 4px var(--mint-pb-glow, rgba(239, 68, 68, 0.4));
+}
+
+.mint-battle-hud__phase-label {
+  font-size: 11px;
+  color: var(--mint-text-muted, #94a3b8);
+}
+
+
 /* ── Reduced Motion ──────────────────────────────────────────────────── */
 
 @media (prefers-reduced-motion: reduce) {
@@ -948,5 +1094,9 @@
 
   .mint-stage__board > * {
     transform: none !important;
+  }
+
+  .mint-compact-card::after {
+    animation: none !important;
   }
 }

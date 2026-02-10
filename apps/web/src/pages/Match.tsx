@@ -15,6 +15,7 @@ import { BoardViewRPG, HandDisplayRPG, GameResultOverlayRPG, TurnLogRPG } from "
 import type { TurnLogEntry } from "@/components/BoardViewRPG";
 import { BoardViewMint } from "@/components/BoardViewMint";
 import { DuelStageMint } from "@/components/DuelStageMint";
+import { BattleHudMint } from "@/components/BattleHudMint";
 import { HandDisplayMint } from "@/components/HandDisplayMint";
 import { GameResultOverlayMint } from "@/components/GameResultOverlayMint";
 import { ScoreBar } from "@/components/ScoreBar";
@@ -1467,32 +1468,47 @@ export function MatchPage() {
                   </details>
                 )}
 
-                {/* ScoreBar */}
+                {/* ScoreBar / BattleHud */}
                 {sim.ok && (
-                  <div className={isMint ? "flex items-center gap-2" : ""}>
-                    <div className={isMint ? "flex-1" : ""}>
-                      <ScoreBar
-                        board={boardNow}
-                        moveCount={turns.length}
-                        maxMoves={9}
-                        winner={turns.length >= 9 ? sim.full.winner : null}
-                      />
+                  isMint ? (
+                    <div className="flex items-center gap-2">
+                      <div className="flex-1">
+                        <BattleHudMint
+                          board={boardNow}
+                          turnCount={turns.length}
+                          maxTurns={9}
+                          currentPlayer={currentPlayer}
+                          gamePhase={
+                            turns.length >= 9 ? "game_over"
+                              : isAiTurn ? "ai_turn"
+                              : draftCardIndex !== null ? "select_cell"
+                              : "select_card"
+                          }
+                        />
+                      </div>
+                      {/* D-3: SFX Mute Toggle */}
+                      {sfx && (
+                        <button
+                          className={[
+                            "mint-sfx-toggle",
+                            sfxMuted && "mint-sfx-toggle--muted",
+                          ].filter(Boolean).join(" ")}
+                          onClick={handleSfxToggle}
+                          title={sfxMuted ? "サウンド ON" : "サウンド OFF"}
+                          aria-label={sfxMuted ? "Unmute sound effects" : "Mute sound effects"}
+                        >
+                          {sfxMuted ? "🔇" : "🔊"}
+                        </button>
+                      )}
                     </div>
-                    {/* D-3: SFX Mute Toggle (Mint only) */}
-                    {isMint && sfx && (
-                      <button
-                        className={[
-                          "mint-sfx-toggle",
-                          sfxMuted && "mint-sfx-toggle--muted",
-                        ].filter(Boolean).join(" ")}
-                        onClick={handleSfxToggle}
-                        title={sfxMuted ? "サウンド ON" : "サウンド OFF"}
-                        aria-label={sfxMuted ? "Unmute sound effects" : "Mute sound effects"}
-                      >
-                        {sfxMuted ? "🔇" : "🔊"}
-                      </button>
-                    )}
-                  </div>
+                  ) : (
+                    <ScoreBar
+                      board={boardNow}
+                      moveCount={turns.length}
+                      maxMoves={9}
+                      winner={turns.length >= 9 ? sim.full.winner : null}
+                    />
+                  )
                 )}
 
                 {/* AI turn notice */}

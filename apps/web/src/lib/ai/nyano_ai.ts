@@ -38,6 +38,16 @@ export type AiMoveArgs = {
   warningMarksRemaining: number;
 };
 
+/** A candidate move with its evaluation score (for HUD / Tips display). */
+export type ScoredMoveCandidate = {
+  cell: number;
+  cardIndex: number;
+  immediateFlips: number;
+  /** Board evaluation score from the moving player's perspective.
+   *  Higher = better for the player. */
+  score: number;
+};
+
 // ────────────────────────────────────────────────────────────
 // Core helpers
 // ────────────────────────────────────────────────────────────
@@ -570,6 +580,43 @@ export function reasonCodeDetail(code: AiReasonCode): string {
     case "MINIMAX_D3": return "3手先までアルファ・ベータ探索で最善手を探索（expert）";
     case "FALLBACK": return "特別な戦略なし、有効な手からランダムに選択";
   }
+}
+
+// ────────────────────────────────────────────────────────────
+// Public: candidate moves with evaluation (for HUD / Tips)
+// ────────────────────────────────────────────────────────────
+
+/**
+ * Compute all legal moves with evaluation scores.
+ * Used by BattleHud / Tips overlay — NOT for AI decision-making.
+ *
+ * Each candidate is scored by placing the card, simulating flips,
+ * then evaluating the resulting board from the player's perspective.
+ * Results are sorted by score descending (best move first).
+ */
+export function computeCandidateMoves(
+  boardNow: (BoardCell | null)[],
+  deckTokens: bigint[],
+  usedCardIndexes: Set<number>,
+  usedCells: Set<number>,
+  cards: Map<bigint, CardData>,
+  player: PlayerIndex,
+): ScoredMoveCandidate[] {
+  const moves = generateMoves(boardNow, deckTokens, usedCardIndexes, usedCells, cards, player);
+
+  return moves
+    .map((m) => {
+      const card = cards.get(deckTokens[m.cardIndex])!;
+      const nextBoard = applyMoveSimple(boardNow, m.cell, card, player);
+      const score = evaluateBoard(nextBoard, player);
+      return {
+        cell: m.cell,
+        cardIndex: m.cardIndex,
+        immediateFlips: m.immediateFlips,
+        score,
+      };
+    })
+    .sort((a, b) => b.score - a.score);
 }
 
 /** @internal Exported for unit testing only. */

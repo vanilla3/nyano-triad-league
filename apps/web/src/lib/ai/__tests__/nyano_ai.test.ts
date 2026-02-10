@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { pickAiMove, predictedImmediateFlips, pickWarningMarkCell, _evaluateBoard, type AiMoveArgs } from "../nyano_ai";
+import { pickAiMove, predictedImmediateFlips, pickWarningMarkCell, _evaluateBoard, computeCandidateMoves, type AiMoveArgs } from "../nyano_ai";
 import type { CardData, PlayerIndex, BoardCell } from "@nyano/triad-engine";
 
 // ── Test helpers ──
@@ -466,5 +466,90 @@ describe("evaluateBoard enhancements", () => {
     const board: (BoardCell | null)[] = Array(9).fill(null);
     const score = _evaluateBoard(board, 1 as PlayerIndex);
     expect(score).toBe(0);
+  });
+});
+
+// ────────────────────────────────────────────────────────────
+// computeCandidateMoves
+// ────────────────────────────────────────────────────────────
+
+describe("computeCandidateMoves", () => {
+  it("returns all legal moves for an empty board", () => {
+    const cards = makeCards([
+      { id: 1, up: 5, right: 5, down: 5, left: 5 },
+    ]);
+    const result = computeCandidateMoves(
+      Array(9).fill(null),
+      [1n],
+      new Set(),
+      new Set(),
+      cards,
+      0 as PlayerIndex,
+    );
+    // 1 card × 9 cells = 9 moves
+    expect(result).toHaveLength(9);
+    expect(result[0]).toHaveProperty("score");
+    expect(result[0]).toHaveProperty("cell");
+    expect(result[0]).toHaveProperty("cardIndex", 0);
+    expect(result[0]).toHaveProperty("immediateFlips");
+  });
+
+  it("excludes used cells and cards", () => {
+    const cards = makeCards([
+      { id: 1, up: 9, right: 9, down: 9, left: 9 },
+      { id: 2, up: 1, right: 1, down: 1, left: 1 },
+    ]);
+    const result = computeCandidateMoves(
+      Array(9).fill(null),
+      [1n, 2n],
+      new Set([0]),    // card 0 used
+      new Set([0, 1]), // cells 0,1 used
+      cards,
+      0 as PlayerIndex,
+    );
+    // 1 card × 7 cells = 7 moves
+    expect(result).toHaveLength(7);
+    expect(result.every((m) => m.cardIndex === 1)).toBe(true);
+    expect(result.every((m) => m.cell >= 2)).toBe(true);
+  });
+
+  it("sorts by score descending (best move first)", () => {
+    const cards = makeCards([
+      { id: 1, up: 9, right: 9, down: 9, left: 9 },
+    ]);
+    // Place opponent card at center with weak edges
+    const board: (BoardCell | null)[] = Array(9).fill(null);
+    const oppCard = makeCard({
+      tokenId: 100n,
+      edges: { up: 1, right: 1, down: 1, left: 1 },
+      jankenHand: 0,
+    });
+    board[4] = makeBoardCell(oppCard, 1 as PlayerIndex);
+
+    const result = computeCandidateMoves(
+      board,
+      [1n],
+      new Set(),
+      new Set([4]), // center occupied
+      cards,
+      0 as PlayerIndex,
+    );
+    // Should be sorted by score desc
+    for (let i = 1; i < result.length; i++) {
+      expect(result[i - 1].score).toBeGreaterThanOrEqual(result[i].score);
+    }
+  });
+
+  it("returns empty array when no moves available", () => {
+    const cards = makeCards([{ id: 1 }]);
+    const result = computeCandidateMoves(
+      Array(9).fill(null),
+      [1n],
+      new Set([0]),  // only card used
+      new Set(),
+      cards,
+      0 as PlayerIndex,
+    );
+    expect(result).toHaveLength(0);
   });
 });
