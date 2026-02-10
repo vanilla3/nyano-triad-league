@@ -149,6 +149,178 @@ aiReasonCode?: string;
   };
 };
 
+// ---------------------------------------------------------------------------
+// Runtime validators (Phase 3 — API contract testing)
+// ---------------------------------------------------------------------------
+
+/** Helper: check integer in range [min, max] inclusive. */
+function isIntInRange(v: unknown, min: number, max: number): boolean {
+  return typeof v === "number" && Number.isInteger(v) && v >= min && v <= max;
+}
+
+/**
+ * Runtime validator for BoardCellLite shape.
+ * Checks owner, card structure, and edge values.
+ */
+export function isValidBoardCellLite(c: unknown): c is BoardCellLite {
+  if (typeof c !== "object" || c === null) return false;
+  const r = c as Record<string, unknown>;
+
+  // owner must be 0 or 1
+  if (r.owner !== 0 && r.owner !== 1) return false;
+
+  // card must be object with edges and jankenHand
+  if (typeof r.card !== "object" || r.card === null) return false;
+  const card = r.card as Record<string, unknown>;
+
+  // tokenId must exist (string or number after JSON roundtrip — bigint is not preserved)
+  if (card.tokenId === undefined || card.tokenId === null) return false;
+  const tidType = typeof card.tokenId;
+  if (tidType !== "string" && tidType !== "number" && tidType !== "bigint") return false;
+
+  // edges must have up/right/down/left as numbers
+  if (typeof card.edges !== "object" || card.edges === null) return false;
+  const edges = card.edges as Record<string, unknown>;
+  if (typeof edges.up !== "number" || typeof edges.right !== "number" ||
+      typeof edges.down !== "number" || typeof edges.left !== "number") return false;
+
+  // jankenHand must be 0, 1, or 2
+  if (card.jankenHand !== 0 && card.jankenHand !== 1 && card.jankenHand !== 2) return false;
+
+  return true;
+}
+
+/**
+ * Runtime validator for OverlayStateV1 shape.
+ * Validates required fields and type-checks optional fields when present.
+ * Follows the isValidEventV1() pattern from events.ts.
+ */
+export function isValidOverlayStateV1(s: unknown): s is OverlayStateV1 {
+  if (typeof s !== "object" || s === null) return false;
+  const r = s as Record<string, unknown>;
+
+  // Required fields
+  if (r.version !== 1) return false;
+  if (typeof r.updatedAtMs !== "number" || !Number.isFinite(r.updatedAtMs)) return false;
+  if (r.mode !== "live" && r.mode !== "replay") return false;
+
+  // Optional: turn must be integer 0-9
+  if (r.turn !== undefined && !isIntInRange(r.turn, 0, 9)) return false;
+
+  // Optional: firstPlayer must be 0 or 1
+  if (r.firstPlayer !== undefined && r.firstPlayer !== 0 && r.firstPlayer !== 1) return false;
+
+  // Optional: playerA/playerB must be strings
+  if (r.playerA !== undefined && typeof r.playerA !== "string") return false;
+  if (r.playerB !== undefined && typeof r.playerB !== "string") return false;
+
+  // Optional: deckA/deckB must be string[] of length 5
+  if (r.deckA !== undefined) {
+    if (!Array.isArray(r.deckA) || r.deckA.length !== 5) return false;
+    if (!r.deckA.every((x: unknown) => typeof x === "string")) return false;
+  }
+  if (r.deckB !== undefined) {
+    if (!Array.isArray(r.deckB) || r.deckB.length !== 5) return false;
+    if (!r.deckB.every((x: unknown) => typeof x === "string")) return false;
+  }
+
+  // Optional: board must be array of length 9, each null or valid BoardCellLite
+  if (r.board !== undefined) {
+    if (!Array.isArray(r.board) || r.board.length !== 9) return false;
+    for (const cell of r.board) {
+      if (cell !== null && !isValidBoardCellLite(cell)) return false;
+    }
+  }
+
+  // Optional: lastMove must have valid structure
+  if (r.lastMove !== undefined) {
+    if (typeof r.lastMove !== "object" || r.lastMove === null) return false;
+    const lm = r.lastMove as Record<string, unknown>;
+    if (!isIntInRange(lm.turnIndex, 0, 8)) return false;
+    if (lm.by !== 0 && lm.by !== 1) return false;
+    if (!isIntInRange(lm.cell, 0, 8)) return false;
+    if (!isIntInRange(lm.cardIndex, 0, 4)) return false;
+  }
+
+  // Optional: lastTurnSummary
+  if (r.lastTurnSummary !== undefined) {
+    if (typeof r.lastTurnSummary !== "object" || r.lastTurnSummary === null) return false;
+    const lts = r.lastTurnSummary as Record<string, unknown>;
+    if (typeof lts.flipCount !== "number") return false;
+    const validEffects = ["none", "momentum", "domination", "fever"];
+    if (!validEffects.includes(lts.comboEffect as string)) return false;
+  }
+
+  return true;
+}
+
+/**
+ * Runtime validator for StreamVoteStateV1 shape.
+ */
+export function isValidStreamVoteStateV1(s: unknown): s is StreamVoteStateV1 {
+  if (typeof s !== "object" || s === null) return false;
+  const r = s as Record<string, unknown>;
+
+  // Required fields
+  if (r.version !== 1) return false;
+  if (typeof r.updatedAtMs !== "number" || !Number.isFinite(r.updatedAtMs)) return false;
+  if (r.status !== "open" && r.status !== "closed") return false;
+
+  // Optional: turn must be integer 0-8
+  if (r.turn !== undefined && !isIntInRange(r.turn, 0, 8)) return false;
+
+  // Optional: controlledSide must be 0 or 1
+  if (r.controlledSide !== undefined && r.controlledSide !== 0 && r.controlledSide !== 1) return false;
+
+  // Optional: top must be valid array of vote entries
+  if (r.top !== undefined) {
+    if (!Array.isArray(r.top)) return false;
+    for (const entry of r.top) {
+      if (typeof entry !== "object" || entry === null) return false;
+      const e = entry as Record<string, unknown>;
+      if (typeof e.count !== "number") return false;
+      if (typeof e.move !== "object" || e.move === null) return false;
+      const m = e.move as Record<string, unknown>;
+      if (!isIntInRange(m.cell, 0, 8)) return false;
+      if (!isIntInRange(m.cardIndex, 0, 4)) return false;
+      // warningMarkCell: null or undefined OK, number must be 0-8
+      if (m.warningMarkCell !== undefined && m.warningMarkCell !== null) {
+        if (!isIntInRange(m.warningMarkCell, 0, 8)) return false;
+      }
+    }
+  }
+
+  return true;
+}
+
+/**
+ * Runtime validator for StreamCommandV1 shape.
+ */
+export function isValidStreamCommandV1(c: unknown): c is StreamCommandV1 {
+  if (typeof c !== "object" || c === null) return false;
+  const r = c as Record<string, unknown>;
+
+  // Required fields
+  if (r.version !== 1) return false;
+  if (typeof r.id !== "string" || r.id.length === 0) return false;
+  if (typeof r.issuedAtMs !== "number" || !Number.isFinite(r.issuedAtMs)) return false;
+  if (r.type !== "commit_move_v1") return false;
+  if (r.by !== 0 && r.by !== 1) return false;
+  if (!isIntInRange(r.forTurn, 0, 8)) return false;
+
+  // move must have valid cell and cardIndex
+  if (typeof r.move !== "object" || r.move === null) return false;
+  const m = r.move as Record<string, unknown>;
+  if (!isIntInRange(m.cell, 0, 8)) return false;
+  if (!isIntInRange(m.cardIndex, 0, 4)) return false;
+  // warningMarkCell: null or undefined OK, number must be 0-8
+  if (m.warningMarkCell !== undefined && m.warningMarkCell !== null) {
+    if (!isIntInRange(m.warningMarkCell, 0, 8)) return false;
+  }
+
+  return true;
+}
+
 function hasBroadcastChannel(): boolean {
   return typeof BroadcastChannel !== "undefined";
 }
@@ -172,7 +344,12 @@ export function readStoredOverlayState(): OverlayStateV1 | null {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return null;
-    return safeParse<OverlayStateV1>(raw);
+    const parsed = safeParse<unknown>(raw);
+    if (!isValidOverlayStateV1(parsed)) {
+      if (parsed !== null) console.warn("[streamer_bus] Invalid OverlayStateV1 in localStorage, ignoring");
+      return null;
+    }
+    return parsed;
   } catch {
     return null;
   }
@@ -213,8 +390,8 @@ export function subscribeOverlayState(onState: (s: OverlayStateV1) => void): () 
       const bc = new BroadcastChannel(CHANNEL_NAME);
       bc.onmessage = (ev: MessageEvent) => {
         const data: any = ev.data;
-        if (data?.type === "overlay_state_v1" && data?.state?.version === 1) {
-          onState(data.state as OverlayStateV1);
+        if (data?.type === "overlay_state_v1" && isValidOverlayStateV1(data?.state)) {
+          onState(data.state);
         }
       };
       return () => bc.close();
@@ -226,8 +403,8 @@ export function subscribeOverlayState(onState: (s: OverlayStateV1) => void): () 
   // Fallback: listen for localStorage changes (cross-tab)
   const onStorage = (e: StorageEvent) => {
     if (e.key === STORAGE_KEY && typeof e.newValue === "string") {
-      const s = safeParse<OverlayStateV1>(e.newValue);
-      if (s && s.version === 1) onState(s);
+      const s = safeParse<unknown>(e.newValue);
+      if (isValidOverlayStateV1(s)) onState(s);
     }
   };
 
@@ -285,7 +462,12 @@ export function readStoredStreamVoteState(): StreamVoteStateV1 | null {
   try {
     const raw = localStorage.getItem(VOTE_STORAGE_KEY);
     if (!raw) return null;
-    return safeParse<StreamVoteStateV1>(raw);
+    const parsed = safeParse<unknown>(raw);
+    if (!isValidStreamVoteStateV1(parsed)) {
+      if (parsed !== null) console.warn("[streamer_bus] Invalid StreamVoteStateV1 in localStorage, ignoring");
+      return null;
+    }
+    return parsed;
   } catch {
     return null;
   }
@@ -326,8 +508,8 @@ export function subscribeStreamVoteState(onState: (s: StreamVoteStateV1) => void
       const bc = new BroadcastChannel(VOTE_CHANNEL_NAME);
       bc.onmessage = (ev: MessageEvent) => {
         const data: any = ev.data;
-        if (data?.type === "stream_vote_state_v1" && data?.state?.version === 1) {
-          onState(data.state as StreamVoteStateV1);
+        if (data?.type === "stream_vote_state_v1" && isValidStreamVoteStateV1(data?.state)) {
+          onState(data.state);
         }
       };
       return () => bc.close();
@@ -339,8 +521,8 @@ export function subscribeStreamVoteState(onState: (s: StreamVoteStateV1) => void
   // Fallback: listen for localStorage changes (cross-tab)
   const onStorage = (e: StorageEvent) => {
     if (e.key === VOTE_STORAGE_KEY && typeof e.newValue === "string") {
-      const s = safeParse<StreamVoteStateV1>(e.newValue);
-      if (s && s.version === 1) onState(s);
+      const s = safeParse<unknown>(e.newValue);
+      if (isValidStreamVoteStateV1(s)) onState(s);
     }
   };
 
@@ -436,8 +618,8 @@ export function subscribeStreamCommand(onCmd: (c: StreamCommandV1) => void): () 
       const bc = new BroadcastChannel(CMD_CHANNEL_NAME);
       bc.onmessage = (ev: MessageEvent) => {
         const data: any = ev.data;
-        if (data?.type === "stream_command_v1" && data?.cmd?.version === 1) {
-          onCmd(data.cmd as StreamCommandV1);
+        if (data?.type === "stream_command_v1" && isValidStreamCommandV1(data?.cmd)) {
+          onCmd(data.cmd);
         }
       };
       return () => bc.close();
@@ -449,8 +631,8 @@ export function subscribeStreamCommand(onCmd: (c: StreamCommandV1) => void): () 
   // Fallback: localStorage (cross-tab)
   const onStorage = (e: StorageEvent) => {
     if (e.key === CMD_STORAGE_KEY && typeof e.newValue === "string") {
-      const c = safeParse<StreamCommandV1>(e.newValue);
-      if (c && c.version === 1) onCmd(c);
+      const c = safeParse<unknown>(e.newValue);
+      if (isValidStreamCommandV1(c)) onCmd(c);
     }
   };
 
@@ -462,7 +644,12 @@ export function readStoredStreamCommand(): StreamCommandV1 | null {
   try {
     const raw = localStorage.getItem(CMD_STORAGE_KEY);
     if (!raw) return null;
-    return safeParse<StreamCommandV1>(raw);
+    const parsed = safeParse<unknown>(raw);
+    if (!isValidStreamCommandV1(parsed)) {
+      if (parsed !== null) console.warn("[streamer_bus] Invalid StreamCommandV1 in localStorage, ignoring");
+      return null;
+    }
+    return parsed;
   } catch {
     return null;
   }

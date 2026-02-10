@@ -1,6 +1,6 @@
 # Nyano Triad League LONG TERM ROADMAP v1（超長期計画・作業指針）
 
-最終更新: 2026-02-10（Sprint 23: Phase 2 完了 + Phase 3 開始）
+最終更新: 2026-02-10（Sprint 24: Phase 3 品質硬化 — ランタイム検証 + E2E リプレイ + アダプタ境界ドキュメント）
 
 このドキュメントは、移行先作業者が **チャットを追わずに**「次に何を作り、何に注意し、どの順で改善すべきか」を把握できるようにするための **超長期ロードマップ**です。
 “細部の実装”よりも、まず **品質の柱・変更の原則・作業の安全策**を共有し、迷いと手戻りを減らすことを優先します。
@@ -146,8 +146,8 @@
   - [x] シミュレーションのゴールデンテスト（特定ターン列で結果固定） — Sprint 23: golden_vectors.json（3 ベクタ）+ golden_vectors.test.ts（12 tests）+ replay_determinism verifyReplayV1 合意テスト
   - [ ] エラートラッキング（Sentry 等）と、リリース後の回帰検知
 - [Extensibility]
-  - [ ] Plugin/Adapter 境界の明文化（twitch / warudo / overlay）
-  - [ ] API 契約テスト（state schema を JSON schema 等で固定）
+  - [x] Plugin/Adapter 境界の明文化（twitch / warudo / overlay） — Sprint 24: ADAPTER_INTERFACES.md（BroadcastChannel Bus 3ch 契約 + Nyano Warudo HTTP Bridge 契約 + Twitch Bridge 設計方針）
+  - [x] API 契約テスト（state schema を JSON schema 等で固定） — Sprint 24: streamer_bus ランタイムバリデータ 4 関数（isValidOverlayStateV1 / isValidStreamVoteStateV1 / isValidStreamCommandV1 / isValidBoardCellLite）+ 66 テスト + subscribe/read 組み込み
 - [Operability]
   - [ ] リリース手順（versioning、changelog、rollback、feature flag）
 

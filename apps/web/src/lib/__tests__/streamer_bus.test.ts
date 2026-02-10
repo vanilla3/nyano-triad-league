@@ -63,7 +63,7 @@ function makeOverlayState(overrides: Partial<OverlayStateV1> = {}): OverlayState
     updatedAtMs: Date.now(),
     mode: "live",
     turn: 0,
-    board: [],
+    board: Array.from({ length: 9 }, () => null),
     ...overrides,
   } as OverlayStateV1;
 }
