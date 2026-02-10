@@ -13,11 +13,11 @@ body {
 
 body {
   /* Nyano: soft + playful, but still readable */
-  @apply bg-gradient-to-b from-rose-50 via-white to-sky-50 text-slate-900 antialiased;
+  @apply bg-gradient-to-b from-emerald-50 via-white to-teal-50 text-slate-900 antialiased;
 }
 
 a {
-  @apply text-rose-700 underline decoration-rose-200 hover:decoration-rose-400;
+  @apply text-emerald-700 underline decoration-emerald-200 hover:decoration-emerald-400;
 }
 
 .container-page {
@@ -45,11 +45,11 @@ a {
 }
 
 .btn-primary {
-  @apply border-transparent bg-gradient-to-r from-rose-500 to-fuchsia-500 text-white shadow hover:from-rose-400 hover:to-fuchsia-400;
+  @apply border-transparent bg-gradient-to-r from-emerald-500 to-teal-500 text-white shadow hover:from-emerald-400 hover:to-teal-400;
 }
 
 .btn-soft {
-  @apply border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100;
+  @apply border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100;
 }
 
 .btn-danger {
@@ -61,11 +61,11 @@ a {
 }
 
 .input {
-  @apply w-full rounded-xl border border-slate-200 bg-white/90 px-3 py-2 text-sm outline-none shadow-sm focus:border-rose-300 focus:ring-2 focus:ring-rose-100;
+  @apply w-full rounded-xl border border-slate-200 bg-white/90 px-3 py-2 text-sm outline-none shadow-sm focus:border-emerald-300 focus:ring-2 focus:ring-emerald-100;
 }
 
 .select {
-  @apply w-full rounded-xl border border-slate-200 bg-white/90 px-3 py-2 text-sm outline-none shadow-sm focus:border-rose-300 focus:ring-2 focus:ring-rose-100;
+  @apply w-full rounded-xl border border-slate-200 bg-white/90 px-3 py-2 text-sm outline-none shadow-sm focus:border-emerald-300 focus:ring-2 focus:ring-emerald-100;
 }
 
 /* Navigation */
@@ -74,7 +74,7 @@ a {
 }
 
 .nav-item-active {
-  @apply bg-gradient-to-r from-rose-500 to-fuchsia-500 text-white shadow-sm;
+  @apply bg-gradient-to-r from-emerald-500 to-teal-500 text-white shadow-sm;
 }
 
 .nav-item-inactive {
@@ -99,7 +99,7 @@ a {
 }
 
 .badge-nyano {
-  @apply border-rose-200 bg-rose-50 text-rose-700;
+  @apply border-emerald-200 bg-emerald-50 text-emerald-700;
 }
 
 .badge-amber {
@@ -127,7 +127,7 @@ a {
 }
 
 .callout-nyano {
-  @apply border-rose-200 bg-rose-50 text-rose-900;
+  @apply border-emerald-200 bg-emerald-50 text-emerald-900;
 }
 
 /* Toasts */
@@ -207,4 +207,31 @@ a {
 
 .code-inline {
   @apply rounded-lg border border-slate-200 bg-white/70 px-2 py-1 font-mono text-xs;
+}
+
+/* ── Classic theme fallback (rose) — ?theme=classic で有効化 ─────────── */
+[data-theme="classic"] body {
+  @apply bg-gradient-to-b from-rose-50 via-white to-sky-50;
+}
+[data-theme="classic"] a {
+  @apply text-rose-700 decoration-rose-200 hover:decoration-rose-400;
+}
+[data-theme="classic"] .btn-primary {
+  @apply from-rose-500 to-fuchsia-500 hover:from-rose-400 hover:to-fuchsia-400;
+}
+[data-theme="classic"] .btn-soft {
+  @apply border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100;
+}
+[data-theme="classic"] .nav-item-active {
+  @apply from-rose-500 to-fuchsia-500;
+}
+[data-theme="classic"] .input:focus,
+[data-theme="classic"] .select:focus {
+  @apply border-rose-300 ring-rose-100;
+}
+[data-theme="classic"] .badge-nyano {
+  @apply border-rose-200 bg-rose-50 text-rose-700;
+}
+[data-theme="classic"] .callout-nyano {
+  @apply border-rose-200 bg-rose-50 text-rose-900;
 }

@@ -1,5 +1,5 @@
 import React from "react";
-import { NavLink } from "react-router-dom";
+import { NavLink, useSearchParams } from "react-router-dom";
 import { AnimatedOutlet } from "@/components/AnimatedOutlet";
 import { AppErrorBoundary } from "@/components/EmptyState";
 import { ToastProvider } from "./components/Toast";
@@ -28,6 +28,13 @@ const NavGroup = (props: { title: string; children: React.ReactNode }) => {
 };
 
 export function AppLayout() {
+  const [searchParams] = useSearchParams();
+  const theme = searchParams.get("theme") ?? localStorage.getItem("nytl.theme") ?? "mint";
+
+  React.useEffect(() => {
+    document.documentElement.dataset.theme = theme;
+  }, [theme]);
+
   return (
     <ToastProvider>
       <div>
@@ -35,7 +42,7 @@ export function AppLayout() {
         <div className="container-page flex flex-col gap-3 py-4 md:flex-row md:items-center md:justify-between">
           <div className="flex items-baseline gap-3">
             <div className="text-lg font-semibold tracking-tight">
-              Nyano Triad League <span className="text-rose-500">🐾</span>
+              Nyano Triad League <span className="text-emerald-500">🐾</span>
             </div>
             <div className="text-xs text-slate-500">ETH-only · replay-first</div>
           </div>

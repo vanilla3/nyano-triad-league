@@ -1,6 +1,6 @@
 import React from "react";
 import type { CardData, TraitType } from "@nyano/triad-engine";
-import { NyanoImage } from "./NyanoImage";
+import { NyanoCardArt } from "./NyanoCardArt";
 
 /* ═══════════════════════════════════════════════════════════════════════════
    CONSTANTS & HELPERS
@@ -147,13 +147,6 @@ export function CardNyano({
     xl: "w-48 h-68",
   };
 
-  const imageSizes = {
-    sm: 48,
-    md: 72,
-    lg: 96,
-    xl: 128,
-  };
-
   return (
     <div
       className={[
@@ -212,7 +205,11 @@ export function CardNyano({
         {/* Center: Nyano Image */}
         {showImage && (
           <div className="flex-1 flex items-center justify-center py-2">
-            <NyanoImage size={imageSizes[size]} className="rounded-xl" />
+            <NyanoCardArt
+              tokenId={card.tokenId}
+              size={size === "sm" ? "sm" : size === "md" ? "md" : "lg"}
+              className="rounded-xl"
+            />
           </div>
         )}
 
