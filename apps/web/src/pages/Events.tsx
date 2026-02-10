@@ -166,7 +166,7 @@ export function EventsPage() {
                 })()}
 
                 <div className="flex flex-wrap items-center gap-2">
-                  <Link className="btn btn-primary no-underline" to={`/match?event=${encodeURIComponent(e.id)}`}>
+                  <Link className="btn btn-primary no-underline" to={`/match?event=${encodeURIComponent(e.id)}&ui=mint`}>
                     Start (Match)
                   </Link>
                   <Link className="btn no-underline" to="/decks">

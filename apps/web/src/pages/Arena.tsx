@@ -5,7 +5,7 @@ const DIFFICULTIES = ["easy", "normal", "hard", "expert"] as const;
 
 export function ArenaPage() {
   const [difficulty, setDifficulty] = React.useState<string>("normal");
-  const quickPlayUrl = `/match?mode=guest&opp=vs_nyano_ai&ai=${difficulty}&rk=v2`;
+  const quickPlayUrl = `/match?mode=guest&opp=vs_nyano_ai&ai=${difficulty}&rk=v2&ui=mint`;
 
   return (
     <div className="grid gap-6">
@@ -61,7 +61,7 @@ export function ArenaPage() {
               <div className="font-medium">2) Match</div>
               <div className="mt-1 text-xs text-slate-600">ローカル対戦（ドラフト）→ transcript → Replay（Vs Nyano AIも可）</div>
               <div className="mt-3">
-                <Link className="btn btn-primary no-underline" to="/match">
+                <Link className="btn btn-primary no-underline" to="/match?ui=mint">
                   Match を開始
                 </Link>
               </div>
@@ -111,7 +111,7 @@ export function ArenaPage() {
             <Link className="btn btn-primary no-underline" to="/events">
               Events を開く
             </Link>
-            <Link className="btn no-underline" to="/match?event=nyano-open-challenge">
+            <Link className="btn no-underline" to="/match?event=nyano-open-challenge&ui=mint">
               Nyano Open Challenge を開始
             </Link>
           </div>

@@ -304,7 +304,7 @@ export function DecksPage() {
               expression="calm"
               title="デッキがまだありません"
               description="上のフォームでtokenIdを5つ入力してデッキを作成してください。"
-              action={{ label: "Quick Play (デッキ不要)", to: "/match?mode=guest&opp=vs_nyano_ai&ai=normal&rk=v2" }}
+              action={{ label: "Quick Play (デッキ不要)", to: "/match?mode=guest&opp=vs_nyano_ai&ai=normal&rk=v2&ui=mint" }}
             />
           ) : (
             decks.map((d) => (
@@ -340,10 +340,10 @@ export function DecksPage() {
                     Edit
                   </button>
 
-                  <Link className="btn no-underline" to={`/match?a=${d.id}`}>
+                  <Link className="btn no-underline" to={`/match?a=${d.id}&ui=mint`}>
                     Set as A
                   </Link>
-                  <Link className="btn no-underline" to={`/match?b=${d.id}`}>
+                  <Link className="btn no-underline" to={`/match?b=${d.id}&ui=mint`}>
                     Set as B
                   </Link>
 

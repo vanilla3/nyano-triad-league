@@ -240,7 +240,7 @@ function CollapsibleSection({
 
 export function MatchPage() {
   const [searchParams, setSearchParams] = useSearchParams();
-  const ui = (searchParams.get("ui") || "").toLowerCase();
+  const ui = (searchParams.get("ui") || "mint").toLowerCase();
   const isRpg = ui === "rpg";
   const isMint = ui === "mint";
   const decks = React.useMemo(() => listDecks(), []);

@@ -10,8 +10,10 @@ const SIZE_MAP = { sm: 48, md: 72, lg: 96 } as const;
 
 export interface NyanoCardArtProps {
   tokenId: bigint;
-  /** Display size */
+  /** Display size (ignored when fill=true) */
   size?: "sm" | "md" | "lg";
+  /** Fill parent container (width/height 100%) — used by CardNyanoDuel hero art */
+  fill?: boolean;
   className?: string;
 }
 
@@ -25,9 +27,12 @@ export interface NyanoCardArtProps {
  * When metadata is not configured (no env var, no GameIndex imageBaseUrl),
  * the hook returns `undefined` and we immediately render NyanoImage.
  */
-export function NyanoCardArt({ tokenId, size = "md", className = "" }: NyanoCardArtProps) {
+export function NyanoCardArt({ tokenId, size = "md", fill = false, className = "" }: NyanoCardArtProps) {
   const { data: meta, isLoading } = useNyanoTokenMetadata(tokenId);
   const px = SIZE_MAP[size];
+  const sizeStyle: { width: number | "100%"; height: number | "100%" } = fill
+    ? { width: "100%", height: "100%" }
+    : { width: px, height: px };
 
   // Loading skeleton
   if (isLoading) {
@@ -35,9 +40,10 @@ export function NyanoCardArt({ tokenId, size = "md", className = "" }: NyanoCard
       <div
         className={[
           "animate-pulse rounded-xl bg-surface-200",
+          fill && "w-full h-full",
           className,
-        ].join(" ")}
-        style={{ width: px, height: px }}
+        ].filter(Boolean).join(" ")}
+        style={fill ? undefined : { width: px, height: px }}
         aria-label="Loading card art..."
       />
     );
@@ -49,33 +55,53 @@ export function NyanoCardArt({ tokenId, size = "md", className = "" }: NyanoCard
       <TokenImage
         src={meta.imageUrl}
         tokenId={tokenId}
-        size={px}
+        sizeStyle={sizeStyle}
+        fill={fill}
         className={className}
       />
     );
   }
 
   // Fallback: generic NyanoImage
-  return <NyanoImage size={px} className={className} />;
+  return <NyanoImage size={fill ? 96 : (px ?? 72)} className={fill ? `w-full h-full ${className}` : className} />;
+}
+
+/* ── Internal: Arweave subdomain → canonical gateway fallback ──────── */
+
+function rewriteToFallbackGateway(url: string): string | null {
+  // https://<hash>.arweave.net/<txid>/<path> → https://arweave.net/<txid>/<path>
+  const m = url.match(/^https:\/\/[^.]+\.arweave\.net\/(.+)$/);
+  return m ? `https://arweave.net/${m[1]}` : null;
 }
 
 /* ── Internal: Token image with error fallback ─────────────────────── */
 
+type ImgState = "primary" | "fallback" | "failed";
+
 function TokenImage({
   src,
   tokenId,
-  size,
+  sizeStyle,
+  fill = false,
   className,
 }: {
   src: string;
   tokenId: bigint;
-  size: number;
+  sizeStyle: { width: number | "100%"; height: number | "100%" };
+  fill?: boolean;
   className: string;
 }) {
-  const [failed, setFailed] = React.useState(false);
+  const [state, setState] = React.useState<ImgState>("primary");
+  const [activeSrc, setActiveSrc] = React.useState(src);
 
-  if (failed) {
-    return <NyanoImage size={size} className={className} />;
+  // Reset when src changes (e.g. different token)
+  React.useEffect(() => {
+    setState("primary");
+    setActiveSrc(src);
+  }, [src]);
+
+  if (state === "failed") {
+    return <NyanoImage size={fill ? 96 : (typeof sizeStyle.width === "number" ? sizeStyle.width : 72)} className={fill ? `w-full h-full ${className}` : className} />;
   }
 
   return (
@@ -83,16 +109,29 @@ function TokenImage({
       className={[
         "overflow-hidden rounded-xl border border-surface-200 bg-surface-100",
         "shadow-soft-sm",
+        fill && "w-full h-full",
         className,
-      ].join(" ")}
-      style={{ width: size, height: size }}
+      ].filter(Boolean).join(" ")}
+      style={fill ? undefined : (sizeStyle as React.CSSProperties)}
     >
       <img
-        src={src}
+        src={activeSrc}
         alt={`Nyano #${tokenId.toString()}`}
         loading="lazy"
         className="h-full w-full object-cover"
-        onError={() => setFailed(true)}
+        onError={() => {
+          if (state === "primary") {
+            const fallbackUrl = rewriteToFallbackGateway(activeSrc);
+            if (fallbackUrl) {
+              setActiveSrc(fallbackUrl);
+              setState("fallback");
+            } else {
+              setState("failed");
+            }
+          } else {
+            setState("failed");
+          }
+        }}
       />
     </div>
   );

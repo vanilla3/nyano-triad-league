@@ -1,6 +1,6 @@
 import React from "react";
 import type { CardData, PlayerIndex } from "@nyano/triad-engine";
-import { CardMini } from "./CardMini";
+import { CardNyanoDuel } from "./CardNyanoDuel";
 
 /* ═══════════════════════════════════════════════════════════════════════════
    HAND DISPLAY MINT — Nintendo-level UX Hand (NIN-UX-022)
@@ -63,7 +63,7 @@ export function HandDisplayMint({
             </div>
 
             {/* Card content */}
-            <CardMini card={card} owner={owner} subtle={!isSelected} />
+            <CardNyanoDuel card={card} owner={owner} className={!isSelected ? "opacity-80" : ""} />
 
             {/* Used overlay */}
             {isUsed && (
