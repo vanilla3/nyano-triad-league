@@ -147,8 +147,15 @@ function MintCell({
   }
   if (isFocus && !isPlaced) classes.push("mint-cell--focus");
 
+  const cellLabel = hasCard
+    ? `${coord}: Player ${owner === 0 ? "A" : "B"} card, edges ${cell.card.edges.up}/${cell.card.edges.right}/${cell.card.edges.down}/${cell.card.edges.left}`
+    : `${coord}: ${isSelectable ? "empty, available" : "empty"}`;
+
   return (
     <div
+      role="gridcell"
+      aria-label={cellLabel}
+      aria-selected={isSelected || undefined}
       className={classes.join(" ")}
       data-board-cell={index}
       onClick={isSelectable && !hasCard ? onSelect : undefined}
@@ -306,7 +313,7 @@ export function BoardViewMint({
       {/* ── Board Grid ── */}
       <div className="mint-board-frame">
         <div className="mint-board-inner">
-          <div className="mint-grid" ref={gridRef}>
+          <div className="mint-grid" ref={gridRef} role="grid" aria-label="Game board">
             {board.map((cell, idx) => {
               const coord = CELL_COORDS[idx] ?? String(idx);
               const isSelectable = !disabled && selectableSet.has(idx);
