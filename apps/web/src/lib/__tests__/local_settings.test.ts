@@ -3,9 +3,11 @@ import {
   readBoolSetting,
   readNumberSetting,
   readStringSetting,
+  readStreamLockTimestamp,
   writeBoolSetting,
   writeNumberSetting,
   writeStringSetting,
+  writeStreamLockTimestamp,
 } from "../local_settings";
 
 /* ------------------------------------------------------------------ */
@@ -157,5 +159,28 @@ describe("write + read roundtrips", () => {
   it("writeStringSetting + readStringSetting roundtrip", () => {
     writeStringSetting("s", "hello world");
     expect(readStringSetting("s", "")).toBe("hello world");
+  });
+});
+
+/* ------------------------------------------------------------------ */
+/* Stream lock timestamp                                               */
+/* ------------------------------------------------------------------ */
+
+describe("stream lock timestamp", () => {
+  it("returns 0 when no timestamp is stored", () => {
+    expect(readStreamLockTimestamp()).toBe(0);
+  });
+
+  it("roundtrips a timestamp", () => {
+    const ts = Date.now();
+    writeStreamLockTimestamp(ts);
+    expect(readStreamLockTimestamp()).toBe(ts);
+  });
+
+  it("clears timestamp when set to 0", () => {
+    writeStreamLockTimestamp(1700000000000);
+    expect(readStreamLockTimestamp()).toBe(1700000000000);
+    writeStreamLockTimestamp(0);
+    expect(readStreamLockTimestamp()).toBe(0);
   });
 });

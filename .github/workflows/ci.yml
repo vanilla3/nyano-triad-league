@@ -23,6 +23,7 @@ jobs:
           else
             pnpm install
           fi
+      - run: pnpm -C packages/triad-engine lint
       - run: pnpm -C packages/triad-engine test
 
       - name: Generate solidity test vectors (should be clean)

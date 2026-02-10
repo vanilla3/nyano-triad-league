@@ -1,5 +1,8 @@
 import type { OverlayStateV1 } from "@/lib/streamer_bus";
-import { formatViewerMoveText } from "@/lib/triad_viewer_command";
+import { formatViewerMoveText, cellCoordToIndex, cellIndexToCoord, parseCellAny } from "@/lib/triad_viewer_command";
+
+// Re-export coordinate helpers from the single source of truth (triad_viewer_command.ts).
+export { cellCoordToIndex, cellIndexToCoord, parseCellAny };
 
 /**
  * triad_vote_utils.ts
@@ -29,42 +32,6 @@ export function fnv1a32Hex(input: string): string {
     h = (h + ((h << 1) + (h << 4) + (h << 7) + (h << 8) + (h << 24))) >>> 0;
   }
   return "0x" + h.toString(16).padStart(8, "0");
-}
-
-// ---------------------------------------------------------------------------
-// Cell coordinate conversion
-// ---------------------------------------------------------------------------
-
-// Board coordinates (viewer-friendly):
-//   A1 B1 C1
-//   A2 B2 C2
-//   A3 B3 C3
-
-export function cellCoordToIndex(coord: string): number | null {
-  const t = coord.trim().toUpperCase();
-  const m = t.match(/^([ABC])([123])$/);
-  if (!m) return null;
-  const col = m[1] === "A" ? 0 : m[1] === "B" ? 1 : 2;
-  const row = Number(m[2]) - 1; // 0..2
-  return row * 3 + col; // 0..8
-}
-
-export function cellIndexToCoord(cell: number): string {
-  const c = Math.max(0, Math.min(8, Math.floor(cell)));
-  const row = Math.floor(c / 3); // 0..2
-  const col = c % 3; // 0..2
-  const colCh = col === 0 ? "A" : col === 1 ? "B" : "C";
-  return `${colCh}${row + 1}`;
-}
-
-export function parseCellAny(raw: string): number | null {
-  const t = raw.trim();
-  if (/^\d$/.test(t)) {
-    const n = Number(t);
-    if (n >= 0 && n <= 8) return n;
-    return null;
-  }
-  return cellCoordToIndex(t);
 }
 
 // ---------------------------------------------------------------------------

@@ -2,6 +2,7 @@ import React from "react";
 import { QrCode } from "@/components/QrCode";
 import { CopyField } from "@/components/CopyField";
 import { useToast } from "@/components/Toast";
+import { generateSampleCommands, generateNightbotTemplate } from "@/lib/stream_command_generator";
 
 /* ═══════════════════════════════════════════════════════════════════════════
    StreamSharePanel — QR codes + viewer instructions for /stream page (P2-310)
@@ -18,6 +19,9 @@ export interface StreamSharePanelProps {
   replayBroadcastUrl: string;
   controlledSide: 0 | 1;
   eventTitle?: string;
+  emptyCells?: number[];
+  remainingCards?: number[];
+  turn?: number;
 }
 
 export const StreamSharePanel: React.FC<StreamSharePanelProps> = React.memo(
@@ -28,10 +32,23 @@ export const StreamSharePanel: React.FC<StreamSharePanelProps> = React.memo(
     overlayTransparentUrl,
     replayBroadcastUrl,
     controlledSide,
+    emptyCells,
+    remainingCards,
+    turn,
   }) {
     const toast = useToast();
 
     const side = controlledSide === 0 ? "A" : "B";
+    const sampleCommands = React.useMemo(
+      () => emptyCells && remainingCards
+        ? generateSampleCommands(controlledSide, emptyCells, remainingCards, 5)
+        : [],
+      [controlledSide, emptyCells, remainingCards],
+    );
+    const nightbotTemplate = React.useMemo(
+      () => generateNightbotTemplate(controlledSide),
+      [controlledSide],
+    );
     const instructions = [
       `【Nyano Triad League 投票コマンド】`,
       ``,
@@ -102,6 +119,50 @@ export const StreamSharePanel: React.FC<StreamSharePanelProps> = React.memo(
           <pre className="mt-2 whitespace-pre-wrap text-xs text-emerald-700 font-mono bg-white/50 rounded-lg px-3 py-2 border border-emerald-100">
             {instructions}
           </pre>
+        </div>
+
+        {/* Quick Commands (context-aware) */}
+        {sampleCommands.length > 0 && (
+          <div className="rounded-xl border border-sky-200 bg-sky-50/60 px-4 py-3">
+            <div className="flex items-center justify-between gap-2">
+              <div className="text-xs font-semibold text-sky-800">
+                Quick Commands {typeof turn === "number" ? `(turn ${turn + 1})` : ""}
+              </div>
+            </div>
+            <div className="mt-2 flex flex-wrap gap-1.5">
+              {sampleCommands.map((cmd) => (
+                <button
+                  key={cmd}
+                  className="rounded-lg border border-sky-300 bg-white px-2.5 py-1 text-xs font-mono text-sky-700 hover:bg-sky-50 transition-colors"
+                  onClick={() => {
+                    navigator.clipboard.writeText(cmd);
+                    toast.success("Copied", cmd);
+                  }}
+                >
+                  {cmd}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Nightbot Template */}
+        <div className="rounded-xl border border-slate-200 bg-slate-50/60 px-4 py-3">
+          <div className="flex items-center justify-between gap-2">
+            <div className="text-xs font-semibold text-slate-700">Nightbot Template</div>
+            <button
+              className="rounded-lg border border-slate-300 bg-white px-3 py-1 text-xs font-semibold text-slate-600 hover:bg-slate-50 transition-colors"
+              onClick={() => {
+                navigator.clipboard.writeText(nightbotTemplate);
+                toast.success("Copied", "Nightbot template copied");
+              }}
+            >
+              Copy
+            </button>
+          </div>
+          <div className="mt-1.5 text-xs text-slate-500 font-mono truncate">
+            {nightbotTemplate}
+          </div>
         </div>
       </div>
     );

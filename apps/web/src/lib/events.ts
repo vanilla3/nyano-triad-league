@@ -22,6 +22,13 @@ export type NyanoAiEventV1 = {
   nyanoDeckTokenIds: string[];
 
   tags?: string[];
+
+  /** Optional: vote time in seconds (overrides default). */
+  voteTimeSeconds?: number;
+  /** Optional: max attempts per player for this event. */
+  maxAttempts?: number;
+  /** Optional: deck restriction rules (e.g. "mint_only"). */
+  deckRestriction?: string;
 };
 
 export type EventV1 = NyanoAiEventV1;
@@ -69,6 +76,21 @@ export function isValidEventV1(e: unknown): e is EventV1 {
   if (r.tags !== undefined) {
     if (!Array.isArray(r.tags)) return false;
     if (!r.tags.every((t: unknown) => typeof t === "string")) return false;
+  }
+
+  // Optional: voteTimeSeconds must be a positive integer if present
+  if (r.voteTimeSeconds !== undefined) {
+    if (typeof r.voteTimeSeconds !== "number" || !Number.isInteger(r.voteTimeSeconds) || r.voteTimeSeconds <= 0) return false;
+  }
+
+  // Optional: maxAttempts must be a positive integer if present
+  if (r.maxAttempts !== undefined) {
+    if (typeof r.maxAttempts !== "number" || !Number.isInteger(r.maxAttempts) || r.maxAttempts <= 0) return false;
+  }
+
+  // Optional: deckRestriction must be a non-empty string if present
+  if (r.deckRestriction !== undefined) {
+    if (typeof r.deckRestriction !== "string" || r.deckRestriction.length === 0) return false;
   }
 
   return true;

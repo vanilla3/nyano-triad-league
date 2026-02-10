@@ -17,7 +17,7 @@
  * monospaced counters, and real-time pulse indicators.
  */
 import React from "react";
-import type { OverlayStateV1 } from "@/lib/streamer_bus";
+import type { OverlayStateV1, BoardCellLite } from "@/lib/streamer_bus";
 import {
   cellIndexToCoord,
   computeEmptyCells,
@@ -25,6 +25,7 @@ import {
   computeStrictAllowed,
   computeToPlay,
 } from "@/lib/triad_vote_utils";
+import { BoardMiniPreview } from "@/components/stream/BoardMiniPreview";
 
 /* ─────────────────────────────────────────────────────────────
    EXPORTED PURE FUNCTIONS (testable)
@@ -163,6 +164,18 @@ export function StreamOperationsHUD({
 
   const emptyCells = computeEmptyCells(live);
   const remainCards = toPlay !== null ? computeRemainingCardIndices(live, toPlay) : [];
+
+  // ── Mini board data ──
+  const miniBoard: (BoardCellLite | null)[] = React.useMemo(() => {
+    if (!live?.board || !Array.isArray(live.board)) return Array(9).fill(null);
+    return live.board.map((cell: any) => {
+      if (cell == null) return null;
+      const owner = typeof cell.owner === "number" ? cell.owner : null;
+      if (owner !== 0 && owner !== 1) return null;
+      return { owner } as BoardCellLite;
+    });
+  }, [live?.board]);
+  const lastCell = live?.lastMove?.cell ?? null;
 
   const allowlistHash = strictAllowed?.hash ?? "—";
   const strictCount = strictAllowed?.count ?? 0;
@@ -368,6 +381,30 @@ export function StreamOperationsHUD({
         {connectionHealth && (
           <ConnectionHealthRow health={connectionHealth} />
         )}
+
+        {/* Board mini preview + log export */}
+        <div className="flex items-center justify-between gap-3 border-t border-surface-100 px-4 py-1.5 bg-white/60">
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] font-semibold uppercase tracking-wider text-surface-400">Board</span>
+            <BoardMiniPreview board={miniBoard} lastCell={lastCell} />
+          </div>
+          {opsLog && opsLog.length > 0 && (
+            <button
+              className="text-[10px] font-semibold text-surface-500 hover:text-surface-700 transition-colors"
+              onClick={() => {
+                const lines = opsLog.map((e) => {
+                  const t = new Date(e.timestampMs);
+                  const ts = `${String(t.getHours()).padStart(2, "0")}:${String(t.getMinutes()).padStart(2, "0")}:${String(t.getSeconds()).padStart(2, "0")}`;
+                  return `[${ts}] [${e.source}] ${e.message}`;
+                });
+                navigator.clipboard.writeText(lines.join("\n"));
+              }}
+              title="Copy ops log to clipboard"
+            >
+              Export log
+            </button>
+          )}
+        </div>
 
         {/* Ops log (collapsible) */}
         {opsLog && opsLog.length > 0 && (

@@ -1,6 +1,6 @@
 # Nyano Triad League LONG TERM ROADMAP v1（超長期計画・作業指針）
 
-最終更新: 2026-02-10（Sprint 20: Phase 0 全項目完了）
+最終更新: 2026-02-10（Sprint 22: Phase 1 完了 + Phase 2 運営基盤）
 
 このドキュメントは、移行先作業者が **チャットを追わずに**「次に何を作り、何に注意し、どの順で改善すべきか」を把握できるようにするための **超長期ロードマップ**です。
 “細部の実装”よりも、まず **品質の柱・変更の原則・作業の安全策**を共有し、迷いと手戻りを減らすことを優先します。
@@ -126,19 +126,19 @@
   - [x] 盤面の「優勢/不利」の根拠を短く出す（例: corner control、threat） — Sprint 21: assessBoardAdvantageDetailed + AdvantageBar reason tags (tile_lead, corner_control, center_control, edge_superiority, vulnerability)
   - [x] 「なぜその手が強い/弱いか」tips（軽量なヒューリスティックでOK） — Sprint 21: generateMoveTipWithNarrative + MoveQualityTip narrative display
 - [Stability]
-  - [ ] Replay の完全再現性（turns + seed + deck）を担保
+  - [x] Replay の完全再現性（turns + seed + deck）を担保 — Sprint 22: verifyReplayV1() API + Replay ページ Verify ボタン（Phase 1 完結）
   - [x] "壊れた時の復旧手順" を docs 化（配信中の再起動手順） — Sprint 21: STREAM_RECOVERY_RUNBOOK.md (症状別トラブルシューティング + 配信前チェックリスト)
 
-### Phase 2（1〜3ヶ月）: “運営が楽”になる（少人数運用の自動化）
+### Phase 2（1〜3ヶ月）: "運営が楽"になる（少人数運用の自動化）
 - [Operability]
-  - [ ] 運営向けダッシュボード（投票、状態、接続、ログ、最後のエラー）
-  - [ ] “配信中に触ってはいけない設定” をロック（誤操作防止）
+  - [x] 運営向けダッシュボード（投票、状態、接続、ログ、最後のエラー） — Sprint 22: BoardMiniPreview + Export log ボタン + opsLog クリップボード出力
+  - [x] "配信中に触ってはいけない設定" をロック（誤操作防止） — Sprint 22: ロック解除確認ダイアログ + lockTimestamp 表示
 - [Participation]
-  - [ ] 参加導線の短縮（QR/短縮URL/コピーボタン/コマンド自動生成）
+  - [x] 参加導線の短縮（QR/短縮URL/コピーボタン/コマンド自動生成） — Sprint 22: StreamSharePanel Quick Commands + Nightbot テンプレート + stream_command_generator.ts
   - [ ] チャット荒れ対策（レート制限、同一ユーザ重複票の扱い、bot 対応）
 - [Extensibility]
   - [ ] ルールセットの抽象化（大会ルール/デッキ制限/特殊イベント）
-  - [ ] “イベント設定ファイル” で差し替え可能に（コード変更不要）
+  - [x] "イベント設定ファイル" で差し替え可能に（コード変更不要） — Sprint 22: NyanoAiEventV1 に voteTimeSeconds/maxAttempts/deckRestriction 追加
 
 ### Phase 3（3〜6ヶ月）: “プロダクト品質”へ（テスト・監視・品質保証）
 - [Stability]
