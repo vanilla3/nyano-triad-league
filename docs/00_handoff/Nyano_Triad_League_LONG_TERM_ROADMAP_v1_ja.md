@@ -1,6 +1,6 @@
 # Nyano Triad League LONG TERM ROADMAP v1（超長期計画・作業指針）
 
-最終更新: 2026-02-10（Sprint 22: Phase 1 完了 + Phase 2 運営基盤）
+最終更新: 2026-02-10（Sprint 23: Phase 2 完了 + Phase 3 開始）
 
 このドキュメントは、移行先作業者が **チャットを追わずに**「次に何を作り、何に注意し、どの順で改善すべきか」を把握できるようにするための **超長期ロードマップ**です。
 “細部の実装”よりも、まず **品質の柱・変更の原則・作業の安全策**を共有し、迷いと手戻りを減らすことを優先します。
@@ -135,15 +135,15 @@
   - [x] "配信中に触ってはいけない設定" をロック（誤操作防止） — Sprint 22: ロック解除確認ダイアログ + lockTimestamp 表示
 - [Participation]
   - [x] 参加導線の短縮（QR/短縮URL/コピーボタン/コマンド自動生成） — Sprint 22: StreamSharePanel Quick Commands + Nightbot テンプレート + stream_command_generator.ts
-  - [ ] チャット荒れ対策（レート制限、同一ユーザ重複票の扱い、bot 対応）
+  - [x] チャット荒れ対策（レート制限、同一ユーザ重複票の扱い、bot 対応） — Sprint 23: anti_spam モジュール（validateUsername / checkRateLimit / checkVoteChangeLimit）+ VoteControlPanel 設定 UI
 - [Extensibility]
-  - [ ] ルールセットの抽象化（大会ルール/デッキ制限/特殊イベント）
+  - [x] ルールセットの抽象化（大会ルール/デッキ制限/特殊イベント） — Sprint 23: deck_restriction モジュール（parseDeckRestriction / validateDeckAgainstRestriction）+ Match.tsx 実行時強制 + voteTimeSeconds イベント連動
   - [x] "イベント設定ファイル" で差し替え可能に（コード変更不要） — Sprint 22: NyanoAiEventV1 に voteTimeSeconds/maxAttempts/deckRestriction 追加
 
-### Phase 3（3〜6ヶ月）: “プロダクト品質”へ（テスト・監視・品質保証）
+### Phase 3（3〜6ヶ月）: "プロダクト品質"へ（テスト・監視・品質保証）
 - [Stability]
-  - [ ] E2E テスト（/match→/stream→/overlay の基本導線）
-  - [ ] シミュレーションのゴールデンテスト（特定ターン列で結果固定）
+  - [x] E2E テスト（/match→/stream→/overlay の基本導線） — Sprint 23: cross-tab-overlay.spec.ts（BroadcastChannel 経由のオーバーレイ状態受信・投票受信・localStorage 復旧の 3 テスト）
+  - [x] シミュレーションのゴールデンテスト（特定ターン列で結果固定） — Sprint 23: golden_vectors.json（3 ベクタ）+ golden_vectors.test.ts（12 tests）+ replay_determinism verifyReplayV1 合意テスト
   - [ ] エラートラッキング（Sentry 等）と、リリース後の回帰検知
 - [Extensibility]
   - [ ] Plugin/Adapter 境界の明文化（twitch / warudo / overlay）

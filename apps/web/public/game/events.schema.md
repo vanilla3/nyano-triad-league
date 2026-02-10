@@ -25,7 +25,16 @@ Events are defined in `events.json` and validated by `isValidEventV1()` at runti
 | `tags` | `string[]` | `[]` | Categorization tags |
 | `voteTimeSeconds` | `integer (>0)` | system default | Vote window duration in seconds |
 | `maxAttempts` | `integer (>0)` | unlimited | Max attempts per player |
-| `deckRestriction` | `string (non-empty)` | none | Deck restriction rule name |
+| `deckRestriction` | `string (non-empty)` | none | Deck restriction rule name (see valid values below) |
+
+## Deck Restriction Values
+
+| Value | Behavior |
+|---|---|
+| `"none"` (or omitted) | No deck restriction — any cards allowed |
+| `"mint_only"` | Only cards from the initial mint set (token IDs 1-100) are allowed |
+
+Unknown restriction strings are treated as `"none"` with a console warning (forward-compatible).
 
 ## Example
 

@@ -115,6 +115,30 @@ export function writeStreamLockTimestamp(ts: number): void {
 }
 
 // ---------------------------------------------------------------------------
+// Anti-spam settings
+// ---------------------------------------------------------------------------
+
+/** Read the anti-spam per-user rate limit in ms (default 2000). */
+export function readAntiSpamRateLimitMs(): number {
+  return readNumberSetting("stream.antiSpam.rateLimitMs", 2000, 500, 30000);
+}
+
+/** Write the anti-spam per-user rate limit in ms. */
+export function writeAntiSpamRateLimitMs(ms: number): void {
+  writeNumberSetting("stream.antiSpam.rateLimitMs", ms);
+}
+
+/** Read the max vote changes per user per round (0=unlimited, default 0). */
+export function readAntiSpamMaxVoteChanges(): number {
+  return readNumberSetting("stream.antiSpam.maxVoteChanges", 0, 0, 100);
+}
+
+/** Write the max vote changes per user per round. */
+export function writeAntiSpamMaxVoteChanges(n: number): void {
+  writeNumberSetting("stream.antiSpam.maxVoteChanges", n);
+}
+
+// ---------------------------------------------------------------------------
 // UI Density (NIN-UX-041)
 // ---------------------------------------------------------------------------
 

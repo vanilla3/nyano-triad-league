@@ -15,6 +15,8 @@ export interface VoteAudit {
   duplicates: number;
   rateLimited: number;
   illegal: number;
+  usernameRejected: number;
+  changeExceeded: number;
 }
 
 export interface VoteCountEntry {
@@ -55,6 +57,12 @@ export interface VoteControlPanelProps {
 
   // Clipboard copy callback
   onCopyViewerInstructions: () => void;
+
+  // Anti-spam settings (P2-SPAM)
+  antiSpamRateLimitMs: number;
+  onChangeAntiSpamRateLimitMs: (v: number) => void;
+  antiSpamMaxVoteChanges: number;
+  onChangeAntiSpamMaxVoteChanges: (v: number) => void;
 }
 
 function moveKey(m: ViewerMove): string {
@@ -83,6 +91,10 @@ export const VoteControlPanel: React.FC<VoteControlPanelProps> = React.memo(func
   counts,
   voteAudit,
   onCopyViewerInstructions,
+  antiSpamRateLimitMs,
+  onChangeAntiSpamRateLimitMs,
+  antiSpamMaxVoteChanges,
+  onChangeAntiSpamMaxVoteChanges,
 }) {
   const sideLabel = controlledSide === 0 ? "A" : "B";
 
@@ -146,6 +158,37 @@ export const VoteControlPanel: React.FC<VoteControlPanelProps> = React.memo(func
           <div className="mt-2 text-[11px] text-slate-500">
             ※ <span className="font-mono">/match</span> は <span className="font-mono">stream=1</span>（Host link）で開いてください。
           </div>
+
+          {/* Anti-spam settings (P2-SPAM) */}
+          <details className="mt-3">
+            <summary className="cursor-pointer text-[11px] font-semibold text-slate-600">Anti-Spam</summary>
+            <div className="mt-2 grid gap-2">
+              <label className="text-[11px] text-slate-600">
+                Rate limit (ms): <span className="font-mono">{antiSpamRateLimitMs}</span>
+              </label>
+              <input
+                type="range"
+                min={500}
+                max={10000}
+                step={500}
+                value={antiSpamRateLimitMs}
+                onChange={(ev) => onChangeAntiSpamRateLimitMs(Number(ev.target.value))}
+                disabled={settingsLocked}
+                aria-label="Anti-spam rate limit ms"
+              />
+              <label className="text-[11px] text-slate-600">Max vote changes per round (0=unlimited)</label>
+              <input
+                className="rounded-lg border border-slate-200 bg-white px-2 py-1 text-xs"
+                type="number"
+                min={0}
+                max={10}
+                value={antiSpamMaxVoteChanges}
+                onChange={(ev) => onChangeAntiSpamMaxVoteChanges(Number(ev.target.value))}
+                disabled={settingsLocked}
+                aria-label="Max vote changes per round"
+              />
+            </div>
+          </details>
         </div>
       </div>
 
@@ -243,7 +286,7 @@ export const VoteControlPanel: React.FC<VoteControlPanelProps> = React.memo(func
           </div>
           {voteAudit.attempts > 0 && (
             <div className="mt-1 text-[10px] text-slate-400" role="status" aria-live="polite">
-              {voteAudit.attempts} attempts · {voteAudit.accepted} accepted · {voteAudit.duplicates} dup · {voteAudit.rateLimited} rate-limited · {voteAudit.illegal} illegal
+              {voteAudit.attempts} attempts · {voteAudit.accepted} accepted · {voteAudit.duplicates} dup · {voteAudit.rateLimited} rate-lim · {voteAudit.illegal} illegal{voteAudit.usernameRejected > 0 ? ` · ${voteAudit.usernameRejected} bad-name` : ""}{voteAudit.changeExceeded > 0 ? ` · ${voteAudit.changeExceeded} chg-limit` : ""}
             </div>
           )}
         </div>
