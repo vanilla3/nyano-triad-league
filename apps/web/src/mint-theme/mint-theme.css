@@ -802,6 +802,124 @@
 }
 
 
+/* ═══════════════════════════════════════════════════════════════════════════
+   Compact Card Skin (P1-100) — "遊戯王級"カードフレーム
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.mint-compact-card {
+  background: linear-gradient(
+    145deg,
+    rgba(255, 255, 255, 0.97) 0%,
+    rgba(248, 250, 252, 0.92) 100%
+  );
+  box-shadow:
+    0 1px 4px rgba(0, 0, 0, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  transition: box-shadow 0.2s ease;
+}
+
+.mint-cell--owner-a .mint-compact-card {
+  border-color: var(--mint-pa-light);
+  box-shadow:
+    0 2px 8px -2px var(--mint-pa-glow),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8);
+}
+
+.mint-cell--owner-b .mint-compact-card {
+  border-color: var(--mint-pb-light);
+  box-shadow:
+    0 2px 8px -2px var(--mint-pb-glow),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   DuelStage Mint (P2-200) — 3D Perspective + Holo Grid
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.mint-stage {
+  position: relative;
+  padding: 24px 16px 20px;
+  border-radius: 28px;
+  overflow: hidden;
+  background: linear-gradient(
+    180deg,
+    #e6f5ee 0%,
+    var(--mint-bg) 40%,
+    #dff0e8 100%
+  );
+  isolation: isolate;
+}
+
+/* ── Holo Grid Background ── */
+.mint-stage__holo {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.08;
+  background:
+    repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 39px,
+      var(--mint-accent) 39px,
+      var(--mint-accent) 40px
+    ),
+    repeating-linear-gradient(
+      90deg,
+      transparent,
+      transparent 39px,
+      var(--mint-accent) 39px,
+      var(--mint-accent) 40px
+    );
+  background-size: 40px 40px;
+}
+
+/* ── Edge Glows ── */
+.mint-stage__glow {
+  position: absolute;
+  left: 10%;
+  right: 10%;
+  height: 60px;
+  pointer-events: none;
+  z-index: 1;
+  border-radius: 50%;
+  filter: blur(20px);
+}
+
+.mint-stage__glow--top {
+  top: -30px;
+  background: radial-gradient(
+    ellipse at center,
+    var(--mint-accent-muted) 0%,
+    transparent 70%
+  );
+  opacity: 0.5;
+}
+
+.mint-stage__glow--bottom {
+  bottom: -30px;
+  background: radial-gradient(
+    ellipse at center,
+    rgba(16, 185, 129, 0.15) 0%,
+    transparent 70%
+  );
+  opacity: 0.4;
+}
+
+/* ── Board Container with 3D Tilt ── */
+.mint-stage__board {
+  position: relative;
+  z-index: 2;
+  perspective: 800px;
+}
+
+.mint-stage__board > * {
+  transform: rotateX(2deg);
+  transform-origin: center bottom;
+}
+
+
 /* ── Reduced Motion ──────────────────────────────────────────────────── */
 
 @media (prefers-reduced-motion: reduce) {
@@ -826,5 +944,9 @@
   .mint-arrow-overlay g {
     opacity: 1 !important;
     animation: none !important;
+  }
+
+  .mint-stage__board > * {
+    transform: none !important;
   }
 }

@@ -264,6 +264,7 @@ export function CardNyanoCompact({
   return (
     <div
       className={[
+        "mint-compact-card",
         "relative w-full h-full rounded-xl overflow-hidden",
         "bg-white border-2",
         ownerStyle.border,
@@ -279,6 +280,11 @@ export function CardNyanoCompact({
           owner === 0 ? "bg-player-a-500" : "bg-player-b-500",
         ].join(" ")}
       />
+
+      {/* Card art watermark (P1-100) */}
+      <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+        <NyanoCardArt tokenId={card.tokenId} size="sm" className="opacity-[0.12]" />
+      </div>
 
       {/* Main content grid - 3x3 for edges */}
       <div className="relative h-full grid grid-cols-3 grid-rows-3 gap-0.5 p-1">
@@ -338,6 +344,11 @@ export function CardNyanoCompact({
         </div>
         <div />
       </div>
+
+      {/* Trait accent bar (P1-100) */}
+      {trait !== "none" && (
+        <div className={["absolute top-0 inset-x-0 h-[2px]", traitStyle.bg].join(" ")} />
+      )}
 
       {/* Token ID overlay */}
       <div className="absolute top-0.5 left-1 text-[8px] font-mono text-surface-400">
