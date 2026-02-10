@@ -2,6 +2,7 @@ import React from "react";
 import { NyanoAvatar } from "./NyanoAvatar";
 import type { ExpressionName } from "@/lib/expression_map";
 import type { GameResultOverlayProps } from "./GameResultOverlay";
+import { type MoveAnnotation, QUALITY_DISPLAY } from "@/lib/ai/replay_annotations";
 
 /* ═══════════════════════════════════════════════════════════════════════════
    GAME RESULT OVERLAY MINT — Soft, Nintendo-feel result screen
@@ -9,6 +10,11 @@ import type { GameResultOverlayProps } from "./GameResultOverlay";
    Uses same props as GameResultOverlay for seamless swapping.
    Visual: white frosted glass, soft shadows, NyanoAvatar reaction.
    ═══════════════════════════════════════════════════════════════════════════ */
+
+interface GameResultOverlayMintProps extends GameResultOverlayProps {
+  /** P1-150: AI move quality annotations for post-game summary */
+  annotations?: MoveAnnotation[];
+}
 
 export function GameResultOverlayMint({
   result,
@@ -18,7 +24,8 @@ export function GameResultOverlayMint({
   onRematch,
   onReplay,
   onShare,
-}: GameResultOverlayProps) {
+  annotations,
+}: GameResultOverlayMintProps) {
   const [visible, setVisible] = React.useState(false);
 
   React.useEffect(() => {
@@ -139,6 +146,36 @@ export function GameResultOverlayMint({
             </div>
           </div>
         </div>
+
+        {/* Post-game summary (P1-150) */}
+        {annotations && annotations.length > 0 && (() => {
+          const best = annotations.reduce((a, b) => b.delta > a.delta ? b : a);
+          const worst = annotations.reduce((a, b) => b.delta < a.delta ? b : a);
+          return (
+            <div className="mint-result__summary">
+              <div className="mint-result__summary-line">
+                <span className="mint-result__summary-icon">⭐</span>
+                <span className="mint-result__summary-text">
+                  Best: Turn {best.turnIndex + 1}
+                </span>
+                <span className={`mint-result__quality mint-result__quality--${best.quality.toLowerCase()}`}>
+                  {QUALITY_DISPLAY[best.quality].ja}
+                </span>
+              </div>
+              {worst.quality !== best.quality && (
+                <div className="mint-result__summary-line">
+                  <span className="mint-result__summary-icon">⚠️</span>
+                  <span className="mint-result__summary-text">
+                    Risk: Turn {worst.turnIndex + 1}
+                  </span>
+                  <span className={`mint-result__quality mint-result__quality--${worst.quality.toLowerCase()}`}>
+                    {QUALITY_DISPLAY[worst.quality].ja}
+                  </span>
+                </div>
+              )}
+            </div>
+          );
+        })()}
 
         {/* Actions */}
         <div className="mint-result__actions">

@@ -571,6 +571,48 @@
   color: var(--mint-text-hint);
 }
 
+/* ── Post-Game Summary (P1-150) ──────────────────────────────────────── */
+
+.mint-result__summary {
+  display: grid;
+  gap: 6px;
+  padding: 10px 16px;
+  border-radius: 12px;
+  background: var(--mint-surface-dim);
+  border: 1px solid var(--mint-accent-muted);
+  margin: 12px 0;
+  font-size: 12px;
+}
+
+.mint-result__summary-line {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.mint-result__summary-icon { font-size: 14px; line-height: 1; }
+
+.mint-result__summary-text {
+  flex: 1;
+  color: var(--mint-text-secondary);
+  font-size: 11px;
+}
+
+.mint-result__quality {
+  display: inline-block;
+  padding: 1px 6px;
+  border-radius: 6px;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.mint-result__quality--excellent { background: rgba(16,185,129,0.12); color: #059669; }
+.mint-result__quality--great     { background: rgba(59,130,246,0.12); color: #2563EB; }
+.mint-result__quality--good      { background: rgba(20,184,166,0.12); color: #0D9488; }
+.mint-result__quality--neutral   { background: rgba(100,116,139,0.08); color: #64748B; }
+.mint-result__quality--questionable { background: rgba(245,158,11,0.12); color: #D97706; }
+.mint-result__quality--blunder   { background: rgba(239,68,68,0.12); color: #DC2626; }
+
 .mint-result__actions {
   display: flex;
   gap: 10px;
