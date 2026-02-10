@@ -18,12 +18,13 @@ describe("CardNyanoDuel", () => {
   it("exports CardNyanoDuel component", async () => {
     const mod = await import("../CardNyanoDuel");
     expect(mod.CardNyanoDuel).toBeDefined();
-    expect(typeof mod.CardNyanoDuel).toBe("function");
+    // React.memo wraps the function — result is object with $$typeof
+    expect(typeof mod.CardNyanoDuel).toMatch(/function|object/);
   });
 
   it("exports CardNyanoDuelProps interface (via component existence)", async () => {
     const mod = await import("../CardNyanoDuel");
-    // Verify the function accepts the expected number of props (1 object param)
-    expect(mod.CardNyanoDuel.length).toBeGreaterThanOrEqual(0);
+    // React.memo components are objects; the inner function is accessible via .type
+    expect(mod.CardNyanoDuel).toBeDefined();
   });
 });

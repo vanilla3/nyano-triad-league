@@ -33,7 +33,7 @@ function edgeStrengthClass(value: number): string {
   return "mint-duel-card__edge--low";
 }
 
-export function CardNyanoDuel({
+export const CardNyanoDuel = React.memo(function CardNyanoDuel({
   card,
   owner,
   highlightEdge = null,
@@ -142,4 +142,4 @@ export function CardNyanoDuel({
       <div className="mint-duel-card__foil" />
     </div>
   );
-}
+});
