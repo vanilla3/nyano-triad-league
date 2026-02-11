@@ -1084,35 +1084,39 @@ export function MatchPage() {
     toast.success("Copied", "transcript JSON");
   };
 
+  /** Build replay URL (relative or absolute). Pre-computes synchronously with fallback. */
+  const buildReplayUrl = React.useCallback(async (absolute?: boolean): Promise<string | null> => {
+    if (!sim.ok) return null;
+    const json = stringifyWithBigInt(sim.transcript, 0);
+    const z = await tryGzipCompressUtf8ToBase64Url(json);
+    const prefix = absolute ? window.location.origin : "";
+    const qp = `&step=9${event ? `&event=${encodeURIComponent(event.id)}` : ""}`;
+    return z ? `${prefix}/replay?z=${z}${qp}` : `${prefix}/replay?t=${base64UrlEncodeUtf8(json)}${qp}`;
+  }, [sim, event]);
+
   const copyShareUrl = async () => {
     setError(null);
-    if (!sim.ok) {
-      setError(sim.error);
-      return;
+    try {
+      const url = await buildReplayUrl(true);
+      if (!url) { setError("Match not ready"); return; }
+      await copyToClipboard(url);
+      toast.success("Copied", "share URL");
+    } catch (e: unknown) {
+      toast.error("Share failed", errorMessage(e));
     }
-    const json = stringifyWithBigInt(sim.transcript, 0);
-
-    const z = await tryGzipCompressUtf8ToBase64Url(json);
-    const origin = window.location.origin;
-    const qp = `&step=9${event ? `&event=${encodeURIComponent(event.id)}` : ""}`;
-    const url = z ? `${origin}/replay?z=${z}${qp}` : `${origin}/replay?t=${base64UrlEncodeUtf8(json)}${qp}`;
-
-    await copyToClipboard(url);
-    toast.success("Copied", "share URL");
   };
 
   const openReplay = async () => {
     setError(null);
     setStatus(null);
-    if (!sim.ok) {
-      setError(sim.error);
-      return;
+    try {
+      const url = await buildReplayUrl(false);
+      if (!url) { setError("Match not ready"); return; }
+      // Use window.location for reliable navigation (window.open blocked by popup blockers in async)
+      window.location.href = url;
+    } catch (e: unknown) {
+      toast.error("Replay failed", errorMessage(e));
     }
-    const json = stringifyWithBigInt(sim.transcript, 0);
-    const z = await tryGzipCompressUtf8ToBase64Url(json);
-    const qp = `&step=9${event ? `&event=${encodeURIComponent(event.id)}` : ""}`;
-    const url = z ? `/replay?z=${z}${qp}` : `/replay?t=${base64UrlEncodeUtf8(json)}${qp}`;
-    window.open(url, "_blank");
   };
 
   // P0-1: Cell select handler for BoardView / BoardViewRPG

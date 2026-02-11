@@ -675,9 +675,10 @@ protocolV1: {
     upsertEventAttempt(a);
   };
 
-const buildShareLink = async (): Promise<string> => {
-    const trimmed = text.trim();
-    if (!trimmed) throw new Error("transcript JSON is empty");
+  const buildShareLink = async (): Promise<string> => {
+    // Use sim transcript when text state is empty (e.g., loaded via ?z= share link)
+    const trimmed = text.trim() || (sim.ok ? stringifyWithBigInt(sim.transcript) : "");
+    if (!trimmed) throw new Error("transcript JSON is empty — paste a transcript or load a share link first");
 
     const url = new URL(window.location.href);
 
