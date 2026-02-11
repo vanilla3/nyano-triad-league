@@ -1,5 +1,7 @@
 import { describe, it, expect } from "vitest";
+import { buildFirstPlayerRevealCommitV1 } from "@nyano/triad-engine";
 import {
+  deriveRevealCommitHex,
   isBytes32Hex,
   parseFirstPlayerResolutionMode,
   resolveFirstPlayer,
@@ -30,10 +32,25 @@ describe("isBytes32Hex", () => {
   });
 });
 
+describe("deriveRevealCommitHex", () => {
+  const salt = `0x${"11".repeat(32)}`;
+  const reveal = `0x${"22".repeat(32)}`;
+
+  it("returns commit hex for valid inputs", () => {
+    const commit = deriveRevealCommitHex(salt, reveal);
+    expect(commit).toMatch(/^0x[0-9a-f]{64}$/);
+  });
+
+  it("returns null for invalid inputs", () => {
+    expect(deriveRevealCommitHex("0x1234", reveal)).toBeNull();
+    expect(deriveRevealCommitHex(salt, "not-hex")).toBeNull();
+  });
+});
+
 describe("resolveFirstPlayer", () => {
-  const bytes32A = `0x${"11".repeat(32)}`;
-  const bytes32B = `0x${"22".repeat(32)}`;
-  const bytes32C = `0x${"33".repeat(32)}`;
+  const bytes32A = `0x${"11".repeat(32)}` as `0x${string}`;
+  const bytes32B = `0x${"22".repeat(32)}` as `0x${string}`;
+  const bytes32C = `0x${"33".repeat(32)}` as `0x${string}`;
 
   it("manual mode uses manual firstPlayer", () => {
     const r = resolveFirstPlayer({
@@ -112,5 +129,46 @@ describe("resolveFirstPlayer", () => {
     expect(r.firstPlayer).toBe(1);
     expect(r.error).toContain("bytes32");
   });
-});
 
+  it("commit_reveal mode accepts valid reveal commits", () => {
+    const commitA = buildFirstPlayerRevealCommitV1({ matchSalt: bytes32A, reveal: bytes32B });
+    const commitB = buildFirstPlayerRevealCommitV1({ matchSalt: bytes32A, reveal: bytes32C });
+
+    const r = resolveFirstPlayer({
+      mode: "commit_reveal",
+      manualFirstPlayer: 0,
+      mutualChoiceA: 0,
+      mutualChoiceB: 0,
+      commitReveal: {
+        matchSalt: bytes32A,
+        revealA: bytes32B,
+        revealB: bytes32C,
+        commitA,
+        commitB,
+      },
+    });
+
+    expect(r.valid).toBe(true);
+  });
+
+  it("commit_reveal mode rejects mismatched reveal commit", () => {
+    const badCommitA = buildFirstPlayerRevealCommitV1({ matchSalt: bytes32A, reveal: bytes32C });
+
+    const r = resolveFirstPlayer({
+      mode: "commit_reveal",
+      manualFirstPlayer: 1,
+      mutualChoiceA: 0,
+      mutualChoiceB: 0,
+      commitReveal: {
+        matchSalt: bytes32A,
+        revealA: bytes32B,
+        revealB: bytes32C,
+        commitA: badCommitA,
+      },
+    });
+
+    expect(r.valid).toBe(false);
+    expect(r.firstPlayer).toBe(1);
+    expect(r.error).toContain("does not match");
+  });
+});

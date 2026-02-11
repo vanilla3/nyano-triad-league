@@ -36,6 +36,19 @@ export interface FirstPlayerCommitRevealV1Input {
   revealB: `0x${string}`;
 }
 
+/**
+ * Input for "commit hash for a reveal secret" flow.
+ *
+ * Commit hash is deterministic and Solidity-compatible:
+ *   keccak256(abi.encode(matchSalt, reveal))
+ */
+export interface FirstPlayerRevealCommitV1Input {
+  /** Match salt / setup id (bytes32) used as anti-replay domain separator. */
+  matchSalt: `0x${string}`;
+  /** 32-byte secret reveal value. */
+  reveal: `0x${string}`;
+}
+
 function assertBytes32(value: `0x${string}`, field: string): void {
   if (!HEX_32_RE.test(value)) {
     throw new Error(`${field} must be bytes32`);
@@ -74,6 +87,32 @@ export function verifyFirstPlayerChoiceCommitV1(
 ): boolean {
   assertBytes32(commit, "commit");
   return buildFirstPlayerChoiceCommitV1(input) === commit.toLowerCase();
+}
+
+/**
+ * Compute commit hash for a player's hidden reveal secret.
+ */
+export function buildFirstPlayerRevealCommitV1(input: FirstPlayerRevealCommitV1Input): `0x${string}` {
+  assertBytes32(input.matchSalt, "matchSalt");
+  assertBytes32(input.reveal, "reveal");
+
+  const encoded = coder.encode(
+    ["bytes32", "bytes32"],
+    [input.matchSalt, input.reveal],
+  );
+
+  return keccak256(encoded) as `0x${string}`;
+}
+
+/**
+ * Verify reveal-secret commit against reveal parameters.
+ */
+export function verifyFirstPlayerRevealCommitV1(
+  commit: `0x${string}`,
+  input: FirstPlayerRevealCommitV1Input,
+): boolean {
+  assertBytes32(commit, "commit");
+  return buildFirstPlayerRevealCommitV1(input) === commit.toLowerCase();
 }
 
 /**

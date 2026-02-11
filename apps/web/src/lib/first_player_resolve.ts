@@ -1,6 +1,8 @@
 import {
+  buildFirstPlayerRevealCommitV1,
   deriveFirstPlayerFromCommitRevealV1,
   resolveFirstPlayerByMutualChoiceV1,
+  verifyFirstPlayerRevealCommitV1,
   type PlayerIndex,
 } from "@nyano/triad-engine";
 
@@ -31,6 +33,11 @@ export function randomBytes32Hex(): `0x${string}` {
   return (`0x${Array.from(b, (x) => x.toString(16).padStart(2, "0")).join("")}`) as `0x${string}`;
 }
 
+export function deriveRevealCommitHex(matchSalt: string, reveal: string): `0x${string}` | null {
+  if (!isBytes32Hex(matchSalt) || !isBytes32Hex(reveal)) return null;
+  return buildFirstPlayerRevealCommitV1({ matchSalt, reveal });
+}
+
 export interface ResolveFirstPlayerInput {
   mode: FirstPlayerResolutionMode;
   manualFirstPlayer: PlayerIndex;
@@ -40,6 +47,8 @@ export interface ResolveFirstPlayerInput {
     matchSalt: string;
     revealA: string;
     revealB: string;
+    commitA?: string;
+    commitB?: string;
   };
 }
 
@@ -97,6 +106,54 @@ export function resolveFirstPlayer(input: ResolveFirstPlayerInput): FirstPlayerR
     };
   }
 
+  const commitA = cr.commitA?.trim() ?? "";
+  if (commitA.length > 0) {
+    if (!isBytes32Hex(commitA)) {
+      return {
+        firstPlayer: input.manualFirstPlayer,
+        valid: false,
+        mode: "commit_reveal",
+        error: "Commit A must be bytes32 hex.",
+      };
+    }
+    const ok = verifyFirstPlayerRevealCommitV1(commitA, {
+      matchSalt: cr.matchSalt,
+      reveal: cr.revealA,
+    });
+    if (!ok) {
+      return {
+        firstPlayer: input.manualFirstPlayer,
+        valid: false,
+        mode: "commit_reveal",
+        error: "Commit A does not match Reveal A.",
+      };
+    }
+  }
+
+  const commitB = cr.commitB?.trim() ?? "";
+  if (commitB.length > 0) {
+    if (!isBytes32Hex(commitB)) {
+      return {
+        firstPlayer: input.manualFirstPlayer,
+        valid: false,
+        mode: "commit_reveal",
+        error: "Commit B must be bytes32 hex.",
+      };
+    }
+    const ok = verifyFirstPlayerRevealCommitV1(commitB, {
+      matchSalt: cr.matchSalt,
+      reveal: cr.revealB,
+    });
+    if (!ok) {
+      return {
+        firstPlayer: input.manualFirstPlayer,
+        valid: false,
+        mode: "commit_reveal",
+        error: "Commit B does not match Reveal B.",
+      };
+    }
+  }
+
   const fp = deriveFirstPlayerFromCommitRevealV1({
     matchSalt: cr.matchSalt,
     revealA: cr.revealA,
@@ -104,4 +161,3 @@ export function resolveFirstPlayer(input: ResolveFirstPlayerInput): FirstPlayerR
   });
   return { firstPlayer: fp, valid: true, mode: "commit_reveal" };
 }
-

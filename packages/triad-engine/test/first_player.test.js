@@ -4,6 +4,8 @@ import assert from "node:assert/strict";
 import {
   buildFirstPlayerChoiceCommitV1,
   verifyFirstPlayerChoiceCommitV1,
+  buildFirstPlayerRevealCommitV1,
+  verifyFirstPlayerRevealCommitV1,
   deriveFirstPlayerFromCommitRevealV1,
   resolveFirstPlayerByMutualChoiceV1,
 } from "../dist/index.js";
@@ -67,6 +69,20 @@ test("commit-reveal first-player: deterministic and sensitive to reveals", () =>
     }
   }
   assert.equal(changed, true, "at least one alternate reveal should change the outcome");
+});
+
+test("reveal-commit: build + verify", () => {
+  const input = {
+    matchSalt: "0x1111111111111111111111111111111111111111111111111111111111111111",
+    reveal: "0x3333333333333333333333333333333333333333333333333333333333333333",
+  };
+
+  const commit = buildFirstPlayerRevealCommitV1(input);
+  assert.match(commit, /^0x[0-9a-f]{64}$/);
+  assert.equal(verifyFirstPlayerRevealCommitV1(commit, input), true);
+
+  const tampered = { ...input, reveal: "0x4444444444444444444444444444444444444444444444444444444444444444" };
+  assert.equal(verifyFirstPlayerRevealCommitV1(commit, tampered), false);
 });
 
 test("mutual-choice first-player: matches when both agree, throws on mismatch", () => {

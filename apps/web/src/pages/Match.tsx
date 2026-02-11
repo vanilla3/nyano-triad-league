@@ -55,6 +55,7 @@ import { MatchDrawerMint, DrawerToggleButton } from "@/components/MatchDrawerMin
 import { writeClipboardText } from "@/lib/clipboard";
 import { appAbsoluteUrl } from "@/lib/appUrl";
 import {
+  deriveRevealCommitHex,
   parseFirstPlayerResolutionMode,
   randomBytes32Hex,
   resolveFirstPlayer,
@@ -309,6 +310,8 @@ export function MatchPage() {
   const commitRevealSaltParam = searchParams.get("fps") ?? "";
   const commitRevealAParam = searchParams.get("fra") ?? "";
   const commitRevealBParam = searchParams.get("frb") ?? "";
+  const commitRevealCommitAParam = searchParams.get("fca") ?? "";
+  const commitRevealCommitBParam = searchParams.get("fcb") ?? "";
 
   const isEvent = Boolean(event);
   const opponentMode: OpponentMode = isEvent ? "vs_nyano_ai" : opponentModeParam;
@@ -330,6 +333,8 @@ export function MatchPage() {
           matchSalt: commitRevealSaltParam,
           revealA: commitRevealAParam,
           revealB: commitRevealBParam,
+          commitA: commitRevealCommitAParam,
+          commitB: commitRevealCommitBParam,
         },
       }),
     [
@@ -340,6 +345,8 @@ export function MatchPage() {
       commitRevealSaltParam,
       commitRevealAParam,
       commitRevealBParam,
+      commitRevealCommitAParam,
+      commitRevealCommitBParam,
     ],
   );
   const firstPlayer: PlayerIndex = isEvent ? (event!.firstPlayer as PlayerIndex) : firstPlayerResolution.firstPlayer;
@@ -1552,6 +1559,22 @@ export function MatchPage() {
                   onChange={(e) => setParam("frb", e.target.value.trim())}
                   aria-label="Commit reveal B"
                 />
+                <input
+                  className="input font-mono text-xs"
+                  placeholder="commitA (optional bytes32 hex)"
+                  value={commitRevealCommitAParam}
+                  disabled={isEvent}
+                  onChange={(e) => setParam("fca", e.target.value.trim())}
+                  aria-label="Commit A (optional)"
+                />
+                <input
+                  className="input font-mono text-xs"
+                  placeholder="commitB (optional bytes32 hex)"
+                  value={commitRevealCommitBParam}
+                  disabled={isEvent}
+                  onChange={(e) => setParam("fcb", e.target.value.trim())}
+                  aria-label="Commit B (optional)"
+                />
                 <div className="flex items-center gap-2">
                   <button
                     type="button"
@@ -1561,9 +1584,29 @@ export function MatchPage() {
                       setParam("fps", randomBytes32Hex());
                       setParam("fra", randomBytes32Hex());
                       setParam("frb", randomBytes32Hex());
+                      setParam("fca", "");
+                      setParam("fcb", "");
                     }}
                   >
                     Randomize Inputs
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn-sm"
+                    disabled={isEvent}
+                    onClick={() => {
+                      const commitA = deriveRevealCommitHex(commitRevealSaltParam, commitRevealAParam);
+                      const commitB = deriveRevealCommitHex(commitRevealSaltParam, commitRevealBParam);
+                      if (!commitA || !commitB) {
+                        toast.warn("Commit derive failed", "matchSalt/revealA/revealB must be bytes32 hex.");
+                        return;
+                      }
+                      setParam("fca", commitA);
+                      setParam("fcb", commitB);
+                      toast.success("Commits derived", "commitA/commitB updated from reveals.");
+                    }}
+                  >
+                    Derive Commits
                   </button>
                 </div>
               </div>
