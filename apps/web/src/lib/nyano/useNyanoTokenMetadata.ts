@@ -29,6 +29,7 @@ export function useNyanoTokenMetadata(tokenId: bigint | null) {
       return { imageUrl };
     },
     staleTime: 1000 * 60 * 60, // 1 hour — token images don't change often
+    gcTime: 1000 * 60 * 60 * 2, // 2 hours — image URLs are stable
     retry: 1,
   });
 }

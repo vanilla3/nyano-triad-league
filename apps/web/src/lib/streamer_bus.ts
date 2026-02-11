@@ -346,7 +346,7 @@ export function readStoredOverlayState(): OverlayStateV1 | null {
     if (!raw) return null;
     const parsed = safeParse<unknown>(raw);
     if (!isValidOverlayStateV1(parsed)) {
-      if (parsed !== null) console.warn("[streamer_bus] Invalid OverlayStateV1 in localStorage, ignoring");
+      if (parsed !== null && import.meta.env.DEV) console.warn("[streamer_bus] Invalid OverlayStateV1 in localStorage, ignoring");
       return null;
     }
     return parsed;
@@ -464,7 +464,7 @@ export function readStoredStreamVoteState(): StreamVoteStateV1 | null {
     if (!raw) return null;
     const parsed = safeParse<unknown>(raw);
     if (!isValidStreamVoteStateV1(parsed)) {
-      if (parsed !== null) console.warn("[streamer_bus] Invalid StreamVoteStateV1 in localStorage, ignoring");
+      if (parsed !== null && import.meta.env.DEV) console.warn("[streamer_bus] Invalid StreamVoteStateV1 in localStorage, ignoring");
       return null;
     }
     return parsed;
@@ -646,7 +646,7 @@ export function readStoredStreamCommand(): StreamCommandV1 | null {
     if (!raw) return null;
     const parsed = safeParse<unknown>(raw);
     if (!isValidStreamCommandV1(parsed)) {
-      if (parsed !== null) console.warn("[streamer_bus] Invalid StreamCommandV1 in localStorage, ignoring");
+      if (parsed !== null && import.meta.env.DEV) console.warn("[streamer_bus] Invalid StreamCommandV1 in localStorage, ignoring");
       return null;
     }
     return parsed;

@@ -147,7 +147,7 @@ export function createTelemetryTracker(): TelemetryTracker {
       flushed = true;
       persistSession(session);
 
-      if (typeof console !== "undefined" && console.debug) {
+      if (import.meta.env.DEV && typeof console !== "undefined" && console.debug) {
         console.debug("[nytl-telemetry] session:", session);
       }
     },

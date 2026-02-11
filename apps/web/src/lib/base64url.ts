@@ -39,9 +39,17 @@ export function safeBase64UrlDecodeUtf8(b64url: string): string | null {
   }
 }
 
+// Compression/DecompressionStream are not in all TypeScript lib targets.
+// Use a structural type so we avoid `globalThis as any`.
+type StreamCtor = new (format: string) => { readable: ReadableStream; writable: WritableStream };
+type GlobalWithStreams = typeof globalThis & {
+  CompressionStream?: StreamCtor;
+  DecompressionStream?: StreamCtor;
+};
+
 /** Gzip-compress UTF-8 text and return base64url(bytes). Requires browser CompressionStream. */
 export async function gzipCompressUtf8ToBase64Url(text: string): Promise<string> {
-  const CompressionStreamCtor = (globalThis as any).CompressionStream;
+  const CompressionStreamCtor = (globalThis as GlobalWithStreams).CompressionStream;
   if (typeof CompressionStreamCtor !== "function") throw new Error("CompressionStream is not available");
 
   const input = new TextEncoder().encode(text);
@@ -58,7 +66,7 @@ export async function gzipCompressUtf8ToBase64Url(text: string): Promise<string>
 
 /** Reverse of gzipCompressUtf8ToBase64Url. Requires browser DecompressionStream. */
 export async function gzipDecompressUtf8FromBase64Url(b64url: string): Promise<string> {
-  const DecompressionStreamCtor = (globalThis as any).DecompressionStream;
+  const DecompressionStreamCtor = (globalThis as GlobalWithStreams).DecompressionStream;
   if (typeof DecompressionStreamCtor !== "function") throw new Error("DecompressionStream is not available");
 
   const input = base64UrlDecodeBytes(b64url);

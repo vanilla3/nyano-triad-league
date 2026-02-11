@@ -30,10 +30,11 @@ describe("parseDeckRestriction", () => {
     expect(rule.allowedTokenIds!.size).toBeGreaterThan(0);
   });
 
-  it("returns 'none' rule for unknown restriction string (with console.warn)", () => {
+  it("returns 'none' rule for unknown restriction string (with dev console.warn)", () => {
     const spy = vi.spyOn(console, "warn").mockImplementation(() => {});
     const rule = parseDeckRestriction("custom_tournament_2026");
     expect(rule.type).toBe("none");
+    // console.warn fires only in DEV mode (Vitest sets import.meta.env.DEV = true)
     expect(spy).toHaveBeenCalledOnce();
     spy.mockRestore();
   });

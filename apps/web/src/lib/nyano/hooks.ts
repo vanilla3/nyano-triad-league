@@ -45,6 +45,7 @@ export function useOwnedNyanoTokenIds(owner?: `0x${string}`, limit = 30) {
       if (!owner) return [] as bigint[];
       return await readOwnedTokenIds(owner, limit);
     },
+    gcTime: 1000 * 60 * 30, // 30 min — ownership changes infrequently
   });
 }
 
@@ -61,6 +62,7 @@ export function useNyanoGameDataBatch(tokenIds: Array<string | number | bigint>)
       if (!ids.length) return [] as TokenGameData[];
       return await readTokenGameDataBatch(ids);
     },
+    gcTime: 1000 * 60 * 30, // 30 min — game stats change only on match completion
   });
 }
 
@@ -71,6 +73,7 @@ export function useNyanoGameIndex(opts?: { force?: boolean }) {
     queryFn: async () => {
       return (await fetchGameIndex({ force })) as GameIndexV1 | null;
     },
-    staleTime: 1000 * 60 * 60 * 12,
+    staleTime: 1000 * 60 * 60 * 12, // 12 hours
+    gcTime: 1000 * 60 * 60 * 24, // 24 hours — game index is semi-static
   });
 }
