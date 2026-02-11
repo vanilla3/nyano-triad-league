@@ -306,30 +306,56 @@ export function HomePage() {
         </div>
       </section>
 
-      {/* ─── Features & Tools (Progressive Disclosure — collapsed) ── */}
-      <section className="max-w-5xl mx-auto px-4 py-8">
+      {/* ─── How to Play (3-step guide) ────────────────────────────── */}
+      <section className="max-w-5xl mx-auto px-4 py-10">
+        <h2 className="text-xl font-bold font-display text-surface-800 text-center mb-6">
+          3ステップで始めよう
+        </h2>
+        <div className="grid gap-4 md:grid-cols-3">
+          {[
+            { step: "1", icon: "🃏", title: "デッキを組む", desc: "5枚のNyanoカードを選んでデッキを作成", link: "/decks" },
+            { step: "2", icon: "⚔️", title: "対戦する", desc: "AIやフレンドと3x3ボードで対戦", link: "/arena" },
+            { step: "3", icon: "📼", title: "共有する", desc: "リプレイを共有して配信で盛り上がる", link: "/replay" },
+          ].map((s) => (
+            <Link
+              key={s.step}
+              to={s.link}
+              className={[
+                "group relative flex flex-col items-center text-center p-6 rounded-2xl",
+                "bg-white border border-surface-200",
+                "transition-all duration-200",
+                "hover:border-surface-300 hover:shadow-soft-sm hover:-translate-y-0.5",
+              ].join(" ")}
+            >
+              <div className="absolute -top-3 left-4 bg-nyano-500 text-white text-xs font-bold w-6 h-6 rounded-full flex items-center justify-center shadow-sm">
+                {s.step}
+              </div>
+              <div className="text-3xl mb-2">{s.icon}</div>
+              <div className="font-bold text-surface-800 mb-1">{s.title}</div>
+              <p className="text-xs text-surface-500">{s.desc}</p>
+            </Link>
+          ))}
+        </div>
+      </section>
+
+      {/* ─── Features (always visible) ─────────────────────────────── */}
+      <section className="max-w-5xl mx-auto px-4 py-6">
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          {FEATURES.map((feature) => (
+            <FeatureCard key={feature.path} {...feature} />
+          ))}
+        </div>
+      </section>
+
+      {/* ─── Tools (Progressive Disclosure — collapsed) ─────────── */}
+      <section className="max-w-5xl mx-auto px-4 py-4">
         <details className="group">
           <summary className="flex items-center gap-2 cursor-pointer text-surface-500 hover:text-surface-700 transition-colors">
-            <span className="text-sm font-medium">もっと見る — モード・ツール</span>
+            <span className="text-sm font-medium">ツール・設定</span>
             <span className="text-xs group-open:rotate-90 transition-transform">▶</span>
           </summary>
-
-          {/* Features */}
-          <div className="mt-6">
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 animate-stagger">
-              {FEATURES.map((feature) => (
-                <FeatureCard key={feature.path} {...feature} />
-              ))}
-            </div>
-          </div>
-
-          {/* Tools */}
-          <div className="mt-8">
-            <div className="mb-4">
-              <h2 className="text-lg font-bold font-display text-surface-700">Tools</h2>
-              <p className="text-sm text-surface-500">検証・設定用のツール</p>
-            </div>
-            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4 animate-stagger">
+          <div className="mt-4">
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
               {TOOLS.map((tool) => (
                 <ToolCard key={tool.path} {...tool} />
               ))}
