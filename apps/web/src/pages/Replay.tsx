@@ -32,7 +32,7 @@ import { errorMessage } from "@/lib/errorMessage";
 import { stringifyWithBigInt } from "@/lib/json";
 import { formatEventPeriod, getEventById, getEventStatus } from "@/lib/events";
 import { hasEventAttempt, upsertEventAttempt, type EventAttemptV1 } from "@/lib/event_attempts";
-import { fetchNyanoCards } from "@/lib/nyano_rpc";
+import { resolveCards } from "@/lib/resolveCards";
 import { publishOverlayState } from "@/lib/streamer_bus";
 import { parseTranscriptV1Json } from "@/lib/transcript_import";
 import { annotateReplayMoves } from "@/lib/ai/replay_annotations";
@@ -379,16 +379,9 @@ protocolV1: {
       const mode0 = override?.mode ?? mode;
       const effectiveMode: Mode = mode0 === "auto" ? pickDefaultMode(transcript.header.rulesetId) : mode0;
 
-      // Fetch on-chain cards for all deck tokenIds
+      // Resolve card data: game index first (fast/cached), RPC fallback for missing
       const tokenIds = [...transcript.header.deckA, ...transcript.header.deckB];
-      const bundles = await fetchNyanoCards(tokenIds);
-
-      const cards = new Map<bigint, CardData>();
-      const owners = new Map<bigint, `0x${string}`>();
-      for (const [tid, b] of bundles.entries()) {
-        cards.set(tid, b.card);
-        owners.set(tid, b.owner);
-      }
+      const { cards, owners } = await resolveCards(tokenIds);
 
       // Always compute both (cheap compared to RPC reads)
       const v1 = simulateMatchV1WithHistory(transcript, cards, ONCHAIN_CORE_TACTICS_RULESET_CONFIG_V1);
