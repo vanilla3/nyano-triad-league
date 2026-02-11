@@ -52,6 +52,12 @@ import { readUiDensity, writeUiDensity, type UiDensity } from "@/lib/local_setti
 import type { FlipTraceArrow } from "@/components/FlipArrowOverlay";
 import { MatchDrawerMint, DrawerToggleButton } from "@/components/MatchDrawerMint";
 import { writeClipboardText } from "@/lib/clipboard";
+import { appAbsoluteUrl } from "@/lib/appUrl";
+import {
+  parseFirstPlayerResolutionMode,
+  randomBytes32Hex,
+  resolveFirstPlayer,
+} from "@/lib/first_player_resolve";
 
 type OpponentMode = "pvp" | "vs_nyano_ai";
 type DataMode = "fast" | "verified";
@@ -300,7 +306,13 @@ export function MatchPage() {
 
   const rulesetKeyParam = parseRulesetKey(searchParams.get("rk"));
   const seasonIdParam = parseSeason(searchParams.get("season"));
-  const firstPlayerParam = parseFirstPlayer(searchParams.get("fp"));
+  const firstPlayerModeParam = parseFirstPlayerResolutionMode(searchParams.get("fpm"));
+  const manualFirstPlayerParam = parseFirstPlayer(searchParams.get("fp"));
+  const mutualChoiceAParam = parseFirstPlayer(searchParams.get("fpa"));
+  const mutualChoiceBParam = parseFirstPlayer(searchParams.get("fpb"));
+  const commitRevealSaltParam = searchParams.get("fps") ?? "";
+  const commitRevealAParam = searchParams.get("fra") ?? "";
+  const commitRevealBParam = searchParams.get("frb") ?? "";
 
   const isEvent = Boolean(event);
   const opponentMode: OpponentMode = isEvent ? "vs_nyano_ai" : opponentModeParam;
@@ -310,7 +322,31 @@ export function MatchPage() {
 
   const rulesetKey: RulesetKey = isEvent ? (event!.rulesetKey as RulesetKey) : rulesetKeyParam;
   const seasonId: number = isEvent ? event!.seasonId : seasonIdParam;
-  const firstPlayer: PlayerIndex = isEvent ? (event!.firstPlayer as PlayerIndex) : firstPlayerParam;
+  const firstPlayerMode = isEvent ? "manual" : firstPlayerModeParam;
+  const firstPlayerResolution = React.useMemo(
+    () =>
+      resolveFirstPlayer({
+        mode: firstPlayerMode,
+        manualFirstPlayer: manualFirstPlayerParam,
+        mutualChoiceA: mutualChoiceAParam,
+        mutualChoiceB: mutualChoiceBParam,
+        commitReveal: {
+          matchSalt: commitRevealSaltParam,
+          revealA: commitRevealAParam,
+          revealB: commitRevealBParam,
+        },
+      }),
+    [
+      firstPlayerMode,
+      manualFirstPlayerParam,
+      mutualChoiceAParam,
+      mutualChoiceBParam,
+      commitRevealSaltParam,
+      commitRevealAParam,
+      commitRevealBParam,
+    ],
+  );
+  const firstPlayer: PlayerIndex = isEvent ? (event!.firstPlayer as PlayerIndex) : firstPlayerResolution.firstPlayer;
 
   const [salt, setSalt] = React.useState<`0x${string}`>(() => randomSalt());
   const [deadline, setDeadline] = React.useState<number>(() => Math.floor(Date.now() / 1000) + 24 * 3600);
@@ -1090,14 +1126,14 @@ export function MatchPage() {
     }
   };
 
-  /** Build replay URL (relative or absolute). Pre-computes synchronously with fallback. */
+  /** Build replay URL (relative or absolute). Respects BASE_URL for subpath deployments. */
   const buildReplayUrl = React.useCallback(async (absolute?: boolean): Promise<string | null> => {
     if (!sim.ok) return null;
     const json = stringifyWithBigInt(sim.transcript, 0);
     const z = await tryGzipCompressUtf8ToBase64Url(json);
-    const prefix = absolute ? window.location.origin : "";
     const qp = `&step=9${event ? `&event=${encodeURIComponent(event.id)}` : ""}`;
-    return z ? `${prefix}/replay?z=${z}${qp}` : `${prefix}/replay?t=${base64UrlEncodeUtf8(json)}${qp}`;
+    const replayPath = z ? `replay?z=${z}${qp}` : `replay?t=${base64UrlEncodeUtf8(json)}${qp}`;
+    return absolute ? appAbsoluteUrl(replayPath) : `/replay?${z ? `z=${z}` : `t=${base64UrlEncodeUtf8(json)}`}${qp}`;
   }, [sim, event]);
 
   const copyShareUrl = async () => {
@@ -1438,10 +1474,103 @@ export function MatchPage() {
 
           <div className="grid gap-2">
             <div className="text-xs font-medium text-slate-600">First Player</div>
-            <select className="input" value={String(firstPlayer)} disabled={isEvent} onChange={(e) => setParam("fp", e.target.value)} aria-label="First player">
-              <option value="0">A first</option>
-              <option value="1">B first</option>
+            <select
+              className="input"
+              value={firstPlayerMode}
+              disabled={isEvent}
+              onChange={(e) => setParam("fpm", e.target.value)}
+              aria-label="First player mode"
+            >
+              <option value="manual">Manual</option>
+              <option value="mutual">Mutual choice</option>
+              <option value="commit_reveal">Commit-reveal</option>
             </select>
+
+            {firstPlayerMode === "manual" ? (
+              <select
+                className="input"
+                value={String(manualFirstPlayerParam)}
+                disabled={isEvent}
+                onChange={(e) => setParam("fp", e.target.value)}
+                aria-label="Manual first player"
+              >
+                <option value="0">A first</option>
+                <option value="1">B first</option>
+              </select>
+            ) : null}
+
+            {firstPlayerMode === "mutual" ? (
+              <div className="grid grid-cols-2 gap-2">
+                <select
+                  className="input"
+                  value={String(mutualChoiceAParam)}
+                  disabled={isEvent}
+                  onChange={(e) => setParam("fpa", e.target.value)}
+                  aria-label="Mutual choice A"
+                >
+                  <option value="0">A chooses A first</option>
+                  <option value="1">A chooses B first</option>
+                </select>
+                <select
+                  className="input"
+                  value={String(mutualChoiceBParam)}
+                  disabled={isEvent}
+                  onChange={(e) => setParam("fpb", e.target.value)}
+                  aria-label="Mutual choice B"
+                >
+                  <option value="0">B chooses A first</option>
+                  <option value="1">B chooses B first</option>
+                </select>
+              </div>
+            ) : null}
+
+            {firstPlayerMode === "commit_reveal" ? (
+              <div className="grid gap-2">
+                <input
+                  className="input font-mono text-xs"
+                  placeholder="matchSalt (bytes32 hex)"
+                  value={commitRevealSaltParam}
+                  disabled={isEvent}
+                  onChange={(e) => setParam("fps", e.target.value.trim())}
+                  aria-label="Commit reveal match salt"
+                />
+                <input
+                  className="input font-mono text-xs"
+                  placeholder="revealA (bytes32 hex)"
+                  value={commitRevealAParam}
+                  disabled={isEvent}
+                  onChange={(e) => setParam("fra", e.target.value.trim())}
+                  aria-label="Commit reveal A"
+                />
+                <input
+                  className="input font-mono text-xs"
+                  placeholder="revealB (bytes32 hex)"
+                  value={commitRevealBParam}
+                  disabled={isEvent}
+                  onChange={(e) => setParam("frb", e.target.value.trim())}
+                  aria-label="Commit reveal B"
+                />
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    className="btn btn-sm"
+                    disabled={isEvent}
+                    onClick={() => {
+                      setParam("fps", randomBytes32Hex());
+                      setParam("fra", randomBytes32Hex());
+                      setParam("frb", randomBytes32Hex());
+                    }}
+                  >
+                    Randomize Inputs
+                  </button>
+                </div>
+              </div>
+            ) : null}
+
+            <div className={`text-xs ${!isEvent && !firstPlayerResolution.valid ? "text-rose-600" : "text-slate-500"}`}>
+              resolved: {firstPlayer === 0 ? "A first" : "B first"}
+              {!isEvent && !firstPlayerResolution.valid && firstPlayerResolution.error ? ` (${firstPlayerResolution.error})` : ""}
+            </div>
           </div>
         </div>
 
