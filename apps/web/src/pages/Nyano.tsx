@@ -4,6 +4,7 @@ import { CardMini } from "@/components/CardMini";
 import { CopyField } from "@/components/CopyField";
 import { useToast } from "@/components/Toast";
 import { errorMessage } from "@/lib/errorMessage";
+import { writeClipboardText } from "@/lib/clipboard";
 import { stringifyWithBigInt } from "@/lib/json";
 import {
   clearUserRpcOverride,
@@ -79,7 +80,7 @@ export function NyanoPage() {
   const rpcCandidates = React.useMemo(() => getRpcCandidates(), []);
 
   const copyWithToast = async (label: string, text: string) => {
-    await navigator.clipboard.writeText(text);
+    await writeClipboardText(text);
     toast.success("Copied", label);
   };
 

@@ -8,6 +8,7 @@ import { CardBrowser } from "@/components/CardBrowser";
 import { EmptyState } from "@/components/EmptyState";
 import { useToast } from "@/components/Toast";
 import { errorMessage } from "@/lib/errorMessage";
+import { writeClipboardText } from "@/lib/clipboard";
 import { fetchGameIndex, type GameIndexV1 } from "@/lib/nyano/gameIndex";
 import { generateRecommendedDeck, strategyLabel, type DeckStrategy } from "@/lib/demo_decks";
 
@@ -136,7 +137,7 @@ export function DecksPage() {
   };
 
   const copy = async (label: string, text: string) => {
-    await navigator.clipboard.writeText(text);
+    await writeClipboardText(text);
     toast.success("Copied", label);
   };
 

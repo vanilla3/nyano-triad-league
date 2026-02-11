@@ -5,6 +5,7 @@ import { Link } from "react-router-dom";
 import { EVENTS, formatEventPeriod, getEventStatus } from "@/lib/events";
 import { parseDeckRestriction } from "@/lib/deck_restriction";
 import { clearEventAttempts, deleteEventAttempt, listEventAttempts } from "@/lib/event_attempts";
+import { writeClipboardText } from "@/lib/clipboard";
 
 function StatusBadge(props: { status: string }) {
   const variant =
@@ -65,7 +66,7 @@ export function EventsPage() {
   const toast = useToast();
 
   const copyWithToast = async (label: string, v: string) => {
-    await navigator.clipboard.writeText(v);
+    await writeClipboardText(v);
     toast.success("Copied", label);
   };
 

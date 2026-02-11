@@ -16,6 +16,7 @@ import { CardMini } from "@/components/CardMini";
 import { TurnLog } from "@/components/TurnLog";
 import { buildCardsMapFromVector, buildTranscriptFromVector } from "@/lib/build";
 import { errorMessage } from "@/lib/errorMessage";
+import { writeClipboardText } from "@/lib/clipboard";
 import { stringifyWithBigInt } from "@/lib/json";
 import { base64UrlEncodeUtf8, tryGzipCompressUtf8ToBase64Url } from "@/lib/base64url";
 import { VECTORS, type VectorKey } from "@/lib/vectors";
@@ -173,7 +174,7 @@ export function PlaygroundPage() {
   const focusTurnIndex = step > 0 ? step - 1 : null;
 
   const copy = async (text: string) => {
-    await navigator.clipboard.writeText(text);
+    await writeClipboardText(text);
   };
   const toast = useToast();
 
