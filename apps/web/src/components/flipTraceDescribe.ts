@@ -134,3 +134,16 @@ export function flipTracesReadout(
 
   return `${playerLabel}が${coord(cellIdx)}に配置 → ${flipped}を奪取${chainNote}`;
 }
+
+/* ───────────────────────────────────────────────
+   Badge Color Variant (Sprint 35)
+   Determines CSS class for flip reason badge coloring.
+   ─────────────────────────────────────────────── */
+
+/** Determine badge color variant based on flip trace properties. */
+export function flipBadgeVariant(trace: FlipTraceV1): string {
+  if (trace.isChain) return "badge-violet";
+  if (trace.tieBreak) return "badge-sky";
+  if (trace.kind === "diag") return "badge-emerald";
+  return "badge-amber";
+}

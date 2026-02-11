@@ -5,6 +5,7 @@ import {
   flipTraceFull,
   flipTracesSummary,
   flipTracesReadout,
+  flipBadgeVariant,
 } from "../flipTraceDescribe";
 
 /* ------------------------------------------------------------------ */
@@ -220,5 +221,35 @@ describe("flipTracesReadout", () => {
         0,
       ),
     ).toBe("NekoがA1に配置 → A2・C2を奪取（連鎖あり！）");
+  });
+});
+
+/* ------------------------------------------------------------------ */
+/* flipBadgeVariant (Sprint 35)                                        */
+/* ------------------------------------------------------------------ */
+
+describe("flipBadgeVariant", () => {
+  it("returns badge-violet for chain flips", () => {
+    expect(flipBadgeVariant(makeTrace({ isChain: true }))).toBe("badge-violet");
+  });
+
+  it("returns badge-sky for tieBreak (janken) flips", () => {
+    expect(flipBadgeVariant(makeTrace({ tieBreak: true }))).toBe("badge-sky");
+  });
+
+  it("returns badge-emerald for diagonal flips", () => {
+    expect(flipBadgeVariant(makeTrace({ kind: "diag" }))).toBe("badge-emerald");
+  });
+
+  it("returns badge-amber for normal ortho flips", () => {
+    expect(flipBadgeVariant(makeTrace())).toBe("badge-amber");
+  });
+
+  it("chain takes priority over tieBreak", () => {
+    expect(flipBadgeVariant(makeTrace({ isChain: true, tieBreak: true }))).toBe("badge-violet");
+  });
+
+  it("tieBreak takes priority over diagonal", () => {
+    expect(flipBadgeVariant(makeTrace({ tieBreak: true, kind: "diag" }))).toBe("badge-sky");
   });
 });

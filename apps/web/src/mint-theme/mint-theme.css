@@ -1199,20 +1199,29 @@
   margin-left: auto;
 }
 
-.mint-battle-hud__player-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
+.mint-battle-hud__player-tag {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 24px;
+  padding: 1px 6px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  line-height: 1.4;
 }
 
-.mint-battle-hud__player-dot--a {
+.mint-battle-hud__player-tag--a {
   background: var(--mint-pa-base, #3b82f6);
-  box-shadow: 0 0 4px var(--mint-pa-glow, rgba(59, 130, 246, 0.4));
+  color: #fff;
+  box-shadow: 0 0 6px var(--mint-pa-glow, rgba(59, 130, 246, 0.5));
 }
 
-.mint-battle-hud__player-dot--b {
+.mint-battle-hud__player-tag--b {
   background: var(--mint-pb-base, #ef4444);
-  box-shadow: 0 0 4px var(--mint-pb-glow, rgba(239, 68, 68, 0.4));
+  color: #fff;
+  box-shadow: 0 0 6px var(--mint-pb-glow, rgba(239, 68, 68, 0.5));
 }
 
 .mint-battle-hud__phase-label {
