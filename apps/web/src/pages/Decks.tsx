@@ -7,6 +7,7 @@ import { CardMini } from "@/components/CardMini";
 import { CardBrowser } from "@/components/CardBrowser";
 import { EmptyState } from "@/components/EmptyState";
 import { useToast } from "@/components/Toast";
+import { errorMessage } from "@/lib/errorMessage";
 import { fetchGameIndex, type GameIndexV1 } from "@/lib/nyano/gameIndex";
 import { generateRecommendedDeck, strategyLabel, type DeckStrategy } from "@/lib/demo_decks";
 
@@ -90,8 +91,8 @@ export function DecksPage() {
     let tokenIds: bigint[];
     try {
       tokenIds = parseTokenIds(tokenText);
-    } catch (e: any) {
-      setError(e?.message ?? String(e));
+    } catch (e: unknown) {
+      setError(errorMessage(e));
       return;
     }
     const vErr = validateTokenIds(tokenIds);
@@ -105,8 +106,8 @@ export function DecksPage() {
       const bundles = await fetchNyanoCards(tokenIds);
       setPreviewCards(toCardsMap(bundles));
       toast.info("Preview loaded");
-    } catch (e: any) {
-      setError(e?.message ?? String(e));
+    } catch (e: unknown) {
+      setError(errorMessage(e));
     } finally {
       setPreviewLoading(false);
     }
@@ -118,8 +119,8 @@ export function DecksPage() {
     let tokenIds: bigint[];
     try {
       tokenIds = parseTokenIds(tokenText);
-    } catch (e: any) {
-      setError(e?.message ?? String(e));
+    } catch (e: unknown) {
+      setError(errorMessage(e));
       return;
     }
     const vErr = validateTokenIds(tokenIds);
@@ -151,8 +152,8 @@ export function DecksPage() {
       const { imported, skipped } = importDecksJson(importText);
       refresh();
       toast.success("Imported decks", `imported=${imported}, skipped=${skipped}`);
-    } catch (e: any) {
-      setError(e?.message ?? String(e));
+    } catch (e: unknown) {
+      setError(errorMessage(e));
     }
   };
 

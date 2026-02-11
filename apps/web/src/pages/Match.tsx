@@ -38,6 +38,7 @@ import { pickAiMove as pickAiMoveNew, type AiDifficulty, type AiReasonCode } fro
 import { generateMoveTip } from "@/lib/ai/move_tips";
 import { assessBoardAdvantage } from "@/lib/ai/board_advantage";
 import { annotateReplayMoves } from "@/lib/ai/replay_annotations";
+import { errorMessage } from "@/lib/errorMessage";
 import { AiNotesList } from "@/components/AiReasonDisplay";
 import { NyanoAvatar } from "@/components/NyanoAvatar";
 import { MiniTutorial } from "@/components/MiniTutorial";
@@ -539,8 +540,8 @@ export function MatchPage() {
         setOwners(null);
         setStatus(`Fast mode: loaded ${cardMap.size} cards from game index`);
       }
-    } catch (e: any) {
-      const msg = e?.message ?? String(e);
+    } catch (e: unknown) {
+      const msg = errorMessage(e);
       setError(`Game Index load failed: ${msg}`);
     } finally {
       setLoading(false);
@@ -601,8 +602,8 @@ export function MatchPage() {
 
       setStatus(`Verified: loaded ${bundles.size} cards from mainnet`);
       rpcStatusRef.current = { ok: true, timestampMs: Date.now() };
-    } catch (e: any) {
-      const msg = e?.message ?? String(e);
+    } catch (e: unknown) {
+      const msg = errorMessage(e);
       setError(msg);
       rpcStatusRef.current = { ok: false, message: msg, timestampMs: Date.now() };
 
@@ -661,8 +662,8 @@ export function MatchPage() {
       const previewHistory = full.boardHistory.slice(0, n + 1);
 
       return { ok: true, transcript, ruleset, rulesetId, full, previewTurns, previewHistory };
-    } catch (e: any) {
-      return { ok: false, error: e?.message ?? String(e) };
+    } catch (e: unknown) {
+      return { ok: false, error: errorMessage(e) };
     }
   }, [cards, effectiveDeckATokens, effectiveDeckBTokens, turns, firstPlayer, ruleset, rulesetId, seasonId, playerA, playerB, deadline, salt]);
 

@@ -270,3 +270,116 @@ describe("format → parse roundtrip", () => {
     }
   });
 });
+
+/* ================================================================== */
+/* Integration test matrix — format variant normalization              */
+/* ================================================================== */
+
+describe("format variant normalization matrix", () => {
+  /**
+   * All supported input formats should normalize to the same canonical
+   * output via parseChatMoveLoose. This is the key integration property:
+   * viewers can type in any format and the vote-keying logic sees one
+   * canonical string.
+   */
+
+  // ── Side A, slot 2, cell B2 (index 4) ─────────────────────────
+  const CANONICAL_A2_B2 = "#triad A2->B2";
+
+  it.each([
+    ["canonical",        "#triad A2->B2"],
+    ["unicode arrow →",  "#triad A2→B2"],
+    ["unicode arrow ⇒",  "#triad A2⇒B2"],
+    ["case variation",   "#TRIAD a2->b2"],
+    ["embedded noise",   "lets go #triad A2->B2 gg"],
+    ["legacy !move",     "!move 4 2"],
+    ["arrow shorthand",  "2->B2"],
+    ["space cell-first", "B2 2"],
+    ["space card-first", "2 B2"],
+    ["digit cell-first", "4 2"],
+  ] as const)("variant %s → %s", (_label, input) => {
+    const r = parseChatMoveLoose(input, 0);
+    expect(r).not.toBeNull();
+    expect(r!.normalizedText).toBe(CANONICAL_A2_B2);
+    expect(r!.cell).toBe(4);
+    expect(r!.cardIndex).toBe(1);
+  });
+
+  // ── Side B, slot 3, cell C1 (index 2), wm=A2 (index 3) ───────
+  const CANONICAL_B3_C1_WM = "#triad B3->C1 wm=A2";
+
+  it.each([
+    ["canonical",        "#triad B3->C1 wm=A2"],
+    ["case variation",   "#triad b3->c1 WM=a2"],
+    ["embedded noise",   "love this #triad B3->C1 wm=A2 kappa"],
+  ] as const)("variant (wm) %s → %s", (_label, input) => {
+    const r = parseChatMoveLoose(input, 1);
+    expect(r).not.toBeNull();
+    expect(r!.normalizedText).toBe(CANONICAL_B3_C1_WM);
+    expect(r!.side).toBe(1);
+    expect(r!.slot).toBe(3);
+    expect(r!.warningMarkCell).toBe(3);
+  });
+
+  // ── Corner cells roundtrip through all parsers ─────────────────
+  it("all 9 cells normalize consistently through loose and strict", () => {
+    for (let cell = 0; cell < 9; cell++) {
+      for (let slot = 1; slot <= 5; slot++) {
+        const text = formatViewerMoveText({ side: 0, slot, cell });
+        const strict = parseViewerMoveText(text);
+        const loose = parseViewerMoveTextLoose(text);
+        const chat = parseChatMoveLoose(text, 0);
+
+        expect(strict).not.toBeNull();
+        expect(loose).not.toBeNull();
+        expect(chat).not.toBeNull();
+
+        // All three parsers must agree
+        expect(strict!.normalizedText).toBe(text);
+        expect(loose!.normalizedText).toBe(text);
+        expect(chat!.normalizedText).toBe(text);
+      }
+    }
+  });
+
+  // ── Side propagation: legacy formats inherit side param ────────
+  it("legacy formats carry side parameter correctly", () => {
+    for (const side of [0, 1] as const) {
+      const sideChar = side === 0 ? "A" : "B";
+      const r = parseChatMoveLoose("!move 0 1", side);
+      expect(r).not.toBeNull();
+      expect(r!.side).toBe(side);
+      expect(r!.normalizedText).toMatch(new RegExp(`^#triad ${sideChar}`));
+    }
+  });
+
+  // ── Rejection matrix: none of these should parse ───────────────
+  it.each([
+    ["empty",           ""],
+    ["whitespace only", "   "],
+    ["random words",    "hello world"],
+    ["partial #triad",  "#triad"],
+    ["#triad no cell",  "#triad A2->"],
+    ["out-of-range slot", "#triad A6->B2"],
+    ["out-of-range col", "#triad A2->D2"],
+    ["out-of-range row", "#triad A2->A4"],
+  ] as const)("rejects invalid: %s", (_label, input) => {
+    expect(parseChatMoveLoose(input)).toBeNull();
+  });
+
+  // ── Fullwidth & special Unicode separators ─────────────────────
+  it("handles fullwidth equals in wm", () => {
+    // fullwidth ＝
+    const r = parseChatMoveLoose("!move 4 2 wm＝6", 0);
+    expect(r).not.toBeNull();
+    expect(r!.warningMarkCell).toBe(6);
+  });
+
+  it("handles en-dash separator", () => {
+    // en-dash –> should be normalized to ->
+    const r = parseChatMoveLoose("2–>B2", 0);
+    expect(r).not.toBeNull();
+    expect(r!.cell).toBe(4);
+    expect(r!.cardIndex).toBe(1);
+  });
+});

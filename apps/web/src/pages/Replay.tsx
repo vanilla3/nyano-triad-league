@@ -28,6 +28,7 @@ import {
   safeGzipDecompressUtf8FromBase64Url,
   tryGzipCompressUtf8ToBase64Url,
 } from "@/lib/base64url";
+import { errorMessage } from "@/lib/errorMessage";
 import { stringifyWithBigInt } from "@/lib/json";
 import { formatEventPeriod, getEventById, getEventStatus } from "@/lib/events";
 import { hasEventAttempt, upsertEventAttempt, type EventAttemptV1 } from "@/lib/event_attempts";
@@ -340,16 +341,16 @@ protocolV1: {
         });
 
         if (!opts?.silent) toast.success("Overlay", "Sent to OBS overlay");
-      } catch (e: any) {
+      } catch (e: unknown) {
         publishOverlayState({
           version: 1,
           updatedAtMs,
           mode: "replay",
           eventId: event?.id ?? (eventId || undefined),
           eventTitle: event?.title,
-          error: e?.message ?? String(e),
+          error: errorMessage(e),
         });
-        if (!opts?.silent) toast.error("Overlay", e?.message ?? String(e));
+        if (!opts?.silent) toast.error("Overlay", errorMessage(e));
       }
     },
     [sim, step, event?.id, event?.title, eventId, toast]
@@ -419,8 +420,8 @@ protocolV1: {
       const stepMax = current.boardHistory.length - 1;
       const startStep = clampInt(override?.step ?? 0, 0, stepMax);
       setStep(startStep);
-    } catch (e: any) {
-      setSim({ ok: false, error: e?.message ?? String(e) });
+    } catch (e: unknown) {
+      setSim({ ok: false, error: errorMessage(e) });
     } finally {
       setLoading(false);
     }
@@ -769,8 +770,8 @@ const buildShareLink = async (): Promise<string> => {
                       try {
                         const link = await buildShareLink();
                         await copyWithToast("share link", link);
-                      } catch (e: any) {
-                        setSim({ ok: false, error: e?.message ?? String(e) });
+                      } catch (e: unknown) {
+                        setSim({ ok: false, error: errorMessage(e) });
                       }
                     })();
                   }}
@@ -790,8 +791,8 @@ const buildShareLink = async (): Promise<string> => {
                             try {
                               await saveToMyAttempts();
                               toast.success("Saved", "Added to My Attempts");
-                            } catch (e: any) {
-                              setSim({ ok: false, error: e?.message ?? String(e) });
+                            } catch (e: unknown) {
+                              setSim({ ok: false, error: errorMessage(e) });
                             }
                           })();
                         }}
@@ -934,8 +935,8 @@ const buildShareLink = async (): Promise<string> => {
                               try {
                                 await saveToMyAttempts();
                                 toast.success("Saved", "Added to My Attempts");
-                              } catch (e: any) {
-                                setSim({ ok: false, error: e?.message ?? String(e) });
+                              } catch (e: unknown) {
+                                setSim({ ok: false, error: errorMessage(e) });
                               }
                             })();
                           }}
