@@ -1,5 +1,6 @@
 import React from "react";
 import { useToast } from "./Toast";
+import { writeClipboardText } from "@/lib/clipboard";
 
 function shortenMiddle(s: string, head = 10, tail = 8): string {
   if (s.length <= head + tail + 3) return s;
@@ -24,8 +25,12 @@ export function CopyField(props: {
   const display = expanded ? v : shortenMiddle(v, 14, 10);
 
   const doCopy = async () => {
-    await navigator.clipboard.writeText(copyText);
-    toast.success("Copied", props.label);
+    try {
+      await writeClipboardText(copyText);
+      toast.success("Copied", props.label);
+    } catch {
+      toast.error("Copy failed", "Clipboard unavailable");
+    }
   };
 
   return (

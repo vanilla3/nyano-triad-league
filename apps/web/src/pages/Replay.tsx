@@ -38,6 +38,7 @@ import { parseTranscriptV1Json } from "@/lib/transcript_import";
 import { annotateReplayMoves } from "@/lib/ai/replay_annotations";
 import { assessBoardAdvantage, type BoardAdvantage } from "@/lib/ai/board_advantage";
 import { AdvantageBadge } from "@/components/AdvantageBadge";
+import { writeClipboardText } from "@/lib/clipboard";
 
 type Mode = "auto" | "v1" | "v2" | "compare";
 
@@ -225,12 +226,16 @@ export function ReplayPage() {
   }, [sim]);
 
   const copy = async (v: string) => {
-    await navigator.clipboard.writeText(v);
+    await writeClipboardText(v);
   };
 
   const copyWithToast = async (label: string, v: string) => {
-    await copy(v);
-    toast.success("Copied", label);
+    try {
+      await copy(v);
+      toast.success("Copied", label);
+    } catch (e: unknown) {
+      toast.error("Copy failed", errorMessage(e));
+    }
   };
 
   const pushOverlay = React.useCallback(
@@ -923,7 +928,16 @@ protocolV1: {
                       </button>
                       <button
                         className="btn btn-sm btn-primary"
-                        onClick={async () => copyWithToast("share link", await buildShareLink())}
+                        onClick={() => {
+                          void (async () => {
+                            try {
+                              const link = await buildShareLink();
+                              await copyWithToast("share link", link);
+                            } catch (e: unknown) {
+                              toast.error("Share failed", errorMessage(e));
+                            }
+                          })();
+                        }}
                       >
                         Share
                       </button>
