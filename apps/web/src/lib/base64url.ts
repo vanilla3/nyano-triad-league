@@ -39,57 +39,34 @@ export function safeBase64UrlDecodeUtf8(b64url: string): string | null {
   }
 }
 
-// Compression/DecompressionStream are not in all TypeScript lib targets.
-// Use a structural type so we avoid `globalThis as any`.
-type StreamCtor = new (format: string) => { readable: ReadableStream; writable: WritableStream };
-type GlobalWithStreams = typeof globalThis & {
-  CompressionStream?: StreamCtor;
-  DecompressionStream?: StreamCtor;
-};
+/* ─── Gzip via fflate (sync, 8kB, all environments) ─── */
 
-/** Gzip-compress UTF-8 text and return base64url(bytes). Requires browser CompressionStream. */
-export async function gzipCompressUtf8ToBase64Url(text: string): Promise<string> {
-  const CompressionStreamCtor = (globalThis as GlobalWithStreams).CompressionStream;
-  if (typeof CompressionStreamCtor !== "function") throw new Error("CompressionStream is not available");
+import { gzipSync, decompressSync } from "fflate";
 
-  const input = new TextEncoder().encode(text);
-
-  // Pipe through gzip
-  const cs = new CompressionStreamCtor("gzip");
-  const writer = cs.writable.getWriter();
-  await writer.write(input);
-  await writer.close();
-
-  const buf = await new Response(cs.readable).arrayBuffer();
-  return base64UrlEncodeBytes(new Uint8Array(buf));
+/** Gzip-compress UTF-8 text and return base64url(bytes). */
+export function gzipCompressUtf8ToBase64Url(text: string): string {
+  const compressed = gzipSync(new TextEncoder().encode(text));
+  return base64UrlEncodeBytes(compressed);
 }
 
-/** Reverse of gzipCompressUtf8ToBase64Url. Requires browser DecompressionStream. */
-export async function gzipDecompressUtf8FromBase64Url(b64url: string): Promise<string> {
-  const DecompressionStreamCtor = (globalThis as GlobalWithStreams).DecompressionStream;
-  if (typeof DecompressionStreamCtor !== "function") throw new Error("DecompressionStream is not available");
-
-  const input = base64UrlDecodeBytes(b64url);
-  const ds = new DecompressionStreamCtor("gzip");
-
-  const stream = new Response(input as BlobPart).body;
-  if (!stream) throw new Error("no response body stream");
-
-  const outBuf = await new Response(stream.pipeThrough(ds)).arrayBuffer();
-  return new TextDecoder().decode(outBuf);
+/** Decompress base64url-encoded gzip bytes and return UTF-8 text. */
+export function gzipDecompressUtf8FromBase64Url(b64url: string): string {
+  return new TextDecoder().decode(decompressSync(base64UrlDecodeBytes(b64url)));
 }
 
-export async function safeGzipDecompressUtf8FromBase64Url(b64url: string): Promise<string | null> {
+/** Safe wrapper: returns null instead of throwing. */
+export function safeGzipDecompressUtf8FromBase64Url(b64url: string): string | null {
   try {
-    return await gzipDecompressUtf8FromBase64Url(b64url);
+    return gzipDecompressUtf8FromBase64Url(b64url);
   } catch {
     return null;
   }
 }
 
-export async function tryGzipCompressUtf8ToBase64Url(text: string): Promise<string | null> {
+/** Safe wrapper: returns null instead of throwing. */
+export function tryGzipCompressUtf8ToBase64Url(text: string): string | null {
   try {
-    return await gzipCompressUtf8ToBase64Url(text);
+    return gzipCompressUtf8ToBase64Url(text);
   } catch {
     return null;
   }

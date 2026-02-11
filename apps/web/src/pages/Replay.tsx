@@ -444,7 +444,7 @@ protocolV1: {
 
     const auto = async () => {
       if (initialZ) {
-        const decoded = await safeGzipDecompressUtf8FromBase64Url(initialZ);
+        const decoded = safeGzipDecompressUtf8FromBase64Url(initialZ);
         if (!decoded) {
           setSim({ ok: false, error: "Invalid share link (z parameter could not be decompressed)." });
           return;
@@ -661,7 +661,7 @@ protocolV1: {
   };
 
   
-  const buildCanonicalReplayLink = async (): Promise<string> => {
+  const buildCanonicalReplayLink = (): string => {
     const trimmed = text.trim();
     if (!trimmed) throw new Error("transcript JSON is empty");
 
@@ -671,7 +671,7 @@ protocolV1: {
     url.searchParams.delete("t");
     url.searchParams.delete("z");
 
-    const z = await tryGzipCompressUtf8ToBase64Url(trimmed);
+    const z = tryGzipCompressUtf8ToBase64Url(trimmed);
     if (z) url.searchParams.set("z", z);
     else url.searchParams.set("t", base64UrlEncodeUtf8(trimmed));
 
@@ -688,7 +688,7 @@ protocolV1: {
       throw new Error("draw matches are not eligible for event attempts");
     }
 
-    const replayUrl = await buildCanonicalReplayLink();
+    const replayUrl = buildCanonicalReplayLink();
 
     const a: EventAttemptV1 = {
       id: sim.current.matchId,
@@ -707,13 +707,13 @@ protocolV1: {
     upsertEventAttempt(a);
   };
 
-  const buildShareLink = async (): Promise<string> => {
+  const buildShareLink = (): string => {
     // Use sim transcript when text state is empty (e.g., loaded via ?z= share link)
     const trimmed = text.trim() || (sim.ok ? stringifyWithBigInt(sim.transcript) : "");
     if (!trimmed) throw new Error("transcript JSON is empty - paste a transcript or load a share link first");
 
     // Build share URL using appAbsoluteUrl to respect BASE_URL for subpath deployments.
-    const z = await tryGzipCompressUtf8ToBase64Url(trimmed);
+    const z = tryGzipCompressUtf8ToBase64Url(trimmed);
     const dataParam = z ? `z=${z}` : `t=${base64UrlEncodeUtf8(trimmed)}`;
     return appAbsoluteUrl(`replay?${dataParam}&mode=${mode}&step=${step}`);
   };
@@ -792,7 +792,7 @@ protocolV1: {
                   onClick={() => {
                     void (async () => {
                       try {
-                        const link = await buildShareLink();
+                        const link = buildShareLink();
                         await copyWithToast("share link", link);
                       } catch (e: unknown) {
                         setSim({ ok: false, error: errorMessage(e) });
@@ -949,7 +949,7 @@ protocolV1: {
                         onClick={() => {
                           void (async () => {
                             try {
-                              const link = await buildShareLink();
+                              const link = buildShareLink();
                               await copyWithToast("share link", link);
                             } catch (e: unknown) {
                               toast.error("Share failed", errorMessage(e));
