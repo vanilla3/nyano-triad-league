@@ -29,10 +29,10 @@ export function detectVfxQuality(): VfxQuality {
     return "off";
   }
 
-  // Navigator hints (not available in all browsers)
-  const nav: Record<string, unknown> = typeof navigator !== "undefined" ? navigator : {};
-  const mem = typeof nav.deviceMemory === "number" ? nav.deviceMemory : null;
-  const cores = typeof nav.hardwareConcurrency === "number" ? nav.hardwareConcurrency : null;
+  // Navigator hints (not available in all browsers; deviceMemory is non-standard)
+  const nav: any = typeof navigator !== "undefined" ? navigator : {};
+  const mem: number | null = typeof nav.deviceMemory === "number" ? nav.deviceMemory : null;
+  const cores: number | null = typeof nav.hardwareConcurrency === "number" ? nav.hardwareConcurrency : null;
 
   // 2. Weak device
   if ((mem !== null && mem < 4) || (cores !== null && cores < 4)) {
