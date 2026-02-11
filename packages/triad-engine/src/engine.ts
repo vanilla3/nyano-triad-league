@@ -110,6 +110,7 @@ export const DEFAULT_RULESET_CONFIG_V1: RulesetConfigV1 = {
       },
     },
   },
+  meta: {},
 };
 
  /**
@@ -448,6 +449,12 @@ export function simulateMatchV1(
 
   const te = rules.synergy.traitEffects;
   const traitEffectsEnabled = te.enabled;
+  const chainCapPerTurn = rules.meta?.chainCapPerTurn;
+  if (chainCapPerTurn !== undefined) {
+    if (!Number.isInteger(chainCapPerTurn) || chainCapPerTurn < 0) {
+      throw new Error("meta.chainCapPerTurn must be a non-negative integer");
+    }
+  }
 
   const traitActive = (trait: TraitType): boolean => {
     if (!traitEffectsEnabled) return false;
@@ -661,11 +668,13 @@ return true;
   const applyChainFlips = (startIdx: number, flipTraces: FlipTraceV1[]): number => {
     // Returns number of flips that happened during this placement (for combo bonus).
     let flipCount = 0;
+    const canFlipMore = (): boolean => chainCapPerTurn === undefined || flipCount < chainCapPerTurn;
 
     const queue: Array<{ idx: number; isChain: boolean }> = [{ idx: startIdx, isChain: false }];
     const inQueue = new Set<number>([startIdx]);
 
     while (queue.length) {
+      if (!canFlipMore()) break;
       const { idx: attackerIdx, isChain } = queue.shift()!;
       inQueue.delete(attackerIdx);
 
@@ -674,6 +683,7 @@ return true;
 
       // Orthogonal attacks
       for (const { dir, opp } of DIRS) {
+        if (!canFlipMore()) break;
         const n = neighborIndex(attackerIdx, dir);
         if (n === null) continue;
         const flipped = compareAndMaybeFlip(attackerIdx, n, isChain, { kind: "ortho", dir, opp }, flipTraces);
@@ -687,6 +697,7 @@ return true;
       // Aqua: diagonal attacks
       if (traitEffectsEnabled && te.aqua.enabled && cardHasTrait(attacker.card, "aqua")) {
         for (const d of DIAGS) {
+          if (!canFlipMore()) break;
           const n = diagNeighborIndex(attackerIdx, d.dx, d.dy);
           if (n === null) continue;
           const flipped = compareAndMaybeFlip(attackerIdx, n, isChain, {

@@ -48,7 +48,9 @@
 - [ ] 「Wind（先攻/後攻選択）」の公平な表現（commit-reveal / seed / 両者合意など）
 
 ### B. ゲームの“面白さ”を積み増す（ただし決定論で）
-- [ ] メタ（Layer4）の小さな可変（例：corner boost / center locked / chain cap）を1つ追加
+- [x] メタ（Layer4）の小さな可変（例：corner boost / center locked / chain cap）を1つ追加
+  - `meta.chainCapPerTurn` を TS参照エンジンに追加（1ターンの成功フリップ数を上限化可能）
+  - v1では engine-only（rulesetId canonicalization には未反映）
 
 ### C. 自走するコミュニティ設計（運営が消えても回る）
 - [ ] 「シーズンの議会」：ruleset proposal / vote / adopt の最小プロトコル
