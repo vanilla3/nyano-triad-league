@@ -39,6 +39,7 @@ import { annotateReplayMoves } from "@/lib/ai/replay_annotations";
 import { assessBoardAdvantage, type BoardAdvantage } from "@/lib/ai/board_advantage";
 import { AdvantageBadge } from "@/components/AdvantageBadge";
 import { writeClipboardText } from "@/lib/clipboard";
+import { appAbsoluteUrl } from "@/lib/appUrl";
 
 type Mode = "auto" | "v1" | "v2" | "compare";
 
@@ -685,19 +686,10 @@ protocolV1: {
     const trimmed = text.trim() || (sim.ok ? stringifyWithBigInt(sim.transcript) : "");
     if (!trimmed) throw new Error("transcript JSON is empty — paste a transcript or load a share link first");
 
-    const url = new URL(window.location.href);
-
-    // Prefer compressed share param (z) if supported; fall back to raw (t).
-    url.searchParams.delete("t");
-    url.searchParams.delete("z");
-
+    // Build share URL using appAbsoluteUrl to respect BASE_URL for subpath deployments.
     const z = await tryGzipCompressUtf8ToBase64Url(trimmed);
-    if (z) url.searchParams.set("z", z);
-    else url.searchParams.set("t", base64UrlEncodeUtf8(trimmed));
-
-    url.searchParams.set("mode", mode);
-    url.searchParams.set("step", String(step));
-    return url.toString();
+    const dataParam = z ? `z=${z}` : `t=${base64UrlEncodeUtf8(trimmed)}`;
+    return appAbsoluteUrl(`replay?${dataParam}&mode=${mode}&step=${step}`);
   };
 
   return (

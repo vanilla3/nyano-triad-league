@@ -15,8 +15,13 @@ import { NyanoPage } from "./pages/Nyano";
 import { RulesetsPage } from "./pages/Rulesets";
 import { StreamPage } from "./pages/Stream";
 import { OverlayPage } from "./pages/Overlay";
+import { getAppBasePath } from "./lib/appUrl";
 
 import "./styles.css";
+
+// Support deployment under a subpath (e.g. GitHub Pages `/nyano-triad-league/`).
+// Vite's BASE_URL is used both for asset loading and router basename.
+const basename = getAppBasePath().replace(/\/$/, "") || "/";
 
 const router = createBrowserRouter([
   {
@@ -39,7 +44,7 @@ const router = createBrowserRouter([
       { path: "stream", element: <StreamPage /> },
     ],
   },
-]);
+], { basename });
 
 const queryClient = new QueryClient({
   defaultOptions: {

@@ -1,5 +1,6 @@
 import React from "react";
 import { useNyanoTokenMetadata } from "@/lib/nyano/useNyanoTokenMetadata";
+import { buildArweaveFallbacks } from "@/lib/arweave_gateways";
 import { NyanoTokenPlaceholder } from "./NyanoTokenPlaceholder";
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -81,17 +82,7 @@ export function NyanoCardArt({ tokenId, size = "md", fill = false, className = "
   );
 }
 
-/* ── Internal: Arweave subdomain → canonical gateway fallback ──────── */
-
-function rewriteToFallbackGateway(url: string): string | null {
-  // https://<hash>.arweave.net/<txid>/<path> → https://arweave.net/<txid>/<path>
-  const m = url.match(/^https:\/\/[^.]+\.arweave\.net\/(.+)$/);
-  return m ? `https://arweave.net/${m[1]}` : null;
-}
-
-/* ── Internal: Token image with error fallback ─────────────────────── */
-
-type ImgState = "primary" | "fallback" | "failed";
+/* ── Internal: Token image with staged error fallback ──────────────── */
 
 function TokenImage({
   src,
@@ -106,16 +97,18 @@ function TokenImage({
   fill?: boolean;
   className: string;
 }) {
-  const [state, setState] = React.useState<ImgState>("primary");
   const [activeSrc, setActiveSrc] = React.useState(src);
+  const [fallbackQueue, setFallbackQueue] = React.useState<string[]>(() => buildArweaveFallbacks(src));
+  const [failed, setFailed] = React.useState(false);
 
   // Reset when src changes (e.g. different token)
   React.useEffect(() => {
-    setState("primary");
     setActiveSrc(src);
+    setFallbackQueue(buildArweaveFallbacks(src));
+    setFailed(false);
   }, [src]);
 
-  if (state === "failed") {
+  if (failed) {
     return (
       <NyanoTokenPlaceholder
         tokenId={tokenId}
@@ -145,16 +138,13 @@ function TokenImage({
         loading="lazy"
         className="h-full w-full object-cover"
         onError={() => {
-          if (state === "primary") {
-            const fallbackUrl = rewriteToFallbackGateway(activeSrc);
-            if (fallbackUrl) {
-              setActiveSrc(fallbackUrl);
-              setState("fallback");
-            } else {
-              setState("failed");
-            }
+          // Try next fallback gateway in queue
+          if (fallbackQueue.length > 0) {
+            const [next, ...rest] = fallbackQueue;
+            setActiveSrc(next);
+            setFallbackQueue(rest);
           } else {
-            setState("failed");
+            setFailed(true);
           }
         }}
       />
