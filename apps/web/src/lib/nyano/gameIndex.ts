@@ -50,7 +50,7 @@ export type GameIndexV1 = {
   fields: string[];
   tokens: Record<string, number[]>;
   missing: number[];
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 };
 
 export type IndexTokenGameParams = {
@@ -61,6 +61,18 @@ export type IndexTokenGameParams = {
 
 const STORAGE_KEY = "nyano.gameIndex.v1";
 
+/**
+ * Clear the localStorage cache for the game index.
+ * Useful for forcing a fresh fetch after metadata configuration changes.
+ */
+export function clearGameIndexCache(): void {
+  try {
+    localStorage.removeItem(STORAGE_KEY);
+  } catch {
+    // localStorage unavailable; ignore
+  }
+}
+
 function toIntSafe(v: unknown): number {
   const n = typeof v === "bigint" ? Number(v) : Number(v);
   return Number.isFinite(n) ? Math.trunc(n) : 0;
@@ -70,17 +82,17 @@ function isValidHand(n: number): n is JankenHand {
   return n === 0 || n === 1 || n === 2;
 }
 
-function safeReadJsonFromStorage(key: string): any | undefined {
+function safeReadJsonFromStorage(key: string): Record<string, unknown> | undefined {
   try {
     const raw = localStorage.getItem(key);
     if (!raw) return undefined;
-    return JSON.parse(raw);
+    return JSON.parse(raw) as Record<string, unknown>;
   } catch {
     return undefined;
   }
 }
 
-function safeWriteJsonToStorage(key: string, value: any): void {
+function safeWriteJsonToStorage(key: string, value: unknown): void {
   try {
     localStorage.setItem(key, JSON.stringify(value));
   } catch {
@@ -178,7 +190,21 @@ export function searchCards(
 }
 
 /**
- * Fetch index from /game/index.v1.json.
+ * Build the URL for the game index JSON, respecting Vite's BASE_URL
+ * so the app works when deployed under a subpath (e.g. GitHub Pages).
+ */
+export function resolveGameIndexUrl(): string {
+  const base =
+    typeof import.meta !== "undefined"
+      ? (import.meta.env?.BASE_URL as string | undefined)
+      : undefined;
+  // Ensure trailing slash so path concatenation is clean
+  const prefix = base && base !== "/" ? base.replace(/\/$/, "") : "";
+  return `${prefix}/game/index.v1.json`;
+}
+
+/**
+ * Fetch index from /game/index.v1.json (respects BASE_URL for subpath deployments).
  * Includes a tiny localStorage cache for faster repeat loads.
  */
 export async function fetchGameIndex(opts?: { force?: boolean }): Promise<GameIndexV1 | null> {
@@ -191,15 +217,16 @@ export async function fetchGameIndex(opts?: { force?: boolean }): Promise<GameIn
     }
   }
 
-  const res = await fetch("/game/index.v1.json").catch(() => null);
+  const url = resolveGameIndexUrl();
+  const res = await fetch(url).catch(() => null);
   if (!res || !res.ok) return null;
 
-  const json = (await res.json().catch(() => null)) as any;
+  const json = (await res.json().catch(() => null)) as GameIndexV1 | null;
   if (!json || json.v !== 1 || !json.tokens) return null;
 
   if (typeof window !== "undefined") {
     safeWriteJsonToStorage(STORAGE_KEY, json);
   }
 
-  return json as GameIndexV1;
+  return json;
 }
