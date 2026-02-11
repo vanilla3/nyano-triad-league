@@ -489,7 +489,7 @@ export function OverlayPage() {
 
                 return (
                   <div key={i} className={cellClass(i)} title={`Cell ${i} (${cellIndexToCoord(i)})`} role="gridcell" aria-label={`${cellIndexToCoord(i)}${board[i]?.owner === 0 ? " Player A" : board[i]?.owner === 1 ? " Player B" : " empty"}`}>
-                    <div className="absolute left-2 top-2 rounded-full bg-white/80 px-2 py-0.5 font-semibold text-slate-500" style={{ fontSize: controls ? undefined : "var(--ol-badge-font, 10px)" }}>
+                    <div className="absolute left-2 top-2 rounded-full bg-white/80 px-2 py-0.5 font-semibold text-slate-500" style={{ fontSize: controls ? undefined : "var(--ol-cell-label, var(--ol-badge-font, 10px))" }}>
                       {cellIndexToCoord(i)}
                     </div>
 
@@ -645,7 +645,7 @@ export function OverlayPage() {
                 ) : null}
               </div>
 
-              <div className="mt-2">
+              <div className="mt-2" style={{ fontSize: controls ? undefined : "var(--ol-score, 22px)" }}>
                 <ScoreBar
                   board={board as unknown as import("@nyano/triad-engine").BoardState}
                   moveCount={typeof state?.turn === "number" ? state.turn : 0}

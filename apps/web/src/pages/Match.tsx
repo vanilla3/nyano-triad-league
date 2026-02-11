@@ -198,12 +198,10 @@ function ShareQrCode({ sim, event }: { sim: SimState; event: EventV1 | null }) {
   React.useEffect(() => {
     if (!sim.ok) return;
     const json = stringifyWithBigInt(sim.transcript, 0);
-    void (async () => {
-      const z = await tryGzipCompressUtf8ToBase64Url(json);
-      const origin = window.location.origin;
-      const qp = `&step=9${event ? `&event=${encodeURIComponent(event.id)}` : ""}`;
-      setUrl(z ? `${origin}/replay?z=${z}${qp}` : `${origin}/replay?t=${base64UrlEncodeUtf8(json)}${qp}`);
-    })();
+    const z = tryGzipCompressUtf8ToBase64Url(json);
+    const origin = window.location.origin;
+    const qp = `&step=9${event ? `&event=${encodeURIComponent(event.id)}` : ""}`;
+    setUrl(z ? `${origin}/replay?z=${z}${qp}` : `${origin}/replay?t=${base64UrlEncodeUtf8(json)}${qp}`);
   }, [sim, event]);
 
   if (!url) return <div className="text-xs text-slate-400">Generating...</div>;
@@ -1142,13 +1140,13 @@ export function MatchPage() {
   /** Build replay URL (relative or absolute). Respects BASE_URL for subpath deployments.
    *  v2: embeds card data in the payload so Replay can work without RPC/GameIndex.
    *  Falls back to v1 (transcript-only) if cards haven't loaded yet. */
-  const buildReplayUrl = React.useCallback(async (absolute?: boolean): Promise<string | null> => {
+  const buildReplayUrl = React.useCallback((absolute?: boolean): string | null => {
     if (!sim.ok) return null;
     // v2 when cards available; v1 fallback otherwise
     const json = cards
       ? stringifyReplayBundle(buildReplayBundleV2(sim.transcript, cards))
       : stringifyWithBigInt(sim.transcript, 0);
-    const z = await tryGzipCompressUtf8ToBase64Url(json);
+    const z = tryGzipCompressUtf8ToBase64Url(json);
     const qp = `&step=9${event ? `&event=${encodeURIComponent(event.id)}` : ""}`;
     const replayPath = z ? `replay?z=${z}${qp}` : `replay?t=${base64UrlEncodeUtf8(json)}${qp}`;
     return absolute ? appAbsoluteUrl(replayPath) : `/replay?${z ? `z=${z}` : `t=${base64UrlEncodeUtf8(json)}`}${qp}`;
@@ -1157,7 +1155,7 @@ export function MatchPage() {
   const copyShareUrl = async () => {
     setError(null);
     try {
-      const url = await buildReplayUrl(true);
+      const url = buildReplayUrl(true);
       if (!url) { toast.warn("Share", "Match not ready — play 9 turns first"); return; }
       await copyToClipboard(url);
       toast.success("Copied!", "Share URL copied to clipboard");
@@ -1170,7 +1168,7 @@ export function MatchPage() {
     setError(null);
     setStatus(null);
     try {
-      const url = await buildReplayUrl(false);
+      const url = buildReplayUrl(false);
       if (!url) { toast.warn("Replay", "Match not ready — play 9 turns first"); return; }
       // SPA navigation via react-router (popup-safe, preserves client state)
       navigate(url);
@@ -2193,7 +2191,7 @@ export function MatchPage() {
                         </button>
                         <button className="btn text-xs" onClick={async () => {
                           try {
-                            const url = await buildReplayUrl(true);
+                            const url = buildReplayUrl(true);
                             if (!url) { toast.warn("Share", "Match not ready"); return; }
                             const msg = `Nyano Triad で対戦したにゃ！\n${url}`;
                             await copyToClipboard(msg);

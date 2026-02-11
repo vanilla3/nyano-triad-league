@@ -182,7 +182,7 @@ export function PlaygroundPage() {
     toast.success("Copied", label);
   };
 
-  const buildReplayLink = async (): Promise<string> => {
+  const buildReplayLink = (): string => {
     if (!sim.ok) throw new Error("simulation is not ready");
 
     // NOTE: Replay page replays using *on-chain* Nyano stats fetched via RPC.
@@ -192,7 +192,7 @@ export function PlaygroundPage() {
     const base = new URL(window.location.origin);
     const url = new URL("/replay", base);
 
-    const z = await tryGzipCompressUtf8ToBase64Url(transcriptJson);
+    const z = tryGzipCompressUtf8ToBase64Url(transcriptJson);
     if (z) url.searchParams.set("z", z);
     else url.searchParams.set("t", base64UrlEncodeUtf8(transcriptJson));
 
@@ -445,7 +445,7 @@ export function PlaygroundPage() {
                       onClick={() => {
                         void (async () => {
                           try {
-                            const link = await buildReplayLink();
+                            const link = buildReplayLink();
                             await copyWithToast("replay link", link);
                           } catch (e: unknown) {
                             await copyWithToast("error", errorMessage(e));
