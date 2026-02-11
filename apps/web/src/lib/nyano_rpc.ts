@@ -245,8 +245,12 @@ export async function pingRpcUrl(rpcUrl: string): Promise<{ ok: boolean; chainId
 
     if (!res.ok) return { ok: false, error: `HTTP ${res.status}` };
 
-    const json = (await res.json().catch(() => null)) as any;
-    const chainId = String(json?.result ?? "");
+    const json: unknown = await res.json().catch(() => null);
+    const chainId = String(
+      typeof json === "object" && json !== null
+        ? ((json as Record<string, unknown>).result ?? "")
+        : "",
+    );
     if (!chainId) return { ok: false, error: "bad response" };
 
     return { ok: true, chainId };

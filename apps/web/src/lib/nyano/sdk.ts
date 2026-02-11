@@ -71,7 +71,13 @@ export async function readTokenGameDataBatch(tokenIds: bigint[]): Promise<TokenG
   const client = getClient();
   const address = getContractAddress();
 
-  const calls: any[] = [];
+  type NyanoCall = {
+    address: `0x${string}`;
+    abi: typeof NYANO_ABI;
+    functionName: string;
+    args: readonly [bigint];
+  };
+  const calls: NyanoCall[] = [];
   for (const tokenId of tokenIds) {
     calls.push({ address, abi: NYANO_ABI, functionName: "exists", args: [tokenId] });
     calls.push({ address, abi: NYANO_ABI, functionName: "ownerOf", args: [tokenId] });
@@ -100,7 +106,7 @@ export async function readTokenGameDataBatch(tokenIds: bigint[]): Promise<TokenG
       continue;
     }
 
-    const owner = ownerR.status === "success" ? (ownerR.result as `0x${string}`) : undefined;
+    const owner = ownerR.status === "success" ? (ownerR.result as unknown as `0x${string}`) : undefined;
 
     let hand: JankenHand | undefined;
     if (handR.status === "success") {
@@ -113,20 +119,26 @@ export async function readTokenGameDataBatch(tokenIds: bigint[]): Promise<TokenG
 
     let combat: CombatStats | undefined;
     if (combatR.status === "success") {
-      const r = combatR.result as any;
-      combat = Array.isArray(r)
-        ? { hp: toNum(r[0]), atk: toNum(r[1]), matk: toNum(r[2]), def: toNum(r[3]), mdef: toNum(r[4]), agi: toNum(r[5]) }
-        : { hp: toNum(r?.hp), atk: toNum(r?.atk), matk: toNum(r?.matk), def: toNum(r?.def), mdef: toNum(r?.mdef), agi: toNum(r?.agi) };
+      const r: unknown = combatR.result;
+      if (Array.isArray(r)) {
+        combat = { hp: toNum(r[0]), atk: toNum(r[1]), matk: toNum(r[2]), def: toNum(r[3]), mdef: toNum(r[4]), agi: toNum(r[5]) };
+      } else if (typeof r === "object" && r !== null) {
+        const obj = r as Record<string, unknown>;
+        combat = { hp: toNum(obj.hp), atk: toNum(obj.atk), matk: toNum(obj.matk), def: toNum(obj.def), mdef: toNum(obj.mdef), agi: toNum(obj.agi) };
+      }
     } else {
       issues.push("combat");
     }
 
     let triad: TriadStats | undefined;
     if (triadR.status === "success") {
-      const r = triadR.result as any;
-      triad = Array.isArray(r)
-        ? { up: toNum(r[0]), right: toNum(r[1]), left: toNum(r[2]), down: toNum(r[3]) }
-        : { up: toNum(r?.up), right: toNum(r?.right), left: toNum(r?.left), down: toNum(r?.down) };
+      const r: unknown = triadR.result;
+      if (Array.isArray(r)) {
+        triad = { up: toNum(r[0]), right: toNum(r[1]), left: toNum(r[2]), down: toNum(r[3]) };
+      } else if (typeof r === "object" && r !== null) {
+        const obj = r as Record<string, unknown>;
+        triad = { up: toNum(obj.up), right: toNum(obj.right), left: toNum(obj.left), down: toNum(obj.down) };
+      }
     } else {
       issues.push("triad");
     }

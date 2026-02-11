@@ -24,7 +24,10 @@ export interface BoardAnimState {
   clear: () => void;
 }
 
-const EMPTY_BOARD = Array.from({ length: 9 }, () => null);
+/** Minimal cell type for animation diffing — only `owner` needed. */
+type AnimBoardCell = { owner: number } | null;
+
+const EMPTY_BOARD: AnimBoardCell[] = Array.from({ length: 9 }, () => null);
 
 /**
  * Duration (ms) for the flip animation.
@@ -38,13 +41,13 @@ const ANIM_DURATION_MS = 900;
  */
 // eslint-disable-next-line react-refresh/only-export-components -- hook export alongside component is intentional
 export function useBoardFlipAnimation(
-  boardNow: any[],
-  simReady: boolean
+  boardNow: AnimBoardCell[],
+  simReady: boolean,
 ): BoardAnimState {
   const [placedCell, setPlacedCell] = React.useState<number | null>(null);
   const [flippedCells, setFlippedCells] = React.useState<number[]>([]);
   const [isAnimating, setIsAnimating] = React.useState(false);
-  const prevBoardRef = React.useRef<any[]>(EMPTY_BOARD);
+  const prevBoardRef = React.useRef<AnimBoardCell[]>(EMPTY_BOARD);
   const timerRef = React.useRef<number | null>(null);
 
   const clear = React.useCallback(() => {

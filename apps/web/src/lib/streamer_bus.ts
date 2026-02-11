@@ -389,9 +389,12 @@ export function subscribeOverlayState(onState: (s: OverlayStateV1) => void): () 
     if (hasBroadcastChannel()) {
       const bc = new BroadcastChannel(CHANNEL_NAME);
       bc.onmessage = (ev: MessageEvent) => {
-        const data: any = ev.data;
-        if (data?.type === "overlay_state_v1" && isValidOverlayStateV1(data?.state)) {
-          onState(data.state);
+        const data: unknown = ev.data;
+        if (typeof data === "object" && data !== null) {
+          const msg = data as Record<string, unknown>;
+          if (msg.type === "overlay_state_v1" && isValidOverlayStateV1(msg.state)) {
+            onState(msg.state);
+          }
         }
       };
       return () => bc.close();
@@ -507,9 +510,12 @@ export function subscribeStreamVoteState(onState: (s: StreamVoteStateV1) => void
     if (hasBroadcastChannel()) {
       const bc = new BroadcastChannel(VOTE_CHANNEL_NAME);
       bc.onmessage = (ev: MessageEvent) => {
-        const data: any = ev.data;
-        if (data?.type === "stream_vote_state_v1" && isValidStreamVoteStateV1(data?.state)) {
-          onState(data.state);
+        const data: unknown = ev.data;
+        if (typeof data === "object" && data !== null) {
+          const msg = data as Record<string, unknown>;
+          if (msg.type === "stream_vote_state_v1" && isValidStreamVoteStateV1(msg.state)) {
+            onState(msg.state);
+          }
         }
       };
       return () => bc.close();
@@ -617,9 +623,12 @@ export function subscribeStreamCommand(onCmd: (c: StreamCommandV1) => void): () 
     if (hasBroadcastChannel()) {
       const bc = new BroadcastChannel(CMD_CHANNEL_NAME);
       bc.onmessage = (ev: MessageEvent) => {
-        const data: any = ev.data;
-        if (data?.type === "stream_command_v1" && isValidStreamCommandV1(data?.cmd)) {
-          onCmd(data.cmd);
+        const data: unknown = ev.data;
+        if (typeof data === "object" && data !== null) {
+          const msg = data as Record<string, unknown>;
+          if (msg.type === "stream_command_v1" && isValidStreamCommandV1(msg.cmd)) {
+            onCmd(msg.cmd);
+          }
         }
       };
       return () => bc.close();

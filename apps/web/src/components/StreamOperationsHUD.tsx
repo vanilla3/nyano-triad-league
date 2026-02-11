@@ -169,7 +169,7 @@ export function StreamOperationsHUD({
   // ── Mini board data ──
   const miniBoard: (BoardCellLite | null)[] = React.useMemo(() => {
     if (!live?.board || !Array.isArray(live.board)) return Array(9).fill(null);
-    return live.board.map((cell: any) => {
+    return live.board.map((cell) => {
       if (cell == null) return null;
       const owner = typeof cell.owner === "number" ? cell.owner : null;
       if (owner !== 0 && owner !== 1) return null;
