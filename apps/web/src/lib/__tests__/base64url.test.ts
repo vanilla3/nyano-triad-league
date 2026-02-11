@@ -163,3 +163,14 @@ describe("tryGzipCompressUtf8ToBase64Url", () => {
     expect(gzipDecompressUtf8FromBase64Url(result!)).toBe("try test");
   });
 });
+
+describe("gunzipSync specificity", () => {
+  it("rejects raw deflate data (non-gzip)", async () => {
+    // Dynamic import to avoid eslint no-require-imports rule
+    const { deflateSync } = await import("fflate");
+    const raw = deflateSync(new TextEncoder().encode("hello"));
+    const b64url = base64UrlEncodeBytes(raw);
+    // gunzipSync rejects non-gzip streams; safe wrapper returns null
+    expect(safeGzipDecompressUtf8FromBase64Url(b64url)).toBeNull();
+  });
+});

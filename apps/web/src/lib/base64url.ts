@@ -1,3 +1,5 @@
+import { gzipSync, gunzipSync } from "fflate";
+
 export function base64UrlEncodeBytes(bytes: Uint8Array): string {
   // Convert bytes to binary string in chunks to avoid call stack issues.
   let bin = "";
@@ -41,8 +43,6 @@ export function safeBase64UrlDecodeUtf8(b64url: string): string | null {
 
 /* ─── Gzip via fflate (sync, 8kB, all environments) ─── */
 
-import { gzipSync, decompressSync } from "fflate";
-
 /** Gzip-compress UTF-8 text and return base64url(bytes). */
 export function gzipCompressUtf8ToBase64Url(text: string): string {
   const compressed = gzipSync(new TextEncoder().encode(text));
@@ -51,7 +51,7 @@ export function gzipCompressUtf8ToBase64Url(text: string): string {
 
 /** Decompress base64url-encoded gzip bytes and return UTF-8 text. */
 export function gzipDecompressUtf8FromBase64Url(b64url: string): string {
-  return new TextDecoder().decode(decompressSync(base64UrlDecodeBytes(b64url)));
+  return new TextDecoder().decode(gunzipSync(base64UrlDecodeBytes(b64url)));
 }
 
 /** Safe wrapper: returns null instead of throwing. */

@@ -1,6 +1,7 @@
 import React from "react";
 import { useToast } from "@/components/Toast";
 import OFFICIAL_RAW from "@root/rulesets/official_onchain_rulesets.json";
+import { writeClipboardText } from "@/lib/clipboard";
 
 type OfficialRuleset = {
   name: string;
@@ -29,7 +30,7 @@ export function RulesetsPage() {
   const toast = useToast();
 
   const copyWithToast = async (label: string, text: string) => {
-    await navigator.clipboard.writeText(text);
+    await writeClipboardText(text);
     toast.success("Copied", label);
   };
 

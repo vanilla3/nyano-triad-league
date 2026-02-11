@@ -26,6 +26,7 @@ import {
   computeToPlay,
 } from "@/lib/triad_vote_utils";
 import { BoardMiniPreview } from "@/components/stream/BoardMiniPreview";
+import { writeClipboardText } from "@/lib/clipboard";
 
 /* ─────────────────────────────────────────────────────────────
    EXPORTED PURE FUNCTIONS (testable)
@@ -397,7 +398,7 @@ export function StreamOperationsHUD({
                   const ts = `${String(t.getHours()).padStart(2, "0")}:${String(t.getMinutes()).padStart(2, "0")}:${String(t.getSeconds()).padStart(2, "0")}`;
                   return `[${ts}] [${e.source}] ${e.message}`;
                 });
-                navigator.clipboard.writeText(lines.join("\n"));
+                void writeClipboardText(lines.join("\n"));
               }}
               title="Copy ops log to clipboard"
             >

@@ -193,12 +193,16 @@ function toHand(x: bigint): 0 | 1 | 2 {
   return n as 0 | 1 | 2;
 }
 
-function getErrMessage(e: any): string {
-  return String(e?.shortMessage ?? e?.message ?? e);
+function getErrMessage(e: unknown): string {
+  if (typeof e === "object" && e !== null) {
+    const obj = e as Record<string, unknown>;
+    return String(obj.shortMessage ?? obj.message ?? e);
+  }
+  return String(e);
 }
 
-function isRpcConnectivityError(e: any): boolean {
-  const name = String(e?.name ?? "");
+function isRpcConnectivityError(e: unknown): boolean {
+  const name = typeof e === "object" && e !== null ? String((e as Record<string, unknown>).name ?? "") : "";
   const msg = getErrMessage(e).toLowerCase();
 
   if (name.includes("HttpRequestError")) return true;
@@ -253,7 +257,7 @@ export async function pingRpcUrl(rpcUrl: string): Promise<{ ok: boolean; chainId
   }
 }
 
-function makeRpcFailureError(candidates: string[], lastErr: any): Error {
+function makeRpcFailureError(candidates: string[], lastErr: unknown): Error {
   const lines = [
     "RPC接続に失敗しました（ブラウザから Ethereum RPC に到達できません）。",
     "",
@@ -309,7 +313,7 @@ export async function fetchNyanoCard(tokenId: bigint): Promise<NyanoCardBundle> 
     const addr = getNyanoAddress();
     const candidates = getRpcCandidates();
 
-    let lastErr: any = null;
+    let lastErr: unknown = null;
 
     for (const rpcUrl of candidates) {
       try {
@@ -399,7 +403,7 @@ export async function fetchNyanoCards(tokenIds: bigint[]): Promise<Map<bigint, N
   const settled = await Promise.allSettled(uniq.map(async (tid) => await fetchNyanoCard(tid)));
 
   const ok = new Map<bigint, NyanoCardBundle>();
-  const errs: Array<{ tokenId: bigint; error: any }> = [];
+  const errs: Array<{ tokenId: bigint; error: unknown }> = [];
 
   for (let i = 0; i < settled.length; i++) {
     const r = settled[i];
@@ -424,8 +428,10 @@ export async function fetchNyanoCards(tokenIds: bigint[]): Promise<Map<bigint, N
       throw e0 instanceof Error ? e0 : new Error(getErrMessage(e0));
     }
 
-    const missing = errs.filter((x) => String(x.error?.name ?? "") === "NyanoTokenNotMintedError");
-    const other = errs.filter((x) => String(x.error?.name ?? "") !== "NyanoTokenNotMintedError");
+    const errName = (e: unknown): string =>
+      typeof e === "object" && e !== null ? String((e as Record<string, unknown>).name ?? "") : "";
+    const missing = errs.filter((x) => errName(x.error) === "NyanoTokenNotMintedError");
+    const other = errs.filter((x) => errName(x.error) !== "NyanoTokenNotMintedError");
 
     const lines: string[] = ["カード読み込みに失敗しました。"];
 
@@ -465,7 +471,7 @@ export async function fetchMintedTokenIds(count: number, startIndex = 0): Promis
 
   const addr = getNyanoAddress();
   const candidates = getRpcCandidates();
-  let lastErr: any = null;
+  let lastErr: unknown = null;
 
   for (const rpcUrl of candidates) {
     try {

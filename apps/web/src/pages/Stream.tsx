@@ -14,6 +14,7 @@ import { readBoolSetting, readNumberSetting, readStringSetting, readStreamLock, 
 import { validateUsername, checkRateLimit, checkVoteChangeLimit, DEFAULT_ANTI_SPAM_CONFIG, type AntiSpamConfig } from "@/lib/anti_spam";
 import { postNyanoWarudoSnapshot } from "@/lib/nyano_warudo_bridge";
 import { errorMessage } from "@/lib/errorMessage";
+import { writeClipboardText } from "@/lib/clipboard";
 import { formatViewerMoveText, parseChatMoveLoose, parseViewerMoveText } from "@/lib/triad_viewer_command";
 import {
   cellIndexToCoord,
@@ -107,7 +108,7 @@ export function StreamPage() {
   const replayBroadcastUrl = `${origin()}/replay?broadcast=1`;
 
   const copy = async (label: string, v: string) => {
-    await navigator.clipboard.writeText(v);
+    await writeClipboardText(v);
     toast.success("Copied", label);
   };
 
@@ -278,7 +279,31 @@ function bestEffortBoardToProtocolBoard(state: OverlayStateV1 | null): Array<any
   return out;
 }
 
-function buildStateJsonContent(state: OverlayStateV1 | null, controlled: 0 | 1): any {
+interface LegalMoveEntry { cell: number; cardIndex: number; viewer: string }
+
+interface StateJsonContent {
+  protocol: string;
+  sentAtMs: number;
+  eventId: string | null;
+  eventTitle: string | null;
+  mode: string | null;
+  status: unknown;
+  turn: number | null;
+  toPlay: "A" | "B" | null;
+  controlledSide: "A" | "B";
+  viewerCommandFormat: string;
+  protocolV1: unknown;
+  board: Array<{ owner: "A" | "B"; cardSlot?: number; tokenId?: string } | null>;
+  hands: {
+    A: Array<{ slot: number; tokenId: string; used: boolean }>;
+    B: Array<{ slot: number; tokenId: string; used: boolean }>;
+  };
+  legalMoves: LegalMoveEntry[];
+  strictAllowed: { allowlist: string[]; hash: string } | null;
+  warningMark: { used: number; remaining: number; candidates: string[] } | null;
+}
+
+function buildStateJsonContent(state: OverlayStateV1 | null, controlled: 0 | 1): StateJsonContent {
   const now = Date.now();
   const turn = typeof state?.turn === "number" ? Number(state!.turn) : null;
   const toPlay = computeToPlay(state);
@@ -286,7 +311,7 @@ function buildStateJsonContent(state: OverlayStateV1 | null, controlled: 0 | 1):
   // SINGLE SOURCE OF TRUTH: computeStrictAllowed() is the only hash authority (P2-2-4)
   const strict = computeStrictAllowed(state);
 
-  const legalMoves: any[] = [];
+  const legalMoves: LegalMoveEntry[] = [];
   if (strict) {
     for (const txt of strict.allowlist) {
       const parsed = parseViewerMoveText(txt);
@@ -914,7 +939,7 @@ const copyViewerInstructions = React.useCallback(() => {
     ``,
     `投票は制限時間内に1人1票。最多票の手が採用されます！`,
   ].join("\n");
-  navigator.clipboard.writeText(instructions);
+  void writeClipboardText(instructions);
   toast.success("Copied", "Viewer instructions copied to clipboard");
 }, [controlledSide, toast]);
 

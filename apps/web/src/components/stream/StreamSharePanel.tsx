@@ -3,6 +3,7 @@ import { QrCode } from "@/components/QrCode";
 import { CopyField } from "@/components/CopyField";
 import { useToast } from "@/components/Toast";
 import { generateSampleCommands, generateNightbotTemplate } from "@/lib/stream_command_generator";
+import { writeClipboardText } from "@/lib/clipboard";
 
 /* ═══════════════════════════════════════════════════════════════════════════
    StreamSharePanel — QR codes + viewer instructions for /stream page (P2-310)
@@ -64,7 +65,7 @@ export const StreamSharePanel: React.FC<StreamSharePanelProps> = React.memo(
     ].join("\n");
 
     const copyInstructions = () => {
-      navigator.clipboard.writeText(instructions);
+      void writeClipboardText(instructions);
       toast.success("Copied", "Viewer instructions copied to clipboard");
     };
 
@@ -135,7 +136,7 @@ export const StreamSharePanel: React.FC<StreamSharePanelProps> = React.memo(
                   key={cmd}
                   className="rounded-lg border border-sky-300 bg-white px-2.5 py-1 text-xs font-mono text-sky-700 hover:bg-sky-50 transition-colors"
                   onClick={() => {
-                    navigator.clipboard.writeText(cmd);
+                    void writeClipboardText(cmd);
                     toast.success("Copied", cmd);
                   }}
                 >
@@ -153,7 +154,7 @@ export const StreamSharePanel: React.FC<StreamSharePanelProps> = React.memo(
             <button
               className="rounded-lg border border-slate-300 bg-white px-3 py-1 text-xs font-semibold text-slate-600 hover:bg-slate-50 transition-colors"
               onClick={() => {
-                navigator.clipboard.writeText(nightbotTemplate);
+                void writeClipboardText(nightbotTemplate);
                 toast.success("Copied", "Nightbot template copied");
               }}
             >
