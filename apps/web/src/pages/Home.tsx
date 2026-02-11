@@ -231,7 +231,7 @@ export function HomePage() {
         {/* Background image layer */}
         <div
           className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-          style={{ backgroundImage: "url('/hero-bg.png')" }}
+          style={{ backgroundImage: "url('/hero-bg.webp')" }}
         />
         {/* Gradient overlays for readability */}
         <div className="absolute inset-0 bg-gradient-to-b from-[#1a1b3a]/60 via-[#1a1b3a]/40 to-surface-50" />

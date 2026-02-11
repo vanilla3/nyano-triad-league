@@ -1,9 +1,13 @@
 /**
  * React Query hook for resolving per-token NFT metadata (image URL).
  *
- * When no metadata configuration is available (no VITE_NYANO_METADATA_BASE
- * env var and no GameIndex metadata.imageBaseUrl), the query is disabled
- * and returns undefined — callers should fall back to NyanoImage.
+ * Resolution priority:
+ *   1. VITE_NYANO_METADATA_BASE env variable
+ *   2. GameIndex metadata.imageBaseUrl field
+ *   3. Hardcoded default Arweave URL (always available)
+ *
+ * The queryKey includes the resolved baseUrlPattern so the cache refreshes
+ * when GameIndex loads (upgrading from hardcoded default to actual URL).
  */
 
 import { useQuery } from "@tanstack/react-query";

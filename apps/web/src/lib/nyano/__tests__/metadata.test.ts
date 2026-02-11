@@ -2,6 +2,7 @@ import { describe, it, expect, vi, afterEach } from "vitest";
 import {
   getMetadataConfig,
   resolveTokenImageUrl,
+  DEFAULT_NYANO_IMAGE_BASE,
   type MetadataConfig,
 } from "../metadata";
 
@@ -98,29 +99,29 @@ describe("getMetadataConfig", () => {
     expect(result?.baseUrlPattern).toBe("https://env.example.com/{id}");
   });
 
-  it("returns null when neither source is available", () => {
+  it("falls back to hardcoded default when neither env nor GameIndex is available", () => {
     delete import.meta.env.VITE_NYANO_METADATA_BASE;
-    expect(getMetadataConfig()).toBeNull();
-    expect(getMetadataConfig(null)).toBeNull();
-    expect(getMetadataConfig(undefined)).toBeNull();
+    expect(getMetadataConfig()?.baseUrlPattern).toBe(DEFAULT_NYANO_IMAGE_BASE);
+    expect(getMetadataConfig(null)?.baseUrlPattern).toBe(DEFAULT_NYANO_IMAGE_BASE);
+    expect(getMetadataConfig(undefined)?.baseUrlPattern).toBe(DEFAULT_NYANO_IMAGE_BASE);
   });
 
-  it("returns null when GameIndex metadata has no imageBaseUrl", () => {
+  it("falls back to hardcoded default when GameIndex metadata has no imageBaseUrl", () => {
     delete import.meta.env.VITE_NYANO_METADATA_BASE;
     const result = getMetadataConfig({ otherField: "value" });
-    expect(result).toBeNull();
+    expect(result?.baseUrlPattern).toBe(DEFAULT_NYANO_IMAGE_BASE);
   });
 
-  it("returns null when GameIndex imageBaseUrl is empty string", () => {
+  it("falls back to hardcoded default when GameIndex imageBaseUrl is empty string", () => {
     delete import.meta.env.VITE_NYANO_METADATA_BASE;
     const result = getMetadataConfig({ imageBaseUrl: "" });
-    expect(result).toBeNull();
+    expect(result?.baseUrlPattern).toBe(DEFAULT_NYANO_IMAGE_BASE);
   });
 
-  it("returns null when GameIndex imageBaseUrl is not a string", () => {
+  it("falls back to hardcoded default when GameIndex imageBaseUrl is not a string", () => {
     delete import.meta.env.VITE_NYANO_METADATA_BASE;
     const result = getMetadataConfig({ imageBaseUrl: 42 });
-    expect(result).toBeNull();
+    expect(result?.baseUrlPattern).toBe(DEFAULT_NYANO_IMAGE_BASE);
   });
 
   it("extracts imageBaseUrl from real GameIndex metadata shape", () => {
@@ -142,11 +143,11 @@ describe("getMetadataConfig", () => {
 
   // --- {id} placeholder validation (FIX-NFTIMG-004) ---
 
-  it("rejects env variable missing {id} placeholder and falls back to null", () => {
+  it("rejects env variable missing {id} placeholder and falls back to hardcoded default", () => {
     const spy = vi.spyOn(console, "warn").mockImplementation(() => {});
     import.meta.env.VITE_NYANO_METADATA_BASE = "https://bad.example.com/no-placeholder";
     const result = getMetadataConfig();
-    expect(result).toBeNull();
+    expect(result?.baseUrlPattern).toBe(DEFAULT_NYANO_IMAGE_BASE);
     spy.mockRestore();
   });
 
@@ -159,15 +160,32 @@ describe("getMetadataConfig", () => {
     spy.mockRestore();
   });
 
-  it("rejects GameIndex imageBaseUrl missing {id} placeholder", () => {
+  it("rejects GameIndex imageBaseUrl missing {id} placeholder and falls back to default", () => {
     delete import.meta.env.VITE_NYANO_METADATA_BASE;
     const result = getMetadataConfig({ imageBaseUrl: "https://example.com/static.png" });
-    expect(result).toBeNull();
+    expect(result?.baseUrlPattern).toBe(DEFAULT_NYANO_IMAGE_BASE);
   });
 
   it("accepts env variable with {id} placeholder", () => {
     import.meta.env.VITE_NYANO_METADATA_BASE = "https://valid.example.com/token/{id}.png";
     const result = getMetadataConfig();
     expect(result).toEqual({ baseUrlPattern: "https://valid.example.com/token/{id}.png" });
+  });
+});
+
+describe("DEFAULT_NYANO_IMAGE_BASE", () => {
+  it("contains {id} placeholder", () => {
+    expect(DEFAULT_NYANO_IMAGE_BASE).toContain("{id}");
+  });
+
+  it("is an Arweave URL", () => {
+    expect(DEFAULT_NYANO_IMAGE_BASE).toContain("arweave.net");
+  });
+
+  it("resolves token image URL using the hardcoded default", () => {
+    const url = resolveTokenImageUrl(42n, { baseUrlPattern: DEFAULT_NYANO_IMAGE_BASE });
+    expect(url).toContain("42.png");
+    expect(url).toContain("arweave.net");
+    expect(url).not.toContain("{id}");
   });
 });
