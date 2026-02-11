@@ -1664,3 +1664,39 @@
 @media (prefers-reduced-motion: reduce) {
   .mint-preview-panel { animation: none; }
 }
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   VFX Quality Tiers — [data-vfx] attribute on <html>  (P2-VFX-001 / 003)
+   Set by visualSettings.ts via App.tsx.  Tiers: off | low | medium | high.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── OFF: No animations at all ──────────────────────────────────────── */
+[data-vfx="off"] .mint-stage::after                 { display: none !important; }
+[data-vfx="off"] .mint-compact-card::after           { animation: none !important; }
+[data-vfx="off"] .mint-duel-card__foil               { animation: none !important; }
+[data-vfx="off"] .mint-cell--selected                { animation: none !important; }
+[data-vfx="off"] .mint-cell--placed                  { animation: none !important; }
+[data-vfx="off"] .mint-cell--flipped                 { animation: none !important; }
+[data-vfx="off"] .mint-duel-card--placed             { animation: none !important; }
+[data-vfx="off"] .mint-duel-card--flipped            { animation: none !important; }
+
+/* ── LOW: Minimal — no foil/sparkle, shortened placement ────────────── */
+[data-vfx="low"] .mint-stage::after                  { display: none !important; }
+[data-vfx="low"] .mint-compact-card::after            { animation: none !important; }
+[data-vfx="low"] .mint-duel-card__foil                { animation: none !important; }
+[data-vfx="low"] .mint-cell--selected                 { animation: none !important; }
+[data-vfx="low"] .mint-cell--placed                   { animation-duration: 0.25s !important; }
+[data-vfx="low"] .mint-cell--flipped                  { animation-duration: 0.25s !important; }
+[data-vfx="low"] .mint-duel-card--placed              { animation-duration: 0.25s !important; }
+[data-vfx="low"] .mint-duel-card--flipped             { animation-duration: 0.3s !important; }
+
+/* ── MEDIUM: Standard — sparkle hidden, slower foils/glow ───────────── */
+[data-vfx="medium"] .mint-stage::after               { display: none !important; }
+[data-vfx="medium"] .mint-compact-card::after         { animation-duration: 12s !important; }
+[data-vfx="medium"] .mint-duel-card__foil             { animation-duration: 6s !important; }
+[data-vfx="medium"] .mint-cell--selected              { animation-duration: 3s !important; }
+
+/* ── HIGH: Full effects (current defaults). Sparkle re-enabled ──────── */
+/* No overrides needed — HIGH matches the existing defaults.
+   Sparkle drift (12s), compact foil (8s), duel foil (4s), glow pulse (2s). */

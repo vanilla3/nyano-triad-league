@@ -3,6 +3,7 @@ import { NavLink, Link, useSearchParams } from "react-router-dom";
 import { AnimatedOutlet } from "@/components/AnimatedOutlet";
 import { AppErrorBoundary } from "@/components/EmptyState";
 import { ToastProvider } from "./components/Toast";
+import { resolveVfxQuality, applyVfxQualityToDocument } from "@/lib/visual/visualSettings";
 
 const NavItem = (props: { to: string; label: string; emoji?: string }) => {
   return (
@@ -34,6 +35,12 @@ export function AppLayout() {
   React.useEffect(() => {
     document.documentElement.dataset.theme = theme;
   }, [theme]);
+
+  // VFX quality: auto-detect device capability and set data-vfx attribute
+  React.useEffect(() => {
+    const quality = resolveVfxQuality();
+    applyVfxQualityToDocument(quality);
+  }, []);
 
   return (
     <ToastProvider>

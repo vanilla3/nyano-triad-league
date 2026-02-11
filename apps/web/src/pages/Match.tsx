@@ -32,6 +32,7 @@ import { base64UrlEncodeUtf8, tryGzipCompressUtf8ToBase64Url } from "@/lib/base6
 import { getDeck, listDecks, upsertDeck, type DeckV1 } from "@/lib/deck_store";
 import { getEventById, getEventStatus, type EventV1 } from "@/lib/events";
 import { stringifyWithBigInt } from "@/lib/json";
+import { buildReplayBundleV2, stringifyReplayBundle } from "@/lib/replay_bundle";
 import { fetchMintedTokenIds, fetchNyanoCards } from "@/lib/nyano_rpc";
 import { publishOverlayState, subscribeStreamCommand, type StreamCommandV1 } from "@/lib/streamer_bus";
 import { pickAiMove as pickAiMoveNew, type AiDifficulty, type AiReasonCode } from "@/lib/ai/nyano_ai";
@@ -1126,15 +1127,20 @@ export function MatchPage() {
     }
   };
 
-  /** Build replay URL (relative or absolute). Respects BASE_URL for subpath deployments. */
+  /** Build replay URL (relative or absolute). Respects BASE_URL for subpath deployments.
+   *  v2: embeds card data in the payload so Replay can work without RPC/GameIndex.
+   *  Falls back to v1 (transcript-only) if cards haven't loaded yet. */
   const buildReplayUrl = React.useCallback(async (absolute?: boolean): Promise<string | null> => {
     if (!sim.ok) return null;
-    const json = stringifyWithBigInt(sim.transcript, 0);
+    // v2 when cards available; v1 fallback otherwise
+    const json = cards
+      ? stringifyReplayBundle(buildReplayBundleV2(sim.transcript, cards))
+      : stringifyWithBigInt(sim.transcript, 0);
     const z = await tryGzipCompressUtf8ToBase64Url(json);
     const qp = `&step=9${event ? `&event=${encodeURIComponent(event.id)}` : ""}`;
     const replayPath = z ? `replay?z=${z}${qp}` : `replay?t=${base64UrlEncodeUtf8(json)}${qp}`;
     return absolute ? appAbsoluteUrl(replayPath) : `/replay?${z ? `z=${z}` : `t=${base64UrlEncodeUtf8(json)}`}${qp}`;
-  }, [sim, event]);
+  }, [sim, event, cards]);
 
   const copyShareUrl = async () => {
     setError(null);

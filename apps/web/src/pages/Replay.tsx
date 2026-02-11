@@ -34,7 +34,7 @@ import { formatEventPeriod, getEventById, getEventStatus } from "@/lib/events";
 import { hasEventAttempt, upsertEventAttempt, type EventAttemptV1 } from "@/lib/event_attempts";
 import { resolveCards } from "@/lib/resolveCards";
 import { publishOverlayState } from "@/lib/streamer_bus";
-import { parseTranscriptV1Json } from "@/lib/transcript_import";
+import { parseReplayPayload } from "@/lib/replay_bundle";
 import { annotateReplayMoves } from "@/lib/ai/replay_annotations";
 import { assessBoardAdvantage, type BoardAdvantage } from "@/lib/ai/board_advantage";
 import { AdvantageBadge } from "@/components/AdvantageBadge";
@@ -373,15 +373,26 @@ protocolV1: {
       const inputText = (override?.text ?? text).trim();
       if (!inputText) throw new Error("transcript JSON is empty");
 
-      const transcript = parseTranscriptV1Json(inputText);
+      const parsed = parseReplayPayload(inputText);
+      const transcript = parsed.transcript;
 
       // Determine preferred mode from rulesetId if mode=auto.
       const mode0 = override?.mode ?? mode;
       const effectiveMode: Mode = mode0 === "auto" ? pickDefaultMode(transcript.header.rulesetId) : mode0;
 
-      // Resolve card data: game index first (fast/cached), RPC fallback for missing
-      const tokenIds = [...transcript.header.deckA, ...transcript.header.deckB];
-      const { cards, owners } = await resolveCards(tokenIds);
+      // v2: use embedded card data (no network calls needed)
+      // v1: resolve via game index first (fast/cached), RPC fallback for missing
+      let cards: Map<bigint, CardData>;
+      let owners: Map<bigint, `0x${string}`>;
+      if (parsed.version === 2) {
+        cards = parsed.cards;
+        owners = new Map();
+      } else {
+        const tokenIds = [...transcript.header.deckA, ...transcript.header.deckB];
+        const resolved = await resolveCards(tokenIds);
+        cards = resolved.cards;
+        owners = resolved.owners;
+      }
 
       // Always compute both (cheap compared to RPC reads)
       const v1 = simulateMatchV1WithHistory(transcript, cards, ONCHAIN_CORE_TACTICS_RULESET_CONFIG_V1);
