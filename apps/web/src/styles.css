@@ -68,17 +68,48 @@ a {
   @apply w-full rounded-xl border border-slate-200 bg-white/90 px-3 py-2 text-sm outline-none shadow-sm focus:border-emerald-300 focus:ring-2 focus:ring-emerald-100;
 }
 
-/* Navigation */
+/* ── App Header — Premium glassmorphic navigation ─────────────────── */
+.app-header {
+  @apply border-b border-surface-200/60;
+  background: rgba(255, 255, 255, 0.82);
+  backdrop-filter: blur(16px) saturate(1.4);
+  -webkit-backdrop-filter: blur(16px) saturate(1.4);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04), 0 4px 12px rgba(0, 0, 0, 0.02);
+}
+
+.app-header__logo-mark {
+  @apply flex items-center justify-center w-8 h-8 rounded-xl;
+  background: linear-gradient(135deg, #FF8A50 0%, #E67340 100%);
+  box-shadow: 0 2px 8px -2px rgba(255, 138, 80, 0.4);
+}
+
+/* ── App Footer ──────────────────────────────────────────────────── */
+.app-footer {
+  @apply border-t border-surface-200/60;
+  background: rgba(250, 250, 249, 0.8);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+/* ── Navigation Items — Refined pill style ─────────────────────── */
 .nav-item {
-  @apply inline-flex items-center justify-center gap-1 rounded-full px-3 py-2 text-sm font-medium no-underline transition;
+  @apply inline-flex items-center justify-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-semibold no-underline;
+  transition: all 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  font-family: 'Nunito', sans-serif;
 }
 
 .nav-item-active {
-  @apply bg-gradient-to-r from-emerald-500 to-teal-500 text-white shadow-sm;
+  @apply text-white shadow-sm;
+  background: linear-gradient(135deg, var(--nyano-primary) 0%, var(--nyano-primary-dark) 100%);
+  box-shadow: 0 2px 8px -2px rgba(255, 138, 80, 0.5);
 }
 
 .nav-item-inactive {
-  @apply text-slate-700 hover:bg-white/80 hover:shadow-sm;
+  @apply text-surface-600;
+}
+
+.nav-item-inactive:hover {
+  @apply text-surface-900 bg-surface-100;
 }
 
 /* UI atoms */
@@ -209,6 +240,27 @@ a {
   @apply rounded-lg border border-slate-200 bg-white/70 px-2 py-1 font-mono text-xs;
 }
 
+/* ── Home Hero — Cinematic CTA ──────────────────────────────────── */
+.home-hero {
+  min-height: 480px;
+}
+
+.home-hero__cta {
+  background: linear-gradient(135deg, #FF8A50 0%, #E67340 50%, #FF8A50 100%);
+  background-size: 200% 100%;
+  animation: cta-shimmer 3s ease-in-out infinite;
+  box-shadow: 0 4px 24px -4px rgba(255, 138, 80, 0.5), 0 0 0 0 rgba(255, 138, 80, 0);
+}
+
+.home-hero__cta:hover {
+  box-shadow: 0 8px 32px -4px rgba(255, 138, 80, 0.6), 0 0 48px -8px rgba(255, 138, 80, 0.3);
+}
+
+@keyframes cta-shimmer {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
 /* ── Classic theme fallback (rose) — ?theme=classic で有効化 ─────────── */
 [data-theme="classic"] body {
   @apply bg-gradient-to-b from-rose-50 via-white to-sky-50;
@@ -223,7 +275,7 @@ a {
   @apply border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100;
 }
 [data-theme="classic"] .nav-item-active {
-  @apply from-rose-500 to-fuchsia-500;
+  background: linear-gradient(135deg, #F43F5E 0%, #D946EF 100%);
 }
 [data-theme="classic"] .input:focus,
 [data-theme="classic"] .select:focus {

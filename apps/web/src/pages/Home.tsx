@@ -226,12 +226,16 @@ export function HomePage() {
 
   return (
     <div className="min-h-screen bg-surface-50">
-      {/* ─── Hero Section ─────────────────────────────────────────── */}
-      <section className="relative overflow-hidden">
-        {/* Background decoration */}
-        <div className="absolute inset-0 bg-gradient-to-br from-nyano-100/30 via-transparent to-player-a-100/20 pointer-events-none" />
-        <div className="absolute -top-24 -right-24 w-96 h-96 bg-nyano-200/30 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute -bottom-24 -left-24 w-96 h-96 bg-player-a-200/20 rounded-full blur-3xl pointer-events-none" />
+      {/* ─── Hero Section — Cinematic with background image ─────── */}
+      <section className="home-hero relative overflow-hidden">
+        {/* Background image layer */}
+        <div
+          className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+          style={{ backgroundImage: "url('/hero-bg.png')" }}
+        />
+        {/* Gradient overlays for readability */}
+        <div className="absolute inset-0 bg-gradient-to-b from-[#1a1b3a]/60 via-[#1a1b3a]/40 to-surface-50" />
+        <div className="absolute inset-0 bg-gradient-to-r from-[#1a1b3a]/30 via-transparent to-[#1a1b3a]/30" />
 
         <div className="relative max-w-5xl mx-auto px-4 py-16 md:py-24">
           <div className="text-center">
@@ -247,26 +251,28 @@ export function HomePage() {
             </div>
 
             {/* Animated gradient title */}
-            <h1 className="text-4xl md:text-5xl font-bold font-display mb-3">
-              <span className="text-gradient-animated">Nyano Triad League</span>
+            <h1 className="text-4xl md:text-6xl font-bold font-display mb-4 drop-shadow-lg">
+              <span className="text-white" style={{ textShadow: "0 2px 16px rgba(255,138,80,0.4)" }}>
+                Nyano Triad League
+              </span>
             </h1>
-            <p className="text-lg text-surface-600 mb-8 max-w-xl mx-auto">
+            <p className="text-base md:text-lg text-white/80 mb-8 max-w-xl mx-auto drop-shadow">
               NyanoNFTを使ったカードバトルゲーム。
               <br className="hidden sm:block" />
               デッキを組んで、対戦し、勝利を共有しよう。
             </p>
 
             {/* Difficulty selector (NIN-UX-020: friendly labels) */}
-            <div className="flex flex-wrap items-center justify-center gap-2 mb-5">
+            <div className="flex flex-wrap items-center justify-center gap-2 mb-6">
               {DIFFICULTIES.map((d) => (
                 <button
                   key={d.key}
                   onClick={() => setDifficulty(d.key)}
                   className={[
-                    "px-4 py-2 rounded-2xl text-sm font-bold font-display transition-all",
+                    "px-4 py-2.5 rounded-2xl text-sm font-bold font-display transition-all",
                     difficulty === d.key
                       ? "bg-nyano-500 text-white shadow-glow-nyano scale-105"
-                      : "bg-surface-100 text-surface-600 hover:bg-surface-200",
+                      : "bg-white/15 text-white/90 backdrop-blur-sm border border-white/20 hover:bg-white/25",
                   ].join(" ")}
                 >
                   {d.ja}
@@ -280,25 +286,25 @@ export function HomePage() {
               <Link
                 to={quickPlayUrl}
                 className={[
+                  "home-hero__cta",
                   "inline-flex items-center gap-3",
                   "px-10 py-4 rounded-3xl",
-                  "bg-gradient-to-r from-emerald-500 to-emerald-600",
                   "text-white text-xl font-bold font-display",
-                  "shadow-lg hover:shadow-xl hover:scale-105",
+                  "shadow-xl hover:shadow-2xl hover:scale-105",
                   "transition-all duration-200",
                 ].join(" ")}
               >
                 🎮 すぐ遊ぶ
               </Link>
-              <span className="text-xs text-surface-400">ゲストモードですぐに対戦できます</span>
+              <span className="text-xs text-white/50">ゲストモードですぐに対戦できます</span>
             </div>
 
             {/* Secondary actions */}
-            <div className="flex flex-wrap items-center justify-center gap-3 mt-4">
-              <Link to="/arena" className="btn btn-secondary">
+            <div className="flex flex-wrap items-center justify-center gap-3 mt-5">
+              <Link to="/arena" className="inline-flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-white/10 backdrop-blur-sm border border-white/20 text-white text-sm font-semibold hover:bg-white/20 transition-all no-underline">
                 ⚔️ Arena
               </Link>
-              <Link to="/decks" className="btn btn-secondary">
+              <Link to="/decks" className="inline-flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-white/10 backdrop-blur-sm border border-white/20 text-white text-sm font-semibold hover:bg-white/20 transition-all no-underline">
                 🃏 Build Deck
               </Link>
             </div>
@@ -307,32 +313,42 @@ export function HomePage() {
       </section>
 
       {/* ─── How to Play (3-step guide) ────────────────────────────── */}
-      <section className="max-w-5xl mx-auto px-4 py-10">
-        <h2 className="text-xl font-bold font-display text-surface-800 text-center mb-6">
+      <section className="max-w-5xl mx-auto px-4 py-12">
+        <h2 className="text-2xl font-bold font-display text-surface-800 text-center mb-2">
           3ステップで始めよう
         </h2>
-        <div className="grid gap-4 md:grid-cols-3">
+        <p className="text-sm text-surface-400 text-center mb-8">
+          10秒でゲームスタート。ウォレット不要のゲストモードも対応。
+        </p>
+        <div className="grid gap-5 md:grid-cols-3">
           {[
-            { step: "1", icon: "🃏", title: "デッキを組む", desc: "5枚のNyanoカードを選んでデッキを作成", link: "/decks" },
-            { step: "2", icon: "⚔️", title: "対戦する", desc: "AIやフレンドと3x3ボードで対戦", link: "/arena" },
-            { step: "3", icon: "📼", title: "共有する", desc: "リプレイを共有して配信で盛り上がる", link: "/replay" },
+            { step: "1", icon: "🃏", title: "デッキを組む", desc: "5枚のNyanoカードを選んでデッキを作成", link: "/decks", accent: "nyano" },
+            { step: "2", icon: "⚔️", title: "対戦する", desc: "AIやフレンドと3x3ボードで対戦", link: "/arena", accent: "sky" },
+            { step: "3", icon: "📼", title: "共有する", desc: "リプレイを共有して配信で盛り上がる", link: "/replay", accent: "violet" },
           ].map((s) => (
             <Link
               key={s.step}
               to={s.link}
               className={[
-                "group relative flex flex-col items-center text-center p-6 rounded-2xl",
-                "bg-white border border-surface-200",
-                "transition-all duration-200",
-                "hover:border-surface-300 hover:shadow-soft-sm hover:-translate-y-0.5",
+                "group relative flex flex-col items-center text-center p-7 rounded-3xl",
+                "bg-white border-2 border-surface-200",
+                "shadow-sm",
+                "transition-all duration-300",
+                "hover:border-nyano-300 hover:shadow-md hover:-translate-y-1",
               ].join(" ")}
             >
-              <div className="absolute -top-3 left-4 bg-nyano-500 text-white text-xs font-bold w-6 h-6 rounded-full flex items-center justify-center shadow-sm">
+              <div
+                className="absolute -top-3 left-5 text-white text-xs font-bold w-7 h-7 rounded-xl flex items-center justify-center shadow-md"
+                style={{ background: "linear-gradient(135deg, #FF8A50, #E67340)" }}
+              >
                 {s.step}
               </div>
-              <div className="text-3xl mb-2">{s.icon}</div>
-              <div className="font-bold text-surface-800 mb-1">{s.title}</div>
-              <p className="text-xs text-surface-500">{s.desc}</p>
+              <div className="text-4xl mb-3 group-hover:scale-110 transition-transform duration-300">{s.icon}</div>
+              <div className="font-bold font-display text-surface-800 mb-1 text-base">{s.title}</div>
+              <p className="text-xs text-surface-500 leading-relaxed">{s.desc}</p>
+              <div className="mt-3 text-[11px] font-semibold text-nyano-500 opacity-0 group-hover:opacity-100 transition-opacity">
+                始める →
+              </div>
             </Link>
           ))}
         </div>
@@ -364,22 +380,22 @@ export function HomePage() {
         </details>
       </section>
 
-      {/* ─── Info Section ─────────────────────────────────────────── */}
+      {/* ─── Info Section — Premium glassmorphic cards ────────────── */}
       <section className="max-w-5xl mx-auto px-4 py-12">
         <div className="grid gap-6 md:grid-cols-2">
           {/* Current Phase */}
-          <div className="card">
-            <div className="card-hd">
-              <h3 className="text-base font-bold font-display text-surface-800">
-                📍 現在のフェーズ
-              </h3>
-            </div>
-            <div className="card-bd">
+          <div className="relative rounded-3xl border border-surface-200 bg-white overflow-hidden">
+            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-emerald-400 via-emerald-500 to-teal-400" />
+            <div className="p-6">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="w-8 h-8 rounded-xl bg-emerald-100 flex items-center justify-center text-lg">📍</div>
+                <h3 className="text-base font-bold font-display text-surface-800">現在のフェーズ</h3>
+              </div>
               <div className="flex items-start gap-3">
-                <div className="w-2 h-2 rounded-full bg-emerald-500 mt-2 animate-pulse" />
+                <div className="w-2 h-2 rounded-full bg-emerald-500 mt-2 animate-pulse flex-shrink-0" />
                 <div>
                   <div className="font-semibold text-surface-800">検証・共有フェーズ</div>
-                  <p className="text-sm text-surface-600 mt-1">
+                  <p className="text-sm text-surface-500 mt-1 leading-relaxed">
                     リプレイ共有、ルール検証、コミュニティフィードバックの収集を行っています。
                     配信連携機能も実験中です。
                   </p>
@@ -389,18 +405,18 @@ export function HomePage() {
           </div>
 
           {/* Next Milestone */}
-          <div className="card">
-            <div className="card-hd">
-              <h3 className="text-base font-bold font-display text-surface-800">
-                🎯 次のマイルストーン
-              </h3>
-            </div>
-            <div className="card-bd">
+          <div className="relative rounded-3xl border border-surface-200 bg-white overflow-hidden">
+            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-nyano-400 via-nyano-500 to-amber-400" />
+            <div className="p-6">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="w-8 h-8 rounded-xl bg-nyano-100 flex items-center justify-center text-lg">🎯</div>
+                <h3 className="text-base font-bold font-display text-surface-800">次のマイルストーン</h3>
+              </div>
               <div className="flex items-start gap-3">
-                <div className="w-2 h-2 rounded-full bg-nyano-500 mt-2" />
+                <div className="w-2 h-2 rounded-full bg-nyano-500 mt-2 flex-shrink-0" />
                 <div>
                   <div className="font-semibold text-surface-800">運営品質のゲーム体験</div>
-                  <p className="text-sm text-surface-600 mt-1">
+                  <p className="text-sm text-surface-500 mt-1 leading-relaxed">
                     デッキ構築→対戦→結果共有→ランキング化の一連フローを、
                     ハイクオリティなUIで提供します。
                   </p>
