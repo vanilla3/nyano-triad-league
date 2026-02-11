@@ -1,4 +1,4 @@
-import { describe, it, expect, afterEach } from "vitest";
+import { describe, it, expect, vi, afterEach } from "vitest";
 import {
   getMetadataConfig,
   resolveTokenImageUrl,
@@ -138,5 +138,36 @@ describe("getMetadataConfig", () => {
     expect(result).not.toBeNull();
     expect(result!.baseUrlPattern).toContain("{id}");
     expect(result!.baseUrlPattern).toContain("arweave.net");
+  });
+
+  // --- {id} placeholder validation (FIX-NFTIMG-004) ---
+
+  it("rejects env variable missing {id} placeholder and falls back to null", () => {
+    const spy = vi.spyOn(console, "warn").mockImplementation(() => {});
+    import.meta.env.VITE_NYANO_METADATA_BASE = "https://bad.example.com/no-placeholder";
+    const result = getMetadataConfig();
+    expect(result).toBeNull();
+    spy.mockRestore();
+  });
+
+  it("rejects env variable missing {id} but uses GameIndex fallback", () => {
+    const spy = vi.spyOn(console, "warn").mockImplementation(() => {});
+    import.meta.env.VITE_NYANO_METADATA_BASE = "https://bad.example.com/no-placeholder";
+    const gameIndexMeta = { imageBaseUrl: "https://game.example.com/{id}.png" };
+    const result = getMetadataConfig(gameIndexMeta);
+    expect(result).toEqual({ baseUrlPattern: "https://game.example.com/{id}.png" });
+    spy.mockRestore();
+  });
+
+  it("rejects GameIndex imageBaseUrl missing {id} placeholder", () => {
+    delete import.meta.env.VITE_NYANO_METADATA_BASE;
+    const result = getMetadataConfig({ imageBaseUrl: "https://example.com/static.png" });
+    expect(result).toBeNull();
+  });
+
+  it("accepts env variable with {id} placeholder", () => {
+    import.meta.env.VITE_NYANO_METADATA_BASE = "https://valid.example.com/token/{id}.png";
+    const result = getMetadataConfig();
+    expect(result).toEqual({ baseUrlPattern: "https://valid.example.com/token/{id}.png" });
   });
 });

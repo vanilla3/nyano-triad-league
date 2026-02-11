@@ -28,8 +28,18 @@ export interface NyanoCardArtProps {
  * the hook returns `undefined` and we immediately render NyanoImage.
  */
 export function NyanoCardArt({ tokenId, size = "md", fill = false, className = "" }: NyanoCardArtProps) {
-  const { data: meta, isLoading } = useNyanoTokenMetadata(tokenId);
+  const { data: meta, isLoading, error } = useNyanoTokenMetadata(tokenId);
   const px = SIZE_MAP[size];
+
+  // DEV diagnostic: log metadata resolution state for debugging NFT image issues.
+  // useEffect is always called (hook rules), but the log body is gated by DEV.
+  React.useEffect(() => {
+    if (import.meta.env.DEV) {
+      console.debug(
+        `[NyanoCardArt #${tokenId}] isLoading=${isLoading} imageUrl=${meta?.imageUrl ?? "none"} error=${error ? String(error) : "none"}`,
+      );
+    }
+  }, [tokenId, isLoading, meta?.imageUrl, error]);
   const sizeStyle: { width: number | "100%"; height: number | "100%" } = fill
     ? { width: "100%", height: "100%" }
     : { width: px, height: px };

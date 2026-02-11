@@ -41,12 +41,23 @@ export function getMetadataConfig(
     typeof import.meta !== "undefined"
       ? (import.meta.env?.VITE_NYANO_METADATA_BASE as string | undefined)
       : undefined;
-  if (envBase) return { baseUrlPattern: envBase };
+  if (envBase) {
+    if (!envBase.includes("{id}")) {
+      if (import.meta.env?.DEV) {
+        console.warn(
+          `[metadata] VITE_NYANO_METADATA_BASE is missing "{id}" placeholder: "${envBase}". Ignoring.`,
+        );
+      }
+      // Fall through to GameIndex source
+    } else {
+      return { baseUrlPattern: envBase };
+    }
+  }
 
   // 2. GameIndex metadata field
   if (gameIndexMetadata && typeof gameIndexMetadata === "object") {
     const indexBase = (gameIndexMetadata as Record<string, string>).imageBaseUrl;
-    if (typeof indexBase === "string" && indexBase) {
+    if (typeof indexBase === "string" && indexBase && indexBase.includes("{id}")) {
       return { baseUrlPattern: indexBase };
     }
   }

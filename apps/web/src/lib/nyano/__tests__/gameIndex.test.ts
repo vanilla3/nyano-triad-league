@@ -1,8 +1,10 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi, afterEach, beforeEach } from "vitest";
 import {
   getFromGameIndex,
   getAllTokenIds,
   searchCards,
+  resolveGameIndexUrl,
+  clearGameIndexCache,
   GAME_INDEX_FIELDS,
   GAME_INDEX_VERSION,
   type GameIndexV1,
@@ -181,5 +183,72 @@ describe("searchCards", () => {
     expect(t1.edgeSum).toBe(7 + 3 + 5 + 4); // 19
     const t3 = results.find((r) => r.tokenId === "3")!;
     expect(t3.edgeSum).toBe(5 + 5 + 5 + 5); // 20
+  });
+});
+
+// ---------------------------------------------------------------------------
+// resolveGameIndexUrl — BASE_URL support
+// ---------------------------------------------------------------------------
+
+describe("resolveGameIndexUrl", () => {
+  const originalEnv = { ...import.meta.env };
+  afterEach(() => {
+    Object.keys(import.meta.env).forEach((key) => {
+      if (!(key in originalEnv)) delete import.meta.env[key];
+    });
+    Object.assign(import.meta.env, originalEnv);
+  });
+
+  it("returns /game/index.v1.json when BASE_URL is /", () => {
+    import.meta.env.BASE_URL = "/";
+    expect(resolveGameIndexUrl()).toBe("/game/index.v1.json");
+  });
+
+  it("prepends subpath when BASE_URL is /subpath/", () => {
+    import.meta.env.BASE_URL = "/nyano-triad-league/";
+    expect(resolveGameIndexUrl()).toBe("/nyano-triad-league/game/index.v1.json");
+  });
+
+  it("handles BASE_URL without trailing slash", () => {
+    import.meta.env.BASE_URL = "/sub";
+    expect(resolveGameIndexUrl()).toBe("/sub/game/index.v1.json");
+  });
+
+  it("handles empty BASE_URL as root", () => {
+    import.meta.env.BASE_URL = "";
+    expect(resolveGameIndexUrl()).toBe("/game/index.v1.json");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// clearGameIndexCache
+// ---------------------------------------------------------------------------
+
+function createMockStorage(): Storage {
+  const store = new Map<string, string>();
+  return {
+    getItem: (k: string) => store.get(k) ?? null,
+    setItem: (k: string, v: string) => { store.set(k, v); },
+    removeItem: (k: string) => { store.delete(k); },
+    clear: () => { store.clear(); },
+    get length() { return store.size; },
+    key: (i: number) => [...store.keys()][i] ?? null,
+  };
+}
+
+describe("clearGameIndexCache", () => {
+  beforeEach(() => {
+    vi.stubGlobal("localStorage", createMockStorage());
+  });
+
+  it("removes the game index key from localStorage", () => {
+    localStorage.setItem("nyano.gameIndex.v1", JSON.stringify({ v: 1 }));
+    expect(localStorage.getItem("nyano.gameIndex.v1")).not.toBeNull();
+    clearGameIndexCache();
+    expect(localStorage.getItem("nyano.gameIndex.v1")).toBeNull();
+  });
+
+  it("does not throw when key does not exist", () => {
+    expect(() => clearGameIndexCache()).not.toThrow();
   });
 });

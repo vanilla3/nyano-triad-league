@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { useToast } from "@/components/Toast";
 import { NyanoAvatar } from "@/components/NyanoAvatar";
 import { resetTutorialSeen } from "@/components/MiniTutorial";
+import { clearGameIndexCache } from "@/lib/nyano/gameIndex";
 import type { ExpressionName } from "@/lib/expression_map";
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -397,6 +398,15 @@ export function HomePage() {
               }}
             >
               Reset Tutorial
+            </button>
+            <button
+              className="btn text-xs"
+              onClick={() => {
+                clearGameIndexCache();
+                toast.success("Cache cleared", "Game index cache has been cleared. Card data will be re-fetched on next load.");
+              }}
+            >
+              Reset Game Cache
             </button>
           </div>
         </details>
