@@ -590,6 +590,25 @@ a {
   }
 }
 
+@media (max-width: 420px) {
+  .replay-transport {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .replay-speed {
+    justify-content: flex-start;
+  }
+
+  .replay-speed select {
+    min-width: 0;
+    width: 100%;
+  }
+
+  .replay-timeline-head {
+    align-items: flex-start;
+  }
+}
+
 @media (max-width: 1024px) {
   .replay-turnlog-body {
     max-height: none;

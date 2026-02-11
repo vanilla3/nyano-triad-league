@@ -47,6 +47,15 @@ import {
   summarizeReplayHighlights,
   type ReplayHighlightKind,
 } from "@/lib/replay_highlights";
+import {
+  REPLAY_PLAYBACK_SPEED_OPTIONS,
+  nextReplayAutoplayStep,
+  normalizeReplayPlaybackSpeed,
+  replayPhaseInfo,
+  replayStepProgress,
+  replayStepStatusText,
+  type ReplayPhaseInfo,
+} from "@/lib/replay_timeline";
 
 type Mode = "auto" | "v1" | "v2" | "compare";
 
@@ -62,11 +71,6 @@ type SimState =
       v1: MatchResultWithHistory;
       v2: MatchResultWithHistory;
     };
-
-type ReplayPhaseInfo = {
-  label: string;
-  tone: "setup" | "opening" | "mid" | "end" | "final";
-};
 
 function clampInt(n: number, min: number, max: number): number {
   if (Number.isNaN(n)) return min;
@@ -485,18 +489,17 @@ protocolV1: {
     () => highlights.filter((highlight) => highlight.step === step),
     [highlights, step],
   );
-  const stepProgress = stepMax > 0 ? Math.round((step / stepMax) * 100) : 0;
+  const stepProgress = replayStepProgress(step, stepMax);
   const canStepBack = step > 0;
   const canStepForward = step < stepMax;
   const canPlay = sim.ok && stepMax > 0;
-  const phaseInfo: ReplayPhaseInfo = React.useMemo(() => {
-    if (step <= 0) return { label: "Setup", tone: "setup" };
-    if (step <= 3) return { label: "Opening", tone: "opening" };
-    if (step <= 6) return { label: "Midgame", tone: "mid" };
-    if (step < 9) return { label: "Endgame", tone: "end" };
-    return { label: "Final", tone: "final" };
-  }, [step]);
-  const stepStatusText = step === 0 ? "Initial board state" : `After turn ${step}`;
+  const phaseInfo: ReplayPhaseInfo = React.useMemo(() => replayPhaseInfo(step, stepMax), [step, stepMax]);
+  const stepStatusText = replayStepStatusText(step);
+
+  React.useEffect(() => {
+    if (canPlay || !isPlaying) return;
+    setIsPlaying(false);
+  }, [canPlay, isPlaying]);
 
   // Highlight jump helpers
   const jumpToNextHighlight = React.useCallback(() => {
@@ -525,7 +528,11 @@ protocolV1: {
       if (tag === "TEXTAREA" || tag === "INPUT" || tag === "SELECT") return;
       if (e.key === "ArrowLeft") { setIsPlaying(false); setStep((s) => Math.max(0, s - 1)); }
       if (e.key === "ArrowRight") { setIsPlaying(false); setStep((s) => Math.min(stepMax, s + 1)); }
-      if (e.key === " ") { e.preventDefault(); setIsPlaying((p) => !p); }
+      if (e.key === " ") {
+        if (!canPlay) return;
+        e.preventDefault();
+        setIsPlaying((p) => !p);
+      }
       if (e.key === "Home") { e.preventDefault(); setIsPlaying(false); setStep(0); }
       if (e.key === "End") { e.preventDefault(); setIsPlaying(false); setStep(stepMax); }
       if (e.key === "[") { e.preventDefault(); jumpToPrevHighlight(); }
@@ -533,16 +540,16 @@ protocolV1: {
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [stepMax, jumpToNextHighlight, jumpToPrevHighlight]);
+  }, [canPlay, stepMax, jumpToNextHighlight, jumpToPrevHighlight]);
 
   // Autoplay timer
   React.useEffect(() => {
-    if (!isPlaying || !sim.ok) return;
-    const ms = 1000 / playbackSpeed;
+    if (!isPlaying || !sim.ok || !canPlay) return;
+    const ms = 1000 / normalizeReplayPlaybackSpeed(playbackSpeed);
     const timer = window.setInterval(() => {
       setStep((s) => {
-        const next = s + 1;
-        if (next > stepMax) {
+        const next = nextReplayAutoplayStep(s, stepMax);
+        if (next === null) {
           setIsPlaying(false);
           return s;
         }
@@ -550,7 +557,7 @@ protocolV1: {
       });
     }, ms);
     return () => window.clearInterval(timer);
-  }, [isPlaying, playbackSpeed, stepMax, sim.ok]);
+  }, [isPlaying, playbackSpeed, stepMax, sim.ok, canPlay]);
 
   const compare = sim.ok && (mode === "compare" || (mode === "auto" && pickDefaultMode(sim.transcript.header.rulesetId) === "compare"));
   const diverged = sim.ok ? !boardEquals(sim.v1.boardHistory[step], sim.v2.boardHistory[step]) : false;
@@ -1045,15 +1052,15 @@ protocolV1: {
                     <select
                       className="rounded-md border border-surface-300 bg-white px-2 py-1 text-xs"
                       value={playbackSpeed}
-                      onChange={(e) => setPlaybackSpeed(Number(e.target.value))}
+                      onChange={(e) => setPlaybackSpeed(normalizeReplayPlaybackSpeed(Number(e.target.value)))}
                       disabled={!canPlay}
                       aria-label="Replay speed"
                     >
-                      <option value={0.5}>0.5x</option>
-                      <option value={1}>1x</option>
-                      <option value={1.5}>1.5x</option>
-                      <option value={2}>2x</option>
-                      <option value={3}>3x</option>
+                      {REPLAY_PLAYBACK_SPEED_OPTIONS.map((speedOption) => (
+                        <option key={speedOption} value={speedOption}>
+                          {speedOption}x
+                        </option>
+                      ))}
                     </select>
                   </label>
 
