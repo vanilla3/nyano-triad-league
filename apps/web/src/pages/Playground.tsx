@@ -15,6 +15,7 @@ import { BoardView } from "@/components/BoardView";
 import { CardMini } from "@/components/CardMini";
 import { TurnLog } from "@/components/TurnLog";
 import { buildCardsMapFromVector, buildTranscriptFromVector } from "@/lib/build";
+import { errorMessage } from "@/lib/errorMessage";
 import { stringifyWithBigInt } from "@/lib/json";
 import { base64UrlEncodeUtf8, tryGzipCompressUtf8ToBase64Url } from "@/lib/base64url";
 import { VECTORS, type VectorKey } from "@/lib/vectors";
@@ -156,8 +157,8 @@ export function PlaygroundPage() {
       const v2 = simulateMatchV1WithHistory(transcript, cards, ONCHAIN_CORE_TACTICS_SHADOW_RULESET_CONFIG_V2);
 
       return { ok: true, transcript, cards, current, v1, v2 };
-    } catch (e: any) {
-      return { ok: false, error: e?.message ?? String(e) };
+    } catch (e: unknown) {
+      return { ok: false, error: errorMessage(e) };
     }
   }, [vectorKey, caseIndex, cases]);
 
@@ -446,8 +447,8 @@ export function PlaygroundPage() {
                           try {
                             const link = await buildReplayLink();
                             await copyWithToast("replay link", link);
-                          } catch (e: any) {
-                            await copyWithToast("error", e?.message ?? String(e));
+                          } catch (e: unknown) {
+                            await copyWithToast("error", errorMessage(e));
                           }
                         })();
                       }}

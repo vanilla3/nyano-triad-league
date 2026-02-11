@@ -3,6 +3,7 @@ import React from "react";
 import { CardMini } from "@/components/CardMini";
 import { CopyField } from "@/components/CopyField";
 import { useToast } from "@/components/Toast";
+import { errorMessage } from "@/lib/errorMessage";
 import { stringifyWithBigInt } from "@/lib/json";
 import {
   clearUserRpcOverride,
@@ -105,8 +106,8 @@ export function NyanoPage() {
       const text = ids.map((x) => x.toString()).join(" ");
       setInput(text);
       toast.success("Sample tokenIds loaded", text);
-    } catch (e: any) {
-      toast.error("Sample load failed", e?.message ?? String(e));
+    } catch (e: unknown) {
+      toast.error("Sample load failed", errorMessage(e));
     } finally {
       setSampleLoading(false);
     }
@@ -124,15 +125,15 @@ export function NyanoPage() {
           try {
             const data = await fetchNyanoCard(tid);
             return { tokenId: tid, ok: true as const, data };
-          } catch (e: any) {
-            return { tokenId: tid, ok: false as const, error: e?.message ?? String(e) };
+          } catch (e: unknown) {
+            return { tokenId: tid, ok: false as const, error: errorMessage(e) };
           }
         })
       );
 
       setItems(results);
-    } catch (e: any) {
-      setError(e?.message ?? String(e));
+    } catch (e: unknown) {
+      setError(errorMessage(e));
     } finally {
       setLoading(false);
     }
@@ -156,8 +157,8 @@ export function NyanoPage() {
       setUserRpcOverride(rpcDraft);
       setRpcProbe(null);
       toast.success("RPC switched", rpcLabel(rpcDraft));
-    } catch (e: any) {
-      toast.error("RPC switch failed", e?.message ?? String(e));
+    } catch (e: unknown) {
+      toast.error("RPC switch failed", errorMessage(e));
     }
   };
 

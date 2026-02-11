@@ -3,6 +3,7 @@ import { mainnet } from "viem/chains";
 
 import type { CardData } from "@nyano/triad-engine";
 import { makeCardDataFromNyano } from "@nyano/triad-engine";
+import { errorMessage } from "@/lib/errorMessage";
 
 /**
  * Public RPC endpoints (browser-friendly defaults).
@@ -245,8 +246,8 @@ export async function pingRpcUrl(rpcUrl: string): Promise<{ ok: boolean; chainId
     if (!chainId) return { ok: false, error: "bad response" };
 
     return { ok: true, chainId };
-  } catch (e: any) {
-    return { ok: false, error: getErrMessage(e) };
+  } catch (e: unknown) {
+    return { ok: false, error: errorMessage(e) };
   } finally {
     clearTimeout(t);
   }
@@ -370,7 +371,7 @@ export async function fetchNyanoCard(tokenId: bigint): Promise<NyanoCardBundle> 
         setLastOkRpcUrl(rpcUrl);
 
         return { tokenId, owner, hand, trait, combatStats, triad, card };
-      } catch (e: any) {
+      } catch (e: unknown) {
         lastErr = e;
         if (isRpcConnectivityError(e)) {
           // try next RPC candidate
@@ -497,7 +498,7 @@ export async function fetchMintedTokenIds(count: number, startIndex = 0): Promis
 
       setLastOkRpcUrl(rpcUrl);
       return tokenIds;
-    } catch (e: any) {
+    } catch (e: unknown) {
       lastErr = e;
       if (isRpcConnectivityError(e)) continue;
       throw e;
