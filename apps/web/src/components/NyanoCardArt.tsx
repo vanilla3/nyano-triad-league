@@ -1,6 +1,7 @@
 import React from "react";
 import { useNyanoTokenMetadata } from "@/lib/nyano/useNyanoTokenMetadata";
 import { buildArweaveFallbacks } from "@/lib/arweave_gateways";
+import { isDebugMode } from "@/lib/debug";
 import { NyanoTokenPlaceholder } from "./NyanoTokenPlaceholder";
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -100,13 +101,17 @@ function TokenImage({
   const [activeSrc, setActiveSrc] = React.useState(src);
   const [fallbackQueue, setFallbackQueue] = React.useState<string[]>(() => buildArweaveFallbacks(src));
   const [failed, setFailed] = React.useState(false);
+  const [attemptCount, setAttemptCount] = React.useState(1);
 
   // Reset when src changes (e.g. different token)
   React.useEffect(() => {
     setActiveSrc(src);
     setFallbackQueue(buildArweaveFallbacks(src));
     setFailed(false);
+    setAttemptCount(1);
   }, [src]);
+
+  const debugMode = isDebugMode();
 
   if (failed) {
     return (
@@ -123,10 +128,13 @@ function TokenImage({
     ? undefined
     : ({ width: size, height: size } as React.CSSProperties);
 
+  // Show last 30 chars of URL for debug badge
+  const debugUrl = activeSrc.length > 30 ? `…${activeSrc.slice(-30)}` : activeSrc;
+
   return (
     <div
       className={[
-        "overflow-hidden bg-slate-900/20",
+        "relative overflow-hidden bg-slate-900/20",
         fill ? "w-full h-full" : "rounded-xl border border-surface-200 shadow-soft-sm",
         className,
       ].filter(Boolean).join(" ")}
@@ -143,11 +151,17 @@ function TokenImage({
             const [next, ...rest] = fallbackQueue;
             setActiveSrc(next);
             setFallbackQueue(rest);
+            setAttemptCount((c) => c + 1);
           } else {
             setFailed(true);
           }
         }}
       />
+      {debugMode && (
+        <div className="nca-debug-badge" data-testid="nca-debug-badge">
+          #{tokenId.toString()} a{attemptCount}{"\n"}{debugUrl}
+        </div>
+      )}
     </div>
   );
 }

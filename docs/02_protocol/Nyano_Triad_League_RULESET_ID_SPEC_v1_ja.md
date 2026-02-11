@@ -19,6 +19,7 @@ rulesetId = keccak256( abi.encode(RulesetConfigV1Canonical) )
 
 - `RulesetConfigV1Canonical` は **無効化されたセクションを正規化（ゼロ化）** した後の値を指す。
 - これにより、例えば `comboBonus.enabled=false` のときに `momentumAt` 等が違っても **同じID** になる（= 同じ挙動）。
+- Engine-only フィールド（`onchainSettlementCompat` / `meta`）は v1 canonicalization に含めない。
 
 ---
 

@@ -157,3 +157,23 @@ export function readUiDensity(fallback: UiDensity = "minimal"): UiDensity {
 export function writeUiDensity(density: UiDensity): void {
   writeStringSetting(DENSITY_KEY, density);
 }
+
+// ---------------------------------------------------------------------------
+// VFX Quality (P2-VFX-001)
+// ---------------------------------------------------------------------------
+
+export type VfxPreference = "auto" | "off" | "low" | "medium" | "high";
+
+const VFX_KEY = "nytl.vfx.quality";
+const VALID_VFX: Set<string> = new Set(["auto", "off", "low", "medium", "high"]);
+
+/** Read VFX quality preference (defaults to "auto" → device detection). */
+export function readVfxQuality(fallback: VfxPreference = "auto"): VfxPreference {
+  const v = readStringSetting(VFX_KEY, fallback);
+  return VALID_VFX.has(v) ? (v as VfxPreference) : fallback;
+}
+
+/** Write VFX quality preference. */
+export function writeVfxQuality(pref: VfxPreference): void {
+  writeStringSetting(VFX_KEY, pref);
+}

@@ -32,6 +32,17 @@ export function isValidRulesetKey(key: unknown): key is RulesetKey {
 }
 
 /**
+ * Parse unknown query/input value into a valid RulesetKey.
+ * Falls back to the provided default key when input is invalid.
+ */
+export function parseRulesetKeyOrDefault(
+  key: string | null | undefined,
+  fallback: RulesetKey = "v2",
+): RulesetKey {
+  return isValidRulesetKey(key) ? key : fallback;
+}
+
+/**
  * Safe resolver: returns the RulesetConfigV1 for the given key, or null if unknown.
  */
 export function resolveRuleset(key: string): RulesetConfigV1 | null {

@@ -8,6 +8,8 @@ import {
   writeNumberSetting,
   writeStringSetting,
   writeStreamLockTimestamp,
+  readVfxQuality,
+  writeVfxQuality,
 } from "../local_settings";
 
 /* ------------------------------------------------------------------ */
@@ -182,5 +184,27 @@ describe("stream lock timestamp", () => {
     expect(readStreamLockTimestamp()).toBe(1700000000000);
     writeStreamLockTimestamp(0);
     expect(readStreamLockTimestamp()).toBe(0);
+  });
+});
+
+/* ------------------------------------------------------------------ */
+/* VFX quality preference                                              */
+/* ------------------------------------------------------------------ */
+
+describe("VFX quality preference", () => {
+  it("returns 'auto' by default when key is missing", () => {
+    expect(readVfxQuality()).toBe("auto");
+  });
+
+  it("roundtrips all valid values", () => {
+    for (const v of ["auto", "off", "low", "medium", "high"] as const) {
+      writeVfxQuality(v);
+      expect(readVfxQuality()).toBe(v);
+    }
+  });
+
+  it("returns fallback for invalid values", () => {
+    localStorage.setItem("nytl.vfx.quality", "ultra");
+    expect(readVfxQuality()).toBe("auto");
   });
 });

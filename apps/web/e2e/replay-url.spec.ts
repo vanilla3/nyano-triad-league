@@ -99,11 +99,21 @@ test("Replay loads and decodes t= parameter correctly", async ({ page }) => {
 });
 
 test("Replay shows error on RPC failure gracefully", async ({ page }) => {
-  // Block all RPC endpoints to simulate network failure
+  // Block game index AND all RPC endpoints to simulate complete network failure.
+  // Since resolveCards() tries game index first (fast/cached), we must block it
+  // too — otherwise tokens 1-10 are resolved from the static index.v1.json and
+  // no RPC call is ever made.
+  await page.route("**/game/index.v1.json", (route) => route.abort());
   await page.route("**/*publicnode*", (route) => route.abort());
   await page.route("**/*ankr*", (route) => route.abort());
   await page.route("**/*llamarpc*", (route) => route.abort());
   await page.route("**/*cloudflare*", (route) => route.abort());
+
+  // Clear any cached game index from localStorage so it cannot be reused
+  await page.goto("/replay");
+  await page.evaluate(() => {
+    try { localStorage.removeItem("nyano.gameIndex.v1"); } catch { /* noop */ }
+  });
 
   const zParam = encodeTranscriptZ(TRANSCRIPT_JSON);
   await page.goto(`/replay?z=${zParam}`);
@@ -113,7 +123,7 @@ test("Replay shows error on RPC failure gracefully", async ({ page }) => {
   await expect(loadBtn).toBeVisible({ timeout: 10_000 });
   await loadBtn.click();
 
-  // Should show an error message (RPC failure) — page should not crash
+  // Should show an error message (card resolution failure) — page should not crash
   // The error appears in rose-700 text
   await expect(page.locator(".text-rose-700").first()).toBeVisible({ timeout: 30_000 });
 

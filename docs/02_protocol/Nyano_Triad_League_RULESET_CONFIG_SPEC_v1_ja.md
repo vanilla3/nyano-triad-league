@@ -177,10 +177,26 @@ Wind の公平な表現（commit-reveal / 両者合意）の実装補助とし�
 `packages/triad-engine/src/first_player.ts` に以下の純関数を用意する：
 - `buildFirstPlayerChoiceCommitV1`
 - `verifyFirstPlayerChoiceCommitV1`
+- `buildFirstPlayerRevealCommitV1`
+- `verifyFirstPlayerRevealCommitV1`
 - `deriveFirstPlayerFromCommitRevealV1`
 - `resolveFirstPlayerByMutualChoiceV1`
 
 詳細な“順序（適用タイミング）”や斜め比較の定義は、別紙 `TRAIT_EFFECTS_SPEC` を参照。
+
+### 4.5 Layer4（experimental / engine-only）
+
+v1では、決定論を保ったままゲーム性の微調整を試すため、TS参照実装に engine-only の `meta` を持たせる。
+
+```ts
+meta?: {
+  chainCapPerTurn?: number;
+}
+```
+
+- `chainCapPerTurn` は **1ターン内の成功フリップ数（直攻+連鎖の合計）** の上限。
+- `undefined` は無制限（既定挙動）。
+- v1では **rulesetId canonicalization の対象外**（オフチェーン実験向け）。
 
 ---
 

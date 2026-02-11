@@ -7,7 +7,7 @@ import {
   computeRulesetIdV1,
   simulateMatchV1WithHistory,
 } from "@nyano/triad-engine";
-import { resolveRulesetOrThrow, type RulesetKey } from "@/lib/ruleset_registry";
+import { parseRulesetKeyOrDefault, resolveRulesetOrThrow, type RulesetKey } from "@/lib/ruleset_registry";
 import { parseDeckRestriction, validateDeckAgainstRestriction } from "@/lib/deck_restriction";
 
 import { BoardView } from "@/components/BoardView";
@@ -32,6 +32,7 @@ import { base64UrlEncodeUtf8, tryGzipCompressUtf8ToBase64Url } from "@/lib/base6
 import { getDeck, listDecks, upsertDeck, type DeckV1 } from "@/lib/deck_store";
 import { getEventById, getEventStatus, type EventV1 } from "@/lib/events";
 import { stringifyWithBigInt } from "@/lib/json";
+import { buildReplayBundleV2, stringifyReplayBundle } from "@/lib/replay_bundle";
 import { fetchMintedTokenIds, fetchNyanoCards } from "@/lib/nyano_rpc";
 import { publishOverlayState, subscribeStreamCommand, type StreamCommandV1 } from "@/lib/streamer_bus";
 import { pickAiMove as pickAiMoveNew, type AiDifficulty, type AiReasonCode } from "@/lib/ai/nyano_ai";
@@ -53,7 +54,9 @@ import type { FlipTraceArrow } from "@/components/FlipArrowOverlay";
 import { MatchDrawerMint, DrawerToggleButton } from "@/components/MatchDrawerMint";
 import { writeClipboardText } from "@/lib/clipboard";
 import { appAbsoluteUrl } from "@/lib/appUrl";
+import { MAX_CHAIN_CAP_PER_TURN, parseChainCapPerTurnParam } from "@/lib/ruleset_meta";
 import {
+  deriveRevealCommitHex,
   parseFirstPlayerResolutionMode,
   randomBytes32Hex,
   resolveFirstPlayer,
@@ -165,11 +168,6 @@ function parseOpponentMode(v: string | null): OpponentMode {
   if (!v) return "pvp";
   if (v === "vs_nyano_ai" || v === "ai" || v === "nyano") return "vs_nyano_ai";
   return "pvp";
-}
-
-function parseRulesetKey(v: string | null): RulesetKey {
-  if (v === "v1") return "v1";
-  return "v2";
 }
 
 function parseAiDifficulty(v: string | null): AiDifficulty {
@@ -304,7 +302,9 @@ export function MatchPage() {
   const streamCtrlParam = (searchParams.get("ctrl") ?? "A").toUpperCase();
   const streamControlledSide = (streamCtrlParam === "B" ? 1 : 0) as PlayerIndex;
 
-  const rulesetKeyParam = parseRulesetKey(searchParams.get("rk"));
+  const rulesetKeyParam = parseRulesetKeyOrDefault(searchParams.get("rk"), "v2");
+  const chainCapRawParam = searchParams.get("ccap");
+  const chainCapPerTurnParam = parseChainCapPerTurnParam(chainCapRawParam);
   const seasonIdParam = parseSeason(searchParams.get("season"));
   const firstPlayerModeParam = parseFirstPlayerResolutionMode(searchParams.get("fpm"));
   const manualFirstPlayerParam = parseFirstPlayer(searchParams.get("fp"));
@@ -313,6 +313,8 @@ export function MatchPage() {
   const commitRevealSaltParam = searchParams.get("fps") ?? "";
   const commitRevealAParam = searchParams.get("fra") ?? "";
   const commitRevealBParam = searchParams.get("frb") ?? "";
+  const commitRevealCommitAParam = searchParams.get("fca") ?? "";
+  const commitRevealCommitBParam = searchParams.get("fcb") ?? "";
 
   const isEvent = Boolean(event);
   const opponentMode: OpponentMode = isEvent ? "vs_nyano_ai" : opponentModeParam;
@@ -334,6 +336,8 @@ export function MatchPage() {
           matchSalt: commitRevealSaltParam,
           revealA: commitRevealAParam,
           revealB: commitRevealBParam,
+          commitA: commitRevealCommitAParam,
+          commitB: commitRevealCommitBParam,
         },
       }),
     [
@@ -344,6 +348,8 @@ export function MatchPage() {
       commitRevealSaltParam,
       commitRevealAParam,
       commitRevealBParam,
+      commitRevealCommitAParam,
+      commitRevealCommitBParam,
     ],
   );
   const firstPlayer: PlayerIndex = isEvent ? (event!.firstPlayer as PlayerIndex) : firstPlayerResolution.firstPlayer;
@@ -492,7 +498,14 @@ export function MatchPage() {
   const effectiveDeckATokens = isGuestMode && guestDeckATokens.length === 5 ? guestDeckATokens : deckATokens;
   const effectiveDeckBTokens = isGuestMode && guestDeckBTokens.length === 5 ? guestDeckBTokens : deckBTokens;
 
-  const ruleset: RulesetConfigV1 = resolveRulesetOrThrow(rulesetKey);
+  const baseRuleset = React.useMemo(() => resolveRulesetOrThrow(rulesetKey), [rulesetKey]);
+  const ruleset: RulesetConfigV1 = React.useMemo(() => {
+    const next = structuredClone(baseRuleset) as RulesetConfigV1;
+    if (chainCapPerTurnParam !== null) {
+      next.meta = { ...(next.meta ?? {}), chainCapPerTurn: chainCapPerTurnParam };
+    }
+    return next;
+  }, [baseRuleset, chainCapPerTurnParam]);
   const rulesetId = React.useMemo(() => computeRulesetIdV1(ruleset), [ruleset]);
 
   const used = React.useMemo(() => computeUsed(turns, firstPlayer), [turns, firstPlayer]);
@@ -1126,15 +1139,20 @@ export function MatchPage() {
     }
   };
 
-  /** Build replay URL (relative or absolute). Respects BASE_URL for subpath deployments. */
+  /** Build replay URL (relative or absolute). Respects BASE_URL for subpath deployments.
+   *  v2: embeds card data in the payload so Replay can work without RPC/GameIndex.
+   *  Falls back to v1 (transcript-only) if cards haven't loaded yet. */
   const buildReplayUrl = React.useCallback(async (absolute?: boolean): Promise<string | null> => {
     if (!sim.ok) return null;
-    const json = stringifyWithBigInt(sim.transcript, 0);
+    // v2 when cards available; v1 fallback otherwise
+    const json = cards
+      ? stringifyReplayBundle(buildReplayBundleV2(sim.transcript, cards))
+      : stringifyWithBigInt(sim.transcript, 0);
     const z = await tryGzipCompressUtf8ToBase64Url(json);
     const qp = `&step=9${event ? `&event=${encodeURIComponent(event.id)}` : ""}`;
     const replayPath = z ? `replay?z=${z}${qp}` : `replay?t=${base64UrlEncodeUtf8(json)}${qp}`;
     return absolute ? appAbsoluteUrl(replayPath) : `/replay?${z ? `z=${z}` : `t=${base64UrlEncodeUtf8(json)}`}${qp}`;
-  }, [sim, event]);
+  }, [sim, event, cards]);
 
   const copyShareUrl = async () => {
     setError(null);
@@ -1468,7 +1486,27 @@ export function MatchPage() {
             <select className="input" value={rulesetKey} disabled={isEvent} onChange={(e) => setParam("rk", e.target.value)} aria-label="Ruleset">
               <option value="v1">v1 (core+tactics)</option>
               <option value="v2">v2 (shadow ignores warning mark)</option>
+              <option value="full">full (tactics+traits+formations)</option>
             </select>
+            <select
+              className="input"
+              value={chainCapPerTurnParam === null ? "" : String(chainCapPerTurnParam)}
+              disabled={isEvent}
+              onChange={(e) => setParam("ccap", e.target.value)}
+              aria-label="Chain cap per turn"
+            >
+              <option value="">Layer4 chain cap: off</option>
+              {Array.from({ length: MAX_CHAIN_CAP_PER_TURN + 1 }, (_, n) => (
+                <option key={n} value={String(n)}>
+                  chain cap = {n}
+                </option>
+              ))}
+            </select>
+            {chainCapRawParam !== null && chainCapPerTurnParam === null ? (
+              <div className="text-xs text-rose-600">Invalid ccap parameter (allowed: 0..{MAX_CHAIN_CAP_PER_TURN})</div>
+            ) : (
+              <div className="text-xs text-slate-500">Layer4 experimental knob (engine-only, rulesetId unchanged)</div>
+            )}
             <div className="text-xs text-slate-500 font-mono truncate">rulesetId: {rulesetId}</div>
           </div>
 
@@ -1550,6 +1588,22 @@ export function MatchPage() {
                   onChange={(e) => setParam("frb", e.target.value.trim())}
                   aria-label="Commit reveal B"
                 />
+                <input
+                  className="input font-mono text-xs"
+                  placeholder="commitA (optional bytes32 hex)"
+                  value={commitRevealCommitAParam}
+                  disabled={isEvent}
+                  onChange={(e) => setParam("fca", e.target.value.trim())}
+                  aria-label="Commit A (optional)"
+                />
+                <input
+                  className="input font-mono text-xs"
+                  placeholder="commitB (optional bytes32 hex)"
+                  value={commitRevealCommitBParam}
+                  disabled={isEvent}
+                  onChange={(e) => setParam("fcb", e.target.value.trim())}
+                  aria-label="Commit B (optional)"
+                />
                 <div className="flex items-center gap-2">
                   <button
                     type="button"
@@ -1559,9 +1613,29 @@ export function MatchPage() {
                       setParam("fps", randomBytes32Hex());
                       setParam("fra", randomBytes32Hex());
                       setParam("frb", randomBytes32Hex());
+                      setParam("fca", "");
+                      setParam("fcb", "");
                     }}
                   >
                     Randomize Inputs
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn-sm"
+                    disabled={isEvent}
+                    onClick={() => {
+                      const commitA = deriveRevealCommitHex(commitRevealSaltParam, commitRevealAParam);
+                      const commitB = deriveRevealCommitHex(commitRevealSaltParam, commitRevealBParam);
+                      if (!commitA || !commitB) {
+                        toast.warn("Commit derive failed", "matchSalt/revealA/revealB must be bytes32 hex.");
+                        return;
+                      }
+                      setParam("fca", commitA);
+                      setParam("fcb", commitB);
+                      toast.success("Commits derived", "commitA/commitB updated from reveals.");
+                    }}
+                  >
+                    Derive Commits
                   </button>
                 </div>
               </div>

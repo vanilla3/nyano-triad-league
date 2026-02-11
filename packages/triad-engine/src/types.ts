@@ -313,10 +313,24 @@ export interface SynergyConfigV1 {
   formationBonuses: FormationBonusesConfigV1;
 }
 
+export interface MetaConfigV1 {
+  /**
+   * Optional cap for total successful flips in a single turn.
+   * - Includes direct flip + chain flips from that placement.
+   * - `undefined` means uncapped (default behavior).
+   */
+  chainCapPerTurn?: number;
+}
+
 export interface RulesetConfigV1 {
   version: 1;
   tactics: TacticsConfigV1;
   synergy: SynergyConfigV1;
+  /**
+   * Experimental Layer4 knobs for off-chain gameplay iteration.
+   * Engine-only: not included in rulesetId canonicalization (v1).
+   */
+  meta?: MetaConfigV1;
 
   /**
    * Engine-only flag:
