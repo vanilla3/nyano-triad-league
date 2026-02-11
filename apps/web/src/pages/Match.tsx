@@ -54,6 +54,7 @@ import type { FlipTraceArrow } from "@/components/FlipArrowOverlay";
 import { MatchDrawerMint, DrawerToggleButton } from "@/components/MatchDrawerMint";
 import { writeClipboardText } from "@/lib/clipboard";
 import { appAbsoluteUrl } from "@/lib/appUrl";
+import { MAX_CHAIN_CAP_PER_TURN, parseChainCapPerTurnParam } from "@/lib/ruleset_meta";
 import {
   deriveRevealCommitHex,
   parseFirstPlayerResolutionMode,
@@ -302,6 +303,8 @@ export function MatchPage() {
   const streamControlledSide = (streamCtrlParam === "B" ? 1 : 0) as PlayerIndex;
 
   const rulesetKeyParam = parseRulesetKeyOrDefault(searchParams.get("rk"), "v2");
+  const chainCapRawParam = searchParams.get("ccap");
+  const chainCapPerTurnParam = parseChainCapPerTurnParam(chainCapRawParam);
   const seasonIdParam = parseSeason(searchParams.get("season"));
   const firstPlayerModeParam = parseFirstPlayerResolutionMode(searchParams.get("fpm"));
   const manualFirstPlayerParam = parseFirstPlayer(searchParams.get("fp"));
@@ -495,7 +498,14 @@ export function MatchPage() {
   const effectiveDeckATokens = isGuestMode && guestDeckATokens.length === 5 ? guestDeckATokens : deckATokens;
   const effectiveDeckBTokens = isGuestMode && guestDeckBTokens.length === 5 ? guestDeckBTokens : deckBTokens;
 
-  const ruleset: RulesetConfigV1 = resolveRulesetOrThrow(rulesetKey);
+  const baseRuleset = React.useMemo(() => resolveRulesetOrThrow(rulesetKey), [rulesetKey]);
+  const ruleset: RulesetConfigV1 = React.useMemo(() => {
+    const next = structuredClone(baseRuleset) as RulesetConfigV1;
+    if (chainCapPerTurnParam !== null) {
+      next.meta = { ...(next.meta ?? {}), chainCapPerTurn: chainCapPerTurnParam };
+    }
+    return next;
+  }, [baseRuleset, chainCapPerTurnParam]);
   const rulesetId = React.useMemo(() => computeRulesetIdV1(ruleset), [ruleset]);
 
   const used = React.useMemo(() => computeUsed(turns, firstPlayer), [turns, firstPlayer]);
@@ -1478,6 +1488,25 @@ export function MatchPage() {
               <option value="v2">v2 (shadow ignores warning mark)</option>
               <option value="full">full (tactics+traits+formations)</option>
             </select>
+            <select
+              className="input"
+              value={chainCapPerTurnParam === null ? "" : String(chainCapPerTurnParam)}
+              disabled={isEvent}
+              onChange={(e) => setParam("ccap", e.target.value)}
+              aria-label="Chain cap per turn"
+            >
+              <option value="">Layer4 chain cap: off</option>
+              {Array.from({ length: MAX_CHAIN_CAP_PER_TURN + 1 }, (_, n) => (
+                <option key={n} value={String(n)}>
+                  chain cap = {n}
+                </option>
+              ))}
+            </select>
+            {chainCapRawParam !== null && chainCapPerTurnParam === null ? (
+              <div className="text-xs text-rose-600">Invalid ccap parameter (allowed: 0..{MAX_CHAIN_CAP_PER_TURN})</div>
+            ) : (
+              <div className="text-xs text-slate-500">Layer4 experimental knob (engine-only, rulesetId unchanged)</div>
+            )}
             <div className="text-xs text-slate-500 font-mono truncate">rulesetId: {rulesetId}</div>
           </div>
 
