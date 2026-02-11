@@ -35,16 +35,16 @@
   - `computeRulesetIdV1(ruleset)` を追加（TS参照実装）
 ## 🚧 Doing (now)
 
-- 🔧 Solidity側：Transcript検証（v1 ABI-encode hash）の最小実装（foundry/hardhatは後で選定）
-  - `matchId` の計算と二重提出防止（replay防止）
-  - `rulesetId` を受け取り、RulesetRegistry（後続）と接続できる形にする
+- 🔧 「Wind（先攻/後攻選択）」の公平な表現を詰める（commit-reveal / seed / 両者合意）
+  - triad-engine に先攻決定ヘルパーを追加（`first_player.ts`）
+  - 次は league / UI / protocol での採用フローを固定する
 
 ## 🧩 Next (high priority)
 
 
 ### A. ルール・プロトコルの安定化
-- [ ] 公式戦向け：Solidity側のTranscript検証（v1 ABI-encode hash）
-- [ ] RulesetRegistry（permissionless）最小実装：rulesetId -> config hash / metadata を登録できる
+- [x] 公式戦向け：Solidity側のTranscript検証（v1 ABI-encode hash）
+- [x] RulesetRegistry（permissionless）最小実装：rulesetId -> config hash / metadata を登録できる
 - [ ] 「Wind（先攻/後攻選択）」の公平な表現（commit-reveal / seed / 両者合意など）
 
 ### B. ゲームの“面白さ”を積み増す（ただし決定論で）

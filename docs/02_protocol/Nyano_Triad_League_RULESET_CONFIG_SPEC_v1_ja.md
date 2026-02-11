@@ -173,6 +173,13 @@ formationBonuses: {
 | Wind | デッキに1枚でもあると、試合開始時に先攻/後攻を選べる | `firstPlayer` で表現 |
 | Earth | 置く際に1辺を選び +`boost`、対辺に `oppositePenalty` | `earthBoostEdge` を使用 |
 
+Wind の公平な表現（commit-reveal / 両者合意）の実装補助として、
+`packages/triad-engine/src/first_player.ts` に以下の純関数を用意する：
+- `buildFirstPlayerChoiceCommitV1`
+- `verifyFirstPlayerChoiceCommitV1`
+- `deriveFirstPlayerFromCommitRevealV1`
+- `resolveFirstPlayerByMutualChoiceV1`
+
 詳細な“順序（適用タイミング）”や斜め比較の定義は、別紙 `TRAIT_EFFECTS_SPEC` を参照。
 
 ---
