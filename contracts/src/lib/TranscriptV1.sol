@@ -89,5 +89,20 @@ library TranscriptV1 {
         require(t.moves.length == 9, "Transcript: moves len");
         require(t.warningMarks.length == 9, "Transcript: warning len");
         require(t.earthBoostEdges.length == 9, "Transcript: earth len");
+
+        for (uint256 i = 0; i < 9; i++) {
+            uint8 moveByte = uint8(t.moves[i]);
+            uint8 cell = moveByte >> 4;
+            uint8 cardIndex = moveByte & 0x0f;
+
+            require(cell < 9, "Transcript: move cell");
+            require(cardIndex < 5, "Transcript: move card");
+
+            uint8 warningMark = uint8(t.warningMarks[i]);
+            require(warningMark == NONE_U8 || warningMark < 9, "Transcript: warning value");
+
+            uint8 earthBoostEdge = uint8(t.earthBoostEdges[i]);
+            require(earthBoostEdge == NONE_U8 || earthBoostEdge < 4, "Transcript: earth value");
+        }
     }
 }
