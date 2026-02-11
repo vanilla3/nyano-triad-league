@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import {
   RULESET_KEYS,
   isValidRulesetKey,
+  parseRulesetKeyOrDefault,
   resolveRuleset,
   resolveRulesetOrThrow,
 } from "../ruleset_registry";
@@ -73,6 +74,23 @@ describe("Ruleset registry (P2-370)", () => {
 
     it("number → false", () => {
       expect(isValidRulesetKey(1)).toBe(false);
+    });
+  });
+
+  /* ─── parseRulesetKeyOrDefault ─── */
+
+  describe("parseRulesetKeyOrDefault", () => {
+    it('"full" parses as full', () => {
+      expect(parseRulesetKeyOrDefault("full")).toBe("full");
+    });
+
+    it("falls back to default (v2) on unknown key", () => {
+      expect(parseRulesetKeyOrDefault("v99")).toBe("v2");
+      expect(parseRulesetKeyOrDefault(null)).toBe("v2");
+    });
+
+    it("uses caller-provided fallback", () => {
+      expect(parseRulesetKeyOrDefault("v99", "v1")).toBe("v1");
     });
   });
 

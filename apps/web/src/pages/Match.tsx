@@ -7,7 +7,7 @@ import {
   computeRulesetIdV1,
   simulateMatchV1WithHistory,
 } from "@nyano/triad-engine";
-import { resolveRulesetOrThrow, type RulesetKey } from "@/lib/ruleset_registry";
+import { parseRulesetKeyOrDefault, resolveRulesetOrThrow, type RulesetKey } from "@/lib/ruleset_registry";
 import { parseDeckRestriction, validateDeckAgainstRestriction } from "@/lib/deck_restriction";
 
 import { BoardView } from "@/components/BoardView";
@@ -168,11 +168,6 @@ function parseOpponentMode(v: string | null): OpponentMode {
   return "pvp";
 }
 
-function parseRulesetKey(v: string | null): RulesetKey {
-  if (v === "v1") return "v1";
-  return "v2";
-}
-
 function parseAiDifficulty(v: string | null): AiDifficulty {
   if (v === "easy") return "easy";
   if (v === "hard") return "hard";
@@ -305,7 +300,7 @@ export function MatchPage() {
   const streamCtrlParam = (searchParams.get("ctrl") ?? "A").toUpperCase();
   const streamControlledSide = (streamCtrlParam === "B" ? 1 : 0) as PlayerIndex;
 
-  const rulesetKeyParam = parseRulesetKey(searchParams.get("rk"));
+  const rulesetKeyParam = parseRulesetKeyOrDefault(searchParams.get("rk"), "v2");
   const seasonIdParam = parseSeason(searchParams.get("season"));
   const firstPlayerModeParam = parseFirstPlayerResolutionMode(searchParams.get("fpm"));
   const manualFirstPlayerParam = parseFirstPlayer(searchParams.get("fp"));
@@ -1474,6 +1469,7 @@ export function MatchPage() {
             <select className="input" value={rulesetKey} disabled={isEvent} onChange={(e) => setParam("rk", e.target.value)} aria-label="Ruleset">
               <option value="v1">v1 (core+tactics)</option>
               <option value="v2">v2 (shadow ignores warning mark)</option>
+              <option value="full">full (tactics+traits+formations)</option>
             </select>
             <div className="text-xs text-slate-500 font-mono truncate">rulesetId: {rulesetId}</div>
           </div>
