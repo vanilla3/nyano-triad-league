@@ -30,7 +30,10 @@ export function detectVfxQuality(): VfxQuality {
   }
 
   // Navigator hints (not available in all browsers; deviceMemory is non-standard)
-  const nav: any = typeof navigator !== "undefined" ? navigator : {};
+  type NavHints = { deviceMemory?: number; hardwareConcurrency?: number };
+  const nav: NavHints = typeof navigator !== "undefined"
+    ? (navigator as unknown as NavHints)
+    : {};
   const mem: number | null = typeof nav.deviceMemory === "number" ? nav.deviceMemory : null;
   const cores: number | null = typeof nav.hardwareConcurrency === "number" ? nav.hardwareConcurrency : null;
 
