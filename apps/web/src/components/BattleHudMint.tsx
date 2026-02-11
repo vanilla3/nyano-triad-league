@@ -106,16 +106,19 @@ export function BattleHudMint({
         </div>
       )}
 
-      {/* Phase indicator */}
+      {/* Active player tag + phase indicator */}
       <div className="mint-battle-hud__phase">
         <span
           className={[
-            "mint-battle-hud__player-dot",
+            "mint-battle-hud__player-tag",
             currentPlayer === 0
-              ? "mint-battle-hud__player-dot--a"
-              : "mint-battle-hud__player-dot--b",
+              ? "mint-battle-hud__player-tag--a"
+              : "mint-battle-hud__player-tag--b",
           ].join(" ")}
-        />
+          aria-label={`Current player: ${currentPlayer === 0 ? "A" : "B"}`}
+        >
+          {gamePhase === "ai_turn" ? "🐱 Nyano" : currentPlayer === 0 ? "A" : "B"}
+        </span>
         <span className="mint-battle-hud__phase-label">
           {PHASE_LABELS[gamePhase]}
         </span>

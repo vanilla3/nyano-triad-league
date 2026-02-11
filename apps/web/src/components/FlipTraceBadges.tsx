@@ -1,14 +1,16 @@
 import React from "react";
 import type { FlipTraceV1 } from "@nyano/triad-engine";
-import { flipTraceFull, flipTraceShort } from "@/components/flipTraceDescribe";
+import { flipTraceFull, flipTraceShort, flipBadgeVariant } from "@/components/flipTraceDescribe";
 
 /**
  * FlipTraceBadges
  *
  * - TurnLog / overlay などで「なぜ奪取が起きたか」を短い文字列で見せる。
  * - 表示文言は flipTraceDescribe.ts に集約（日本語出力の一貫性）。
+ * - バッジ色: 連鎖=violet, じゃんけん=sky, 斜め=emerald, 通常=amber
  *
  * commit-0072: P1-1 TurnLog の flipTraces 表示を日本語説明へ統合
+ * Sprint 35: カラー分け強化
  */
 
 export function FlipTraceBadges(props: {
@@ -26,7 +28,7 @@ export function FlipTraceBadges(props: {
   return (
     <div className={["flex flex-wrap items-center gap-1", className].join(" ")}>
       {shown.map((t, i) => (
-        <span key={`${t.from}-${t.to}-${i}`} className="badge badge-amber">
+        <span key={`${t.from}-${t.to}-${i}`} className={["badge", flipBadgeVariant(t)].join(" ")}>
           {flipTraceShort(t)}
         </span>
       ))}

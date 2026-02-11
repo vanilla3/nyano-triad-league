@@ -28,6 +28,38 @@ function winnerLabel(w: number): string {
   return w === 0 ? "A" : "B";
 }
 
+/**
+ * Determine the "best" attempt for an event.
+ * Priority: win (A=0) > tile advantage (tilesA - tilesB) > newest.
+ * Returns the attempt ID of the best record, or null if no attempts.
+ */
+function findBestAttemptId(
+  attempts: { id: string; winner: 0 | 1; tilesA: number; tilesB: number; createdAt: string }[],
+): string | null {
+  if (attempts.length === 0) return null;
+
+  let best = attempts[0];
+  for (let i = 1; i < attempts.length; i++) {
+    const a = attempts[i];
+    const bestIsWin = best.winner === 0;
+    const aIsWin = a.winner === 0;
+
+    if (aIsWin && !bestIsWin) { best = a; continue; }
+    if (!aIsWin && bestIsWin) continue;
+
+    // Both won or both lost — compare tile advantage
+    const bestDiff = best.tilesA - best.tilesB;
+    const aDiff = a.tilesA - a.tilesB;
+    if (aDiff > bestDiff) { best = a; continue; }
+    if (aDiff < bestDiff) continue;
+
+    // Same tile diff — prefer newer
+    if (a.createdAt > best.createdAt) { best = a; }
+  }
+
+  return best.id;
+}
+
 export function EventsPage() {
   const [refresh, setRefresh] = React.useState(0);
   const toast = useToast();
@@ -118,6 +150,8 @@ export function EventsPage() {
                     );
                   }
 
+                  const bestId = findBestAttemptId(attempts);
+
                   return (
                     <div className="rounded-lg border border-slate-200 bg-white p-3 text-xs text-slate-700">
                       <div className="flex flex-wrap items-center justify-between gap-2">
@@ -136,12 +170,30 @@ export function EventsPage() {
                       </div>
 
                       <div className="mt-2 grid gap-2">
-                        {attempts.slice(0, 5).map((a) => (
-                          <div key={a.id} className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2">
+                        {attempts.slice(0, 5).map((a) => {
+                          const isBest = a.id === bestId;
+                          return (
+                          <div
+                            key={a.id}
+                            className={[
+                              "flex flex-wrap items-center justify-between gap-2 rounded-lg border px-3 py-2",
+                              isBest
+                                ? "border-amber-300 bg-amber-50 ring-1 ring-amber-200"
+                                : "border-slate-200 bg-slate-50",
+                            ].join(" ")}
+                          >
                             <div className="grid gap-0.5">
-                              <div className="text-[11px] text-slate-500">{formatIsoShort(a.createdAt)}</div>
+                              <div className="flex items-center gap-2">
+                                <div className="text-[11px] text-slate-500">{formatIsoShort(a.createdAt)}</div>
+                                {isBest && (
+                                  <span className="inline-flex items-center gap-0.5 rounded-full border border-amber-300 bg-amber-100 px-1.5 py-0.5 text-[10px] font-bold text-amber-700">
+                                    ⭐ BEST
+                                  </span>
+                                )}
+                              </div>
                               <div className="text-xs">
                                 winner: <span className="font-medium">{winnerLabel(a.winner)}</span> · tiles A:{a.tilesA}/B:{a.tilesB}
+                                {a.winner === 0 && <span className="ml-1 text-emerald-600 font-medium">WIN</span>}
                               </div>
                               <div className="text-[11px] text-slate-500 font-mono">matchId: {a.matchId}</div>
                             </div>
@@ -166,7 +218,8 @@ export function EventsPage() {
                               </button>
                             </div>
                           </div>
-                        ))}
+                          );
+                        })}
                         {attempts.length > 5 ? <div className="text-[11px] text-slate-500">…and {attempts.length - 5} more</div> : null}
                       </div>
                     </div>
