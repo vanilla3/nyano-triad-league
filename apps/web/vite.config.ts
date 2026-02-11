@@ -15,6 +15,18 @@ export default defineConfig({
       allow: [monorepoRoot],
     },
   },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          // Separate vendor chunks for better caching & smaller main bundle
+          "vendor-react": ["react", "react-dom", "react-router-dom"],
+          "vendor-query": ["@tanstack/react-query"],
+          "vendor-viem": ["viem"],
+        },
+      },
+    },
+  },
   test: {
     globals: true,
     environment: "node",

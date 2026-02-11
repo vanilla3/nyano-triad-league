@@ -11,8 +11,9 @@ describe("nyano_assets", () => {
     expect(NYANO_IMAGE_URL).toBe(NYANO_IMAGE_WEBP_URL);
   });
 
-  it('NYANO_IMAGE_PNG_URL is "/nyano.png"', () => {
-    expect(NYANO_IMAGE_PNG_URL).toBe("/nyano.png");
+  it("NYANO_IMAGE_PNG_URL is deprecated alias for WebP", () => {
+    expect(NYANO_IMAGE_PNG_URL).toBe("/nyano.webp");
+    expect(NYANO_IMAGE_PNG_URL).toBe(NYANO_IMAGE_WEBP_URL);
   });
 
   it('NYANO_IMAGE_WEBP_URL is "/nyano.webp"', () => {

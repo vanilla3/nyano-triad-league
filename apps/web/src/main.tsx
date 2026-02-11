@@ -1,23 +1,41 @@
-import React from "react";
+/* eslint-disable react-refresh/only-export-components */
+import React, { Suspense } from "react";
 import ReactDOM from "react-dom/client";
 import { RouterProvider, createBrowserRouter } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
 import { AppLayout } from "./App";
-import { HomePage } from "./pages/Home";
-import { ArenaPage } from "./pages/Arena";
-import { EventsPage } from "./pages/Events";
-import { DecksPage } from "./pages/Decks";
-import { MatchPage } from "./pages/Match";
-import { PlaygroundPage } from "./pages/Playground";
-import { ReplayPage } from "./pages/Replay";
-import { NyanoPage } from "./pages/Nyano";
-import { RulesetsPage } from "./pages/Rulesets";
-import { StreamPage } from "./pages/Stream";
-import { OverlayPage } from "./pages/Overlay";
 import { getAppBasePath } from "./lib/appUrl";
 
 import "./styles.css";
+
+// ── Eager imports — critical path (home + match) ────────────────────
+import { HomePage } from "./pages/Home";
+import { MatchPage } from "./pages/Match";
+
+// ── Lazy imports — loaded on demand per route ───────────────────────
+const ArenaPage = React.lazy(() => import("./pages/Arena").then((m) => ({ default: m.ArenaPage })));
+const EventsPage = React.lazy(() => import("./pages/Events").then((m) => ({ default: m.EventsPage })));
+const DecksPage = React.lazy(() => import("./pages/Decks").then((m) => ({ default: m.DecksPage })));
+const PlaygroundPage = React.lazy(() => import("./pages/Playground").then((m) => ({ default: m.PlaygroundPage })));
+const ReplayPage = React.lazy(() => import("./pages/Replay").then((m) => ({ default: m.ReplayPage })));
+const NyanoPage = React.lazy(() => import("./pages/Nyano").then((m) => ({ default: m.NyanoPage })));
+const RulesetsPage = React.lazy(() => import("./pages/Rulesets").then((m) => ({ default: m.RulesetsPage })));
+const StreamPage = React.lazy(() => import("./pages/Stream").then((m) => ({ default: m.StreamPage })));
+const OverlayPage = React.lazy(() => import("./pages/Overlay").then((m) => ({ default: m.OverlayPage })));
+
+// ── Route-level loading fallback ────────────────────────────────────
+function RouteFallback() {
+  return (
+    <div className="flex min-h-[40vh] items-center justify-center">
+      <div className="animate-pulse text-sm text-slate-400">Loading…</div>
+    </div>
+  );
+}
+
+function Lazy({ children }: { children: React.ReactNode }) {
+  return <Suspense fallback={<RouteFallback />}>{children}</Suspense>;
+}
 
 // Support deployment under a subpath (e.g. GitHub Pages `/nyano-triad-league/`).
 // Vite's BASE_URL is used both for asset loading and router basename.
@@ -26,22 +44,22 @@ const basename = getAppBasePath().replace(/\/$/, "") || "/";
 const router = createBrowserRouter([
   {
     path: "/overlay",
-    element: <OverlayPage />,
+    element: <Lazy><OverlayPage /></Lazy>,
   },
   {
     path: "/",
     element: <AppLayout />,
     children: [
       { index: true, element: <HomePage /> },
-      { path: "arena", element: <ArenaPage /> },
-      { path: "events", element: <EventsPage /> },
-      { path: "decks", element: <DecksPage /> },
+      { path: "arena", element: <Lazy><ArenaPage /></Lazy> },
+      { path: "events", element: <Lazy><EventsPage /></Lazy> },
+      { path: "decks", element: <Lazy><DecksPage /></Lazy> },
       { path: "match", element: <MatchPage /> },
-      { path: "playground", element: <PlaygroundPage /> },
-      { path: "replay", element: <ReplayPage /> },
-      { path: "nyano", element: <NyanoPage /> },
-      { path: "rulesets", element: <RulesetsPage /> },
-      { path: "stream", element: <StreamPage /> },
+      { path: "playground", element: <Lazy><PlaygroundPage /></Lazy> },
+      { path: "replay", element: <Lazy><ReplayPage /></Lazy> },
+      { path: "nyano", element: <Lazy><NyanoPage /></Lazy> },
+      { path: "rulesets", element: <Lazy><RulesetsPage /></Lazy> },
+      { path: "stream", element: <Lazy><StreamPage /></Lazy> },
     ],
   },
 ], { basename });

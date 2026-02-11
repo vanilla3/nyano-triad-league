@@ -1,5 +1,5 @@
 import React from "react";
-import { NYANO_IMAGE_ARWEAVE_URL, NYANO_IMAGE_PNG_URL, NYANO_IMAGE_WEBP_URL } from "@/lib/nyano_assets";
+import { NYANO_IMAGE_ARWEAVE_URL, NYANO_IMAGE_WEBP_URL } from "@/lib/nyano_assets";
 
 type Props = {
   size?: number;
@@ -19,7 +19,7 @@ type Props = {
  */
 export function NyanoImage({ size = 72, className = "", alt = "Nyano", title }: Props) {
   const [phase, setPhase] = React.useState<"local" | "arweave" | "failed">("local");
-  const [src, setSrc] = React.useState<string>(NYANO_IMAGE_PNG_URL);
+  const [src, setSrc] = React.useState<string>(NYANO_IMAGE_WEBP_URL);
 
   const handleError = () => {
     if (phase === "local") {

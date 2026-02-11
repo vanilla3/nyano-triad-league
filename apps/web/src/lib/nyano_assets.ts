@@ -9,7 +9,8 @@
  * - We keep the original Arweave URL as a fallback / provenance reference.
  */
 
-export const NYANO_IMAGE_PNG_URL = "/nyano.png";
+/** @deprecated PNG removed — all local images now WebP only */
+export const NYANO_IMAGE_PNG_URL = "/nyano.webp";
 export const NYANO_IMAGE_WEBP_URL = "/nyano.webp";
 
 /** Original immutable source (reference / fallback) */
