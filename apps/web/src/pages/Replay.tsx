@@ -481,6 +481,9 @@ protocolV1: {
     [highlights, step],
   );
   const stepProgress = stepMax > 0 ? Math.round((step / stepMax) * 100) : 0;
+  const canStepBack = step > 0;
+  const canStepForward = step < stepMax;
+  const canPlay = sim.ok && stepMax > 0;
 
   // Highlight jump helpers
   const jumpToNextHighlight = React.useCallback(() => {
@@ -948,7 +951,7 @@ protocolV1: {
 
           <section className="grid gap-6 lg:grid-cols-2">
             <div className="card">
-              <div className="card-hd flex items-center justify-between">
+              <div className="card-hd replay-header-grid">
                 <div className="flex items-center gap-3">
                   <div className="text-base font-semibold">Replay</div>
                   <div className="text-xs text-slate-500">{sim.currentRulesetLabel}</div>
@@ -966,45 +969,72 @@ protocolV1: {
                     </span>
                   ) : null}
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="replay-transport">
                   <button
-                    className="btn"
+                    className="btn btn-sm"
                     onClick={() => {
                       setIsPlaying(false);
                       setStep(0);
                     }}
-                    disabled={step === 0}
+                    disabled={!canStepBack}
+                    title="Jump to start"
                   >
-                    reset
+                    start
                   </button>
                   <button
-                    className="btn"
+                    className="btn btn-sm"
                     onClick={() => {
                       setIsPlaying(false);
                       setStep((s) => Math.max(0, s - 1));
                     }}
-                    disabled={step === 0}
+                    disabled={!canStepBack}
                     aria-label="Previous step"
                   >
                     prev
                   </button>
 
                   <button
-                    className="btn"
+                    className="btn btn-sm btn-primary"
                     onClick={() => setIsPlaying((p) => !p)}
-                    disabled={!sim.ok || stepMax === 0}
-                    title="auto play"
+                    disabled={!canPlay}
+                    title="Auto play"
+                    aria-label={isPlaying ? "Pause replay" : "Play replay"}
                   >
                     {isPlaying ? "pause" : "play"}
                   </button>
 
-                  <label className="flex items-center gap-2 text-xs text-surface-600">
+                  <button
+                    className="btn btn-sm"
+                    onClick={() => {
+                      setIsPlaying(false);
+                      setStep((s) => Math.min(stepMax, s + 1));
+                    }}
+                    disabled={!canStepForward}
+                    aria-label="Next step"
+                  >
+                    next
+                  </button>
+
+                  <button
+                    className="btn btn-sm"
+                    onClick={() => {
+                      setIsPlaying(false);
+                      setStep(stepMax);
+                    }}
+                    disabled={!canStepForward}
+                    title="Jump to end"
+                  >
+                    end
+                  </button>
+
+                  <label className="replay-speed">
                     speed
                     <select
                       className="rounded-md border border-surface-300 bg-white px-2 py-1 text-xs"
                       value={playbackSpeed}
                       onChange={(e) => setPlaybackSpeed(Number(e.target.value))}
-                      disabled={!sim.ok || stepMax === 0}
+                      disabled={!canPlay}
+                      aria-label="Replay speed"
                     >
                       <option value={0.5}>0.5x</option>
                       <option value={1}>1x</option>
@@ -1014,17 +1044,6 @@ protocolV1: {
                     </select>
                   </label>
 
-                  <button
-                    className="btn"
-                    onClick={() => {
-                      setIsPlaying(false);
-                      setStep((s) => Math.min(stepMax, s + 1));
-                    }}
-                    disabled={step === stepMax}
-                    aria-label="Next step"
-                  >
-                    next
-                  </button>
                 </div>
               </div>
 
@@ -1071,6 +1090,9 @@ protocolV1: {
                         </button>
                       </div>
                     ) : null}
+                  </div>
+                  <div className="replay-progress" aria-hidden="true">
+                    <div className="replay-progress__bar" style={{ width: `${stepProgress}%` }} />
                   </div>
 
                   <div className="replay-range-wrap">
@@ -1195,7 +1217,7 @@ protocolV1: {
                 <div className="text-base font-semibold">Turn log</div>
                 <div className="text-xs text-slate-500">Click a turn to jump the replay step.</div>
               </div>
-              <div className="card-bd">
+              <div className="card-bd replay-turnlog-body">
                 <TurnLog
                   turns={sim.current.turns}
                   boardHistory={sim.current.boardHistory}
@@ -1217,7 +1239,7 @@ protocolV1: {
             <div className="card-bd grid gap-6 md:grid-cols-2">
               <div className="grid gap-2">
                 <div className="text-xs font-medium text-slate-600">playerA deck</div>
-                <div className="deck-preview-grid grid grid-cols-5 gap-2">
+                <div className="deck-preview-grid grid grid-cols-3 gap-2 sm:grid-cols-5">
                   {sim.transcript.header.deckA.map((tid) => {
                     const card = sim.cards.get(tid);
                     return card ? <CardMini key={tid.toString()} card={card} owner={0} subtle /> : null;
@@ -1227,7 +1249,7 @@ protocolV1: {
 
               <div className="grid gap-2">
                 <div className="text-xs font-medium text-slate-600">playerB deck</div>
-                <div className="deck-preview-grid grid grid-cols-5 gap-2">
+                <div className="deck-preview-grid grid grid-cols-3 gap-2 sm:grid-cols-5">
                   {sim.transcript.header.deckB.map((tid) => {
                     const card = sim.cards.get(tid);
                     return card ? <CardMini key={tid.toString()} card={card} owner={1} subtle /> : null;
@@ -1238,7 +1260,7 @@ protocolV1: {
               <div className="md:col-span-2 grid gap-2 text-xs text-slate-600">
                 <div className="rounded-lg border border-slate-200 bg-white p-3">
                   <div className="font-medium text-slate-700">owners (read-only)</div>
-                  <div className="mt-2 grid gap-1 font-mono">
+                  <div className="mt-2 grid max-h-56 gap-1 overflow-auto font-mono">
                     {Array.from(sim.owners.entries()).map(([tid, o]) => (
                       <div key={tid.toString()}>
                         #{tid.toString()} {"->"} {o}
