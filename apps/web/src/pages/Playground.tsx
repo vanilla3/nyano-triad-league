@@ -3,7 +3,7 @@ import { useSearchParams } from "react-router-dom";
 import { useToast } from "@/components/Toast";
 import { Disclosure } from "@/components/Disclosure";
 
-import type { CardData, MatchResultWithHistory, RulesetConfigV1, TranscriptV1 } from "@nyano/triad-engine";
+import type { BoardCell, CardData, MatchResultWithHistory, RulesetConfigV1, TranscriptV1 } from "@nyano/triad-engine";
 import {
   simulateMatchV1WithHistory,
   ONCHAIN_CORE_TACTICS_RULESET_CONFIG_V1,
@@ -56,7 +56,7 @@ function clampInt(n: number, min: number, max: number): number {
   return Math.max(min, Math.min(max, n));
 }
 
-function boardEquals(a: any, b: any): boolean {
+function boardEquals(a: ReadonlyArray<BoardCell | null>, b: ReadonlyArray<BoardCell | null>): boolean {
   if (a === b) return true;
   if (!a || !b) return false;
   if (a.length !== b.length) return false;
@@ -71,7 +71,7 @@ function boardEquals(a: any, b: any): boolean {
   return true;
 }
 
-function computeDelta(boardPrev: any, boardNow: any): { placedCell: number | null; flippedCells: number[] } {
+function computeDelta(boardPrev: ReadonlyArray<BoardCell | null>, boardNow: ReadonlyArray<BoardCell | null>): { placedCell: number | null; flippedCells: number[] } {
   let placedCell: number | null = null;
   const flippedCells: number[] = [];
 
