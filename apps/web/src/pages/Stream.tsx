@@ -13,6 +13,7 @@ import { StreamSharePanel } from "@/components/stream/StreamSharePanel";
 import { readBoolSetting, readNumberSetting, readStringSetting, readStreamLock, readStreamLockTimestamp, readAntiSpamRateLimitMs, readAntiSpamMaxVoteChanges, writeBoolSetting, writeNumberSetting, writeStreamLock, writeStreamLockTimestamp, writeAntiSpamRateLimitMs, writeAntiSpamMaxVoteChanges, writeStringSetting } from "@/lib/local_settings";
 import { validateUsername, checkRateLimit, checkVoteChangeLimit, DEFAULT_ANTI_SPAM_CONFIG, type AntiSpamConfig } from "@/lib/anti_spam";
 import { postNyanoWarudoSnapshot } from "@/lib/nyano_warudo_bridge";
+import { errorMessage } from "@/lib/errorMessage";
 import { formatViewerMoveText, parseChatMoveLoose, parseViewerMoveText } from "@/lib/triad_viewer_command";
 import {
   cellIndexToCoord,
@@ -122,9 +123,8 @@ function downloadTextFile(filename: string, content: string, mime: string) {
     a.click();
     a.remove();
     URL.revokeObjectURL(url);
-  } catch (err) {
-    console.error(err);
-    toast.error("Download failed", String(err));
+  } catch (err: unknown) {
+    toast.error("Download failed", errorMessage(err));
   }
 }
 

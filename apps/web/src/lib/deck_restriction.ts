@@ -81,10 +81,12 @@ export function parseDeckRestriction(
     return RESTRICTION_PRESETS[key];
   }
 
-  // Unknown restriction → treat as "none" with warning
-  console.warn(
-    `[deck_restriction] Unknown restriction "${key}", falling back to "none".`,
-  );
+  // Unknown restriction → treat as "none" with dev warning
+  if (import.meta.env.DEV) {
+    console.warn(
+      `[deck_restriction] Unknown restriction "${key}", falling back to "none".`,
+    );
+  }
   return {
     type: "none",
     label: "No Restriction",
