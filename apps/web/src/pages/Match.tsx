@@ -1,6 +1,6 @@
 import React from "react";
 import { useToast } from "@/components/Toast";
-import { Link, useSearchParams } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 
 import type { BoardState, CardData, FlipTraceV1, MatchResultWithHistory, PlayerIndex, RulesetConfigV1, TranscriptV1, Turn, TurnSummary } from "@nyano/triad-engine";
 import {
@@ -51,6 +51,7 @@ import { createSfxEngine, type SfxEngine } from "@/lib/sfx";
 import { readUiDensity, writeUiDensity, type UiDensity } from "@/lib/local_settings";
 import type { FlipTraceArrow } from "@/components/FlipArrowOverlay";
 import { MatchDrawerMint, DrawerToggleButton } from "@/components/MatchDrawerMint";
+import { writeClipboardText } from "@/lib/clipboard";
 
 type OpponentMode = "pvp" | "vs_nyano_ai";
 type DataMode = "fast" | "verified";
@@ -149,7 +150,7 @@ function fillTurns(partial: Turn[], firstPlayer: PlayerIndex): Turn[] {
 }
 
 async function copyToClipboard(text: string): Promise<void> {
-  await navigator.clipboard.writeText(text);
+  await writeClipboardText(text);
 }
 
 // AI logic has been extracted to @/lib/ai/nyano_ai.ts
@@ -243,6 +244,7 @@ function CollapsibleSection({
    ═══════════════════════════════════════════════════════════════════════════ */
 
 export function MatchPage() {
+  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const ui = (searchParams.get("ui") || "mint").toLowerCase();
   const isRpg = ui === "rpg";
@@ -1079,9 +1081,13 @@ export function MatchPage() {
       setError(sim.error);
       return;
     }
-    const json = stringifyWithBigInt(sim.transcript, 2);
-    await copyToClipboard(json);
-    toast.success("Copied", "transcript JSON");
+    try {
+      const json = stringifyWithBigInt(sim.transcript, 2);
+      await copyToClipboard(json);
+      toast.success("Copied", "transcript JSON");
+    } catch (e: unknown) {
+      toast.error("Copy failed", errorMessage(e));
+    }
   };
 
   /** Build replay URL (relative or absolute). Pre-computes synchronously with fallback. */
@@ -1098,9 +1104,9 @@ export function MatchPage() {
     setError(null);
     try {
       const url = await buildReplayUrl(true);
-      if (!url) { setError("Match not ready"); return; }
+      if (!url) { toast.warn("Share", "Match not ready — play 9 turns first"); return; }
       await copyToClipboard(url);
-      toast.success("Copied", "share URL");
+      toast.success("Copied!", "Share URL copied to clipboard");
     } catch (e: unknown) {
       toast.error("Share failed", errorMessage(e));
     }
@@ -1111,9 +1117,9 @@ export function MatchPage() {
     setStatus(null);
     try {
       const url = await buildReplayUrl(false);
-      if (!url) { setError("Match not ready"); return; }
-      // Use window.location for reliable navigation (window.open blocked by popup blockers in async)
-      window.location.href = url;
+      if (!url) { toast.warn("Replay", "Match not ready — play 9 turns first"); return; }
+      // SPA navigation via react-router (popup-safe, preserves client state)
+      navigate(url);
     } catch (e: unknown) {
       toast.error("Replay failed", errorMessage(e));
     }
@@ -1983,15 +1989,15 @@ export function MatchPage() {
                           Share URL
                         </button>
                         <button className="btn text-xs" onClick={async () => {
-                          if (!sim.ok) return;
-                          const json = stringifyWithBigInt(sim.transcript, 0);
-                          const z = await tryGzipCompressUtf8ToBase64Url(json);
-                          const origin = window.location.origin;
-                          const qp = `&step=9${event ? `&event=${encodeURIComponent(event.id)}` : ""}`;
-                          const url = z ? `${origin}/replay?z=${z}${qp}` : `${origin}/replay?t=${base64UrlEncodeUtf8(json)}${qp}`;
-                          const msg = `Nyano Triad で対戦したにゃ！\n${url}`;
-                          await copyToClipboard(msg);
-                          toast.success("Copied", "share template");
+                          try {
+                            const url = await buildReplayUrl(true);
+                            if (!url) { toast.warn("Share", "Match not ready"); return; }
+                            const msg = `Nyano Triad で対戦したにゃ！\n${url}`;
+                            await copyToClipboard(msg);
+                            toast.success("Copied", "share template");
+                          } catch (e: unknown) {
+                            toast.error("Share failed", errorMessage(e));
+                          }
                         }} disabled={!canFinalize}>
                           Share Template
                         </button>

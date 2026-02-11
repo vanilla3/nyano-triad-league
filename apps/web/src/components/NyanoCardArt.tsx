@@ -1,9 +1,9 @@
 import React from "react";
 import { useNyanoTokenMetadata } from "@/lib/nyano/useNyanoTokenMetadata";
-import { NyanoImage } from "./NyanoImage";
+import { NyanoTokenPlaceholder } from "./NyanoTokenPlaceholder";
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   NyanoCardArt — Per-token card art with NyanoImage fallback
+   NyanoCardArt — Per-token card art with generative fallback
    ═══════════════════════════════════════════════════════════════════════════ */
 
 const SIZE_MAP = { sm: 48, md: 72, lg: 96 } as const;
@@ -21,11 +21,12 @@ export interface NyanoCardArtProps {
  * Display per-token NFT card art when metadata is configured.
  *
  * Resolution order:
- *  1. `useNyanoTokenMetadata` → token-specific image URL
- *  2. Fallback → `<NyanoImage>` (generic mascot, local→Arweave→text)
+ *  1. `useNyanoTokenMetadata` → token-specific image URL (Arweave)
+ *  2. Arweave canonical gateway fallback (subdomain → arweave.net)
+ *  3. `<NyanoTokenPlaceholder>` — deterministic generative art based on tokenId
  *
  * When metadata is not configured (no env var, no GameIndex imageBaseUrl),
- * the hook returns `undefined` and we immediately render NyanoImage.
+ * the hook returns `undefined` and we immediately render the placeholder.
  */
 export function NyanoCardArt({ tokenId, size = "md", fill = false, className = "" }: NyanoCardArtProps) {
   const { data: meta, isLoading, error } = useNyanoTokenMetadata(tokenId);
@@ -40,9 +41,6 @@ export function NyanoCardArt({ tokenId, size = "md", fill = false, className = "
       );
     }
   }, [tokenId, isLoading, meta?.imageUrl, error]);
-  const sizeStyle: { width: number | "100%"; height: number | "100%" } = fill
-    ? { width: "100%", height: "100%" }
-    : { width: px, height: px };
 
   // Loading skeleton — matches card shape with shimmer
   if (isLoading) {
@@ -65,15 +63,22 @@ export function NyanoCardArt({ tokenId, size = "md", fill = false, className = "
       <TokenImage
         src={meta.imageUrl}
         tokenId={tokenId}
-        sizeStyle={sizeStyle}
+        size={px}
         fill={fill}
         className={className}
       />
     );
   }
 
-  // Fallback: generic NyanoImage
-  return <NyanoImage size={fill ? 96 : (px ?? 72)} className={fill ? `w-full h-full ${className}` : className} />;
+  // Fallback: deterministic generative art
+  return (
+    <NyanoTokenPlaceholder
+      tokenId={tokenId}
+      size={fill ? 96 : (px ?? 72)}
+      fill={fill}
+      className={className}
+    />
+  );
 }
 
 /* ── Internal: Arweave subdomain → canonical gateway fallback ──────── */
@@ -91,13 +96,13 @@ type ImgState = "primary" | "fallback" | "failed";
 function TokenImage({
   src,
   tokenId,
-  sizeStyle,
+  size,
   fill = false,
   className,
 }: {
   src: string;
   tokenId: bigint;
-  sizeStyle: { width: number | "100%"; height: number | "100%" };
+  size: number;
   fill?: boolean;
   className: string;
 }) {
@@ -111,8 +116,19 @@ function TokenImage({
   }, [src]);
 
   if (state === "failed") {
-    return <NyanoImage size={fill ? 96 : (typeof sizeStyle.width === "number" ? sizeStyle.width : 72)} className={fill ? `w-full h-full ${className}` : className} />;
+    return (
+      <NyanoTokenPlaceholder
+        tokenId={tokenId}
+        size={fill ? 96 : size}
+        fill={fill}
+        className={className}
+      />
+    );
   }
+
+  const sizeStyle = fill
+    ? undefined
+    : ({ width: size, height: size } as React.CSSProperties);
 
   return (
     <div
@@ -121,7 +137,7 @@ function TokenImage({
         fill ? "w-full h-full" : "rounded-xl border border-surface-200 shadow-soft-sm",
         className,
       ].filter(Boolean).join(" ")}
-      style={fill ? undefined : (sizeStyle as React.CSSProperties)}
+      style={sizeStyle}
     >
       <img
         src={activeSrc}
