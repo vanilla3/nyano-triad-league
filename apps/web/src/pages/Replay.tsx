@@ -392,6 +392,17 @@ protocolV1: {
         const resolved = await resolveCards(tokenIds);
         cards = resolved.cards;
         owners = resolved.owners;
+
+        // Verify all cards were resolved — resolveCards silently swallows
+        // RPC errors and returns an incomplete map. Surface the failure here
+        // so the user sees a clear error instead of a broken replay.
+        const unique = new Set(tokenIds.map((t) => t.toString()));
+        if (cards.size < unique.size) {
+          const missing = [...unique].filter((id) => !cards.has(BigInt(id)));
+          throw new Error(
+            `Could not resolve ${missing.length} card(s): ${missing.slice(0, 5).join(", ")}${missing.length > 5 ? "…" : ""}. Check your network connection.`,
+          );
+        }
       }
 
       // Always compute both (cheap compared to RPC reads)
