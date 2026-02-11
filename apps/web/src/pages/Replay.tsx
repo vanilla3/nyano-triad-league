@@ -63,6 +63,11 @@ type SimState =
       v2: MatchResultWithHistory;
     };
 
+type ReplayPhaseInfo = {
+  label: string;
+  tone: "setup" | "opening" | "mid" | "end" | "final";
+};
+
 function clampInt(n: number, min: number, max: number): number {
   if (Number.isNaN(n)) return min;
   return Math.max(min, Math.min(max, n));
@@ -484,6 +489,14 @@ protocolV1: {
   const canStepBack = step > 0;
   const canStepForward = step < stepMax;
   const canPlay = sim.ok && stepMax > 0;
+  const phaseInfo: ReplayPhaseInfo = React.useMemo(() => {
+    if (step <= 0) return { label: "Setup", tone: "setup" };
+    if (step <= 3) return { label: "Opening", tone: "opening" };
+    if (step <= 6) return { label: "Midgame", tone: "mid" };
+    if (step < 9) return { label: "Endgame", tone: "end" };
+    return { label: "Final", tone: "final" };
+  }, [step]);
+  const stepStatusText = step === 0 ? "Initial board state" : `After turn ${step}`;
 
   // Highlight jump helpers
   const jumpToNextHighlight = React.useCallback(() => {
@@ -1048,6 +1061,9 @@ protocolV1: {
               </div>
 
               <div className="card-bd grid gap-4">
+                <div className="sr-only" aria-live="polite">
+                  {`${stepStatusText}. ${phaseInfo.label} phase. Progress ${stepProgress} percent.`}
+                </div>
                 {compare ? (
                   <div className="grid gap-6 md:grid-cols-2">
                     {renderReplay("engine v1", sim.v1)}
@@ -1061,6 +1077,7 @@ protocolV1: {
                   <div className="replay-timeline-head">
                     <div className="flex flex-wrap items-center gap-2">
                       <span className="replay-step-pill">{step === 0 ? "Initial board" : `After turn ${step}`}</span>
+                      <span className={`replay-phase replay-phase--${phaseInfo.tone}`}>{phaseInfo.label}</span>
                       <span className="text-xs text-slate-500">
                         {step}/{stepMax} | {stepProgress}%
                       </span>
@@ -1103,6 +1120,8 @@ protocolV1: {
                       value={step}
                       onChange={(e) => { setIsPlaying(false); setStep(Number(e.target.value)); }}
                       className="replay-range w-full"
+                      aria-label="Replay step"
+                      aria-valuetext={stepStatusText}
                     />
                     {stepMax > 0 && highlights.map((highlight, i) => (
                       <button
@@ -1137,6 +1156,9 @@ protocolV1: {
                   ) : (
                     <div className="text-xs text-slate-500">No tactical highlights yet.</div>
                   )}
+                  <div className="text-[11px] text-slate-500">
+                    Keyboard: <span className="font-mono">[</span>/<span className="font-mono">]</span> jump highlights, <span className="font-mono">Space</span> play/pause.
+                  </div>
 
                   {activeHighlights.length > 0 ? (
                     <div className="replay-highlight-callout">

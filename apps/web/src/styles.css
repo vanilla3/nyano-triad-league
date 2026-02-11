@@ -363,6 +363,47 @@ a {
   font-weight: 700;
 }
 
+.replay-phase {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  border-radius: 999px;
+  padding: 2px 9px;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.replay-phase--setup {
+  background: rgba(241, 245, 249, 0.95);
+  color: rgb(51, 65, 85);
+}
+
+.replay-phase--opening {
+  background: rgba(224, 242, 254, 0.95);
+  border-color: rgba(14, 165, 233, 0.3);
+  color: rgb(12, 74, 110);
+}
+
+.replay-phase--mid {
+  background: rgba(254, 240, 138, 0.25);
+  border-color: rgba(245, 158, 11, 0.35);
+  color: rgb(146, 64, 14);
+}
+
+.replay-phase--end {
+  background: rgba(255, 237, 213, 0.95);
+  border-color: rgba(249, 115, 22, 0.35);
+  color: rgb(154, 52, 18);
+}
+
+.replay-phase--final {
+  background: rgba(220, 252, 231, 0.95);
+  border-color: rgba(16, 185, 129, 0.35);
+  color: rgb(6, 95, 70);
+}
+
 .replay-highlight-index {
   min-width: 74px;
   text-align: center;
@@ -506,6 +547,7 @@ a {
 .replay-turnlog-body {
   max-height: min(70vh, 680px);
   overflow: auto;
+  scroll-behavior: smooth;
 }
 
 @media (min-width: 1024px) {
@@ -551,5 +593,17 @@ a {
 @media (max-width: 1024px) {
   .replay-turnlog-body {
     max-height: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .replay-highlight-chip--active {
+    animation: none;
+    transform: none;
+  }
+
+  .replay-progress__bar,
+  .replay-highlight-marker {
+    transition: none;
   }
 }

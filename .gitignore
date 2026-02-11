@@ -22,3 +22,10 @@ Thumbs.db
 
 # Playwright artifacts
 apps/web/test-results/
+
+# Local temporary artifacts
+*tempall_components.txt
+*temptested_components.txt
+/nul
+/apps/web/nul
+/contracts/cache/test-failures
