@@ -172,6 +172,16 @@
   text-shadow: var(--ol-text-shadow, none);
 }
 
+/* OBS-0501: Theme-aware padding for overlay panels */
+[class*="overlay-theme-"] .ol-pad {
+  padding: var(--ol-pad, 14px);
+}
+
+/* OBS-0502: Theme-aware badge font for overlay mode */
+[class*="overlay-theme-"] .badge {
+  font-size: var(--ol-badge-font, 10px);
+}
+
 /* OBS-0401: Scale duel card internal elements per overlay theme */
 [class*="overlay-theme-"] .mint-duel-card__edge {
   font-size: max(9px, calc(var(--ol-card, 80px) * 0.12));

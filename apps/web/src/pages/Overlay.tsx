@@ -33,7 +33,7 @@ import {
   type StreamVoteStateV1,
 } from "@/lib/streamer_bus";
 import { readStringSetting, writeStringSetting } from "@/lib/local_settings";
-import type { CardData, PlayerIndex } from "@nyano/triad-engine";
+import type { CardData, FlipTraceV1, PlayerIndex } from "@nyano/triad-engine";
 
 // ── Overlay Theme System ──────────────────────────────────────────────
 
@@ -362,9 +362,9 @@ export function OverlayPage() {
   const _flipStats = React.useMemo(() => {
     const flips = Array.isArray(lastTurnSummary?.flips) ? lastTurnSummary!.flips : null;
     if (!flips) return null;
-    const chain = flips.filter((f: any) => Boolean(f.isChain)).length;
-    const diag = flips.filter((f: any) => f.kind === "diag").length;
-    const janken = flips.filter((f: any) => Boolean(f.tieBreak)).length;
+    const chain = flips.filter((f: FlipTraceV1) => Boolean(f.isChain)).length;
+    const diag = flips.filter((f: FlipTraceV1) => f.kind === "diag").length;
+    const janken = flips.filter((f: FlipTraceV1) => Boolean(f.tieBreak)).length;
     const total = flips.length;
     return {
       total,
@@ -413,7 +413,7 @@ export function OverlayPage() {
           ? lastFlipCount
           : 0;
 
-    const hasChain = Array.isArray(lastTurnSummary?.flips) ? lastTurnSummary!.flips!.some((f: any) => Boolean(f.isChain)) : false;
+    const hasChain = Array.isArray(lastTurnSummary?.flips) ? lastTurnSummary!.flips!.some((f: FlipTraceV1) => Boolean(f.isChain)) : false;
 
     return {
       flipCount,
@@ -478,7 +478,7 @@ export function OverlayPage() {
         <div className={layoutClass}>
           {/* Board */}
           <div className={controls ? "rounded-3xl border border-slate-200 bg-white/75 p-3 shadow-sm" : "rounded-3xl border border-slate-200 bg-white/90 p-3 shadow-sm"}>
-            <div className={controls ? "grid grid-cols-3 gap-2" : `grid grid-cols-3 ${boardGap}`}>
+            <div className={controls ? "grid grid-cols-3 gap-2" : `grid grid-cols-3 ${boardGap}`} role="grid" aria-label="Triad game board">
               {Array.from({ length: 9 }, (_, i) => {
                 const cell = board[i];
                 const owner = cell?.owner;
@@ -488,8 +488,8 @@ export function OverlayPage() {
                 const isMark = markCell === i;
 
                 return (
-                  <div key={i} className={cellClass(i)} title={`Cell ${i} (${cellIndexToCoord(i)})`}>
-                    <div className="absolute left-2 top-2 rounded-full bg-white/80 px-2 py-0.5 text-xs font-semibold text-slate-500">
+                  <div key={i} className={cellClass(i)} title={`Cell ${i} (${cellIndexToCoord(i)})`} role="gridcell" aria-label={`${cellIndexToCoord(i)}${board[i]?.owner === 0 ? " Player A" : board[i]?.owner === 1 ? " Player B" : " empty"}`}>
+                    <div className="absolute left-2 top-2 rounded-full bg-white/80 px-2 py-0.5 font-semibold text-slate-500" style={{ fontSize: controls ? undefined : "var(--ol-badge-font, 10px)" }}>
                       {cellIndexToCoord(i)}
                     </div>
 
@@ -521,7 +521,7 @@ export function OverlayPage() {
               <div className={controls
                 ? "rounded-2xl border border-slate-200 bg-white/70 px-4 py-3 shadow-sm"
                 : [
-                    "rounded-2xl border border-slate-200 px-4 py-3 shadow-sm",
+                    "rounded-2xl border border-slate-200 ol-pad shadow-sm",
                     (lastTurnSummary && (
                       (lastTurnSummary.flipCount ?? 0) >= 3 ||
                       lastTurnSummary.comboEffect === "domination" ||
@@ -610,14 +610,14 @@ export function OverlayPage() {
                       <div className="text-xs font-semibold text-slate-700">Flip traces</div>
                       <div className="text-xs text-slate-500">(debug)</div>
                     </div>
-                    <FlipTraceDetailList flipTraces={lastTurnSummary.flips as unknown as import("@nyano/triad-engine").FlipTraceV1[]} />
+                    <FlipTraceDetailList flipTraces={lastTurnSummary.flips as FlipTraceV1[]} />
                   </div>
                 ) : null}
               </div>
             ) : null}
 
             {/* 2. Now Playing — Tier 1: Primary */}
-            <div className={controls ? "rounded-2xl border border-slate-200 bg-white/70 px-4 py-3 shadow-sm" : "rounded-2xl border border-slate-200 ol-panel-primary px-4 py-3 shadow-sm"}>
+            <div className={controls ? "rounded-2xl border border-slate-200 bg-white/70 px-4 py-3 shadow-sm" : "rounded-2xl border border-slate-200 ol-panel-primary ol-pad shadow-sm"}>
               <div className="flex items-center justify-between gap-2">
                 <div className="flex items-center gap-2">
                   {reactionInput ? (
@@ -706,7 +706,7 @@ export function OverlayPage() {
             {/* 4. Vote status (visible when vote=1) */}
             {/* 4. Vote status — Tier 2: Secondary */}
             {voteEnabled ? (
-              <div className={controls ? "rounded-2xl border border-slate-200 bg-white/70 px-4 py-3 shadow-sm" : "rounded-2xl border border-slate-200 ol-panel-secondary px-4 py-3 shadow-sm"}>
+              <div className={controls ? "rounded-2xl border border-slate-200 bg-white/70 px-4 py-3 shadow-sm" : "rounded-2xl border border-slate-200 ol-panel-secondary ol-pad shadow-sm"}>
                 <div className="flex items-center justify-between gap-2">
                   <div className={controls ? "text-xs font-semibold text-slate-800" : "text-sm font-semibold text-slate-800"}>Chat voting</div>
                   {voteState?.status === "open" ? (
@@ -728,6 +728,8 @@ export function OverlayPage() {
                           ].filter(Boolean).join(" ")
                     }
                     style={controls ? undefined : { fontSize: "var(--ol-countdown, 28px)" }}
+                    aria-live="polite"
+                    aria-label={`${voteRemainingSec} seconds remaining`}
                   >
                     {voteRemainingSec}s remaining
                   </div>
@@ -832,7 +834,7 @@ export function OverlayPage() {
 
             {/* 6. Error callout */}
             {state?.error ? (
-              <div className="callout callout-error">
+              <div className="callout callout-error" role="alert">
                 <div className="flex items-center gap-2">
                   <div className="h-2 w-2 shrink-0 rounded-full bg-red-500 animate-pulse" />
                   <div className="text-xs font-semibold">Error</div>
@@ -843,7 +845,7 @@ export function OverlayPage() {
 
             {/* 7. External integration error */}
             {state?.externalStatus && state.externalStatus.lastOk === false ? (
-              <div className="callout callout-error">
+              <div className="callout callout-error" role="alert">
                 <div className="flex items-center gap-2">
                   <div className="h-2 w-2 shrink-0 rounded-full bg-red-500 animate-pulse" />
                   <div className="text-xs font-semibold">Integration error</div>
@@ -854,7 +856,7 @@ export function OverlayPage() {
 
             {/* 7.5. RPC connection error (Phase 0 stability) */}
             {state?.rpcStatus && !state.rpcStatus.ok ? (
-              <div className="callout callout-error">
+              <div className="callout callout-error" role="alert">
                 <div className="flex items-center gap-2">
                   <div className="h-2 w-2 shrink-0 rounded-full bg-red-500 animate-pulse" />
                   <div className="text-xs font-semibold">RPC Error</div>
@@ -889,6 +891,8 @@ export function OverlayPage() {
                             : "border-slate-200 bg-white text-slate-600 hover:border-slate-300"
                         }`}
                         onClick={() => handleThemeChange(t)}
+                        aria-label={`Theme: ${THEME_LABELS[t]}`}
+                        aria-current={theme === t ? "true" : undefined}
                       >
                         {THEME_LABELS[t]}
                       </button>
