@@ -144,7 +144,7 @@
 
 .mint-board-inner {
   background: var(--mint-bg);
-  background-image: url('/board-bg.png');
+  background-image: url('/board-bg.webp');
   background-size: cover;
   background-position: center;
   border-radius: 18px;

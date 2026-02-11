@@ -5,7 +5,7 @@
  * Sources (in priority order):
  *   1. `VITE_NYANO_METADATA_BASE` env variable
  *   2. GameIndex `metadata.imageBaseUrl` field
- *   3. null (no metadata configured → NyanoImage fallback)
+ *   3. Hardcoded default Arweave URL (ensures images load even without GameIndex)
  */
 
 // ── Types ────────────────────────────────────────────────────────────
@@ -23,6 +23,18 @@ export type MetadataConfig = {
   baseUrlPattern: string;
 };
 
+// ── Hardcoded default (last resort) ─────────────────────────────────
+
+/**
+ * Default Arweave image URL pattern — used when neither env var nor
+ * GameIndex provides `imageBaseUrl`. This ensures NFT images load even
+ * when the GameIndex fetch fails or hasn't completed yet.
+ *
+ * This is the production Arweave subdomain gateway URL for Nyano token images.
+ */
+export const DEFAULT_NYANO_IMAGE_BASE =
+  "https://m3c2ncchjkvsn3lc5ccd4kdsm74cdssuvxbuuaefwy43cyt4oixa.arweave.net/ZsWmiEdKqybtYuiEPihyZ_ghylStw0oAhbY5sWJ8ci4/{id}.png";
+
 // ── Config resolution ────────────────────────────────────────────────
 
 /**
@@ -31,7 +43,7 @@ export type MetadataConfig = {
  * Priority:
  *   1. VITE_NYANO_METADATA_BASE env variable
  *   2. GameIndex metadata.imageBaseUrl field
- *   3. null (not configured)
+ *   3. Hardcoded default Arweave URL
  */
 export function getMetadataConfig(
   gameIndexMetadata?: Record<string, unknown> | null,
@@ -62,8 +74,8 @@ export function getMetadataConfig(
     }
   }
 
-  // 3. Not configured
-  return null;
+  // 3. Hardcoded default — ensures images load even without GameIndex
+  return { baseUrlPattern: DEFAULT_NYANO_IMAGE_BASE };
 }
 
 // ── URL resolution ───────────────────────────────────────────────────

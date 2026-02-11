@@ -40,6 +40,13 @@ import { assessBoardAdvantage, type BoardAdvantage } from "@/lib/ai/board_advant
 import { AdvantageBadge } from "@/components/AdvantageBadge";
 import { writeClipboardText } from "@/lib/clipboard";
 import { appAbsoluteUrl } from "@/lib/appUrl";
+import {
+  detectReplayHighlights,
+  formatReplayWinnerLabel,
+  replayHighlightKindLabel,
+  summarizeReplayHighlights,
+  type ReplayHighlightKind,
+} from "@/lib/replay_highlights";
 
 type Mode = "auto" | "v1" | "v2" | "compare";
 
@@ -139,36 +146,6 @@ function buildNyanoReactionInput(res: MatchResultWithHistory, step: number): Nya
   };
 }
 
-type StepHighlight = {
-  step: number;
-  kind: "big_flip" | "chain" | "combo" | "warning";
-  label: string;
-};
-
-function detectHighlights(res: MatchResultWithHistory): StepHighlight[] {
-  const highlights: StepHighlight[] = [];
-  for (let i = 0; i < res.turns.length; i++) {
-    const t = res.turns[i];
-    const s = i + 1;
-    const flipCount = Number(t.flipCount ?? 0);
-    const hasChain = Boolean(t.flipTraces?.some((f) => f.isChain));
-    const comboEffect = (t.comboEffect ?? "none") as string;
-    const warningTriggered = Boolean(t.warningTriggered);
-
-    if (flipCount >= 3) {
-      highlights.push({ step: s, kind: "big_flip", label: `${flipCount} flips` });
-    } else if (hasChain) {
-      highlights.push({ step: s, kind: "chain", label: "Chain" });
-    } else if (comboEffect !== "none") {
-      highlights.push({ step: s, kind: "combo", label: comboEffect });
-    }
-    if (warningTriggered) {
-      highlights.push({ step: s, kind: "warning", label: "Warning!" });
-    }
-  }
-  return highlights;
-}
-
 function rulesetLabelFromConfig(cfg: RulesetConfigV1): string {
   if (cfg === ONCHAIN_CORE_TACTICS_SHADOW_RULESET_CONFIG_V2) return "engine v2 (shadow ignores warning)";
   return "engine v1 (core+tactics)";
@@ -184,6 +161,8 @@ function pickDefaultMode(rulesetId: string): Mode {
     return "compare";
   }
 }
+
+const HIGHLIGHT_KIND_ORDER: ReplayHighlightKind[] = ["big_flip", "chain", "combo", "warning"];
 
 export function ReplayPage() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -492,29 +471,35 @@ protocolV1: {
   }, [mode, step, searchParams, setSearchParams]);
 
   const highlights = React.useMemo(
-    () => (sim.ok ? detectHighlights(sim.current) : []),
+    () => (sim.ok ? detectReplayHighlights(sim.current) : []),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [sim.ok, sim.ok ? sim.current : null],
   );
+  const highlightSummary = React.useMemo(() => summarizeReplayHighlights(highlights), [highlights]);
+  const activeHighlights = React.useMemo(
+    () => highlights.filter((highlight) => highlight.step === step),
+    [highlights, step],
+  );
+  const stepProgress = stepMax > 0 ? Math.round((step / stepMax) * 100) : 0;
 
   // Highlight jump helpers
   const jumpToNextHighlight = React.useCallback(() => {
     if (highlights.length === 0) return;
-    const next = highlights.find(h => h.step > step);
+    const next = highlights.find((h) => h.step > step);
     setIsPlaying(false);
     setStep(next ? next.step : highlights[0].step);
   }, [highlights, step]);
 
   const jumpToPrevHighlight = React.useCallback(() => {
     if (highlights.length === 0) return;
-    const prev = [...highlights].reverse().find(h => h.step < step);
+    const prev = [...highlights].reverse().find((h) => h.step < step);
     setIsPlaying(false);
     setStep(prev ? prev.step : highlights[highlights.length - 1].step);
   }, [highlights, step]);
 
   const currentHighlightIdx = React.useMemo(() => {
     if (highlights.length === 0) return -1;
-    return highlights.findIndex(h => h.step === step);
+    return highlights.findIndex((h) => h.step === step);
   }, [highlights, step]);
 
   // keyboard
@@ -580,7 +565,7 @@ protocolV1: {
         <div className="flex items-center justify-between">
           <div className="text-sm font-semibold">{label}</div>
           <div className="text-xs text-slate-500">
-            winner: {res.winner === "draw" ? "draw" : res.winner === 0 ? "A" : "B"}
+            winner: {formatReplayWinnerLabel(res.winner)}
           </div>
         </div>
 
@@ -597,7 +582,7 @@ protocolV1: {
               <ScoreBar board={boardNow} moveCount={step} maxMoves={9} winner={res.winner} />
               {boardAdvantages[step] && (
                 <div className="mt-1 flex items-center gap-1.5">
-                  <span className="text-[10px] text-slate-400">形勢</span>
+                  <span className="text-[10px] text-slate-400">Advantage</span>
                   <AdvantageBadge advantage={boardAdvantages[step]} size="sm" showScore />
                 </div>
               )}
@@ -627,7 +612,7 @@ protocolV1: {
 
         {step > 0 ? (
           <div className="flex flex-wrap gap-2 text-xs text-slate-600">
-            <span className="rounded-md border border-slate-200 bg-slate-50 px-2 py-0.5">placed: {placedCell !== null ? placedCell : "—"}</span>
+            <span className="rounded-md border border-slate-200 bg-slate-50 px-2 py-0.5">placed: {placedCell !== null ? placedCell : "-"}</span>
             <span className="rounded-md border border-amber-200 bg-amber-50 px-2 py-0.5">flipped: {flippedCells.length}</span>
           </div>
         ) : (
@@ -661,6 +646,9 @@ protocolV1: {
   const saveToMyAttempts = async () => {
     if (!eventId) throw new Error("eventId is missing");
     if (!sim.ok) throw new Error("replay is not ready");
+    if (sim.current.winner !== 0 && sim.current.winner !== 1) {
+      throw new Error("draw matches are not eligible for event attempts");
+    }
 
     const replayUrl = await buildCanonicalReplayLink();
 
@@ -670,7 +658,7 @@ protocolV1: {
       eventId,
       replayUrl,
       matchId: sim.current.matchId,
-      winner: sim.current.winner as 0 | 1,
+      winner: sim.current.winner,
       tilesA: Number(sim.current.tiles.A),
       tilesB: Number(sim.current.tiles.B),
       rulesetLabel: sim.currentRulesetLabel,
@@ -684,7 +672,7 @@ protocolV1: {
   const buildShareLink = async (): Promise<string> => {
     // Use sim transcript when text state is empty (e.g., loaded via ?z= share link)
     const trimmed = text.trim() || (sim.ok ? stringifyWithBigInt(sim.transcript) : "");
-    if (!trimmed) throw new Error("transcript JSON is empty — paste a transcript or load a share link first");
+    if (!trimmed) throw new Error("transcript JSON is empty - paste a transcript or load a share link first");
 
     // Build share URL using appAbsoluteUrl to respect BASE_URL for subpath deployments.
     const z = await tryGzipCompressUtf8ToBase64Url(trimmed);
@@ -702,11 +690,11 @@ protocolV1: {
               <div className="text-xs text-slate-500">
                 {event ? (
                   <>
-                    <span className="font-medium">{event.title}</span> · status: <span className="font-medium">{eventStatus}</span> · {formatEventPeriod(event)}
+                    <span className="font-medium">{event.title}</span> | status: <span className="font-medium">{eventStatus}</span> | {formatEventPeriod(event)}
                   </>
                 ) : (
                   <>
-                    eventId: <span className="font-mono">{eventId}</span>（unknown）
+                    eventId: <span className="font-mono">{eventId}</span> (unknown)
                   </>
                 )}
               </div>
@@ -739,7 +727,7 @@ protocolV1: {
         <div className="card-hd">
           <div className="text-base font-semibold">Replay from transcript</div>
           <div className="text-xs text-slate-500">
-            transcript JSON を貼り付けると、デッキの tokenId をオンチェーンから読み出して再現します（read-only）。 共有リンク（?z=... または ?t=...）で “議論の入口” を軽くします。
+            Paste transcript JSON to replay with on-chain card metadata (read-only). You can also open share links via <span className="font-mono">?z=...</span> or <span className="font-mono">?t=...</span>.
           </div>
         </div>
 
@@ -758,7 +746,7 @@ protocolV1: {
                 </select>
 
                 <button className="btn btn-primary" onClick={() => load()} disabled={loading}>
-                  {loading ? "Loading…" : "Load & replay"}
+                  {loading ? "Loading..." : "Load & replay"}
                 </button>
 
                 <button
@@ -810,14 +798,14 @@ protocolV1: {
               rows={10}
               value={text}
               onChange={(e) => setText(e.target.value)}
-              placeholder='Playgroundの "Copy transcript JSON" を貼り付けてください（または共有リンクを開いてください）'
+              placeholder="Paste transcript JSON from Playground, or open a share link."
             />
 
             <div className="mt-3">
               <Disclosure title={<span>Streamer tools (Overlay)</span>}>
                 <div className="grid gap-3">
                   <div className="text-xs text-slate-600">
-                    OBSの <span className="font-mono">/overlay</span> を開いた状態で、Replay の <span className="font-mono">step</span> を動かすと overlay が追随します。
+                    Open <span className="font-mono">/overlay</span>, then moving replay <span className="font-mono">step</span> will sync the overlay snapshot.
                   </div>
 
                   <div className="flex flex-wrap items-center gap-2">
@@ -854,7 +842,7 @@ protocolV1: {
                   </div>
 
                   <div className="text-[11px] text-slate-500">
-                    Tip: 配信者側で <span className="font-mono">/replay?broadcast=1</span> を使うと、step同期が最初からONになります。
+                    Tip: open <span className="font-mono">/replay?broadcast=1</span> to start with overlay step sync enabled.
                   </div>
                 </div>
               </Disclosure>
@@ -865,7 +853,7 @@ protocolV1: {
             {!sim.ok && sim.error ? <div className="text-sm text-rose-700">Error: {sim.error}</div> : null}
 
             <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500">
-              <span className="kbd">←</span>/<span className="kbd">→</span> step
+              <span className="kbd">Left</span>/<span className="kbd">Right</span> step
               <span className="kbd">Space</span> play/pause
               <span className="kbd">Home</span>/<span className="kbd">End</span> jump
             </div>
@@ -897,7 +885,7 @@ protocolV1: {
                   />
                   <div className="flex flex-wrap items-center justify-between gap-2 border-t border-surface-100 bg-surface-50/80 px-4 py-3">
                     <div className="text-xs text-slate-600">
-                      <span className="font-medium">Finished</span> · step {step}/{stepMax}
+                      <span className="font-medium">Finished</span> | step {step}/{stepMax}
                     </div>
                     <div className="flex flex-wrap items-center gap-2">
                       <button
@@ -979,62 +967,64 @@ protocolV1: {
                   ) : null}
                 </div>
                 <div className="flex items-center gap-2">
-<button
-  className="btn"
-  onClick={() => {
-    setIsPlaying(false);
-    setStep(0);
-  }}
-  disabled={step === 0}
->
-  reset
-</button>
-<button
-  className="btn"
-  onClick={() => {
-    setIsPlaying(false);
-    setStep((s) => Math.max(0, s - 1));
-  }}
-  disabled={step === 0}
->
-  ←
-</button>
+                  <button
+                    className="btn"
+                    onClick={() => {
+                      setIsPlaying(false);
+                      setStep(0);
+                    }}
+                    disabled={step === 0}
+                  >
+                    reset
+                  </button>
+                  <button
+                    className="btn"
+                    onClick={() => {
+                      setIsPlaying(false);
+                      setStep((s) => Math.max(0, s - 1));
+                    }}
+                    disabled={step === 0}
+                    aria-label="Previous step"
+                  >
+                    prev
+                  </button>
 
-<button
-  className="btn"
-  onClick={() => setIsPlaying((p) => !p)}
-  disabled={!sim.ok || stepMax === 0}
-  title="auto play"
->
-  {isPlaying ? "pause" : "play"}
-</button>
+                  <button
+                    className="btn"
+                    onClick={() => setIsPlaying((p) => !p)}
+                    disabled={!sim.ok || stepMax === 0}
+                    title="auto play"
+                  >
+                    {isPlaying ? "pause" : "play"}
+                  </button>
 
-<label className="flex items-center gap-2 text-xs text-surface-600">
-  speed
-  <select
-    className="rounded-md border border-surface-300 bg-white px-2 py-1 text-xs"
-    value={playbackSpeed}
-    onChange={(e) => setPlaybackSpeed(Number(e.target.value))}
-    disabled={!sim.ok || stepMax === 0}
-  >
-    <option value={0.5}>0.5x</option>
-    <option value={1}>1x</option>
-    <option value={1.5}>1.5x</option>
-    <option value={2}>2x</option>
-    <option value={3}>3x</option>
-  </select>
-</label>
+                  <label className="flex items-center gap-2 text-xs text-surface-600">
+                    speed
+                    <select
+                      className="rounded-md border border-surface-300 bg-white px-2 py-1 text-xs"
+                      value={playbackSpeed}
+                      onChange={(e) => setPlaybackSpeed(Number(e.target.value))}
+                      disabled={!sim.ok || stepMax === 0}
+                    >
+                      <option value={0.5}>0.5x</option>
+                      <option value={1}>1x</option>
+                      <option value={1.5}>1.5x</option>
+                      <option value={2}>2x</option>
+                      <option value={3}>3x</option>
+                    </select>
+                  </label>
 
-<button
-  className="btn"
-  onClick={() => {
-    setIsPlaying(false);
-    setStep((s) => Math.min(stepMax, s + 1));
-  }}
-  disabled={step === stepMax}
->
-  →
-</button>
+                  <button
+                    className="btn"
+                    onClick={() => {
+                      setIsPlaying(false);
+                      setStep((s) => Math.min(stepMax, s + 1));
+                    }}
+                    disabled={step === stepMax}
+                    aria-label="Next step"
+                  >
+                    next
+                  </button>
                 </div>
               </div>
 
@@ -1048,72 +1038,106 @@ protocolV1: {
                   renderReplay(sim.currentRulesetLabel, sim.current)
                 )}
 
-                <div className="grid gap-2">
-                  <div className="relative">
+                <div className="replay-timeline-shell">
+                  <div className="replay-timeline-head">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="replay-step-pill">{step === 0 ? "Initial board" : `After turn ${step}`}</span>
+                      <span className="text-xs text-slate-500">
+                        {step}/{stepMax} | {stepProgress}%
+                      </span>
+                    </div>
+                    {highlights.length > 0 ? (
+                      <div className="flex items-center gap-1.5">
+                        <button
+                          className="btn btn-sm"
+                          onClick={jumpToPrevHighlight}
+                          disabled={highlights.length === 0}
+                          title="Previous highlight ([)"
+                        >
+                          Prev
+                        </button>
+                        <span className="replay-highlight-index">
+                          {currentHighlightIdx >= 0
+                            ? `${currentHighlightIdx + 1}/${highlights.length}`
+                            : `${highlights.length} highlights`}
+                        </span>
+                        <button
+                          className="btn btn-sm"
+                          onClick={jumpToNextHighlight}
+                          disabled={highlights.length === 0}
+                          title="Next highlight (])"
+                        >
+                          Next
+                        </button>
+                      </div>
+                    ) : null}
+                  </div>
+
+                  <div className="replay-range-wrap">
                     <input
                       type="range"
                       min={0}
                       max={stepMax}
                       value={step}
                       onChange={(e) => { setIsPlaying(false); setStep(Number(e.target.value)); }}
-                      className="w-full"
+                      className="replay-range w-full"
                     />
-                    {stepMax > 0 && highlights.map((h, i) => (
+                    {stepMax > 0 && highlights.map((highlight, i) => (
                       <button
-                        key={i}
-                        className={[
-                          "absolute -translate-x-1/2 w-2.5 h-2.5 rounded-full border border-white shadow-sm",
-                          h.kind === "big_flip" ? "bg-amber-500" :
-                          h.kind === "chain" ? "bg-purple-500" :
-                          h.kind === "combo" ? "bg-red-500" :
-                          "bg-orange-500",
-                        ].join(" ")}
-                        style={{ left: `${(h.step / stepMax) * 100}%`, top: "-4px" }}
-                        title={`Turn ${h.step}: ${h.label}`}
-                        onClick={() => { setIsPlaying(false); setStep(h.step); }}
+                        key={`${highlight.kind}-${highlight.step}-${i}`}
+                        className="replay-highlight-marker"
+                        data-kind={highlight.kind}
+                        style={{ left: `${(highlight.step / stepMax) * 100}%` }}
+                        title={`Turn ${highlight.step}: ${highlight.label}`}
+                        aria-label={`Jump to turn ${highlight.step} (${replayHighlightKindLabel(highlight.kind)})`}
+                        onClick={() => { setIsPlaying(false); setStep(highlight.step); }}
                       />
                     ))}
                   </div>
-                  <div className="text-xs text-slate-600">{step === 0 ? "initial" : `after turn ${step}`}</div>
-                  {highlights.length > 0 && (
-                    <div className="flex flex-wrap items-center gap-3">
-                      <div className="flex items-center gap-1.5">
-                        <button
-                          className="rounded border border-slate-300 bg-white px-2 py-0.5 text-xs font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-40"
-                          onClick={jumpToPrevHighlight}
-                          disabled={highlights.length === 0}
-                          title="Previous highlight ([)"
-                        >
-                          ⏮
-                        </button>
-                        <span className="text-[10px] font-medium text-slate-600">
-                          {currentHighlightIdx >= 0
-                            ? `${currentHighlightIdx + 1}/${highlights.length}`
-                            : `${highlights.length} highlights`}
-                        </span>
-                        <button
-                          className="rounded border border-slate-300 bg-white px-2 py-0.5 text-xs font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-40"
-                          onClick={jumpToNextHighlight}
-                          disabled={highlights.length === 0}
-                          title="Next highlight (])"
-                        >
-                          ⏭
-                        </button>
-                      </div>
-                      <div className="flex flex-wrap gap-2 text-[10px] text-slate-500">
-                        <span className="flex items-center gap-1"><span className="inline-block w-2 h-2 rounded-full bg-amber-500" /> Big Flip</span>
-                        <span className="flex items-center gap-1"><span className="inline-block w-2 h-2 rounded-full bg-purple-500" /> Chain</span>
-                        <span className="flex items-center gap-1"><span className="inline-block w-2 h-2 rounded-full bg-red-500" /> Combo</span>
-                        <span className="flex items-center gap-1"><span className="inline-block w-2 h-2 rounded-full bg-orange-500" /> Warning</span>
+
+                  {highlights.length > 0 ? (
+                    <div className="replay-highlight-summary">
+                      {HIGHLIGHT_KIND_ORDER.map((kind) => {
+                        const count = highlightSummary[kind];
+                        if (count <= 0) return null;
+                        const isActive = activeHighlights.some((highlight) => highlight.kind === kind);
+                        return (
+                          <span
+                            key={kind}
+                            className={`replay-highlight-chip${isActive ? " replay-highlight-chip--active" : ""}`}
+                            data-kind={kind}
+                          >
+                            {replayHighlightKindLabel(kind)} {count}
+                          </span>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <div className="text-xs text-slate-500">No tactical highlights yet.</div>
+                  )}
+
+                  {activeHighlights.length > 0 ? (
+                    <div className="replay-highlight-callout">
+                      <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Now highlighted</div>
+                      <div className="mt-1 flex flex-wrap gap-1.5">
+                        {activeHighlights.map((highlight, i) => (
+                          <span
+                            key={`${highlight.kind}-${highlight.step}-${i}`}
+                            className="replay-highlight-chip replay-highlight-chip--active"
+                            data-kind={highlight.kind}
+                          >
+                            {replayHighlightKindLabel(highlight.kind)}: {highlight.label}
+                          </span>
+                        ))}
                       </div>
                     </div>
-                  )}
+                  ) : null}
                 </div>
 
                 <div className="rounded-lg border border-slate-200 bg-white p-3 text-sm">
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <div className="font-medium">
-                      current winner: {sim.current.winner === 0 ? "A" : "B"} · tiles A:{sim.current.tiles.A} / B:{sim.current.tiles.B}
+                      current winner: {formatReplayWinnerLabel(sim.current.winner)} | tiles A:{sim.current.tiles.A} / B:{sim.current.tiles.B}
                     </div>
                     <div className="text-xs text-slate-500">tieBreak: {sim.current.tieBreak}</div>
                   </div>
@@ -1169,7 +1193,7 @@ protocolV1: {
             <div className="card">
               <div className="card-hd">
                 <div className="text-base font-semibold">Turn log</div>
-                <div className="text-xs text-slate-500">クリックするとそのターンへジャンプします。</div>
+                <div className="text-xs text-slate-500">Click a turn to jump the replay step.</div>
               </div>
               <div className="card-bd">
                 <TurnLog
@@ -1187,7 +1211,7 @@ protocolV1: {
           <section className="card">
             <div className="card-hd">
               <div className="text-base font-semibold">Deck inspector</div>
-              <div className="text-xs text-slate-500">オンチェーン属性からカード性能に変換して表示します。</div>
+              <div className="text-xs text-slate-500">Read-only deck cards loaded from on-chain data.</div>
             </div>
 
             <div className="card-bd grid gap-6 md:grid-cols-2">
@@ -1217,7 +1241,7 @@ protocolV1: {
                   <div className="mt-2 grid gap-1 font-mono">
                     {Array.from(sim.owners.entries()).map(([tid, o]) => (
                       <div key={tid.toString()}>
-                        #{tid.toString()} → {o}
+                        #{tid.toString()} {"->"} {o}
                       </div>
                     ))}
                   </div>

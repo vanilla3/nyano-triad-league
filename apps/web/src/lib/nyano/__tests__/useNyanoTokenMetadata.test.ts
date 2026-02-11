@@ -64,12 +64,13 @@ describe("useNyanoTokenMetadata — dependency integration", () => {
     );
   });
 
-  it("getMetadataConfig returns null when gameIndex has no metadata", async () => {
-    const { getMetadataConfig } = await import("../metadata");
+  it("getMetadataConfig returns hardcoded default when gameIndex has no metadata", async () => {
+    const { getMetadataConfig, DEFAULT_NYANO_IMAGE_BASE } = await import("../metadata");
 
     // Simulates gameIndex still loading (undefined) or missing metadata
-    expect(getMetadataConfig(undefined)).toBeNull();
-    expect(getMetadataConfig(null)).toBeNull();
-    expect(getMetadataConfig({})).toBeNull();
+    // → falls back to hardcoded default Arweave URL
+    expect(getMetadataConfig(undefined)?.baseUrlPattern).toBe(DEFAULT_NYANO_IMAGE_BASE);
+    expect(getMetadataConfig(null)?.baseUrlPattern).toBe(DEFAULT_NYANO_IMAGE_BASE);
+    expect(getMetadataConfig({})?.baseUrlPattern).toBe(DEFAULT_NYANO_IMAGE_BASE);
   });
 });

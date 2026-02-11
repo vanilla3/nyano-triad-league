@@ -95,13 +95,16 @@ describe("getMetadataConfig + fetchGameIndex integration", () => {
     expect(config!.baseUrlPattern).toContain("arweave.net");
   });
 
-  it("getMetadataConfig returns null when metadata missing", () => {
+  it("getMetadataConfig returns hardcoded default when metadata missing", () => {
     const config = getMetadataConfig(undefined);
-    expect(config).toBeNull();
+    expect(config).not.toBeNull();
+    expect(config!.baseUrlPattern).toContain("{id}");
+    expect(config!.baseUrlPattern).toContain("arweave.net");
   });
 
-  it("getMetadataConfig returns null when metadata has no imageBaseUrl", () => {
+  it("getMetadataConfig returns hardcoded default when metadata has no imageBaseUrl", () => {
     const config = getMetadataConfig({ mode: "local" });
-    expect(config).toBeNull();
+    expect(config).not.toBeNull();
+    expect(config!.baseUrlPattern).toContain("{id}");
   });
 });
