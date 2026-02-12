@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import {
   clearCumulativeStats,
   createTelemetryTracker,
+  evaluateUxTargets,
   markQuickPlayStart,
   recordHomeLcpMs,
   readCumulativeStats,
@@ -196,6 +197,20 @@ describe("telemetry", () => {
     expect(stats.avg_quickplay_to_first_place_ms).toBe(2000);
   });
 
+  it("ignores stale quick-play markers", () => {
+    vi.spyOn(Date, "now").mockReturnValue(1_000);
+    markQuickPlayStart();
+
+    const tracker = createTelemetryTracker();
+    vi.spyOn(performance, "now").mockReturnValue(2500);
+    vi.spyOn(Date, "now").mockReturnValue(701_001); // 11m 40s later
+    tracker.recordPlace();
+    tracker.flush();
+
+    const stats = readCumulativeStats();
+    expect(stats.avg_quickplay_to_first_place_ms).toBeNull();
+  });
+
   it("records Home LCP cumulative average", () => {
     recordHomeLcpMs(2400.4);
     recordHomeLcpMs(2600.4);
@@ -209,6 +224,37 @@ describe("telemetry", () => {
     recordHomeLcpMs(Number.POSITIVE_INFINITY);
     const stats = readCumulativeStats();
     expect(stats.avg_home_lcp_ms).toBeNull();
+  });
+
+  it("evaluates ux targets as insufficient without data", () => {
+    const checks = evaluateUxTargets(readCumulativeStats());
+    const statuses = Object.fromEntries(checks.map((c) => [c.id, c.status]));
+    expect(statuses["A-1"]).toBe("insufficient");
+    expect(statuses["B-1"]).toBe("insufficient");
+    expect(statuses["B-4"]).toBe("insufficient");
+    expect(statuses["G-3"]).toBe("insufficient");
+  });
+
+  it("evaluates ux targets with mixed pass/fail", () => {
+    vi.spyOn(Date, "now").mockReturnValue(1_000);
+    markQuickPlayStart();
+
+    const tracker = createTelemetryTracker();
+    vi.spyOn(performance, "now").mockReturnValue(20_000); // A-1 pass (<30s)
+    vi.spyOn(Date, "now").mockReturnValue(13_000); // B-1 fail (12s > 10s)
+    tracker.recordPlace();
+    tracker.recordInvalidAction();
+    tracker.recordInvalidAction(); // B-4 fail (2.00 is not < 2.00)
+    tracker.flush();
+
+    recordHomeLcpMs(3000); // G-3 fail (> 2.5s)
+
+    const checks = evaluateUxTargets(readCumulativeStats());
+    const statuses = Object.fromEntries(checks.map((c) => [c.id, c.status]));
+    expect(statuses["A-1"]).toBe("pass");
+    expect(statuses["B-1"]).toBe("fail");
+    expect(statuses["B-4"]).toBe("fail");
+    expect(statuses["G-3"]).toBe("fail");
   });
 
   it("returns safe defaults when nothing stored", () => {

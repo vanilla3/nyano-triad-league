@@ -6,9 +6,11 @@ import { resetTutorialSeen } from "@/components/MiniTutorial";
 import { clearGameIndexCache } from "@/lib/nyano/gameIndex";
 import {
   clearCumulativeStats,
+  evaluateUxTargets,
   markQuickPlayStart,
   readCumulativeStats,
   recordHomeLcpMs,
+  type UxTargetStatus,
 } from "@/lib/telemetry";
 import type { ExpressionName } from "@/lib/expression_map";
 
@@ -229,6 +231,18 @@ function formatSecondsFromMs(ms: number | null): string {
   return `${(ms / 1000).toFixed(1)}s`;
 }
 
+function targetStatusLabel(status: UxTargetStatus): string {
+  if (status === "pass") return "PASS";
+  if (status === "fail") return "FAIL";
+  return "N/A";
+}
+
+function targetStatusClass(status: UxTargetStatus): string {
+  if (status === "pass") return "bg-emerald-100 text-emerald-700 border-emerald-200";
+  if (status === "fail") return "bg-rose-100 text-rose-700 border-rose-200";
+  return "bg-surface-100 text-surface-500 border-surface-200";
+}
+
 export function HomePage() {
   const heroExpression = useHeroExpression();
   const toast = useToast();
@@ -238,6 +252,7 @@ export function HomePage() {
   const avgInvalidPerSession = uxStats.sessions > 0
     ? uxStats.total_invalid_actions / uxStats.sessions
     : null;
+  const uxTargetChecks = React.useMemo(() => evaluateUxTargets(uxStats), [uxStats]);
 
   const refreshUxStats = React.useCallback(() => {
     setUxStats(readCumulativeStats());
@@ -588,6 +603,30 @@ export function HomePage() {
                 <div className="text-sm font-semibold text-surface-800">
                   {avgInvalidPerSession === null ? "--" : avgInvalidPerSession.toFixed(2)}
                 </div>
+              </div>
+            </div>
+            <div className="mt-3 rounded-2xl border border-surface-200 bg-surface-50 p-3">
+              <div className="text-xs font-semibold text-surface-700">UX Target Snapshot</div>
+              <div className="mt-2 grid gap-2 sm:grid-cols-2">
+                {uxTargetChecks.map((check) => (
+                  <div key={check.id} className="rounded-xl border border-surface-200 bg-white px-3 py-2">
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="text-xs font-semibold text-surface-700">
+                        {check.id} · {check.label}
+                      </div>
+                      <span
+                        className={[
+                          "inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-bold",
+                          targetStatusClass(check.status),
+                        ].join(" ")}
+                      >
+                        {targetStatusLabel(check.status)}
+                      </span>
+                    </div>
+                    <div className="mt-1 text-[11px] text-surface-500">target {check.target}</div>
+                    <div className="text-xs font-semibold text-surface-800">current {check.valueText}</div>
+                  </div>
+                ))}
               </div>
             </div>
           </div>

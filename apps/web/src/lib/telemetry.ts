@@ -62,6 +62,16 @@ export interface CumulativeStats {
   total_invalid_actions: number;
 }
 
+export type UxTargetStatus = "pass" | "fail" | "insufficient";
+
+export interface UxTargetEvaluation {
+  id: "A-1" | "B-1" | "B-4" | "G-3";
+  label: string;
+  target: string;
+  status: UxTargetStatus;
+  valueText: string;
+}
+
 const CUMULATIVE_KEYS = [
   "cum.sessions",
   "cum.sum_first_interaction_ms",
@@ -123,6 +133,65 @@ export function recordHomeLcpMs(lcpMs: number): void {
   writeNumber("cum.count_home_lcp", count);
 }
 
+function formatSeconds(ms: number | null): string {
+  if (ms === null) return "--";
+  return `${(ms / 1000).toFixed(1)}s`;
+}
+
+/**
+ * Evaluate current telemetry against key UX scorecard targets.
+ */
+export function evaluateUxTargets(stats: CumulativeStats): UxTargetEvaluation[] {
+  const avgInvalidPerSession = stats.sessions > 0
+    ? stats.total_invalid_actions / stats.sessions
+    : null;
+
+  const checks: UxTargetEvaluation[] = [
+    {
+      id: "A-1",
+      label: "初見が30秒以内に1手目",
+      target: "< 30.0s",
+      status:
+        stats.avg_first_place_ms === null
+          ? "insufficient"
+          : (stats.avg_first_place_ms < 30_000 ? "pass" : "fail"),
+      valueText: formatSeconds(stats.avg_first_place_ms),
+    },
+    {
+      id: "B-1",
+      label: "Home→試合開始 10秒以内",
+      target: "< 10.0s",
+      status:
+        stats.avg_quickplay_to_first_place_ms === null
+          ? "insufficient"
+          : (stats.avg_quickplay_to_first_place_ms < 10_000 ? "pass" : "fail"),
+      valueText: formatSeconds(stats.avg_quickplay_to_first_place_ms),
+    },
+    {
+      id: "B-4",
+      label: "誤操作が2回未満/試合",
+      target: "< 2.00",
+      status:
+        avgInvalidPerSession === null
+          ? "insufficient"
+          : (avgInvalidPerSession < 2 ? "pass" : "fail"),
+      valueText: avgInvalidPerSession === null ? "--" : avgInvalidPerSession.toFixed(2),
+    },
+    {
+      id: "G-3",
+      label: "Home LCP 2.5秒未満",
+      target: "< 2.5s",
+      status:
+        stats.avg_home_lcp_ms === null
+          ? "insufficient"
+          : (stats.avg_home_lcp_ms < 2_500 ? "pass" : "fail"),
+      valueText: formatSeconds(stats.avg_home_lcp_ms),
+    },
+  ];
+
+  return checks;
+}
+
 function persistSession(session: SessionTelemetry): void {
   const sessions = (readNumber("cum.sessions") ?? 0) + 1;
   writeNumber("cum.sessions", sessions);
@@ -158,6 +227,7 @@ function persistSession(session: SessionTelemetry): void {
 // ── Cross-page quick play marker (Home -> Match) ──────────────────────
 
 const QUICKPLAY_START_KEY = `${STORAGE_PREFIX}ephemeral.quickplay_start_epoch_ms`;
+const MAX_QUICKPLAY_TO_FIRST_PLACE_MS = 10 * 60 * 1000;
 
 function getTransientStorage(): Pick<Storage, "getItem" | "setItem" | "removeItem"> | null {
   try {
@@ -244,7 +314,11 @@ export function createTelemetryTracker(): TelemetryTracker {
         const quickPlayStartedAt = consumeQuickPlayStart();
         if (quickPlayStartedAt !== null) {
           const elapsed = Date.now() - quickPlayStartedAt;
-          if (Number.isFinite(elapsed) && elapsed >= 0) {
+          if (
+            Number.isFinite(elapsed) &&
+            elapsed >= 0 &&
+            elapsed <= MAX_QUICKPLAY_TO_FIRST_PLACE_MS
+          ) {
             session.quickplay_to_first_place_ms = Math.round(elapsed);
           }
         }

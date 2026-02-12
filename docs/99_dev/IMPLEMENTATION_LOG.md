@@ -280,3 +280,24 @@
 - `pnpm -C apps/web test`
 - `pnpm -C apps/web lint`
 - `pnpm -C apps/web build`
+
+
+## 2026-02-12 — commit-0088: UX目標スナップショット表示 + quick-play計測の堅牢化
+
+### Why
+- テレメトリ値が増えてきたため、配信前チェックで「目標を満たしているか」を即判定できる表示が必要だった。
+- `quickplay_to_first_place_ms` は古い開始時刻が残ると外れ値になり得るため、異常値ガードを入れて誤判定を防ぎたかった。
+
+### What
+- `telemetry.ts` に `evaluateUxTargets(stats)` を追加し、A-1/B-1/B-4/G-3 の PASS/FAIL/INSUFFICIENT を算出可能にした。
+- Home > Settings に `UX Target Snapshot` を追加し、上記4項目を目標値と現在値つきで可視化。
+- quick-play 計測に上限（10分）を追加し、古い開始時刻による外れ値を無視するようにした。
+- テスト追加：
+  - stale quick-play marker を無視すること
+  - `evaluateUxTargets` の insufficient 判定
+  - pass/fail 混在ケースの判定
+
+### Verify
+- `pnpm -C apps/web test`
+- `pnpm -C apps/web lint`
+- `pnpm -C apps/web build`
