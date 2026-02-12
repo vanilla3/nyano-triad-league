@@ -132,6 +132,20 @@ describe("resolveVfxQuality", () => {
     localStorage.setItem("nytl.vfx.quality", "low");
     expect(resolveVfxQuality()).toBe("low");
   });
+
+  it("returns explicit preference when set to 'medium'", () => {
+    stubMatchMedia(false);
+    stubNavigator(8, 8);
+    localStorage.setItem("nytl.vfx.quality", "medium");
+    expect(resolveVfxQuality()).toBe("medium");
+  });
+
+  it("returns explicit preference when set to 'high'", () => {
+    stubMatchMedia(false);
+    stubNavigator(2, 2);
+    localStorage.setItem("nytl.vfx.quality", "high");
+    expect(resolveVfxQuality()).toBe("high");
+  });
 });
 
 /* ═══════════════════════════════════════════════════════════════════
