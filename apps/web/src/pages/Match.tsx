@@ -2103,6 +2103,7 @@ export function MatchPage() {
                         selectableCells={selectableCells}
                         onCellSelect={(cell) => { telemetry.recordInteraction(); handleCellSelect(cell); }}
                         currentPlayer={currentPlayer}
+                        preloadTokenIds={currentDeckTokens}
                         placedCell={boardAnim.placedCell}
                         flippedCells={boardAnim.flippedCells}
                         showActionPrompt
