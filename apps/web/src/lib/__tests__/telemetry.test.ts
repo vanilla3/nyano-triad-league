@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
-import { createTelemetryTracker, readCumulativeStats } from "../telemetry";
+import { createTelemetryTracker, readCumulativeStats, clearCumulativeStats } from "../telemetry";
 
 // ── Mock localStorage for node test environment ────────────────────────
 const store = new Map<string, string>();
@@ -140,6 +140,24 @@ describe("telemetry", () => {
   });
 
   it("returns safe defaults when nothing stored", () => {
+    const stats = readCumulativeStats();
+    expect(stats.sessions).toBe(0);
+    expect(stats.avg_first_interaction_ms).toBeNull();
+    expect(stats.avg_first_place_ms).toBeNull();
+    expect(stats.total_invalid_actions).toBe(0);
+  });
+
+  it("clears cumulative stats", () => {
+    const tracker = createTelemetryTracker();
+    vi.spyOn(performance, "now").mockReturnValue(1000);
+    tracker.recordPlace();
+    tracker.recordInvalidAction();
+    tracker.flush();
+
+    expect(readCumulativeStats().sessions).toBe(1);
+
+    clearCumulativeStats();
+
     const stats = readCumulativeStats();
     expect(stats.sessions).toBe(0);
     expect(stats.avg_first_interaction_ms).toBeNull();

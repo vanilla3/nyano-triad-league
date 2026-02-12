@@ -9,7 +9,7 @@
 
 | # | チェック項目 | 測定方法 | 目標 | 現状 |
 |---|-------------|---------|------|------|
-| A-1 | 初見が30秒以内に1手目を置ける | `first_place_ms` テレメトリ | < 30,000ms | 未計測 |
+| A-1 | 初見が30秒以内に1手目を置ける | `first_place_ms` テレメトリ | < 30,000ms | 計測可能（Home > Settings） |
 | A-2 | 画面内に "次にやること" が常に1行で表示されている | 目視 | Yes | ✅ Yes (Mint: ActionPrompt) |
 | A-3 | スコア（タイル数）が常時見えている | 目視 | Yes | Yes |
 | A-4 | 現在のターン（誰の番か）が一目で分かる | 目視 | Yes | ✅ Yes (Mint: ScoreBar turn indicator) |
@@ -21,7 +21,7 @@
 | B-1 | Home から試合開始まで10秒以内 | ストップウォッチ | < 10s | 未計測 |
 | B-2 | 置けるセルが "見れば分かる"（形・色で区別） | 無説明テスト | Yes | ✅ Yes (Mint: puffy+breathe vs flat) |
 | B-3 | カード選択 → セル選択の2ステップが直感的 | 無説明テスト | Yes | ✅ Yes (Mint: HandDisplayMint + ActionPrompt) |
-| B-4 | モバイルで誤タップなく操作できる | `invalid_action_count` | < 2回/試合 | 未計測 |
+| B-4 | モバイルで誤タップなく操作できる | `invalid_action_count` | < 2回/試合 | 計測可能（Home > Settings） |
 
 ## C: "見れば分かるデザイン" (Design follows Function)
 
