@@ -103,6 +103,7 @@
 .overlay-theme-720p-minimal {
   --ol-font: 11px;
   --ol-font-lg: 15px;
+  --ol-detail-font: 10px;
   --ol-card: 56px;
   --ol-gap: 6px;
   --ol-pad: 8px;
@@ -110,7 +111,7 @@
   --ol-avatar: 22px;
   --ol-badge-font: 11px;
   --ol-cell-label: 10px;
-  --ol-text-shadow: 0 1px 3px rgba(0,0,0,0.7);
+  --ol-text-shadow: 0 1px 4px rgba(0,0,0,0.8);
   --ol-countdown: 20px;
   --ol-score: 16px;
   --ol-turn: 14px;
@@ -120,6 +121,7 @@
 .overlay-theme-720p-standard {
   --ol-font: 12px;
   --ol-font-lg: 16px;
+  --ol-detail-font: 11px;
   --ol-card: 64px;
   --ol-gap: 8px;
   --ol-pad: 10px;
@@ -127,7 +129,7 @@
   --ol-avatar: 26px;
   --ol-badge-font: 11px;
   --ol-cell-label: 11px;
-  --ol-text-shadow: 0 1px 3px rgba(0,0,0,0.6);
+  --ol-text-shadow: 0 1px 3px rgba(0,0,0,0.7);
   --ol-countdown: 24px;
   --ol-score: 18px;
   --ol-turn: 15px;
@@ -137,6 +139,7 @@
 .overlay-theme-1080p-standard {
   --ol-font: 13px;
   --ol-font-lg: 17px;
+  --ol-detail-font: 12px;
   --ol-card: 80px;
   --ol-gap: 10px;
   --ol-pad: 14px;
@@ -144,7 +147,7 @@
   --ol-avatar: 32px;
   --ol-badge-font: 11px;
   --ol-cell-label: 11px;
-  --ol-text-shadow: 0 1px 2px rgba(0,0,0,0.4);
+  --ol-text-shadow: 0 1px 2px rgba(0,0,0,0.5);
   --ol-countdown: 28px;
   --ol-score: 22px;
   --ol-turn: 16px;
@@ -154,6 +157,7 @@
 .overlay-theme-1080p-full {
   --ol-font: 16px;
   --ol-font-lg: 20px;
+  --ol-detail-font: 14px;
   --ol-card: 96px;
   --ol-gap: 12px;
   --ol-pad: 16px;
@@ -161,7 +165,7 @@
   --ol-avatar: 38px;
   --ol-badge-font: 12px;
   --ol-cell-label: 12px;
-  --ol-text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+  --ol-text-shadow: 0 1px 2px rgba(0,0,0,0.4);
   --ol-countdown: 36px;
   --ol-score: 28px;
   --ol-turn: 18px;
@@ -179,6 +183,19 @@
 /* OBS-0501: Theme-aware padding for overlay panels */
 [class*="overlay-theme-"] .ol-pad {
   padding: var(--ol-pad, 14px);
+}
+
+/* OBS-0841: Theme-aware detail text for secondary info (flip readout, vote details) */
+[class*="overlay-theme-"] .ol-detail-text {
+  font-size: var(--ol-detail-font, 12px);
+  text-shadow: var(--ol-text-shadow, none);
+}
+
+/* OBS-0842: Theme-aware vote display text (top vote list, tallies) */
+[class*="overlay-theme-"] .ol-vote-display {
+  font-size: var(--ol-font-lg, 16px);
+  text-shadow: var(--ol-text-shadow, none);
+  font-variant-numeric: tabular-nums;
 }
 
 /* OBS-0502: Theme-aware badge font for overlay mode */
