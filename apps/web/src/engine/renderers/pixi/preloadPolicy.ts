@@ -1,0 +1,36 @@
+import type { VfxQuality } from "@/lib/visual/visualSettings";
+
+/**
+ * Preload concurrency policy tuned for low-end devices.
+ * off/low keep background requests minimal.
+ */
+export function texturePreloadConcurrencyForQuality(quality: VfxQuality): number {
+  switch (quality) {
+    case "off":
+    case "low":
+      return 1;
+    case "medium":
+      return 2;
+    case "high":
+      return 3;
+  }
+}
+
+/**
+ * Normalize tokenIds for preload queueing:
+ * - trim whitespace
+ * - drop empty values
+ * - keep stable insertion order while deduping
+ */
+export function normalizePreloadTokenIds(tokenIds: readonly string[]): string[] {
+  const out: string[] = [];
+  const seen = new Set<string>();
+  for (const raw of tokenIds) {
+    const tokenId = raw.trim();
+    if (!tokenId) continue;
+    if (seen.has(tokenId)) continue;
+    seen.add(tokenId);
+    out.push(tokenId);
+  }
+  return out;
+}

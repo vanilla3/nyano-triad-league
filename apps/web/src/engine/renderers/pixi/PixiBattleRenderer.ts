@@ -35,6 +35,7 @@ import {
   type CellAnimFrame,
   type VfxFeatureFlags,
 } from "./cellAnimations";
+import { texturePreloadConcurrencyForQuality } from "./preloadPolicy";
 import { errorMessage } from "@/lib/errorMessage";
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -213,6 +214,7 @@ export class PixiBattleRenderer implements IBattleRenderer {
   setState(state: BattleRendererState): void {
     const prevState = this.state;
     this.state = state;
+    this.preloadVisibleTextures(state);
 
     // ── Detect new animations ──
     this.detectAnimationTriggers(state, prevState);
@@ -226,6 +228,19 @@ export class PixiBattleRenderer implements IBattleRenderer {
     }
 
     this.redraw();
+  }
+
+  private preloadVisibleTextures(state: BattleRendererState): void {
+    const tokenIds: string[] = [];
+    for (const cell of state.board) {
+      if (!cell) continue;
+      tokenIds.push(cell.card.tokenId.toString());
+    }
+    if (tokenIds.length === 0) return;
+    this.textureResolver.preloadTextures(
+      tokenIds,
+      texturePreloadConcurrencyForQuality(state.vfxQuality),
+    );
   }
 
   onCellSelect(cb: CellSelectCallback): void {

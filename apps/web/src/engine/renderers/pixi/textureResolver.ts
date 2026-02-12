@@ -13,6 +13,7 @@ import { getCachedGameIndexMetadata } from "@/lib/nyano/gameIndex";
 import { getMetadataConfig, type MetadataConfig } from "@/lib/nyano/metadata";
 import { errorMessage } from "@/lib/errorMessage";
 import { buildTokenImageUrls } from "./tokenImageUrls";
+import { normalizePreloadTokenIds } from "./preloadPolicy";
 
 /**
  * Manages NFT card image texture loading, caching, and URL fallback.
@@ -20,12 +21,17 @@ import { buildTokenImageUrls } from "./tokenImageUrls";
  * Usage:
  * - `getTexture(tokenId)` - synchronous cache lookup; returns null if not loaded
  * - `loadTexture(tokenId)` - async load with fallback; resolves to Texture | null
+ * - `preloadTextures(tokenIds, maxConcurrent)` - background preload queue
  * - `dispose()` - clear cache (call from renderer destroy)
  */
 export class TextureResolver {
   private config: MetadataConfig | null = null;
   private cache = new Map<string, Texture>();
   private pending = new Map<string, Promise<Texture | null>>();
+  private preloadQueue: string[] = [];
+  private preloadQueued = new Set<string>();
+  private preloadInFlight = 0;
+  private preloadMaxConcurrent = 2;
 
   /**
    * Synchronous cache lookup. Returns cached Texture or null.
@@ -61,10 +67,35 @@ export class TextureResolver {
     }
   }
 
+  /**
+   * Queue token textures for background preloading with limited concurrency.
+   * Visible cards should call this so card art appears faster when cells update.
+   */
+  preloadTextures(tokenIds: readonly string[], maxConcurrent = 2): void {
+    const normalizedConcurrency = Number.isFinite(maxConcurrent)
+      ? Math.max(1, Math.trunc(maxConcurrent))
+      : 1;
+    this.preloadMaxConcurrent = normalizedConcurrency;
+
+    for (const tokenId of normalizePreloadTokenIds(tokenIds)) {
+      if (this.cache.has(tokenId)) continue;
+      if (this.pending.has(tokenId)) continue;
+      if (this.preloadQueued.has(tokenId)) continue;
+      this.preloadQueue.push(tokenId);
+      this.preloadQueued.add(tokenId);
+    }
+
+    this.drainPreloadQueue();
+  }
+
   /** Clear cache and pending loads. Called from renderer destroy(). */
   dispose(): void {
     this.cache.clear();
     this.pending.clear();
+    this.preloadQueue = [];
+    this.preloadQueued.clear();
+    this.preloadInFlight = 0;
+    this.preloadMaxConcurrent = 2;
     this.config = null;
   }
 
@@ -107,5 +138,26 @@ export class TextureResolver {
     }
 
     return null;
+  }
+
+  private drainPreloadQueue(): void {
+    while (
+      this.preloadInFlight < this.preloadMaxConcurrent &&
+      this.preloadQueue.length > 0
+    ) {
+      const tokenId = this.preloadQueue.shift();
+      if (!tokenId) continue;
+      this.preloadQueued.delete(tokenId);
+
+      if (this.cache.has(tokenId) || this.pending.has(tokenId)) {
+        continue;
+      }
+
+      this.preloadInFlight += 1;
+      void this.loadTexture(tokenId).finally(() => {
+        this.preloadInFlight = Math.max(0, this.preloadInFlight - 1);
+        this.drainPreloadQueue();
+      });
+    }
   }
 }
