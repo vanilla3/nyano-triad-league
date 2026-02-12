@@ -10,6 +10,9 @@ import { buildTokenImageUrls } from "@/engine/renderers/pixi/tokenImageUrls";
 const ARWEAVE_CONFIG: MetadataConfig = {
   baseUrlPattern: "https://abc123.arweave.net/tx123/{id}.png",
 };
+const AR_IO_CONFIG: MetadataConfig = {
+  baseUrlPattern: "https://ar-io.dev/tx123/{id}.png",
+};
 
 describe("normalizeNyanoTokenId", () => {
   it("normalizes boundary tokenIds used by NFT image paths", () => {
@@ -48,6 +51,13 @@ describe("resolveNyanoImageUrls", () => {
       "https://abc123.arweave.net/tx123/1.png",
       "https://arweave.net/tx123/1.png",
       "https://ar-io.dev/tx123/1.png",
+    ]);
+  });
+
+  it("returns canonical fallback when primary URL is ar-io", () => {
+    expect(resolveNyanoImageUrls(1n, AR_IO_CONFIG)).toEqual([
+      "https://ar-io.dev/tx123/1.png",
+      "https://arweave.net/tx123/1.png",
     ]);
   });
 });

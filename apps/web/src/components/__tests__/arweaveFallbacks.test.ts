@@ -28,6 +28,15 @@ describe("buildArweaveFallbacks", () => {
     );
   });
 
+  it("generates canonical fallback from ar-io gateway URL", () => {
+    const url = "https://ar-io.dev/ZsWmiEdKqybtYuiEPihyZ_ghylStw0oAhbY5sWJ8ci4/42.png";
+    const fallbacks = buildArweaveFallbacks(url);
+    expect(fallbacks).toHaveLength(1);
+    expect(fallbacks[0]).toBe(
+      "https://arweave.net/ZsWmiEdKqybtYuiEPihyZ_ghylStw0oAhbY5sWJ8ci4/42.png",
+    );
+  });
+
   it("returns empty array for non-Arweave URL", () => {
     expect(buildArweaveFallbacks("https://example.com/image.png")).toEqual([]);
     expect(buildArweaveFallbacks("https://ipfs.io/ipfs/abc")).toEqual([]);
