@@ -15,12 +15,14 @@ import OFFICIAL from "@root/rulesets/official_onchain_rulesets.json";
 
 import { BoardView } from "@/components/BoardView";
 import { BoardViewRPG } from "@/components/BoardViewRPG";
+import { DuelStageMint } from "@/components/DuelStageMint";
 import { ScoreBar } from "@/components/ScoreBar";
 import { CardMini } from "@/components/CardMini";
 import { TurnLog } from "@/components/TurnLog";
 import { GameResultBanner } from "@/components/GameResultOverlay";
 import { NyanoReaction, pickReactionKind, type NyanoReactionInput } from "@/components/NyanoReaction";
 import { NyanoAvatar } from "@/components/NyanoAvatar";
+import { BattleStageEngine } from "@/engine/components/BattleStageEngine";
 import { reactionToExpression } from "@/lib/expression_map";
 import {
   base64UrlEncodeUtf8,
@@ -175,6 +177,7 @@ const HIGHLIGHT_KIND_ORDER: ReplayHighlightKind[] = ["big_flip", "chain", "combo
 export function ReplayPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const ui = (searchParams.get("ui") || "").toLowerCase();
+  const isEngine = ui === "engine";
   const isRpg = ui === "rpg";
 
   const eventId = searchParams.get("event") ?? "";
@@ -590,11 +593,25 @@ protocolV1: {
     [sim.ok, sim.ok ? sim.current : null],
   );
 
+  const replayPreloadTokenIds = React.useMemo(() => {
+    if (!sim.ok) return [] as bigint[];
+    const out: bigint[] = [];
+    const seen = new Set<string>();
+    for (const tid of [...sim.transcript.header.deckA, ...sim.transcript.header.deckB]) {
+      const key = tid.toString();
+      if (seen.has(key)) continue;
+      seen.add(key);
+      out.push(tid);
+    }
+    return out;
+  }, [sim]);
+
   const renderReplay = (label: string, res: MatchResultWithHistory) => {
     const boardNow = res.boardHistory[step];
     const boardPrev = step === 0 ? res.boardHistory[0] : res.boardHistory[step - 1];
     const { placedCell, flippedCells } = step === 0 ? { placedCell: null, flippedCells: [] } : computeDelta(boardPrev, boardNow);
     const nyanoReactionInput = buildNyanoReactionInput(res, step);
+    const focusCell = focusTurnIndex !== null ? (res.turns[focusTurnIndex]?.cell ?? null) : null;
 
     return (
       <div className="grid gap-3">
@@ -627,24 +644,35 @@ protocolV1: {
           {nyanoReactionInput ? <NyanoReaction input={nyanoReactionInput} turnIndex={step} rpg={isRpg} /> : null}
         </div>
 
-{isRpg ? (
-  <BoardViewRPG
-    board={boardNow}
-    focusCell={focusTurnIndex !== null ? res.turns[focusTurnIndex]?.cell : null}
-    placedCell={placedCell}
-    flippedCells={flippedCells}
-    showCoordinates
-    showCandles
-    showParticles
-  />
-) : (
-  <BoardView
-    board={boardNow}
-    focusCell={focusTurnIndex !== null ? res.turns[focusTurnIndex]?.cell : null}
-    placedCell={placedCell}
-    flippedCells={flippedCells}
-  />
-)}
+        {isEngine && !compare ? (
+          <DuelStageMint>
+            <BattleStageEngine
+              board={boardNow}
+              selectedCell={null}
+              currentPlayer={0}
+              preloadTokenIds={replayPreloadTokenIds}
+              placedCell={placedCell}
+              flippedCells={flippedCells}
+            />
+          </DuelStageMint>
+        ) : isRpg ? (
+          <BoardViewRPG
+            board={boardNow}
+            focusCell={focusCell}
+            placedCell={placedCell}
+            flippedCells={flippedCells}
+            showCoordinates
+            showCandles
+            showParticles
+          />
+        ) : (
+          <BoardView
+            board={boardNow}
+            focusCell={focusCell}
+            placedCell={placedCell}
+            flippedCells={flippedCells}
+          />
+        )}
 
         {step > 0 ? (
           <div className="flex flex-wrap gap-2 text-xs text-slate-600">
@@ -760,7 +788,7 @@ protocolV1: {
         <div className="card-hd">
           <div className="text-base font-semibold">Replay from transcript</div>
           <div className="text-xs text-slate-500">
-            Paste transcript JSON to replay with on-chain card metadata (read-only). You can also open share links via <span className="font-mono">?z=...</span> or <span className="font-mono">?t=...</span>.
+            Paste transcript JSON to replay with on-chain card metadata (read-only). You can also open share links via <span className="font-mono">?z=...</span> or <span className="font-mono">?t=...</span>, and switch board renderer with <span className="font-mono">?ui=engine</span> / <span className="font-mono">?ui=rpg</span>.
           </div>
         </div>
 
