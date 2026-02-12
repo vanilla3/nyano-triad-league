@@ -8,6 +8,7 @@ import { useToast } from "@/components/Toast";
 import { EVENTS, fetchEventConfig, getEventStatus, type EventV1 } from "@/lib/events";
 import { executeRecovery, recoveryActionLabel } from "@/lib/stream_recovery";
 import { buildStreamUrls } from "@/lib/stream_urls";
+import { appPath } from "@/lib/appUrl";
 import { WarudoBridgePanel } from "@/components/stream/WarudoBridgePanel";
 import { VoteControlPanel } from "@/components/stream/VoteControlPanel";
 import { StreamSharePanel } from "@/components/stream/StreamSharePanel";
@@ -101,6 +102,11 @@ export function StreamPage() {
     overlayTransparentUrl,
     replayBroadcastUrl,
   } = React.useMemo(() => buildStreamUrls(e?.id), [e?.id]);
+  const matchPath = React.useMemo(() => appPath("match"), []);
+  const replayPath = React.useMemo(() => appPath("replay"), []);
+  const overlayPath = React.useMemo(() => appPath("overlay"), []);
+  const streamPath = React.useMemo(() => appPath("stream"), []);
+  const replayBroadcastPath = React.useMemo(() => appPath("replay?broadcast=1"), []);
 
   const copy = async (label: string, v: string) => {
     await writeClipboardText(v);
@@ -425,7 +431,7 @@ const sendNyanoWarudo = React.useCallback(
   async (kind: "ai_prompt" | "state_json", opts?: { silent?: boolean }) => {
     const state = live;
     if (!state) {
-      const msg = "No live state yet (open /match or /replay with broadcast=1).";
+      const msg = `No live state yet (open ${matchPath} or ${replayBroadcastPath}).`;
       setLastBridgeResult(msg);
       if (!opts?.silent) toast.warn("Nyano Warudo", msg);
       return;
@@ -477,7 +483,7 @@ const sendNyanoWarudo = React.useCallback(
     }
   },
   // eslint-disable-next-line react-hooks/exhaustive-deps -- buildAiPrompt/buildStateJsonContent are stable module-level fns
-  [live, controlledSide, warudoBaseUrl, toast, appendOpsLog]
+  [live, controlledSide, warudoBaseUrl, toast, appendOpsLog, matchPath, replayBroadcastPath]
 );
 
 
@@ -1035,7 +1041,7 @@ return (
           <div className="rounded-2xl border border-slate-200 bg-white/70 px-4 py-3 shadow-sm">
             <div className="text-xs font-semibold text-slate-800">Step 3 · Review replays on stream</div>
             <div className="mt-1 text-sm text-slate-700">
-              <span className="font-mono">/replay</span> で共有URLを開き、<span className="font-semibold">Broadcast to overlay</span> をONにすると、
+              <span className="font-mono">{replayPath}</span> で共有URLを開き、<span className="font-semibold">Broadcast to overlay</span> をONにすると、
               overlayが step と一緒に追随します（解説がしやすい）。
             </div>
             <div className="mt-3 flex flex-wrap items-center gap-2">
@@ -1047,7 +1053,7 @@ return (
               </a>
             </div>
             <div className="mt-2 text-xs text-slate-500">
-              ※ OBS側は <span className="font-mono">/overlay</span> を表示しておけばOK
+              ※ OBS側は <span className="font-mono">{overlayPath}</span> を表示しておけばOK
             </div>
           </div>
 
@@ -1056,7 +1062,7 @@ return (
               <div>
                 <div className="text-xs font-semibold text-slate-800">Step 4 · Nyano vs Chat (prototype)</div>
                 <div className="mt-1 text-xs text-slate-600">
-                  Twitch連携の前に、まずは <span className="font-mono">/stream</span> で投票集計 → <span className="font-mono">/match</span> に反映する最小ループを作ります。
+                  Twitch連携の前に、まずは <span className="font-mono">{streamPath}</span> で投票集計 → <span className="font-mono">{matchPath}</span> に反映する最小ループを作ります。
                 </div>
               </div>
 
