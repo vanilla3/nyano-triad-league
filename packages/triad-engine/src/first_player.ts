@@ -74,6 +74,19 @@ export interface FirstPlayerRevealCommitV1Input {
   reveal: `0x${string}`;
 }
 
+export type FirstPlayerResolutionMethodV1 =
+  | ({
+      mode: "mutual_choice";
+      choiceA: number;
+      choiceB: number;
+    })
+  | ({
+      mode: "seed";
+    } & FirstPlayerSeedV1Input)
+  | ({
+      mode: "commit_reveal";
+    } & FirstPlayerCommitRevealResolutionV1Input);
+
 function assertBytes32(value: `0x${string}`, field: string): void {
   if (!HEX_32_RE.test(value)) {
     throw new Error(`${field} must be bytes32`);
@@ -215,4 +228,25 @@ export function resolveFirstPlayerByMutualChoiceV1(choiceA: number, choiceB: num
   assertPlayerIndex(choiceB, "choiceB");
   if (choiceA !== choiceB) throw new Error("mutual choice mismatch");
   return choiceA;
+}
+
+/**
+ * High-level resolver for first-player determination.
+ *
+ * Accepts one of three methods:
+ * - mutual_choice
+ * - seed
+ * - commit_reveal
+ */
+export function resolveFirstPlayerV1(input: FirstPlayerResolutionMethodV1): PlayerIndex {
+  switch (input.mode) {
+    case "mutual_choice":
+      return resolveFirstPlayerByMutualChoiceV1(input.choiceA, input.choiceB);
+    case "seed":
+      return deriveFirstPlayerFromSeedV1(input);
+    case "commit_reveal":
+      return resolveFirstPlayerFromCommitRevealV1(input);
+    default:
+      throw new Error(`unsupported first-player mode: ${(input as { mode: string }).mode}`);
+  }
 }

@@ -442,3 +442,26 @@
 ### Verify
 - `pnpm -C packages/triad-engine lint`
 - `pnpm -C packages/triad-engine test`
+
+## 2026-02-12 - commit-0095: unified first-player resolver API
+
+### Why
+- Consumers still had to choose and call different low-level helpers per mode.
+- That made integration code verbose and increased branch-specific mistakes.
+
+### What
+- `packages/triad-engine/src/first_player.ts`
+  - Added `FirstPlayerResolutionMethodV1` discriminated union:
+    - `mutual_choice`
+    - `seed`
+    - `commit_reveal`
+  - Added `resolveFirstPlayerV1(input)` as unified resolver entrypoint.
+- `packages/triad-engine/test/first_player.test.js`
+  - Added mode-specific tests for `resolveFirstPlayerV1`.
+  - Added unsupported mode guard test.
+- `docs/02_protocol/Nyano_Triad_League_RULESET_CONFIG_SPEC_v1_ja.md`
+  - Added `resolveFirstPlayerV1` to helper list.
+
+### Verify
+- `pnpm -C packages/triad-engine lint`
+- `pnpm -C packages/triad-engine test`

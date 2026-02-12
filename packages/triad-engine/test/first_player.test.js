@@ -10,6 +10,7 @@ import {
   resolveFirstPlayerFromCommitRevealV1,
   deriveFirstPlayerFromSeedV1,
   resolveFirstPlayerByMutualChoiceV1,
+  resolveFirstPlayerV1,
 } from "../dist/index.js";
 
 test("first-player commit: build + verify", () => {
@@ -187,4 +188,36 @@ test("mutual-choice first-player: matches when both agree, throws on mismatch", 
   assert.equal(resolveFirstPlayerByMutualChoiceV1(0, 0), 0);
   assert.equal(resolveFirstPlayerByMutualChoiceV1(1, 1), 1);
   assert.throws(() => resolveFirstPlayerByMutualChoiceV1(0, 1));
+});
+
+test("resolveFirstPlayerV1: mutual_choice mode", () => {
+  assert.equal(resolveFirstPlayerV1({ mode: "mutual_choice", choiceA: 1, choiceB: 1 }), 1);
+});
+
+test("resolveFirstPlayerV1: seed mode", () => {
+  const matchSalt = "0x1111111111111111111111111111111111111111111111111111111111111111";
+  const seed = "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
+  assert.equal(
+    resolveFirstPlayerV1({ mode: "seed", matchSalt, seed }),
+    deriveFirstPlayerFromSeedV1({ matchSalt, seed }),
+  );
+});
+
+test("resolveFirstPlayerV1: commit_reveal mode", () => {
+  const matchSalt = "0x1111111111111111111111111111111111111111111111111111111111111111";
+  const revealA = "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
+  const revealB = "0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb";
+  const commitA = buildFirstPlayerRevealCommitV1({ matchSalt, reveal: revealA });
+  const commitB = buildFirstPlayerRevealCommitV1({ matchSalt, reveal: revealB });
+  assert.equal(
+    resolveFirstPlayerV1({ mode: "commit_reveal", matchSalt, revealA, revealB, commitA, commitB }),
+    deriveFirstPlayerFromCommitRevealV1({ matchSalt, revealA, revealB }),
+  );
+});
+
+test("resolveFirstPlayerV1: unsupported mode throws", () => {
+  assert.throws(
+    () => resolveFirstPlayerV1({ mode: "future_mode" }),
+    /unsupported first-player mode/,
+  );
 });
