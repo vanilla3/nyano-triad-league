@@ -44,11 +44,28 @@
   - `season_council.ts` を追加（proposalId / vote hash / EIP-712 vote verify / tally / adopt）
   - 決定論ルールを固定（候補集合 canonicalize、同一voterは最大nonce採用、同率は rulesetId 昇順）
   - 仕様書 `SEASON_COUNCIL_SPEC` を追加
+- ✅ Commit0105: permissionless ladder format v1（transcript + settled event + 両署名）を TS 参照実装
+  - `ladder.ts` を追加（EIP-712 attestation / record verify / deterministic standings）
+  - indexer 非依存の tie-break を固定（points → wins → tileDiff → losses → address）
+  - 仕様書 `LADDER_FORMAT_SPEC` を追加
+- ✅ Commit0106: Phase 3 hardening（error tracking + release runbook）を最小実装
+  - `apps/web/src/lib/error_tracking.ts` を追加（global error / unhandledrejection の収集）
+  - sink を切替可能化（local / console / remote, env設定）
+  - `docs/99_dev/RELEASE_RUNBOOK_v1_ja.md` を追加（versioning/changelog/rollback/feature flag）
+  - `pnpm run release:check` を追加（出荷前チェックの標準化）
+- ✅ Commit0107: 新規参加者向け quickstart 導線（3ステップ進捗）を実装
+  - `apps/web/src/lib/onboarding.ts` を追加（localStorage永続化・進捗集計・リセット）
+  - Home に「はじめての1分スタート」チェックリストと1分ルールモーダルを追加
+  - Match のゲスト対戦導線で `start_first_match` / `commit_first_move` を自動更新
+  - `onboarding.test.ts` を追加（既定値、永続化、異常値fallback、reset）
+- ✅ Commit0108: /stream モデレーション（NGワード / BAN / slow mode）を実装
+  - `stream_moderation.ts` を追加（判定ロジックを pure function 化）
+  - VoteControlPanel に moderation 設定UI（slow mode秒数 / banned users / blocked words）を追加
+  - 投票受理前に BAN / NGワード / slow mode を適用し、audit に reject 理由を記録
+  - `local_settings` に moderation 永続化キーを追加（roundtrip test 付き）
 ## 🚧 Doing (now)
 
-- 🔧 ラダー（ランキング）を“許可不要”で第三者が運用できるフォーマットを詰める
-  - transcript / events / 署名検証で再計算できる最小仕様を定義
-  - indexer 非依存で同じ順位が出る tie-break を固定する
+- 🔧 Phase 4 の運用面（シーズン制UI / アーカイブ導線）の最小設計を進める
 
 ## 🧩 Next (high priority)
 
@@ -65,8 +82,9 @@
 
 ### C. 自走するコミュニティ設計（運営が消えても回る）
 - [x] 「シーズンの議会」：ruleset proposal / vote / adopt の最小プロトコル
-- [ ] ラダー（ランキング）を“許可不要”で第三者が運用できるフォーマット
-  - 例：イベントログ＋署名検証＋ランキング算出の決定論
+- [x] ラダー（ランキング）を“許可不要”で第三者が運用できるフォーマット
+  - transcript + settled event + EIP-712 attestation で再計算可能
+  - indexer 非依存の固定 tie-break を実装（`buildLadderStandingsV1`）
 
 ---
 

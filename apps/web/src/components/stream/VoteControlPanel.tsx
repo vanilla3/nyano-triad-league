@@ -18,6 +18,10 @@ export interface VoteAudit {
   illegal: number;
   usernameRejected: number;
   changeExceeded: number;
+  // Backward-compatible optional fields (added in commit-0108).
+  bannedUserRejected?: number;
+  blockedWordRejected?: number;
+  slowModeRejected?: number;
 }
 
 export interface VoteCountEntry {
@@ -64,6 +68,16 @@ export interface VoteControlPanelProps {
   onChangeAntiSpamRateLimitMs: (v: number) => void;
   antiSpamMaxVoteChanges: number;
   onChangeAntiSpamMaxVoteChanges: (v: number) => void;
+
+  // Moderation settings (Phase 4)
+  moderationSlowModeSeconds: number;
+  onChangeModerationSlowModeSeconds: (v: number) => void;
+  moderationBannedUsersText: string;
+  onChangeModerationBannedUsersText: (v: string) => void;
+  moderationBlockedWordsText: string;
+  onChangeModerationBlockedWordsText: (v: string) => void;
+  moderationBannedUsersCount: number;
+  moderationBlockedWordsCount: number;
 }
 
 function moveKey(m: ViewerMove): string {
@@ -96,8 +110,19 @@ export const VoteControlPanel: React.FC<VoteControlPanelProps> = React.memo(func
   onChangeAntiSpamRateLimitMs,
   antiSpamMaxVoteChanges,
   onChangeAntiSpamMaxVoteChanges,
+  moderationSlowModeSeconds,
+  onChangeModerationSlowModeSeconds,
+  moderationBannedUsersText,
+  onChangeModerationBannedUsersText,
+  moderationBlockedWordsText,
+  onChangeModerationBlockedWordsText,
+  moderationBannedUsersCount,
+  moderationBlockedWordsCount,
 }) {
   const sideLabel = controlledSide === 0 ? "A" : "B";
+  const bannedUserRejected = voteAudit.bannedUserRejected ?? 0;
+  const blockedWordRejected = voteAudit.blockedWordRejected ?? 0;
+  const slowModeRejected = voteAudit.slowModeRejected ?? 0;
   const hostMatchPath = React.useMemo(() => appPath("match?stream=1"), []);
 
   return (
@@ -189,6 +214,48 @@ export const VoteControlPanel: React.FC<VoteControlPanelProps> = React.memo(func
                 disabled={settingsLocked}
                 aria-label="Max vote changes per round"
               />
+            </div>
+          </details>
+
+          <details className="mt-3">
+            <summary className="cursor-pointer text-[11px] font-semibold text-slate-600">Moderation</summary>
+            <div className="mt-2 grid gap-2">
+              <label className="text-[11px] text-slate-600">Slow mode (seconds per user, 0=off)</label>
+              <input
+                className="rounded-lg border border-slate-200 bg-white px-2 py-1 text-xs"
+                type="number"
+                min={0}
+                max={120}
+                value={moderationSlowModeSeconds}
+                onChange={(ev) => onChangeModerationSlowModeSeconds(Number(ev.target.value))}
+                disabled={settingsLocked}
+                aria-label="Slow mode seconds"
+              />
+              <label className="text-[11px] text-slate-600">
+                Banned users ({moderationBannedUsersCount})
+              </label>
+              <textarea
+                className="min-h-16 rounded-lg border border-slate-200 bg-white px-2 py-1 text-xs font-mono"
+                value={moderationBannedUsersText}
+                onChange={(ev) => onChangeModerationBannedUsersText(ev.target.value)}
+                disabled={settingsLocked}
+                placeholder="bad_user&#10;spam_account"
+                aria-label="Banned users list"
+              />
+              <label className="text-[11px] text-slate-600">
+                NG words ({moderationBlockedWordsCount})
+              </label>
+              <textarea
+                className="min-h-16 rounded-lg border border-slate-200 bg-white px-2 py-1 text-xs font-mono"
+                value={moderationBlockedWordsText}
+                onChange={(ev) => onChangeModerationBlockedWordsText(ev.target.value)}
+                disabled={settingsLocked}
+                placeholder="spoiler&#10;abuse"
+                aria-label="Blocked words list"
+              />
+              <div className="text-[10px] text-slate-500">
+                List format: comma or newline delimited. Matching is case-insensitive.
+              </div>
             </div>
           </details>
         </div>
@@ -288,7 +355,7 @@ export const VoteControlPanel: React.FC<VoteControlPanelProps> = React.memo(func
           </div>
           {voteAudit.attempts > 0 && (
             <div className="mt-1 text-[10px] text-slate-400" role="status" aria-live="polite">
-              {voteAudit.attempts} attempts · {voteAudit.accepted} accepted · {voteAudit.duplicates} dup · {voteAudit.rateLimited} rate-lim · {voteAudit.illegal} illegal{voteAudit.usernameRejected > 0 ? ` · ${voteAudit.usernameRejected} bad-name` : ""}{voteAudit.changeExceeded > 0 ? ` · ${voteAudit.changeExceeded} chg-limit` : ""}
+              {voteAudit.attempts} attempts · {voteAudit.accepted} accepted · {voteAudit.duplicates} dup · {voteAudit.rateLimited} rate-lim · {voteAudit.illegal} illegal{voteAudit.usernameRejected > 0 ? ` · ${voteAudit.usernameRejected} bad-name` : ""}{voteAudit.changeExceeded > 0 ? ` · ${voteAudit.changeExceeded} chg-limit` : ""}{bannedUserRejected > 0 ? ` · ${bannedUserRejected} banned` : ""}{blockedWordRejected > 0 ? ` · ${blockedWordRejected} ng-word` : ""}{slowModeRejected > 0 ? ` · ${slowModeRejected} slow` : ""}
             </div>
           )}
         </div>

@@ -139,6 +139,40 @@ export function writeAntiSpamMaxVoteChanges(n: number): void {
 }
 
 // ---------------------------------------------------------------------------
+// Stream moderation settings
+// ---------------------------------------------------------------------------
+
+/** Read stream slow mode seconds (0=off, default 0). */
+export function readStreamSlowModeSeconds(): number {
+  return readNumberSetting("stream.moderation.slowModeSeconds", 0, 0, 120);
+}
+
+/** Write stream slow mode seconds. */
+export function writeStreamSlowModeSeconds(seconds: number): void {
+  writeNumberSetting("stream.moderation.slowModeSeconds", seconds);
+}
+
+/** Read stream banned-user list text (comma/newline delimited). */
+export function readStreamBannedUsersText(): string {
+  return readStringSetting("stream.moderation.bannedUsers", "");
+}
+
+/** Write stream banned-user list text (comma/newline delimited). */
+export function writeStreamBannedUsersText(value: string): void {
+  writeStringSetting("stream.moderation.bannedUsers", value);
+}
+
+/** Read stream blocked-word list text (comma/newline delimited). */
+export function readStreamBlockedWordsText(): string {
+  return readStringSetting("stream.moderation.blockedWords", "");
+}
+
+/** Write stream blocked-word list text (comma/newline delimited). */
+export function writeStreamBlockedWordsText(value: string): void {
+  writeStringSetting("stream.moderation.blockedWords", value);
+}
+
+// ---------------------------------------------------------------------------
 // UI Density (NIN-UX-041)
 // ---------------------------------------------------------------------------
 

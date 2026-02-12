@@ -466,6 +466,144 @@
 - `pnpm -C packages/triad-engine lint`
 - `pnpm -C packages/triad-engine test`
 
+## 2026-02-12 - commit-0107: phase4 onboarding quickstart (Home checklist + Match progress sync)
+
+### Why
+- Phase 4 の参加導線で「新規参加者向けチュートリアル（3分理解→1分参加）」が未実装だった。
+- ルール確認から初回対戦までを短くし、離脱しやすい最初の1分をプロダクト側で補助する必要があった。
+
+### What
+- `apps/web/src/lib/onboarding.ts` を新規追加。
+  - 進捗3ステップ（`read_quick_guide` / `start_first_match` / `commit_first_move`）を定義。
+  - localStorage への読み書き、完了数集計、全完了判定、reset を実装。
+- `apps/web/src/lib/__tests__/onboarding.test.ts` を新規追加。
+  - 既定値、進捗永続化、完了数判定、異常payload fallback、reset を検証。
+- `apps/web/src/pages/Home.tsx`
+  - 「はじめての1分スタート」チェックリストUIを追加。
+  - 1分ルールモーダルを追加し、表示時に `read_quick_guide` を更新。
+  - クイック対戦導線で `start_first_match` を更新し、進捗リセット操作を追加。
+- `apps/web/src/pages/Match.tsx`
+  - guest match 開始時に `start_first_match` を更新。
+  - 最初の手が確定したタイミング（`turns.length >= 1`）で `commit_first_move` を更新。
+- `docs/00_handoff/Nyano_Triad_League_LONG_TERM_ROADMAP_v1_ja.md`
+  - Phase 4 の「新規参加者向けチュートリアル」項目を完了に更新。
+- `docs/99_dev/Nyano_Triad_League_DEV_TODO_v1_ja.md`
+  - Commit0107 を追記し、Doing を次フェーズへ更新。
+
+### Verify
+- `pnpm -C apps/web typecheck`
+- `pnpm -C apps/web lint`
+- `pnpm -C apps/web build`
+- `pnpm -C apps/web test -- src/lib/__tests__/onboarding.test.ts`
+  - この実行環境では `vite/vitest` 起動時に `spawn EPERM` が発生し完走不可
+
+## 2026-02-12 - commit-0108: stream moderation controls (NG words / ban / slow mode)
+
+### Why
+- Phase 4 の未完了項目「モデレーション機能（NGワード、BAN、スローモード連携）」が `/stream` に不足していた。
+- 既存 anti-spam（レート制限・投票変更回数）だけでは、配信現場での明示的な除外制御が足りなかった。
+
+### What
+- `apps/web/src/lib/stream_moderation.ts` を新規追加。
+  - BAN 判定、NGワード判定、slow mode 判定を pure function 化。
+  - comma/newline 形式の設定文字列を正規化・重複除去するパーサを追加。
+- `apps/web/src/pages/Stream.tsx`
+  - moderation 設定 state を追加（slow mode 秒数 / banned users / blocked words）。
+  - localStorage 永続化を追加（`stream.moderation.*`）。
+  - `addVoteFromChat` で受理前に moderation 判定を適用:
+    - banned user reject
+    - blocked word reject
+    - slow mode reject
+  - vote audit に `banned/ng-word/slow` の reject カウンタを追加。
+- `apps/web/src/components/stream/VoteControlPanel.tsx`
+  - Moderation UI（slow mode秒数・BAN list・NG words）を追加。
+  - audit 表示に moderation reject 内訳を追加。
+- `apps/web/src/lib/local_settings.ts`
+  - moderation 設定の read/write ヘルパを追加。
+- Tests:
+  - `apps/web/src/lib/__tests__/stream_moderation.test.ts` を追加。
+  - `apps/web/src/lib/__tests__/local_settings.test.ts` に moderation roundtrip を追加。
+- Docs:
+  - `docs/00_handoff/Nyano_Triad_League_LONG_TERM_ROADMAP_v1_ja.md` の Phase 4 moderation 項目を完了に更新。
+  - `docs/99_dev/Nyano_Triad_League_DEV_TODO_v1_ja.md` に Commit0108 を追記。
+
+### Verify
+- `pnpm -C apps/web typecheck`
+- `pnpm -C apps/web lint`
+- `pnpm -C apps/web build`
+- `pnpm -C apps/web test -- src/lib/__tests__/stream_moderation.test.ts src/lib/__tests__/local_settings.test.ts`
+  - この実行環境では `vite/vitest` 起動時に `spawn EPERM` が発生し完走不可
+
+## 2026-02-12 - commit-0105: permissionless ladder format v1 (record verify + deterministic standings)
+
+### Why
+- DEV_TODO の高優先項目「ラダー（ランキング）を許可不要で第三者運用できるフォーマット」が未完了だった。
+- transcript / settled event / 署名の3点を最小セットで固定しないと、同じデータでも再計算結果が揺れるリスクがあった。
+- indexer依存を避けるため、重複処理・ソート順・tie-break順を仕様として固定する必要があった。
+
+### What
+- `packages/triad-engine/src/ladder.ts` を新規追加。
+  - `LadderMatchAttestationV1`（EIP-712）を追加。
+    - typed-data payload / digest / signer recover / signature verify を実装。
+  - `LadderMatchRecordV1` 検証を実装。
+    - `hashTranscriptV1(transcript) == settled.matchId` を必須化。
+    - transcript header と settled event の ruleset/season/player 一致を検証。
+    - playerA/playerB の両署名検証を必須化。
+  - `buildLadderStandingsV1(...)` を実装。
+    - sourceキー（chainId:blockNumber:txHash:logIndex）で重複排除。
+    - 同一sourceの内容不一致を reject。
+    - points / wins / draws / losses / tileDiff を集計。
+    - tie-break順を固定（points desc → wins desc → tileDiff desc → losses asc → address asc）。
+- `packages/triad-engine/src/index.ts`
+  - `ladder` エクスポートを追加。
+- `packages/triad-engine/test/ladder.test.js`
+  - 正常系、transcript不一致、署名不一致、重複排除、conflicting duplicate rejection、固定tie-breakを追加検証。
+- `docs/02_protocol/Nyano_Triad_League_LADDER_FORMAT_SPEC_v1_ja.md`
+  - ladder v1 のフォーマット仕様を新規追加。
+- `docs/99_dev/Nyano_Triad_League_DEV_TODO_v1_ja.md`
+  - ladder項目を完了に更新。
+
+### Verify
+- `pnpm -C packages/triad-engine lint`
+- `pnpm -C packages/triad-engine build`
+- `pnpm -C packages/triad-engine test`（この実行環境では `node:test` が `spawn EPERM` のため完走不可）
+- `node -e ...` で ladder の署名検証・standings集計をスモーク実行（成功）
+
+## 2026-02-12 - commit-0106: phase3 hardening (web error tracking + release runbook)
+
+### Why
+- Phase 3 の未完了項目（エラートラッキング / リリース手順）が残っており、回帰検知と出荷手順の標準化が不足していた。
+- 依存追加を最小に抑えつつ、まず実運用できるエラー収集の基盤が必要だった。
+
+### What
+- `apps/web/src/lib/error_tracking.ts` を新規追加。
+  - global `error` / `unhandledrejection` 向けの収集ロジックを実装。
+  - sink を切替可能化（`local` / `console` / `remote`）。
+  - localStorage リングバッファ（既定50件）で履歴保持。
+  - env 設定:
+    - `VITE_ERROR_TRACKING_MODE`
+    - `VITE_ERROR_TRACKING_ENDPOINT`
+    - `VITE_ERROR_TRACKING_MAX_EVENTS`
+    - `VITE_APP_RELEASE`
+- `apps/web/src/main.tsx`
+  - `installGlobalErrorTracking()` を起動時に導入。
+- `apps/web/src/lib/__tests__/error_tracking.test.ts`
+  - sink解析、イベント正規化、ローカル保持、クリア、console sink を検証。
+- `package.json`
+  - `release:check` スクリプトを追加（engine lint/build + web typecheck/lint/build）。
+- `docs/99_dev/RELEASE_RUNBOOK_v1_ja.md`
+  - versioning / changelog / rollback / feature flag / release check を定義。
+- `docs/00_handoff/Nyano_Triad_League_LONG_TERM_ROADMAP_v1_ja.md`
+  - Phase 3 の未完了2項目を完了に更新。
+- `docs/99_dev/Nyano_Triad_League_DEV_TODO_v1_ja.md`
+  - Commit0106 を反映し、Doing を次フェーズへ更新。
+
+### Verify
+- `pnpm -C apps/web typecheck`
+- `pnpm -C apps/web lint`
+- `pnpm -C apps/web test -- src/lib/__tests__/error_tracking.test.ts`
+  - この実行環境では `vite/vitest` 起動時に `spawn EPERM` が発生し完走不可
+
 ## 2026-02-12 - commit-0096: first-player flow adoption (committed mutual + web seed mode)
 
 ### Why

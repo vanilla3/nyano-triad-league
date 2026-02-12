@@ -46,6 +46,7 @@ import { MiniTutorial } from "@/components/MiniTutorial";
 import { SkeletonBoard, SkeletonHand } from "@/components/Skeleton";
 import { fetchGameIndex } from "@/lib/nyano/gameIndex";
 import { generateBalancedDemoPair, buildCardDataFromIndex } from "@/lib/demo_decks";
+import { markOnboardingStepDone } from "@/lib/onboarding";
 import { QrCode } from "@/components/QrCode";
 import { createTelemetryTracker } from "@/lib/telemetry";
 import { createSfxEngine, type SfxEngine } from "@/lib/sfx";
@@ -504,6 +505,17 @@ export function MatchPage() {
     setGuestDeckSaved(true);
     toast.success("Deck saved!", "Find it on the Decks page.");
   };
+
+  React.useEffect(() => {
+    if (!isGuestMode) return;
+    markOnboardingStepDone("start_first_match");
+  }, [isGuestMode]);
+
+  React.useEffect(() => {
+    if (!isGuestMode) return;
+    if (turns.length < 1) return;
+    markOnboardingStepDone("commit_first_move");
+  }, [isGuestMode, turns.length]);
 
   React.useEffect(() => {
     resetMatch();

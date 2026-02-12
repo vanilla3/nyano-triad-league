@@ -76,6 +76,14 @@ describe("VoteControlPanel", () => {
           onChangeAntiSpamRateLimitMs: () => undefined,
           antiSpamMaxVoteChanges: 2,
           onChangeAntiSpamMaxVoteChanges: () => undefined,
+          moderationSlowModeSeconds: 0,
+          onChangeModerationSlowModeSeconds: () => undefined,
+          moderationBannedUsersText: "",
+          onChangeModerationBannedUsersText: () => undefined,
+          moderationBlockedWordsText: "",
+          onChangeModerationBlockedWordsText: () => undefined,
+          moderationBannedUsersCount: 0,
+          moderationBlockedWordsCount: 0,
         }),
       );
       expect(html).toContain("/sub/match?stream=1");

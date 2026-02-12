@@ -6,8 +6,11 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
 import { AppLayout } from "./App";
 import { getAppBasePath } from "./lib/appUrl";
+import { installGlobalErrorTracking } from "./lib/error_tracking";
 
 import "./styles.css";
+
+installGlobalErrorTracking();
 
 // ── Eager imports — critical path (home + match) ────────────────────
 import { HomePage } from "./pages/Home";

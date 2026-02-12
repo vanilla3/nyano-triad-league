@@ -3,11 +3,17 @@ import {
   readBoolSetting,
   readNumberSetting,
   readStringSetting,
+  readStreamBannedUsersText,
+  readStreamBlockedWordsText,
   readStreamLockTimestamp,
+  readStreamSlowModeSeconds,
+  writeStreamBannedUsersText,
+  writeStreamBlockedWordsText,
   writeBoolSetting,
   writeNumberSetting,
   writeStringSetting,
   writeStreamLockTimestamp,
+  writeStreamSlowModeSeconds,
   readVfxQuality,
   writeVfxQuality,
 } from "../local_settings";
@@ -184,6 +190,30 @@ describe("stream lock timestamp", () => {
     expect(readStreamLockTimestamp()).toBe(1700000000000);
     writeStreamLockTimestamp(0);
     expect(readStreamLockTimestamp()).toBe(0);
+  });
+});
+
+/* ------------------------------------------------------------------ */
+/* Stream moderation settings                                          */
+/* ------------------------------------------------------------------ */
+
+describe("stream moderation settings", () => {
+  it("slow mode defaults to 0 and roundtrips", () => {
+    expect(readStreamSlowModeSeconds()).toBe(0);
+    writeStreamSlowModeSeconds(8);
+    expect(readStreamSlowModeSeconds()).toBe(8);
+  });
+
+  it("banned users text defaults to empty and roundtrips", () => {
+    expect(readStreamBannedUsersText()).toBe("");
+    writeStreamBannedUsersText("alice,bob");
+    expect(readStreamBannedUsersText()).toBe("alice,bob");
+  });
+
+  it("blocked words text defaults to empty and roundtrips", () => {
+    expect(readStreamBlockedWordsText()).toBe("");
+    writeStreamBlockedWordsText("spam\nscam");
+    expect(readStreamBlockedWordsText()).toBe("spam\nscam");
   });
 });
 
