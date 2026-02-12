@@ -56,6 +56,20 @@ describe("buildTokenImageUrls", () => {
     expect(urls[0]).toBe("https://example.com/tokens/9999/image");
   });
 
+  it("handles edge tokenIds 1, 2, 9999, 10000", () => {
+    const config = { baseUrlPattern: "https://cdn.example.com/{id}.png" };
+    expect(buildTokenImageUrls("1", config)[0]).toBe("https://cdn.example.com/1.png");
+    expect(buildTokenImageUrls("2", config)[0]).toBe("https://cdn.example.com/2.png");
+    expect(buildTokenImageUrls("9999", config)[0]).toBe("https://cdn.example.com/9999.png");
+    expect(buildTokenImageUrls("10000", config)[0]).toBe("https://cdn.example.com/10000.png");
+  });
+
+  it("returns empty array for invalid tokenId inputs", () => {
+    const config = { baseUrlPattern: "https://cdn.example.com/{id}.png" };
+    expect(buildTokenImageUrls("0", config)).toEqual([]);
+    expect(buildTokenImageUrls("abc", config)).toEqual([]);
+  });
+
   it("works with DEFAULT_NYANO_IMAGE_BASE", () => {
     const config = { baseUrlPattern: DEFAULT_NYANO_IMAGE_BASE };
     const urls = buildTokenImageUrls("1", config);

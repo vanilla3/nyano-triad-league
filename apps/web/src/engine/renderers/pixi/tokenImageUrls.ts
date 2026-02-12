@@ -7,11 +7,8 @@
  * This file has NO pixi.js dependency — safe for Node.js tests.
  */
 
-import {
-  resolveTokenImageUrl,
-  type MetadataConfig,
-} from "@/lib/nyano/metadata";
-import { buildArweaveFallbacks } from "@/lib/arweave_gateways";
+import { type MetadataConfig } from "@/lib/nyano/metadata";
+import { resolveNyanoImageUrls } from "@/lib/nyano/resolveNyanoImageUrl";
 
 /**
  * Build an ordered list of image URLs for a given tokenId.
@@ -26,8 +23,5 @@ export function buildTokenImageUrls(
   tokenId: string,
   config: MetadataConfig | null,
 ): string[] {
-  if (!config?.baseUrlPattern) return [];
-  const primary = resolveTokenImageUrl(tokenId, config);
-  if (!primary) return [];
-  return [primary, ...buildArweaveFallbacks(primary)];
+  return resolveNyanoImageUrls(tokenId, config);
 }
