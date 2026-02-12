@@ -4,7 +4,12 @@ import { useToast } from "@/components/Toast";
 import { NyanoAvatar } from "@/components/NyanoAvatar";
 import { resetTutorialSeen } from "@/components/MiniTutorial";
 import { clearGameIndexCache } from "@/lib/nyano/gameIndex";
-import { clearCumulativeStats, markQuickPlayStart, readCumulativeStats } from "@/lib/telemetry";
+import {
+  clearCumulativeStats,
+  markQuickPlayStart,
+  readCumulativeStats,
+  recordHomeLcpMs,
+} from "@/lib/telemetry";
 import type { ExpressionName } from "@/lib/expression_map";
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -244,6 +249,57 @@ export function HomePage() {
     };
     window.addEventListener("focus", onFocus);
     return () => window.removeEventListener("focus", onFocus);
+  }, [refreshUxStats]);
+
+  React.useEffect(() => {
+    if (typeof window === "undefined" || typeof PerformanceObserver === "undefined") return;
+
+    let reported = false;
+    let latestLcp: number | null = null;
+
+    const report = () => {
+      if (reported || latestLcp === null) return;
+      reported = true;
+      recordHomeLcpMs(latestLcp);
+      refreshUxStats();
+    };
+
+    const observer = new PerformanceObserver((entryList) => {
+      const entries = entryList.getEntries();
+      const last = entries[entries.length - 1];
+      if (!last) return;
+      latestLcp = last.startTime;
+    });
+
+    try {
+      observer.observe({ type: "largest-contentful-paint", buffered: true } as PerformanceObserverInit);
+    } catch {
+      observer.disconnect();
+      return;
+    }
+
+    const onVisibilityChange = () => {
+      if (document.visibilityState === "hidden") {
+        report();
+      }
+    };
+    const onPageHide = () => {
+      report();
+    };
+
+    document.addEventListener("visibilitychange", onVisibilityChange, true);
+    window.addEventListener("pagehide", onPageHide, true);
+
+    // Fallback: if user keeps Home open, still persist a value after initial render settles.
+    const fallbackTimer = window.setTimeout(report, 6_000);
+
+    return () => {
+      window.clearTimeout(fallbackTimer);
+      report();
+      document.removeEventListener("visibilitychange", onVisibilityChange, true);
+      window.removeEventListener("pagehide", onPageHide, true);
+      observer.disconnect();
+    };
   }, [refreshUxStats]);
 
   return (
@@ -498,7 +554,7 @@ export function HomePage() {
                 </button>
               </div>
             </div>
-            <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-5">
+            <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-6">
               <div className="rounded-xl border border-surface-200 bg-surface-50 px-3 py-2">
                 <div className="text-[11px] text-surface-500">Sessions</div>
                 <div className="text-sm font-semibold text-surface-800">{uxStats.sessions}</div>
@@ -519,6 +575,12 @@ export function HomePage() {
                 <div className="text-[11px] text-surface-500">Avg quick-play to first place</div>
                 <div className="text-sm font-semibold text-surface-800">
                   {formatSecondsFromMs(uxStats.avg_quickplay_to_first_place_ms)}
+                </div>
+              </div>
+              <div className="rounded-xl border border-surface-200 bg-surface-50 px-3 py-2">
+                <div className="text-[11px] text-surface-500">Avg Home LCP</div>
+                <div className="text-sm font-semibold text-surface-800">
+                  {formatSecondsFromMs(uxStats.avg_home_lcp_ms)}
                 </div>
               </div>
               <div className="rounded-xl border border-surface-200 bg-surface-50 px-3 py-2">

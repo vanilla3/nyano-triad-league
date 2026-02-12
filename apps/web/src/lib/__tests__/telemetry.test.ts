@@ -3,6 +3,7 @@ import {
   clearCumulativeStats,
   createTelemetryTracker,
   markQuickPlayStart,
+  recordHomeLcpMs,
   readCumulativeStats,
 } from "../telemetry";
 
@@ -154,6 +155,7 @@ describe("telemetry", () => {
     expect(stats.avg_first_interaction_ms).toBe(3000); // (2000+4000)/2
     expect(stats.avg_first_place_ms).toBe(8000); // (6000+10000)/2
     expect(stats.avg_quickplay_to_first_place_ms).toBeNull();
+    expect(stats.avg_home_lcp_ms).toBeNull();
     expect(stats.total_invalid_actions).toBe(3); // 1+2
   });
 
@@ -194,12 +196,28 @@ describe("telemetry", () => {
     expect(stats.avg_quickplay_to_first_place_ms).toBe(2000);
   });
 
+  it("records Home LCP cumulative average", () => {
+    recordHomeLcpMs(2400.4);
+    recordHomeLcpMs(2600.4);
+    const stats = readCumulativeStats();
+    expect(stats.avg_home_lcp_ms).toBe(2500);
+  });
+
+  it("ignores invalid Home LCP values", () => {
+    recordHomeLcpMs(Number.NaN);
+    recordHomeLcpMs(-1);
+    recordHomeLcpMs(Number.POSITIVE_INFINITY);
+    const stats = readCumulativeStats();
+    expect(stats.avg_home_lcp_ms).toBeNull();
+  });
+
   it("returns safe defaults when nothing stored", () => {
     const stats = readCumulativeStats();
     expect(stats.sessions).toBe(0);
     expect(stats.avg_first_interaction_ms).toBeNull();
     expect(stats.avg_first_place_ms).toBeNull();
     expect(stats.avg_quickplay_to_first_place_ms).toBeNull();
+    expect(stats.avg_home_lcp_ms).toBeNull();
     expect(stats.total_invalid_actions).toBe(0);
   });
 
@@ -219,6 +237,7 @@ describe("telemetry", () => {
     expect(stats.avg_first_interaction_ms).toBeNull();
     expect(stats.avg_first_place_ms).toBeNull();
     expect(stats.avg_quickplay_to_first_place_ms).toBeNull();
+    expect(stats.avg_home_lcp_ms).toBeNull();
     expect(stats.total_invalid_actions).toBe(0);
   });
 

@@ -5,6 +5,7 @@
    Tracks the "Nintendo UX" quality metrics:
    - first_interaction_ms: Time to first user interaction
    - first_place_ms: Time to first card placement
+   - home_lcp_ms: Largest Contentful Paint on Home page
    - invalid_action_count: Number of invalid action attempts
    ═══════════════════════════════════════════════════════════════════════════ */
 
@@ -57,6 +58,7 @@ export interface CumulativeStats {
   avg_first_interaction_ms: number | null;
   avg_first_place_ms: number | null;
   avg_quickplay_to_first_place_ms: number | null;
+  avg_home_lcp_ms: number | null;
   total_invalid_actions: number;
 }
 
@@ -65,9 +67,11 @@ const CUMULATIVE_KEYS = [
   "cum.sum_first_interaction_ms",
   "cum.sum_first_place_ms",
   "cum.sum_quickplay_to_first_place_ms",
+  "cum.sum_home_lcp_ms",
   "cum.count_first_interaction",
   "cum.count_first_place",
   "cum.count_quickplay_to_first_place",
+  "cum.count_home_lcp",
   "cum.total_invalid_actions",
 ] as const;
 
@@ -76,9 +80,11 @@ export function readCumulativeStats(): CumulativeStats {
   const sumInteraction = readNumber("cum.sum_first_interaction_ms");
   const sumPlace = readNumber("cum.sum_first_place_ms");
   const sumQuickPlayToFirstPlace = readNumber("cum.sum_quickplay_to_first_place_ms");
+  const sumHomeLcp = readNumber("cum.sum_home_lcp_ms");
   const countInteraction = readNumber("cum.count_first_interaction") ?? 0;
   const countPlace = readNumber("cum.count_first_place") ?? 0;
   const countQuickPlayToFirstPlace = readNumber("cum.count_quickplay_to_first_place") ?? 0;
+  const countHomeLcp = readNumber("cum.count_home_lcp") ?? 0;
   const totalInvalid = readNumber("cum.total_invalid_actions") ?? 0;
 
   return {
@@ -93,6 +99,8 @@ export function readCumulativeStats(): CumulativeStats {
       countQuickPlayToFirstPlace > 0 && sumQuickPlayToFirstPlace !== null
         ? Math.round(sumQuickPlayToFirstPlace / countQuickPlayToFirstPlace)
         : null,
+    avg_home_lcp_ms:
+      countHomeLcp > 0 && sumHomeLcp !== null ? Math.round(sumHomeLcp / countHomeLcp) : null,
     total_invalid_actions: totalInvalid,
   };
 }
@@ -101,6 +109,18 @@ export function clearCumulativeStats(): void {
   for (const key of CUMULATIVE_KEYS) {
     removeNumber(key);
   }
+}
+
+/**
+ * Record Home page LCP in milliseconds (local cumulative average only).
+ */
+export function recordHomeLcpMs(lcpMs: number): void {
+  if (!Number.isFinite(lcpMs) || lcpMs < 0) return;
+  const rounded = Math.round(lcpMs);
+  const sum = (readNumber("cum.sum_home_lcp_ms") ?? 0) + rounded;
+  const count = (readNumber("cum.count_home_lcp") ?? 0) + 1;
+  writeNumber("cum.sum_home_lcp_ms", sum);
+  writeNumber("cum.count_home_lcp", count);
 }
 
 function persistSession(session: SessionTelemetry): void {

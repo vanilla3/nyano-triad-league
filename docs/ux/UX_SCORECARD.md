@@ -62,7 +62,7 @@
 |---|-------------|---------|------|------|
 | G-1 | `prefers-reduced-motion` で演出が控えめになる | ブラウザ設定 | Yes | ✅ Yes (Mint: all animations + SFX) |
 | G-2 | ミュート設定で音が完全に消える | UI設定 | Yes | ✅ Yes (Mint: 🔊/🔇 toggle + localStorage) |
-| G-3 | LCP < 2.5s | Lighthouse | Yes | 未計測 |
+| G-3 | LCP < 2.5s | `home_lcp_ms` テレメトリ + Lighthouse | Yes | 計測可能（Home > Settings） |
 
 ---
 
@@ -85,6 +85,7 @@
 | `first_interaction_ms` | number | ページ読み込みから最初の操作までの時間 |
 | `first_place_ms` | number | ページ読み込みから1手目配置までの時間 |
 | `quickplay_to_first_place_ms` | number | Home の「すぐ遊ぶ」押下から1手目配置までの時間 |
+| `home_lcp_ms` | number | Home ページの Largest Contentful Paint |
 | `invalid_action_count` | number | セッション内の不正操作回数 |
 
 ---

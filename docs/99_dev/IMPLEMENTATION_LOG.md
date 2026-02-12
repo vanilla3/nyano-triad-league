@@ -258,3 +258,25 @@
 ### Verify
 - `pnpm -C apps/web test`
 - `pnpm -C apps/web build`
+
+
+## 2026-02-12 — commit-0087: Home LCP ローカル計測追加（G-3）
+
+### Why
+- UX スコアカード G-3（LCP < 2.5s）が未計測で、改善前後の比較ができなかった。
+- 既存の Home Settings テレメトリに、パフォーマンスの中核指標を同じ導線で表示したかった。
+
+### What
+- `telemetry.ts` の cumulative stats に `avg_home_lcp_ms` を追加。
+- `recordHomeLcpMs()` を追加し、Home ページの LCP をローカル集計できるようにした。
+- Home で `PerformanceObserver`（`largest-contentful-paint`）を監視し、`visibilitychange/pagehide` か 6 秒フォールバックで記録。
+- Home > Settings のメトリクスに `Avg Home LCP` を追加。
+- テスト追加：
+  - Home LCP 平均の計算
+  - 不正値（NaN / 負数 / Infinity）を無視する挙動
+- `UX_SCORECARD` を更新し、G-3 を「計測可能」に変更。
+
+### Verify
+- `pnpm -C apps/web test`
+- `pnpm -C apps/web lint`
+- `pnpm -C apps/web build`
