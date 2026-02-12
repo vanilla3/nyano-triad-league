@@ -2,11 +2,13 @@ import { describe, it, expect } from "vitest";
 import {
   IDENTITY_FRAME,
   animDurationsForQuality,
+  vfxFeatureFlagsForQuality,
   easePlacement,
   easeFlip,
   interpolatePlacement,
   interpolateFlip,
   computeCellFrame,
+  animationProgress,
   BREATHE_CYCLE_MS,
   computeBreatheFrame,
   type CellAnimRecord,
@@ -59,6 +61,47 @@ describe("animDurationsForQuality", () => {
     expect(d.placeMs).toBe(500);
     expect(d.flipMs).toBe(600);
     expect(d.flipStaggerMs).toBe(200);
+  });
+});
+
+describe("vfxFeatureFlagsForQuality", () => {
+  it("off disables heavy/animated features", () => {
+    expect(vfxFeatureFlagsForQuality("off")).toEqual({
+      boardDepth: false,
+      boardPattern: false,
+      cellShadow: false,
+      cardGlass: false,
+      edgePill: false,
+      idleBreathe: false,
+      brightnessPulse: false,
+      eventFoilFlash: false,
+    });
+  });
+
+  it("low keeps readability layers but disables heavy loops/flashes", () => {
+    expect(vfxFeatureFlagsForQuality("low")).toEqual({
+      boardDepth: true,
+      boardPattern: false,
+      cellShadow: true,
+      cardGlass: false,
+      edgePill: true,
+      idleBreathe: false,
+      brightnessPulse: false,
+      eventFoilFlash: false,
+    });
+  });
+
+  it("high enables full feature set", () => {
+    expect(vfxFeatureFlagsForQuality("high")).toEqual({
+      boardDepth: true,
+      boardPattern: true,
+      cellShadow: true,
+      cardGlass: true,
+      edgePill: true,
+      idleBreathe: true,
+      brightnessPulse: true,
+      eventFoilFlash: true,
+    });
   });
 });
 
@@ -298,6 +341,32 @@ describe("computeCellFrame", () => {
   });
 });
 
+describe("animationProgress", () => {
+  const rec: CellAnimRecord = {
+    kind: "flip",
+    startMs: 1000,
+    durationMs: 600,
+    staggerDelayMs: 200,
+  };
+
+  it("returns 0 before stagger delay elapses", () => {
+    expect(animationProgress(rec, 1100)).toBe(0);
+  });
+
+  it("returns normalized 0..1 while active", () => {
+    // elapsed = 400 - 200 = 200, progress = 200/600
+    expect(animationProgress(rec, 1400)).toBeCloseTo(1 / 3, 3);
+  });
+
+  it("clamps to 1 after completion", () => {
+    expect(animationProgress(rec, 1900)).toBe(1);
+  });
+
+  it("returns 1 for zero duration", () => {
+    expect(animationProgress({ ...rec, durationMs: 0 }, 1400)).toBe(1);
+  });
+});
+
 /* ═══════════════════════════════════════════════════════════════════════════
    computeBreatheFrame
    ═══════════════════════════════════════════════════════════════════════════ */
@@ -357,6 +426,19 @@ describe("computeBreatheFrame", () => {
       expect(glowAlpha).toBeLessThanOrEqual(0.25 + 0.001);
     }
   });
+
+  it("returns identity frame for off/low quality", () => {
+    expect(computeBreatheFrame(1234, "off")).toEqual({ scale: 1, glowAlpha: 0 });
+    expect(computeBreatheFrame(1234, "low")).toEqual({ scale: 1, glowAlpha: 0 });
+  });
+
+  it("medium is gentler than high", () => {
+    const t = BREATHE_CYCLE_MS * 0.25; // peak
+    const medium = computeBreatheFrame(t, "medium");
+    const high = computeBreatheFrame(t, "high");
+    expect(medium.scale).toBeLessThan(high.scale);
+    expect(medium.glowAlpha).toBeLessThan(high.glowAlpha);
+  });
 });
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -368,11 +450,13 @@ describe("cellAnimations module exports", () => {
     const mod = await import("../renderers/pixi/cellAnimations");
     expect(mod.IDENTITY_FRAME).toBeDefined();
     expect(typeof mod.animDurationsForQuality).toBe("function");
+    expect(typeof mod.vfxFeatureFlagsForQuality).toBe("function");
     expect(typeof mod.easePlacement).toBe("function");
     expect(typeof mod.easeFlip).toBe("function");
     expect(typeof mod.interpolatePlacement).toBe("function");
     expect(typeof mod.interpolateFlip).toBe("function");
     expect(typeof mod.computeCellFrame).toBe("function");
+    expect(typeof mod.animationProgress).toBe("function");
     expect(mod.BREATHE_CYCLE_MS).toBeDefined();
     expect(typeof mod.computeBreatheFrame).toBe("function");
   });

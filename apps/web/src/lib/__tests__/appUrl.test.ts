@@ -1,5 +1,5 @@
 import { describe, it, expect, afterEach } from "vitest";
-import { getAppBasePath, appPath, appAbsoluteUrl } from "../appUrl";
+import { getAppBasePath, appPath, appAbsoluteUrl, buildReplayShareUrl } from "../appUrl";
 
 /* ═══════════════════════════════════════════════════════════════════
    appUrl.ts — BASE_URL-aware URL utilities
@@ -80,5 +80,88 @@ describe("appAbsoluteUrl", () => {
     import.meta.env.BASE_URL = "/nyano-triad-league/";
     const url = appAbsoluteUrl("replay?z=test123");
     expect(url).toContain("/nyano-triad-league/replay?z=test123");
+  });
+});
+
+describe("buildReplayShareUrl", () => {
+  const originalEnv = { ...import.meta.env };
+  afterEach(() => {
+    Object.keys(import.meta.env).forEach((key) => {
+      if (!(key in originalEnv)) delete import.meta.env[key];
+    });
+    Object.assign(import.meta.env, originalEnv);
+  });
+
+  it("builds root replay URL with query params", () => {
+    import.meta.env.BASE_URL = "/";
+    const url = buildReplayShareUrl({
+      data: { key: "z", value: "abc123" },
+      mode: "auto",
+      step: 9,
+      absolute: false,
+    });
+    expect(url).toBe("/replay?z=abc123&mode=auto&step=9");
+  });
+
+  it("builds subpath replay URL with event param", () => {
+    import.meta.env.BASE_URL = "/nyano-triad-league/";
+    const url = buildReplayShareUrl({
+      data: { key: "t", value: "raw_payload" },
+      eventId: "gp-1",
+      step: 9,
+      absolute: false,
+    });
+    expect(url).toBe("/nyano-triad-league/replay?t=raw_payload&event=gp-1&step=9");
+  });
+
+  it("includes ui query param when provided", () => {
+    import.meta.env.BASE_URL = "/";
+    const url = buildReplayShareUrl({
+      data: { key: "z", value: "abc123" },
+      mode: "auto",
+      ui: "engine",
+      step: 9,
+      absolute: false,
+    });
+    expect(url).toBe("/replay?z=abc123&mode=auto&ui=engine&step=9");
+  });
+
+  it("returns absolute URL in browser env", () => {
+    import.meta.env.BASE_URL = "/sub/";
+    const url = buildReplayShareUrl({
+      data: { key: "z", value: "test123" },
+      step: 9,
+      absolute: true,
+    });
+    expect(url).toContain("/sub/replay?z=test123&step=9");
+  });
+
+  it("normalizes non-integer step values to integer", () => {
+    import.meta.env.BASE_URL = "/";
+    const url = buildReplayShareUrl({
+      data: { key: "z", value: "abc123" },
+      mode: "auto",
+      step: 7.9,
+      absolute: false,
+    });
+    expect(url).toBe("/replay?z=abc123&mode=auto&step=7");
+  });
+
+  it("omits invalid step values outside replay range", () => {
+    import.meta.env.BASE_URL = "/";
+
+    const tooLarge = buildReplayShareUrl({
+      data: { key: "z", value: "abc123" },
+      step: 99,
+      absolute: false,
+    });
+    expect(tooLarge).toBe("/replay?z=abc123");
+
+    const negative = buildReplayShareUrl({
+      data: { key: "z", value: "abc123" },
+      step: -1,
+      absolute: false,
+    });
+    expect(negative).toBe("/replay?z=abc123");
   });
 });

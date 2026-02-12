@@ -54,7 +54,7 @@ import { readUiDensity, writeUiDensity, type UiDensity } from "@/lib/local_setti
 import type { FlipTraceArrow } from "@/components/FlipArrowOverlay";
 import { MatchDrawerMint, DrawerToggleButton } from "@/components/MatchDrawerMint";
 import { writeClipboardText } from "@/lib/clipboard";
-import { appAbsoluteUrl } from "@/lib/appUrl";
+import { appAbsoluteUrl, buildReplayShareUrl } from "@/lib/appUrl";
 import { BattleStageEngine } from "@/engine/components/BattleStageEngine";
 import { MAX_CHAIN_CAP_PER_TURN, parseChainCapPerTurnParam } from "@/lib/ruleset_meta";
 import {
@@ -71,6 +71,7 @@ import {
 
 type OpponentMode = "pvp" | "vs_nyano_ai";
 type DataMode = "fast" | "verified";
+type MatchBoardUi = "mint" | "engine" | "rpg";
 
 type SimOk = {
   ok: true;
@@ -199,17 +200,29 @@ function parseBool01(v: string | null, defaultValue: boolean): boolean {
   return defaultValue;
 }
 
+function parseMatchBoardUi(v: string | null): MatchBoardUi {
+  if (v === "engine") return "engine";
+  if (v === "rpg") return "rpg";
+  return "mint";
+}
+
 /** Lazy QR code for share URL — avoids computing gzip in render */
-function ShareQrCode({ sim, event }: { sim: SimState; event: EventV1 | null }) {
+function ShareQrCode({ sim, event, ui }: { sim: SimState; event: EventV1 | null; ui?: string }) {
   const [url, setUrl] = React.useState<string | null>(null);
   React.useEffect(() => {
     if (!sim.ok) return;
     const json = stringifyWithBigInt(sim.transcript, 0);
     const z = tryGzipCompressUtf8ToBase64Url(json);
-    const origin = window.location.origin;
-    const qp = `&step=9${event ? `&event=${encodeURIComponent(event.id)}` : ""}`;
-    setUrl(z ? `${origin}/replay?z=${z}${qp}` : `${origin}/replay?t=${base64UrlEncodeUtf8(json)}${qp}`);
-  }, [sim, event]);
+    setUrl(
+      buildReplayShareUrl({
+        data: z ? { key: "z", value: z } : { key: "t", value: base64UrlEncodeUtf8(json) },
+        step: 9,
+        eventId: event?.id,
+        ui,
+        absolute: true,
+      })
+    );
+  }, [sim, event, ui]);
 
   if (!url) return <div className="text-xs text-slate-400">Generating...</div>;
   return <QrCode value={url} size={160} />;
@@ -255,7 +268,7 @@ function CollapsibleSection({
 export function MatchPage() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-  const ui = (searchParams.get("ui") || "mint").toLowerCase();
+  const ui = parseMatchBoardUi((searchParams.get("ui") || "").toLowerCase());
   const isRpg = ui === "rpg";
   const isMint = ui === "mint";
   const isEngine = ui === "engine";
@@ -308,6 +321,7 @@ export function MatchPage() {
   const streamMode = parseBool01(searchParams.get("stream"), false);
   const streamCtrlParam = (searchParams.get("ctrl") ?? "A").toUpperCase();
   const streamControlledSide = (streamCtrlParam === "B" ? 1 : 0) as PlayerIndex;
+  const uiParam: MatchBoardUi = ui;
 
   const rulesetKeyParam = parseRulesetKeyOrDefault(searchParams.get("rk"), "v2");
   const chainCapRawParam = searchParams.get("ccap");
@@ -410,6 +424,7 @@ export function MatchPage() {
 
   const [status, setStatus] = React.useState<string | null>(null);
   const toast = useToast();
+  const overlayUrl = React.useMemo(() => appAbsoluteUrl("overlay?controls=0"), []);
   const lastStreamCmdIdRef = React.useRef<string>("");
   const [error, setError] = React.useState<string | null>(null);
 
@@ -1210,10 +1225,16 @@ export function MatchPage() {
       ? stringifyReplayBundle(buildReplayBundleV2(sim.transcript, cards))
       : stringifyWithBigInt(sim.transcript, 0);
     const z = tryGzipCompressUtf8ToBase64Url(json);
-    const qp = `&step=9${event ? `&event=${encodeURIComponent(event.id)}` : ""}`;
-    const replayPath = z ? `replay?z=${z}${qp}` : `replay?t=${base64UrlEncodeUtf8(json)}${qp}`;
-    return absolute ? appAbsoluteUrl(replayPath) : `/replay?${z ? `z=${z}` : `t=${base64UrlEncodeUtf8(json)}`}${qp}`;
-  }, [sim, event, cards]);
+    const data: { key: "z" | "t"; value: string } =
+      z ? { key: "z", value: z } : { key: "t", value: base64UrlEncodeUtf8(json) };
+    return buildReplayShareUrl({
+      data,
+      step: 9,
+      eventId: event?.id,
+      ui: uiParam,
+      absolute,
+    });
+  }, [sim, event, cards, uiParam]);
 
   const copyShareUrl = async () => {
     setError(null);
@@ -1495,7 +1516,7 @@ export function MatchPage() {
           </div>
         </div>
 
-        <div className="grid gap-3 md:grid-cols-3">
+        <div className="grid gap-3 md:grid-cols-4">
           <div className="grid gap-2">
             <div className="text-xs font-medium text-slate-600">Opponent</div>
             <select className="input" value={opponentMode} disabled={isEvent} onChange={(e) => setParam("opp", e.target.value)} aria-label="Opponent mode">
@@ -1540,6 +1561,20 @@ export function MatchPage() {
                 <option value="B">Chat controls B</option>
               </select>
             ) : null}
+          </div>
+
+          <div className="grid gap-2">
+            <div className="text-xs font-medium text-slate-600">Board</div>
+            <select
+              className="input"
+              value={ui}
+              onChange={(e) => setParam("ui", parseMatchBoardUi(e.target.value))}
+              aria-label="Board renderer"
+            >
+              <option value="mint">mint</option>
+              <option value="engine">engine (pixi)</option>
+              <option value="rpg">rpg</option>
+            </select>
           </div>
 
           <div className="grid gap-2">
@@ -1910,7 +1945,7 @@ export function MatchPage() {
           <button className="btn" onClick={() => setSalt(randomSalt())}>New Salt</button>
           <a
             className="btn"
-            href={`${window.location.origin}/overlay?controls=0`}
+            href={overlayUrl}
             target="_blank"
             rel="noreferrer noopener"
           >
@@ -2096,6 +2131,7 @@ export function MatchPage() {
                         selectableCells={selectableCells}
                         onCellSelect={(cell) => { telemetry.recordInteraction(); handleCellSelect(cell); }}
                         currentPlayer={currentPlayer}
+                        preloadTokenIds={currentDeckTokens}
                         placedCell={boardAnim.placedCell}
                         flippedCells={boardAnim.flippedCells}
                         showActionPrompt
@@ -2477,7 +2513,7 @@ export function MatchPage() {
                         <details className="text-xs">
                           <summary className="cursor-pointer text-sky-600 hover:text-sky-700 font-medium">QR Code</summary>
                           <div className="mt-2 flex justify-center">
-                            <ShareQrCode sim={sim} event={event} />
+                            <ShareQrCode sim={sim} event={event} ui={uiParam} />
                           </div>
                         </details>
                       )}

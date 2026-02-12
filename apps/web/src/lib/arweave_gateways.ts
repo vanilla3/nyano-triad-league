@@ -15,6 +15,9 @@
  * Given `https://arweave.net/<txid>/<path>`:
  *   1. ar-io gateway:     `https://ar-io.dev/<txid>/<path>`
  *
+ * Given `https://ar-io.dev/<txid>/<path>`:
+ *   1. canonical gateway:  `https://arweave.net/<txid>/<path>`
+ *
  * Returns empty array if the URL is not an Arweave URL.
  */
 export function buildArweaveFallbacks(url: string): string[] {
@@ -32,6 +35,13 @@ export function buildArweaveFallbacks(url: string): string[] {
   const canon = url.match(/^https:\/\/arweave\.net\/(.+)$/);
   if (canon) {
     fallbacks.push(`https://ar-io.dev/${canon[1]}`);
+    return fallbacks;
+  }
+
+  // Pattern 3: ar-io gateway -> canonical arweave fallback
+  const arIo = url.match(/^https:\/\/ar-io\.dev\/(.+)$/);
+  if (arIo) {
+    fallbacks.push(`https://arweave.net/${arIo[1]}`);
     return fallbacks;
   }
 

@@ -83,12 +83,29 @@ describe("getMetadataConfig", () => {
     });
   });
 
+  it("normalizes ar:// env URL to canonical arweave gateway", () => {
+    import.meta.env.VITE_NYANO_METADATA_BASE = "ar://tx-root/path/{id}.png";
+    const result = getMetadataConfig();
+    expect(result).toEqual({
+      baseUrlPattern: "https://arweave.net/tx-root/path/{id}.png",
+    });
+  });
+
   it("returns GameIndex metadata when env is unset", () => {
     delete import.meta.env.VITE_NYANO_METADATA_BASE;
     const gameIndexMeta = { imageBaseUrl: "https://game.example.com/{id}.png" };
     const result = getMetadataConfig(gameIndexMeta);
     expect(result).toEqual({
       baseUrlPattern: "https://game.example.com/{id}.png",
+    });
+  });
+
+  it("normalizes ar:// GameIndex URL when env is unset", () => {
+    delete import.meta.env.VITE_NYANO_METADATA_BASE;
+    const gameIndexMeta = { imageBaseUrl: "ar://tx-root/path/{id}.png" };
+    const result = getMetadataConfig(gameIndexMeta);
+    expect(result).toEqual({
+      baseUrlPattern: "https://arweave.net/tx-root/path/{id}.png",
     });
   });
 

@@ -1,5 +1,9 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { fetchGameIndex, type GameIndexV1 } from "../nyano/gameIndex";
+import {
+  fetchGameIndex,
+  getCachedGameIndexMetadata,
+  type GameIndexV1,
+} from "../nyano/gameIndex";
 import { getMetadataConfig } from "../nyano/metadata";
 
 /* ═══════════════════════════════════════════════════════════════════
@@ -106,5 +110,42 @@ describe("getMetadataConfig + fetchGameIndex integration", () => {
     const config = getMetadataConfig({ mode: "local" });
     expect(config).not.toBeNull();
     expect(config!.baseUrlPattern).toContain("{id}");
+  });
+});
+
+describe("getCachedGameIndexMetadata", () => {
+  let mockStorage: Storage;
+
+  beforeEach(() => {
+    mockStorage = createMockStorage();
+    vi.stubGlobal("window", {} as Window & typeof globalThis);
+    vi.stubGlobal("localStorage", mockStorage);
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+    vi.unstubAllGlobals();
+  });
+
+  it("returns metadata when cache contains valid GameIndex data", () => {
+    const valid = makeValidCacheJson();
+    mockStorage.setItem("nyano.gameIndex.v1", JSON.stringify(valid));
+
+    expect(getCachedGameIndexMetadata()).toEqual(valid.metadata);
+  });
+
+  it("returns null when cached GameIndex lacks metadata", () => {
+    mockStorage.setItem(
+      "nyano.gameIndex.v1",
+      JSON.stringify({
+        v: 1,
+        maxTokenId: 1,
+        fields: ["hand", "hp", "atk", "matk", "def", "mdef", "agi", "up", "right", "left", "down"],
+        tokens: { "1": [0, 100, 50, 30, 40, 35, 60, 7, 3, 5, 4] },
+        missing: [],
+      }),
+    );
+
+    expect(getCachedGameIndexMetadata()).toBeNull();
   });
 });

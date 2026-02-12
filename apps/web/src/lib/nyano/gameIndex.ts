@@ -101,6 +101,20 @@ function safeWriteJsonToStorage(key: string, value: unknown): void {
 }
 
 /**
+ * Read cached GameIndex metadata from localStorage.
+ * Returns null when cache is missing or invalid.
+ */
+export function getCachedGameIndexMetadata(): Record<string, unknown> | null {
+  const cached = safeReadJsonFromStorage(STORAGE_KEY);
+  if (!cached || cached.v !== 1 || !cached.tokens) return null;
+
+  const metadata = cached.metadata;
+  if (!metadata || typeof metadata !== "object") return null;
+
+  return metadata as Record<string, unknown>;
+}
+
+/**
  * Get gameplay params for a token from the index.
  * Returns null if the token is not present.
  */

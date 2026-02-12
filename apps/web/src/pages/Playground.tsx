@@ -19,6 +19,7 @@ import { errorMessage } from "@/lib/errorMessage";
 import { writeClipboardText } from "@/lib/clipboard";
 import { stringifyWithBigInt } from "@/lib/json";
 import { base64UrlEncodeUtf8, tryGzipCompressUtf8ToBase64Url } from "@/lib/base64url";
+import { buildReplayShareUrl } from "@/lib/appUrl";
 import { VECTORS, type VectorKey } from "@/lib/vectors";
 
 type SimOk = {
@@ -190,16 +191,13 @@ export function PlaygroundPage() {
     // Playground vectors may use synthetic CardData; results can differ.
     const transcriptJson = stringifyWithBigInt(sim.transcript);
 
-    const base = new URL(window.location.origin);
-    const url = new URL("/replay", base);
-
     const z = tryGzipCompressUtf8ToBase64Url(transcriptJson);
-    if (z) url.searchParams.set("z", z);
-    else url.searchParams.set("t", base64UrlEncodeUtf8(transcriptJson));
-
-    url.searchParams.set("mode", compareMode ? "compare" : "auto");
-    url.searchParams.set("step", String(step));
-    return url.toString();
+    return buildReplayShareUrl({
+      data: z ? { key: "z", value: z } : { key: "t", value: base64UrlEncodeUtf8(transcriptJson) },
+      mode: compareMode ? "compare" : "auto",
+      step,
+      absolute: true,
+    });
   };
 
 

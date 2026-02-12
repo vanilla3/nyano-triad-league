@@ -10,7 +10,7 @@
     "test": "pnpm -C packages/triad-engine test",
     "lint": "pnpm -C apps/web lint",
     "fmt": "pnpm -C apps/web format",
-    "typecheck": "pnpm -C apps/web typecheck",
+    "typecheck": "pnpm -C packages/triad-engine build && pnpm -C apps/web typecheck",
     "dev:web": "pnpm -C apps/web dev",
     "build:web": "pnpm -C packages/triad-engine build && pnpm -C apps/web build",
     "release:check": "pnpm -C packages/triad-engine lint && pnpm -C packages/triad-engine build && pnpm -C apps/web typecheck && pnpm -C apps/web lint && pnpm -C apps/web build",

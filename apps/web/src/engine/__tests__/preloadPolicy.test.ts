@@ -1,0 +1,37 @@
+import { describe, expect, it } from "vitest";
+import {
+  normalizePreloadTokenIds,
+  texturePreloadConcurrencyForQuality,
+} from "../renderers/pixi/preloadPolicy";
+
+describe("texturePreloadConcurrencyForQuality", () => {
+  it("disables preload in off tier and keeps low tier minimal", () => {
+    expect(texturePreloadConcurrencyForQuality("off")).toBe(0);
+    expect(texturePreloadConcurrencyForQuality("low")).toBe(1);
+  });
+
+  it("uses higher parallelism on stronger tiers", () => {
+    expect(texturePreloadConcurrencyForQuality("medium")).toBe(2);
+    expect(texturePreloadConcurrencyForQuality("high")).toBe(3);
+  });
+});
+
+describe("normalizePreloadTokenIds", () => {
+  it("dedupes while keeping stable order", () => {
+    expect(normalizePreloadTokenIds(["2", "1", "2", "3", "1"])).toEqual(["2", "1", "3"]);
+  });
+
+  it("trims whitespace and removes empty entries", () => {
+    expect(normalizePreloadTokenIds([" 10 ", "", "   ", "11"])).toEqual(["10", "11"]);
+  });
+
+  it("drops malformed token IDs and zero", () => {
+    expect(
+      normalizePreloadTokenIds(["1", "0", "-2", "3.14", "abc", "04", "2"]),
+    ).toEqual(["1", "4", "2"]);
+  });
+
+  it("canonicalizes leading-zero values and dedupes by normalized ID", () => {
+    expect(normalizePreloadTokenIds(["0042", "42", "00042"])).toEqual(["42"]);
+  });
+});

@@ -33,6 +33,7 @@ import {
   type StreamVoteStateV1,
 } from "@/lib/streamer_bus";
 import { readStringSetting, writeStringSetting } from "@/lib/local_settings";
+import { appAbsoluteUrl, appPath } from "@/lib/appUrl";
 import type { CardData, FlipTraceV1, PlayerIndex } from "@nyano/triad-engine";
 
 // ── Overlay Theme System ──────────────────────────────────────────────
@@ -200,6 +201,26 @@ export function OverlayPage() {
   const density = themeDensity(theme);
   const avatarSize = themeAvatarSize(theme);
   const boardGap = themeBoardGap(theme);
+  const matchPath = React.useMemo(() => appPath("match"), []);
+  const replayPath = React.useMemo(() => appPath("replay"), []);
+  const themedObsUrl = React.useMemo(() => {
+    const params = new URLSearchParams();
+    params.set("controls", "0");
+    params.set("theme", theme);
+    return appAbsoluteUrl(`overlay?${params.toString()}`);
+  }, [theme]);
+  const obs720pUrl = React.useMemo(
+    () => appAbsoluteUrl("overlay?controls=0&theme=720p-standard&bg=transparent"),
+    [],
+  );
+  const obs1080pUrl = React.useMemo(
+    () => appAbsoluteUrl("overlay?controls=0&theme=1080p-standard&bg=transparent"),
+    [],
+  );
+  const obsFullUrl = React.useMemo(
+    () => appAbsoluteUrl("overlay?controls=0&theme=1080p-full&bg=transparent&vote=0"),
+    [],
+  );
 
   const [state, setState] = React.useState<OverlayStateV1 | null>(() => readStoredOverlayState());
   const [voteState, setVoteState] = React.useState<StreamVoteStateV1 | null>(() => readStoredStreamVoteState());
@@ -870,7 +891,7 @@ export function OverlayPage() {
               <div className="callout callout-muted">
                 <div className="text-xs font-semibold">No signal yet</div>
                 <div className="mt-1 text-sm text-slate-700">
-                  Open <span className="font-mono">/match</span> or <span className="font-mono">/replay</span>, then send state to the overlay.
+                  Open <span className="font-mono">{matchPath}</span> or <span className="font-mono">{replayPath}</span>, then send state to the overlay.
                   <br />
                   The overlay will pick up the latest state automatically.
                 </div>
@@ -900,7 +921,7 @@ export function OverlayPage() {
                     ))}
                   </div>
                   <div className="mt-1.5 text-[10px] text-slate-400">
-                    OBS URL: <span className="font-mono">/overlay?controls=0&theme={theme}</span>
+                    OBS URL: <span className="font-mono">{themedObsUrl}</span>
                   </div>
                 </div>
 
@@ -908,7 +929,7 @@ export function OverlayPage() {
                   Tips:
                   <ul className="mt-1 list-disc pl-4">
                     <li>
-                      OBS BrowserSource: use <span className="font-mono">/overlay?controls=0&theme={theme}</span> (and optionally{" "}
+                      OBS BrowserSource: use <span className="font-mono">{themedObsUrl}</span> (and optionally{" "}
                       <span className="font-mono">bg=transparent</span>)
                     </li>
                     <li>
@@ -931,7 +952,7 @@ export function OverlayPage() {
                       <ul className="list-disc pl-4 mt-1 space-y-0.5">
                         <li>Theme: <code className="font-mono bg-slate-100 px-1 rounded">720p-standard</code> or <code className="font-mono bg-slate-100 px-1 rounded">720p-minimal</code></li>
                         <li>Browser Source: 400x720 (right side)</li>
-                        <li>URL: <code className="font-mono bg-slate-100 px-1 rounded text-[10px]">/overlay?controls=0&theme=720p-standard&bg=transparent</code></li>
+                        <li>URL: <code className="font-mono bg-slate-100 px-1 rounded text-[10px]">{obs720pUrl}</code></li>
                       </ul>
                     </div>
                     <div>
@@ -939,14 +960,14 @@ export function OverlayPage() {
                       <ul className="list-disc pl-4 mt-1 space-y-0.5">
                         <li>Theme: <code className="font-mono bg-slate-100 px-1 rounded">1080p-standard</code> or <code className="font-mono bg-slate-100 px-1 rounded">1080p-full</code></li>
                         <li>Browser Source: 500x1080 (right side)</li>
-                        <li>URL: <code className="font-mono bg-slate-100 px-1 rounded text-[10px]">/overlay?controls=0&theme=1080p-standard&bg=transparent</code></li>
+                        <li>URL: <code className="font-mono bg-slate-100 px-1 rounded text-[10px]">{obs1080pUrl}</code></li>
                       </ul>
                     </div>
                     <div>
                       <div className="font-semibold text-slate-700">Full Screen Overlay</div>
                       <ul className="list-disc pl-4 mt-1 space-y-0.5">
                         <li>Browser Source: 1920x1080</li>
-                        <li>URL: <code className="font-mono bg-slate-100 px-1 rounded text-[10px]">/overlay?controls=0&theme=1080p-full&bg=transparent&vote=0</code></li>
+                        <li>URL: <code className="font-mono bg-slate-100 px-1 rounded text-[10px]">{obsFullUrl}</code></li>
                       </ul>
                     </div>
                     <div className="text-[10px] text-slate-400 border-t border-slate-100 pt-2">

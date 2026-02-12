@@ -14,20 +14,24 @@ import { useQuery } from "@tanstack/react-query";
 import { useNyanoGameIndex } from "./hooks";
 import {
   getMetadataConfig,
-  resolveTokenImageUrl,
   type NyanoTokenMetadata,
 } from "./metadata";
+import {
+  normalizeNyanoTokenId,
+  resolveNyanoImageUrl,
+} from "./resolveNyanoImageUrl";
 
 export function useNyanoTokenMetadata(tokenId: bigint | null) {
   const { data: gameIndex } = useNyanoGameIndex();
   const config = getMetadataConfig(gameIndex?.metadata);
+  const normalizedTokenId = normalizeNyanoTokenId(tokenId);
 
   return useQuery({
-    queryKey: ["nyano", "tokenMeta", tokenId?.toString() ?? "null", config?.baseUrlPattern ?? ""],
-    enabled: tokenId !== null && config !== null,
+    queryKey: ["nyano", "tokenMeta", normalizedTokenId ?? "null", config?.baseUrlPattern ?? ""],
+    enabled: normalizedTokenId !== null && config !== null,
     queryFn: async (): Promise<NyanoTokenMetadata | null> => {
-      if (!tokenId || !config) return null;
-      const imageUrl = resolveTokenImageUrl(tokenId, config);
+      if (!normalizedTokenId || !config) return null;
+      const imageUrl = resolveNyanoImageUrl(normalizedTokenId, config);
       if (!imageUrl) return null;
       // For now, construct URL directly. Future: fetch JSON metadata and extract image field.
       return { imageUrl };

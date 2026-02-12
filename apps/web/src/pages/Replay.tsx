@@ -15,17 +15,17 @@ import OFFICIAL from "@root/rulesets/official_onchain_rulesets.json";
 
 import { BoardView } from "@/components/BoardView";
 import { BoardViewRPG } from "@/components/BoardViewRPG";
+import { DuelStageMint } from "@/components/DuelStageMint";
 import { ScoreBar } from "@/components/ScoreBar";
 import { CardMini } from "@/components/CardMini";
 import { TurnLog } from "@/components/TurnLog";
 import { GameResultBanner } from "@/components/GameResultOverlay";
 import { NyanoReaction, pickReactionKind, type NyanoReactionInput } from "@/components/NyanoReaction";
 import { NyanoAvatar } from "@/components/NyanoAvatar";
+import { BattleStageEngine } from "@/engine/components/BattleStageEngine";
 import { reactionToExpression } from "@/lib/expression_map";
 import {
   base64UrlEncodeUtf8,
-  safeBase64UrlDecodeUtf8,
-  safeGzipDecompressUtf8FromBase64Url,
   tryGzipCompressUtf8ToBase64Url,
 } from "@/lib/base64url";
 import { errorMessage } from "@/lib/errorMessage";
@@ -39,7 +39,8 @@ import { annotateReplayMoves } from "@/lib/ai/replay_annotations";
 import { assessBoardAdvantage, type BoardAdvantage } from "@/lib/ai/board_advantage";
 import { AdvantageBadge } from "@/components/AdvantageBadge";
 import { writeClipboardText } from "@/lib/clipboard";
-import { appAbsoluteUrl } from "@/lib/appUrl";
+import { appAbsoluteUrl, appPath, buildReplayShareUrl } from "@/lib/appUrl";
+import { decodeReplaySharePayload, hasReplaySharePayload, stripReplayShareParams } from "@/lib/replay_share_params";
 import {
   detectReplayHighlights,
   formatReplayWinnerLabel,
@@ -86,6 +87,20 @@ function turnPlayer(firstPlayer: 0 | 1, turnIndex: number): 0 | 1 {
 function parseMode(v: string | null): Mode {
   if (v === "auto" || v === "v1" || v === "v2" || v === "compare") return v;
   return "auto";
+}
+
+type ReplayBoardUi = "classic" | "rpg" | "engine";
+type MatchBoardUi = "mint" | "rpg" | "engine";
+
+function parseReplayBoardUi(v: string | null): ReplayBoardUi {
+  if (v === "rpg") return "rpg";
+  if (v === "engine") return "engine";
+  return "classic";
+}
+
+function toMatchBoardUi(v: ReplayBoardUi): MatchBoardUi {
+  if (v === "classic") return "mint";
+  return v;
 }
 
 function boardEquals(a: ReadonlyArray<BoardCell | null>, b: ReadonlyArray<BoardCell | null>): boolean {
@@ -175,8 +190,11 @@ const HIGHLIGHT_KIND_ORDER: ReplayHighlightKind[] = ["big_flip", "chain", "combo
 
 export function ReplayPage() {
   const [searchParams, setSearchParams] = useSearchParams();
-  const ui = (searchParams.get("ui") || "").toLowerCase();
-  const isRpg = ui === "rpg";
+  const uiMode = parseReplayBoardUi((searchParams.get("ui") || "").toLowerCase());
+  const uiParam = uiMode === "classic" ? undefined : uiMode;
+  const matchUi = toMatchBoardUi(uiMode);
+  const isEngine = uiMode === "engine";
+  const isRpg = uiMode === "rpg";
 
   const eventId = searchParams.get("event") ?? "";
   const event = React.useMemo(() => (eventId ? getEventById(eventId) : null), [eventId]);
@@ -187,8 +205,16 @@ export function ReplayPage() {
   const initialT = searchParams.get("t");
   const initialZ = searchParams.get("z");
 
-  // t = raw base64url(json), z = gzip(base64url(bytes)) [preferred if available]
-  const initialTextFromT = initialT ? safeBase64UrlDecodeUtf8(initialT) ?? "" : "";
+  const initialSharePayload = React.useMemo(() => {
+    const params = new URLSearchParams();
+    if (initialZ) params.set("z", initialZ);
+    if (initialT) params.set("t", initialT);
+    return decodeReplaySharePayload(params);
+  }, [initialT, initialZ]);
+  const initialTextFromT = initialSharePayload.kind === "ok" && initialSharePayload.param === "t"
+    ? initialSharePayload.text
+    : "";
+  const hasSharePayload = hasReplaySharePayload(searchParams);
 
   const initialMode = parseMode(searchParams.get("mode"));
   const initialStep = clampInt(Number(searchParams.get("step") ?? "0"), 0, 9);
@@ -226,6 +252,17 @@ export function ReplayPage() {
       toast.error("Copy failed", errorMessage(e));
     }
   };
+
+  const setReplayBoardUi = React.useCallback((nextUi: ReplayBoardUi) => {
+    const next = new URLSearchParams(searchParams);
+    if (nextUi === "classic") next.delete("ui");
+    else next.set("ui", nextUi);
+    setSearchParams(next, { replace: true });
+  }, [searchParams, setSearchParams]);
+
+  const overlayUrl = React.useMemo(() => appAbsoluteUrl("overlay?controls=0"), []);
+  const overlayPath = React.useMemo(() => appPath("overlay"), []);
+  const replayBroadcastPath = React.useMemo(() => appPath("replay?broadcast=1"), []);
 
   const pushOverlay = React.useCallback(
     (opts?: { silent?: boolean }) => {
@@ -443,25 +480,13 @@ protocolV1: {
     didAutoLoadRef.current = true;
 
     const auto = async () => {
-      if (initialZ) {
-        const decoded = safeGzipDecompressUtf8FromBase64Url(initialZ);
-        if (!decoded) {
-          setSim({ ok: false, error: "Invalid share link (z parameter could not be decompressed)." });
-          return;
-        }
-        setText(decoded);
-        await load({ text: decoded, mode: initialMode, step: initialStep });
+      if (initialSharePayload.kind === "none") return;
+      if (initialSharePayload.kind === "error") {
+        setSim({ ok: false, error: initialSharePayload.error });
         return;
       }
-
-      if (initialT) {
-        if (!initialTextFromT) {
-          setSim({ ok: false, error: "Invalid share link (t parameter could not be decoded)." });
-          return;
-        }
-        await load({ text: initialTextFromT, mode: initialMode, step: initialStep });
-        return;
-      }
+      setText(initialSharePayload.text);
+      await load({ text: initialSharePayload.text, mode: initialMode, step: initialStep });
     };
 
     void auto();
@@ -478,7 +503,7 @@ protocolV1: {
 
   // Keep URL step/mode in sync IF a share param exists (so links can point to a specific step).
   React.useEffect(() => {
-    if (!searchParams.get("t") && !searchParams.get("z")) return;
+    if (!hasReplaySharePayload(searchParams)) return;
 
     const curMode = searchParams.get("mode") ?? "auto";
     const curStep = searchParams.get("step") ?? "0";
@@ -592,11 +617,25 @@ protocolV1: {
     [sim.ok, sim.ok ? sim.current : null],
   );
 
+  const replayPreloadTokenIds = React.useMemo(() => {
+    if (!sim.ok) return [] as bigint[];
+    const out: bigint[] = [];
+    const seen = new Set<string>();
+    for (const tid of [...sim.transcript.header.deckA, ...sim.transcript.header.deckB]) {
+      const key = tid.toString();
+      if (seen.has(key)) continue;
+      seen.add(key);
+      out.push(tid);
+    }
+    return out;
+  }, [sim]);
+
   const renderReplay = (label: string, res: MatchResultWithHistory) => {
     const boardNow = res.boardHistory[step];
     const boardPrev = step === 0 ? res.boardHistory[0] : res.boardHistory[step - 1];
     const { placedCell, flippedCells } = step === 0 ? { placedCell: null, flippedCells: [] } : computeDelta(boardPrev, boardNow);
     const nyanoReactionInput = buildNyanoReactionInput(res, step);
+    const focusCell = focusTurnIndex !== null ? (res.turns[focusTurnIndex]?.cell ?? null) : null;
 
     return (
       <div className="grid gap-3">
@@ -629,24 +668,35 @@ protocolV1: {
           {nyanoReactionInput ? <NyanoReaction input={nyanoReactionInput} turnIndex={step} rpg={isRpg} /> : null}
         </div>
 
-{isRpg ? (
-  <BoardViewRPG
-    board={boardNow}
-    focusCell={focusTurnIndex !== null ? res.turns[focusTurnIndex]?.cell : null}
-    placedCell={placedCell}
-    flippedCells={flippedCells}
-    showCoordinates
-    showCandles
-    showParticles
-  />
-) : (
-  <BoardView
-    board={boardNow}
-    focusCell={focusTurnIndex !== null ? res.turns[focusTurnIndex]?.cell : null}
-    placedCell={placedCell}
-    flippedCells={flippedCells}
-  />
-)}
+        {isEngine && !compare ? (
+          <DuelStageMint>
+            <BattleStageEngine
+              board={boardNow}
+              selectedCell={null}
+              currentPlayer={0}
+              preloadTokenIds={replayPreloadTokenIds}
+              placedCell={placedCell}
+              flippedCells={flippedCells}
+            />
+          </DuelStageMint>
+        ) : isRpg ? (
+          <BoardViewRPG
+            board={boardNow}
+            focusCell={focusCell}
+            placedCell={placedCell}
+            flippedCells={flippedCells}
+            showCoordinates
+            showCandles
+            showParticles
+          />
+        ) : (
+          <BoardView
+            board={boardNow}
+            focusCell={focusCell}
+            placedCell={placedCell}
+            flippedCells={flippedCells}
+          />
+        )}
 
         {step > 0 ? (
           <div className="flex flex-wrap gap-2 text-xs text-slate-600">
@@ -662,23 +712,18 @@ protocolV1: {
 
   
   const buildCanonicalReplayLink = (): string => {
-    const trimmed = text.trim();
+    const trimmed = text.trim() || (sim.ok ? stringifyWithBigInt(sim.transcript) : "");
     if (!trimmed) throw new Error("transcript JSON is empty");
 
-    const origin = window.location.origin;
-    const url = new URL(`${origin}/replay`);
-
-    url.searchParams.delete("t");
-    url.searchParams.delete("z");
-
     const z = tryGzipCompressUtf8ToBase64Url(trimmed);
-    if (z) url.searchParams.set("z", z);
-    else url.searchParams.set("t", base64UrlEncodeUtf8(trimmed));
-
-    if (eventId) url.searchParams.set("event", eventId);
-    url.searchParams.set("mode", "auto");
-    url.searchParams.set("step", "9");
-    return url.toString();
+    return buildReplayShareUrl({
+      data: z ? { key: "z", value: z } : { key: "t", value: base64UrlEncodeUtf8(trimmed) },
+      eventId: eventId || undefined,
+      mode: "auto",
+      ui: uiParam,
+      step: 9,
+      absolute: true,
+    });
   };
 
   const saveToMyAttempts = async () => {
@@ -712,10 +757,14 @@ protocolV1: {
     const trimmed = text.trim() || (sim.ok ? stringifyWithBigInt(sim.transcript) : "");
     if (!trimmed) throw new Error("transcript JSON is empty - paste a transcript or load a share link first");
 
-    // Build share URL using appAbsoluteUrl to respect BASE_URL for subpath deployments.
     const z = tryGzipCompressUtf8ToBase64Url(trimmed);
-    const dataParam = z ? `z=${z}` : `t=${base64UrlEncodeUtf8(trimmed)}`;
-    return appAbsoluteUrl(`replay?${dataParam}&mode=${mode}&step=${step}`);
+    return buildReplayShareUrl({
+      data: z ? { key: "z", value: z } : { key: "t", value: base64UrlEncodeUtf8(trimmed) },
+      mode,
+      ui: uiParam,
+      step,
+      absolute: true,
+    });
   };
 
   return (
@@ -743,7 +792,7 @@ protocolV1: {
                 Events
               </Link>
               {event ? (
-                <Link className="btn btn-primary no-underline" to={`/match?event=${encodeURIComponent(event.id)}&ui=mint`}>
+                <Link className="btn btn-primary no-underline" to={`/match?event=${encodeURIComponent(event.id)}&ui=${matchUi}`}>
                   Challenge again
                 </Link>
               ) : null}
@@ -765,7 +814,7 @@ protocolV1: {
         <div className="card-hd">
           <div className="text-base font-semibold">Replay from transcript</div>
           <div className="text-xs text-slate-500">
-            Paste transcript JSON to replay with on-chain card metadata (read-only). You can also open share links via <span className="font-mono">?z=...</span> or <span className="font-mono">?t=...</span>.
+            Paste transcript JSON to replay with on-chain card metadata (read-only). You can also open share links via <span className="font-mono">?z=...</span> or <span className="font-mono">?t=...</span>, and switch board renderer with <span className="font-mono">?ui=engine</span> / <span className="font-mono">?ui=rpg</span>.
           </div>
         </div>
 
@@ -782,6 +831,19 @@ protocolV1: {
                   <option value="v2">engine v2</option>
                   <option value="compare">compare</option>
                 </select>
+                <span>board</span>
+                <select
+                  className="select w-40"
+                  value={uiMode}
+                  onChange={(e) => setReplayBoardUi(parseReplayBoardUi(e.target.value))}
+                >
+                  <option value="classic">classic</option>
+                  <option value="rpg">rpg</option>
+                  <option value="engine">engine (pixi)</option>
+                </select>
+                {isEngine && compare ? (
+                  <span className="text-[11px] text-slate-500">compare mode renders classic board.</span>
+                ) : null}
 
                 <button className="btn btn-primary" onClick={() => load()} disabled={loading}>
                   {loading ? "Loading..." : "Load & replay"}
@@ -843,7 +905,7 @@ protocolV1: {
               <Disclosure title={<span>Streamer tools (Overlay)</span>}>
                 <div className="grid gap-3">
                   <div className="text-xs text-slate-600">
-                    Open <span className="font-mono">/overlay</span>, then moving replay <span className="font-mono">step</span> will sync the overlay snapshot.
+                    Open <span className="font-mono">{overlayPath}</span>, then moving replay <span className="font-mono">step</span> will sync the overlay snapshot.
                   </div>
 
                   <div className="flex flex-wrap items-center gap-2">
@@ -862,7 +924,7 @@ protocolV1: {
 
                     <a
                       className="btn btn-sm no-underline"
-                      href={`${window.location.origin}/overlay?controls=0`}
+                      href={overlayUrl}
                       target="_blank"
                       rel="noreferrer noopener"
                     >
@@ -872,7 +934,7 @@ protocolV1: {
                     <button
                       className="btn btn-sm"
                       onClick={() => {
-                        void copyWithToast("overlay URL", `${window.location.origin}/overlay?controls=0`);
+                        void copyWithToast("overlay URL", overlayUrl);
                       }}
                     >
                       Copy overlay URL
@@ -880,7 +942,7 @@ protocolV1: {
                   </div>
 
                   <div className="text-[11px] text-slate-500">
-                    Tip: open <span className="font-mono">/replay?broadcast=1</span> to start with overlay step sync enabled.
+                    Tip: open <span className="font-mono">{replayBroadcastPath}</span> to start with overlay step sync enabled.
                   </div>
                 </div>
               </Disclosure>
@@ -888,7 +950,54 @@ protocolV1: {
 
 
 
-            {!sim.ok && sim.error ? <div className="text-sm text-rose-700">Error: {sim.error}</div> : null}
+            {!sim.ok && sim.error ? (
+              <div className="rounded-lg border border-rose-200 bg-rose-50 p-3 text-sm text-rose-800">
+                <div className="font-medium">Error: {sim.error}</div>
+                <div className="mt-1 text-xs text-rose-700">
+                  {hasSharePayload
+                    ? "This share link may be invalid or incomplete. Retry loading, or clear share params and paste transcript JSON."
+                    : "Check transcript JSON and retry loading."}
+                </div>
+                <div className="mt-2 flex flex-wrap items-center gap-2">
+                  <button
+                    className="btn btn-sm"
+                    onClick={() => {
+                      void (async () => {
+                        const decoded = decodeReplaySharePayload(searchParams);
+                        if (decoded.kind === "error") {
+                          setSim({ ok: false, error: decoded.error });
+                          return;
+                        }
+                        if (decoded.kind === "ok") {
+                          setText(decoded.text);
+                          await load({ text: decoded.text, mode, step });
+                          return;
+                        }
+                        await load();
+                      })();
+                    }}
+                    disabled={loading}
+                  >
+                    {loading ? "Retrying..." : "Retry load"}
+                  </button>
+                  {hasSharePayload ? (
+                    <button
+                      className="btn btn-sm"
+                      onClick={() => {
+                        const next = stripReplayShareParams(searchParams);
+                        setSearchParams(next, { replace: true });
+                        setSim({ ok: false, error: "Paste transcript JSON and load." });
+                      }}
+                    >
+                      Clear share params
+                    </button>
+                  ) : null}
+                  <Link className="btn btn-sm no-underline" to="/">
+                    Home
+                  </Link>
+                </div>
+              </div>
+            ) : null}
 
             <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500">
               <span className="kbd">Left</span>/<span className="kbd">Right</span> step

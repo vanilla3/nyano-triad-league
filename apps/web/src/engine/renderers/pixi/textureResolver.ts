@@ -1,40 +1,42 @@
 /**
- * TextureResolver — NFT card image texture loading for PixiJS renderer.
+ * TextureResolver - NFT card image texture loading for PixiJS renderer.
  *
- * Resolves tokenId → image URL using existing pure functions from metadata.ts
- * and arweave_gateways.ts, then loads textures via PixiJS Assets with
- * Arweave multi-gateway fallback.
+ * Resolves token image URLs via shared Nyano URL helpers, then loads textures
+ * with fallback URLs in order.
  *
  * This file imports from "pixi.js" and must only be loaded via dynamic
- * import() chain — same restriction as PixiBattleRenderer.
+ * import() chain, same restriction as PixiBattleRenderer.
  */
 
 import { Assets, Texture } from "pixi.js";
+import { getCachedGameIndexMetadata } from "@/lib/nyano/gameIndex";
 import { getMetadataConfig, type MetadataConfig } from "@/lib/nyano/metadata";
-import { buildTokenImageUrls } from "./tokenImageUrls";
 import { errorMessage } from "@/lib/errorMessage";
-
-/* ═══════════════════════════════════════════════════════════════════════════
-   TextureResolver class
-   ═══════════════════════════════════════════════════════════════════════════ */
+import { buildTokenImageUrls } from "./tokenImageUrls";
+import { normalizePreloadTokenIds } from "./preloadPolicy";
 
 /**
- * Manages NFT card image texture loading, caching, and Arweave fallback.
+ * Manages NFT card image texture loading, caching, and URL fallback.
  *
  * Usage:
- * - `getTexture(tokenId)` — synchronous cache lookup; returns null if not loaded
- * - `loadTexture(tokenId)` — async load with fallback; resolves to Texture | null
- * - `dispose()` — clear cache (call from renderer destroy)
+ * - `getTexture(tokenId)` - synchronous cache lookup; returns null if not loaded
+ * - `loadTexture(tokenId)` - async load with fallback; resolves to Texture | null
+ * - `preloadTextures(tokenIds, maxConcurrent)` - background preload queue
+ * - `dispose()` - clear cache (call from renderer destroy)
  */
 export class TextureResolver {
   private config: MetadataConfig | null = null;
-  private configResolved = false;
   private cache = new Map<string, Texture>();
   private pending = new Map<string, Promise<Texture | null>>();
+  private preloadQueue: string[] = [];
+  private preloadQueued = new Set<string>();
+  private preloadInFlight = 0;
+  private preloadMaxConcurrent = 2;
+  private generation = 0;
 
   /**
    * Synchronous cache lookup. Returns cached Texture or null.
-   * Call this from redraw() — if null, kick off loadTexture() separately.
+   * Call this from redraw() and start loadTexture() separately when null.
    */
   getTexture(tokenId: string): Texture | null {
     return this.cache.get(tokenId) ?? null;
@@ -42,23 +44,22 @@ export class TextureResolver {
 
   /**
    * Asynchronously load a texture for the given tokenId.
-   * Tries primary URL first, then Arweave fallbacks in order.
+   * Tries primary URL first, then fallback URLs in order.
    * Deduplicates concurrent loads for the same tokenId.
    * Returns null if all URLs fail.
    */
   async loadTexture(tokenId: string): Promise<Texture | null> {
-    // Return from cache
     const cached = this.cache.get(tokenId);
     if (cached) return cached;
 
-    // Deduplicate concurrent loads
     const existing = this.pending.get(tokenId);
     if (existing) return existing;
 
     const urls = buildTokenImageUrls(tokenId, this.ensureConfig());
     if (urls.length === 0) return null;
 
-    const promise = this.tryLoadFromUrls(urls, tokenId);
+    const generationAtStart = this.generation;
+    const promise = this.tryLoadFromUrls(urls, tokenId, generationAtStart);
     this.pending.set(tokenId, promise);
 
     try {
@@ -68,25 +69,52 @@ export class TextureResolver {
     }
   }
 
-  /** Clear cache and pending loads. Called from renderer destroy(). */
-  dispose(): void {
-    this.cache.clear();
-    this.pending.clear();
-    this.config = null;
-    this.configResolved = false;
+  /**
+   * Queue token textures for background preloading with limited concurrency.
+   * Visible cards should call this so card art appears faster when cells update.
+   */
+  preloadTextures(tokenIds: readonly string[], maxConcurrent = 2): void {
+    const normalizedConcurrency = Number.isFinite(maxConcurrent)
+      ? Math.max(0, Math.trunc(maxConcurrent))
+      : 0;
+    this.preloadMaxConcurrent = normalizedConcurrency;
+    if (normalizedConcurrency === 0) {
+      this.preloadQueue = [];
+      this.preloadQueued.clear();
+      return;
+    }
+
+    for (const tokenId of normalizePreloadTokenIds(tokenIds)) {
+      if (this.cache.has(tokenId)) continue;
+      if (this.pending.has(tokenId)) continue;
+      if (this.preloadQueued.has(tokenId)) continue;
+      this.preloadQueue.push(tokenId);
+      this.preloadQueued.add(tokenId);
+    }
+
+    this.drainPreloadQueue();
   }
 
-  /* ── Private helpers ─────────────────────────────────────────────── */
+  /** Clear cache and pending loads. Called from renderer destroy(). */
+  dispose(): void {
+    this.generation += 1;
+    this.cache.clear();
+    this.pending.clear();
+    this.preloadQueue = [];
+    this.preloadQueued.clear();
+    this.preloadInFlight = 0;
+    this.preloadMaxConcurrent = 2;
+    this.config = null;
+  }
 
   /**
-   * Resolve metadata config lazily (memoized).
-   * Uses getMetadataConfig() with no GameIndex arg — relies on
-   * hardcoded DEFAULT_NYANO_IMAGE_BASE for immediate availability.
+   * Resolve metadata config lazily from cache/env/default.
+   * Keeps Pixi and DOM URL sources aligned when cache has metadata.
    */
   private ensureConfig(): MetadataConfig | null {
-    if (!this.configResolved) {
-      this.config = getMetadataConfig();
-      this.configResolved = true;
+    const nextConfig = getMetadataConfig(getCachedGameIndexMetadata());
+    if (this.config?.baseUrlPattern !== nextConfig?.baseUrlPattern) {
+      this.config = nextConfig;
     }
     return this.config;
   }
@@ -98,10 +126,13 @@ export class TextureResolver {
   private async tryLoadFromUrls(
     urls: string[],
     tokenId: string,
+    generationAtStart: number,
   ): Promise<Texture | null> {
     for (const url of urls) {
+      if (generationAtStart !== this.generation) return null;
       try {
         const texture = await Assets.load<Texture>(url);
+        if (generationAtStart !== this.generation) return null;
         if (texture && !texture.destroyed) {
           this.cache.set(tokenId, texture);
           return texture;
@@ -110,12 +141,34 @@ export class TextureResolver {
         if (import.meta.env.DEV) {
           console.warn(`[TextureResolver] #${tokenId} failed from ${url}:`, errorMessage(e));
         }
-        continue;
       }
     }
+
     if (import.meta.env.DEV) {
       console.warn(`[TextureResolver] All ${urls.length} URLs failed for #${tokenId}`);
     }
+
     return null;
+  }
+
+  private drainPreloadQueue(): void {
+    while (
+      this.preloadInFlight < this.preloadMaxConcurrent &&
+      this.preloadQueue.length > 0
+    ) {
+      const tokenId = this.preloadQueue.shift();
+      if (!tokenId) continue;
+      this.preloadQueued.delete(tokenId);
+
+      if (this.cache.has(tokenId) || this.pending.has(tokenId)) {
+        continue;
+      }
+
+      this.preloadInFlight += 1;
+      void this.loadTexture(tokenId).finally(() => {
+        this.preloadInFlight = Math.max(0, this.preloadInFlight - 1);
+        this.drainPreloadQueue();
+      });
+    }
   }
 }

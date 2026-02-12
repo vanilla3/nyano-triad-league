@@ -1,14 +1,14 @@
 /**
- * Application URL utilities — BASE_URL-aware URL generation.
+ * Application URL utilities (BASE_URL-aware URL generation).
  *
  * When deployed under a subpath (e.g. GitHub Pages `/nyano-triad-league/`),
  * `import.meta.env.BASE_URL` provides the subpath. These helpers ensure
- * all generated URLs (share links, replay URLs) work correctly regardless
+ * generated URLs (share links, replay URLs) work correctly regardless
  * of deployment subpath.
  */
 
 /**
- * Get the app's base path (from Vite's BASE_URL), e.g. "/" or "/nyano-triad-league/".
+ * Get the app base path from Vite's BASE_URL.
  * Always includes trailing slash.
  */
 export function getAppBasePath(): string {
@@ -17,15 +17,12 @@ export function getAppBasePath(): string {
       ? (import.meta.env?.BASE_URL as string | undefined)
       : undefined;
   if (!base || base === "/") return "/";
-  // Ensure trailing slash
   return base.endsWith("/") ? base : `${base}/`;
 }
 
 /**
  * Build a relative app URL, respecting BASE_URL subpath.
- * E.g. `appPath("replay")` → "/nyano-triad-league/replay" or "/replay"
- *
- * @param path — path relative to app root (no leading slash needed)
+ * Example: `appPath("replay")` -> "/nyano-triad-league/replay" or "/replay"
  */
 export function appPath(path: string): string {
   const base = getAppBasePath();
@@ -33,11 +30,64 @@ export function appPath(path: string): string {
   return `${base}${cleanPath}`;
 }
 
+function hasWindowOrigin(): boolean {
+  return typeof window !== "undefined" && typeof window.location?.origin === "string";
+}
+
+/**
+ * Build a URL object for app routes, respecting BASE_URL subpath.
+ * Uses a fallback origin in non-browser environments so the same
+ * URL composition logic can run in tests.
+ */
+function appUrlObject(path: string): URL {
+  const routePath = appPath(path);
+  return new URL(routePath, hasWindowOrigin() ? window.location.origin : "https://example.invalid");
+}
+
 /**
  * Build an absolute app URL (with origin), respecting BASE_URL.
- * E.g. `appAbsoluteUrl("replay?z=abc")` → "https://example.com/nyano-triad-league/replay?z=abc"
+ * In non-browser environments returns the relative app path.
  */
 export function appAbsoluteUrl(path: string): string {
-  const origin = typeof window !== "undefined" ? window.location.origin : "";
-  return `${origin}${appPath(path)}`;
+  const url = appUrlObject(path);
+  if (!hasWindowOrigin()) return `${url.pathname}${url.search}${url.hash}`;
+  return url.toString();
+}
+
+export type ReplayShareDataParam = {
+  key: "z" | "t";
+  value: string;
+};
+
+export type ReplayMode = "auto" | "v1" | "v2" | "compare";
+
+export type ReplayShareUrlOptions = {
+  data: ReplayShareDataParam;
+  mode?: ReplayMode;
+  step?: number;
+  eventId?: string;
+  ui?: string;
+  absolute?: boolean;
+};
+
+function normalizeReplayStep(step: number | undefined): number | null {
+  if (typeof step !== "number" || !Number.isFinite(step)) return null;
+  const n = Math.trunc(step);
+  if (n < 0 || n > 9) return null;
+  return n;
+}
+
+/**
+ * Build a replay share URL with stable query handling and BASE_URL support.
+ */
+export function buildReplayShareUrl(opts: ReplayShareUrlOptions): string {
+  const url = appUrlObject("replay");
+  url.searchParams.set(opts.data.key, opts.data.value);
+  if (opts.eventId) url.searchParams.set("event", opts.eventId);
+  if (opts.mode) url.searchParams.set("mode", opts.mode);
+  if (opts.ui) url.searchParams.set("ui", opts.ui);
+  const step = normalizeReplayStep(opts.step);
+  if (step !== null) url.searchParams.set("step", String(step));
+  if (opts.absolute === false || !hasWindowOrigin()) return `${url.pathname}${url.search}${url.hash}`;
+  return url.toString();
 }

@@ -45,6 +45,26 @@ export interface AnimDurations {
   flipStaggerMs: number;
 }
 
+/** Renderer-side feature gates by VFX quality (kept pure for easy tests). */
+export interface VfxFeatureFlags {
+  /** Board depth pass (panel shadow + layered frame). */
+  boardDepth: boolean;
+  /** Board material pattern lines (medium/high only). */
+  boardPattern: boolean;
+  /** Per-cell soft shadow under card slots. */
+  cellShadow: boolean;
+  /** Subtle card glass sheen. */
+  cardGlass: boolean;
+  /** Edge number pill backgrounds for textured cards. */
+  edgePill: boolean;
+  /** Idle selectable-cell breathe loop. */
+  idleBreathe: boolean;
+  /** Place/flip brightness pulse overlay. */
+  brightnessPulse: boolean;
+  /** High-tier event-only foil/holo flash. */
+  eventFoilFlash: boolean;
+}
+
 /* ═══════════════════════════════════════════════════════════════════════════
    Constants
    ═══════════════════════════════════════════════════════════════════════════ */
@@ -68,7 +88,7 @@ export const IDENTITY_FRAME: Readonly<CellAnimFrame> = {
  *   off    → 0ms (no animation — identity frame always)
  *   low    → 250ms condensed
  *   medium → 500/600ms (matches CSS)
- *   high   → 500/600ms (same as medium; future: add particles)
+ *   high   → 500/600ms (same timing as medium; renderer adds foil flash)
  */
 export function animDurationsForQuality(quality: VfxQuality): AnimDurations {
   switch (quality) {
@@ -80,6 +100,60 @@ export function animDurationsForQuality(quality: VfxQuality): AnimDurations {
       return { placeMs: 500, flipMs: 600, flipStaggerMs: 200 };
     case "high":
       return { placeMs: 500, flipMs: 600, flipStaggerMs: 200 };
+  }
+}
+
+/**
+ * Map VFX quality tier to renderer feature flags.
+ *
+ * Off/low intentionally avoid continuous/heavy effects.
+ */
+export function vfxFeatureFlagsForQuality(quality: VfxQuality): VfxFeatureFlags {
+  switch (quality) {
+    case "off":
+      return {
+        boardDepth: false,
+        boardPattern: false,
+        cellShadow: false,
+        cardGlass: false,
+        edgePill: false,
+        idleBreathe: false,
+        brightnessPulse: false,
+        eventFoilFlash: false,
+      };
+    case "low":
+      return {
+        boardDepth: true,
+        boardPattern: false,
+        cellShadow: true,
+        cardGlass: false,
+        edgePill: true,
+        idleBreathe: false,
+        brightnessPulse: false,
+        eventFoilFlash: false,
+      };
+    case "medium":
+      return {
+        boardDepth: true,
+        boardPattern: true,
+        cellShadow: true,
+        cardGlass: true,
+        edgePill: true,
+        idleBreathe: true,
+        brightnessPulse: true,
+        eventFoilFlash: false,
+      };
+    case "high":
+      return {
+        boardDepth: true,
+        boardPattern: true,
+        cellShadow: true,
+        cardGlass: true,
+        edgePill: true,
+        idleBreathe: true,
+        brightnessPulse: true,
+        eventFoilFlash: true,
+      };
   }
 }
 
@@ -302,6 +376,18 @@ export function computeCellFrame(
     : interpolateFlip(easedT);
 }
 
+/**
+ * Compute normalized animation progress [0, 1] from a record and current time.
+ * Useful for effect layers that should sweep once per event (not per wall-clock).
+ */
+export function animationProgress(record: CellAnimRecord, nowMs: number): number {
+  if (record.durationMs <= 0) return 1;
+  const elapsed = nowMs - record.startMs - record.staggerDelayMs;
+  if (elapsed <= 0) return 0;
+  if (elapsed >= record.durationMs) return 1;
+  return elapsed / record.durationMs;
+}
+
 /* ═══════════════════════════════════════════════════════════════════════════
    Breathe glow (selectable empty cells)
    ═══════════════════════════════════════════════════════════════════════════ */
@@ -326,15 +412,25 @@ export interface BreatheFrame {
  *
  * Uses sin() for smooth infinite loop — no record/startMs needed.
  *
- * @param nowMs  Current time (performance.now())
+ * @param nowMs    Current time (performance.now())
+ * @param quality  VFX quality for amplitude gating
  */
-export function computeBreatheFrame(nowMs: number): BreatheFrame {
+export function computeBreatheFrame(
+  nowMs: number,
+  quality: VfxQuality = "high",
+): BreatheFrame {
+  if (!vfxFeatureFlagsForQuality(quality).idleBreathe) {
+    return { scale: 1, glowAlpha: 0 };
+  }
+
+  const ampScale = quality === "high" ? 0.02 : 0.012;
+  const ampAlpha = quality === "high" ? 0.25 : 0.16;
   const t = (nowMs % BREATHE_CYCLE_MS) / BREATHE_CYCLE_MS;
   const sin = Math.sin(t * Math.PI * 2);
   // Remap sin [-1, 1] → [0, 1]
   const p = (sin + 1) / 2;
   return {
-    scale: 1 + 0.02 * p,    // 1.0 → 1.02
-    glowAlpha: 0.25 * p,    // 0 → 0.25
+    scale: 1 + ampScale * p,
+    glowAlpha: ampAlpha * p,
   };
 }

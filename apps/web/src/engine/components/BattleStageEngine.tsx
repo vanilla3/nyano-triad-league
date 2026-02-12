@@ -36,6 +36,8 @@ export interface BattleStageEngineProps {
   placedCell?: number | null;
   /** Cell indices flipped this turn (animation trigger). */
   flippedCells?: readonly number[];
+  /** Optional extra tokenIds to preload (e.g. current hand cards). */
+  preloadTokenIds?: readonly bigint[];
   /** Show the action prompt bar below the canvas. */
   showActionPrompt?: boolean;
   /** Current game phase for prompt text. */
@@ -129,6 +131,7 @@ export function BattleStageEngine({
   currentPlayer = null,
   placedCell,
   flippedCells,
+  preloadTokenIds,
   showActionPrompt,
   gamePhase,
   inlineError,
@@ -234,10 +237,11 @@ export function BattleStageEngine({
       selectableCells: selectableCells ?? EMPTY_SET,
       currentPlayer: (currentPlayer ?? 0) as PlayerIndex,
       vfxQuality: resolveVfxQuality(),
+      preloadTokenIds: preloadTokenIds?.map((tid) => tid.toString()),
       placedCell,
       flippedCells,
     });
-  }, [board, selectedCell, selectableCells, currentPlayer, placedCell, flippedCells]);
+  }, [board, selectedCell, selectableCells, currentPlayer, preloadTokenIds, placedCell, flippedCells]);
 
   // ── Resize: ResizeObserver on container ─────────────────────────────
   React.useEffect(() => {
