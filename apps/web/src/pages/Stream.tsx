@@ -7,6 +7,7 @@ import { NyanoImage } from "@/components/NyanoImage";
 import { useToast } from "@/components/Toast";
 import { EVENTS, fetchEventConfig, getEventStatus, type EventV1 } from "@/lib/events";
 import { executeRecovery, recoveryActionLabel } from "@/lib/stream_recovery";
+import { buildStreamUrls } from "@/lib/stream_urls";
 import { WarudoBridgePanel } from "@/components/stream/WarudoBridgePanel";
 import { VoteControlPanel } from "@/components/stream/VoteControlPanel";
 import { StreamSharePanel } from "@/components/stream/StreamSharePanel";
@@ -28,11 +29,6 @@ import {
   type ViewerMove,
 } from "@/lib/triad_vote_utils";
 import { publishOverlayState, publishStreamCommand, makeStreamCommandId, publishStreamVoteState, readStoredOverlayState, subscribeOverlayState, type OverlayStateV1 } from "@/lib/streamer_bus";
-
-function origin(): string {
-  if (typeof window === "undefined") return "";
-  return window.location.origin;
-}
 
 function pickDefaultEvent(events: EventV1[]): string {
   const now = Date.now();
@@ -98,14 +94,13 @@ export function StreamPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps -- run once on mount
   }, []);
 
-  // viewer link (safe) — always include ui=mint for consistent high-quality experience
-  const matchUrl = e ? `${origin()}/match?event=${encodeURIComponent(e.id)}&ui=mint` : `${origin()}/match?ui=mint`;
-  // host link (accepts /stream commands)
-  const hostMatchUrl = e ? `${origin()}/match?event=${encodeURIComponent(e.id)}&stream=1&ctrl=A&ui=mint` : `${origin()}/match?stream=1&ctrl=A&ui=mint`;
-
-  const overlayUrl = `${origin()}/overlay?controls=0`;
-  const overlayTransparentUrl = `${origin()}/overlay?controls=0&bg=transparent`;
-  const replayBroadcastUrl = `${origin()}/replay?broadcast=1`;
+  const {
+    matchUrl,
+    hostMatchUrl,
+    overlayUrl,
+    overlayTransparentUrl,
+    replayBroadcastUrl,
+  } = React.useMemo(() => buildStreamUrls(e?.id), [e?.id]);
 
   const copy = async (label: string, v: string) => {
     await writeClipboardText(v);
