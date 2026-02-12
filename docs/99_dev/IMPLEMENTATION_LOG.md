@@ -573,3 +573,80 @@
 - `pnpm -C apps/web lint`
 - `pnpm -C apps/web test -- src/lib/__tests__/first_player_resolve.test.ts`
 - `pnpm -C apps/web build`
+
+## 2026-02-12 - commit-0099: Match first-player params update hardening (atomic URL updates)
+
+### Why
+- `Match.tsx` の first-player 設定ボタンで `setParam(...)` を連続呼び出ししており、URLパラメータ更新が取りこぼれる可能性があった。
+- `commit_reveal` / `committed_mutual_choice` の入力条件がUI上で伝わりづらく、誤入力時の手戻りが発生しやすかった。
+
+### What
+- `apps/web/src/pages/Match.tsx`
+  - Added `setParams(updates)` helper to apply multiple query param updates in one `setSearchParams(...)` call.
+  - Replaced multi-step param writes in first-player actions with atomic updates:
+    - commit-reveal randomize
+    - commit-reveal derive commits
+    - committed-mutual randomize
+    - committed-mutual derive commits
+    - seed randomize
+  - Updated first-player field helper text:
+    - commit-reveal now explicitly says Commit A/B must be set together when used.
+    - committed-mutual now explicitly says choice A/B must match.
+
+### Verify
+- `pnpm -C apps/web typecheck`
+- `pnpm -C apps/web lint`
+- `pnpm -C apps/web build`
+
+## 2026-02-12 - commit-0100: first-player mode switch default-fill for safer setup UX
+
+### Why
+- モード切替時に不要パラメータは消えるようになったが、必須入力が空のまま残るケースがあり、切替直後に invalid になりやすかった。
+- `seed / commit_reveal / committed_mutual_choice` では、初回入力コストと入力ミスを減らすために安全な初期値補完が必要だった。
+
+### What
+- `apps/web/src/lib/first_player_params.ts`
+  - Added `buildFirstPlayerModeDefaultParamPatch(mode, current, randomBytes32Hex)`.
+  - Mode switch default-fill behavior:
+    - `manual`: `fp` を 0/1 に正規化
+    - `mutual`: `fpa/fpb` を 0/1 に正規化
+    - `seed`: `fps/fpsd` が bytes32 でなければ自動補完
+    - `commit_reveal`: `fps/fra/frb` を自動補完し、`fca/fcb` はクリア
+    - `committed_mutual_choice`: `fps/fpna/fpnb` 自動補完、`fpoa/fpob` 既定アドレス補完、`fpa/fpb` 正規化、`fcoa/fcob` クリア
+- `apps/web/src/lib/__tests__/first_player_params.test.ts`
+  - Added tests for default-fill patch behavior across modes.
+- `apps/web/src/pages/Match.tsx`
+  - First-player mode `onChange` now applies:
+    - stale param cleanup (`buildFirstPlayerModeParamPatch`)
+    - required default-fill (`buildFirstPlayerModeDefaultParamPatch`)
+  - This keeps mode transition deterministic and immediately usable.
+
+### Verify
+- `pnpm -C apps/web typecheck`
+- `pnpm -C apps/web lint`
+- `pnpm -C apps/web test -- src/lib/__tests__/first_player_params.test.ts src/lib/__tests__/first_player_resolve.test.ts`
+- `pnpm -C apps/web build`
+
+## 2026-02-12 - commit-0101: Match first-player mode transition e2e coverage
+
+### Why
+- first-player モード切替は URL パラメータ状態に強く依存するため、ユニットテストだけでは画面実動作の回帰を拾いきれない。
+- mode transition 時の「不要値クリア + 必須値補完」が崩れると、共有URL再現性とUXが悪化する。
+
+### What
+- `apps/web/e2e/match-first-player.spec.ts` を新規追加。
+  - Case 1: `manual` → `commit_reveal`
+    - `fps/fra/frb` が bytes32 で埋まること
+    - `fpsd` / committed-mutual系パラメータがクリアされること
+  - Case 2: `commit_reveal` → `committed_mutual_choice`
+    - `fps/fpna/fpnb` が bytes32 で埋まること
+    - `fpa/fpb` が正規化されること
+    - `fpoa/fpob` が既定値で補完されること
+    - `fra/frb/fca/fcb/fpsd` がクリアされること
+
+### Verify
+- `pnpm -C apps/web typecheck`
+- `pnpm -C apps/web lint`
+- `pnpm -C apps/web test -- src/lib/__tests__/first_player_params.test.ts src/lib/__tests__/first_player_resolve.test.ts`
+- `pnpm -C apps/web build`
+- `pnpm -C apps/web e2e -- match-first-player.spec.ts`
