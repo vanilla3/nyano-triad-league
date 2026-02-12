@@ -124,8 +124,6 @@ export function buildFirstPlayerModeDefaultParamPatch(
     patch.fps = isBytes32Hex(get("fps")) ? get("fps") : randomBytes32Hex();
     patch.fra = isBytes32Hex(get("fra")) ? get("fra") : randomBytes32Hex();
     patch.frb = isBytes32Hex(get("frb")) ? get("frb") : randomBytes32Hex();
-    patch.fca = undefined;
-    patch.fcb = undefined;
     return patch;
   }
 
@@ -137,8 +135,6 @@ export function buildFirstPlayerModeDefaultParamPatch(
     patch.fpob = get("fpob") || DEFAULT_PLAYER_B;
     patch.fpna = isBytes32Hex(get("fpna")) ? get("fpna") : randomBytes32Hex();
     patch.fpnb = isBytes32Hex(get("fpnb")) ? get("fpnb") : randomBytes32Hex();
-    patch.fcoa = undefined;
-    patch.fcob = undefined;
     return patch;
   }
 

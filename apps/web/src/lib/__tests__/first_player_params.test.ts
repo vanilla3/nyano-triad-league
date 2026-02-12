@@ -58,17 +58,17 @@ describe("buildFirstPlayerModeDefaultParamPatch", () => {
     expect(patch.fpsd).toMatch(/^0x[0-9a-f]{64}$/);
   });
 
-  it("commit_reveal mode fills salt/reveals and clears commits", () => {
+  it("commit_reveal mode fills salt/reveals without touching commits", () => {
     const params = new URLSearchParams("fca=0xaaa&fcb=0xbbb");
     const patch = buildFirstPlayerModeDefaultParamPatch("commit_reveal", params, mkRandom);
     expect(patch.fps).toMatch(/^0x[0-9a-f]{64}$/);
     expect(patch.fra).toMatch(/^0x[0-9a-f]{64}$/);
     expect(patch.frb).toMatch(/^0x[0-9a-f]{64}$/);
-    expect(patch.fca).toBeUndefined();
-    expect(patch.fcb).toBeUndefined();
+    expect(Object.prototype.hasOwnProperty.call(patch, "fca")).toBe(false);
+    expect(Object.prototype.hasOwnProperty.call(patch, "fcb")).toBe(false);
   });
 
-  it("committed_mutual_choice mode applies defaults and clears commits", () => {
+  it("committed_mutual_choice mode applies defaults without touching commits", () => {
     const params = new URLSearchParams("fpa=1&fpb=9");
     const patch = buildFirstPlayerModeDefaultParamPatch("committed_mutual_choice", params, mkRandom);
     expect(patch.fps).toMatch(/^0x[0-9a-f]{64}$/);
@@ -78,8 +78,8 @@ describe("buildFirstPlayerModeDefaultParamPatch", () => {
     expect(patch.fpob).toMatch(/^0x[a-fA-F0-9]{40}$/);
     expect(patch.fpna).toMatch(/^0x[0-9a-f]{64}$/);
     expect(patch.fpnb).toMatch(/^0x[0-9a-f]{64}$/);
-    expect(patch.fcoa).toBeUndefined();
-    expect(patch.fcob).toBeUndefined();
+    expect(Object.prototype.hasOwnProperty.call(patch, "fcoa")).toBe(false);
+    expect(Object.prototype.hasOwnProperty.call(patch, "fcob")).toBe(false);
   });
 });
 
@@ -94,6 +94,32 @@ describe("buildFirstPlayerModeCanonicalParamPatch", () => {
     expect(patch.fpm).toBe("seed");
     expect(patch.fps).toMatch(/^0x[0-9a-f]{64}$/);
     expect(patch.fpsd).toMatch(/^0x[0-9a-f]{64}$/);
+  });
+
+  it("preserves commit fields in commit_reveal mode", () => {
+    const params = new URLSearchParams(
+      `fpm=commit_reveal&fps=0x${"11".repeat(32)}&fra=0x${"22".repeat(32)}&frb=0x${"33".repeat(32)}&fca=0x${"44".repeat(32)}&fcb=0x${"55".repeat(32)}`,
+    );
+    const patch = buildFirstPlayerModeCanonicalParamPatch(
+      "commit_reveal",
+      params,
+      () => `0x${"aa".repeat(32)}` as `0x${string}`,
+    );
+    expect(Object.prototype.hasOwnProperty.call(patch, "fca")).toBe(false);
+    expect(Object.prototype.hasOwnProperty.call(patch, "fcb")).toBe(false);
+  });
+
+  it("preserves commit fields in committed_mutual_choice mode", () => {
+    const params = new URLSearchParams(
+      `fpm=committed_mutual_choice&fps=0x${"11".repeat(32)}&fpa=1&fpb=0&fpoa=0xaAaAaAaaAaAaAaaAaAAAAAAAAaaaAaAaAaaAaaAa&fpob=0xbBbBBBBbbBBBbbbBbbBbbbbBBbBbbbbBbBbbBBbB&fpna=0x${"22".repeat(32)}&fpnb=0x${"33".repeat(32)}&fcoa=0x${"44".repeat(32)}&fcob=0x${"55".repeat(32)}`,
+    );
+    const patch = buildFirstPlayerModeCanonicalParamPatch(
+      "committed_mutual_choice",
+      params,
+      () => `0x${"aa".repeat(32)}` as `0x${string}`,
+    );
+    expect(Object.prototype.hasOwnProperty.call(patch, "fcoa")).toBe(false);
+    expect(Object.prototype.hasOwnProperty.call(patch, "fcob")).toBe(false);
   });
 });
 

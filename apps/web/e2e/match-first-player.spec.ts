@@ -24,6 +24,28 @@ test.describe("Match first-player mode URL params", () => {
     await expect.poll(() => new URL(page.url()).searchParams.has("fca")).toBe(false);
   });
 
+  test("loading commit_reveal mode keeps provided commits", async ({ page }) => {
+    await page.goto(`/match?fpm=commit_reveal&fps=${SEED}&fra=${REVEAL_A}&frb=${REVEAL_B}&fca=${COMMIT_A}&fcb=${COMMIT_B}`);
+
+    await expect(page.getByLabel("First player mode")).toBeVisible({ timeout: 10_000 });
+
+    await expect.poll(() => new URL(page.url()).searchParams.get("fpm")).toBe("commit_reveal");
+    await expect.poll(() => new URL(page.url()).searchParams.get("fca")).toBe(COMMIT_A);
+    await expect.poll(() => new URL(page.url()).searchParams.get("fcb")).toBe(COMMIT_B);
+  });
+
+  test("loading committed_mutual_choice mode keeps provided commits", async ({ page }) => {
+    await page.goto(
+      `/match?fpm=committed_mutual_choice&fps=${SEED}&fpa=0&fpb=1&fpoa=0xaAaAaAaaAaAaAaaAaAAAAAAAAaaaAaAaAaaAaaAa&fpob=0xbBbBBBBbbBBBbbbBbbBbbbbBBbBbbbbBbBbbBBbB&fpna=${REVEAL_A}&fpnb=${REVEAL_B}&fcoa=${COMMIT_A}&fcob=${COMMIT_B}`,
+    );
+
+    await expect(page.getByLabel("First player mode")).toBeVisible({ timeout: 10_000 });
+
+    await expect.poll(() => new URL(page.url()).searchParams.get("fpm")).toBe("committed_mutual_choice");
+    await expect.poll(() => new URL(page.url()).searchParams.get("fcoa")).toBe(COMMIT_A);
+    await expect.poll(() => new URL(page.url()).searchParams.get("fcob")).toBe(COMMIT_B);
+  });
+
   test("switching to commit_reveal fills required inputs and clears unrelated mode params", async ({ page }) => {
     await page.goto(
       `/match?fpm=manual&fpsd=${SEED}&fpoa=0xaAaAaAaaAaAaAaaAaAAAAAAAAaaaAaAaAaaAaaAa&fpna=${REVEAL_A}&fcoa=${COMMIT_A}`,
