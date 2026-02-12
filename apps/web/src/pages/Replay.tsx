@@ -177,6 +177,7 @@ const HIGHLIGHT_KIND_ORDER: ReplayHighlightKind[] = ["big_flip", "chain", "combo
 export function ReplayPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const ui = (searchParams.get("ui") || "").toLowerCase();
+  const uiParam = searchParams.get("ui") ?? undefined;
   const isEngine = ui === "engine";
   const isRpg = ui === "rpg";
 
@@ -696,6 +697,7 @@ protocolV1: {
       data: z ? { key: "z", value: z } : { key: "t", value: base64UrlEncodeUtf8(trimmed) },
       eventId: eventId || undefined,
       mode: "auto",
+      ui: uiParam,
       step: 9,
       absolute: true,
     });
@@ -736,6 +738,7 @@ protocolV1: {
     return buildReplayShareUrl({
       data: z ? { key: "z", value: z } : { key: "t", value: base64UrlEncodeUtf8(trimmed) },
       mode,
+      ui: uiParam,
       step,
       absolute: true,
     });

@@ -114,6 +114,18 @@ describe("buildReplayShareUrl", () => {
     expect(url).toBe("/nyano-triad-league/replay?t=raw_payload&event=gp-1&step=9");
   });
 
+  it("includes ui query param when provided", () => {
+    import.meta.env.BASE_URL = "/";
+    const url = buildReplayShareUrl({
+      data: { key: "z", value: "abc123" },
+      mode: "auto",
+      ui: "engine",
+      step: 9,
+      absolute: false,
+    });
+    expect(url).toBe("/replay?z=abc123&mode=auto&ui=engine&step=9");
+  });
+
   it("returns absolute URL in browser env", () => {
     import.meta.env.BASE_URL = "/sub/";
     const url = buildReplayShareUrl({

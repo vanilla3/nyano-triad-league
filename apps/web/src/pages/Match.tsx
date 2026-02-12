@@ -312,6 +312,7 @@ export function MatchPage() {
   const streamMode = parseBool01(searchParams.get("stream"), false);
   const streamCtrlParam = (searchParams.get("ctrl") ?? "A").toUpperCase();
   const streamControlledSide = (streamCtrlParam === "B" ? 1 : 0) as PlayerIndex;
+  const uiParam = searchParams.get("ui") ?? undefined;
 
   const rulesetKeyParam = parseRulesetKeyOrDefault(searchParams.get("rk"), "v2");
   const chainCapRawParam = searchParams.get("ccap");
@@ -1206,21 +1207,14 @@ export function MatchPage() {
     const z = tryGzipCompressUtf8ToBase64Url(json);
     const data: { key: "z" | "t"; value: string } =
       z ? { key: "z", value: z } : { key: "t", value: base64UrlEncodeUtf8(json) };
-    if (absolute) {
-      return buildReplayShareUrl({
-        data,
-        step: 9,
-        eventId: event?.id,
-        absolute: true,
-      });
-    }
-
-    const params = new URLSearchParams();
-    params.set(data.key, data.value);
-    params.set("step", "9");
-    if (event?.id) params.set("event", event.id);
-    return `/replay?${params.toString()}`;
-  }, [sim, event, cards]);
+    return buildReplayShareUrl({
+      data,
+      step: 9,
+      eventId: event?.id,
+      ui: uiParam,
+      absolute,
+    });
+  }, [sim, event, cards, uiParam]);
 
   const copyShareUrl = async () => {
     setError(null);
