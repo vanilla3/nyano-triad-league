@@ -22,6 +22,7 @@ import type {
   IBattleRenderer,
   BattleRendererState,
   CellSelectCallback,
+  CellInspectCallback,
 } from "../IBattleRenderer";
 import { TextureResolver } from "./textureResolver";
 import {
@@ -98,9 +99,13 @@ export class PixiBattleRenderer implements IBattleRenderer {
   private layouts = new Map<number, CellLayout>();
   private state: BattleRendererState | null = null;
   private cellSelectCb: CellSelectCallback | null = null;
+  private cellInspectCb: CellInspectCallback | null = null;
 
   // ── Texture management ──
   private textureResolver = new TextureResolver();
+
+  // ── Card inspect (long-press / right-click) ──
+  private longPressTimers: (ReturnType<typeof setTimeout> | null)[] = Array.from({ length: 9 }, () => null);
 
   // ── Animation state ──
   private cellAnims: (CellAnimRecord | null)[] = Array.from({ length: 9 }, () => null);
@@ -148,6 +153,10 @@ export class PixiBattleRenderer implements IBattleRenderer {
     this.cellSelectCb = cb;
   }
 
+  onCellInspect(cb: CellInspectCallback): void {
+    this.cellInspectCb = cb;
+  }
+
   resize(width: number, height: number): void {
     if (!this.app) return;
     this.app.renderer.resize(width, height);
@@ -176,6 +185,9 @@ export class PixiBattleRenderer implements IBattleRenderer {
     this.layouts.clear();
     this.state = null;
     this.cellSelectCb = null;
+    this.cellInspectCb = null;
+    this.longPressTimers.forEach(t => { if (t) clearTimeout(t); });
+    this.longPressTimers = Array.from({ length: 9 }, () => null);
     this.cellAnims = Array.from({ length: 9 }, () => null);
     this.prevPlacedCell = undefined;
     this.prevFlippedCells = [];
@@ -196,6 +208,38 @@ export class PixiBattleRenderer implements IBattleRenderer {
       cellGfx.on("pointertap", () => {
         if (this.state?.selectableCells.has(cellIndex)) {
           this.cellSelectCb?.(cellIndex);
+        }
+      });
+
+      // ── Long-press for card inspect (400ms) ──
+      let lpTimer: ReturnType<typeof setTimeout> | null = null;
+
+      cellGfx.on("pointerdown", () => {
+        if (lpTimer) clearTimeout(lpTimer);
+        lpTimer = setTimeout(() => {
+          const cell = this.state?.board[cellIndex];
+          if (cell?.card && this.cellInspectCb) {
+            const rect = this.getCellScreenRect(cellIndex);
+            if (rect) this.cellInspectCb(cellIndex, rect);
+          }
+          lpTimer = null;
+        }, 400);
+        this.longPressTimers[cellIndex] = lpTimer;
+      });
+
+      cellGfx.on("pointerup", () => {
+        if (lpTimer) { clearTimeout(lpTimer); lpTimer = null; }
+      });
+      cellGfx.on("pointerupoutside", () => {
+        if (lpTimer) { clearTimeout(lpTimer); lpTimer = null; }
+      });
+
+      // ── Right-click for card inspect ──
+      cellGfx.on("rightclick", () => {
+        const cell = this.state?.board[cellIndex];
+        if (cell?.card && this.cellInspectCb) {
+          const rect = this.getCellScreenRect(cellIndex);
+          if (rect) this.cellInspectCb(cellIndex, rect);
         }
       });
 
@@ -684,6 +728,23 @@ export class PixiBattleRenderer implements IBattleRenderer {
     if (cc && !this.cellAnims[i]) {
       cc.scale.set(frame.scale, frame.scale);
     }
+  }
+
+  /* ── Cell screen-space rect (for card inspect positioning) ──────── */
+
+  private getCellScreenRect(cellIndex: number): DOMRect | null {
+    const layout = this.layouts.get(cellIndex);
+    if (!layout || !this.app) return null;
+    const canvas = this.app.canvas as HTMLCanvasElement;
+    const canvasRect = canvas.getBoundingClientRect();
+    const scaleX = canvasRect.width / this.app.screen.width;
+    const scaleY = canvasRect.height / this.app.screen.height;
+    return new DOMRect(
+      canvasRect.left + layout.x * scaleX,
+      canvasRect.top + layout.y * scaleY,
+      layout.w * scaleX,
+      layout.h * scaleY,
+    );
   }
 
   private applyBrightness(

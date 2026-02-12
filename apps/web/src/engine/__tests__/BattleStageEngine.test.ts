@@ -27,7 +27,15 @@ describe("BattleStageEngine", () => {
     const mod = await import("../components/BattleStageEngine");
     const keys = Object.keys(mod);
     expect(keys).toContain("BattleStageEngine");
-    // BattleStageEngineProps is a type — erased at compile time
+    // BattleStageEngineProps + FlipTraceArrow re-export are types — erased at compile time
     expect(keys).toHaveLength(1);
+  });
+
+  it("still exports only BattleStageEngine after adding flipTraces/inspect props (Sprint 51)", async () => {
+    // Verifies that adding flipTraces, isFlipAnimating, and card inspect
+    // integration did not accidentally introduce new runtime exports
+    const mod = await import("../components/BattleStageEngine");
+    expect(Object.keys(mod)).toEqual(["BattleStageEngine"]);
+    expect(typeof mod.BattleStageEngine).toBe("function");
   });
 });

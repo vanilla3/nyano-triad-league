@@ -5,7 +5,9 @@
  * and cleans up on unmount. PixiJS is loaded via dynamic import() so it never
  * enters the main bundle or breaks Vitest (environment: "node").
  *
- * Also renders React UI layers below the canvas:
+ * Also renders React UI layers around the canvas:
+ * - Flip Causality Arrows (NIN-UX-030) — SVG overlay on board
+ * - Card Inspect Panel (CardPreviewPanel) — long-press / right-click
  * - Action Prompt (NIN-UX-011) — bilingual instruction text
  * - Inline Error (NIN-UX-012) — error pill with auto-dismiss
  */
@@ -14,6 +16,9 @@ import React from "react";
 import type { BoardState, PlayerIndex } from "@nyano/triad-engine";
 import type { IBattleRenderer } from "../renderers/IBattleRenderer";
 import { resolveVfxQuality } from "@/lib/visual/visualSettings";
+import { FlipArrowOverlay, type FlipTraceArrow } from "@/components/FlipArrowOverlay";
+import { CardPreviewPanel } from "@/components/CardPreviewPanel";
+import { useCardPreview } from "@/hooks/useCardPreview";
 import "@/mint-theme/mint-theme.css";
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -38,6 +43,10 @@ export interface BattleStageEngineProps {
   inlineError?: string | null;
   /** Callback to dismiss inline error. */
   onDismissError?: () => void;
+  /** Flip traces for causality arrow overlay (NIN-UX-030). */
+  flipTraces?: readonly FlipTraceArrow[] | null;
+  /** Whether board flip animation is currently running. */
+  isFlipAnimating?: boolean;
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -123,10 +132,22 @@ export function BattleStageEngine({
   gamePhase,
   inlineError,
   onDismissError,
+  flipTraces,
+  isFlipAnimating,
 }: BattleStageEngineProps) {
   const containerRef = React.useRef<HTMLDivElement>(null);
+  const gridOverlayRef = React.useRef<HTMLDivElement>(null);
   const rendererRef = React.useRef<IBattleRenderer | null>(null);
   const callbackRef = React.useRef(onCellSelect);
+
+  // ── Card inspect hook ──
+  const inspect = useCardPreview();
+  const inspectRef = React.useRef(inspect);
+  React.useEffect(() => { inspectRef.current = inspect; }, [inspect]);
+
+  // Keep board ref current for inspect callback
+  const boardRef = React.useRef(board);
+  React.useEffect(() => { boardRef.current = board; }, [board]);
 
   // Keep callback ref current without triggering effect re-runs
   React.useEffect(() => {
@@ -159,6 +180,23 @@ export function BattleStageEngine({
       renderer.onCellSelect((cell) => {
         callbackRef.current?.(cell);
       });
+
+      // Card inspect: long-press / right-click → show CardPreviewPanel
+      // NOTE: showImmediate only calls anchorEl.getBoundingClientRect() internally,
+      // so a proxy object returning the screen rect is safe (verified useCardPreview.ts:81).
+      renderer.onCellInspect((cellIndex, screenRect) => {
+        const cell = boardRef.current[cellIndex];
+        if (cell?.card) {
+          const fakeAnchor = { getBoundingClientRect: () => screenRect } as HTMLElement;
+          inspectRef.current.showImmediate(cell.card, cell.owner, fakeAnchor);
+        }
+      });
+
+      // Prevent browser context menu on canvas (right-click → inspect instead)
+      const canvasEl = container.querySelector("canvas");
+      if (canvasEl) {
+        canvasEl.addEventListener("contextmenu", (e) => e.preventDefault());
+      }
 
       rendererRef.current = renderer;
     })();
@@ -209,14 +247,29 @@ export function BattleStageEngine({
 
   return (
     <div className="grid gap-3">
-      {/* PixiJS Canvas */}
+      {/* PixiJS Canvas + overlays */}
       <div
         ref={containerRef}
         className="relative mx-auto aspect-square w-full max-w-md"
         style={{ minHeight: 280 }}
         aria-label="Game board (engine renderer)"
         role="img"
-      />
+      >
+        {/* Flip arrow overlay — transparent div matching PixiJS grid area (85% centered) */}
+        <div
+          ref={gridOverlayRef}
+          className="absolute inset-0 m-auto pointer-events-none"
+          style={{ width: "85%", height: "85%" }}
+        >
+          {flipTraces && flipTraces.length > 0 && (
+            <FlipArrowOverlay
+              traces={flipTraces}
+              gridRef={gridOverlayRef}
+              isAnimating={isFlipAnimating}
+            />
+          )}
+        </div>
+      </div>
 
       {/* Action Prompt (NIN-UX-011) */}
       {showActionPrompt && <EngineActionPrompt gamePhase={gamePhase} />}
@@ -226,6 +279,17 @@ export function BattleStageEngine({
         <div className="flex justify-center">
           <EngineInlineError message={inlineError} onDismiss={onDismissError} />
         </div>
+      )}
+
+      {/* Card Inspect Panel — portal to body */}
+      {inspect.state.visible && inspect.state.card && inspect.state.anchorRect && (
+        <CardPreviewPanel
+          card={inspect.state.card}
+          owner={inspect.state.owner!}
+          anchorRect={inspect.state.anchorRect}
+          position={inspect.state.position}
+          onClose={inspect.hide}
+        />
       )}
     </div>
   );

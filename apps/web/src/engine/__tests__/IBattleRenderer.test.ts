@@ -13,10 +13,11 @@ describe("IBattleRenderer interface module", () => {
     expect(mod).toBeDefined();
   });
 
-  it("has no runtime exports (types only)", async () => {
+  it("has no runtime exports (types only — including CellInspectCallback)", async () => {
     const mod = await import("../renderers/IBattleRenderer");
     // All exports are TypeScript interfaces/types — erased at compile time.
-    // The module should have zero runtime exports.
+    // CellSelectCallback, CellInspectCallback, IBattleRenderer, BattleRendererState
+    // are all type-only exports → zero runtime keys.
     const keys = Object.keys(mod);
     expect(keys).toHaveLength(0);
   });

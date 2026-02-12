@@ -1866,6 +1866,8 @@ export function MatchPage() {
                         }
                         inlineError={error}
                         onDismissError={() => setError(null)}
+                        flipTraces={density !== "minimal" ? lastFlipTraces : null}
+                        isFlipAnimating={boardAnim.isAnimating}
                       />
                     </DuelStageMint>
                   ) : isRpg ? (

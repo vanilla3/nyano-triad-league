@@ -37,6 +37,9 @@ export interface BattleRendererState {
 /** Callback from renderer to React when a cell is tapped/clicked. */
 export type CellSelectCallback = (cellIndex: number) => void;
 
+/** Callback from renderer to React when a cell card is inspected (long-press / right-click). */
+export type CellInspectCallback = (cellIndex: number, screenRect: DOMRect) => void;
+
 /* ═══════════════════════════════════════════════════════════════════════════
    Interface
    ═══════════════════════════════════════════════════════════════════════════ */
@@ -60,6 +63,12 @@ export interface IBattleRenderer {
    * Only one callback is active at a time (last call wins).
    */
   onCellSelect(cb: CellSelectCallback): void;
+
+  /**
+   * Register a callback for cell inspect events (long-press / right-click on card cells).
+   * Provides the cell index and its screen-space bounding rect for positioning UI.
+   */
+  onCellInspect(cb: CellInspectCallback): void;
 
   /**
    * Handle container resize. Called by ResizeObserver.
