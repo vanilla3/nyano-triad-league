@@ -376,6 +376,18 @@ export function computeCellFrame(
     : interpolateFlip(easedT);
 }
 
+/**
+ * Compute normalized animation progress [0, 1] from a record and current time.
+ * Useful for effect layers that should sweep once per event (not per wall-clock).
+ */
+export function animationProgress(record: CellAnimRecord, nowMs: number): number {
+  if (record.durationMs <= 0) return 1;
+  const elapsed = nowMs - record.startMs - record.staggerDelayMs;
+  if (elapsed <= 0) return 0;
+  if (elapsed >= record.durationMs) return 1;
+  return elapsed / record.durationMs;
+}
+
 /* ═══════════════════════════════════════════════════════════════════════════
    Breathe glow (selectable empty cells)
    ═══════════════════════════════════════════════════════════════════════════ */

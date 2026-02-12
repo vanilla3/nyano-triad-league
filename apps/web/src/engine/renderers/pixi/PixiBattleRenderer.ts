@@ -29,6 +29,7 @@ import {
   animDurationsForQuality,
   vfxFeatureFlagsForQuality,
   computeCellFrame,
+  animationProgress,
   computeBreatheFrame,
   type CellAnimRecord,
   type CellAnimFrame,
@@ -115,7 +116,6 @@ const LAYOUT = {
   cardFrameInnerWidth: 1,
   cardFrameCorner: 7,
   foilStripeWidth: 12,
-  foilSweepSpeed: 0.22,
 } as const;
 
 const CELL_COORDS = [
@@ -661,26 +661,32 @@ export class PixiBattleRenderer implements IBattleRenderer {
     frame: CellAnimFrame,
     w: number,
     h: number,
-    nowMs: number,
+    animProgress: number,
   ): void {
     const foil = this.cellFoilOverlays[index];
     if (!foil) return;
 
-    const intensity = Math.max(0, Math.min(1, (frame.brightness - 1) / 0.45));
+    const rawIntensity = Math.max(0, Math.min(1, (frame.brightness - 1) / 0.45));
+    const sweepProgress = Math.max(0, Math.min(1, animProgress));
+    const pulse = Math.sin(Math.PI * sweepProgress);
+    const intensity = rawIntensity * pulse;
     if (intensity < 0.01) {
       foil.visible = false;
       return;
     }
 
     const stripeW = Math.max(LAYOUT.foilStripeWidth, w * 0.14);
-    const sweep = (nowMs * LAYOUT.foilSweepSpeed) % (w + stripeW * 4) - stripeW * 2;
+    const sweepStart = -stripeW * 1.8;
+    const sweepEnd = w + stripeW * 1.2;
+    const sweep = sweepStart + (sweepEnd - sweepStart) * sweepProgress;
+    const counterSweep = w + stripeW - (w + stripeW * 2) * sweepProgress;
 
     foil.clear();
     foil.roundRect(0, 0, w, h, LAYOUT.cardFrameCorner);
     foil.stroke({ color: COLORS.cardGlass, width: 1, alpha: 0.2 * intensity });
     foil.rect(sweep, 0, stripeW, h);
     foil.fill({ color: COLORS.holoA, alpha: 0.16 * intensity });
-    foil.rect(sweep - stripeW * 1.5, 0, stripeW * 0.8, h);
+    foil.rect(counterSweep, 0, stripeW * 0.8, h);
     foil.fill({ color: COLORS.holoB, alpha: 0.1 * intensity });
     foil.visible = true;
   }
@@ -994,7 +1000,8 @@ export class PixiBattleRenderer implements IBattleRenderer {
 
       if (frame) {
         // Animation in progress — apply frame
-        this.applyCellFrame(i, frame, layout, quality, features, nowMs);
+        const progress = animationProgress(record, nowMs);
+        this.applyCellFrame(i, frame, layout, quality, features, progress);
         anyActive = true;
       } else {
         // Animation complete — reset to identity
@@ -1044,7 +1051,7 @@ export class PixiBattleRenderer implements IBattleRenderer {
     layout: CellLayout,
     quality: BattleRendererState["vfxQuality"],
     features: VfxFeatureFlags,
-    nowMs: number,
+    animProgress: number,
   ): void {
     const cc = this.cellContentContainers[i];
     if (!cc) return;
@@ -1066,7 +1073,7 @@ export class PixiBattleRenderer implements IBattleRenderer {
     }
 
     if (features.eventFoilFlash) {
-      this.applyEventFoilFlash(i, frame, layout.w, layout.h, nowMs);
+      this.applyEventFoilFlash(i, frame, layout.w, layout.h, animProgress);
     } else {
       this.cellFoilOverlays[i].visible = false;
     }
