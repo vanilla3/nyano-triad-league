@@ -10,7 +10,6 @@ import {
   BREATHE_CYCLE_MS,
   computeBreatheFrame,
   type CellAnimRecord,
-  type CellAnimFrame,
 } from "../renderers/pixi/cellAnimations";
 
 /* ═══════════════════════════════════════════════════════════════════════════

@@ -325,3 +325,22 @@
 - `pnpm -C apps/web test`
 - `pnpm -C apps/web lint`
 - `pnpm -C apps/web build`
+
+
+## 2026-02-12 — commit-0090: lint warning 0 化（web）
+
+### Why
+- `pnpm -C apps/web lint` に既知 warning が2件残っており、日常の検証でノイズになっていた。
+- warning を放置すると、新規 warning の検知性が落ちるため早めに解消したかった。
+
+### What
+- `apps/web/src/engine/renderers/pixi/cellAnimations.ts`
+  - 未使用引数 `cellH` を `_cellH` に変更（API互換を維持して lint 準拠）。
+- `apps/web/src/engine/__tests__/cellAnimations.test.ts`
+  - 未使用の型 import `CellAnimFrame` を削除。
+
+### Verify
+- `pnpm -C apps/web test`
+- `pnpm -C apps/web lint`
+- `pnpm -C apps/web typecheck`
+- `pnpm -C apps/web build`
