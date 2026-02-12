@@ -58,9 +58,14 @@
   - Home に「はじめての1分スタート」チェックリストと1分ルールモーダルを追加
   - Match のゲスト対戦導線で `start_first_match` / `commit_first_move` を自動更新
   - `onboarding.test.ts` を追加（既定値、永続化、異常値fallback、reset）
+- ✅ Commit0108: /stream モデレーション（NGワード / BAN / slow mode）を実装
+  - `stream_moderation.ts` を追加（判定ロジックを pure function 化）
+  - VoteControlPanel に moderation 設定UI（slow mode秒数 / banned users / blocked words）を追加
+  - 投票受理前に BAN / NGワード / slow mode を適用し、audit に reject 理由を記録
+  - `local_settings` に moderation 永続化キーを追加（roundtrip test 付き）
 ## 🚧 Doing (now)
 
-- 🔧 Phase 4 の運用面（シーズン制UI / モデレーション機能）の最小設計を進める
+- 🔧 Phase 4 の運用面（シーズン制UI / アーカイブ導線）の最小設計を進める
 
 ## 🧩 Next (high priority)
 

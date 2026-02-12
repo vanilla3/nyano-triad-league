@@ -162,7 +162,8 @@
   - [ ] overlay のテーマプリセット（大会/配信者ごとに即切替）
   - [ ] アニメーション・演出（過剰にしない、読みやすさ優先）
 - [Operability]
-  - [ ] モデレーション機能（NGワード、BAN、スローモード連携）
+  - [x] モデレーション機能（NGワード、BAN、スローモード連携）
+    - Sprint 24: Stream vote console に moderation 設定（slow mode / banned users / blocked words）を追加し、投票受理前に判定を適用
 
 ### Phase 5（1〜2年）: “エコシステム化”（外部が作れる）
 - [Extensibility]

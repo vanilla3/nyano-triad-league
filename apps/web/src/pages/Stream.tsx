@@ -10,8 +10,37 @@ import { executeRecovery, recoveryActionLabel } from "@/lib/stream_recovery";
 import { WarudoBridgePanel } from "@/components/stream/WarudoBridgePanel";
 import { VoteControlPanel } from "@/components/stream/VoteControlPanel";
 import { StreamSharePanel } from "@/components/stream/StreamSharePanel";
-import { readBoolSetting, readNumberSetting, readStringSetting, readStreamLock, readStreamLockTimestamp, readAntiSpamRateLimitMs, readAntiSpamMaxVoteChanges, writeBoolSetting, writeNumberSetting, writeStreamLock, writeStreamLockTimestamp, writeAntiSpamRateLimitMs, writeAntiSpamMaxVoteChanges, writeStringSetting } from "@/lib/local_settings";
+import {
+  readBoolSetting,
+  readNumberSetting,
+  readStringSetting,
+  readStreamLock,
+  readStreamLockTimestamp,
+  readAntiSpamRateLimitMs,
+  readAntiSpamMaxVoteChanges,
+  readStreamSlowModeSeconds,
+  readStreamBannedUsersText,
+  readStreamBlockedWordsText,
+  writeBoolSetting,
+  writeNumberSetting,
+  writeStreamLock,
+  writeStreamLockTimestamp,
+  writeAntiSpamRateLimitMs,
+  writeAntiSpamMaxVoteChanges,
+  writeStreamSlowModeSeconds,
+  writeStreamBannedUsersText,
+  writeStreamBlockedWordsText,
+  writeStringSetting,
+} from "@/lib/local_settings";
 import { validateUsername, checkRateLimit, checkVoteChangeLimit, DEFAULT_ANTI_SPAM_CONFIG, type AntiSpamConfig } from "@/lib/anti_spam";
+import {
+  buildStreamModerationConfig,
+  checkSlowMode,
+  findBlockedWord,
+  isUserBanned,
+  parseModerationListText,
+  recordSlowModeAcceptedVote,
+} from "@/lib/stream_moderation";
 import { postNyanoWarudoSnapshot } from "@/lib/nyano_warudo_bridge";
 import { errorMessage } from "@/lib/errorMessage";
 import { writeClipboardText } from "@/lib/clipboard";
@@ -561,10 +590,31 @@ const _remainingWarningMarks = React.useMemo(() => computeWarningMarksRemaining(
 
   // ── Vote audit trail ──
   const [voteAudit, setVoteAudit] = React.useState<{
-    attempts: number; accepted: number; duplicates: number; rateLimited: number; illegal: number; usernameRejected: number; changeExceeded: number;
-  }>({ attempts: 0, accepted: 0, duplicates: 0, rateLimited: 0, illegal: 0, usernameRejected: 0, changeExceeded: 0 });
+    attempts: number;
+    accepted: number;
+    duplicates: number;
+    rateLimited: number;
+    illegal: number;
+    usernameRejected: number;
+    changeExceeded: number;
+    bannedUserRejected: number;
+    blockedWordRejected: number;
+    slowModeRejected: number;
+  }>({
+    attempts: 0,
+    accepted: 0,
+    duplicates: 0,
+    rateLimited: 0,
+    illegal: 0,
+    usernameRejected: 0,
+    changeExceeded: 0,
+    bannedUserRejected: 0,
+    blockedWordRejected: 0,
+    slowModeRejected: 0,
+  });
   const rateLimitMapRef = React.useRef<Map<string, number>>(new Map());
   const voteChangeCountRef = React.useRef<Map<string, number>>(new Map());
+  const slowModeMapRef = React.useRef<Map<string, number>>(new Map());
 
   // ── Anti-spam configuration (persisted) ──
   const [antiSpamRateLimitMs, setAntiSpamRateLimitMs] = React.useState<number>(() => readAntiSpamRateLimitMs());
@@ -575,11 +625,45 @@ const _remainingWarningMarks = React.useMemo(() => computeWarningMarksRemaining(
     maxVoteChangesPerRound: antiSpamMaxVoteChanges,
   }), [antiSpamRateLimitMs, antiSpamMaxVoteChanges]);
 
+  // ── Moderation configuration (persisted) ──
+  const [moderationSlowModeSeconds, setModerationSlowModeSeconds] = React.useState<number>(() =>
+    readStreamSlowModeSeconds(),
+  );
+  const [moderationBannedUsersText, setModerationBannedUsersText] = React.useState<string>(() =>
+    readStreamBannedUsersText(),
+  );
+  const [moderationBlockedWordsText, setModerationBlockedWordsText] = React.useState<string>(() =>
+    readStreamBlockedWordsText(),
+  );
+  const moderationConfig = React.useMemo(
+    () =>
+      buildStreamModerationConfig({
+        slowModeSeconds: moderationSlowModeSeconds,
+        bannedUsersText: moderationBannedUsersText,
+        blockedWordsText: moderationBlockedWordsText,
+      }),
+    [moderationSlowModeSeconds, moderationBannedUsersText, moderationBlockedWordsText],
+  );
+  const moderationBannedUsersCount = React.useMemo(
+    () => parseModerationListText(moderationBannedUsersText).length,
+    [moderationBannedUsersText],
+  );
+  const moderationBlockedWordsCount = React.useMemo(
+    () => parseModerationListText(moderationBlockedWordsText).length,
+    [moderationBlockedWordsText],
+  );
+
   // Persist anti-spam settings (P2-SPAM)
   React.useEffect(() => {
     writeAntiSpamRateLimitMs(antiSpamRateLimitMs);
     writeAntiSpamMaxVoteChanges(antiSpamMaxVoteChanges);
   }, [antiSpamRateLimitMs, antiSpamMaxVoteChanges]);
+
+  React.useEffect(() => {
+    writeStreamSlowModeSeconds(moderationSlowModeSeconds);
+    writeStreamBannedUsersText(moderationBannedUsersText);
+    writeStreamBlockedWordsText(moderationBlockedWordsText);
+  }, [moderationSlowModeSeconds, moderationBannedUsersText, moderationBlockedWordsText]);
 
   // Apply event's voteTimeSeconds as default when event changes (P2-SPAM)
   React.useEffect(() => {
@@ -591,9 +675,21 @@ const _remainingWarningMarks = React.useMemo(() => computeWarningMarksRemaining(
 
   const resetVotes = React.useCallback(() => {
     setVotesByUser({});
-    setVoteAudit({ attempts: 0, accepted: 0, duplicates: 0, rateLimited: 0, illegal: 0, usernameRejected: 0, changeExceeded: 0 });
+    setVoteAudit({
+      attempts: 0,
+      accepted: 0,
+      duplicates: 0,
+      rateLimited: 0,
+      illegal: 0,
+      usernameRejected: 0,
+      changeExceeded: 0,
+      bannedUserRejected: 0,
+      blockedWordRejected: 0,
+      slowModeRejected: 0,
+    });
     rateLimitMapRef.current.clear();
     voteChangeCountRef.current.clear();
+    slowModeMapRef.current.clear();
   }, []);
 
   const startVote = React.useCallback(() => {
@@ -771,6 +867,46 @@ React.useEffect(() => {
     const u = userName.trim() || "viewer";
     const now = Date.now();
 
+    // Moderation: banned user list (Phase 4)
+    if (isUserBanned(u, moderationConfig)) {
+      setVoteAudit((prev) => ({
+        ...prev,
+        attempts: prev.attempts + 1,
+        bannedUserRejected: prev.bannedUserRejected + 1,
+      }));
+      toast.warn("Vote", `Banned user: ${u}`);
+      return;
+    }
+
+    // Moderation: blocked words in raw chat input (Phase 4)
+    const blockedWord = findBlockedWord(chatText, moderationConfig);
+    if (blockedWord) {
+      setVoteAudit((prev) => ({
+        ...prev,
+        attempts: prev.attempts + 1,
+        blockedWordRejected: prev.blockedWordRejected + 1,
+      }));
+      toast.warn("Vote", `Blocked by NG word: "${blockedWord}"`);
+      return;
+    }
+
+    // Moderation: per-user slow mode
+    const slowCheck = checkSlowMode(
+      u,
+      now,
+      slowModeMapRef.current,
+      moderationConfig.slowModeSeconds,
+    );
+    if (!slowCheck.ok) {
+      setVoteAudit((prev) => ({
+        ...prev,
+        attempts: prev.attempts + 1,
+        slowModeRejected: prev.slowModeRejected + 1,
+      }));
+      toast.warn("Vote", `Slow mode: ${u} (wait ${Math.ceil(slowCheck.waitMs / 1000)}s)`);
+      return;
+    }
+
     // Username validation (P2-SPAM)
     const usernameCheck = validateUsername(u, antiSpamConfig);
     if (!usernameCheck.ok && usernameCheck.reason === "invalid_username") {
@@ -818,12 +954,16 @@ React.useEffect(() => {
         illegal: a.illegal,
         usernameRejected: a.usernameRejected,
         changeExceeded: a.changeExceeded,
+        bannedUserRejected: a.bannedUserRejected,
+        blockedWordRejected: a.blockedWordRejected,
+        slowModeRejected: a.slowModeRejected,
       }));
       return { ...prev, [u]: mv };
     });
     rateLimitMapRef.current.set(u, now);
     voteChangeCountRef.current.set(u, (voteChangeCountRef.current.get(u) ?? 0) + 1);
-  }, [chatText, userName, controlledSide, toast, antiSpamConfig, live]);
+    recordSlowModeAcceptedVote(u, now, slowModeMapRef.current);
+  }, [chatText, userName, controlledSide, toast, antiSpamConfig, moderationConfig, live]);
 
   const counts = React.useMemo(() => {
     const entries = Object.values(votesByUser);
@@ -1114,6 +1254,14 @@ return (
                 onChangeAntiSpamRateLimitMs={setAntiSpamRateLimitMs}
                 antiSpamMaxVoteChanges={antiSpamMaxVoteChanges}
                 onChangeAntiSpamMaxVoteChanges={setAntiSpamMaxVoteChanges}
+                moderationSlowModeSeconds={moderationSlowModeSeconds}
+                onChangeModerationSlowModeSeconds={setModerationSlowModeSeconds}
+                moderationBannedUsersText={moderationBannedUsersText}
+                onChangeModerationBannedUsersText={setModerationBannedUsersText}
+                moderationBlockedWordsText={moderationBlockedWordsText}
+                onChangeModerationBlockedWordsText={setModerationBlockedWordsText}
+                moderationBannedUsersCount={moderationBannedUsersCount}
+                moderationBlockedWordsCount={moderationBlockedWordsCount}
               />
             </div>
 

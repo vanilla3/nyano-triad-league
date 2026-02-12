@@ -497,6 +497,43 @@
 - `pnpm -C apps/web test -- src/lib/__tests__/onboarding.test.ts`
   - この実行環境では `vite/vitest` 起動時に `spawn EPERM` が発生し完走不可
 
+## 2026-02-12 - commit-0108: stream moderation controls (NG words / ban / slow mode)
+
+### Why
+- Phase 4 の未完了項目「モデレーション機能（NGワード、BAN、スローモード連携）」が `/stream` に不足していた。
+- 既存 anti-spam（レート制限・投票変更回数）だけでは、配信現場での明示的な除外制御が足りなかった。
+
+### What
+- `apps/web/src/lib/stream_moderation.ts` を新規追加。
+  - BAN 判定、NGワード判定、slow mode 判定を pure function 化。
+  - comma/newline 形式の設定文字列を正規化・重複除去するパーサを追加。
+- `apps/web/src/pages/Stream.tsx`
+  - moderation 設定 state を追加（slow mode 秒数 / banned users / blocked words）。
+  - localStorage 永続化を追加（`stream.moderation.*`）。
+  - `addVoteFromChat` で受理前に moderation 判定を適用:
+    - banned user reject
+    - blocked word reject
+    - slow mode reject
+  - vote audit に `banned/ng-word/slow` の reject カウンタを追加。
+- `apps/web/src/components/stream/VoteControlPanel.tsx`
+  - Moderation UI（slow mode秒数・BAN list・NG words）を追加。
+  - audit 表示に moderation reject 内訳を追加。
+- `apps/web/src/lib/local_settings.ts`
+  - moderation 設定の read/write ヘルパを追加。
+- Tests:
+  - `apps/web/src/lib/__tests__/stream_moderation.test.ts` を追加。
+  - `apps/web/src/lib/__tests__/local_settings.test.ts` に moderation roundtrip を追加。
+- Docs:
+  - `docs/00_handoff/Nyano_Triad_League_LONG_TERM_ROADMAP_v1_ja.md` の Phase 4 moderation 項目を完了に更新。
+  - `docs/99_dev/Nyano_Triad_League_DEV_TODO_v1_ja.md` に Commit0108 を追記。
+
+### Verify
+- `pnpm -C apps/web typecheck`
+- `pnpm -C apps/web lint`
+- `pnpm -C apps/web build`
+- `pnpm -C apps/web test -- src/lib/__tests__/stream_moderation.test.ts src/lib/__tests__/local_settings.test.ts`
+  - この実行環境では `vite/vitest` 起動時に `spawn EPERM` が発生し完走不可
+
 ## 2026-02-12 - commit-0105: permissionless ladder format v1 (record verify + deterministic standings)
 
 ### Why
