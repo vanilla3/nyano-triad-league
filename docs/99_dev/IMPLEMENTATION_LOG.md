@@ -396,3 +396,24 @@
 - `pnpm -C apps/web lint`
 - `pnpm -C apps/web typecheck`
 - `pnpm -C apps/web build`
+
+## 2026-02-12 - commit-0093: first-player seed helper (Wind fairness)
+
+### Why
+- Wind trait fairness options in TODO include commit-reveal / seed / mutual agreement.
+- `first_player.ts` already covered commit-reveal and mutual choice, but seed-based deterministic resolution was missing.
+
+### What
+- `packages/triad-engine/src/first_player.ts`
+  - Added `FirstPlayerSeedV1Input`.
+  - Added `deriveFirstPlayerFromSeedV1(input)`:
+    - `keccak256(abi.encode(matchSalt, seed)) & 1` (Solidity-compatible deterministic rule).
+    - bytes32 validation for both `matchSalt` and `seed`.
+- `packages/triad-engine/test/first_player.test.js`
+  - Added seed flow tests: deterministic output, sensitivity to seed changes, invalid seed throw.
+- `docs/02_protocol/Nyano_Triad_League_RULESET_CONFIG_SPEC_v1_ja.md`
+  - Added `deriveFirstPlayerFromSeedV1` to the Wind fairness helper list.
+
+### Verify
+- `pnpm -C packages/triad-engine test`
+- `pnpm -C packages/triad-engine lint`

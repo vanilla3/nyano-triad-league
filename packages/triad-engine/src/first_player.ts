@@ -37,6 +37,19 @@ export interface FirstPlayerCommitRevealV1Input {
 }
 
 /**
+ * Input for "shared seed decides first player" flow.
+ *
+ * First player is derived as:
+ *   keccak256(abi.encode(matchSalt, seed)) & 1
+ */
+export interface FirstPlayerSeedV1Input {
+  /** Match salt / setup id (bytes32) used as anti-replay domain separator. */
+  matchSalt: `0x${string}`;
+  /** Shared seed (e.g. agreed nonce / randomness beacon output). */
+  seed: `0x${string}`;
+}
+
+/**
  * Input for "commit hash for a reveal secret" flow.
  *
  * Commit hash is deterministic and Solidity-compatible:
@@ -126,6 +139,23 @@ export function deriveFirstPlayerFromCommitRevealV1(input: FirstPlayerCommitReve
   assertBytes32(input.revealB, "revealB");
 
   const encoded = coder.encode(["bytes32", "bytes32", "bytes32"], [input.matchSalt, input.revealA, input.revealB]);
+  const mixed = keccak256(encoded);
+  const bit = Number(BigInt(mixed) & 1n);
+  return bit as PlayerIndex;
+}
+
+/**
+ * Resolve first player from a single shared seed.
+ *
+ * Useful when both players already agreed on one randomness source
+ * (or a trusted randomness output is available) and commit-reveal
+ * is unnecessary for that match setup.
+ */
+export function deriveFirstPlayerFromSeedV1(input: FirstPlayerSeedV1Input): PlayerIndex {
+  assertBytes32(input.matchSalt, "matchSalt");
+  assertBytes32(input.seed, "seed");
+
+  const encoded = coder.encode(["bytes32", "bytes32"], [input.matchSalt, input.seed]);
   const mixed = keccak256(encoded);
   const bit = Number(BigInt(mixed) & 1n);
   return bit as PlayerIndex;

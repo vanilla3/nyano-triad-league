@@ -7,6 +7,7 @@ import {
   buildFirstPlayerRevealCommitV1,
   verifyFirstPlayerRevealCommitV1,
   deriveFirstPlayerFromCommitRevealV1,
+  deriveFirstPlayerFromSeedV1,
   resolveFirstPlayerByMutualChoiceV1,
 } from "../dist/index.js";
 
@@ -69,6 +70,43 @@ test("commit-reveal first-player: deterministic and sensitive to reveals", () =>
     }
   }
   assert.equal(changed, true, "at least one alternate reveal should change the outcome");
+});
+
+test("seed-based first-player: deterministic and sensitive to seed", () => {
+  const matchSalt = "0x1111111111111111111111111111111111111111111111111111111111111111";
+  const base = deriveFirstPlayerFromSeedV1({
+    matchSalt,
+    seed: "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  });
+
+  assert.ok(base === 0 || base === 1, "firstPlayer must be 0 or 1");
+  assert.equal(
+    base,
+    deriveFirstPlayerFromSeedV1({
+      matchSalt,
+      seed: "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    }),
+  );
+
+  let changed = false;
+  for (let i = 1; i <= 16; i++) {
+    const seed = `0x${i.toString(16).padStart(64, "0")}`;
+    const v = deriveFirstPlayerFromSeedV1({ matchSalt, seed });
+    if (v !== base) {
+      changed = true;
+      break;
+    }
+  }
+  assert.equal(changed, true, "at least one alternate seed should change the outcome");
+});
+
+test("seed-based first-player: invalid seed throws", () => {
+  assert.throws(() =>
+    deriveFirstPlayerFromSeedV1({
+      matchSalt: "0x1111111111111111111111111111111111111111111111111111111111111111",
+      seed: "0x1234",
+    }),
+  );
 });
 
 test("reveal-commit: build + verify", () => {
