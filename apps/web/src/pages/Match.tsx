@@ -1855,6 +1855,8 @@ export function MatchPage() {
                         selectableCells={selectableCells}
                         onCellSelect={(cell) => { telemetry.recordInteraction(); handleCellSelect(cell); }}
                         currentPlayer={currentPlayer}
+                        placedCell={boardAnim.placedCell}
+                        flippedCells={boardAnim.flippedCells}
                       />
                     </DuelStageMint>
                   ) : isRpg ? (
