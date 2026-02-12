@@ -199,7 +199,7 @@ function parseBool01(v: string | null, defaultValue: boolean): boolean {
 }
 
 /** Lazy QR code for share URL — avoids computing gzip in render */
-function ShareQrCode({ sim, event }: { sim: SimState; event: EventV1 | null }) {
+function ShareQrCode({ sim, event, ui }: { sim: SimState; event: EventV1 | null; ui?: string }) {
   const [url, setUrl] = React.useState<string | null>(null);
   React.useEffect(() => {
     if (!sim.ok) return;
@@ -210,10 +210,11 @@ function ShareQrCode({ sim, event }: { sim: SimState; event: EventV1 | null }) {
         data: z ? { key: "z", value: z } : { key: "t", value: base64UrlEncodeUtf8(json) },
         step: 9,
         eventId: event?.id,
+        ui,
         absolute: true,
       })
     );
-  }, [sim, event]);
+  }, [sim, event, ui]);
 
   if (!url) return <div className="text-xs text-slate-400">Generating...</div>;
   return <QrCode value={url} size={160} />;
@@ -2479,7 +2480,7 @@ export function MatchPage() {
                         <details className="text-xs">
                           <summary className="cursor-pointer text-sky-600 hover:text-sky-700 font-medium">QR Code</summary>
                           <div className="mt-2 flex justify-center">
-                            <ShareQrCode sim={sim} event={event} />
+                            <ShareQrCode sim={sim} event={event} ui={uiParam} />
                           </div>
                         </details>
                       )}
