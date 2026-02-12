@@ -33,6 +33,21 @@ describe("getAppBasePath", () => {
     import.meta.env.BASE_URL = "";
     expect(getAppBasePath()).toBe("/");
   });
+
+  it("normalizes bare segment BASE_URL to rooted subpath", () => {
+    import.meta.env.BASE_URL = "nyano-triad-league";
+    expect(getAppBasePath()).toBe("/nyano-triad-league/");
+  });
+
+  it("uses pathname from absolute BASE_URL", () => {
+    import.meta.env.BASE_URL = "https://cdn.example.com/nyano-triad-league/?v=1#hash";
+    expect(getAppBasePath()).toBe("/nyano-triad-league/");
+  });
+
+  it("treats ./ BASE_URL as root", () => {
+    import.meta.env.BASE_URL = "./";
+    expect(getAppBasePath()).toBe("/");
+  });
 });
 
 describe("appPath", () => {

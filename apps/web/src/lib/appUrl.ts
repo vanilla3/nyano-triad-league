@@ -11,13 +11,29 @@
  * Get the app base path from Vite's BASE_URL.
  * Always includes trailing slash.
  */
+function normalizeBasePath(base: string): string {
+  const trimmed = base.trim();
+  if (!trimmed || trimmed === "/" || trimmed === "./") return "/";
+
+  try {
+    const parsed = new URL(trimmed, "https://example.invalid");
+    let path = parsed.pathname || "/";
+    if (!path.startsWith("/")) path = `/${path}`;
+    if (!path.endsWith("/")) path = `${path}/`;
+    return path;
+  } catch {
+    const bare = trimmed.replace(/^\/+/, "").replace(/\/+$/, "");
+    return bare ? `/${bare}/` : "/";
+  }
+}
+
 export function getAppBasePath(): string {
   const base =
     typeof import.meta !== "undefined"
       ? (import.meta.env?.BASE_URL as string | undefined)
       : undefined;
-  if (!base || base === "/") return "/";
-  return base.endsWith("/") ? base : `${base}/`;
+  if (typeof base !== "string") return "/";
+  return normalizeBasePath(base);
 }
 
 /**
