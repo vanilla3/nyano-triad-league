@@ -53,7 +53,7 @@ import { readUiDensity, writeUiDensity, type UiDensity } from "@/lib/local_setti
 import type { FlipTraceArrow } from "@/components/FlipArrowOverlay";
 import { MatchDrawerMint, DrawerToggleButton } from "@/components/MatchDrawerMint";
 import { writeClipboardText } from "@/lib/clipboard";
-import { appAbsoluteUrl } from "@/lib/appUrl";
+import { buildReplayShareUrl } from "@/lib/appUrl";
 import { BattleStageEngine } from "@/engine/components/BattleStageEngine";
 import { MAX_CHAIN_CAP_PER_TURN, parseChainCapPerTurnParam } from "@/lib/ruleset_meta";
 import {
@@ -201,9 +201,14 @@ function ShareQrCode({ sim, event }: { sim: SimState; event: EventV1 | null }) {
     if (!sim.ok) return;
     const json = stringifyWithBigInt(sim.transcript, 0);
     const z = tryGzipCompressUtf8ToBase64Url(json);
-    const origin = window.location.origin;
-    const qp = `&step=9${event ? `&event=${encodeURIComponent(event.id)}` : ""}`;
-    setUrl(z ? `${origin}/replay?z=${z}${qp}` : `${origin}/replay?t=${base64UrlEncodeUtf8(json)}${qp}`);
+    setUrl(
+      buildReplayShareUrl({
+        data: z ? { key: "z", value: z } : { key: "t", value: base64UrlEncodeUtf8(json) },
+        step: 9,
+        eventId: event?.id,
+        absolute: true,
+      })
+    );
   }, [sim, event]);
 
   if (!url) return <div className="text-xs text-slate-400">Generating...</div>;
@@ -1180,9 +1185,22 @@ export function MatchPage() {
       ? stringifyReplayBundle(buildReplayBundleV2(sim.transcript, cards))
       : stringifyWithBigInt(sim.transcript, 0);
     const z = tryGzipCompressUtf8ToBase64Url(json);
-    const qp = `&step=9${event ? `&event=${encodeURIComponent(event.id)}` : ""}`;
-    const replayPath = z ? `replay?z=${z}${qp}` : `replay?t=${base64UrlEncodeUtf8(json)}${qp}`;
-    return absolute ? appAbsoluteUrl(replayPath) : `/replay?${z ? `z=${z}` : `t=${base64UrlEncodeUtf8(json)}`}${qp}`;
+    const data: { key: "z" | "t"; value: string } =
+      z ? { key: "z", value: z } : { key: "t", value: base64UrlEncodeUtf8(json) };
+    if (absolute) {
+      return buildReplayShareUrl({
+        data,
+        step: 9,
+        eventId: event?.id,
+        absolute: true,
+      });
+    }
+
+    const params = new URLSearchParams();
+    params.set(data.key, data.value);
+    params.set("step", "9");
+    if (event?.id) params.set("event", event.id);
+    return `/replay?${params.toString()}`;
   }, [sim, event, cards]);
 
   const copyShareUrl = async () => {

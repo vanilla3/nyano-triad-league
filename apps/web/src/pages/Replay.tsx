@@ -39,7 +39,7 @@ import { annotateReplayMoves } from "@/lib/ai/replay_annotations";
 import { assessBoardAdvantage, type BoardAdvantage } from "@/lib/ai/board_advantage";
 import { AdvantageBadge } from "@/components/AdvantageBadge";
 import { writeClipboardText } from "@/lib/clipboard";
-import { appAbsoluteUrl } from "@/lib/appUrl";
+import { buildReplayShareUrl } from "@/lib/appUrl";
 import {
   detectReplayHighlights,
   formatReplayWinnerLabel,
@@ -662,23 +662,17 @@ protocolV1: {
 
   
   const buildCanonicalReplayLink = (): string => {
-    const trimmed = text.trim();
+    const trimmed = text.trim() || (sim.ok ? stringifyWithBigInt(sim.transcript) : "");
     if (!trimmed) throw new Error("transcript JSON is empty");
 
-    const origin = window.location.origin;
-    const url = new URL(`${origin}/replay`);
-
-    url.searchParams.delete("t");
-    url.searchParams.delete("z");
-
     const z = tryGzipCompressUtf8ToBase64Url(trimmed);
-    if (z) url.searchParams.set("z", z);
-    else url.searchParams.set("t", base64UrlEncodeUtf8(trimmed));
-
-    if (eventId) url.searchParams.set("event", eventId);
-    url.searchParams.set("mode", "auto");
-    url.searchParams.set("step", "9");
-    return url.toString();
+    return buildReplayShareUrl({
+      data: z ? { key: "z", value: z } : { key: "t", value: base64UrlEncodeUtf8(trimmed) },
+      eventId: eventId || undefined,
+      mode: "auto",
+      step: 9,
+      absolute: true,
+    });
   };
 
   const saveToMyAttempts = async () => {
@@ -712,10 +706,13 @@ protocolV1: {
     const trimmed = text.trim() || (sim.ok ? stringifyWithBigInt(sim.transcript) : "");
     if (!trimmed) throw new Error("transcript JSON is empty - paste a transcript or load a share link first");
 
-    // Build share URL using appAbsoluteUrl to respect BASE_URL for subpath deployments.
     const z = tryGzipCompressUtf8ToBase64Url(trimmed);
-    const dataParam = z ? `z=${z}` : `t=${base64UrlEncodeUtf8(trimmed)}`;
-    return appAbsoluteUrl(`replay?${dataParam}&mode=${mode}&step=${step}`);
+    return buildReplayShareUrl({
+      data: z ? { key: "z", value: z } : { key: "t", value: base64UrlEncodeUtf8(trimmed) },
+      mode,
+      step,
+      absolute: true,
+    });
   };
 
   return (
