@@ -1,10 +1,7 @@
 import {
   buildFirstPlayerChoiceCommitV1,
   buildFirstPlayerRevealCommitV1,
-  deriveFirstPlayerFromCommitRevealV1,
-  deriveFirstPlayerFromSeedV1,
-  resolveFirstPlayerFromCommittedMutualChoiceV1,
-  resolveFirstPlayerByMutualChoiceV1,
+  resolveFirstPlayerV1,
   verifyFirstPlayerRevealCommitV1,
   type PlayerIndex,
 } from "@nyano/triad-engine";
@@ -103,7 +100,11 @@ export function resolveFirstPlayer(input: ResolveFirstPlayerInput): FirstPlayerR
 
   if (input.mode === "mutual") {
     try {
-      const fp = resolveFirstPlayerByMutualChoiceV1(input.mutualChoiceA, input.mutualChoiceB);
+      const fp = resolveFirstPlayerV1({
+        mode: "mutual_choice",
+        choiceA: input.mutualChoiceA,
+        choiceB: input.mutualChoiceB,
+      });
       return { firstPlayer: fp, valid: true, mode: "mutual" };
     } catch {
       return {
@@ -144,7 +145,8 @@ export function resolveFirstPlayer(input: ResolveFirstPlayerInput): FirstPlayerR
       };
     }
 
-    const fp = deriveFirstPlayerFromSeedV1({
+    const fp = resolveFirstPlayerV1({
+      mode: "seed",
       matchSalt: sr.matchSalt,
       seed: sr.seed,
     });
@@ -199,7 +201,8 @@ export function resolveFirstPlayer(input: ResolveFirstPlayerInput): FirstPlayerR
     }
 
     try {
-      const fp = resolveFirstPlayerFromCommittedMutualChoiceV1({
+      const fp = resolveFirstPlayerV1({
+        mode: "committed_mutual_choice",
         commitA,
         commitB,
         revealA: {
@@ -263,7 +266,17 @@ export function resolveFirstPlayer(input: ResolveFirstPlayerInput): FirstPlayerR
   }
 
   const commitA = cr.commitA?.trim() ?? "";
-  if (commitA.length > 0) {
+  const commitB = cr.commitB?.trim() ?? "";
+  if (commitA.length > 0 || commitB.length > 0) {
+    if (commitA.length === 0 || commitB.length === 0) {
+      return {
+        firstPlayer: input.manualFirstPlayer,
+        valid: false,
+        mode: "commit_reveal",
+        error: "Commit A and Commit B must be provided together.",
+      };
+    }
+
     if (!isBytes32Hex(commitA)) {
       return {
         firstPlayer: input.manualFirstPlayer,
@@ -272,22 +285,6 @@ export function resolveFirstPlayer(input: ResolveFirstPlayerInput): FirstPlayerR
         error: "Commit A must be bytes32 hex.",
       };
     }
-    const ok = verifyFirstPlayerRevealCommitV1(commitA, {
-      matchSalt: cr.matchSalt,
-      reveal: cr.revealA,
-    });
-    if (!ok) {
-      return {
-        firstPlayer: input.manualFirstPlayer,
-        valid: false,
-        mode: "commit_reveal",
-        error: "Commit A does not match Reveal A.",
-      };
-    }
-  }
-
-  const commitB = cr.commitB?.trim() ?? "";
-  if (commitB.length > 0) {
     if (!isBytes32Hex(commitB)) {
       return {
         firstPlayer: input.manualFirstPlayer,
@@ -296,11 +293,23 @@ export function resolveFirstPlayer(input: ResolveFirstPlayerInput): FirstPlayerR
         error: "Commit B must be bytes32 hex.",
       };
     }
-    const ok = verifyFirstPlayerRevealCommitV1(commitB, {
+    const okA = verifyFirstPlayerRevealCommitV1(commitA, {
+      matchSalt: cr.matchSalt,
+      reveal: cr.revealA,
+    });
+    if (!okA) {
+      return {
+        firstPlayer: input.manualFirstPlayer,
+        valid: false,
+        mode: "commit_reveal",
+        error: "Commit A does not match Reveal A.",
+      };
+    }
+    const okB = verifyFirstPlayerRevealCommitV1(commitB, {
       matchSalt: cr.matchSalt,
       reveal: cr.revealB,
     });
-    if (!ok) {
+    if (!okB) {
       return {
         firstPlayer: input.manualFirstPlayer,
         valid: false,
@@ -310,10 +319,20 @@ export function resolveFirstPlayer(input: ResolveFirstPlayerInput): FirstPlayerR
     }
   }
 
-  const fp = deriveFirstPlayerFromCommitRevealV1({
+  const commitPair =
+    commitA.length > 0 && commitB.length > 0
+      ? {
+          commitA: commitA as `0x${string}`,
+          commitB: commitB as `0x${string}`,
+        }
+      : undefined;
+
+  const fp = resolveFirstPlayerV1({
+    mode: "commit_reveal",
     matchSalt: cr.matchSalt,
     revealA: cr.revealA,
     revealB: cr.revealB,
+    ...(commitPair ?? {}),
   });
   return { firstPlayer: fp, valid: true, mode: "commit_reveal" };
 }

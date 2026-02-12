@@ -347,6 +347,7 @@ describe("resolveFirstPlayer", () => {
 
   it("commit_reveal mode rejects mismatched reveal commit", () => {
     const badCommitA = buildFirstPlayerRevealCommitV1({ matchSalt: bytes32A, reveal: bytes32C });
+    const commitB = buildFirstPlayerRevealCommitV1({ matchSalt: bytes32A, reveal: bytes32C });
 
     const r = resolveFirstPlayer({
       mode: "commit_reveal",
@@ -358,6 +359,7 @@ describe("resolveFirstPlayer", () => {
         revealA: bytes32B,
         revealB: bytes32C,
         commitA: badCommitA,
+        commitB,
       },
       seedResolution: {
         matchSalt: bytes32A,
@@ -368,5 +370,30 @@ describe("resolveFirstPlayer", () => {
     expect(r.valid).toBe(false);
     expect(r.firstPlayer).toBe(1);
     expect(r.error).toContain("does not match");
+  });
+
+  it("commit_reveal mode rejects one-sided commit input", () => {
+    const commitA = buildFirstPlayerRevealCommitV1({ matchSalt: bytes32A, reveal: bytes32B });
+
+    const r = resolveFirstPlayer({
+      mode: "commit_reveal",
+      manualFirstPlayer: 1,
+      mutualChoiceA: 0,
+      mutualChoiceB: 0,
+      commitReveal: {
+        matchSalt: bytes32A,
+        revealA: bytes32B,
+        revealB: bytes32C,
+        commitA,
+      },
+      seedResolution: {
+        matchSalt: bytes32A,
+        seed: bytes32B,
+      },
+    });
+
+    expect(r.valid).toBe(false);
+    expect(r.firstPlayer).toBe(1);
+    expect(r.error).toContain("provided together");
   });
 });

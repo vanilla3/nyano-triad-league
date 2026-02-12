@@ -546,3 +546,30 @@
 - `pnpm -C apps/web typecheck`
 - `pnpm -C apps/web lint`
 - `pnpm -C apps/web test -- src/lib/__tests__/first_player_resolve.test.ts`
+
+## 2026-02-12 - commit-0098: web first-player resolver now delegates to engine unified API
+
+### Why
+- web 側 `first_player_resolve` が engine の判定ロジックを部分的に再実装しており、将来モード追加時に乖離リスクがあった。
+- `commit_reveal` で片側commitだけを受け入れる余地が残っていたため、engine側ポリシーと揃える必要があった。
+
+### What
+- `apps/web/src/lib/first_player_resolve.ts`
+  - `resolveFirstPlayerV1(...)` を利用する形に統一:
+    - `mutual` → `mode: "mutual_choice"`
+    - `seed` → `mode: "seed"`
+    - `committed_mutual_choice` → `mode: "committed_mutual_choice"`
+    - `commit_reveal` → `mode: "commit_reveal"`
+  - `commit_reveal` のcommit入力を厳密化:
+    - commitA/commitB どちらか片方のみはエラー。
+    - 両方入力時のみ engine resolver へ commit pair を渡す。
+  - 既存の UI 向けエラーハンドリング（manual fallback + error文字列）は維持。
+- `apps/web/src/lib/__tests__/first_player_resolve.test.ts`
+  - `commit_reveal` の不一致テストを「両側commit入力あり」の形に更新。
+  - 片側commit入力を明示的に reject するテストを追加。
+
+### Verify
+- `pnpm -C apps/web typecheck`
+- `pnpm -C apps/web lint`
+- `pnpm -C apps/web test -- src/lib/__tests__/first_player_resolve.test.ts`
+- `pnpm -C apps/web build`
