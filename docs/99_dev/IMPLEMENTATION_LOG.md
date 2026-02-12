@@ -236,3 +236,340 @@
 
 ### Verify
 - `pnpm build:web` 成功
+
+
+## 2026-02-12 — commit-0086: Quick Play 導線テレメトリ追加（Home→初手配置）
+
+### Why
+- UX スコアカード B-1「Home から試合開始まで10秒以内」が未計測で、改善のループを回しにくかった。
+- 既存の `first_place_ms` は Match ページ起点のため、Home CTA からの体験時間を直接評価できなかった。
+
+### What
+- `telemetry.ts` に `quickplay_to_first_place_ms` を追加（Session + Cumulative 平均）。
+- Home の「🎮 すぐ遊ぶ」押下時に `markQuickPlayStart()` を記録し、Match 側の初回配置で消費して計測するようにした。
+- Home > Settings の UX Telemetry パネルに `Avg quick-play to first place` を表示追加。
+- テスト追加：
+  - Home マーカーありで計測されること
+  - マーカーが1回で消費されること
+- ドキュメント更新：
+  - `UX_SCORECARD` の B-1 を「計測可能」に更新
+  - テレメトリ一覧へ `quickplay_to_first_place_ms` を追加
+
+### Verify
+- `pnpm -C apps/web test`
+- `pnpm -C apps/web build`
+
+
+## 2026-02-12 — commit-0087: Home LCP ローカル計測追加（G-3）
+
+### Why
+- UX スコアカード G-3（LCP < 2.5s）が未計測で、改善前後の比較ができなかった。
+- 既存の Home Settings テレメトリに、パフォーマンスの中核指標を同じ導線で表示したかった。
+
+### What
+- `telemetry.ts` の cumulative stats に `avg_home_lcp_ms` を追加。
+- `recordHomeLcpMs()` を追加し、Home ページの LCP をローカル集計できるようにした。
+- Home で `PerformanceObserver`（`largest-contentful-paint`）を監視し、`visibilitychange/pagehide` か 6 秒フォールバックで記録。
+- Home > Settings のメトリクスに `Avg Home LCP` を追加。
+- テスト追加：
+  - Home LCP 平均の計算
+  - 不正値（NaN / 負数 / Infinity）を無視する挙動
+- `UX_SCORECARD` を更新し、G-3 を「計測可能」に変更。
+
+### Verify
+- `pnpm -C apps/web test`
+- `pnpm -C apps/web lint`
+- `pnpm -C apps/web build`
+
+
+## 2026-02-12 — commit-0088: UX目標スナップショット表示 + quick-play計測の堅牢化
+
+### Why
+- テレメトリ値が増えてきたため、配信前チェックで「目標を満たしているか」を即判定できる表示が必要だった。
+- `quickplay_to_first_place_ms` は古い開始時刻が残ると外れ値になり得るため、異常値ガードを入れて誤判定を防ぎたかった。
+
+### What
+- `telemetry.ts` に `evaluateUxTargets(stats)` を追加し、A-1/B-1/B-4/G-3 の PASS/FAIL/INSUFFICIENT を算出可能にした。
+- Home > Settings に `UX Target Snapshot` を追加し、上記4項目を目標値と現在値つきで可視化。
+- quick-play 計測に上限（10分）を追加し、古い開始時刻による外れ値を無視するようにした。
+- テスト追加：
+  - stale quick-play marker を無視すること
+  - `evaluateUxTargets` の insufficient 判定
+  - pass/fail 混在ケースの判定
+
+### Verify
+- `pnpm -C apps/web test`
+- `pnpm -C apps/web lint`
+- `pnpm -C apps/web build`
+
+
+## 2026-02-12 — commit-0089: UX計測ログのコピー導線 + Playtest Log テンプレ
+
+### Why
+- 計測値が見えるようになった一方で、`UX_SCORECARD` 運用の記録転記が手作業で、継続しにくかった。
+- 配信前/改修後に同じフォーマットで比較できるログ出力を、UIから1クリックで取得したかった。
+
+### What
+- `telemetry.ts` に以下を追加：
+  - `buildUxTelemetrySnapshot(stats)`（timestamp + stats + target checks）
+  - `formatUxTelemetrySnapshotMarkdown(snapshot)`（`PLAYTEST_LOG.md` 貼り付け形式）
+- Home Settings の `UX Telemetry` に `Copy Snapshot` ボタンを追加。
+  - クリックで markdown をクリップボードにコピーし、`docs/ux/PLAYTEST_LOG.md` への貼り付けを案内。
+- `docs/ux/PLAYTEST_LOG.md` を新規作成し、記録テンプレを追加。
+- `UX_SCORECARD` の記録先表記をテンプレ作成済み状態へ更新。
+- テスト追加：
+  - snapshot 生成の timestamp/shape
+  - markdown 整形内容
+
+### Verify
+- `pnpm -C apps/web test`
+- `pnpm -C apps/web lint`
+- `pnpm -C apps/web build`
+
+
+## 2026-02-12 — commit-0090: lint warning 0 化（web）
+
+### Why
+- `pnpm -C apps/web lint` に既知 warning が2件残っており、日常の検証でノイズになっていた。
+- warning を放置すると、新規 warning の検知性が落ちるため早めに解消したかった。
+
+### What
+- `apps/web/src/engine/renderers/pixi/cellAnimations.ts`
+  - 未使用引数 `cellH` を `_cellH` に変更（API互換を維持して lint 準拠）。
+- `apps/web/src/engine/__tests__/cellAnimations.test.ts`
+  - 未使用の型 import `CellAnimFrame` を削除。
+
+### Verify
+- `pnpm -C apps/web test`
+- `pnpm -C apps/web lint`
+- `pnpm -C apps/web typecheck`
+- `pnpm -C apps/web build`
+
+
+## 2026-02-12 — commit-0091: UX snapshot に環境コンテキストを追加
+
+### Why
+- 同じ指標でも端末や表示サイズで体験値が変わるため、snapshot比較時に実行環境を残す必要があった。
+- `PLAYTEST_LOG.md` に貼る情報を増やし、後から「なぜ差が出たか」を追跡しやすくしたかった。
+
+### What
+- `telemetry.ts` に `UxTelemetryContext` を追加し、snapshotへ `context` を含められるようにした。
+- `formatUxTelemetrySnapshotMarkdown()` を拡張し、`route / viewport / language / userAgent` を出力するようにした。
+- Home の `Copy Snapshot` でブラウザ情報を収集して snapshot に埋め込むようにした。
+- `PLAYTEST_LOG.md` のテンプレに context 例を追記。
+- テスト追加：
+  - context あり snapshot 生成
+  - markdown の context 出力
+- e2e `home.spec.ts` を更新し、Settings 内の `Copy Snapshot` / `UX Target Snapshot` 表示を検証対象に追加。
+
+### Verify
+- `pnpm -C apps/web test`
+- `pnpm -C apps/web lint`
+- `pnpm -C apps/web typecheck`
+- `pnpm -C apps/web build`
+
+## 2026-02-12 - commit-0092: UX snapshot local history + Home visibility
+
+### Why
+- Snapshot copy alone was one-shot; if clipboard fails or user forgets to paste, telemetry evidence is lost.
+- Home Settings needed a quick local view of recent UX snapshot quality without opening external docs.
+
+### What
+- `apps/web/src/lib/telemetry.ts`
+  - Added local snapshot history storage (`saveUxTelemetrySnapshot`, `readUxTelemetrySnapshotHistory`, `clearUxTelemetrySnapshotHistory`).
+  - Added safe parser for stored history to ignore broken/invalid localStorage payloads.
+  - Added fixed retention (`MAX_UX_SNAPSHOT_HISTORY = 20`).
+- `apps/web/src/pages/Home.tsx`
+  - `Copy Snapshot` now saves snapshot locally before clipboard write.
+  - Added `Recent Snapshots (Local)` panel (latest 5, PASS/FAIL/N/A summary, route/viewport context).
+  - Added `Clear History` action.
+  - Copy failure toast now mentions snapshot was still saved locally.
+- `apps/web/src/lib/__tests__/telemetry.test.ts`
+  - Added tests for history read/write ordering, retention limit, invalid payload handling, and clear behavior.
+- `apps/web/e2e/home.spec.ts`
+  - Added visibility assertion for `Recent Snapshots (Local)` in Settings.
+- `docs/ux/PLAYTEST_LOG.md`
+  - Added note about local snapshot history behavior.
+
+### Verify
+- `pnpm -C apps/web test`
+- `pnpm -C apps/web lint`
+- `pnpm -C apps/web typecheck`
+- `pnpm -C apps/web build`
+
+## 2026-02-12 - commit-0093: first-player seed helper (Wind fairness)
+
+### Why
+- Wind trait fairness options in TODO include commit-reveal / seed / mutual agreement.
+- `first_player.ts` already covered commit-reveal and mutual choice, but seed-based deterministic resolution was missing.
+
+### What
+- `packages/triad-engine/src/first_player.ts`
+  - Added `FirstPlayerSeedV1Input`.
+  - Added `deriveFirstPlayerFromSeedV1(input)`:
+    - `keccak256(abi.encode(matchSalt, seed)) & 1` (Solidity-compatible deterministic rule).
+    - bytes32 validation for both `matchSalt` and `seed`.
+- `packages/triad-engine/test/first_player.test.js`
+  - Added seed flow tests: deterministic output, sensitivity to seed changes, invalid seed throw.
+- `docs/02_protocol/Nyano_Triad_League_RULESET_CONFIG_SPEC_v1_ja.md`
+  - Added `deriveFirstPlayerFromSeedV1` to the Wind fairness helper list.
+
+### Verify
+- `pnpm -C packages/triad-engine test`
+- `pnpm -C packages/triad-engine lint`
+
+## 2026-02-12 - commit-0094: commit-reveal resolver helper hardening
+
+### Why
+- Integrators had to call verify + derive separately for commit-reveal flow.
+- That split made it easy to forget commit verification or pass one-sided commit data.
+
+### What
+- `packages/triad-engine/src/first_player.ts`
+  - Added `FirstPlayerCommitRevealResolutionV1Input` with optional `commitA/commitB`.
+  - Added `resolveFirstPlayerFromCommitRevealV1(input)`:
+    - requires commit pair when verification is used,
+    - verifies both commits against reveals,
+    - then derives first player deterministically.
+- `packages/triad-engine/test/first_player.test.js`
+  - Added tests for:
+    - successful commit verification path,
+    - commit mismatch failure,
+    - one-sided commit input failure.
+- `docs/02_protocol/Nyano_Triad_League_RULESET_CONFIG_SPEC_v1_ja.md`
+  - Added `resolveFirstPlayerFromCommitRevealV1` to helper list.
+
+### Verify
+- `pnpm -C packages/triad-engine lint`
+- `pnpm -C packages/triad-engine test`
+
+## 2026-02-12 - commit-0095: unified first-player resolver API
+
+### Why
+- Consumers still had to choose and call different low-level helpers per mode.
+- That made integration code verbose and increased branch-specific mistakes.
+
+### What
+- `packages/triad-engine/src/first_player.ts`
+  - Added `FirstPlayerResolutionMethodV1` discriminated union:
+    - `mutual_choice`
+    - `seed`
+    - `commit_reveal`
+  - Added `resolveFirstPlayerV1(input)` as unified resolver entrypoint.
+- `packages/triad-engine/test/first_player.test.js`
+  - Added mode-specific tests for `resolveFirstPlayerV1`.
+  - Added unsupported mode guard test.
+- `docs/02_protocol/Nyano_Triad_League_RULESET_CONFIG_SPEC_v1_ja.md`
+  - Added `resolveFirstPlayerV1` to helper list.
+
+### Verify
+- `pnpm -C packages/triad-engine lint`
+- `pnpm -C packages/triad-engine test`
+
+## 2026-02-12 - commit-0096: first-player flow adoption (committed mutual + web seed mode)
+
+### Why
+- `resolveFirstPlayerV1` を導入した後も、両者合意フローの「commit検証付き」導線が不足していた。
+- web 側の first-player UI は `manual / mutual / commit_reveal` の3モードのみで、seed フローを直接検証できなかった。
+
+### What
+- `packages/triad-engine/src/first_player.ts`
+  - Added `FirstPlayerCommittedMutualChoiceV1Input`.
+  - Added `resolveFirstPlayerFromCommittedMutualChoiceV1(input)`:
+    - verifies both player commits against reveals,
+    - requires same `matchSalt`,
+    - requires distinct player addresses,
+    - resolves via mutual choice agreement.
+  - Extended `FirstPlayerResolutionMethodV1` and `resolveFirstPlayerV1(input)` with `committed_mutual_choice`.
+- `packages/triad-engine/test/first_player.test.js`
+  - Added tests for committed mutual choice happy path and failure paths:
+    - commit mismatch,
+    - matchSalt mismatch,
+    - same-player reject.
+  - Added `resolveFirstPlayerV1` mode test for `committed_mutual_choice`.
+- `apps/web/src/lib/first_player_resolve.ts`
+  - Added `seed` to `FirstPlayerResolutionMode`.
+  - Added `seedResolution` input and seed-mode validation/derivation via `deriveFirstPlayerFromSeedV1`.
+- `apps/web/src/lib/__tests__/first_player_resolve.test.ts`
+  - Added mode parse test for `seed`.
+  - Added deterministic seed-mode test and invalid-seed fallback test.
+- `apps/web/src/pages/Match.tsx`
+  - Added `Seed` option to first-player mode select.
+  - Added seed-mode inputs (`fps` + `fpsd`) and randomize action.
+  - Wired seed inputs into `resolveFirstPlayer(...)`.
+- `docs/02_protocol/Nyano_Triad_League_RULESET_CONFIG_SPEC_v1_ja.md`
+  - Updated Wind fairness helper list:
+    - added `resolveFirstPlayerFromCommittedMutualChoiceV1`,
+    - clarified fairness modes include `seed`.
+
+### Verify
+- `pnpm -C packages/triad-engine lint`
+- `pnpm -C packages/triad-engine test`
+- `pnpm -C apps/web typecheck`
+- `pnpm -C apps/web test -- src/lib/__tests__/first_player_resolve.test.ts`
+
+## 2026-02-12 - commit-0097: web first-player resolver adds committed mutual-choice mode
+
+### Why
+- Engine側で `committed_mutual_choice` を追加済みだったが、web Match UI からは選択・検証できなかった。
+- 「公平な先攻決定（commit付き両者合意）」を実運用で試すには、URLパラメータとUIの両方で再現可能にする必要があった。
+
+### What
+- `apps/web/src/lib/first_player_resolve.ts`
+  - Added `FirstPlayerResolutionMode` value: `committed_mutual_choice`.
+  - Added parser support for `committed_mutual_choice`.
+  - Added `deriveChoiceCommitHex(...)` helper for choice-commit derivation.
+  - Added `committedMutualChoice` input block to resolver input.
+  - Added committed mutual-choice resolve path:
+    - validates bytes32 fields and required commits,
+    - calls `resolveFirstPlayerFromCommittedMutualChoiceV1(...)`,
+    - returns fallback/manual on validation or resolver error.
+- `apps/web/src/pages/Match.tsx`
+  - Added first-player mode option: `Committed mutual choice`.
+  - Added URL params for committed mutual flow:
+    - `fpoa`, `fpob` (player addresses)
+    - `fpna`, `fpnb` (nonces)
+    - `fcoa`, `fcob` (commits)
+    - reuses `fps` (matchSalt), `fpa`/`fpb` (choices)
+  - Added UI inputs and actions:
+    - randomize matchSalt/nonces,
+    - derive commits from reveal tuple via `deriveChoiceCommitHex(...)`.
+- `apps/web/src/lib/__tests__/first_player_resolve.test.ts`
+  - Added mode parse test for `committed_mutual_choice`.
+  - Added `deriveChoiceCommitHex` tests.
+  - Added resolver tests for committed mutual flow:
+    - success path,
+    - missing commit fallback,
+    - mismatched commit fallback.
+
+### Verify
+- `pnpm -C apps/web typecheck`
+- `pnpm -C apps/web lint`
+- `pnpm -C apps/web test -- src/lib/__tests__/first_player_resolve.test.ts`
+
+## 2026-02-12 - commit-0098: web first-player resolver now delegates to engine unified API
+
+### Why
+- web 側 `first_player_resolve` が engine の判定ロジックを部分的に再実装しており、将来モード追加時に乖離リスクがあった。
+- `commit_reveal` で片側commitだけを受け入れる余地が残っていたため、engine側ポリシーと揃える必要があった。
+
+### What
+- `apps/web/src/lib/first_player_resolve.ts`
+  - `resolveFirstPlayerV1(...)` を利用する形に統一:
+    - `mutual` → `mode: "mutual_choice"`
+    - `seed` → `mode: "seed"`
+    - `committed_mutual_choice` → `mode: "committed_mutual_choice"`
+    - `commit_reveal` → `mode: "commit_reveal"`
+  - `commit_reveal` のcommit入力を厳密化:
+    - commitA/commitB どちらか片方のみはエラー。
+    - 両方入力時のみ engine resolver へ commit pair を渡す。
+  - 既存の UI 向けエラーハンドリング（manual fallback + error文字列）は維持。
+- `apps/web/src/lib/__tests__/first_player_resolve.test.ts`
+  - `commit_reveal` の不一致テストを「両側commit入力あり」の形に更新。
+  - 片側commit入力を明示的に reject するテストを追加。
+
+### Verify
+- `pnpm -C apps/web typecheck`
+- `pnpm -C apps/web lint`
+- `pnpm -C apps/web test -- src/lib/__tests__/first_player_resolve.test.ts`
+- `pnpm -C apps/web build`

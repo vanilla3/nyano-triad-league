@@ -57,6 +57,7 @@ import { appAbsoluteUrl } from "@/lib/appUrl";
 import { BattleStageEngine } from "@/engine/components/BattleStageEngine";
 import { MAX_CHAIN_CAP_PER_TURN, parseChainCapPerTurnParam } from "@/lib/ruleset_meta";
 import {
+  deriveChoiceCommitHex,
   deriveRevealCommitHex,
   parseFirstPlayerResolutionMode,
   randomBytes32Hex,
@@ -312,6 +313,13 @@ export function MatchPage() {
   const mutualChoiceAParam = parseFirstPlayer(searchParams.get("fpa"));
   const mutualChoiceBParam = parseFirstPlayer(searchParams.get("fpb"));
   const commitRevealSaltParam = searchParams.get("fps") ?? "";
+  const seedResolutionParam = searchParams.get("fpsd") ?? "";
+  const committedMutualPlayerAParam = searchParams.get("fpoa") ?? "0xaAaAaAaaAaAaAaaAaAAAAAAAAaaaAaAaAaaAaaAa";
+  const committedMutualPlayerBParam = searchParams.get("fpob") ?? "0xbBbBBBBbbBBBbbbBbbBbbbbBBbBbbbbBbBbbBBbB";
+  const committedMutualNonceAParam = searchParams.get("fpna") ?? "";
+  const committedMutualNonceBParam = searchParams.get("fpnb") ?? "";
+  const committedMutualCommitAParam = searchParams.get("fcoa") ?? "";
+  const committedMutualCommitBParam = searchParams.get("fcob") ?? "";
   const commitRevealAParam = searchParams.get("fra") ?? "";
   const commitRevealBParam = searchParams.get("frb") ?? "";
   const commitRevealCommitAParam = searchParams.get("fca") ?? "";
@@ -333,12 +341,27 @@ export function MatchPage() {
         manualFirstPlayer: manualFirstPlayerParam,
         mutualChoiceA: mutualChoiceAParam,
         mutualChoiceB: mutualChoiceBParam,
+        committedMutualChoice: {
+          matchSalt: commitRevealSaltParam,
+          playerA: committedMutualPlayerAParam,
+          playerB: committedMutualPlayerBParam,
+          choiceA: mutualChoiceAParam,
+          choiceB: mutualChoiceBParam,
+          nonceA: committedMutualNonceAParam,
+          nonceB: committedMutualNonceBParam,
+          commitA: committedMutualCommitAParam,
+          commitB: committedMutualCommitBParam,
+        },
         commitReveal: {
           matchSalt: commitRevealSaltParam,
           revealA: commitRevealAParam,
           revealB: commitRevealBParam,
           commitA: commitRevealCommitAParam,
           commitB: commitRevealCommitBParam,
+        },
+        seedResolution: {
+          matchSalt: commitRevealSaltParam,
+          seed: seedResolutionParam,
         },
       }),
     [
@@ -347,6 +370,13 @@ export function MatchPage() {
       mutualChoiceAParam,
       mutualChoiceBParam,
       commitRevealSaltParam,
+      seedResolutionParam,
+      committedMutualPlayerAParam,
+      committedMutualPlayerBParam,
+      committedMutualNonceAParam,
+      committedMutualNonceBParam,
+      committedMutualCommitAParam,
+      committedMutualCommitBParam,
       commitRevealAParam,
       commitRevealBParam,
       commitRevealCommitAParam,
@@ -1522,6 +1552,8 @@ export function MatchPage() {
             >
               <option value="manual">Manual</option>
               <option value="mutual">Mutual choice</option>
+              <option value="committed_mutual_choice">Committed mutual choice</option>
+              <option value="seed">Seed</option>
               <option value="commit_reveal">Commit-reveal</option>
             </select>
 
@@ -1637,6 +1669,170 @@ export function MatchPage() {
                     }}
                   >
                     Derive Commits
+                  </button>
+                </div>
+              </div>
+            ) : null}
+
+            {firstPlayerMode === "committed_mutual_choice" ? (
+              <div className="grid gap-2">
+                <input
+                  className="input font-mono text-xs"
+                  placeholder="matchSalt (bytes32 hex)"
+                  value={commitRevealSaltParam}
+                  disabled={isEvent}
+                  onChange={(e) => setParam("fps", e.target.value.trim())}
+                  aria-label="Committed mutual match salt"
+                />
+                <div className="grid grid-cols-2 gap-2">
+                  <select
+                    className="input"
+                    value={String(mutualChoiceAParam)}
+                    disabled={isEvent}
+                    onChange={(e) => setParam("fpa", e.target.value)}
+                    aria-label="Committed mutual choice A"
+                  >
+                    <option value="0">A chooses A first</option>
+                    <option value="1">A chooses B first</option>
+                  </select>
+                  <select
+                    className="input"
+                    value={String(mutualChoiceBParam)}
+                    disabled={isEvent}
+                    onChange={(e) => setParam("fpb", e.target.value)}
+                    aria-label="Committed mutual choice B"
+                  >
+                    <option value="0">B chooses A first</option>
+                    <option value="1">B chooses B first</option>
+                  </select>
+                </div>
+                <input
+                  className="input font-mono text-xs"
+                  placeholder="playerA (0x address)"
+                  value={committedMutualPlayerAParam}
+                  disabled={isEvent}
+                  onChange={(e) => setParam("fpoa", e.target.value.trim())}
+                  aria-label="Committed mutual player A"
+                />
+                <input
+                  className="input font-mono text-xs"
+                  placeholder="nonceA (bytes32 hex)"
+                  value={committedMutualNonceAParam}
+                  disabled={isEvent}
+                  onChange={(e) => setParam("fpna", e.target.value.trim())}
+                  aria-label="Committed mutual nonce A"
+                />
+                <input
+                  className="input font-mono text-xs"
+                  placeholder="commitA (bytes32 hex)"
+                  value={committedMutualCommitAParam}
+                  disabled={isEvent}
+                  onChange={(e) => setParam("fcoa", e.target.value.trim())}
+                  aria-label="Committed mutual commit A"
+                />
+                <input
+                  className="input font-mono text-xs"
+                  placeholder="playerB (0x address)"
+                  value={committedMutualPlayerBParam}
+                  disabled={isEvent}
+                  onChange={(e) => setParam("fpob", e.target.value.trim())}
+                  aria-label="Committed mutual player B"
+                />
+                <input
+                  className="input font-mono text-xs"
+                  placeholder="nonceB (bytes32 hex)"
+                  value={committedMutualNonceBParam}
+                  disabled={isEvent}
+                  onChange={(e) => setParam("fpnb", e.target.value.trim())}
+                  aria-label="Committed mutual nonce B"
+                />
+                <input
+                  className="input font-mono text-xs"
+                  placeholder="commitB (bytes32 hex)"
+                  value={committedMutualCommitBParam}
+                  disabled={isEvent}
+                  onChange={(e) => setParam("fcob", e.target.value.trim())}
+                  aria-label="Committed mutual commit B"
+                />
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    className="btn btn-sm"
+                    disabled={isEvent}
+                    onClick={() => {
+                      setParam("fps", randomBytes32Hex());
+                      setParam("fpna", randomBytes32Hex());
+                      setParam("fpnb", randomBytes32Hex());
+                      setParam("fcoa", "");
+                      setParam("fcob", "");
+                    }}
+                  >
+                    Randomize Inputs
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn-sm"
+                    disabled={isEvent}
+                    onClick={() => {
+                      const commitA = deriveChoiceCommitHex({
+                        matchSalt: commitRevealSaltParam,
+                        player: committedMutualPlayerAParam,
+                        firstPlayer: mutualChoiceAParam,
+                        nonce: committedMutualNonceAParam,
+                      });
+                      const commitB = deriveChoiceCommitHex({
+                        matchSalt: commitRevealSaltParam,
+                        player: committedMutualPlayerBParam,
+                        firstPlayer: mutualChoiceBParam,
+                        nonce: committedMutualNonceBParam,
+                      });
+                      if (!commitA || !commitB) {
+                        toast.warn(
+                          "Commit derive failed",
+                          "matchSalt/player/choice/nonce values must be valid.",
+                        );
+                        return;
+                      }
+                      setParam("fcoa", commitA);
+                      setParam("fcob", commitB);
+                      toast.success("Commits derived", "Committed mutual choice commits were updated.");
+                    }}
+                  >
+                    Derive Commits
+                  </button>
+                </div>
+              </div>
+            ) : null}
+
+            {firstPlayerMode === "seed" ? (
+              <div className="grid gap-2">
+                <input
+                  className="input font-mono text-xs"
+                  placeholder="matchSalt (bytes32 hex)"
+                  value={commitRevealSaltParam}
+                  disabled={isEvent}
+                  onChange={(e) => setParam("fps", e.target.value.trim())}
+                  aria-label="Seed mode match salt"
+                />
+                <input
+                  className="input font-mono text-xs"
+                  placeholder="seed (bytes32 hex)"
+                  value={seedResolutionParam}
+                  disabled={isEvent}
+                  onChange={(e) => setParam("fpsd", e.target.value.trim())}
+                  aria-label="Seed mode seed"
+                />
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    className="btn btn-sm"
+                    disabled={isEvent}
+                    onClick={() => {
+                      setParam("fps", randomBytes32Hex());
+                      setParam("fpsd", randomBytes32Hex());
+                    }}
+                  >
+                    Randomize Inputs
                   </button>
                 </div>
               </div>

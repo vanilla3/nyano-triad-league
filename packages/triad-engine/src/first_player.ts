@@ -37,6 +37,31 @@ export interface FirstPlayerCommitRevealV1Input {
 }
 
 /**
+ * Input for "commit-reveal with optional commit verification" flow.
+ *
+ * If commitA/commitB are provided, both are verified against revealA/revealB.
+ */
+export interface FirstPlayerCommitRevealResolutionV1Input extends FirstPlayerCommitRevealV1Input {
+  /** Optional reveal-commit hash from playerA. Must be provided together with commitB. */
+  commitA?: `0x${string}`;
+  /** Optional reveal-commit hash from playerB. Must be provided together with commitA. */
+  commitB?: `0x${string}`;
+}
+
+/**
+ * Input for "shared seed decides first player" flow.
+ *
+ * First player is derived as:
+ *   keccak256(abi.encode(matchSalt, seed)) & 1
+ */
+export interface FirstPlayerSeedV1Input {
+  /** Match salt / setup id (bytes32) used as anti-replay domain separator. */
+  matchSalt: `0x${string}`;
+  /** Shared seed (e.g. agreed nonce / randomness beacon output). */
+  seed: `0x${string}`;
+}
+
+/**
  * Input for "commit hash for a reveal secret" flow.
  *
  * Commit hash is deterministic and Solidity-compatible:
@@ -48,6 +73,39 @@ export interface FirstPlayerRevealCommitV1Input {
   /** 32-byte secret reveal value. */
   reveal: `0x${string}`;
 }
+
+/**
+ * Input for "mutual choice with per-player commit verification" flow.
+ *
+ * Each player reveals their previously committed choice, then both
+ * revealed choices must match to finalize first player.
+ */
+export interface FirstPlayerCommittedMutualChoiceV1Input {
+  /** Commitment from playerA side. */
+  commitA: `0x${string}`;
+  /** Revealed payload corresponding to commitA. */
+  revealA: FirstPlayerChoiceCommitV1Input;
+  /** Commitment from playerB side. */
+  commitB: `0x${string}`;
+  /** Revealed payload corresponding to commitB. */
+  revealB: FirstPlayerChoiceCommitV1Input;
+}
+
+export type FirstPlayerResolutionMethodV1 =
+  | ({
+      mode: "mutual_choice";
+      choiceA: number;
+      choiceB: number;
+    })
+  | ({
+      mode: "committed_mutual_choice";
+    } & FirstPlayerCommittedMutualChoiceV1Input)
+  | ({
+      mode: "seed";
+    } & FirstPlayerSeedV1Input)
+  | ({
+      mode: "commit_reveal";
+    } & FirstPlayerCommitRevealResolutionV1Input);
 
 function assertBytes32(value: `0x${string}`, field: string): void {
   if (!HEX_32_RE.test(value)) {
@@ -132,6 +190,56 @@ export function deriveFirstPlayerFromCommitRevealV1(input: FirstPlayerCommitReve
 }
 
 /**
+ * Resolve first player from commit-reveal and optionally verify commit hashes.
+ *
+ * This helper reduces integration mistakes by bundling:
+ * - reveal validation
+ * - optional commit/reveal consistency checks
+ * - deterministic first-player derivation
+ */
+export function resolveFirstPlayerFromCommitRevealV1(
+  input: FirstPlayerCommitRevealResolutionV1Input,
+): PlayerIndex {
+  const { commitA, commitB } = input;
+  if (commitA !== undefined || commitB !== undefined) {
+    if (commitA === undefined || commitB === undefined) {
+      throw new Error("commitA and commitB must be provided together");
+    }
+
+    const okA = verifyFirstPlayerRevealCommitV1(commitA, {
+      matchSalt: input.matchSalt,
+      reveal: input.revealA,
+    });
+    if (!okA) throw new Error("commitA mismatch");
+
+    const okB = verifyFirstPlayerRevealCommitV1(commitB, {
+      matchSalt: input.matchSalt,
+      reveal: input.revealB,
+    });
+    if (!okB) throw new Error("commitB mismatch");
+  }
+
+  return deriveFirstPlayerFromCommitRevealV1(input);
+}
+
+/**
+ * Resolve first player from a single shared seed.
+ *
+ * Useful when both players already agreed on one randomness source
+ * (or a trusted randomness output is available) and commit-reveal
+ * is unnecessary for that match setup.
+ */
+export function deriveFirstPlayerFromSeedV1(input: FirstPlayerSeedV1Input): PlayerIndex {
+  assertBytes32(input.matchSalt, "matchSalt");
+  assertBytes32(input.seed, "seed");
+
+  const encoded = coder.encode(["bytes32", "bytes32"], [input.matchSalt, input.seed]);
+  const mixed = keccak256(encoded);
+  const bit = Number(BigInt(mixed) & 1n);
+  return bit as PlayerIndex;
+}
+
+/**
  * Resolve first player from explicit agreement.
  * Throws if both players did not agree on the same value.
  */
@@ -140,4 +248,57 @@ export function resolveFirstPlayerByMutualChoiceV1(choiceA: number, choiceB: num
   assertPlayerIndex(choiceB, "choiceB");
   if (choiceA !== choiceB) throw new Error("mutual choice mismatch");
   return choiceA;
+}
+
+/**
+ * Resolve first player from two committed mutual choices.
+ *
+ * This path is useful when both players explicitly choose first player,
+ * but still want commit/reveal anti-front-running guarantees.
+ */
+export function resolveFirstPlayerFromCommittedMutualChoiceV1(
+  input: FirstPlayerCommittedMutualChoiceV1Input,
+): PlayerIndex {
+  const okA = verifyFirstPlayerChoiceCommitV1(input.commitA, input.revealA);
+  if (!okA) throw new Error("commitA mismatch");
+
+  const okB = verifyFirstPlayerChoiceCommitV1(input.commitB, input.revealB);
+  if (!okB) throw new Error("commitB mismatch");
+
+  if (input.revealA.matchSalt !== input.revealB.matchSalt) {
+    throw new Error("matchSalt mismatch");
+  }
+
+  const playerA = getAddress(input.revealA.player);
+  const playerB = getAddress(input.revealB.player);
+  if (playerA === playerB) throw new Error("distinct players required");
+
+  return resolveFirstPlayerByMutualChoiceV1(
+    input.revealA.firstPlayer,
+    input.revealB.firstPlayer,
+  );
+}
+
+/**
+ * High-level resolver for first-player determination.
+ *
+ * Accepts one of four methods:
+ * - mutual_choice
+ * - committed_mutual_choice
+ * - seed
+ * - commit_reveal
+ */
+export function resolveFirstPlayerV1(input: FirstPlayerResolutionMethodV1): PlayerIndex {
+  switch (input.mode) {
+    case "mutual_choice":
+      return resolveFirstPlayerByMutualChoiceV1(input.choiceA, input.choiceB);
+    case "committed_mutual_choice":
+      return resolveFirstPlayerFromCommittedMutualChoiceV1(input);
+    case "seed":
+      return deriveFirstPlayerFromSeedV1(input);
+    case "commit_reveal":
+      return resolveFirstPlayerFromCommitRevealV1(input);
+    default:
+      throw new Error(`unsupported first-player mode: ${(input as { mode: string }).mode}`);
+  }
 }

@@ -4,7 +4,21 @@ import { useToast } from "@/components/Toast";
 import { NyanoAvatar } from "@/components/NyanoAvatar";
 import { resetTutorialSeen } from "@/components/MiniTutorial";
 import { clearGameIndexCache } from "@/lib/nyano/gameIndex";
-import { clearCumulativeStats, readCumulativeStats } from "@/lib/telemetry";
+import {
+  buildUxTelemetrySnapshot,
+  clearCumulativeStats,
+  clearUxTelemetrySnapshotHistory,
+  evaluateUxTargets,
+  formatUxTelemetrySnapshotMarkdown,
+  markQuickPlayStart,
+  readCumulativeStats,
+  readUxTelemetrySnapshotHistory,
+  recordHomeLcpMs,
+  saveUxTelemetrySnapshot,
+  type UxTargetStatus,
+} from "@/lib/telemetry";
+import { writeClipboardText } from "@/lib/clipboard";
+import { errorMessage } from "@/lib/errorMessage";
 import type { ExpressionName } from "@/lib/expression_map";
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -224,19 +238,69 @@ function formatSecondsFromMs(ms: number | null): string {
   return `${(ms / 1000).toFixed(1)}s`;
 }
 
+function targetStatusLabel(status: UxTargetStatus): string {
+  if (status === "pass") return "PASS";
+  if (status === "fail") return "FAIL";
+  return "N/A";
+}
+
+function targetStatusClass(status: UxTargetStatus): string {
+  if (status === "pass") return "bg-emerald-100 text-emerald-700 border-emerald-200";
+  if (status === "fail") return "bg-rose-100 text-rose-700 border-rose-200";
+  return "bg-surface-100 text-surface-500 border-surface-200";
+}
+
+function summarizeTargetStatuses(
+  statuses: readonly UxTargetStatus[],
+): string {
+  let pass = 0;
+  let fail = 0;
+  let insufficient = 0;
+  for (const status of statuses) {
+    if (status === "pass") pass += 1;
+    else if (status === "fail") fail += 1;
+    else insufficient += 1;
+  }
+  return `PASS ${pass} / FAIL ${fail} / N/A ${insufficient}`;
+}
+
 export function HomePage() {
   const heroExpression = useHeroExpression();
   const toast = useToast();
   const [difficulty, setDifficulty] = React.useState<string>("normal");
   const [uxStats, setUxStats] = React.useState(() => readCumulativeStats());
+  const [uxSnapshotHistory, setUxSnapshotHistory] = React.useState(() =>
+    readUxTelemetrySnapshotHistory(5),
+  );
   const quickPlayUrl = `/match?mode=guest&opp=vs_nyano_ai&ai=${difficulty}&rk=v2&ui=mint`;
   const avgInvalidPerSession = uxStats.sessions > 0
     ? uxStats.total_invalid_actions / uxStats.sessions
     : null;
+  const uxTargetChecks = React.useMemo(() => evaluateUxTargets(uxStats), [uxStats]);
 
   const refreshUxStats = React.useCallback(() => {
     setUxStats(readCumulativeStats());
+    setUxSnapshotHistory(readUxTelemetrySnapshotHistory(5));
   }, []);
+
+  const copyUxSnapshot = React.useCallback(async () => {
+    const snapshot = buildUxTelemetrySnapshot(uxStats, Date.now(), {
+      route: `${window.location.pathname}${window.location.search}`,
+      viewport: `${window.innerWidth}x${window.innerHeight}`,
+      language: navigator.language ?? "unknown",
+      userAgent: navigator.userAgent ?? "unknown",
+    });
+    saveUxTelemetrySnapshot(snapshot);
+    setUxSnapshotHistory(readUxTelemetrySnapshotHistory(5));
+
+    try {
+      const markdown = formatUxTelemetrySnapshotMarkdown(snapshot);
+      await writeClipboardText(markdown);
+      toast.success("Snapshot copied", "Paste into docs/ux/PLAYTEST_LOG.md");
+    } catch (e) {
+      toast.error("Copy failed", `${errorMessage(e)} (snapshot saved locally)`);
+    }
+  }, [toast, uxStats]);
 
   React.useEffect(() => {
     const onFocus = () => {
@@ -244,6 +308,57 @@ export function HomePage() {
     };
     window.addEventListener("focus", onFocus);
     return () => window.removeEventListener("focus", onFocus);
+  }, [refreshUxStats]);
+
+  React.useEffect(() => {
+    if (typeof window === "undefined" || typeof PerformanceObserver === "undefined") return;
+
+    let reported = false;
+    let latestLcp: number | null = null;
+
+    const report = () => {
+      if (reported || latestLcp === null) return;
+      reported = true;
+      recordHomeLcpMs(latestLcp);
+      refreshUxStats();
+    };
+
+    const observer = new PerformanceObserver((entryList) => {
+      const entries = entryList.getEntries();
+      const last = entries[entries.length - 1];
+      if (!last) return;
+      latestLcp = last.startTime;
+    });
+
+    try {
+      observer.observe({ type: "largest-contentful-paint", buffered: true } as PerformanceObserverInit);
+    } catch {
+      observer.disconnect();
+      return;
+    }
+
+    const onVisibilityChange = () => {
+      if (document.visibilityState === "hidden") {
+        report();
+      }
+    };
+    const onPageHide = () => {
+      report();
+    };
+
+    document.addEventListener("visibilitychange", onVisibilityChange, true);
+    window.addEventListener("pagehide", onPageHide, true);
+
+    // Fallback: if user keeps Home open, still persist a value after initial render settles.
+    const fallbackTimer = window.setTimeout(report, 6_000);
+
+    return () => {
+      window.clearTimeout(fallbackTimer);
+      report();
+      document.removeEventListener("visibilitychange", onVisibilityChange, true);
+      window.removeEventListener("pagehide", onPageHide, true);
+      observer.disconnect();
+    };
   }, [refreshUxStats]);
 
   return (
@@ -307,6 +422,7 @@ export function HomePage() {
             <div className="flex flex-col items-center gap-3">
               <Link
                 to={quickPlayUrl}
+                onClick={() => markQuickPlayStart()}
                 className={[
                   "home-hero__cta",
                   "inline-flex items-center gap-3",
@@ -485,6 +601,9 @@ export function HomePage() {
                 <button className="btn text-xs" onClick={refreshUxStats}>
                   Refresh Metrics
                 </button>
+                <button className="btn text-xs" onClick={copyUxSnapshot}>
+                  Copy Snapshot
+                </button>
                 <button
                   className="btn text-xs"
                   onClick={() => {
@@ -497,7 +616,7 @@ export function HomePage() {
                 </button>
               </div>
             </div>
-            <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-6">
               <div className="rounded-xl border border-surface-200 bg-surface-50 px-3 py-2">
                 <div className="text-[11px] text-surface-500">Sessions</div>
                 <div className="text-sm font-semibold text-surface-800">{uxStats.sessions}</div>
@@ -515,11 +634,89 @@ export function HomePage() {
                 </div>
               </div>
               <div className="rounded-xl border border-surface-200 bg-surface-50 px-3 py-2">
+                <div className="text-[11px] text-surface-500">Avg quick-play to first place</div>
+                <div className="text-sm font-semibold text-surface-800">
+                  {formatSecondsFromMs(uxStats.avg_quickplay_to_first_place_ms)}
+                </div>
+              </div>
+              <div className="rounded-xl border border-surface-200 bg-surface-50 px-3 py-2">
+                <div className="text-[11px] text-surface-500">Avg Home LCP</div>
+                <div className="text-sm font-semibold text-surface-800">
+                  {formatSecondsFromMs(uxStats.avg_home_lcp_ms)}
+                </div>
+              </div>
+              <div className="rounded-xl border border-surface-200 bg-surface-50 px-3 py-2">
                 <div className="text-[11px] text-surface-500">Invalid / session</div>
                 <div className="text-sm font-semibold text-surface-800">
                   {avgInvalidPerSession === null ? "--" : avgInvalidPerSession.toFixed(2)}
                 </div>
               </div>
+            </div>
+            <div className="mt-3 rounded-2xl border border-surface-200 bg-surface-50 p-3">
+              <div className="text-xs font-semibold text-surface-700">UX Target Snapshot</div>
+              <div className="mt-2 grid gap-2 sm:grid-cols-2">
+                {uxTargetChecks.map((check) => (
+                  <div key={check.id} className="rounded-xl border border-surface-200 bg-white px-3 py-2">
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="text-xs font-semibold text-surface-700">
+                        {check.id} · {check.label}
+                      </div>
+                      <span
+                        className={[
+                          "inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-bold",
+                          targetStatusClass(check.status),
+                        ].join(" ")}
+                      >
+                        {targetStatusLabel(check.status)}
+                      </span>
+                    </div>
+                    <div className="mt-1 text-[11px] text-surface-500">target {check.target}</div>
+                    <div className="text-xs font-semibold text-surface-800">current {check.valueText}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div className="mt-3 rounded-2xl border border-surface-200 bg-surface-50 p-3">
+              <div className="flex items-center justify-between gap-2">
+                <div className="text-xs font-semibold text-surface-700">Recent Snapshots (Local)</div>
+                <button
+                  className="btn text-[11px]"
+                  disabled={uxSnapshotHistory.length === 0}
+                  onClick={() => {
+                    clearUxTelemetrySnapshotHistory();
+                    setUxSnapshotHistory([]);
+                    toast.success("Snapshot history reset", "Local snapshot history has been cleared.");
+                  }}
+                >
+                  Clear History
+                </button>
+              </div>
+              {uxSnapshotHistory.length === 0 ? (
+                <div className="mt-2 text-[11px] text-surface-500">No snapshot history yet.</div>
+              ) : (
+                <div className="mt-2 grid gap-2">
+                  {uxSnapshotHistory.map((snapshot, index) => (
+                    <div
+                      key={`${snapshot.generatedAtIso}-${index}`}
+                      className="rounded-xl border border-surface-200 bg-white px-3 py-2"
+                    >
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <div className="text-[11px] font-semibold text-surface-700">
+                          {snapshot.generatedAtIso}
+                        </div>
+                        <div className="text-[10px] text-surface-500">
+                          {summarizeTargetStatuses(snapshot.checks.map((check) => check.status))}
+                        </div>
+                      </div>
+                      <div className="mt-1 text-[11px] text-surface-500">
+                        {snapshot.context
+                          ? `${snapshot.context.route} / ${snapshot.context.viewport}`
+                          : "Context unavailable"}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         </details>

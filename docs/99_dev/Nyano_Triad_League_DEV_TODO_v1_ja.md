@@ -33,6 +33,12 @@
   - 無効化セクションを正規化（同挙動でIDが分裂しない）
   - 五行調和の requiredElements を集合扱い（順序を無視）
   - `computeRulesetIdV1(ruleset)` を追加（TS参照実装）
+- ✅ Sprint UX: Home「すぐ遊ぶ」→初手配置までの時間計測を追加（`quickplay_to_first_place_ms`）
+- ✅ Sprint UX: Home LCP のローカル計測を追加（`home_lcp_ms`）
+- ✅ Sprint UX: Home Settings に UX目標の PASS/FAIL 判定を追加（A-1/B-1/B-4/G-3）
+- ✅ Sprint UX: `Copy Snapshot` と `PLAYTEST_LOG.md` を追加し、計測ログ運用を固定
+- ✅ Sprint UX: web lint warning 2件を解消（`pnpm -C apps/web lint` warning 0）
+- ✅ Sprint UX: Snapshotに環境コンテキスト（route/viewport/language/UA）を含め、比較ログ精度を向上
 ## 🚧 Doing (now)
 
 - 🔧 「Wind（先攻/後攻選択）」の公平な表現を詰める（commit-reveal / seed / 両者合意）
@@ -64,3 +70,4 @@
 - [ ] ERC-6551（Nyanoトークン境界のアカウント）を使った「チーム/ギルド」
 - [ ] NFTステーキングで Season Pass / ルール投票権 / 参加枠（sybil対策）を提供する設計
 - [ ] 互換性：過去のOasysエコシステムからの資産移行方針（必要なら）
+- Sprint UX: Home Settings now keeps local UX snapshot history (save on copy, view recent 5, clear history).

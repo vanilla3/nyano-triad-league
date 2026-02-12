@@ -139,7 +139,7 @@ function lerp(a: number, b: number, t: number): number {
  *
  * @param cellH  Cell height in px (for translateY scaling)
  */
-export function interpolatePlacement(t: number, cellH: number): CellAnimFrame {
+export function interpolatePlacement(t: number, _cellH: number): CellAnimFrame {
   if (t <= 0) {
     return { scaleX: 0.5, scaleY: 0.5, alpha: 0, offsetY: -16, brightness: 1 };
   }
