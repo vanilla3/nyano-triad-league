@@ -17,9 +17,10 @@ export interface VoteAudit {
   illegal: number;
   usernameRejected: number;
   changeExceeded: number;
-  bannedUserRejected: number;
-  blockedWordRejected: number;
-  slowModeRejected: number;
+  // Backward-compatible optional fields (added in commit-0108).
+  bannedUserRejected?: number;
+  blockedWordRejected?: number;
+  slowModeRejected?: number;
 }
 
 export interface VoteCountEntry {
@@ -118,6 +119,9 @@ export const VoteControlPanel: React.FC<VoteControlPanelProps> = React.memo(func
   moderationBlockedWordsCount,
 }) {
   const sideLabel = controlledSide === 0 ? "A" : "B";
+  const bannedUserRejected = voteAudit.bannedUserRejected ?? 0;
+  const blockedWordRejected = voteAudit.blockedWordRejected ?? 0;
+  const slowModeRejected = voteAudit.slowModeRejected ?? 0;
 
   return (
     <>
@@ -349,7 +353,7 @@ export const VoteControlPanel: React.FC<VoteControlPanelProps> = React.memo(func
           </div>
           {voteAudit.attempts > 0 && (
             <div className="mt-1 text-[10px] text-slate-400" role="status" aria-live="polite">
-              {voteAudit.attempts} attempts · {voteAudit.accepted} accepted · {voteAudit.duplicates} dup · {voteAudit.rateLimited} rate-lim · {voteAudit.illegal} illegal{voteAudit.usernameRejected > 0 ? ` · ${voteAudit.usernameRejected} bad-name` : ""}{voteAudit.changeExceeded > 0 ? ` · ${voteAudit.changeExceeded} chg-limit` : ""}{voteAudit.bannedUserRejected > 0 ? ` · ${voteAudit.bannedUserRejected} banned` : ""}{voteAudit.blockedWordRejected > 0 ? ` · ${voteAudit.blockedWordRejected} ng-word` : ""}{voteAudit.slowModeRejected > 0 ? ` · ${voteAudit.slowModeRejected} slow` : ""}
+              {voteAudit.attempts} attempts · {voteAudit.accepted} accepted · {voteAudit.duplicates} dup · {voteAudit.rateLimited} rate-lim · {voteAudit.illegal} illegal{voteAudit.usernameRejected > 0 ? ` · ${voteAudit.usernameRejected} bad-name` : ""}{voteAudit.changeExceeded > 0 ? ` · ${voteAudit.changeExceeded} chg-limit` : ""}{bannedUserRejected > 0 ? ` · ${bannedUserRejected} banned` : ""}{blockedWordRejected > 0 ? ` · ${blockedWordRejected} ng-word` : ""}{slowModeRejected > 0 ? ` · ${slowModeRejected} slow` : ""}
             </div>
           )}
         </div>
