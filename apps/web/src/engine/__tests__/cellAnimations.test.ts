@@ -8,6 +8,7 @@ import {
   interpolatePlacement,
   interpolateFlip,
   computeCellFrame,
+  animationProgress,
   BREATHE_CYCLE_MS,
   computeBreatheFrame,
   type CellAnimRecord,
@@ -340,6 +341,32 @@ describe("computeCellFrame", () => {
   });
 });
 
+describe("animationProgress", () => {
+  const rec: CellAnimRecord = {
+    kind: "flip",
+    startMs: 1000,
+    durationMs: 600,
+    staggerDelayMs: 200,
+  };
+
+  it("returns 0 before stagger delay elapses", () => {
+    expect(animationProgress(rec, 1100)).toBe(0);
+  });
+
+  it("returns normalized 0..1 while active", () => {
+    // elapsed = 400 - 200 = 200, progress = 200/600
+    expect(animationProgress(rec, 1400)).toBeCloseTo(1 / 3, 3);
+  });
+
+  it("clamps to 1 after completion", () => {
+    expect(animationProgress(rec, 1900)).toBe(1);
+  });
+
+  it("returns 1 for zero duration", () => {
+    expect(animationProgress({ ...rec, durationMs: 0 }, 1400)).toBe(1);
+  });
+});
+
 /* ═══════════════════════════════════════════════════════════════════════════
    computeBreatheFrame
    ═══════════════════════════════════════════════════════════════════════════ */
@@ -429,6 +456,7 @@ describe("cellAnimations module exports", () => {
     expect(typeof mod.interpolatePlacement).toBe("function");
     expect(typeof mod.interpolateFlip).toBe("function");
     expect(typeof mod.computeCellFrame).toBe("function");
+    expect(typeof mod.animationProgress).toBe("function");
     expect(mod.BREATHE_CYCLE_MS).toBeDefined();
     expect(typeof mod.computeBreatheFrame).toBe("function");
   });
