@@ -39,7 +39,7 @@ import { annotateReplayMoves } from "@/lib/ai/replay_annotations";
 import { assessBoardAdvantage, type BoardAdvantage } from "@/lib/ai/board_advantage";
 import { AdvantageBadge } from "@/components/AdvantageBadge";
 import { writeClipboardText } from "@/lib/clipboard";
-import { appAbsoluteUrl, buildReplayShareUrl } from "@/lib/appUrl";
+import { appAbsoluteUrl, appPath, buildReplayShareUrl } from "@/lib/appUrl";
 import {
   detectReplayHighlights,
   formatReplayWinnerLabel,
@@ -227,6 +227,7 @@ export function ReplayPage() {
     }
   };
   const overlayUrl = React.useMemo(() => appAbsoluteUrl("overlay?controls=0"), []);
+  const replayBroadcastPath = React.useMemo(() => appPath("replay?broadcast=1"), []);
 
   const pushOverlay = React.useCallback(
     (opts?: { silent?: boolean }) => {
@@ -878,7 +879,7 @@ protocolV1: {
                   </div>
 
                   <div className="text-[11px] text-slate-500">
-                    Tip: open <span className="font-mono">/replay?broadcast=1</span> to start with overlay step sync enabled.
+                    Tip: open <span className="font-mono">{replayBroadcastPath}</span> to start with overlay step sync enabled.
                   </div>
                 </div>
               </Disclosure>
