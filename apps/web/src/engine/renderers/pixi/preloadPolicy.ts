@@ -29,6 +29,10 @@ export function normalizePreloadTokenIds(tokenIds: readonly string[]): string[] 
   for (const raw of tokenIds) {
     const tokenId = raw.trim();
     if (!tokenId) continue;
+    // Token IDs are decimal positive integers in this project.
+    // Filtering here avoids futile preload requests for malformed inputs.
+    if (!/^\d+$/.test(tokenId)) continue;
+    if (tokenId === "0") continue;
     if (seen.has(tokenId)) continue;
     seen.add(tokenId);
     out.push(tokenId);
