@@ -12,6 +12,7 @@
 import { Assets, Texture } from "pixi.js";
 import { getMetadataConfig, type MetadataConfig } from "@/lib/nyano/metadata";
 import { buildTokenImageUrls } from "./tokenImageUrls";
+import { errorMessage } from "@/lib/errorMessage";
 
 /* ═══════════════════════════════════════════════════════════════════════════
    TextureResolver class
@@ -105,10 +106,15 @@ export class TextureResolver {
           this.cache.set(tokenId, texture);
           return texture;
         }
-      } catch {
-        // Try next fallback
+      } catch (e: unknown) {
+        if (import.meta.env.DEV) {
+          console.warn(`[TextureResolver] #${tokenId} failed from ${url}:`, errorMessage(e));
+        }
         continue;
       }
+    }
+    if (import.meta.env.DEV) {
+      console.warn(`[TextureResolver] All ${urls.length} URLs failed for #${tokenId}`);
     }
     return null;
   }
