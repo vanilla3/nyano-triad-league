@@ -24,8 +24,6 @@ import { NyanoAvatar } from "@/components/NyanoAvatar";
 import { reactionToExpression } from "@/lib/expression_map";
 import {
   base64UrlEncodeUtf8,
-  safeBase64UrlDecodeUtf8,
-  safeGzipDecompressUtf8FromBase64Url,
   tryGzipCompressUtf8ToBase64Url,
 } from "@/lib/base64url";
 import { errorMessage } from "@/lib/errorMessage";
@@ -40,6 +38,7 @@ import { assessBoardAdvantage, type BoardAdvantage } from "@/lib/ai/board_advant
 import { AdvantageBadge } from "@/components/AdvantageBadge";
 import { writeClipboardText } from "@/lib/clipboard";
 import { appAbsoluteUrl, appPath, buildReplayShareUrl } from "@/lib/appUrl";
+import { decodeReplaySharePayload, hasReplaySharePayload, stripReplayShareParams } from "@/lib/replay_share_params";
 import {
   detectReplayHighlights,
   formatReplayWinnerLabel,
@@ -187,8 +186,16 @@ export function ReplayPage() {
   const initialT = searchParams.get("t");
   const initialZ = searchParams.get("z");
 
-  // t = raw base64url(json), z = gzip(base64url(bytes)) [preferred if available]
-  const initialTextFromT = initialT ? safeBase64UrlDecodeUtf8(initialT) ?? "" : "";
+  const initialSharePayload = React.useMemo(() => {
+    const params = new URLSearchParams();
+    if (initialZ) params.set("z", initialZ);
+    if (initialT) params.set("t", initialT);
+    return decodeReplaySharePayload(params);
+  }, [initialT, initialZ]);
+  const initialTextFromT = initialSharePayload.kind === "ok" && initialSharePayload.param === "t"
+    ? initialSharePayload.text
+    : "";
+  const hasSharePayload = hasReplaySharePayload(searchParams);
 
   const initialMode = parseMode(searchParams.get("mode"));
   const initialStep = clampInt(Number(searchParams.get("step") ?? "0"), 0, 9);
@@ -446,25 +453,13 @@ protocolV1: {
     didAutoLoadRef.current = true;
 
     const auto = async () => {
-      if (initialZ) {
-        const decoded = safeGzipDecompressUtf8FromBase64Url(initialZ);
-        if (!decoded) {
-          setSim({ ok: false, error: "Invalid share link (z parameter could not be decompressed)." });
-          return;
-        }
-        setText(decoded);
-        await load({ text: decoded, mode: initialMode, step: initialStep });
+      if (initialSharePayload.kind === "none") return;
+      if (initialSharePayload.kind === "error") {
+        setSim({ ok: false, error: initialSharePayload.error });
         return;
       }
-
-      if (initialT) {
-        if (!initialTextFromT) {
-          setSim({ ok: false, error: "Invalid share link (t parameter could not be decoded)." });
-          return;
-        }
-        await load({ text: initialTextFromT, mode: initialMode, step: initialStep });
-        return;
-      }
+      setText(initialSharePayload.text);
+      await load({ text: initialSharePayload.text, mode: initialMode, step: initialStep });
     };
 
     void auto();
@@ -481,7 +476,7 @@ protocolV1: {
 
   // Keep URL step/mode in sync IF a share param exists (so links can point to a specific step).
   React.useEffect(() => {
-    if (!searchParams.get("t") && !searchParams.get("z")) return;
+    if (!hasReplaySharePayload(searchParams)) return;
 
     const curMode = searchParams.get("mode") ?? "auto";
     const curStep = searchParams.get("step") ?? "0";
@@ -888,7 +883,54 @@ protocolV1: {
 
 
 
-            {!sim.ok && sim.error ? <div className="text-sm text-rose-700">Error: {sim.error}</div> : null}
+            {!sim.ok && sim.error ? (
+              <div className="rounded-lg border border-rose-200 bg-rose-50 p-3 text-sm text-rose-800">
+                <div className="font-medium">Error: {sim.error}</div>
+                <div className="mt-1 text-xs text-rose-700">
+                  {hasSharePayload
+                    ? "This share link may be invalid or incomplete. Retry loading, or clear share params and paste transcript JSON."
+                    : "Check transcript JSON and retry loading."}
+                </div>
+                <div className="mt-2 flex flex-wrap items-center gap-2">
+                  <button
+                    className="btn btn-sm"
+                    onClick={() => {
+                      void (async () => {
+                        const decoded = decodeReplaySharePayload(searchParams);
+                        if (decoded.kind === "error") {
+                          setSim({ ok: false, error: decoded.error });
+                          return;
+                        }
+                        if (decoded.kind === "ok") {
+                          setText(decoded.text);
+                          await load({ text: decoded.text, mode, step });
+                          return;
+                        }
+                        await load();
+                      })();
+                    }}
+                    disabled={loading}
+                  >
+                    {loading ? "Retrying..." : "Retry load"}
+                  </button>
+                  {hasSharePayload ? (
+                    <button
+                      className="btn btn-sm"
+                      onClick={() => {
+                        const next = stripReplayShareParams(searchParams);
+                        setSearchParams(next, { replace: true });
+                        setSim({ ok: false, error: "Paste transcript JSON and load." });
+                      }}
+                    >
+                      Clear share params
+                    </button>
+                  ) : null}
+                  <Link className="btn btn-sm no-underline" to="/">
+                    Home
+                  </Link>
+                </div>
+              </div>
+            ) : null}
 
             <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500">
               <span className="kbd">Left</span>/<span className="kbd">Right</span> step
