@@ -5,8 +5,8 @@ import {
 } from "../renderers/pixi/preloadPolicy";
 
 describe("texturePreloadConcurrencyForQuality", () => {
-  it("keeps off/low tiers minimal", () => {
-    expect(texturePreloadConcurrencyForQuality("off")).toBe(1);
+  it("disables preload in off tier and keeps low tier minimal", () => {
+    expect(texturePreloadConcurrencyForQuality("off")).toBe(0);
     expect(texturePreloadConcurrencyForQuality("low")).toBe(1);
   });
 
