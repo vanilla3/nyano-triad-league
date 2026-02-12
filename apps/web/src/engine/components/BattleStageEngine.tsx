@@ -16,6 +16,7 @@ import React from "react";
 import type { BoardState, PlayerIndex } from "@nyano/triad-engine";
 import type { IBattleRenderer } from "../renderers/IBattleRenderer";
 import { resolveVfxQuality } from "@/lib/visual/visualSettings";
+import { errorMessage } from "@/lib/errorMessage";
 import { FlipArrowOverlay, type FlipTraceArrow } from "@/components/FlipArrowOverlay";
 import { CardPreviewPanel } from "@/components/CardPreviewPanel";
 import { useCardPreview } from "@/hooks/useCardPreview";
@@ -139,6 +140,7 @@ export function BattleStageEngine({
   const gridOverlayRef = React.useRef<HTMLDivElement>(null);
   const rendererRef = React.useRef<IBattleRenderer | null>(null);
   const callbackRef = React.useRef(onCellSelect);
+  const [initError, setInitError] = React.useState<string | null>(null);
 
   // ── Card inspect hook ──
   const inspect = useCardPreview();
@@ -162,6 +164,8 @@ export function BattleStageEngine({
     let destroyed = false;
     let renderer: IBattleRenderer | null = null;
 
+    if (import.meta.env.DEV) console.debug("[BattleStageEngine] mount");
+
     (async () => {
       const { PixiBattleRenderer } = await import(
         "../renderers/pixi/PixiBattleRenderer"
@@ -170,7 +174,14 @@ export function BattleStageEngine({
       if (destroyed) return; // component unmounted during async import
 
       renderer = new PixiBattleRenderer();
-      await renderer.init(container);
+
+      try {
+        await renderer.init(container);
+      } catch (e: unknown) {
+        if (import.meta.env.DEV) console.error("[BattleStageEngine] init failed:", errorMessage(e));
+        setInitError(errorMessage(e));
+        return;
+      }
 
       if (destroyed) {
         renderer.destroy();
@@ -207,6 +218,7 @@ export function BattleStageEngine({
         renderer.destroy();
       }
       rendererRef.current = null;
+      if (import.meta.env.DEV) console.debug("[BattleStageEngine] unmount");
     };
     // Mount-only effect: renderer lifecycle is independent of React state.
   }, []);
@@ -244,6 +256,24 @@ export function BattleStageEngine({
     observer.observe(container);
     return () => observer.disconnect();
   }, []);
+
+  // ── Init error fallback UI ──
+  if (initError) {
+    return (
+      <div className="grid gap-3">
+        <div
+          className="relative mx-auto flex aspect-square w-full max-w-md flex-col items-center justify-center rounded-lg border border-red-800/40 bg-slate-900/80"
+          style={{ minHeight: 280 }}
+          role="alert"
+        >
+          <p className="text-sm font-medium text-red-400">レンダラー初期化エラー</p>
+          <p className="mt-1 text-xs text-slate-400">
+            WebGL が利用できない可能性があります
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="grid gap-3">

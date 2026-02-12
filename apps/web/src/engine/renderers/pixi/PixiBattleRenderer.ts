@@ -32,6 +32,7 @@ import {
   type CellAnimRecord,
   type CellAnimFrame,
 } from "./cellAnimations";
+import { errorMessage } from "@/lib/errorMessage";
 
 /* ═══════════════════════════════════════════════════════════════════════════
    Constants
@@ -54,6 +55,37 @@ const COLORS = {
   brightnessWhite: 0xffffff,
   brightnessBlack: 0x000000,
   breatheGlow: 0x34d399, // emerald-400 (matches --mint-cell-active-glow)
+} as const;
+
+const LAYOUT = {
+  boardSizePercent: 0.85,
+  cellGap: 4,
+  cellRadius: 6,
+  longPressMs: 400,
+  smallFontSize: 10,
+  edgeFontSizeMin: 12,
+  edgeFontSizeScale: 0.18,
+  edgePadding: 6,
+  edgePillAlpha: 0.55,
+  pillWidthScale: 1.3,
+  pillHeightScale: 1.15,
+  pillRadius: 3,
+  tokenLabelPadX: 3,
+  tokenLabelPadY: 2,
+  coordOffsetX: 3,
+  coordOffsetY: 2,
+  ownerTintAlpha: 0.25,
+  ownerFallbackAlpha: 0.35,
+  selectedFillAlpha: 0.6,
+  selectedStrokeWidth: 3,
+  selectableStrokeWidth: 1.5,
+  selectableStrokeAlpha: 0.6,
+  glowMargin: 2,
+  glowRadius: 8,
+  glowStrokeWidth: 2,
+  brightnessThreshold: 0.02,
+  brightnessWhiteScale: 0.4,
+  brightnessBlackScale: 0.6,
 } as const;
 
 const CELL_COORDS = [
@@ -112,26 +144,34 @@ export class PixiBattleRenderer implements IBattleRenderer {
   private prevPlacedCell: number | null | undefined = undefined;
   private prevFlippedCells: readonly number[] = [];
   private tickerBound = false;
+  private visibilityBound = false;
 
   /* ── Lifecycle ─────────────────────────────────────────────────────── */
 
   async init(container: HTMLElement): Promise<void> {
-    const app = new Application();
-    await app.init({
-      preference: "webgl",
-      background: COLORS.background,
-      resizeTo: container,
-      antialias: true,
-      resolution: window.devicePixelRatio || 1,
-      autoDensity: true,
-    });
-    container.appendChild(app.canvas as HTMLCanvasElement);
-    this.app = app;
+    try {
+      const app = new Application();
+      await app.init({
+        preference: "webgl",
+        background: COLORS.background,
+        resizeTo: container,
+        antialias: true,
+        resolution: window.devicePixelRatio || 1,
+        autoDensity: true,
+      });
+      container.appendChild(app.canvas as HTMLCanvasElement);
+      this.app = app;
 
-    this.boardContainer = new Container();
-    app.stage.addChild(this.boardContainer);
+      this.boardContainer = new Container();
+      app.stage.addChild(this.boardContainer);
 
-    this.buildGrid();
+      this.buildGrid();
+
+      if (import.meta.env.DEV) console.debug("[PixiBattleRenderer] init OK");
+    } catch (e: unknown) {
+      if (import.meta.env.DEV) console.error("[PixiBattleRenderer] init failed:", errorMessage(e));
+      throw e;
+    }
   }
 
   setState(state: BattleRendererState): void {
@@ -166,6 +206,7 @@ export class PixiBattleRenderer implements IBattleRenderer {
 
   destroy(): void {
     this.teardownTicker();
+    this.teardownVisibilityListener();
     if (this.app) {
       this.app.destroy(true, { children: true, texture: true });
       this.app = null;
@@ -223,7 +264,7 @@ export class PixiBattleRenderer implements IBattleRenderer {
             if (rect) this.cellInspectCb(cellIndex, rect);
           }
           lpTimer = null;
-        }, 400);
+        }, LAYOUT.longPressMs);
         this.longPressTimers[cellIndex] = lpTimer;
       });
 
@@ -286,7 +327,7 @@ export class PixiBattleRenderer implements IBattleRenderer {
       const tokenLabel = new Text({
         text: "",
         style: new TextStyle({
-          fontSize: 10,
+          fontSize: LAYOUT.smallFontSize,
           fill: COLORS.tokenIdText,
           fontFamily: "monospace",
           fontWeight: "bold",
@@ -307,7 +348,7 @@ export class PixiBattleRenderer implements IBattleRenderer {
       const coordText = new Text({
         text: CELL_COORDS[i],
         style: new TextStyle({
-          fontSize: 10,
+          fontSize: LAYOUT.smallFontSize,
           fill: COLORS.coordText,
           fontFamily: "monospace",
         }),
@@ -325,9 +366,9 @@ export class PixiBattleRenderer implements IBattleRenderer {
 
     const w = this.app.screen.width;
     const h = this.app.screen.height;
-    const boardSize = Math.min(w, h) * 0.85;
+    const boardSize = Math.min(w, h) * LAYOUT.boardSizePercent;
     const cellSize = boardSize / 3;
-    const gap = 4;
+    const gap = LAYOUT.cellGap;
     const offsetX = (w - boardSize) / 2;
     const offsetY = (h - boardSize) / 2;
 
@@ -351,7 +392,7 @@ export class PixiBattleRenderer implements IBattleRenderer {
       // Update mask geometry (container-relative)
       const mask = this.cellMasks[i];
       mask.clear();
-      mask.roundRect(0, 0, cw, ch, 6);
+      mask.roundRect(0, 0, cw, ch, LAYOUT.cellRadius);
       mask.fill({ color: 0xffffff });
 
       // Update sprite position/size (container-relative)
@@ -365,13 +406,13 @@ export class PixiBattleRenderer implements IBattleRenderer {
 
       // Update token label position (container-relative, top-right)
       const tokenLabel = this.cellTokenLabels[i];
-      tokenLabel.x = cw - 3;
-      tokenLabel.y = 2;
+      tokenLabel.x = cw - LAYOUT.tokenLabelPadX;
+      tokenLabel.y = LAYOUT.tokenLabelPadY;
 
       // Position coordinate text (board-absolute, NOT animated)
       const coordTxt = this.cellCoordTexts[i];
-      coordTxt.x = x + 3;
-      coordTxt.y = y + 2;
+      coordTxt.x = x + LAYOUT.coordOffsetX;
+      coordTxt.y = y + LAYOUT.coordOffsetY;
     }
   }
 
@@ -414,20 +455,20 @@ export class PixiBattleRenderer implements IBattleRenderer {
           // Owner tint overlay (container-relative)
           const tint = this.cellTintOverlays[i];
           tint.clear();
-          tint.roundRect(0, 0, w, h, 6);
-          tint.fill({ color: ownerColor, alpha: 0.25 });
+          tint.roundRect(0, 0, w, h, LAYOUT.cellRadius);
+          tint.fill({ color: ownerColor, alpha: LAYOUT.ownerTintAlpha });
           tint.visible = true;
 
           // Cell border only (board-absolute, transparent fill for hit area)
-          gfx.roundRect(x, y, w, h, 6);
+          gfx.roundRect(x, y, w, h, LAYOUT.cellRadius);
           gfx.fill({ color: 0x000000, alpha: 0 });
-          gfx.roundRect(x, y, w, h, 6);
+          gfx.roundRect(x, y, w, h, LAYOUT.cellRadius);
           gfx.stroke({ color: ownerColor, width: 2 });
         } else {
           // Texture not loaded yet — colored rectangle fallback
-          gfx.roundRect(x, y, w, h, 6);
-          gfx.fill({ color: ownerColor, alpha: 0.35 });
-          gfx.roundRect(x, y, w, h, 6);
+          gfx.roundRect(x, y, w, h, LAYOUT.cellRadius);
+          gfx.fill({ color: ownerColor, alpha: LAYOUT.ownerFallbackAlpha });
+          gfx.roundRect(x, y, w, h, LAYOUT.cellRadius);
           gfx.stroke({ color: ownerColor, width: 2 });
 
           // Hide sprite and tint
@@ -455,21 +496,21 @@ export class PixiBattleRenderer implements IBattleRenderer {
 
         if (isSelected) {
           // Selected empty cell — emphasized
-          gfx.roundRect(x, y, w, h, 6);
-          gfx.fill({ color: COLORS.cellSelectedFill, alpha: 0.6 });
-          gfx.roundRect(x, y, w, h, 6);
-          gfx.stroke({ color: COLORS.cellSelectedStroke, width: 3 });
+          gfx.roundRect(x, y, w, h, LAYOUT.cellRadius);
+          gfx.fill({ color: COLORS.cellSelectedFill, alpha: LAYOUT.selectedFillAlpha });
+          gfx.roundRect(x, y, w, h, LAYOUT.cellRadius);
+          gfx.stroke({ color: COLORS.cellSelectedStroke, width: LAYOUT.selectedStrokeWidth });
         } else if (isSelectable) {
           // Selectable empty cell — subtle highlight
-          gfx.roundRect(x, y, w, h, 6);
+          gfx.roundRect(x, y, w, h, LAYOUT.cellRadius);
           gfx.fill({ color: COLORS.cellEmpty });
-          gfx.roundRect(x, y, w, h, 6);
-          gfx.stroke({ color: COLORS.cellSelectableStroke, width: 1.5, alpha: 0.6 });
+          gfx.roundRect(x, y, w, h, LAYOUT.cellRadius);
+          gfx.stroke({ color: COLORS.cellSelectableStroke, width: LAYOUT.selectableStrokeWidth, alpha: LAYOUT.selectableStrokeAlpha });
         } else {
           // Non-selectable empty cell
-          gfx.roundRect(x, y, w, h, 6);
+          gfx.roundRect(x, y, w, h, LAYOUT.cellRadius);
           gfx.fill({ color: COLORS.cellEmpty });
-          gfx.roundRect(x, y, w, h, 6);
+          gfx.roundRect(x, y, w, h, LAYOUT.cellRadius);
           gfx.stroke({ color: COLORS.gridLine, width: 1 });
         }
       }
@@ -494,7 +535,7 @@ export class PixiBattleRenderer implements IBattleRenderer {
     if (!cell) return;
 
     const { edges } = cell.card;
-    const fontSize = Math.max(12, w * 0.18);
+    const fontSize = Math.max(LAYOUT.edgeFontSizeMin, w * LAYOUT.edgeFontSizeScale);
     const style = new TextStyle({
       fontSize,
       fill: COLORS.edgeText,
@@ -515,26 +556,26 @@ export class PixiBattleRenderer implements IBattleRenderer {
       ax: number;
       ay: number;
     }> = [
-      { val: edges.up, px: w / 2, py: 6, ax: 0.5, ay: 0 },
-      { val: edges.right, px: w - 6, py: h / 2, ax: 1, ay: 0.5 },
-      { val: edges.down, px: w / 2, py: h - 6, ax: 0.5, ay: 1 },
-      { val: edges.left, px: 6, py: h / 2, ax: 0, ay: 0.5 },
+      { val: edges.up, px: w / 2, py: LAYOUT.edgePadding, ax: 0.5, ay: 0 },
+      { val: edges.right, px: w - LAYOUT.edgePadding, py: h / 2, ax: 1, ay: 0.5 },
+      { val: edges.down, px: w / 2, py: h - LAYOUT.edgePadding, ax: 0.5, ay: 1 },
+      { val: edges.left, px: LAYOUT.edgePadding, py: h / 2, ax: 0, ay: 0.5 },
     ];
 
     for (const { val, px, py, ax, ay } of edgeData) {
       // Dark pill background when texture is visible
       if (hasTexture) {
-        const pillW = fontSize * 1.3;
-        const pillH = fontSize * 1.15;
+        const pillW = fontSize * LAYOUT.pillWidthScale;
+        const pillH = fontSize * LAYOUT.pillHeightScale;
         const pillGfx = new Graphics();
         pillGfx.roundRect(
           px - pillW * ax,
           py - pillH * ay,
           pillW,
           pillH,
-          3,
+          LAYOUT.pillRadius,
         );
-        pillGfx.fill({ color: COLORS.edgePillBg, alpha: 0.55 });
+        pillGfx.fill({ color: COLORS.edgePillBg, alpha: LAYOUT.edgePillAlpha });
         container.addChild(pillGfx);
       }
 
@@ -608,8 +649,10 @@ export class PixiBattleRenderer implements IBattleRenderer {
 
   private ensureTicker(): void {
     if (this.tickerBound || !this.app) return;
+    if (document.hidden) return; // Don't start ticker while tab is hidden
     this.app.ticker.add(this.onTick, this);
     this.tickerBound = true;
+    this.ensureVisibilityListener();
   }
 
   private teardownTicker(): void {
@@ -617,6 +660,26 @@ export class PixiBattleRenderer implements IBattleRenderer {
     this.app.ticker.remove(this.onTick, this);
     this.tickerBound = false;
   }
+
+  private ensureVisibilityListener(): void {
+    if (this.visibilityBound) return;
+    document.addEventListener("visibilitychange", this.onVisibilityChange);
+    this.visibilityBound = true;
+  }
+
+  private teardownVisibilityListener(): void {
+    if (!this.visibilityBound) return;
+    document.removeEventListener("visibilitychange", this.onVisibilityChange);
+    this.visibilityBound = false;
+  }
+
+  private onVisibilityChange = (): void => {
+    if (document.hidden) {
+      this.teardownTicker();
+    } else if (this.state && this.state.selectableCells.size > 0) {
+      this.ensureTicker();
+    }
+  };
 
   private onTick = (): void => {
     const nowMs = performance.now();
@@ -719,8 +782,12 @@ export class PixiBattleRenderer implements IBattleRenderer {
 
     // Draw glow ring (emerald, board-absolute coordinates)
     glow.clear();
-    glow.roundRect(x - 2, y - 2, w + 4, h + 4, 8);
-    glow.stroke({ color: COLORS.breatheGlow, width: 2, alpha: frame.glowAlpha });
+    glow.roundRect(
+      x - LAYOUT.glowMargin, y - LAYOUT.glowMargin,
+      w + LAYOUT.glowMargin * 2, h + LAYOUT.glowMargin * 2,
+      LAYOUT.glowRadius,
+    );
+    glow.stroke({ color: COLORS.breatheGlow, width: LAYOUT.glowStrokeWidth, alpha: frame.glowAlpha });
     glow.visible = true;
 
     // Apply breathe scale to content container (only if no cell animation active)
@@ -757,20 +824,20 @@ export class PixiBattleRenderer implements IBattleRenderer {
     if (!overlay) return;
 
     // Near identity brightness — hide overlay
-    if (Math.abs(brightness - 1) < 0.02) {
+    if (Math.abs(brightness - 1) < LAYOUT.brightnessThreshold) {
       overlay.visible = false;
       return;
     }
 
     overlay.clear();
-    overlay.roundRect(0, 0, w, h, 6);
+    overlay.roundRect(0, 0, w, h, LAYOUT.cellRadius);
 
     if (brightness > 1) {
       // Brighter: white overlay, alpha scaled by how far above 1
-      overlay.fill({ color: COLORS.brightnessWhite, alpha: (brightness - 1) * 0.4 });
+      overlay.fill({ color: COLORS.brightnessWhite, alpha: (brightness - 1) * LAYOUT.brightnessWhiteScale });
     } else {
       // Darker: black overlay, alpha scaled by how far below 1
-      overlay.fill({ color: COLORS.brightnessBlack, alpha: (1 - brightness) * 0.6 });
+      overlay.fill({ color: COLORS.brightnessBlack, alpha: (1 - brightness) * LAYOUT.brightnessBlackScale });
     }
 
     overlay.visible = true;
