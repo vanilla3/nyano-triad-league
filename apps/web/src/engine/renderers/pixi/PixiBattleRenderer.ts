@@ -27,6 +27,7 @@ import { TextureResolver } from "./textureResolver";
 import {
   animDurationsForQuality,
   computeCellFrame,
+  computeBreatheFrame,
   type CellAnimRecord,
   type CellAnimFrame,
 } from "./cellAnimations";
@@ -51,6 +52,7 @@ const COLORS = {
   tokenIdText: 0xffffff,
   brightnessWhite: 0xffffff,
   brightnessBlack: 0x000000,
+  breatheGlow: 0x34d399, // emerald-400 (matches --mint-cell-active-glow)
 } as const;
 
 const CELL_COORDS = [
@@ -83,6 +85,7 @@ export class PixiBattleRenderer implements IBattleRenderer {
 
   // ── Per-cell visual objects (9 each) ──
   private cellGraphics: Graphics[] = [];
+  private cellGlowOverlays: Graphics[] = [];         // ★ breathe glow ring
   private cellContentContainers: Container[] = [];   // ★ animated wrapper
   private cellMasks: Graphics[] = [];
   private cellSprites: (Sprite | null)[] = [];
@@ -133,6 +136,11 @@ export class PixiBattleRenderer implements IBattleRenderer {
     // ── Detect new animations ──
     this.detectAnimationTriggers(state, prevState);
 
+    // ── Breathe glow needs ticker when selectable cells exist ──
+    if (state.selectableCells.size > 0 && state.vfxQuality !== "off") {
+      this.ensureTicker();
+    }
+
     this.redraw();
   }
 
@@ -156,6 +164,7 @@ export class PixiBattleRenderer implements IBattleRenderer {
     this.textureResolver.dispose();
     this.boardContainer = null;
     this.cellGraphics = [];
+    this.cellGlowOverlays = [];
     this.cellContentContainers = [];
     this.cellMasks = [];
     this.cellSprites = [];
@@ -192,6 +201,12 @@ export class PixiBattleRenderer implements IBattleRenderer {
 
       this.boardContainer.addChild(cellGfx);
       this.cellGraphics.push(cellGfx);
+
+      // 1b. Glow overlay — ★ breathe glow ring for selectable empty cells
+      const glowGfx = new Graphics();
+      glowGfx.visible = false;
+      this.boardContainer.addChild(glowGfx);
+      this.cellGlowOverlays.push(glowGfx);
 
       // 2. Content container — ★ animation target
       //    All card visual content goes inside this container.
@@ -563,6 +578,7 @@ export class PixiBattleRenderer implements IBattleRenderer {
     const nowMs = performance.now();
     let anyActive = false;
 
+    // ── Cell placement/flip animations ──
     for (let i = 0; i < 9; i++) {
       const record = this.cellAnims[i];
       if (!record) continue;
@@ -580,6 +596,31 @@ export class PixiBattleRenderer implements IBattleRenderer {
         // Animation complete — reset to identity
         this.cellAnims[i] = null;
         this.resetCellTransform(i);
+      }
+    }
+
+    // ── Breathe glow for selectable empty cells ──
+    if (this.state && this.state.selectableCells.size > 0) {
+      const breathe = computeBreatheFrame(nowMs);
+      for (let i = 0; i < 9; i++) {
+        const isSelectable = this.state.selectableCells.has(i);
+        const hasCard = !!this.state.board[i];
+        if (isSelectable && !hasCard) {
+          this.applyBreatheGlow(i, breathe);
+          anyActive = true;
+        } else {
+          this.cellGlowOverlays[i].visible = false;
+          // Reset breathe scale if no cell animation is active
+          if (!this.cellAnims[i]) {
+            const cc = this.cellContentContainers[i];
+            if (cc) cc.scale.set(1, 1);
+          }
+        }
+      }
+    } else {
+      // No selectable cells — hide all glow overlays
+      for (let i = 0; i < 9; i++) {
+        this.cellGlowOverlays[i].visible = false;
       }
     }
 
@@ -620,6 +661,29 @@ export class PixiBattleRenderer implements IBattleRenderer {
     // Hide brightness overlay
     const overlay = this.cellBrightnessOverlays[i];
     if (overlay) overlay.visible = false;
+  }
+
+  private applyBreatheGlow(
+    i: number,
+    frame: { scale: number; glowAlpha: number },
+  ): void {
+    const glow = this.cellGlowOverlays[i];
+    const layout = this.layouts.get(i);
+    if (!glow || !layout) return;
+
+    const { x, y, w, h } = layout;
+
+    // Draw glow ring (emerald, board-absolute coordinates)
+    glow.clear();
+    glow.roundRect(x - 2, y - 2, w + 4, h + 4, 8);
+    glow.stroke({ color: COLORS.breatheGlow, width: 2, alpha: frame.glowAlpha });
+    glow.visible = true;
+
+    // Apply breathe scale to content container (only if no cell animation active)
+    const cc = this.cellContentContainers[i];
+    if (cc && !this.cellAnims[i]) {
+      cc.scale.set(frame.scale, frame.scale);
+    }
   }
 
   private applyBrightness(

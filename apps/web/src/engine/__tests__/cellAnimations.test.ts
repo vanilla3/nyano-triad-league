@@ -7,6 +7,8 @@ import {
   interpolatePlacement,
   interpolateFlip,
   computeCellFrame,
+  BREATHE_CYCLE_MS,
+  computeBreatheFrame,
   type CellAnimRecord,
   type CellAnimFrame,
 } from "../renderers/pixi/cellAnimations";
@@ -298,6 +300,67 @@ describe("computeCellFrame", () => {
 });
 
 /* ═══════════════════════════════════════════════════════════════════════════
+   computeBreatheFrame
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+describe("computeBreatheFrame", () => {
+  it("BREATHE_CYCLE_MS is 2500", () => {
+    expect(BREATHE_CYCLE_MS).toBe(2500);
+  });
+
+  it("at t=0: scale=1, glowAlpha=0", () => {
+    // sin(0) = 0 → p = 0.5 ... wait, let's think about this.
+    // t=0 → (0 % 2500) / 2500 = 0 → sin(0) = 0 → p = (0+1)/2 = 0.5
+    // Actually at t=0: sin(0)=0 → p=0.5 → scale=1.01, glowAlpha=0.125
+    // This is the mid-point, not the start. The "start" of the visual cycle
+    // (scale=1, glow=0) happens at t where sin = -1, i.e. t = 75% of cycle.
+    const frame = computeBreatheFrame(0);
+    // At t=0: sin(0)=0, p=0.5
+    expect(frame.scale).toBeCloseTo(1.01, 2);
+    expect(frame.glowAlpha).toBeCloseTo(0.125, 2);
+  });
+
+  it("at peak (25% of cycle): scale≈1.02, glowAlpha≈0.25", () => {
+    // sin(π/2) = 1 → p = 1 → max values
+    const peakMs = BREATHE_CYCLE_MS * 0.25; // 625ms
+    const frame = computeBreatheFrame(peakMs);
+    expect(frame.scale).toBeCloseTo(1.02, 2);
+    expect(frame.glowAlpha).toBeCloseTo(0.25, 2);
+  });
+
+  it("at trough (75% of cycle): scale=1, glowAlpha=0", () => {
+    // sin(3π/2) = -1 → p = 0 → min values
+    const troughMs = BREATHE_CYCLE_MS * 0.75; // 1875ms
+    const frame = computeBreatheFrame(troughMs);
+    expect(frame.scale).toBeCloseTo(1.0, 2);
+    expect(frame.glowAlpha).toBeCloseTo(0, 2);
+  });
+
+  it("loops: t=2500 same as t=0", () => {
+    const f0 = computeBreatheFrame(0);
+    const fCycle = computeBreatheFrame(BREATHE_CYCLE_MS);
+    expect(fCycle.scale).toBeCloseTo(f0.scale, 4);
+    expect(fCycle.glowAlpha).toBeCloseTo(f0.glowAlpha, 4);
+  });
+
+  it("scale stays in [1.0, 1.02] range", () => {
+    for (let ms = 0; ms < BREATHE_CYCLE_MS; ms += 50) {
+      const { scale } = computeBreatheFrame(ms);
+      expect(scale).toBeGreaterThanOrEqual(1.0);
+      expect(scale).toBeLessThanOrEqual(1.02 + 0.001);
+    }
+  });
+
+  it("glowAlpha stays in [0, 0.25] range", () => {
+    for (let ms = 0; ms < BREATHE_CYCLE_MS; ms += 50) {
+      const { glowAlpha } = computeBreatheFrame(ms);
+      expect(glowAlpha).toBeGreaterThanOrEqual(-0.001);
+      expect(glowAlpha).toBeLessThanOrEqual(0.25 + 0.001);
+    }
+  });
+});
+
+/* ═══════════════════════════════════════════════════════════════════════════
    Module exports
    ═══════════════════════════════════════════════════════════════════════════ */
 
@@ -311,5 +374,7 @@ describe("cellAnimations module exports", () => {
     expect(typeof mod.interpolatePlacement).toBe("function");
     expect(typeof mod.interpolateFlip).toBe("function");
     expect(typeof mod.computeCellFrame).toBe("function");
+    expect(mod.BREATHE_CYCLE_MS).toBeDefined();
+    expect(typeof mod.computeBreatheFrame).toBe("function");
   });
 });
