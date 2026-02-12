@@ -23,10 +23,11 @@ export interface FirstPlayerResolution {
 const BYTES32_RE = /^0x[0-9a-fA-F]{64}$/;
 
 export function parseFirstPlayerResolutionMode(v: string | null): FirstPlayerResolutionMode {
-  if (v === "mutual") return "mutual";
-  if (v === "committed_mutual_choice") return "committed_mutual_choice";
-  if (v === "seed") return "seed";
-  if (v === "commit_reveal") return "commit_reveal";
+  const normalized = (v ?? "").trim().toLowerCase().replace(/[\s-]+/g, "_");
+  if (normalized === "mutual" || normalized === "mutual_choice") return "mutual";
+  if (normalized === "committed_mutual_choice") return "committed_mutual_choice";
+  if (normalized === "seed") return "seed";
+  if (normalized === "commit_reveal") return "commit_reveal";
   return "manual";
 }
 

@@ -650,3 +650,35 @@
 - `pnpm -C apps/web test -- src/lib/__tests__/first_player_params.test.ts src/lib/__tests__/first_player_resolve.test.ts`
 - `pnpm -C apps/web build`
 - `pnpm -C apps/web e2e -- match-first-player.spec.ts`
+
+## 2026-02-12 - commit-0102: first-player alias parsing and committed-mutual address hardening
+
+### Why
+- Shared URLs sometimes used mode aliases like `commit-reveal` / `committed-mutual-choice`, but parser support was strict.
+- In committed mutual-choice mode, invalid `fpoa/fpob` addresses could remain in URL and cause avoidable resolver failures.
+
+### What
+- `apps/web/src/lib/first_player_resolve.ts`
+  - Hardened `parseFirstPlayerResolutionMode(...)`:
+    - normalize case/whitespace/hyphen to underscore,
+    - accept aliases such as `mutual-choice`, `commit-reveal`, and `committed-mutual-choice`.
+- `apps/web/src/lib/first_player_params.ts`
+  - Added address validation for committed mutual defaults:
+    - if `fpoa/fpob` are not `0x` + 40 hex chars, replace with deterministic default addresses.
+  - Kept previous behavior that preserves existing commit params (`fca/fcb/fcoa/fcob`) during canonicalization.
+- `apps/web/src/lib/__tests__/first_player_resolve.test.ts`
+  - Added parse coverage for alias inputs.
+- `apps/web/src/lib/__tests__/first_player_params.test.ts`
+  - Added committed mutual invalid-address fallback test.
+- `apps/web/e2e/match-first-player.spec.ts`
+  - Added alias/canonicalization scenario:
+    - `fpm=committed-mutual-choice` canonicalizes to `committed_mutual_choice`,
+    - invalid `fpoa/fpob` are replaced with defaults,
+    - existing commits remain intact.
+
+### Verify
+- `pnpm -C apps/web typecheck`
+- `pnpm -C apps/web lint`
+- `pnpm -C apps/web test -- src/lib/__tests__/first_player_params.test.ts src/lib/__tests__/first_player_resolve.test.ts`
+- `pnpm -C apps/web e2e -- match-first-player.spec.ts`
+- `pnpm -C apps/web build`

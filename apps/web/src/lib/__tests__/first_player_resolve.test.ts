@@ -17,9 +17,12 @@ describe("parseFirstPlayerResolutionMode", () => {
   it("parses supported values", () => {
     expect(parseFirstPlayerResolutionMode("manual")).toBe("manual");
     expect(parseFirstPlayerResolutionMode("mutual")).toBe("mutual");
+    expect(parseFirstPlayerResolutionMode("mutual-choice")).toBe("mutual");
     expect(parseFirstPlayerResolutionMode("committed_mutual_choice")).toBe("committed_mutual_choice");
+    expect(parseFirstPlayerResolutionMode("committed-mutual-choice")).toBe("committed_mutual_choice");
     expect(parseFirstPlayerResolutionMode("seed")).toBe("seed");
     expect(parseFirstPlayerResolutionMode("commit_reveal")).toBe("commit_reveal");
+    expect(parseFirstPlayerResolutionMode("commit-reveal")).toBe("commit_reveal");
   });
 });
 

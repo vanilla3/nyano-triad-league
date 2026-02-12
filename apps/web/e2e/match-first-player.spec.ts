@@ -46,6 +46,24 @@ test.describe("Match first-player mode URL params", () => {
     await expect.poll(() => new URL(page.url()).searchParams.get("fcob")).toBe(COMMIT_B);
   });
 
+  test("loading committed-mutual alias canonicalizes mode and invalid addresses", async ({ page }) => {
+    await page.goto(
+      `/match?fpm=committed-mutual-choice&fps=${SEED}&fpa=1&fpb=1&fpoa=not-an-address&fpob=0x1234&fpna=${REVEAL_A}&fpnb=${REVEAL_B}&fcoa=${COMMIT_A}&fcob=${COMMIT_B}`,
+    );
+
+    await expect(page.getByLabel("First player mode")).toBeVisible({ timeout: 10_000 });
+
+    await expect.poll(() => new URL(page.url()).searchParams.get("fpm")).toBe("committed_mutual_choice");
+    await expect.poll(() => new URL(page.url()).searchParams.get("fpoa")).toBe(
+      "0xaAaAaAaaAaAaAaaAaAAAAAAAAaaaAaAaAaaAaaAa",
+    );
+    await expect.poll(() => new URL(page.url()).searchParams.get("fpob")).toBe(
+      "0xbBbBBBBbbBBBbbbBbbBbbbbBBbBbbbbBbBbbBBbB",
+    );
+    await expect.poll(() => new URL(page.url()).searchParams.get("fcoa")).toBe(COMMIT_A);
+    await expect.poll(() => new URL(page.url()).searchParams.get("fcob")).toBe(COMMIT_B);
+  });
+
   test("switching to commit_reveal fills required inputs and clears unrelated mode params", async ({ page }) => {
     await page.goto(
       `/match?fpm=manual&fpsd=${SEED}&fpoa=0xaAaAaAaaAaAaAaaAaAAAAAAAAaaaAaAaAaaAaaAa&fpna=${REVEAL_A}&fcoa=${COMMIT_A}`,

@@ -1,11 +1,16 @@
 import type { FirstPlayerResolutionMode } from "./first_player_resolve";
 
 const BYTES32_RE = /^0x[0-9a-fA-F]{64}$/;
+const ADDRESS_RE = /^0x[0-9a-fA-F]{40}$/;
 const DEFAULT_PLAYER_A = "0xaAaAaAaaAaAaAaaAaAAAAAAAAaaaAaAaAaaAaaAa";
 const DEFAULT_PLAYER_B = "0xbBbBBBBbbBBBbbbBbbBbbbbBBbBbbbbBbBbbBBbB";
 
 function isBytes32Hex(v: string): boolean {
   return BYTES32_RE.test(v);
+}
+
+function isAddressHex(v: string): boolean {
+  return ADDRESS_RE.test(v);
 }
 
 function normalizeChoiceParam(v: string | null): "0" | "1" {
@@ -128,11 +133,13 @@ export function buildFirstPlayerModeDefaultParamPatch(
   }
 
   if (mode === "committed_mutual_choice") {
+    const playerA = get("fpoa");
+    const playerB = get("fpob");
     patch.fps = isBytes32Hex(get("fps")) ? get("fps") : randomBytes32Hex();
     patch.fpa = normalizeChoiceParam(current.get("fpa"));
     patch.fpb = normalizeChoiceParam(current.get("fpb"));
-    patch.fpoa = get("fpoa") || DEFAULT_PLAYER_A;
-    patch.fpob = get("fpob") || DEFAULT_PLAYER_B;
+    patch.fpoa = isAddressHex(playerA) ? playerA : DEFAULT_PLAYER_A;
+    patch.fpob = isAddressHex(playerB) ? playerB : DEFAULT_PLAYER_B;
     patch.fpna = isBytes32Hex(get("fpna")) ? get("fpna") : randomBytes32Hex();
     patch.fpnb = isBytes32Hex(get("fpnb")) ? get("fpnb") : randomBytes32Hex();
     return patch;
