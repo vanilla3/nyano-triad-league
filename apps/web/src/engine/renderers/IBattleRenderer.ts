@@ -28,6 +28,8 @@ export interface BattleRendererState {
   currentPlayer: PlayerIndex;
   /** VFX quality tier for animation scaling. */
   vfxQuality: VfxQuality;
+  /** Optional extra tokenIds to preload (e.g. current hand). */
+  preloadTokenIds?: readonly string[];
   /** Cell index where a card was just placed (Sprint 49). */
   placedCell?: number | null;
   /** Cell indices flipped this turn (Sprint 49). */

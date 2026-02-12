@@ -236,6 +236,7 @@ export class PixiBattleRenderer implements IBattleRenderer {
       if (!cell) continue;
       tokenIds.push(cell.card.tokenId.toString());
     }
+    if (state.preloadTokenIds) tokenIds.push(...state.preloadTokenIds);
     if (tokenIds.length === 0) return;
     this.textureResolver.preloadTextures(
       tokenIds,
