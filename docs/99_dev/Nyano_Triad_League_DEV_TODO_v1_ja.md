@@ -48,9 +48,14 @@
   - `ladder.ts` を追加（EIP-712 attestation / record verify / deterministic standings）
   - indexer 非依存の tie-break を固定（points → wins → tileDiff → losses → address）
   - 仕様書 `LADDER_FORMAT_SPEC` を追加
+- ✅ Commit0106: Phase 3 hardening（error tracking + release runbook）を最小実装
+  - `apps/web/src/lib/error_tracking.ts` を追加（global error / unhandledrejection の収集）
+  - sink を切替可能化（local / console / remote, env設定）
+  - `docs/99_dev/RELEASE_RUNBOOK_v1_ja.md` を追加（versioning/changelog/rollback/feature flag）
+  - `pnpm run release:check` を追加（出荷前チェックの標準化）
 ## 🚧 Doing (now)
 
-- 🔧 Phase 3 の未完了（エラートラッキング / リリース手順）を最小実装に落とし込む
+- 🔧 Phase 4 の導線（新規参加者チュートリアル / シーズン運用UI）の最小設計を進める
 
 ## 🧩 Next (high priority)
 

@@ -501,6 +501,41 @@
 - `pnpm -C packages/triad-engine test`（この実行環境では `node:test` が `spawn EPERM` のため完走不可）
 - `node -e ...` で ladder の署名検証・standings集計をスモーク実行（成功）
 
+## 2026-02-12 - commit-0106: phase3 hardening (web error tracking + release runbook)
+
+### Why
+- Phase 3 の未完了項目（エラートラッキング / リリース手順）が残っており、回帰検知と出荷手順の標準化が不足していた。
+- 依存追加を最小に抑えつつ、まず実運用できるエラー収集の基盤が必要だった。
+
+### What
+- `apps/web/src/lib/error_tracking.ts` を新規追加。
+  - global `error` / `unhandledrejection` 向けの収集ロジックを実装。
+  - sink を切替可能化（`local` / `console` / `remote`）。
+  - localStorage リングバッファ（既定50件）で履歴保持。
+  - env 設定:
+    - `VITE_ERROR_TRACKING_MODE`
+    - `VITE_ERROR_TRACKING_ENDPOINT`
+    - `VITE_ERROR_TRACKING_MAX_EVENTS`
+    - `VITE_APP_RELEASE`
+- `apps/web/src/main.tsx`
+  - `installGlobalErrorTracking()` を起動時に導入。
+- `apps/web/src/lib/__tests__/error_tracking.test.ts`
+  - sink解析、イベント正規化、ローカル保持、クリア、console sink を検証。
+- `package.json`
+  - `release:check` スクリプトを追加（engine lint/build + web typecheck/lint/build）。
+- `docs/99_dev/RELEASE_RUNBOOK_v1_ja.md`
+  - versioning / changelog / rollback / feature flag / release check を定義。
+- `docs/00_handoff/Nyano_Triad_League_LONG_TERM_ROADMAP_v1_ja.md`
+  - Phase 3 の未完了2項目を完了に更新。
+- `docs/99_dev/Nyano_Triad_League_DEV_TODO_v1_ja.md`
+  - Commit0106 を反映し、Doing を次フェーズへ更新。
+
+### Verify
+- `pnpm -C apps/web typecheck`
+- `pnpm -C apps/web lint`
+- `pnpm -C apps/web test -- src/lib/__tests__/error_tracking.test.ts`
+  - この実行環境では `vite/vitest` 起動時に `spawn EPERM` が発生し完走不可
+
 ## 2026-02-12 - commit-0096: first-player flow adoption (committed mutual + web seed mode)
 
 ### Why
