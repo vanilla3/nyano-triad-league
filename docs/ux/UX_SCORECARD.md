@@ -18,7 +18,7 @@
 
 | # | チェック項目 | 測定方法 | 目標 | 現状 |
 |---|-------------|---------|------|------|
-| B-1 | Home から試合開始まで10秒以内 | ストップウォッチ | < 10s | 未計測 |
+| B-1 | Home から試合開始まで10秒以内 | `quickplay_to_first_place_ms` テレメトリ | < 10s | 計測可能（Home > Settings） |
 | B-2 | 置けるセルが "見れば分かる"（形・色で区別） | 無説明テスト | Yes | ✅ Yes (Mint: puffy+breathe vs flat) |
 | B-3 | カード選択 → セル選択の2ステップが直感的 | 無説明テスト | Yes | ✅ Yes (Mint: HandDisplayMint + ActionPrompt) |
 | B-4 | モバイルで誤タップなく操作できる | `invalid_action_count` | < 2回/試合 | 計測可能（Home > Settings） |
@@ -84,6 +84,7 @@
 |-----------|-----|------|
 | `first_interaction_ms` | number | ページ読み込みから最初の操作までの時間 |
 | `first_place_ms` | number | ページ読み込みから1手目配置までの時間 |
+| `quickplay_to_first_place_ms` | number | Home の「すぐ遊ぶ」押下から1手目配置までの時間 |
 | `invalid_action_count` | number | セッション内の不正操作回数 |
 
 ---

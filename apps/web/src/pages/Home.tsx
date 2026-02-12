@@ -4,7 +4,7 @@ import { useToast } from "@/components/Toast";
 import { NyanoAvatar } from "@/components/NyanoAvatar";
 import { resetTutorialSeen } from "@/components/MiniTutorial";
 import { clearGameIndexCache } from "@/lib/nyano/gameIndex";
-import { clearCumulativeStats, readCumulativeStats } from "@/lib/telemetry";
+import { clearCumulativeStats, markQuickPlayStart, readCumulativeStats } from "@/lib/telemetry";
 import type { ExpressionName } from "@/lib/expression_map";
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -307,6 +307,7 @@ export function HomePage() {
             <div className="flex flex-col items-center gap-3">
               <Link
                 to={quickPlayUrl}
+                onClick={() => markQuickPlayStart()}
                 className={[
                   "home-hero__cta",
                   "inline-flex items-center gap-3",
@@ -497,7 +498,7 @@ export function HomePage() {
                 </button>
               </div>
             </div>
-            <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-5">
               <div className="rounded-xl border border-surface-200 bg-surface-50 px-3 py-2">
                 <div className="text-[11px] text-surface-500">Sessions</div>
                 <div className="text-sm font-semibold text-surface-800">{uxStats.sessions}</div>
@@ -512,6 +513,12 @@ export function HomePage() {
                 <div className="text-[11px] text-surface-500">Avg first place</div>
                 <div className="text-sm font-semibold text-surface-800">
                   {formatSecondsFromMs(uxStats.avg_first_place_ms)}
+                </div>
+              </div>
+              <div className="rounded-xl border border-surface-200 bg-surface-50 px-3 py-2">
+                <div className="text-[11px] text-surface-500">Avg quick-play to first place</div>
+                <div className="text-sm font-semibold text-surface-800">
+                  {formatSecondsFromMs(uxStats.avg_quickplay_to_first_place_ms)}
                 </div>
               </div>
               <div className="rounded-xl border border-surface-200 bg-surface-50 px-3 py-2">

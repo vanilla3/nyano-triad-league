@@ -13,6 +13,8 @@ export interface SessionTelemetry {
   first_interaction_ms: number | null;
   /** ms from page load to first card placement */
   first_place_ms: number | null;
+  /** ms from Home quick-play click to first card placement */
+  quickplay_to_first_place_ms: number | null;
   /** Count of invalid action attempts in this session */
   invalid_action_count: number;
 }
@@ -54,6 +56,7 @@ export interface CumulativeStats {
   sessions: number;
   avg_first_interaction_ms: number | null;
   avg_first_place_ms: number | null;
+  avg_quickplay_to_first_place_ms: number | null;
   total_invalid_actions: number;
 }
 
@@ -61,8 +64,10 @@ const CUMULATIVE_KEYS = [
   "cum.sessions",
   "cum.sum_first_interaction_ms",
   "cum.sum_first_place_ms",
+  "cum.sum_quickplay_to_first_place_ms",
   "cum.count_first_interaction",
   "cum.count_first_place",
+  "cum.count_quickplay_to_first_place",
   "cum.total_invalid_actions",
 ] as const;
 
@@ -70,8 +75,10 @@ export function readCumulativeStats(): CumulativeStats {
   const sessions = readNumber("cum.sessions") ?? 0;
   const sumInteraction = readNumber("cum.sum_first_interaction_ms");
   const sumPlace = readNumber("cum.sum_first_place_ms");
+  const sumQuickPlayToFirstPlace = readNumber("cum.sum_quickplay_to_first_place_ms");
   const countInteraction = readNumber("cum.count_first_interaction") ?? 0;
   const countPlace = readNumber("cum.count_first_place") ?? 0;
+  const countQuickPlayToFirstPlace = readNumber("cum.count_quickplay_to_first_place") ?? 0;
   const totalInvalid = readNumber("cum.total_invalid_actions") ?? 0;
 
   return {
@@ -82,6 +89,10 @@ export function readCumulativeStats(): CumulativeStats {
         : null,
     avg_first_place_ms:
       countPlace > 0 && sumPlace !== null ? Math.round(sumPlace / countPlace) : null,
+    avg_quickplay_to_first_place_ms:
+      countQuickPlayToFirstPlace > 0 && sumQuickPlayToFirstPlace !== null
+        ? Math.round(sumQuickPlayToFirstPlace / countQuickPlayToFirstPlace)
+        : null,
     total_invalid_actions: totalInvalid,
   };
 }
@@ -110,9 +121,64 @@ function persistSession(session: SessionTelemetry): void {
     writeNumber("cum.count_first_place", count);
   }
 
+  if (session.quickplay_to_first_place_ms !== null) {
+    const sum =
+      (readNumber("cum.sum_quickplay_to_first_place_ms") ?? 0) +
+      session.quickplay_to_first_place_ms;
+    const count = (readNumber("cum.count_quickplay_to_first_place") ?? 0) + 1;
+    writeNumber("cum.sum_quickplay_to_first_place_ms", sum);
+    writeNumber("cum.count_quickplay_to_first_place", count);
+  }
+
   const totalInvalid =
     (readNumber("cum.total_invalid_actions") ?? 0) + session.invalid_action_count;
   writeNumber("cum.total_invalid_actions", totalInvalid);
+}
+
+// ── Cross-page quick play marker (Home -> Match) ──────────────────────
+
+const QUICKPLAY_START_KEY = `${STORAGE_PREFIX}ephemeral.quickplay_start_epoch_ms`;
+
+function getTransientStorage(): Pick<Storage, "getItem" | "setItem" | "removeItem"> | null {
+  try {
+    if (typeof sessionStorage !== "undefined") return sessionStorage;
+  } catch {
+    // ignore
+  }
+  try {
+    if (typeof localStorage !== "undefined") return localStorage;
+  } catch {
+    // ignore
+  }
+  return null;
+}
+
+/**
+ * Called from Home quick-play CTA to mark "start match flow".
+ * Stored only locally (sessionStorage preferred).
+ */
+export function markQuickPlayStart(epochMs: number = Date.now()): void {
+  const storage = getTransientStorage();
+  if (!storage || !Number.isFinite(epochMs)) return;
+  try {
+    storage.setItem(QUICKPLAY_START_KEY, String(Math.round(epochMs)));
+  } catch {
+    // storage unavailable/full
+  }
+}
+
+function consumeQuickPlayStart(): number | null {
+  const storage = getTransientStorage();
+  if (!storage) return null;
+  try {
+    const raw = storage.getItem(QUICKPLAY_START_KEY);
+    storage.removeItem(QUICKPLAY_START_KEY);
+    if (raw === null) return null;
+    const value = Number(raw);
+    return Number.isFinite(value) ? value : null;
+  } catch {
+    return null;
+  }
 }
 
 // ── Session tracker ────────────────────────────────────────────────────
@@ -137,6 +203,7 @@ export function createTelemetryTracker(): TelemetryTracker {
   const session: SessionTelemetry = {
     first_interaction_ms: null,
     first_place_ms: null,
+    quickplay_to_first_place_ms: null,
     invalid_action_count: 0,
   };
 
@@ -154,6 +221,13 @@ export function createTelemetryTracker(): TelemetryTracker {
       }
       if (session.first_place_ms === null) {
         session.first_place_ms = Math.round(performance.now() - startTime);
+        const quickPlayStartedAt = consumeQuickPlayStart();
+        if (quickPlayStartedAt !== null) {
+          const elapsed = Date.now() - quickPlayStartedAt;
+          if (Number.isFinite(elapsed) && elapsed >= 0) {
+            session.quickplay_to_first_place_ms = Math.round(elapsed);
+          }
+        }
       }
     },
 

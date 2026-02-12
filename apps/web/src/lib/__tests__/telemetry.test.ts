@@ -1,5 +1,10 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
-import { createTelemetryTracker, readCumulativeStats, clearCumulativeStats } from "../telemetry";
+import {
+  clearCumulativeStats,
+  createTelemetryTracker,
+  markQuickPlayStart,
+  readCumulativeStats,
+} from "../telemetry";
 
 // ── Mock localStorage for node test environment ────────────────────────
 const store = new Map<string, string>();
@@ -12,10 +17,22 @@ const mockLocalStorage = {
   key: (index: number) => Array.from(store.keys())[index] ?? null,
 };
 
+const sessionStore = new Map<string, string>();
+const mockSessionStorage = {
+  getItem: (key: string) => sessionStore.get(key) ?? null,
+  setItem: (key: string, value: string) => { sessionStore.set(key, value); },
+  removeItem: (key: string) => { sessionStore.delete(key); },
+  clear: () => { sessionStore.clear(); },
+  get length() { return sessionStore.size; },
+  key: (index: number) => Array.from(sessionStore.keys())[index] ?? null,
+};
+
 describe("telemetry", () => {
   beforeEach(() => {
     store.clear();
+    sessionStore.clear();
     globalThis.localStorage = mockLocalStorage as unknown as Storage;
+    globalThis.sessionStorage = mockSessionStorage as unknown as Storage;
     vi.spyOn(performance, "now").mockReturnValue(0);
   });
 
@@ -136,7 +153,45 @@ describe("telemetry", () => {
     expect(stats.sessions).toBe(2);
     expect(stats.avg_first_interaction_ms).toBe(3000); // (2000+4000)/2
     expect(stats.avg_first_place_ms).toBe(8000); // (6000+10000)/2
+    expect(stats.avg_quickplay_to_first_place_ms).toBeNull();
     expect(stats.total_invalid_actions).toBe(3); // 1+2
+  });
+
+  it("records quick-play to first place from Home marker", () => {
+    vi.spyOn(Date, "now").mockReturnValue(10_000);
+    markQuickPlayStart();
+
+    const tracker = createTelemetryTracker();
+    vi.spyOn(performance, "now").mockReturnValue(2200);
+    vi.spyOn(Date, "now").mockReturnValue(17_400);
+    tracker.recordPlace();
+
+    expect(tracker.getSession().quickplay_to_first_place_ms).toBe(7400);
+
+    tracker.flush();
+    const stats = readCumulativeStats();
+    expect(stats.avg_quickplay_to_first_place_ms).toBe(7400);
+  });
+
+  it("consumes quick-play marker once", () => {
+    vi.spyOn(Date, "now").mockReturnValue(1_000);
+    markQuickPlayStart();
+
+    const t1 = createTelemetryTracker();
+    vi.spyOn(performance, "now").mockReturnValue(1500);
+    vi.spyOn(Date, "now").mockReturnValue(3_000);
+    t1.recordPlace();
+    t1.flush();
+
+    const t2 = createTelemetryTracker();
+    vi.spyOn(performance, "now").mockReturnValue(1800);
+    vi.spyOn(Date, "now").mockReturnValue(8_000);
+    t2.recordPlace();
+    t2.flush();
+
+    const stats = readCumulativeStats();
+    expect(stats.sessions).toBe(2);
+    expect(stats.avg_quickplay_to_first_place_ms).toBe(2000);
   });
 
   it("returns safe defaults when nothing stored", () => {
@@ -144,6 +199,7 @@ describe("telemetry", () => {
     expect(stats.sessions).toBe(0);
     expect(stats.avg_first_interaction_ms).toBeNull();
     expect(stats.avg_first_place_ms).toBeNull();
+    expect(stats.avg_quickplay_to_first_place_ms).toBeNull();
     expect(stats.total_invalid_actions).toBe(0);
   });
 
@@ -162,6 +218,7 @@ describe("telemetry", () => {
     expect(stats.sessions).toBe(0);
     expect(stats.avg_first_interaction_ms).toBeNull();
     expect(stats.avg_first_place_ms).toBeNull();
+    expect(stats.avg_quickplay_to_first_place_ms).toBeNull();
     expect(stats.total_invalid_actions).toBe(0);
   });
 

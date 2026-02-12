@@ -236,3 +236,25 @@
 
 ### Verify
 - `pnpm build:web` 成功
+
+
+## 2026-02-12 — commit-0086: Quick Play 導線テレメトリ追加（Home→初手配置）
+
+### Why
+- UX スコアカード B-1「Home から試合開始まで10秒以内」が未計測で、改善のループを回しにくかった。
+- 既存の `first_place_ms` は Match ページ起点のため、Home CTA からの体験時間を直接評価できなかった。
+
+### What
+- `telemetry.ts` に `quickplay_to_first_place_ms` を追加（Session + Cumulative 平均）。
+- Home の「🎮 すぐ遊ぶ」押下時に `markQuickPlayStart()` を記録し、Match 側の初回配置で消費して計測するようにした。
+- Home > Settings の UX Telemetry パネルに `Avg quick-play to first place` を表示追加。
+- テスト追加：
+  - Home マーカーありで計測されること
+  - マーカーが1回で消費されること
+- ドキュメント更新：
+  - `UX_SCORECARD` の B-1 を「計測可能」に更新
+  - テレメトリ一覧へ `quickplay_to_first_place_ms` を追加
+
+### Verify
+- `pnpm -C apps/web test`
+- `pnpm -C apps/web build`

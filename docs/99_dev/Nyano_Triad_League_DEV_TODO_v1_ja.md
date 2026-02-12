@@ -33,6 +33,7 @@
   - 無効化セクションを正規化（同挙動でIDが分裂しない）
   - 五行調和の requiredElements を集合扱い（順序を無視）
   - `computeRulesetIdV1(ruleset)` を追加（TS参照実装）
+- ✅ Sprint UX: Home「すぐ遊ぶ」→初手配置までの時間計測を追加（`quickplay_to_first_place_ms`）
 ## 🚧 Doing (now)
 
 - 🔧 「Wind（先攻/後攻選択）」の公平な表現を詰める（commit-reveal / seed / 両者合意）
