@@ -54,6 +54,7 @@ import type { FlipTraceArrow } from "@/components/FlipArrowOverlay";
 import { MatchDrawerMint, DrawerToggleButton } from "@/components/MatchDrawerMint";
 import { writeClipboardText } from "@/lib/clipboard";
 import { appAbsoluteUrl } from "@/lib/appUrl";
+import { BattleStageEngine } from "@/engine/components/BattleStageEngine";
 import { MAX_CHAIN_CAP_PER_TURN, parseChainCapPerTurnParam } from "@/lib/ruleset_meta";
 import {
   deriveRevealCommitHex,
@@ -251,6 +252,7 @@ export function MatchPage() {
   const ui = (searchParams.get("ui") || "mint").toLowerCase();
   const isRpg = ui === "rpg";
   const isMint = ui === "mint";
+  const isEngine = ui === "engine";
   const decks = React.useMemo(() => listDecks(), []);
 
   // ── Telemetry (NIN-UX-003) ──
@@ -1844,6 +1846,14 @@ export function MatchPage() {
                         isFlipAnimating={boardAnim.isAnimating}
                       />
                     </DuelStageMint>
+                  ) : isEngine ? (
+                    <BattleStageEngine
+                      board={boardNow}
+                      selectedCell={draftCell}
+                      selectableCells={selectableCells}
+                      onCellSelect={(cell) => { telemetry.recordInteraction(); handleCellSelect(cell); }}
+                      currentPlayer={currentPlayer}
+                    />
                   ) : isRpg ? (
                     <BoardViewRPG
                       board={boardNow}
