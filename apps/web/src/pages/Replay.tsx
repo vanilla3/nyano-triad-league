@@ -89,6 +89,14 @@ function parseMode(v: string | null): Mode {
   return "auto";
 }
 
+type ReplayBoardUi = "classic" | "rpg" | "engine";
+
+function parseReplayBoardUi(v: string | null): ReplayBoardUi {
+  if (v === "rpg") return "rpg";
+  if (v === "engine") return "engine";
+  return "classic";
+}
+
 function boardEquals(a: ReadonlyArray<BoardCell | null>, b: ReadonlyArray<BoardCell | null>): boolean {
   if (a === b) return true;
   if (!a || !b) return false;
@@ -176,10 +184,10 @@ const HIGHLIGHT_KIND_ORDER: ReplayHighlightKind[] = ["big_flip", "chain", "combo
 
 export function ReplayPage() {
   const [searchParams, setSearchParams] = useSearchParams();
-  const ui = (searchParams.get("ui") || "").toLowerCase();
-  const uiParam = searchParams.get("ui") ?? undefined;
-  const isEngine = ui === "engine";
-  const isRpg = ui === "rpg";
+  const uiMode = parseReplayBoardUi((searchParams.get("ui") || "").toLowerCase());
+  const uiParam = uiMode === "classic" ? undefined : uiMode;
+  const isEngine = uiMode === "engine";
+  const isRpg = uiMode === "rpg";
 
   const eventId = searchParams.get("event") ?? "";
   const event = React.useMemo(() => (eventId ? getEventById(eventId) : null), [eventId]);
@@ -237,6 +245,14 @@ export function ReplayPage() {
       toast.error("Copy failed", errorMessage(e));
     }
   };
+
+  const setReplayBoardUi = React.useCallback((nextUi: ReplayBoardUi) => {
+    const next = new URLSearchParams(searchParams);
+    if (nextUi === "classic") next.delete("ui");
+    else next.set("ui", nextUi);
+    setSearchParams(next, { replace: true });
+  }, [searchParams, setSearchParams]);
+
   const overlayUrl = React.useMemo(() => appAbsoluteUrl("overlay?controls=0"), []);
   const overlayPath = React.useMemo(() => appPath("overlay"), []);
   const replayBroadcastPath = React.useMemo(() => appPath("replay?broadcast=1"), []);
@@ -808,6 +824,19 @@ protocolV1: {
                   <option value="v2">engine v2</option>
                   <option value="compare">compare</option>
                 </select>
+                <span>board</span>
+                <select
+                  className="select w-40"
+                  value={uiMode}
+                  onChange={(e) => setReplayBoardUi(parseReplayBoardUi(e.target.value))}
+                >
+                  <option value="classic">classic</option>
+                  <option value="rpg">rpg</option>
+                  <option value="engine">engine (pixi)</option>
+                </select>
+                {isEngine && compare ? (
+                  <span className="text-[11px] text-slate-500">compare mode renders classic board.</span>
+                ) : null}
 
                 <button className="btn btn-primary" onClick={() => load()} disabled={loading}>
                   {loading ? "Loading..." : "Load & replay"}
