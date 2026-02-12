@@ -81,6 +81,13 @@ describe("buildFirstPlayerModeDefaultParamPatch", () => {
     expect(Object.prototype.hasOwnProperty.call(patch, "fcoa")).toBe(false);
     expect(Object.prototype.hasOwnProperty.call(patch, "fcob")).toBe(false);
   });
+
+  it("committed_mutual_choice mode falls back to default addresses when invalid", () => {
+    const params = new URLSearchParams("fpoa=not-an-address&fpob=0x1234");
+    const patch = buildFirstPlayerModeDefaultParamPatch("committed_mutual_choice", params, mkRandom);
+    expect(patch.fpoa).toBe("0xaAaAaAaaAaAaAaaAaAAAAAAAAaaaAaAaAaaAaaAa");
+    expect(patch.fpob).toBe("0xbBbBBBBbbBBBbbbBbbBbbbbBBbBbbbbBbBbbBBbB");
+  });
 });
 
 describe("buildFirstPlayerModeCanonicalParamPatch", () => {
