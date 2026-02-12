@@ -547,8 +547,8 @@ export function OverlayPage() {
                   </span>
                 </div>
 
-                {/* flipTracesReadout (P0) — P2-084: theme-scaled font */}
-                {flipReadout ? <div className={controls ? "mt-1 text-xs text-slate-600" : "mt-1 text-slate-600"} style={controls ? undefined : { fontSize: "var(--ol-font-lg, 15px)" }}>{flipReadout}</div> : null}
+                {/* flipTracesReadout (P0) — commit-0084: OBS-critical, theme-scaled */}
+                {flipReadout ? <div className={controls ? "mt-1 text-xs text-slate-600" : "mt-1 ol-detail-text text-slate-300"}>{flipReadout}</div> : null}
 
                 <div className="mt-2 flex flex-wrap items-center gap-2">
                   <span className="badge badge-sky">{flipBadgeLabel}</span>
@@ -636,7 +636,7 @@ export function OverlayPage() {
                 </div>
               </div>
               <div className={controls ? "mt-1 text-sm text-slate-700" : "mt-1 text-base font-semibold text-slate-800"}>{title}</div>
-              <div className={controls ? "mt-1 flex flex-wrap items-center gap-2 text-xs text-slate-500" : "mt-1 flex flex-wrap items-center gap-2 text-sm text-slate-600"}>
+              <div className={controls ? "mt-1 flex flex-wrap items-center gap-2 text-xs text-slate-500" : "mt-1 flex flex-wrap items-center gap-2 ol-detail-text text-slate-300"}>
                 <span className={controls ? "" : "ol-turn-label"} style={controls ? undefined : { fontSize: "var(--ol-turn, 16px)" }}>{sub}</span>
                 {toPlayLabel ? (
                   <span className={toPlay === 0 ? "to-play-pill to-play-pill-a" : "to-play-pill to-play-pill-b"}>
@@ -656,7 +656,7 @@ export function OverlayPage() {
                 />
               </div>
 
-              {matchIdShort ? <div className={controls ? "mt-1 text-xs text-slate-400" : "mt-1 text-xs text-slate-400"}>match: {matchIdShort}</div> : null}
+              {matchIdShort ? <div className={controls ? "mt-1 text-xs text-slate-400" : "mt-1 ol-detail-text text-slate-400"}>match: {matchIdShort}</div> : null}
             </div>
 
             {/* 2.5 Advantage indicator (hidden in minimal density) — Tier 2: Secondary */}
@@ -735,7 +735,8 @@ export function OverlayPage() {
                   </div>
                 ) : null}
 
-                <div className={controls ? "mt-1 text-xs text-slate-600" : "mt-1 text-sm text-slate-600"}>
+                {/* commit-0084: OBS-critical vote metadata — theme-scaled */}
+                <div className={controls ? "mt-1 text-xs text-slate-600" : "mt-1 ol-detail-text text-slate-300"}>
                   controls:{" "}
                   <span className="font-mono">{voteState?.controlledSide === 1 ? "B" : voteState?.controlledSide === 0 ? "A" : "—"}</span>
                   {" "}· turn:{" "}
@@ -758,13 +759,13 @@ export function OverlayPage() {
                     )}
                   </div>
                 ) : (
-                  <div className="mt-2 text-xs text-slate-500">Vote is closed.</div>
+                  <div className={controls ? "mt-2 text-xs text-slate-500" : "mt-2 ol-detail-text text-slate-400"}>Vote is closed.</div>
                 )}
 
                 {voteState?.status === "open" && Array.isArray(voteState.top) && voteState.top.length > 0 ? (
                   <div className="mt-2 space-y-1">
                     {voteState.top.slice(0, 3).map((x, i) => (
-                      <div key={i} className={controls ? "flex items-center justify-between gap-2 text-xs" : "flex items-center justify-between gap-2 text-sm"}>
+                      <div key={i} className={controls ? "flex items-center justify-between gap-2 text-xs" : "flex items-center justify-between gap-2 ol-vote-display"}>
                         <span className="font-mono">
                           {toViewerMoveText({
                             cell: x.move.cell,
@@ -778,7 +779,7 @@ export function OverlayPage() {
                   </div>
                 ) : null}
 
-                {voteState?.note ? <div className={controls ? "mt-2 text-xs text-slate-500" : "mt-2 text-xs text-slate-500"}>{voteState.note}</div> : null}
+                {voteState?.note ? <div className={controls ? "mt-2 text-xs text-slate-500" : "mt-2 ol-detail-text text-slate-400"}>{voteState.note}</div> : null}
               </div>
             ) : null}
 
