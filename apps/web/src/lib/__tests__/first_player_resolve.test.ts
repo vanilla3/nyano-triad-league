@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
-import { buildFirstPlayerRevealCommitV1 } from "@nyano/triad-engine";
+import { buildFirstPlayerChoiceCommitV1, buildFirstPlayerRevealCommitV1 } from "@nyano/triad-engine";
 import {
+  deriveChoiceCommitHex,
   deriveRevealCommitHex,
   isBytes32Hex,
   parseFirstPlayerResolutionMode,
@@ -16,6 +17,7 @@ describe("parseFirstPlayerResolutionMode", () => {
   it("parses supported values", () => {
     expect(parseFirstPlayerResolutionMode("manual")).toBe("manual");
     expect(parseFirstPlayerResolutionMode("mutual")).toBe("mutual");
+    expect(parseFirstPlayerResolutionMode("committed_mutual_choice")).toBe("committed_mutual_choice");
     expect(parseFirstPlayerResolutionMode("seed")).toBe("seed");
     expect(parseFirstPlayerResolutionMode("commit_reveal")).toBe("commit_reveal");
   });
@@ -48,10 +50,48 @@ describe("deriveRevealCommitHex", () => {
   });
 });
 
+describe("deriveChoiceCommitHex", () => {
+  const salt = `0x${"11".repeat(32)}`;
+  const nonce = `0x${"22".repeat(32)}`;
+  const player = "0xaAaAaAaaAaAaAaaAaAAAAAAAAaaaAaAaAaaAaaAa";
+
+  it("returns commit hex for valid inputs", () => {
+    const commit = deriveChoiceCommitHex({
+      matchSalt: salt,
+      player,
+      firstPlayer: 0,
+      nonce,
+    });
+    expect(commit).toMatch(/^0x[0-9a-f]{64}$/);
+  });
+
+  it("returns null for invalid inputs", () => {
+    expect(
+      deriveChoiceCommitHex({
+        matchSalt: "0x1234",
+        player,
+        firstPlayer: 0,
+        nonce,
+      }),
+    ).toBeNull();
+    expect(
+      deriveChoiceCommitHex({
+        matchSalt: salt,
+        player: "not-an-address",
+        firstPlayer: 1,
+        nonce,
+      }),
+    ).toBeNull();
+  });
+});
+
 describe("resolveFirstPlayer", () => {
   const bytes32A = `0x${"11".repeat(32)}` as `0x${string}`;
   const bytes32B = `0x${"22".repeat(32)}` as `0x${string}`;
   const bytes32C = `0x${"33".repeat(32)}` as `0x${string}`;
+  const bytes32D = `0x${"44".repeat(32)}` as `0x${string}`;
+  const playerA = "0xaAaAaAaaAaAaAaaAaAAAAAAAAaaaAaAaAaaAaaAa";
+  const playerB = "0xbBbBBBBbbBBBbbbBbbBbbbbBBbBbbbbBbBbbBBbB";
 
   it("manual mode uses manual firstPlayer", () => {
     const r = resolveFirstPlayer({
@@ -127,6 +167,101 @@ describe("resolveFirstPlayer", () => {
     expect(r.valid).toBe(false);
     expect(r.firstPlayer).toBe(1);
     expect(r.error).toContain("Seed must be bytes32");
+  });
+
+  it("committed_mutual_choice mode resolves after commit checks", () => {
+    const commitA = buildFirstPlayerChoiceCommitV1({
+      matchSalt: bytes32A,
+      player: playerA,
+      firstPlayer: 0,
+      nonce: bytes32B,
+    });
+    const commitB = buildFirstPlayerChoiceCommitV1({
+      matchSalt: bytes32A,
+      player: playerB,
+      firstPlayer: 0,
+      nonce: bytes32C,
+    });
+
+    const r = resolveFirstPlayer({
+      mode: "committed_mutual_choice",
+      manualFirstPlayer: 1,
+      mutualChoiceA: 1,
+      mutualChoiceB: 1,
+      committedMutualChoice: {
+        matchSalt: bytes32A,
+        playerA,
+        playerB,
+        choiceA: 0,
+        choiceB: 0,
+        nonceA: bytes32B,
+        nonceB: bytes32C,
+        commitA,
+        commitB,
+      },
+    });
+
+    expect(r.valid).toBe(true);
+    expect(r.firstPlayer).toBe(0);
+  });
+
+  it("committed_mutual_choice mode falls back on missing commits", () => {
+    const r = resolveFirstPlayer({
+      mode: "committed_mutual_choice",
+      manualFirstPlayer: 1,
+      mutualChoiceA: 0,
+      mutualChoiceB: 0,
+      committedMutualChoice: {
+        matchSalt: bytes32A,
+        playerA,
+        playerB,
+        choiceA: 0,
+        choiceB: 0,
+        nonceA: bytes32B,
+        nonceB: bytes32C,
+      },
+    });
+
+    expect(r.valid).toBe(false);
+    expect(r.firstPlayer).toBe(1);
+    expect(r.error).toContain("required");
+  });
+
+  it("committed_mutual_choice mode rejects mismatched commit", () => {
+    const commitA = buildFirstPlayerChoiceCommitV1({
+      matchSalt: bytes32A,
+      player: playerA,
+      firstPlayer: 0,
+      nonce: bytes32B,
+    });
+    const wrongCommitB = buildFirstPlayerChoiceCommitV1({
+      matchSalt: bytes32A,
+      player: playerB,
+      firstPlayer: 1,
+      nonce: bytes32D,
+    });
+
+    const r = resolveFirstPlayer({
+      mode: "committed_mutual_choice",
+      manualFirstPlayer: 1,
+      mutualChoiceA: 0,
+      mutualChoiceB: 0,
+      committedMutualChoice: {
+        matchSalt: bytes32A,
+        playerA,
+        playerB,
+        choiceA: 0,
+        choiceB: 0,
+        nonceA: bytes32B,
+        nonceB: bytes32C,
+        commitA,
+        commitB: wrongCommitB,
+      },
+    });
+
+    expect(r.valid).toBe(false);
+    expect(r.firstPlayer).toBe(1);
+    expect(r.error).toContain("mismatch");
   });
 
   it("commit_reveal mode resolves deterministically", () => {

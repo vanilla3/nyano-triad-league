@@ -507,3 +507,42 @@
 - `pnpm -C packages/triad-engine test`
 - `pnpm -C apps/web typecheck`
 - `pnpm -C apps/web test -- src/lib/__tests__/first_player_resolve.test.ts`
+
+## 2026-02-12 - commit-0097: web first-player resolver adds committed mutual-choice mode
+
+### Why
+- Engine側で `committed_mutual_choice` を追加済みだったが、web Match UI からは選択・検証できなかった。
+- 「公平な先攻決定（commit付き両者合意）」を実運用で試すには、URLパラメータとUIの両方で再現可能にする必要があった。
+
+### What
+- `apps/web/src/lib/first_player_resolve.ts`
+  - Added `FirstPlayerResolutionMode` value: `committed_mutual_choice`.
+  - Added parser support for `committed_mutual_choice`.
+  - Added `deriveChoiceCommitHex(...)` helper for choice-commit derivation.
+  - Added `committedMutualChoice` input block to resolver input.
+  - Added committed mutual-choice resolve path:
+    - validates bytes32 fields and required commits,
+    - calls `resolveFirstPlayerFromCommittedMutualChoiceV1(...)`,
+    - returns fallback/manual on validation or resolver error.
+- `apps/web/src/pages/Match.tsx`
+  - Added first-player mode option: `Committed mutual choice`.
+  - Added URL params for committed mutual flow:
+    - `fpoa`, `fpob` (player addresses)
+    - `fpna`, `fpnb` (nonces)
+    - `fcoa`, `fcob` (commits)
+    - reuses `fps` (matchSalt), `fpa`/`fpb` (choices)
+  - Added UI inputs and actions:
+    - randomize matchSalt/nonces,
+    - derive commits from reveal tuple via `deriveChoiceCommitHex(...)`.
+- `apps/web/src/lib/__tests__/first_player_resolve.test.ts`
+  - Added mode parse test for `committed_mutual_choice`.
+  - Added `deriveChoiceCommitHex` tests.
+  - Added resolver tests for committed mutual flow:
+    - success path,
+    - missing commit fallback,
+    - mismatched commit fallback.
+
+### Verify
+- `pnpm -C apps/web typecheck`
+- `pnpm -C apps/web lint`
+- `pnpm -C apps/web test -- src/lib/__tests__/first_player_resolve.test.ts`
