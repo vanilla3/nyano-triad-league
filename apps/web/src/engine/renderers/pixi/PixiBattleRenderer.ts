@@ -27,10 +27,12 @@ import type {
 import { TextureResolver } from "./textureResolver";
 import {
   animDurationsForQuality,
+  vfxFeatureFlagsForQuality,
   computeCellFrame,
   computeBreatheFrame,
   type CellAnimRecord,
   type CellAnimFrame,
+  type VfxFeatureFlags,
 } from "./cellAnimations";
 import { errorMessage } from "@/lib/errorMessage";
 
@@ -55,6 +57,14 @@ const COLORS = {
   brightnessWhite: 0xffffff,
   brightnessBlack: 0x000000,
   breatheGlow: 0x34d399, // emerald-400 (matches --mint-cell-active-glow)
+  boardPanel: 0x0b1220,
+  boardPanelInner: 0x111c2f,
+  boardFrame: 0x3e5b7f,
+  boardHighlight: 0x9cc3ff,
+  cellShadow: 0x030712,
+  cardGlass: 0xffffff,
+  holoA: 0x67e8f9,
+  holoB: 0xa78bfa,
 } as const;
 
 const LAYOUT = {
@@ -86,6 +96,17 @@ const LAYOUT = {
   brightnessThreshold: 0.02,
   brightnessWhiteScale: 0.4,
   brightnessBlackScale: 0.6,
+  boardRadius: 14,
+  boardFrameInset: 6,
+  boardShadowOffsetY: 6,
+  boardShadowSpread: 10,
+  cellShadowOffsetY: 2,
+  cellShadowSpread: 4,
+  cardFrameOuterWidth: 2,
+  cardFrameInnerWidth: 1,
+  cardFrameCorner: 7,
+  foilStripeWidth: 12,
+  foilSweepSpeed: 0.22,
 } as const;
 
 const CELL_COORDS = [
@@ -115,14 +136,20 @@ interface CellLayout {
 export class PixiBattleRenderer implements IBattleRenderer {
   private app: Application | null = null;
   private boardContainer: Container | null = null;
+  private boardBackdrop: Graphics | null = null;
+  private boardBackdropDetail: Graphics | null = null;
 
   // ── Per-cell visual objects (9 each) ──
+  private cellShadowOverlays: Graphics[] = [];
   private cellGraphics: Graphics[] = [];
   private cellGlowOverlays: Graphics[] = [];         // ★ breathe glow ring
   private cellContentContainers: Container[] = [];   // ★ animated wrapper
   private cellMasks: Graphics[] = [];
   private cellSprites: (Sprite | null)[] = [];
   private cellTintOverlays: Graphics[] = [];
+  private cellFrameOverlays: Graphics[] = [];
+  private cellGlassOverlays: Graphics[] = [];
+  private cellFoilOverlays: Graphics[] = [];
   private cellTextContainers: Container[] = [];
   private cellTokenLabels: Text[] = [];
   private cellBrightnessOverlays: Graphics[] = [];   // ★ brightness effect
@@ -181,8 +208,11 @@ export class PixiBattleRenderer implements IBattleRenderer {
     // ── Detect new animations ──
     this.detectAnimationTriggers(state, prevState);
 
-    // ── Breathe glow needs ticker when selectable cells exist ──
-    if (state.selectableCells.size > 0 && state.vfxQuality !== "off") {
+    // ── Breathe glow runs only on medium/high tiers ──
+    if (
+      state.selectableCells.size > 0 &&
+      vfxFeatureFlagsForQuality(state.vfxQuality).idleBreathe
+    ) {
       this.ensureTicker();
     }
 
@@ -213,12 +243,18 @@ export class PixiBattleRenderer implements IBattleRenderer {
     }
     this.textureResolver.dispose();
     this.boardContainer = null;
+    this.boardBackdrop = null;
+    this.boardBackdropDetail = null;
+    this.cellShadowOverlays = [];
     this.cellGraphics = [];
     this.cellGlowOverlays = [];
     this.cellContentContainers = [];
     this.cellMasks = [];
     this.cellSprites = [];
     this.cellTintOverlays = [];
+    this.cellFrameOverlays = [];
+    this.cellGlassOverlays = [];
+    this.cellFoilOverlays = [];
     this.cellTextContainers = [];
     this.cellTokenLabels = [];
     this.cellBrightnessOverlays = [];
@@ -239,7 +275,16 @@ export class PixiBattleRenderer implements IBattleRenderer {
   private buildGrid(): void {
     if (!this.boardContainer || !this.app) return;
 
+    this.boardBackdrop = new Graphics();
+    this.boardContainer.addChild(this.boardBackdrop);
+    this.boardBackdropDetail = new Graphics();
+    this.boardContainer.addChild(this.boardBackdropDetail);
+
     for (let i = 0; i < 9; i++) {
+      const shadowGfx = new Graphics();
+      this.boardContainer.addChild(shadowGfx);
+      this.cellShadowOverlays.push(shadowGfx);
+
       // 1. Cell graphics — background / stroke / hit area (NOT animated)
       const cellGfx = new Graphics();
       cellGfx.eventMode = "static";
@@ -315,8 +360,27 @@ export class PixiBattleRenderer implements IBattleRenderer {
       // 5. Owner tint overlay
       const tintOverlay = new Graphics();
       tintOverlay.visible = false;
+      tintOverlay.mask = maskGfx;
       contentContainer.addChild(tintOverlay);
       this.cellTintOverlays.push(tintOverlay);
+
+      const frameOverlay = new Graphics();
+      frameOverlay.visible = false;
+      frameOverlay.mask = maskGfx;
+      contentContainer.addChild(frameOverlay);
+      this.cellFrameOverlays.push(frameOverlay);
+
+      const glassOverlay = new Graphics();
+      glassOverlay.visible = false;
+      glassOverlay.mask = maskGfx;
+      contentContainer.addChild(glassOverlay);
+      this.cellGlassOverlays.push(glassOverlay);
+
+      const foilOverlay = new Graphics();
+      foilOverlay.visible = false;
+      foilOverlay.mask = maskGfx;
+      contentContainer.addChild(foilOverlay);
+      this.cellFoilOverlays.push(foilOverlay);
 
       // 6. Edge text container (up to 4 Text + 4 pill bg Graphics)
       const textContainer = new Container();
@@ -372,6 +436,8 @@ export class PixiBattleRenderer implements IBattleRenderer {
     const offsetX = (w - boardSize) / 2;
     const offsetY = (h - boardSize) / 2;
 
+    this.drawBoardBackdrop(offsetX, offsetY, boardSize);
+
     for (let i = 0; i < 9; i++) {
       const col = i % 3;
       const row = Math.floor(i / 3);
@@ -416,10 +482,184 @@ export class PixiBattleRenderer implements IBattleRenderer {
     }
   }
 
+  private drawBoardBackdrop(
+    offsetX: number,
+    offsetY: number,
+    boardSize: number,
+  ): void {
+    const base = this.boardBackdrop;
+    const detail = this.boardBackdropDetail;
+    if (!base || !detail) return;
+
+    const quality = this.state?.vfxQuality ?? "medium";
+    const features = vfxFeatureFlagsForQuality(quality);
+    const frameInset = LAYOUT.boardFrameInset;
+    const innerSize = Math.max(0, boardSize - frameInset * 2);
+
+    base.clear();
+    detail.clear();
+
+    if (features.boardDepth) {
+      const shadowAlpha = quality === "high" ? 0.34 : quality === "medium" ? 0.28 : 0.2;
+      base.roundRect(
+        offsetX - LAYOUT.boardShadowSpread,
+        offsetY - LAYOUT.boardShadowSpread + LAYOUT.boardShadowOffsetY,
+        boardSize + LAYOUT.boardShadowSpread * 2,
+        boardSize + LAYOUT.boardShadowSpread * 2,
+        LAYOUT.boardRadius + 2,
+      );
+      base.fill({ color: COLORS.brightnessBlack, alpha: shadowAlpha });
+    }
+
+    base.roundRect(offsetX, offsetY, boardSize, boardSize, LAYOUT.boardRadius);
+    base.fill({ color: features.boardDepth ? COLORS.boardPanel : COLORS.cellEmpty });
+
+    base.roundRect(offsetX + frameInset, offsetY + frameInset, innerSize, innerSize, LAYOUT.boardRadius - 3);
+    base.fill({ color: features.boardDepth ? COLORS.boardPanelInner : COLORS.background });
+
+    base.roundRect(offsetX, offsetY, boardSize, boardSize, LAYOUT.boardRadius);
+    base.stroke({
+      color: features.boardDepth ? COLORS.boardFrame : COLORS.gridLine,
+      width: features.boardDepth ? 2 : 1,
+      alpha: features.boardDepth ? 0.9 : 0.75,
+    });
+
+    if (!features.boardDepth) return;
+
+    detail.roundRect(
+      offsetX + frameInset,
+      offsetY + frameInset,
+      innerSize,
+      Math.max(14, boardSize * 0.16),
+      LAYOUT.boardRadius - 3,
+    );
+    detail.fill({ color: COLORS.boardHighlight, alpha: quality === "high" ? 0.12 : 0.08 });
+
+    const unit = boardSize / 3;
+    for (let idx = 1; idx <= 2; idx++) {
+      const px = offsetX + unit * idx;
+      detail.moveTo(px, offsetY + frameInset);
+      detail.lineTo(px, offsetY + boardSize - frameInset);
+      detail.stroke({ color: COLORS.boardFrame, width: 1, alpha: 0.18 });
+
+      const py = offsetY + unit * idx;
+      detail.moveTo(offsetX + frameInset, py);
+      detail.lineTo(offsetX + boardSize - frameInset, py);
+      detail.stroke({ color: COLORS.boardFrame, width: 1, alpha: 0.18 });
+    }
+  }
+
+  private drawCellShadow(
+    index: number,
+    layout: CellLayout,
+    hasCard: boolean,
+    quality: BattleRendererState["vfxQuality"],
+    features: VfxFeatureFlags,
+  ): void {
+    const shadow = this.cellShadowOverlays[index];
+    if (!shadow) return;
+
+    shadow.clear();
+    if (!features.cellShadow) {
+      shadow.visible = false;
+      return;
+    }
+
+    const alphaBase = quality === "high" ? 0.22 : quality === "medium" ? 0.17 : 0.12;
+    const alpha = hasCard ? alphaBase : alphaBase * 0.6;
+    shadow.roundRect(
+      layout.x - LAYOUT.cellShadowSpread,
+      layout.y + LAYOUT.cellShadowOffsetY,
+      layout.w + LAYOUT.cellShadowSpread * 2,
+      layout.h + LAYOUT.cellShadowSpread * 2,
+      LAYOUT.cellRadius + 2,
+    );
+    shadow.fill({ color: COLORS.cellShadow, alpha });
+    shadow.visible = true;
+  }
+
+  private drawCardSurface(
+    index: number,
+    w: number,
+    h: number,
+    ownerColor: number,
+    hasTexture: boolean,
+    quality: BattleRendererState["vfxQuality"],
+    features: VfxFeatureFlags,
+  ): void {
+    const frame = this.cellFrameOverlays[index];
+    const glass = this.cellGlassOverlays[index];
+    const foil = this.cellFoilOverlays[index];
+    if (!frame || !glass || !foil) return;
+
+    frame.clear();
+    frame.roundRect(0, 0, w, h, LAYOUT.cardFrameCorner);
+    frame.stroke({ color: ownerColor, width: LAYOUT.cardFrameOuterWidth });
+    frame.roundRect(1, 1, Math.max(0, w - 2), Math.max(0, h - 2), LAYOUT.cardFrameCorner - 1);
+    frame.stroke({
+      color: COLORS.edgeText,
+      width: LAYOUT.cardFrameInnerWidth,
+      alpha: quality === "high" ? 0.32 : quality === "medium" ? 0.2 : 0.12,
+    });
+    frame.visible = true;
+
+    glass.clear();
+    if (features.cardGlass && hasTexture) {
+      const topH = Math.max(10, h * 0.34);
+      glass.roundRect(0, 0, w, topH, LAYOUT.cardFrameCorner);
+      glass.fill({ color: COLORS.cardGlass, alpha: quality === "high" ? 0.11 : 0.075 });
+      glass.roundRect(0, h * 0.58, w, h * 0.24, LAYOUT.cardFrameCorner);
+      glass.fill({ color: COLORS.cardGlass, alpha: 0.03 });
+      glass.visible = true;
+    } else {
+      glass.visible = false;
+    }
+
+    // Foil layer is animated only during place/flip in high tier.
+    foil.visible = false;
+  }
+
+  private applyEventFoilFlash(
+    index: number,
+    frame: CellAnimFrame,
+    w: number,
+    h: number,
+    nowMs: number,
+  ): void {
+    const foil = this.cellFoilOverlays[index];
+    if (!foil) return;
+
+    const intensity = Math.max(0, Math.min(1, (frame.brightness - 1) / 0.45));
+    if (intensity < 0.01) {
+      foil.visible = false;
+      return;
+    }
+
+    const stripeW = Math.max(LAYOUT.foilStripeWidth, w * 0.14);
+    const sweep = (nowMs * LAYOUT.foilSweepSpeed) % (w + stripeW * 4) - stripeW * 2;
+
+    foil.clear();
+    foil.roundRect(0, 0, w, h, LAYOUT.cardFrameCorner);
+    foil.stroke({ color: COLORS.cardGlass, width: 1, alpha: 0.2 * intensity });
+    foil.rect(sweep, 0, stripeW, h);
+    foil.fill({ color: COLORS.holoA, alpha: 0.16 * intensity });
+    foil.rect(sweep - stripeW * 1.5, 0, stripeW * 0.8, h);
+    foil.fill({ color: COLORS.holoB, alpha: 0.1 * intensity });
+    foil.visible = true;
+  }
+
   /* ── Redraw ────────────────────────────────────────────────────────── */
 
   private redraw(): void {
     if (!this.state) return;
+    const quality = this.state.vfxQuality;
+    const features = vfxFeatureFlagsForQuality(quality);
+    const tl = this.layouts.get(0);
+    const br = this.layouts.get(8);
+    if (tl && br) {
+      const boardSize = br.x + br.w - tl.x + LAYOUT.cellGap;
+      this.drawBoardBackdrop(tl.x - LAYOUT.cellGap / 2, tl.y - LAYOUT.cellGap / 2, boardSize);
+    }
 
     for (let i = 0; i < 9; i++) {
       const gfx = this.cellGraphics[i];
@@ -432,6 +672,7 @@ export class PixiBattleRenderer implements IBattleRenderer {
       const isSelected = this.state.selectedCell === i;
 
       gfx.clear();
+      this.drawCellShadow(i, layout, !!cell, quality, features);
 
       // ── Cell fill & stroke (board-absolute coordinates, NOT animated) ──
       if (cell) {
@@ -439,6 +680,7 @@ export class PixiBattleRenderer implements IBattleRenderer {
           cell.owner === 0 ? COLORS.ownerA : COLORS.ownerB;
         const tokenIdStr = cell.card.tokenId.toString();
         const texture = this.textureResolver.getTexture(tokenIdStr);
+        const hasTexture = texture !== null;
 
         if (texture) {
           // NFT art loaded — show sprite + tint overlay
@@ -454,22 +696,27 @@ export class PixiBattleRenderer implements IBattleRenderer {
 
           // Owner tint overlay (container-relative)
           const tint = this.cellTintOverlays[i];
+          const tintAlpha = quality === "high"
+            ? LAYOUT.ownerTintAlpha + 0.05
+            : quality === "medium"
+              ? LAYOUT.ownerTintAlpha
+              : 0.16;
           tint.clear();
           tint.roundRect(0, 0, w, h, LAYOUT.cellRadius);
-          tint.fill({ color: ownerColor, alpha: LAYOUT.ownerTintAlpha });
+          tint.fill({ color: ownerColor, alpha: tintAlpha });
           tint.visible = true;
 
           // Cell border only (board-absolute, transparent fill for hit area)
           gfx.roundRect(x, y, w, h, LAYOUT.cellRadius);
           gfx.fill({ color: 0x000000, alpha: 0 });
           gfx.roundRect(x, y, w, h, LAYOUT.cellRadius);
-          gfx.stroke({ color: ownerColor, width: 2 });
+          gfx.stroke({ color: ownerColor, width: quality === "off" ? 1.4 : 2 });
         } else {
           // Texture not loaded yet — colored rectangle fallback
           gfx.roundRect(x, y, w, h, LAYOUT.cellRadius);
           gfx.fill({ color: ownerColor, alpha: LAYOUT.ownerFallbackAlpha });
           gfx.roundRect(x, y, w, h, LAYOUT.cellRadius);
-          gfx.stroke({ color: ownerColor, width: 2 });
+          gfx.stroke({ color: ownerColor, width: quality === "off" ? 1.4 : 2 });
 
           // Hide sprite and tint
           const sprite = this.cellSprites[i];
@@ -482,6 +729,8 @@ export class PixiBattleRenderer implements IBattleRenderer {
           });
         }
 
+        this.drawCardSurface(i, w, h, ownerColor, hasTexture, quality, features);
+
         // Token ID label (container-relative)
         const tokenLabel = this.cellTokenLabels[i];
         tokenLabel.text = `#${tokenIdStr.slice(-3).padStart(3, "0")}`;
@@ -492,6 +741,9 @@ export class PixiBattleRenderer implements IBattleRenderer {
         const sprite = this.cellSprites[i];
         if (sprite) sprite.visible = false;
         this.cellTintOverlays[i].visible = false;
+        this.cellFrameOverlays[i].visible = false;
+        this.cellGlassOverlays[i].visible = false;
+        this.cellFoilOverlays[i].visible = false;
         this.cellTokenLabels[i].visible = false;
 
         if (isSelected) {
@@ -519,7 +771,7 @@ export class PixiBattleRenderer implements IBattleRenderer {
       gfx.cursor = isSelectable && !cell ? "pointer" : "default";
 
       // ── Edge numbers for occupied cells (container-relative) ──
-      this.updateEdgeTexts(i, cell, w, h);
+      this.updateEdgeTexts(i, cell, w, h, features);
     }
   }
 
@@ -528,6 +780,7 @@ export class PixiBattleRenderer implements IBattleRenderer {
     cell: BoardCell | null,
     w: number,
     h: number,
+    features: VfxFeatureFlags,
   ): void {
     const container = this.cellTextContainers[index];
     container.removeChildren();
@@ -564,7 +817,7 @@ export class PixiBattleRenderer implements IBattleRenderer {
 
     for (const { val, px, py, ax, ay } of edgeData) {
       // Dark pill background when texture is visible
-      if (hasTexture) {
+      if (hasTexture && features.edgePill) {
         const pillW = fontSize * LAYOUT.pillWidthScale;
         const pillH = fontSize * LAYOUT.pillHeightScale;
         const pillGfx = new Graphics();
@@ -676,7 +929,11 @@ export class PixiBattleRenderer implements IBattleRenderer {
   private onVisibilityChange = (): void => {
     if (document.hidden) {
       this.teardownTicker();
-    } else if (this.state && this.state.selectableCells.size > 0) {
+    } else if (
+      this.state &&
+      this.state.selectableCells.size > 0 &&
+      vfxFeatureFlagsForQuality(this.state.vfxQuality).idleBreathe
+    ) {
       this.ensureTicker();
     }
   };
@@ -684,6 +941,9 @@ export class PixiBattleRenderer implements IBattleRenderer {
   private onTick = (): void => {
     const nowMs = performance.now();
     let anyActive = false;
+    const state = this.state;
+    const quality = state?.vfxQuality ?? "medium";
+    const features = vfxFeatureFlagsForQuality(quality);
 
     // ── Cell placement/flip animations ──
     for (let i = 0; i < 9; i++) {
@@ -697,7 +957,7 @@ export class PixiBattleRenderer implements IBattleRenderer {
 
       if (frame) {
         // Animation in progress — apply frame
-        this.applyCellFrame(i, frame, layout);
+        this.applyCellFrame(i, frame, layout, quality, features, nowMs);
         anyActive = true;
       } else {
         // Animation complete — reset to identity
@@ -706,12 +966,12 @@ export class PixiBattleRenderer implements IBattleRenderer {
       }
     }
 
-    // ── Breathe glow for selectable empty cells ──
-    if (this.state && this.state.selectableCells.size > 0) {
-      const breathe = computeBreatheFrame(nowMs);
+    // ── Breathe glow for selectable empty cells (medium/high only) ──
+    if (state && state.selectableCells.size > 0 && features.idleBreathe) {
+      const breathe = computeBreatheFrame(nowMs, quality);
       for (let i = 0; i < 9; i++) {
-        const isSelectable = this.state.selectableCells.has(i);
-        const hasCard = !!this.state.board[i];
+        const isSelectable = state.selectableCells.has(i);
+        const hasCard = !!state.board[i];
         if (isSelectable && !hasCard) {
           this.applyBreatheGlow(i, breathe);
           anyActive = true;
@@ -725,9 +985,13 @@ export class PixiBattleRenderer implements IBattleRenderer {
         }
       }
     } else {
-      // No selectable cells — hide all glow overlays
+      // No selectable cells / low tiers — hide all glow overlays
       for (let i = 0; i < 9; i++) {
         this.cellGlowOverlays[i].visible = false;
+        if (!this.cellAnims[i]) {
+          const cc = this.cellContentContainers[i];
+          if (cc) cc.scale.set(1, 1);
+        }
       }
     }
 
@@ -741,17 +1005,34 @@ export class PixiBattleRenderer implements IBattleRenderer {
     i: number,
     frame: CellAnimFrame,
     layout: CellLayout,
+    quality: BattleRendererState["vfxQuality"],
+    features: VfxFeatureFlags,
+    nowMs: number,
   ): void {
     const cc = this.cellContentContainers[i];
     if (!cc) return;
 
-    cc.scale.set(frame.scaleX, frame.scaleY);
+    const transformStrength = quality === "low" ? 0.55 : quality === "off" ? 0 : 1;
+    const scaleX = 1 + (frame.scaleX - 1) * transformStrength;
+    const scaleY = 1 + (frame.scaleY - 1) * transformStrength;
+    const offsetY = frame.offsetY * (quality === "low" ? 0.5 : 1);
+
+    cc.scale.set(scaleX, scaleY);
     cc.alpha = frame.alpha;
     // Offset Y: adjust position relative to layout center
-    cc.position.set(layout.x + layout.w / 2, layout.y + layout.h / 2 + frame.offsetY);
+    cc.position.set(layout.x + layout.w / 2, layout.y + layout.h / 2 + offsetY);
 
-    // Brightness
-    this.applyBrightness(i, frame.brightness, layout.w, layout.h);
+    if (features.brightnessPulse) {
+      this.applyBrightness(i, frame.brightness, layout.w, layout.h);
+    } else {
+      this.cellBrightnessOverlays[i].visible = false;
+    }
+
+    if (features.eventFoilFlash) {
+      this.applyEventFoilFlash(i, frame, layout.w, layout.h, nowMs);
+    } else {
+      this.cellFoilOverlays[i].visible = false;
+    }
   }
 
   private resetCellTransform(i: number): void {
@@ -768,6 +1049,7 @@ export class PixiBattleRenderer implements IBattleRenderer {
     // Hide brightness overlay
     const overlay = this.cellBrightnessOverlays[i];
     if (overlay) overlay.visible = false;
+    this.cellFoilOverlays[i].visible = false;
   }
 
   private applyBreatheGlow(
