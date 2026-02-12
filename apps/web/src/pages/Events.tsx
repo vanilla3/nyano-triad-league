@@ -4,8 +4,9 @@ import { Link } from "react-router-dom";
 
 import { EVENTS, formatEventPeriod, getEventStatus } from "@/lib/events";
 import { parseDeckRestriction } from "@/lib/deck_restriction";
-import { clearEventAttempts, deleteEventAttempt, listEventAttempts } from "@/lib/event_attempts";
+import { clearAllEventAttempts, clearEventAttempts, deleteEventAttempt, listAllEventAttempts, listEventAttempts } from "@/lib/event_attempts";
 import { writeClipboardText } from "@/lib/clipboard";
+import { buildSeasonArchiveSummaries, formatSeasonArchiveMarkdown } from "@/lib/season_archive";
 
 function StatusBadge(props: { status: string }) {
   const variant =
@@ -27,6 +28,10 @@ function formatIsoShort(iso: string): string {
 
 function winnerLabel(w: number): string {
   return w === 0 ? "A" : "B";
+}
+
+function formatPercent(v: number): string {
+  return `${v.toFixed(1)}%`;
 }
 
 /**
@@ -63,11 +68,38 @@ function findBestAttemptId(
 
 export function EventsPage() {
   const [refresh, setRefresh] = React.useState(0);
+  const [selectedSeasonId, setSelectedSeasonId] = React.useState<number | null>(null);
   const toast = useToast();
+
+  const seasonArchive = React.useMemo(() => {
+    void refresh;
+    return buildSeasonArchiveSummaries(EVENTS, listAllEventAttempts());
+  }, [refresh]);
+
+  React.useEffect(() => {
+    if (seasonArchive.length === 0) {
+      setSelectedSeasonId(null);
+      return;
+    }
+    if (selectedSeasonId === null || !seasonArchive.some((s) => s.seasonId === selectedSeasonId)) {
+      setSelectedSeasonId(seasonArchive[0].seasonId);
+    }
+  }, [seasonArchive, selectedSeasonId]);
+
+  const selectedSeason =
+    selectedSeasonId !== null
+      ? seasonArchive.find((s) => s.seasonId === selectedSeasonId) ?? seasonArchive[0] ?? null
+      : seasonArchive[0] ?? null;
 
   const copyWithToast = async (label: string, v: string) => {
     await writeClipboardText(v);
     toast.success("Copied", label);
+  };
+
+  const copySeasonSummary = async () => {
+    if (!selectedSeason) return;
+    await writeClipboardText(formatSeasonArchiveMarkdown(selectedSeason));
+    toast.success("Copied", "season archive markdown");
   };
 
   return (
@@ -92,6 +124,110 @@ export function EventsPage() {
       </section>
 
       <section className="grid gap-3">
+        <div className="card">
+          <div className="card-hd flex flex-wrap items-center justify-between gap-2">
+            <div>
+              <div className="text-base font-semibold">Season Archive (local)</div>
+              <div className="text-xs text-slate-500">ローカル保存された挑戦ログを、season単位で振り返り</div>
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <button className="btn" onClick={() => void copySeasonSummary()} disabled={!selectedSeason}>
+                Copy summary
+              </button>
+              <button
+                className="btn"
+                onClick={() => {
+                  if (!window.confirm("Clear all local event attempts across all seasons?")) return;
+                  clearAllEventAttempts();
+                  setRefresh((v) => v + 1);
+                  toast.success("Cleared", "all local event attempts");
+                }}
+                disabled={seasonArchive.length === 0}
+              >
+                Clear all local
+              </button>
+            </div>
+          </div>
+
+          <div className="card-bd grid gap-3">
+            {seasonArchive.length === 0 || !selectedSeason ? (
+              <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600">
+                まだローカルアーカイブがありません。Event をプレイして Replay で Save するとここに集計されます。
+              </div>
+            ) : (
+              <>
+                <div className="flex flex-wrap items-center gap-2">
+                  {seasonArchive.map((s) => {
+                    const active = s.seasonId === selectedSeason.seasonId;
+                    return (
+                      <button
+                        key={s.seasonId}
+                        className={[
+                          "rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors",
+                          active
+                            ? "border-nyano-300 bg-nyano-50 text-nyano-700"
+                            : "border-slate-200 bg-white text-slate-600 hover:border-slate-300",
+                        ].join(" ")}
+                        onClick={() => setSelectedSeasonId(s.seasonId)}
+                      >
+                        Season {s.seasonId}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                <div className="grid gap-2 md:grid-cols-4">
+                  <div className="rounded-lg border border-slate-200 bg-white p-3">
+                    <div className="text-[11px] text-slate-500">Attempts</div>
+                    <div className="mt-1 text-sm font-semibold text-slate-800">{selectedSeason.totalAttempts}</div>
+                  </div>
+                  <div className="rounded-lg border border-slate-200 bg-white p-3">
+                    <div className="text-[11px] text-slate-500">Win / Loss</div>
+                    <div className="mt-1 text-sm font-semibold text-slate-800">
+                      {selectedSeason.totalWins} / {selectedSeason.totalLosses}
+                    </div>
+                  </div>
+                  <div className="rounded-lg border border-slate-200 bg-white p-3">
+                    <div className="text-[11px] text-slate-500">Win rate</div>
+                    <div className="mt-1 text-sm font-semibold text-slate-800">{formatPercent(selectedSeason.winRatePercent)}</div>
+                  </div>
+                  <div className="rounded-lg border border-slate-200 bg-white p-3">
+                    <div className="text-[11px] text-slate-500">Latest</div>
+                    <div className="mt-1 text-xs font-mono text-slate-700">{selectedSeason.latestAttemptAt ?? "—"}</div>
+                  </div>
+                </div>
+
+                <div className="grid gap-2">
+                  {selectedSeason.events.map((eventSummary) => (
+                    <div key={eventSummary.eventId} className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2">
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <div className="flex items-center gap-2">
+                          <div className="text-sm font-medium text-slate-800">{eventSummary.eventTitle}</div>
+                          <StatusBadge status={eventSummary.status} />
+                        </div>
+                        <div className="flex flex-wrap items-center gap-2">
+                          {eventSummary.latestReplayUrl ? (
+                            <a className="btn no-underline" href={eventSummary.latestReplayUrl} target="_blank" rel="noreferrer">
+                              Latest replay
+                            </a>
+                          ) : null}
+                        </div>
+                      </div>
+                      <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-slate-600">
+                        <span>attempts: <span className="font-medium text-slate-800">{eventSummary.attemptCount}</span></span>
+                        <span>win/loss: <span className="font-medium text-slate-800">{eventSummary.winCount}/{eventSummary.lossCount}</span></span>
+                        <span>win rate: <span className="font-medium text-slate-800">{formatPercent(eventSummary.winRatePercent)}</span></span>
+                        <span>best diff: <span className="font-medium text-slate-800">{eventSummary.bestTileDiff ?? "—"}</span></span>
+                        <span>latest: <span className="font-mono text-slate-700">{eventSummary.latestAttemptAt ?? "—"}</span></span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+
         {EVENTS.map((e) => {
           const status = getEventStatus(e);
           return (

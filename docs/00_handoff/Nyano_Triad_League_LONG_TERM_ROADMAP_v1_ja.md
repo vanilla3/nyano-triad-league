@@ -156,6 +156,7 @@
 ### Phase 4（6〜12ヶ月）: “スケール”と“コミュニティの手触り”
 - [Participation]
   - [ ] シーズン制（ランキング、報酬、アーカイブ）
+    - Sprint 24: `/events` に local season archive（season切替 / 勝率サマリー / 最新Replay導線 / Markdownコピー）を追加
   - [x] 新規参加者向けチュートリアル（3分で理解→1分で参加）
     - Sprint 24: Home に quickstart checklist（進捗保存）を追加し、Match の初手確定で進捗を自動更新
 - [Visual]

@@ -1,10 +1,12 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import {
   listEventAttempts,
+  listAllEventAttempts,
   hasEventAttempt,
   upsertEventAttempt,
   deleteEventAttempt,
   clearEventAttempts,
+  clearAllEventAttempts,
   type EventAttemptV1,
 } from "../event_attempts";
 
@@ -177,5 +179,32 @@ describe("clearEventAttempts", () => {
     clearEventAttempts("ev1");
     expect(listEventAttempts("ev1")).toEqual([]);
     expect(listEventAttempts("ev2")).toHaveLength(1);
+  });
+});
+
+/* ------------------------------------------------------------------ */
+/* listAllEventAttempts / clearAllEventAttempts                        */
+/* ------------------------------------------------------------------ */
+
+describe("listAllEventAttempts", () => {
+  it("returns merged attempts sorted by createdAt desc", () => {
+    upsertEventAttempt(makeAttempt("ev1", "a", "2025-01-01T00:00:00Z"));
+    upsertEventAttempt(makeAttempt("ev2", "b", "2025-03-01T00:00:00Z"));
+    upsertEventAttempt(makeAttempt("ev1", "c", "2025-02-01T00:00:00Z"));
+
+    const list = listAllEventAttempts();
+    expect(list.map((a) => a.matchId)).toEqual(["b", "c", "a"]);
+  });
+});
+
+describe("clearAllEventAttempts", () => {
+  it("clears storage for all events", () => {
+    upsertEventAttempt(makeAttempt("ev1", "m1"));
+    upsertEventAttempt(makeAttempt("ev2", "m2"));
+    expect(listAllEventAttempts()).toHaveLength(2);
+
+    clearAllEventAttempts();
+    expect(listAllEventAttempts()).toEqual([]);
+    expect(mockStorage.getItem("nyano_triad_event_attempts_v1")).toBeNull();
   });
 });
