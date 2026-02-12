@@ -17,6 +17,14 @@ import {
   saveUxTelemetrySnapshot,
   type UxTargetStatus,
 } from "@/lib/telemetry";
+import {
+  ONBOARDING_STEPS,
+  completedOnboardingStepCount,
+  isOnboardingCompleted,
+  markOnboardingStepDone,
+  readOnboardingProgress,
+  resetOnboardingProgress,
+} from "@/lib/onboarding";
 import { writeClipboardText } from "@/lib/clipboard";
 import { errorMessage } from "@/lib/errorMessage";
 import type { ExpressionName } from "@/lib/expression_map";
@@ -268,9 +276,21 @@ export function HomePage() {
   const heroExpression = useHeroExpression();
   const toast = useToast();
   const [difficulty, setDifficulty] = React.useState<string>("normal");
+  const [showQuickGuide, setShowQuickGuide] = React.useState(false);
   const [uxStats, setUxStats] = React.useState(() => readCumulativeStats());
   const [uxSnapshotHistory, setUxSnapshotHistory] = React.useState(() =>
     readUxTelemetrySnapshotHistory(5),
+  );
+  const [onboardingProgress, setOnboardingProgress] = React.useState(() =>
+    readOnboardingProgress(),
+  );
+  const onboardingCompleted = React.useMemo(
+    () => completedOnboardingStepCount(onboardingProgress),
+    [onboardingProgress],
+  );
+  const onboardingAllDone = React.useMemo(
+    () => isOnboardingCompleted(onboardingProgress),
+    [onboardingProgress],
   );
   const quickPlayUrl = `/match?mode=guest&opp=vs_nyano_ai&ai=${difficulty}&rk=v2&ui=mint`;
   const avgInvalidPerSession = uxStats.sessions > 0
@@ -278,10 +298,26 @@ export function HomePage() {
     : null;
   const uxTargetChecks = React.useMemo(() => evaluateUxTargets(uxStats), [uxStats]);
 
+  const refreshOnboarding = React.useCallback(() => {
+    setOnboardingProgress(readOnboardingProgress());
+  }, []);
+
   const refreshUxStats = React.useCallback(() => {
     setUxStats(readCumulativeStats());
     setUxSnapshotHistory(readUxTelemetrySnapshotHistory(5));
   }, []);
+
+  const openQuickGuide = React.useCallback(() => {
+    markOnboardingStepDone("read_quick_guide");
+    refreshOnboarding();
+    setShowQuickGuide(true);
+  }, [refreshOnboarding]);
+
+  const handleQuickPlayStart = React.useCallback(() => {
+    markQuickPlayStart();
+    markOnboardingStepDone("start_first_match");
+    refreshOnboarding();
+  }, [refreshOnboarding]);
 
   const copyUxSnapshot = React.useCallback(async () => {
     const snapshot = buildUxTelemetrySnapshot(uxStats, Date.now(), {
@@ -305,10 +341,11 @@ export function HomePage() {
   React.useEffect(() => {
     const onFocus = () => {
       refreshUxStats();
+      refreshOnboarding();
     };
     window.addEventListener("focus", onFocus);
     return () => window.removeEventListener("focus", onFocus);
-  }, [refreshUxStats]);
+  }, [refreshOnboarding, refreshUxStats]);
 
   React.useEffect(() => {
     if (typeof window === "undefined" || typeof PerformanceObserver === "undefined") return;
@@ -422,7 +459,7 @@ export function HomePage() {
             <div className="flex flex-col items-center gap-3">
               <Link
                 to={quickPlayUrl}
-                onClick={() => markQuickPlayStart()}
+                onClick={handleQuickPlayStart}
                 className={[
                   "home-hero__cta",
                   "inline-flex items-center gap-3",
@@ -449,6 +486,119 @@ export function HomePage() {
           </div>
         </div>
       </section>
+
+      {/* ─── Newcomer quickstart checklist ───────────────────────── */}
+      <section className="max-w-5xl mx-auto px-4 py-4">
+        <div className="rounded-3xl border border-nyano-200 bg-white p-5 shadow-soft-sm">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <h2 className="text-lg font-bold font-display text-surface-800">
+                はじめての1分スタート
+              </h2>
+              <p className="text-xs text-surface-500 mt-1">
+                3ステップ完了で「ルール理解 → 参加開始 → 初手確定」まで到達できます。
+              </p>
+            </div>
+            <div className="rounded-full border border-surface-200 bg-surface-50 px-3 py-1 text-xs font-semibold text-surface-700">
+              {onboardingCompleted} / {ONBOARDING_STEPS.length} steps
+            </div>
+          </div>
+
+          <div className="mt-4 grid gap-2">
+            <div className="flex items-center justify-between rounded-2xl border border-surface-200 bg-surface-50 px-3 py-2">
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-bold text-surface-500">1</span>
+                <span className="text-sm text-surface-700">1分ルールを見る</span>
+              </div>
+              <div className="flex items-center gap-2">
+                {onboardingProgress.steps.read_quick_guide ? (
+                  <span className="text-[11px] font-semibold text-emerald-600">DONE</span>
+                ) : (
+                  <span className="text-[11px] font-semibold text-surface-400">TODO</span>
+                )}
+                <button className="btn text-xs" onClick={openQuickGuide}>
+                  ルールを開く
+                </button>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between rounded-2xl border border-surface-200 bg-surface-50 px-3 py-2">
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-bold text-surface-500">2</span>
+                <span className="text-sm text-surface-700">ゲスト対戦を開始する</span>
+              </div>
+              <div className="flex items-center gap-2">
+                {onboardingProgress.steps.start_first_match ? (
+                  <span className="text-[11px] font-semibold text-emerald-600">DONE</span>
+                ) : (
+                  <span className="text-[11px] font-semibold text-surface-400">TODO</span>
+                )}
+                <Link
+                  to={quickPlayUrl}
+                  onClick={handleQuickPlayStart}
+                  className="btn btn-primary text-xs no-underline"
+                >
+                  今すぐ対戦
+                </Link>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between rounded-2xl border border-surface-200 bg-surface-50 px-3 py-2">
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-bold text-surface-500">3</span>
+                <span className="text-sm text-surface-700">Match で最初の手を確定する</span>
+              </div>
+              {onboardingProgress.steps.commit_first_move ? (
+                <span className="text-[11px] font-semibold text-emerald-600">DONE</span>
+              ) : (
+                <span className="text-[11px] font-semibold text-surface-400">AUTO (Matchで更新)</span>
+              )}
+            </div>
+          </div>
+
+          <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
+            {onboardingAllDone ? (
+              <div className="text-xs font-semibold text-emerald-700">
+                チュートリアル完了。次は Decks / Arena で本番デッキを試せます。
+              </div>
+            ) : (
+              <div className="text-xs text-surface-500">
+                進捗はこのブラウザに保存されます。
+              </div>
+            )}
+            <button
+              className="btn text-xs"
+              onClick={() => {
+                resetOnboardingProgress();
+                refreshOnboarding();
+                toast.success("Quickstart reset", "オンボーディング進捗を初期化しました。");
+              }}
+            >
+              Reset quickstart
+            </button>
+          </div>
+        </div>
+      </section>
+
+      {showQuickGuide && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 p-4">
+          <div className="w-full max-w-lg rounded-3xl border border-surface-200 bg-white p-6 shadow-xl">
+            <div className="text-lg font-bold font-display text-surface-900">1分ルールガイド</div>
+            <div className="mt-3 grid gap-2 text-sm text-surface-700">
+              <div>1. 空いているマスを選ぶ</div>
+              <div>2. 手札からカードを選んで置く</div>
+              <div>3. 隣接する辺の数値が高いと相手カードを反転できる</div>
+              <div>4. 9手終了時にタイル枚数が多い側が勝ち</div>
+              <div>5. 同値はじゃんけん属性で判定（Rock/Paper/Scissors）</div>
+            </div>
+            <div className="mt-4 flex justify-end gap-2">
+              <button className="btn text-xs" onClick={() => setShowQuickGuide(false)}>
+                閉じる
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ─── How to Play (3-step guide) ────────────────────────────── */}
       <section className="max-w-5xl mx-auto px-4 py-12">

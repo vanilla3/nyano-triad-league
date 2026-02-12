@@ -466,6 +466,37 @@
 - `pnpm -C packages/triad-engine lint`
 - `pnpm -C packages/triad-engine test`
 
+## 2026-02-12 - commit-0107: phase4 onboarding quickstart (Home checklist + Match progress sync)
+
+### Why
+- Phase 4 の参加導線で「新規参加者向けチュートリアル（3分理解→1分参加）」が未実装だった。
+- ルール確認から初回対戦までを短くし、離脱しやすい最初の1分をプロダクト側で補助する必要があった。
+
+### What
+- `apps/web/src/lib/onboarding.ts` を新規追加。
+  - 進捗3ステップ（`read_quick_guide` / `start_first_match` / `commit_first_move`）を定義。
+  - localStorage への読み書き、完了数集計、全完了判定、reset を実装。
+- `apps/web/src/lib/__tests__/onboarding.test.ts` を新規追加。
+  - 既定値、進捗永続化、完了数判定、異常payload fallback、reset を検証。
+- `apps/web/src/pages/Home.tsx`
+  - 「はじめての1分スタート」チェックリストUIを追加。
+  - 1分ルールモーダルを追加し、表示時に `read_quick_guide` を更新。
+  - クイック対戦導線で `start_first_match` を更新し、進捗リセット操作を追加。
+- `apps/web/src/pages/Match.tsx`
+  - guest match 開始時に `start_first_match` を更新。
+  - 最初の手が確定したタイミング（`turns.length >= 1`）で `commit_first_move` を更新。
+- `docs/00_handoff/Nyano_Triad_League_LONG_TERM_ROADMAP_v1_ja.md`
+  - Phase 4 の「新規参加者向けチュートリアル」項目を完了に更新。
+- `docs/99_dev/Nyano_Triad_League_DEV_TODO_v1_ja.md`
+  - Commit0107 を追記し、Doing を次フェーズへ更新。
+
+### Verify
+- `pnpm -C apps/web typecheck`
+- `pnpm -C apps/web lint`
+- `pnpm -C apps/web build`
+- `pnpm -C apps/web test -- src/lib/__tests__/onboarding.test.ts`
+  - この実行環境では `vite/vitest` 起動時に `spawn EPERM` が発生し完走不可
+
 ## 2026-02-12 - commit-0105: permissionless ladder format v1 (record verify + deterministic standings)
 
 ### Why

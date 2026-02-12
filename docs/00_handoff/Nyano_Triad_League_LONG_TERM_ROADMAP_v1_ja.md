@@ -144,19 +144,20 @@
 - [Stability]
   - [x] E2E テスト（/match→/stream→/overlay の基本導線） — Sprint 23: cross-tab-overlay.spec.ts（BroadcastChannel 経由のオーバーレイ状態受信・投票受信・localStorage 復旧の 3 テスト）
   - [x] シミュレーションのゴールデンテスト（特定ターン列で結果固定） — Sprint 23: golden_vectors.json（3 ベクタ）+ golden_vectors.test.ts（12 tests）+ replay_determinism verifyReplayV1 合意テスト
-- [x] エラートラッキング（Sentry 等）と、リリース後の回帰検知
-  - Sprint 24: `apps/web/src/lib/error_tracking.ts` で global error / unhandledrejection を収集（local/console/remote 切替）
+  - [x] エラートラッキング（Sentry 等）と、リリース後の回帰検知
+    - Sprint 24: `apps/web/src/lib/error_tracking.ts` で global error / unhandledrejection を収集（local/console/remote 切替）
 - [Extensibility]
   - [x] Plugin/Adapter 境界の明文化（twitch / warudo / overlay） — Sprint 24: ADAPTER_INTERFACES.md（BroadcastChannel Bus 3ch 契約 + Nyano Warudo HTTP Bridge 契約 + Twitch Bridge 設計方針）
   - [x] API 契約テスト（state schema を JSON schema 等で固定） — Sprint 24: streamer_bus ランタイムバリデータ 4 関数（isValidOverlayStateV1 / isValidStreamVoteStateV1 / isValidStreamCommandV1 / isValidBoardCellLite）+ 66 テスト + subscribe/read 組み込み
 - [Operability]
-- [x] リリース手順（versioning、changelog、rollback、feature flag）
-  - Sprint 24: `docs/99_dev/RELEASE_RUNBOOK_v1_ja.md` を追加し、`pnpm run release:check` を標準化
+  - [x] リリース手順（versioning、changelog、rollback、feature flag）
+    - Sprint 24: `docs/99_dev/RELEASE_RUNBOOK_v1_ja.md` を追加し、`pnpm run release:check` を標準化
 
 ### Phase 4（6〜12ヶ月）: “スケール”と“コミュニティの手触り”
 - [Participation]
   - [ ] シーズン制（ランキング、報酬、アーカイブ）
-  - [ ] 新規参加者向けチュートリアル（3分で理解→1分で参加）
+  - [x] 新規参加者向けチュートリアル（3分で理解→1分で参加）
+    - Sprint 24: Home に quickstart checklist（進捗保存）を追加し、Match の初手確定で進捗を自動更新
 - [Visual]
   - [ ] overlay のテーマプリセット（大会/配信者ごとに即切替）
   - [ ] アニメーション・演出（過剰にしない、読みやすさ優先）

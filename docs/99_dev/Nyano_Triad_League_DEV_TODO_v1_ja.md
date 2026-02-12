@@ -53,9 +53,14 @@
   - sink を切替可能化（local / console / remote, env設定）
   - `docs/99_dev/RELEASE_RUNBOOK_v1_ja.md` を追加（versioning/changelog/rollback/feature flag）
   - `pnpm run release:check` を追加（出荷前チェックの標準化）
+- ✅ Commit0107: 新規参加者向け quickstart 導線（3ステップ進捗）を実装
+  - `apps/web/src/lib/onboarding.ts` を追加（localStorage永続化・進捗集計・リセット）
+  - Home に「はじめての1分スタート」チェックリストと1分ルールモーダルを追加
+  - Match のゲスト対戦導線で `start_first_match` / `commit_first_move` を自動更新
+  - `onboarding.test.ts` を追加（既定値、永続化、異常値fallback、reset）
 ## 🚧 Doing (now)
 
-- 🔧 Phase 4 の導線（新規参加者チュートリアル / シーズン運用UI）の最小設計を進める
+- 🔧 Phase 4 の運用面（シーズン制UI / モデレーション機能）の最小設計を進める
 
 ## 🧩 Next (high priority)
 
