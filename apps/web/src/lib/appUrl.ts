@@ -66,6 +66,7 @@ export type ReplayShareUrlOptions = {
   mode?: ReplayMode;
   step?: number;
   eventId?: string;
+  ui?: string;
   absolute?: boolean;
 };
 
@@ -84,6 +85,7 @@ export function buildReplayShareUrl(opts: ReplayShareUrlOptions): string {
   url.searchParams.set(opts.data.key, opts.data.value);
   if (opts.eventId) url.searchParams.set("event", opts.eventId);
   if (opts.mode) url.searchParams.set("mode", opts.mode);
+  if (opts.ui) url.searchParams.set("ui", opts.ui);
   const step = normalizeReplayStep(opts.step);
   if (step !== null) url.searchParams.set("step", String(step));
   if (opts.absolute === false || !hasWindowOrigin()) return `${url.pathname}${url.search}${url.hash}`;
