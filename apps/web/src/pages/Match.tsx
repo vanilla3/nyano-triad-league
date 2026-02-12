@@ -36,6 +36,7 @@ import { buildReplayBundleV2, stringifyReplayBundle } from "@/lib/replay_bundle"
 import { fetchMintedTokenIds, fetchNyanoCards } from "@/lib/nyano_rpc";
 import { publishOverlayState, subscribeStreamCommand, type StreamCommandV1 } from "@/lib/streamer_bus";
 import { pickAiMove as pickAiMoveNew, type AiDifficulty, type AiReasonCode } from "@/lib/ai/nyano_ai";
+import { computeAiAutoMoveDelayMs } from "@/lib/ai/turn_timing";
 import { generateMoveTip } from "@/lib/ai/move_tips";
 import { assessBoardAdvantage } from "@/lib/ai/board_advantage";
 import { annotateReplayMoves } from "@/lib/ai/replay_annotations";
@@ -1162,9 +1163,13 @@ export function MatchPage() {
     if (!cards) return;
     if (turns.length >= 9) return;
     if (currentPlayer !== aiPlayer) return;
-    const t = window.setTimeout(() => doAiMove(), 180);
+    const delayMs = computeAiAutoMoveDelayMs({
+      difficulty: aiDifficulty,
+      turnIndex: turns.length,
+    });
+    const t = window.setTimeout(() => doAiMove(), delayMs);
     return () => window.clearTimeout(t);
-  }, [isVsNyanoAi, aiAutoPlay, cards, turns.length, currentPlayer, aiPlayer, doAiMove]);
+  }, [isVsNyanoAi, aiAutoPlay, cards, turns.length, currentPlayer, aiPlayer, aiDifficulty, doAiMove]);
 
   // Stream commands (from /stream)
   React.useEffect(() => {
