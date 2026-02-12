@@ -40,11 +40,15 @@
 - ✅ Sprint UX: web lint warning 2件を解消（`pnpm -C apps/web lint` warning 0）
 - ✅ Sprint UX: Snapshotに環境コンテキスト（route/viewport/language/UA）を含め、比較ログ精度を向上
 - ✅ Sprint UX: NyanoCardArt の失敗時に Retry 導線を追加（retry nonce 付き再読込）
+- ✅ Commit0104: 「シーズンの議会」最小プロトコル（proposal / vote / adopt）を TS 参照実装
+  - `season_council.ts` を追加（proposalId / vote hash / EIP-712 vote verify / tally / adopt）
+  - 決定論ルールを固定（候補集合 canonicalize、同一voterは最大nonce採用、同率は rulesetId 昇順）
+  - 仕様書 `SEASON_COUNCIL_SPEC` を追加
 ## 🚧 Doing (now)
 
-- 🔧 「Wind（先攻/後攻選択）」の公平な表現を詰める（commit-reveal / seed / 両者合意）
-  - triad-engine に先攻決定ヘルパーを追加（`first_player.ts`）
-  - 次は league / UI / protocol での採用フローを固定する
+- 🔧 ラダー（ランキング）を“許可不要”で第三者が運用できるフォーマットを詰める
+  - transcript / events / 署名検証で再計算できる最小仕様を定義
+  - indexer 非依存で同じ順位が出る tie-break を固定する
 
 ## 🧩 Next (high priority)
 
@@ -52,7 +56,7 @@
 ### A. ルール・プロトコルの安定化
 - [x] 公式戦向け：Solidity側のTranscript検証（v1 ABI-encode hash）
 - [x] RulesetRegistry（permissionless）最小実装：rulesetId -> config hash / metadata を登録できる
-- [ ] 「Wind（先攻/後攻選択）」の公平な表現（commit-reveal / seed / 両者合意など）
+- [x] 「Wind（先攻/後攻選択）」の公平な表現（commit-reveal / seed / 両者合意など）
 
 ### B. ゲームの“面白さ”を積み増す（ただし決定論で）
 - [x] メタ（Layer4）の小さな可変（例：corner boost / center locked / chain cap）を1つ追加
@@ -60,7 +64,7 @@
   - v1では engine-only（rulesetId canonicalization には未反映）
 
 ### C. 自走するコミュニティ設計（運営が消えても回る）
-- [ ] 「シーズンの議会」：ruleset proposal / vote / adopt の最小プロトコル
+- [x] 「シーズンの議会」：ruleset proposal / vote / adopt の最小プロトコル
 - [ ] ラダー（ランキング）を“許可不要”で第三者が運用できるフォーマット
   - 例：イベントログ＋署名検証＋ランキング算出の決定論
 

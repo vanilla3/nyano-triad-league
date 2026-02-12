@@ -714,3 +714,46 @@
 - `pnpm -C apps/web typecheck`
 - `pnpm -C apps/web lint`
 - `pnpm -C apps/web test`
+
+## 2026-02-12 - commit-0104: season council minimal protocol (proposal / vote / adopt)
+
+### Why
+- DEV_TODO の高優先項目として「シーズンの議会（ruleset proposal / vote / adopt）」が未完了だった。
+- 運営不在でも第三者が同じ採択結果を再現できるように、決定論な集計規則を先に固定する必要があった。
+- 署名投票（EIP-712）を導入する前提を崩さない形で、最小の TS 参照実装を追加したかった。
+
+### What
+- `packages/triad-engine/src/season_council.ts` を新規追加。
+  - Proposal:
+    - `canonicalizeSeasonCouncilCandidatesV1(...)`
+    - `hashSeasonCouncilCandidateSetV1(...)`
+    - `buildSeasonCouncilProposalIdV1(...)`
+  - Vote:
+    - `buildSeasonCouncilVoteHashV1(...)`
+    - EIP-712 payload/digest/recover/verify helpers:
+      - `buildSeasonCouncilVoteTypedDataV1(...)`
+      - `buildSeasonCouncilVoteTypedDataDigestV1(...)`
+      - `recoverSeasonCouncilVoteSignerV1(...)`
+      - `verifySeasonCouncilVoteSignatureV1(...)`
+  - Tally/Adopt:
+    - `tallySeasonCouncilVotesV1(...)`
+      - 同一 voter は最大 nonce 採用
+      - 同一 nonce 競合はエラー
+      - proposal不一致 / 期限切れ / 候補外は reject
+      - 同率は `rulesetId` 昇順で tie-break
+    - `adoptSeasonCouncilRulesetV1(...)`
+      - quorum 到達 + winner 存在時のみ採択
+- `packages/triad-engine/src/index.ts`
+  - `season_council` エクスポートを追加。
+- `packages/triad-engine/test/season_council.test.js`
+  - proposalId canonicalization、vote hash 決定性、EIP-712 sign/verify/recover、nonce 競合、tally/adopt 条件を追加検証。
+- `docs/02_protocol/Nyano_Triad_League_SEASON_COUNCIL_SPEC_v1_ja.md`
+  - v1 最小プロトコル仕様を新規追加（proposal/vote/adopt、deterministic rule、EIP-712 型）。
+- `docs/99_dev/Nyano_Triad_League_DEV_TODO_v1_ja.md`
+  - Wind公平化を完了に更新。
+  - 「シーズンの議会」項目を完了に更新。
+  - Doing を「ラダー format 固定」へ更新。
+
+### Verify
+- `pnpm -C packages/triad-engine lint`
+- `pnpm -C packages/triad-engine test`
