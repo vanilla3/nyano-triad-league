@@ -63,7 +63,7 @@ import {
   randomBytes32Hex,
   resolveFirstPlayer,
 } from "@/lib/first_player_resolve";
-import { buildFirstPlayerModeParamPatch } from "@/lib/first_player_params";
+import { buildFirstPlayerModeDefaultParamPatch, buildFirstPlayerModeParamPatch } from "@/lib/first_player_params";
 
 type OpponentMode = "pvp" | "vs_nyano_ai";
 type DataMode = "fast" | "verified";
@@ -1562,6 +1562,7 @@ export function MatchPage() {
                 setParams({
                   fpm: nextMode,
                   ...buildFirstPlayerModeParamPatch(nextMode),
+                  ...buildFirstPlayerModeDefaultParamPatch(nextMode, searchParams, randomBytes32Hex),
                 });
               }}
               aria-label="First player mode"
