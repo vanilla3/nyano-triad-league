@@ -8,6 +8,7 @@ import React from "react";
 
 import { cellIndexToCoord, toViewerMoveText, type ViewerMove } from "@/lib/triad_vote_utils";
 import { parseChatMoveLoose } from "@/lib/triad_viewer_command";
+import { appPath } from "@/lib/appUrl";
 
 export interface VoteAudit {
   attempts: number;
@@ -97,6 +98,7 @@ export const VoteControlPanel: React.FC<VoteControlPanelProps> = React.memo(func
   onChangeAntiSpamMaxVoteChanges,
 }) {
   const sideLabel = controlledSide === 0 ? "A" : "B";
+  const hostMatchPath = React.useMemo(() => appPath("match?stream=1"), []);
 
   return (
     <>
@@ -156,7 +158,7 @@ export const VoteControlPanel: React.FC<VoteControlPanelProps> = React.memo(func
           </div>
 
           <div className="mt-2 text-[11px] text-slate-500">
-            ※ <span className="font-mono">/match</span> は <span className="font-mono">stream=1</span>（Host link）で開いてください。
+            Note: open host view with <span className="font-mono">{hostMatchPath}</span>.
           </div>
 
           {/* Anti-spam settings (P2-SPAM) */}
