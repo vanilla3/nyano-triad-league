@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { buildFirstPlayerModeDefaultParamPatch, buildFirstPlayerModeParamPatch } from "../first_player_params";
+import {
+  applySearchParamPatch,
+  buildFirstPlayerModeCanonicalParamPatch,
+  buildFirstPlayerModeDefaultParamPatch,
+  buildFirstPlayerModeParamPatch,
+} from "../first_player_params";
 
 describe("buildFirstPlayerModeParamPatch", () => {
   it("manual mode clears non-manual first-player params", () => {
@@ -75,5 +80,37 @@ describe("buildFirstPlayerModeDefaultParamPatch", () => {
     expect(patch.fpnb).toMatch(/^0x[0-9a-f]{64}$/);
     expect(patch.fcoa).toBeUndefined();
     expect(patch.fcob).toBeUndefined();
+  });
+});
+
+describe("buildFirstPlayerModeCanonicalParamPatch", () => {
+  it("includes fpm and mode defaults", () => {
+    const params = new URLSearchParams("fpm=manual");
+    const patch = buildFirstPlayerModeCanonicalParamPatch(
+      "seed",
+      params,
+      () => `0x${"11".repeat(32)}` as `0x${string}`,
+    );
+    expect(patch.fpm).toBe("seed");
+    expect(patch.fps).toMatch(/^0x[0-9a-f]{64}$/);
+    expect(patch.fpsd).toMatch(/^0x[0-9a-f]{64}$/);
+  });
+});
+
+describe("applySearchParamPatch", () => {
+  it("applies set/delete and reports changed=true", () => {
+    const current = new URLSearchParams("a=1&b=2");
+    const { next, changed } = applySearchParamPatch(current, { a: "9", b: undefined, c: "x" });
+    expect(changed).toBe(true);
+    expect(next.get("a")).toBe("9");
+    expect(next.has("b")).toBe(false);
+    expect(next.get("c")).toBe("x");
+  });
+
+  it("keeps params and reports changed=false when patch is no-op", () => {
+    const current = new URLSearchParams("a=1");
+    const { next, changed } = applySearchParamPatch(current, { a: "1", b: undefined });
+    expect(changed).toBe(false);
+    expect(next.toString()).toBe("a=1");
   });
 });

@@ -63,7 +63,10 @@ import {
   randomBytes32Hex,
   resolveFirstPlayer,
 } from "@/lib/first_player_resolve";
-import { buildFirstPlayerModeDefaultParamPatch, buildFirstPlayerModeParamPatch } from "@/lib/first_player_params";
+import {
+  applySearchParamPatch,
+  buildFirstPlayerModeCanonicalParamPatch,
+} from "@/lib/first_player_params";
 
 type OpponentMode = "pvp" | "vs_nyano_ai";
 type DataMode = "fast" | "verified";
@@ -503,6 +506,15 @@ export function MatchPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [firstPlayer]);
 
+  React.useEffect(() => {
+    if (isEvent) return;
+    const patch = buildFirstPlayerModeCanonicalParamPatch(firstPlayerModeParam, searchParams, randomBytes32Hex);
+    const { next, changed } = applySearchParamPatch(searchParams, patch);
+    if (changed) {
+      setSearchParams(next, { replace: true });
+    }
+  }, [isEvent, firstPlayerModeParam, searchParams, setSearchParams]);
+
   const setParam = (key: string, value: string) => {
     const next = new URLSearchParams(searchParams);
     if (!value) next.delete(key);
@@ -511,12 +523,8 @@ export function MatchPage() {
   };
 
   const setParams = (updates: Record<string, string | undefined>) => {
-    const next = new URLSearchParams(searchParams);
-    for (const [key, value] of Object.entries(updates)) {
-      if (!value) next.delete(key);
-      else next.set(key, value);
-    }
-    setSearchParams(next, { replace: true });
+    const { next, changed } = applySearchParamPatch(searchParams, updates);
+    if (changed) setSearchParams(next, { replace: true });
   };
 
   const clearEvent = () => {
@@ -1560,9 +1568,7 @@ export function MatchPage() {
               onChange={(e) => {
                 const nextMode = parseFirstPlayerResolutionMode(e.target.value);
                 setParams({
-                  fpm: nextMode,
-                  ...buildFirstPlayerModeParamPatch(nextMode),
-                  ...buildFirstPlayerModeDefaultParamPatch(nextMode, searchParams, randomBytes32Hex),
+                  ...buildFirstPlayerModeCanonicalParamPatch(nextMode, searchParams, randomBytes32Hex),
                 });
               }}
               aria-label="First player mode"

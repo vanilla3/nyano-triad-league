@@ -8,6 +8,22 @@ const COMMIT_A = `0x${"44".repeat(32)}`;
 const COMMIT_B = `0x${"55".repeat(32)}`;
 
 test.describe("Match first-player mode URL params", () => {
+  test("loading seed mode canonicalizes missing/invalid defaults and removes stale params", async ({ page }) => {
+    await page.goto(`/match?fpm=seed&fps=0x1234&fra=${REVEAL_A}&fca=${COMMIT_A}`);
+
+    await expect(page.getByLabel("First player mode")).toBeVisible({ timeout: 10_000 });
+
+    await expect.poll(() => new URL(page.url()).searchParams.get("fpm")).toBe("seed");
+    await expect.poll(() => {
+      const params = new URL(page.url()).searchParams;
+      const fps = params.get("fps");
+      const fpsd = params.get("fpsd");
+      return Boolean(fps && fpsd && HEX_32_RE.test(fps) && HEX_32_RE.test(fpsd));
+    }).toBe(true);
+    await expect.poll(() => new URL(page.url()).searchParams.has("fra")).toBe(false);
+    await expect.poll(() => new URL(page.url()).searchParams.has("fca")).toBe(false);
+  });
+
   test("switching to commit_reveal fills required inputs and clears unrelated mode params", async ({ page }) => {
     await page.goto(
       `/match?fpm=manual&fpsd=${SEED}&fpoa=0xaAaAaAaaAaAaAaaAaAAAAAAAAaaaAaAaAaaAaaAa&fpna=${REVEAL_A}&fcoa=${COMMIT_A}`,
@@ -62,4 +78,3 @@ test.describe("Match first-player mode URL params", () => {
     await expect.poll(() => new URL(page.url()).searchParams.has("fpsd")).toBe(false);
   });
 });
-

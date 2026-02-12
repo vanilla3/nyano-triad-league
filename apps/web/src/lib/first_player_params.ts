@@ -144,3 +144,51 @@ export function buildFirstPlayerModeDefaultParamPatch(
 
   return patch;
 }
+
+/**
+ * Build a canonical first-player param patch for a mode.
+ *
+ * Includes:
+ * - mode key normalization (`fpm`)
+ * - stale key cleanup
+ * - mode-specific default-fill
+ */
+export function buildFirstPlayerModeCanonicalParamPatch(
+  mode: FirstPlayerResolutionMode,
+  current: URLSearchParams,
+  randomBytes32Hex: () => `0x${string}`,
+): Record<string, string | undefined> {
+  return {
+    fpm: mode,
+    ...buildFirstPlayerModeParamPatch(mode),
+    ...buildFirstPlayerModeDefaultParamPatch(mode, current, randomBytes32Hex),
+  };
+}
+
+/**
+ * Apply a query patch to search params and report whether something changed.
+ */
+export function applySearchParamPatch(
+  current: URLSearchParams,
+  patch: Record<string, string | undefined>,
+): { next: URLSearchParams; changed: boolean } {
+  const next = new URLSearchParams(current);
+  let changed = false;
+
+  for (const [key, value] of Object.entries(patch)) {
+    const before = next.get(key);
+    if (!value) {
+      if (before !== null) {
+        next.delete(key);
+        changed = true;
+      }
+      continue;
+    }
+    if (before !== value) {
+      next.set(key, value);
+      changed = true;
+    }
+  }
+
+  return { next, changed };
+}
