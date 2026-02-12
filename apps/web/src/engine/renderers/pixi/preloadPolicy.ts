@@ -33,9 +33,10 @@ export function normalizePreloadTokenIds(tokenIds: readonly string[]): string[] 
     // Filtering here avoids futile preload requests for malformed inputs.
     if (!/^\d+$/.test(tokenId)) continue;
     if (tokenId === "0") continue;
-    if (seen.has(tokenId)) continue;
-    seen.add(tokenId);
-    out.push(tokenId);
+    const normalized = BigInt(tokenId).toString();
+    if (seen.has(normalized)) continue;
+    seen.add(normalized);
+    out.push(normalized);
   }
   return out;
 }

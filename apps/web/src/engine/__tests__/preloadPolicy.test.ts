@@ -28,6 +28,10 @@ describe("normalizePreloadTokenIds", () => {
   it("drops malformed token IDs and zero", () => {
     expect(
       normalizePreloadTokenIds(["1", "0", "-2", "3.14", "abc", "04", "2"]),
-    ).toEqual(["1", "04", "2"]);
+    ).toEqual(["1", "4", "2"]);
+  });
+
+  it("canonicalizes leading-zero values and dedupes by normalized ID", () => {
+    expect(normalizePreloadTokenIds(["0042", "42", "00042"])).toEqual(["42"]);
   });
 });
