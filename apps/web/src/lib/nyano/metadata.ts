@@ -6,6 +6,10 @@
  *   1. `VITE_NYANO_METADATA_BASE` env variable
  *   2. GameIndex `metadata.imageBaseUrl` field
  *   3. Hardcoded default Arweave URL (ensures images load even without GameIndex)
+ *
+ * Supported base URL schemes:
+ *   - `https://...`
+ *   - `ar://...` (normalized internally to `https://arweave.net/...`)
  */
 
 // ── Types ────────────────────────────────────────────────────────────
@@ -35,6 +39,15 @@ export type MetadataConfig = {
 export const DEFAULT_NYANO_IMAGE_BASE =
   "https://m3c2ncchjkvsn3lc5ccd4kdsm74cdssuvxbuuaefwy43cyt4oixa.arweave.net/ZsWmiEdKqybtYuiEPihyZ_ghylStw0oAhbY5sWJ8ci4/{id}.png";
 
+function normalizeMetadataBasePattern(base: string): string {
+  const trimmed = base.trim();
+  if (trimmed.toLowerCase().startsWith("ar://")) {
+    const path = trimmed.slice("ar://".length).replace(/^\/+/, "");
+    return `https://arweave.net/${path}`;
+  }
+  return trimmed;
+}
+
 // ── Config resolution ────────────────────────────────────────────────
 
 /**
@@ -49,15 +62,16 @@ export function getMetadataConfig(
   gameIndexMetadata?: Record<string, unknown> | null,
 ): MetadataConfig | null {
   // 1. Env variable override
-  const envBase =
+  const envBaseRaw =
     typeof import.meta !== "undefined"
       ? (import.meta.env?.VITE_NYANO_METADATA_BASE as string | undefined)
       : undefined;
+  const envBase = typeof envBaseRaw === "string" ? normalizeMetadataBasePattern(envBaseRaw) : undefined;
   if (envBase) {
     if (!envBase.includes("{id}")) {
       if (import.meta.env?.DEV) {
         console.warn(
-          `[metadata] VITE_NYANO_METADATA_BASE is missing "{id}" placeholder: "${envBase}". Ignoring.`,
+          `[metadata] VITE_NYANO_METADATA_BASE is missing "{id}" placeholder: "${envBaseRaw}". Ignoring.`,
         );
       }
       // Fall through to GameIndex source
@@ -68,7 +82,10 @@ export function getMetadataConfig(
 
   // 2. GameIndex metadata field
   if (gameIndexMetadata && typeof gameIndexMetadata === "object") {
-    const indexBase = (gameIndexMetadata as Record<string, string>).imageBaseUrl;
+    const indexBaseRaw = (gameIndexMetadata as Record<string, string>).imageBaseUrl;
+    const indexBase = typeof indexBaseRaw === "string"
+      ? normalizeMetadataBasePattern(indexBaseRaw)
+      : undefined;
     if (typeof indexBase === "string" && indexBase && indexBase.includes("{id}")) {
       return { baseUrlPattern: indexBase };
     }
