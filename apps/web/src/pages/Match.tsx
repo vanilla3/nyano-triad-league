@@ -53,7 +53,7 @@ import { readUiDensity, writeUiDensity, type UiDensity } from "@/lib/local_setti
 import type { FlipTraceArrow } from "@/components/FlipArrowOverlay";
 import { MatchDrawerMint, DrawerToggleButton } from "@/components/MatchDrawerMint";
 import { writeClipboardText } from "@/lib/clipboard";
-import { buildReplayShareUrl } from "@/lib/appUrl";
+import { appAbsoluteUrl, buildReplayShareUrl } from "@/lib/appUrl";
 import { BattleStageEngine } from "@/engine/components/BattleStageEngine";
 import { MAX_CHAIN_CAP_PER_TURN, parseChainCapPerTurnParam } from "@/lib/ruleset_meta";
 import {
@@ -414,6 +414,7 @@ export function MatchPage() {
 
   const [status, setStatus] = React.useState<string | null>(null);
   const toast = useToast();
+  const overlayUrl = React.useMemo(() => appAbsoluteUrl("overlay?controls=0"), []);
   const lastStreamCmdIdRef = React.useRef<string>("");
   const [error, setError] = React.useState<string | null>(null);
 
@@ -1916,7 +1917,7 @@ export function MatchPage() {
           <button className="btn" onClick={() => setSalt(randomSalt())}>New Salt</button>
           <a
             className="btn"
-            href={`${window.location.origin}/overlay?controls=0`}
+            href={overlayUrl}
             target="_blank"
             rel="noreferrer noopener"
           >

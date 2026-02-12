@@ -39,7 +39,7 @@ import { annotateReplayMoves } from "@/lib/ai/replay_annotations";
 import { assessBoardAdvantage, type BoardAdvantage } from "@/lib/ai/board_advantage";
 import { AdvantageBadge } from "@/components/AdvantageBadge";
 import { writeClipboardText } from "@/lib/clipboard";
-import { buildReplayShareUrl } from "@/lib/appUrl";
+import { appAbsoluteUrl, buildReplayShareUrl } from "@/lib/appUrl";
 import {
   detectReplayHighlights,
   formatReplayWinnerLabel,
@@ -226,6 +226,7 @@ export function ReplayPage() {
       toast.error("Copy failed", errorMessage(e));
     }
   };
+  const overlayUrl = React.useMemo(() => appAbsoluteUrl("overlay?controls=0"), []);
 
   const pushOverlay = React.useCallback(
     (opts?: { silent?: boolean }) => {
@@ -859,7 +860,7 @@ protocolV1: {
 
                     <a
                       className="btn btn-sm no-underline"
-                      href={`${window.location.origin}/overlay?controls=0`}
+                      href={overlayUrl}
                       target="_blank"
                       rel="noreferrer noopener"
                     >
@@ -869,7 +870,7 @@ protocolV1: {
                     <button
                       className="btn btn-sm"
                       onClick={() => {
-                        void copyWithToast("overlay URL", `${window.location.origin}/overlay?controls=0`);
+                        void copyWithToast("overlay URL", overlayUrl);
                       }}
                     >
                       Copy overlay URL
