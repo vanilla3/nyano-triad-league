@@ -100,6 +100,15 @@ const LAYOUT = {
   boardFrameInset: 6,
   boardShadowOffsetY: 6,
   boardShadowSpread: 10,
+  boardPatternInset: 6,
+  boardPatternSpacing: 26,
+  boardPatternSpacingHigh: 20,
+  boardPatternAlpha: 0.045,
+  boardPatternAlphaHigh: 0.07,
+  boardScanlineSpacing: 34,
+  boardScanlineSpacingHigh: 26,
+  boardScanlineAlpha: 0.03,
+  boardScanlineAlphaHigh: 0.045,
   cellShadowOffsetY: 2,
   cellShadowSpread: 4,
   cardFrameOuterWidth: 2,
@@ -546,6 +555,34 @@ export class PixiBattleRenderer implements IBattleRenderer {
       detail.moveTo(offsetX + frameInset, py);
       detail.lineTo(offsetX + boardSize - frameInset, py);
       detail.stroke({ color: COLORS.boardFrame, width: 1, alpha: 0.18 });
+    }
+
+    if (features.boardPattern) {
+      const left = offsetX + frameInset + LAYOUT.boardPatternInset;
+      const top = offsetY + frameInset + LAYOUT.boardPatternInset;
+      const right = offsetX + boardSize - frameInset - LAYOUT.boardPatternInset;
+      const bottom = offsetY + boardSize - frameInset - LAYOUT.boardPatternInset;
+      const size = Math.max(0, right - left);
+
+      const diagonalSpacing = quality === "high" ? LAYOUT.boardPatternSpacingHigh : LAYOUT.boardPatternSpacing;
+      const diagonalAlpha = quality === "high" ? LAYOUT.boardPatternAlphaHigh : LAYOUT.boardPatternAlpha;
+      for (let start = left - size; start < right + size; start += diagonalSpacing) {
+        const x1 = Math.max(left, start);
+        const y1 = bottom - Math.max(0, x1 - start);
+        const x2 = Math.min(right, start + size);
+        const y2 = top + Math.max(0, start + size - x2);
+        detail.moveTo(x1, y1);
+        detail.lineTo(x2, y2);
+        detail.stroke({ color: COLORS.boardHighlight, width: 1, alpha: diagonalAlpha });
+      }
+
+      const scanlineSpacing = quality === "high" ? LAYOUT.boardScanlineSpacingHigh : LAYOUT.boardScanlineSpacing;
+      const scanlineAlpha = quality === "high" ? LAYOUT.boardScanlineAlphaHigh : LAYOUT.boardScanlineAlpha;
+      for (let y = top; y < bottom; y += scanlineSpacing) {
+        detail.moveTo(left, y);
+        detail.lineTo(right, y);
+        detail.stroke({ color: COLORS.edgeText, width: 1, alpha: scanlineAlpha });
+      }
     }
   }
 

@@ -49,6 +49,8 @@ export interface AnimDurations {
 export interface VfxFeatureFlags {
   /** Board depth pass (panel shadow + layered frame). */
   boardDepth: boolean;
+  /** Board material pattern lines (medium/high only). */
+  boardPattern: boolean;
   /** Per-cell soft shadow under card slots. */
   cellShadow: boolean;
   /** Subtle card glass sheen. */
@@ -111,6 +113,7 @@ export function vfxFeatureFlagsForQuality(quality: VfxQuality): VfxFeatureFlags 
     case "off":
       return {
         boardDepth: false,
+        boardPattern: false,
         cellShadow: false,
         cardGlass: false,
         edgePill: false,
@@ -121,6 +124,7 @@ export function vfxFeatureFlagsForQuality(quality: VfxQuality): VfxFeatureFlags 
     case "low":
       return {
         boardDepth: true,
+        boardPattern: false,
         cellShadow: true,
         cardGlass: false,
         edgePill: true,
@@ -131,6 +135,7 @@ export function vfxFeatureFlagsForQuality(quality: VfxQuality): VfxFeatureFlags 
     case "medium":
       return {
         boardDepth: true,
+        boardPattern: true,
         cellShadow: true,
         cardGlass: true,
         edgePill: true,
@@ -141,6 +146,7 @@ export function vfxFeatureFlagsForQuality(quality: VfxQuality): VfxFeatureFlags 
     case "high":
       return {
         boardDepth: true,
+        boardPattern: true,
         cellShadow: true,
         cardGlass: true,
         edgePill: true,

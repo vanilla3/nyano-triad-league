@@ -67,6 +67,7 @@ describe("vfxFeatureFlagsForQuality", () => {
   it("off disables heavy/animated features", () => {
     expect(vfxFeatureFlagsForQuality("off")).toEqual({
       boardDepth: false,
+      boardPattern: false,
       cellShadow: false,
       cardGlass: false,
       edgePill: false,
@@ -79,6 +80,7 @@ describe("vfxFeatureFlagsForQuality", () => {
   it("low keeps readability layers but disables heavy loops/flashes", () => {
     expect(vfxFeatureFlagsForQuality("low")).toEqual({
       boardDepth: true,
+      boardPattern: false,
       cellShadow: true,
       cardGlass: false,
       edgePill: true,
@@ -91,6 +93,7 @@ describe("vfxFeatureFlagsForQuality", () => {
   it("high enables full feature set", () => {
     expect(vfxFeatureFlagsForQuality("high")).toEqual({
       boardDepth: true,
+      boardPattern: true,
       cellShadow: true,
       cardGlass: true,
       edgePill: true,
