@@ -90,11 +90,17 @@ function parseMode(v: string | null): Mode {
 }
 
 type ReplayBoardUi = "classic" | "rpg" | "engine";
+type MatchBoardUi = "mint" | "rpg" | "engine";
 
 function parseReplayBoardUi(v: string | null): ReplayBoardUi {
   if (v === "rpg") return "rpg";
   if (v === "engine") return "engine";
   return "classic";
+}
+
+function toMatchBoardUi(v: ReplayBoardUi): MatchBoardUi {
+  if (v === "classic") return "mint";
+  return v;
 }
 
 function boardEquals(a: ReadonlyArray<BoardCell | null>, b: ReadonlyArray<BoardCell | null>): boolean {
@@ -186,6 +192,7 @@ export function ReplayPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const uiMode = parseReplayBoardUi((searchParams.get("ui") || "").toLowerCase());
   const uiParam = uiMode === "classic" ? undefined : uiMode;
+  const matchUi = toMatchBoardUi(uiMode);
   const isEngine = uiMode === "engine";
   const isRpg = uiMode === "rpg";
 
@@ -785,7 +792,7 @@ protocolV1: {
                 Events
               </Link>
               {event ? (
-                <Link className="btn btn-primary no-underline" to={`/match?event=${encodeURIComponent(event.id)}&ui=mint`}>
+                <Link className="btn btn-primary no-underline" to={`/match?event=${encodeURIComponent(event.id)}&ui=${matchUi}`}>
                   Challenge again
                 </Link>
               ) : null}
