@@ -21,6 +21,8 @@ export interface SessionTelemetry {
 }
 
 const STORAGE_PREFIX = "nytl.telemetry.";
+const UX_SNAPSHOT_HISTORY_KEY = `${STORAGE_PREFIX}ux_snapshot_history_v1`;
+const MAX_UX_SNAPSHOT_HISTORY = 20;
 
 // ── Persistence helpers ────────────────────────────────────────────────
 
@@ -76,6 +78,127 @@ export interface UxTelemetrySnapshot {
   generatedAtIso: string;
   stats: CumulativeStats;
   checks: UxTargetEvaluation[];
+  context?: UxTelemetryContext;
+}
+
+export interface UxTelemetryContext {
+  route: string;
+  viewport: string;
+  language: string;
+  userAgent: string;
+}
+
+function parseFiniteNumber(value: unknown): number | null {
+  return typeof value === "number" && Number.isFinite(value) ? value : null;
+}
+
+function parseStatus(value: unknown): UxTargetStatus | null {
+  if (value === "pass" || value === "fail" || value === "insufficient") return value;
+  return null;
+}
+
+function parseSnapshotContext(value: unknown): UxTelemetryContext | undefined {
+  if (value === null || value === undefined) return undefined;
+  if (typeof value !== "object") return undefined;
+  const v = value as Partial<UxTelemetryContext>;
+  if (
+    typeof v.route !== "string" ||
+    typeof v.viewport !== "string" ||
+    typeof v.language !== "string" ||
+    typeof v.userAgent !== "string"
+  ) {
+    return undefined;
+  }
+  return {
+    route: v.route,
+    viewport: v.viewport,
+    language: v.language,
+    userAgent: v.userAgent,
+  };
+}
+
+function parseSnapshotStats(value: unknown): CumulativeStats | null {
+  if (typeof value !== "object" || value === null) return null;
+  const v = value as Record<string, unknown>;
+  const sessions = parseFiniteNumber(v.sessions);
+  const totalInvalidActions = parseFiniteNumber(v.total_invalid_actions);
+  if (sessions === null || totalInvalidActions === null) return null;
+  return {
+    sessions,
+    avg_first_interaction_ms: parseFiniteNumber(v.avg_first_interaction_ms),
+    avg_first_place_ms: parseFiniteNumber(v.avg_first_place_ms),
+    avg_quickplay_to_first_place_ms: parseFiniteNumber(v.avg_quickplay_to_first_place_ms),
+    avg_home_lcp_ms: parseFiniteNumber(v.avg_home_lcp_ms),
+    total_invalid_actions: totalInvalidActions,
+  };
+}
+
+function parseSnapshotChecks(value: unknown): UxTargetEvaluation[] | null {
+  if (!Array.isArray(value)) return null;
+  const checks: UxTargetEvaluation[] = [];
+  for (const item of value) {
+    if (typeof item !== "object" || item === null) return null;
+    const v = item as Record<string, unknown>;
+    const status = parseStatus(v.status);
+    if (status === null) return null;
+    const id = v.id;
+    if (id !== "A-1" && id !== "B-1" && id !== "B-4" && id !== "G-3") return null;
+    if (
+      typeof v.label !== "string" ||
+      typeof v.target !== "string" ||
+      typeof v.valueText !== "string"
+    ) {
+      return null;
+    }
+    checks.push({
+      id,
+      label: v.label,
+      target: v.target,
+      status,
+      valueText: v.valueText,
+    });
+  }
+  return checks;
+}
+
+function parseSnapshot(value: unknown): UxTelemetrySnapshot | null {
+  if (typeof value !== "object" || value === null) return null;
+  const v = value as Record<string, unknown>;
+  if (typeof v.generatedAtIso !== "string") return null;
+  const stats = parseSnapshotStats(v.stats);
+  const checks = parseSnapshotChecks(v.checks);
+  if (stats === null || checks === null) return null;
+  return {
+    generatedAtIso: v.generatedAtIso,
+    stats,
+    checks,
+    context: parseSnapshotContext(v.context),
+  };
+}
+
+function readStoredSnapshotHistory(): UxTelemetrySnapshot[] {
+  try {
+    const raw = localStorage.getItem(UX_SNAPSHOT_HISTORY_KEY);
+    if (raw === null) return [];
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return [];
+    const history: UxTelemetrySnapshot[] = [];
+    for (const item of parsed) {
+      const snapshot = parseSnapshot(item);
+      if (snapshot !== null) history.push(snapshot);
+    }
+    return history;
+  } catch {
+    return [];
+  }
+}
+
+function writeStoredSnapshotHistory(history: UxTelemetrySnapshot[]): void {
+  try {
+    localStorage.setItem(UX_SNAPSHOT_HISTORY_KEY, JSON.stringify(history));
+  } catch {
+    // localStorage unavailable/full
+  }
 }
 
 const CUMULATIVE_KEYS = [
@@ -201,11 +324,13 @@ export function evaluateUxTargets(stats: CumulativeStats): UxTargetEvaluation[] 
 export function buildUxTelemetrySnapshot(
   stats: CumulativeStats,
   nowMs: number = Date.now(),
+  context?: UxTelemetryContext,
 ): UxTelemetrySnapshot {
   return {
     generatedAtIso: new Date(nowMs).toISOString(),
     stats,
     checks: evaluateUxTargets(stats),
+    context,
   };
 }
 
@@ -223,10 +348,20 @@ export function formatUxTelemetrySnapshotMarkdown(snapshot: UxTelemetrySnapshot)
   const avgInvalidPerSession = stats.sessions > 0
     ? (stats.total_invalid_actions / stats.sessions).toFixed(2)
     : "--";
+  const contextLines = snapshot.context
+    ? [
+      `- Route: ${snapshot.context.route}`,
+      `- Viewport: ${snapshot.context.viewport}`,
+      `- Language: ${snapshot.context.language}`,
+      `- User agent: ${snapshot.context.userAgent}`,
+      "",
+    ]
+    : [];
 
   const lines = [
     `## ${snapshot.generatedAtIso} — Local UX snapshot`,
     "",
+    ...contextLines,
     `- Sessions: ${stats.sessions}`,
     `- Avg first interaction: ${formatSeconds(stats.avg_first_interaction_ms)}`,
     `- Avg first place: ${formatSeconds(stats.avg_first_place_ms)}`,
@@ -241,6 +376,33 @@ export function formatUxTelemetrySnapshotMarkdown(snapshot: UxTelemetrySnapshot)
   ];
 
   return lines.join("\n");
+}
+
+/**
+ * Save a UX snapshot into local history (newest retained, fixed-size ring).
+ */
+export function saveUxTelemetrySnapshot(snapshot: UxTelemetrySnapshot): void {
+  const history = readStoredSnapshotHistory();
+  history.push(snapshot);
+  const clipped = history.slice(-MAX_UX_SNAPSHOT_HISTORY);
+  writeStoredSnapshotHistory(clipped);
+}
+
+/**
+ * Read recent UX snapshots from local history (newest first).
+ */
+export function readUxTelemetrySnapshotHistory(limit: number = MAX_UX_SNAPSHOT_HISTORY): UxTelemetrySnapshot[] {
+  const max = Number.isFinite(limit) ? Math.max(1, Math.floor(limit)) : MAX_UX_SNAPSHOT_HISTORY;
+  const history = readStoredSnapshotHistory();
+  return history.slice(-max).reverse();
+}
+
+export function clearUxTelemetrySnapshotHistory(): void {
+  try {
+    localStorage.removeItem(UX_SNAPSHOT_HISTORY_KEY);
+  } catch {
+    // localStorage unavailable
+  }
 }
 
 function persistSession(session: SessionTelemetry): void {

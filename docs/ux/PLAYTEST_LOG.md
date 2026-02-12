@@ -6,6 +6,11 @@ Home の `Settings > UX Telemetry (Local)` にある `Copy Snapshot` で、以�
 
 ## 2026-02-12T00:00:00.000Z — Local UX snapshot
 
+- Route: /?mode=guest
+- Viewport: 390x844
+- Language: ja-JP
+- User agent: Example Browser UA
+
 - Sessions: 0
 - Avg first interaction: --
 - Avg first place: --
@@ -26,3 +31,4 @@ Home の `Settings > UX Telemetry (Local)` にある `Copy Snapshot` で、以�
 
 - 実施端末（PC/スマホ）、ブラウザ、回線条件、観察メモをこの下に追記してください。
 - `Reset Metrics` は測定を区切るときだけ実行してください。
+- `Copy Snapshot` now also stores local history (latest 5 shown in Home Settings, max 20 retained).

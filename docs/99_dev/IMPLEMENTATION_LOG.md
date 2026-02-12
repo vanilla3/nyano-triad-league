@@ -344,3 +344,55 @@
 - `pnpm -C apps/web lint`
 - `pnpm -C apps/web typecheck`
 - `pnpm -C apps/web build`
+
+
+## 2026-02-12 — commit-0091: UX snapshot に環境コンテキストを追加
+
+### Why
+- 同じ指標でも端末や表示サイズで体験値が変わるため、snapshot比較時に実行環境を残す必要があった。
+- `PLAYTEST_LOG.md` に貼る情報を増やし、後から「なぜ差が出たか」を追跡しやすくしたかった。
+
+### What
+- `telemetry.ts` に `UxTelemetryContext` を追加し、snapshotへ `context` を含められるようにした。
+- `formatUxTelemetrySnapshotMarkdown()` を拡張し、`route / viewport / language / userAgent` を出力するようにした。
+- Home の `Copy Snapshot` でブラウザ情報を収集して snapshot に埋め込むようにした。
+- `PLAYTEST_LOG.md` のテンプレに context 例を追記。
+- テスト追加：
+  - context あり snapshot 生成
+  - markdown の context 出力
+- e2e `home.spec.ts` を更新し、Settings 内の `Copy Snapshot` / `UX Target Snapshot` 表示を検証対象に追加。
+
+### Verify
+- `pnpm -C apps/web test`
+- `pnpm -C apps/web lint`
+- `pnpm -C apps/web typecheck`
+- `pnpm -C apps/web build`
+
+## 2026-02-12 - commit-0092: UX snapshot local history + Home visibility
+
+### Why
+- Snapshot copy alone was one-shot; if clipboard fails or user forgets to paste, telemetry evidence is lost.
+- Home Settings needed a quick local view of recent UX snapshot quality without opening external docs.
+
+### What
+- `apps/web/src/lib/telemetry.ts`
+  - Added local snapshot history storage (`saveUxTelemetrySnapshot`, `readUxTelemetrySnapshotHistory`, `clearUxTelemetrySnapshotHistory`).
+  - Added safe parser for stored history to ignore broken/invalid localStorage payloads.
+  - Added fixed retention (`MAX_UX_SNAPSHOT_HISTORY = 20`).
+- `apps/web/src/pages/Home.tsx`
+  - `Copy Snapshot` now saves snapshot locally before clipboard write.
+  - Added `Recent Snapshots (Local)` panel (latest 5, PASS/FAIL/N/A summary, route/viewport context).
+  - Added `Clear History` action.
+  - Copy failure toast now mentions snapshot was still saved locally.
+- `apps/web/src/lib/__tests__/telemetry.test.ts`
+  - Added tests for history read/write ordering, retention limit, invalid payload handling, and clear behavior.
+- `apps/web/e2e/home.spec.ts`
+  - Added visibility assertion for `Recent Snapshots (Local)` in Settings.
+- `docs/ux/PLAYTEST_LOG.md`
+  - Added note about local snapshot history behavior.
+
+### Verify
+- `pnpm -C apps/web test`
+- `pnpm -C apps/web lint`
+- `pnpm -C apps/web typecheck`
+- `pnpm -C apps/web build`

@@ -7,11 +7,14 @@ import { clearGameIndexCache } from "@/lib/nyano/gameIndex";
 import {
   buildUxTelemetrySnapshot,
   clearCumulativeStats,
+  clearUxTelemetrySnapshotHistory,
   evaluateUxTargets,
   formatUxTelemetrySnapshotMarkdown,
   markQuickPlayStart,
   readCumulativeStats,
+  readUxTelemetrySnapshotHistory,
   recordHomeLcpMs,
+  saveUxTelemetrySnapshot,
   type UxTargetStatus,
 } from "@/lib/telemetry";
 import { writeClipboardText } from "@/lib/clipboard";
@@ -247,11 +250,28 @@ function targetStatusClass(status: UxTargetStatus): string {
   return "bg-surface-100 text-surface-500 border-surface-200";
 }
 
+function summarizeTargetStatuses(
+  statuses: readonly UxTargetStatus[],
+): string {
+  let pass = 0;
+  let fail = 0;
+  let insufficient = 0;
+  for (const status of statuses) {
+    if (status === "pass") pass += 1;
+    else if (status === "fail") fail += 1;
+    else insufficient += 1;
+  }
+  return `PASS ${pass} / FAIL ${fail} / N/A ${insufficient}`;
+}
+
 export function HomePage() {
   const heroExpression = useHeroExpression();
   const toast = useToast();
   const [difficulty, setDifficulty] = React.useState<string>("normal");
   const [uxStats, setUxStats] = React.useState(() => readCumulativeStats());
+  const [uxSnapshotHistory, setUxSnapshotHistory] = React.useState(() =>
+    readUxTelemetrySnapshotHistory(5),
+  );
   const quickPlayUrl = `/match?mode=guest&opp=vs_nyano_ai&ai=${difficulty}&rk=v2&ui=mint`;
   const avgInvalidPerSession = uxStats.sessions > 0
     ? uxStats.total_invalid_actions / uxStats.sessions
@@ -260,16 +280,25 @@ export function HomePage() {
 
   const refreshUxStats = React.useCallback(() => {
     setUxStats(readCumulativeStats());
+    setUxSnapshotHistory(readUxTelemetrySnapshotHistory(5));
   }, []);
 
   const copyUxSnapshot = React.useCallback(async () => {
+    const snapshot = buildUxTelemetrySnapshot(uxStats, Date.now(), {
+      route: `${window.location.pathname}${window.location.search}`,
+      viewport: `${window.innerWidth}x${window.innerHeight}`,
+      language: navigator.language ?? "unknown",
+      userAgent: navigator.userAgent ?? "unknown",
+    });
+    saveUxTelemetrySnapshot(snapshot);
+    setUxSnapshotHistory(readUxTelemetrySnapshotHistory(5));
+
     try {
-      const snapshot = buildUxTelemetrySnapshot(uxStats);
       const markdown = formatUxTelemetrySnapshotMarkdown(snapshot);
       await writeClipboardText(markdown);
       toast.success("Snapshot copied", "Paste into docs/ux/PLAYTEST_LOG.md");
     } catch (e) {
-      toast.error("Copy failed", errorMessage(e));
+      toast.error("Copy failed", `${errorMessage(e)} (snapshot saved locally)`);
     }
   }, [toast, uxStats]);
 
@@ -646,6 +675,48 @@ export function HomePage() {
                   </div>
                 ))}
               </div>
+            </div>
+            <div className="mt-3 rounded-2xl border border-surface-200 bg-surface-50 p-3">
+              <div className="flex items-center justify-between gap-2">
+                <div className="text-xs font-semibold text-surface-700">Recent Snapshots (Local)</div>
+                <button
+                  className="btn text-[11px]"
+                  disabled={uxSnapshotHistory.length === 0}
+                  onClick={() => {
+                    clearUxTelemetrySnapshotHistory();
+                    setUxSnapshotHistory([]);
+                    toast.success("Snapshot history reset", "Local snapshot history has been cleared.");
+                  }}
+                >
+                  Clear History
+                </button>
+              </div>
+              {uxSnapshotHistory.length === 0 ? (
+                <div className="mt-2 text-[11px] text-surface-500">No snapshot history yet.</div>
+              ) : (
+                <div className="mt-2 grid gap-2">
+                  {uxSnapshotHistory.map((snapshot, index) => (
+                    <div
+                      key={`${snapshot.generatedAtIso}-${index}`}
+                      className="rounded-xl border border-surface-200 bg-white px-3 py-2"
+                    >
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <div className="text-[11px] font-semibold text-surface-700">
+                          {snapshot.generatedAtIso}
+                        </div>
+                        <div className="text-[10px] text-surface-500">
+                          {summarizeTargetStatuses(snapshot.checks.map((check) => check.status))}
+                        </div>
+                      </div>
+                      <div className="mt-1 text-[11px] text-surface-500">
+                        {snapshot.context
+                          ? `${snapshot.context.route} / ${snapshot.context.viewport}`
+                          : "Context unavailable"}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         </details>
