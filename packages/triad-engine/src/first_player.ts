@@ -37,6 +37,18 @@ export interface FirstPlayerCommitRevealV1Input {
 }
 
 /**
+ * Input for "commit-reveal with optional commit verification" flow.
+ *
+ * If commitA/commitB are provided, both are verified against revealA/revealB.
+ */
+export interface FirstPlayerCommitRevealResolutionV1Input extends FirstPlayerCommitRevealV1Input {
+  /** Optional reveal-commit hash from playerA. Must be provided together with commitB. */
+  commitA?: `0x${string}`;
+  /** Optional reveal-commit hash from playerB. Must be provided together with commitA. */
+  commitB?: `0x${string}`;
+}
+
+/**
  * Input for "shared seed decides first player" flow.
  *
  * First player is derived as:
@@ -142,6 +154,39 @@ export function deriveFirstPlayerFromCommitRevealV1(input: FirstPlayerCommitReve
   const mixed = keccak256(encoded);
   const bit = Number(BigInt(mixed) & 1n);
   return bit as PlayerIndex;
+}
+
+/**
+ * Resolve first player from commit-reveal and optionally verify commit hashes.
+ *
+ * This helper reduces integration mistakes by bundling:
+ * - reveal validation
+ * - optional commit/reveal consistency checks
+ * - deterministic first-player derivation
+ */
+export function resolveFirstPlayerFromCommitRevealV1(
+  input: FirstPlayerCommitRevealResolutionV1Input,
+): PlayerIndex {
+  const { commitA, commitB } = input;
+  if (commitA !== undefined || commitB !== undefined) {
+    if (commitA === undefined || commitB === undefined) {
+      throw new Error("commitA and commitB must be provided together");
+    }
+
+    const okA = verifyFirstPlayerRevealCommitV1(commitA, {
+      matchSalt: input.matchSalt,
+      reveal: input.revealA,
+    });
+    if (!okA) throw new Error("commitA mismatch");
+
+    const okB = verifyFirstPlayerRevealCommitV1(commitB, {
+      matchSalt: input.matchSalt,
+      reveal: input.revealB,
+    });
+    if (!okB) throw new Error("commitB mismatch");
+  }
+
+  return deriveFirstPlayerFromCommitRevealV1(input);
 }
 
 /**

@@ -417,3 +417,28 @@
 ### Verify
 - `pnpm -C packages/triad-engine test`
 - `pnpm -C packages/triad-engine lint`
+
+## 2026-02-12 - commit-0094: commit-reveal resolver helper hardening
+
+### Why
+- Integrators had to call verify + derive separately for commit-reveal flow.
+- That split made it easy to forget commit verification or pass one-sided commit data.
+
+### What
+- `packages/triad-engine/src/first_player.ts`
+  - Added `FirstPlayerCommitRevealResolutionV1Input` with optional `commitA/commitB`.
+  - Added `resolveFirstPlayerFromCommitRevealV1(input)`:
+    - requires commit pair when verification is used,
+    - verifies both commits against reveals,
+    - then derives first player deterministically.
+- `packages/triad-engine/test/first_player.test.js`
+  - Added tests for:
+    - successful commit verification path,
+    - commit mismatch failure,
+    - one-sided commit input failure.
+- `docs/02_protocol/Nyano_Triad_League_RULESET_CONFIG_SPEC_v1_ja.md`
+  - Added `resolveFirstPlayerFromCommitRevealV1` to helper list.
+
+### Verify
+- `pnpm -C packages/triad-engine lint`
+- `pnpm -C packages/triad-engine test`

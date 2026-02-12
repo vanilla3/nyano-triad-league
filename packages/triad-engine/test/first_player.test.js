@@ -7,6 +7,7 @@ import {
   buildFirstPlayerRevealCommitV1,
   verifyFirstPlayerRevealCommitV1,
   deriveFirstPlayerFromCommitRevealV1,
+  resolveFirstPlayerFromCommitRevealV1,
   deriveFirstPlayerFromSeedV1,
   resolveFirstPlayerByMutualChoiceV1,
 } from "../dist/index.js";
@@ -70,6 +71,65 @@ test("commit-reveal first-player: deterministic and sensitive to reveals", () =>
     }
   }
   assert.equal(changed, true, "at least one alternate reveal should change the outcome");
+});
+
+test("commit-reveal resolver: verifies commits before deriving", () => {
+  const matchSalt = "0x1111111111111111111111111111111111111111111111111111111111111111";
+  const revealA = "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
+  const revealB = "0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb";
+  const commitA = buildFirstPlayerRevealCommitV1({ matchSalt, reveal: revealA });
+  const commitB = buildFirstPlayerRevealCommitV1({ matchSalt, reveal: revealB });
+
+  const viaResolve = resolveFirstPlayerFromCommitRevealV1({
+    matchSalt,
+    revealA,
+    revealB,
+    commitA,
+    commitB,
+  });
+  const viaDerive = deriveFirstPlayerFromCommitRevealV1({ matchSalt, revealA, revealB });
+  assert.equal(viaResolve, viaDerive);
+});
+
+test("commit-reveal resolver: mismatch commit throws", () => {
+  const matchSalt = "0x1111111111111111111111111111111111111111111111111111111111111111";
+  const revealA = "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
+  const revealB = "0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb";
+  const commitA = buildFirstPlayerRevealCommitV1({ matchSalt, reveal: revealA });
+  const wrongCommitB = buildFirstPlayerRevealCommitV1({
+    matchSalt,
+    reveal: "0xcccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+  });
+
+  assert.throws(
+    () =>
+      resolveFirstPlayerFromCommitRevealV1({
+        matchSalt,
+        revealA,
+        revealB,
+        commitA,
+        commitB: wrongCommitB,
+      }),
+    /commitB mismatch/,
+  );
+});
+
+test("commit-reveal resolver: one-sided commit input throws", () => {
+  const matchSalt = "0x1111111111111111111111111111111111111111111111111111111111111111";
+  const revealA = "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
+  const revealB = "0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb";
+  const commitA = buildFirstPlayerRevealCommitV1({ matchSalt, reveal: revealA });
+
+  assert.throws(
+    () =>
+      resolveFirstPlayerFromCommitRevealV1({
+        matchSalt,
+        revealA,
+        revealB,
+        commitA,
+      }),
+    /must be provided together/,
+  );
 });
 
 test("seed-based first-player: deterministic and sensitive to seed", () => {

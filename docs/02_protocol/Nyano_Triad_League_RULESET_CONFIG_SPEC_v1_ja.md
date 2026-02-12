@@ -180,6 +180,7 @@ Wind の公平な表現（commit-reveal / 両者合意）の実装補助とし�
 - `buildFirstPlayerRevealCommitV1`
 - `verifyFirstPlayerRevealCommitV1`
 - `deriveFirstPlayerFromCommitRevealV1`
+- `resolveFirstPlayerFromCommitRevealV1`
 - `deriveFirstPlayerFromSeedV1`
 - `resolveFirstPlayerByMutualChoiceV1`
 
