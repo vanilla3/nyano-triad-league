@@ -21,6 +21,10 @@ export interface BattleStageEngineProps {
   selectableCells?: Set<number>;
   onCellSelect?: (cell: number) => void;
   currentPlayer?: PlayerIndex | null;
+  /** Cell index where a card was just placed (animation trigger). */
+  placedCell?: number | null;
+  /** Cell indices flipped this turn (animation trigger). */
+  flippedCells?: readonly number[];
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -39,6 +43,8 @@ export function BattleStageEngine({
   selectableCells,
   onCellSelect,
   currentPlayer = null,
+  placedCell,
+  flippedCells,
 }: BattleStageEngineProps) {
   const containerRef = React.useRef<HTMLDivElement>(null);
   const rendererRef = React.useRef<IBattleRenderer | null>(null);
@@ -100,8 +106,10 @@ export function BattleStageEngine({
       selectableCells: selectableCells ?? EMPTY_SET,
       currentPlayer: (currentPlayer ?? 0) as PlayerIndex,
       vfxQuality: resolveVfxQuality(),
+      placedCell,
+      flippedCells,
     });
-  }, [board, selectedCell, selectableCells, currentPlayer]);
+  }, [board, selectedCell, selectableCells, currentPlayer, placedCell, flippedCells]);
 
   // ── Resize: ResizeObserver on container ─────────────────────────────
   React.useEffect(() => {

@@ -28,6 +28,10 @@ export interface BattleRendererState {
   currentPlayer: PlayerIndex;
   /** VFX quality tier for animation scaling. */
   vfxQuality: VfxQuality;
+  /** Cell index where a card was just placed (Sprint 49). */
+  placedCell?: number | null;
+  /** Cell indices flipped this turn (Sprint 49). */
+  flippedCells?: readonly number[];
 }
 
 /** Callback from renderer to React when a cell is tapped/clicked. */
