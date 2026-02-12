@@ -61,6 +61,16 @@ export function listEventAttempts(eventId: string): EventAttemptV1[] {
   return normalize(store[eventId] ?? []);
 }
 
+export function listAllEventAttempts(): EventAttemptV1[] {
+  const store = loadStore();
+  const merged: EventAttemptV1[] = [];
+  for (const list of Object.values(store)) {
+    if (!Array.isArray(list)) continue;
+    for (const attempt of list) merged.push(attempt);
+  }
+  return normalize(merged);
+}
+
 export function hasEventAttempt(eventId: string, matchId: string): boolean {
   if (!eventId || !matchId) return false;
   const store = loadStore();
@@ -93,4 +103,8 @@ export function clearEventAttempts(eventId: string): void {
   const store = loadStore();
   delete store[eventId];
   saveStore(store);
+}
+
+export function clearAllEventAttempts(): void {
+  window.localStorage.removeItem(STORAGE_KEY);
 }

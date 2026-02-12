@@ -63,9 +63,14 @@
   - VoteControlPanel に moderation 設定UI（slow mode秒数 / banned users / blocked words）を追加
   - 投票受理前に BAN / NGワード / slow mode を適用し、audit に reject 理由を記録
   - `local_settings` に moderation 永続化キーを追加（roundtrip test 付き）
+- ✅ Commit0109: /events に Season Archive（local）を追加
+  - `season_archive.ts` を追加（season/event単位の集計を pure function 化）
+  - Events に season 切替・勝率/挑戦数サマリー・最新Replay導線・Markdownコピーを追加
+  - `event_attempts` に全件取得/全消去 API を追加（ローカル運用の保守性向上）
+  - `season_archive.test.ts` / `event_attempts.test.ts` で集計と storage API を検証
 ## 🚧 Doing (now)
 
-- 🔧 Phase 4 の運用面（シーズン制UI / アーカイブ導線）の最小設計を進める
+- 🔧 Phase 4 の運用面（ランキング / 報酬導線）の最小設計を進める
 
 ## 🧩 Next (high priority)
 
