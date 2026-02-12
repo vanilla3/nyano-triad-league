@@ -682,3 +682,35 @@
 - `pnpm -C apps/web test -- src/lib/__tests__/first_player_params.test.ts src/lib/__tests__/first_player_resolve.test.ts`
 - `pnpm -C apps/web e2e -- match-first-player.spec.ts`
 - `pnpm -C apps/web build`
+
+## 2026-02-12 - commit-0103: Nyano card-art retry CTA + nonce-based reload
+
+### Why
+- `NyanoCardArt` は gateway fallback を試した後に即 placeholder 固定となり、回線復帰時にユーザーが再試行できなかった。
+- 同じ URL への再読込ではブラウザキャッシュにより失敗状態が残るケースがあり、明示的な cache-busting が必要だった。
+
+### What
+- `apps/web/src/lib/card_image_retry.ts`
+  - Added image retry utilities:
+    - `normalizeImageRetryQueryKey(...)`
+    - `applyImageRetryNonce(...)`
+    - `buildImageRetryAttemptSources(...)`
+  - Supports absolute/relative URL safely and keeps nonce=0 as no-op.
+- `apps/web/src/lib/__tests__/card_image_retry.test.ts`
+  - Added coverage for:
+    - retry query key normalization,
+    - nonce injection behavior (absolute + relative URL),
+    - attempt-source planning with fallback dedupe.
+- `apps/web/src/components/NyanoCardArt.tsx`
+  - Integrated retry-source planner for primary + fallback gateways.
+  - Added failed-state `Retry` button:
+    - increments retry nonce,
+    - rebuilds source queue with cache-busting query,
+    - re-attempts loading from primary source.
+  - Kept existing placeholder fallback and debug badge behavior.
+
+### Verify
+- `pnpm -C apps/web test -- src/lib/__tests__/card_image_retry.test.ts`
+- `pnpm -C apps/web typecheck`
+- `pnpm -C apps/web lint`
+- `pnpm -C apps/web test`

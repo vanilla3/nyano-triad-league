@@ -39,6 +39,7 @@
 - ✅ Sprint UX: `Copy Snapshot` と `PLAYTEST_LOG.md` を追加し、計測ログ運用を固定
 - ✅ Sprint UX: web lint warning 2件を解消（`pnpm -C apps/web lint` warning 0）
 - ✅ Sprint UX: Snapshotに環境コンテキスト（route/viewport/language/UA）を含め、比較ログ精度を向上
+- ✅ Sprint UX: NyanoCardArt の失敗時に Retry 導線を追加（retry nonce 付き再読込）
 ## 🚧 Doing (now)
 
 - 🔧 「Wind（先攻/後攻選択）」の公平な表現を詰める（commit-reveal / seed / 両者合意）

@@ -2,6 +2,7 @@ import React from "react";
 import { useNyanoTokenMetadata } from "@/lib/nyano/useNyanoTokenMetadata";
 import { buildArweaveFallbacks } from "@/lib/arweave_gateways";
 import { isDebugMode } from "@/lib/debug";
+import { buildImageRetryAttemptSources } from "@/lib/card_image_retry";
 import { NyanoTokenPlaceholder } from "./NyanoTokenPlaceholder";
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -98,38 +99,74 @@ function TokenImage({
   fill?: boolean;
   className: string;
 }) {
+  const [retryNonce, setRetryNonce] = React.useState(0);
   const [activeSrc, setActiveSrc] = React.useState(src);
   const [fallbackQueue, setFallbackQueue] = React.useState<string[]>(() => buildArweaveFallbacks(src));
   const [failed, setFailed] = React.useState(false);
   const [attemptCount, setAttemptCount] = React.useState(1);
 
+  const resetSources = React.useCallback(
+    (nextRetryNonce: number) => {
+      const next = buildImageRetryAttemptSources(src, buildArweaveFallbacks(src), nextRetryNonce);
+      setActiveSrc(next.activeSrc);
+      setFallbackQueue(next.fallbackQueue);
+      setFailed(false);
+      setAttemptCount(1);
+    },
+    [src],
+  );
+
   // Reset when src changes (e.g. different token)
   React.useEffect(() => {
-    setActiveSrc(src);
-    setFallbackQueue(buildArweaveFallbacks(src));
-    setFailed(false);
-    setAttemptCount(1);
-  }, [src]);
+    setRetryNonce(0);
+    resetSources(0);
+  }, [resetSources]);
 
   const debugMode = isDebugMode();
-
-  if (failed) {
-    return (
-      <NyanoTokenPlaceholder
-        tokenId={tokenId}
-        size={fill ? 96 : size}
-        fill={fill}
-        className={className}
-      />
-    );
-  }
-
   const sizeStyle = fill
     ? undefined
     : ({ width: size, height: size } as React.CSSProperties);
 
+  const retryLoad = React.useCallback(() => {
+    const nextRetryNonce = retryNonce + 1;
+    setRetryNonce(nextRetryNonce);
+    resetSources(nextRetryNonce);
+  }, [retryNonce, resetSources]);
+
   // Show last 30 chars of URL for debug badge
   const debugUrl = activeSrc.length > 30 ? `…${activeSrc.slice(-30)}` : activeSrc;
+
+  if (failed) {
+    return (
+      <div
+        className={[
+          "relative overflow-hidden bg-slate-900/20",
+          fill ? "w-full h-full" : "rounded-xl border border-surface-200 shadow-soft-sm",
+          className,
+        ].filter(Boolean).join(" ")}
+        style={sizeStyle}
+      >
+        <NyanoTokenPlaceholder
+          tokenId={tokenId}
+          size={fill ? 96 : size}
+          fill={fill}
+          className={fill ? "" : "h-full w-full"}
+        />
+        <button
+          type="button"
+          className="absolute bottom-2 right-2 rounded-md border border-surface-300 bg-white/90 px-2 py-1 text-[10px] font-semibold text-surface-700 hover:bg-white"
+          onClick={retryLoad}
+        >
+          Retry
+        </button>
+        {debugMode && (
+          <div className="nca-debug-badge" data-testid="nca-debug-badge">
+            #{tokenId.toString()} fail r{retryNonce}{"\n"}{debugUrl}
+          </div>
+        )}
+      </div>
+    );
+  }
 
   return (
     <div
