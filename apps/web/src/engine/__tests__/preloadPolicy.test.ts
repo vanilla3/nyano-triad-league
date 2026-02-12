@@ -24,4 +24,10 @@ describe("normalizePreloadTokenIds", () => {
   it("trims whitespace and removes empty entries", () => {
     expect(normalizePreloadTokenIds([" 10 ", "", "   ", "11"])).toEqual(["10", "11"]);
   });
+
+  it("drops malformed token IDs and zero", () => {
+    expect(
+      normalizePreloadTokenIds(["1", "0", "-2", "3.14", "abc", "04", "2"]),
+    ).toEqual(["1", "04", "2"]);
+  });
 });
