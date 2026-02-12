@@ -5,13 +5,17 @@ import { NyanoAvatar } from "@/components/NyanoAvatar";
 import { resetTutorialSeen } from "@/components/MiniTutorial";
 import { clearGameIndexCache } from "@/lib/nyano/gameIndex";
 import {
+  buildUxTelemetrySnapshot,
   clearCumulativeStats,
   evaluateUxTargets,
+  formatUxTelemetrySnapshotMarkdown,
   markQuickPlayStart,
   readCumulativeStats,
   recordHomeLcpMs,
   type UxTargetStatus,
 } from "@/lib/telemetry";
+import { writeClipboardText } from "@/lib/clipboard";
+import { errorMessage } from "@/lib/errorMessage";
 import type { ExpressionName } from "@/lib/expression_map";
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -257,6 +261,17 @@ export function HomePage() {
   const refreshUxStats = React.useCallback(() => {
     setUxStats(readCumulativeStats());
   }, []);
+
+  const copyUxSnapshot = React.useCallback(async () => {
+    try {
+      const snapshot = buildUxTelemetrySnapshot(uxStats);
+      const markdown = formatUxTelemetrySnapshotMarkdown(snapshot);
+      await writeClipboardText(markdown);
+      toast.success("Snapshot copied", "Paste into docs/ux/PLAYTEST_LOG.md");
+    } catch (e) {
+      toast.error("Copy failed", errorMessage(e));
+    }
+  }, [toast, uxStats]);
 
   React.useEffect(() => {
     const onFocus = () => {
@@ -556,6 +571,9 @@ export function HomePage() {
               <div className="flex flex-wrap gap-2">
                 <button className="btn text-xs" onClick={refreshUxStats}>
                   Refresh Metrics
+                </button>
+                <button className="btn text-xs" onClick={copyUxSnapshot}>
+                  Copy Snapshot
                 </button>
                 <button
                   className="btn text-xs"

@@ -72,6 +72,12 @@ export interface UxTargetEvaluation {
   valueText: string;
 }
 
+export interface UxTelemetrySnapshot {
+  generatedAtIso: string;
+  stats: CumulativeStats;
+  checks: UxTargetEvaluation[];
+}
+
 const CUMULATIVE_KEYS = [
   "cum.sessions",
   "cum.sum_first_interaction_ms",
@@ -190,6 +196,51 @@ export function evaluateUxTargets(stats: CumulativeStats): UxTargetEvaluation[] 
   ];
 
   return checks;
+}
+
+export function buildUxTelemetrySnapshot(
+  stats: CumulativeStats,
+  nowMs: number = Date.now(),
+): UxTelemetrySnapshot {
+  return {
+    generatedAtIso: new Date(nowMs).toISOString(),
+    stats,
+    checks: evaluateUxTargets(stats),
+  };
+}
+
+function statusText(status: UxTargetStatus): string {
+  if (status === "pass") return "PASS";
+  if (status === "fail") return "FAIL";
+  return "N/A";
+}
+
+/**
+ * Format snapshot as markdown for docs/ux/PLAYTEST_LOG.md paste.
+ */
+export function formatUxTelemetrySnapshotMarkdown(snapshot: UxTelemetrySnapshot): string {
+  const { stats, checks } = snapshot;
+  const avgInvalidPerSession = stats.sessions > 0
+    ? (stats.total_invalid_actions / stats.sessions).toFixed(2)
+    : "--";
+
+  const lines = [
+    `## ${snapshot.generatedAtIso} — Local UX snapshot`,
+    "",
+    `- Sessions: ${stats.sessions}`,
+    `- Avg first interaction: ${formatSeconds(stats.avg_first_interaction_ms)}`,
+    `- Avg first place: ${formatSeconds(stats.avg_first_place_ms)}`,
+    `- Avg quick-play to first place: ${formatSeconds(stats.avg_quickplay_to_first_place_ms)}`,
+    `- Avg Home LCP: ${formatSeconds(stats.avg_home_lcp_ms)}`,
+    `- Invalid / session: ${avgInvalidPerSession}`,
+    "",
+    "| Target | Status | Current | Goal |",
+    "|---|---|---|---|",
+    ...checks.map((c) => `| ${c.id} ${c.label} | ${statusText(c.status)} | ${c.valueText} | ${c.target} |`),
+    "",
+  ];
+
+  return lines.join("\n");
 }
 
 function persistSession(session: SessionTelemetry): void {

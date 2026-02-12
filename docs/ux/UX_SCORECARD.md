@@ -97,4 +97,4 @@
 - **失敗納得テスト**: わざとミスをしてもらい、C-1〜C-2 を記録
 - **クイック判定**: Home > Settings の `UX Target Snapshot` で A-1/B-1/B-4/G-3 の達成状況を確認
 - **頻度**: 隔週（大きな変更の後は都度）
-- **記録先**: `docs/ux/PLAYTEST_LOG.md`（別途作成）
+- **記録先**: `docs/ux/PLAYTEST_LOG.md`

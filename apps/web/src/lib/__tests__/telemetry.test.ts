@@ -1,8 +1,10 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import {
+  buildUxTelemetrySnapshot,
   clearCumulativeStats,
   createTelemetryTracker,
   evaluateUxTargets,
+  formatUxTelemetrySnapshotMarkdown,
   markQuickPlayStart,
   recordHomeLcpMs,
   readCumulativeStats,
@@ -255,6 +257,31 @@ describe("telemetry", () => {
     expect(statuses["B-1"]).toBe("fail");
     expect(statuses["B-4"]).toBe("fail");
     expect(statuses["G-3"]).toBe("fail");
+  });
+
+  it("builds telemetry snapshot with deterministic timestamp", () => {
+    recordHomeLcpMs(2200);
+    const snapshot = buildUxTelemetrySnapshot(readCumulativeStats(), 1_700_000_000_000);
+    expect(snapshot.generatedAtIso).toBe("2023-11-14T22:13:20.000Z");
+    expect(snapshot.checks).toHaveLength(4);
+    expect(snapshot.stats.avg_home_lcp_ms).toBe(2200);
+  });
+
+  it("formats telemetry snapshot markdown for playtest log", () => {
+    const stats = {
+      sessions: 2,
+      avg_first_interaction_ms: 1200,
+      avg_first_place_ms: 9000,
+      avg_quickplay_to_first_place_ms: 8500,
+      avg_home_lcp_ms: 2100,
+      total_invalid_actions: 1,
+    };
+    const snapshot = buildUxTelemetrySnapshot(stats, 1_700_000_000_000);
+    const markdown = formatUxTelemetrySnapshotMarkdown(snapshot);
+    expect(markdown).toContain("## 2023-11-14T22:13:20.000Z — Local UX snapshot");
+    expect(markdown).toContain("Avg Home LCP: 2.1s");
+    expect(markdown).toContain("| A-1 初見が30秒以内に1手目 | PASS | 9.0s | < 30.0s |");
+    expect(markdown).toContain("| B-4 誤操作が2回未満/試合 | PASS | 0.50 | < 2.00 |");
   });
 
   it("returns safe defaults when nothing stored", () => {

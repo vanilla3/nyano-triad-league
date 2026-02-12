@@ -301,3 +301,27 @@
 - `pnpm -C apps/web test`
 - `pnpm -C apps/web lint`
 - `pnpm -C apps/web build`
+
+
+## 2026-02-12 — commit-0089: UX計測ログのコピー導線 + Playtest Log テンプレ
+
+### Why
+- 計測値が見えるようになった一方で、`UX_SCORECARD` 運用の記録転記が手作業で、継続しにくかった。
+- 配信前/改修後に同じフォーマットで比較できるログ出力を、UIから1クリックで取得したかった。
+
+### What
+- `telemetry.ts` に以下を追加：
+  - `buildUxTelemetrySnapshot(stats)`（timestamp + stats + target checks）
+  - `formatUxTelemetrySnapshotMarkdown(snapshot)`（`PLAYTEST_LOG.md` 貼り付け形式）
+- Home Settings の `UX Telemetry` に `Copy Snapshot` ボタンを追加。
+  - クリックで markdown をクリップボードにコピーし、`docs/ux/PLAYTEST_LOG.md` への貼り付けを案内。
+- `docs/ux/PLAYTEST_LOG.md` を新規作成し、記録テンプレを追加。
+- `UX_SCORECARD` の記録先表記をテンプレ作成済み状態へ更新。
+- テスト追加：
+  - snapshot 生成の timestamp/shape
+  - markdown 整形内容
+
+### Verify
+- `pnpm -C apps/web test`
+- `pnpm -C apps/web lint`
+- `pnpm -C apps/web build`
