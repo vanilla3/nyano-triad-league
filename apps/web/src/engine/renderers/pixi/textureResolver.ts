@@ -32,6 +32,7 @@ export class TextureResolver {
   private preloadQueued = new Set<string>();
   private preloadInFlight = 0;
   private preloadMaxConcurrent = 2;
+  private generation = 0;
 
   /**
    * Synchronous cache lookup. Returns cached Texture or null.
@@ -57,7 +58,8 @@ export class TextureResolver {
     const urls = buildTokenImageUrls(tokenId, this.ensureConfig());
     if (urls.length === 0) return null;
 
-    const promise = this.tryLoadFromUrls(urls, tokenId);
+    const generationAtStart = this.generation;
+    const promise = this.tryLoadFromUrls(urls, tokenId, generationAtStart);
     this.pending.set(tokenId, promise);
 
     try {
@@ -90,6 +92,7 @@ export class TextureResolver {
 
   /** Clear cache and pending loads. Called from renderer destroy(). */
   dispose(): void {
+    this.generation += 1;
     this.cache.clear();
     this.pending.clear();
     this.preloadQueue = [];
@@ -118,10 +121,13 @@ export class TextureResolver {
   private async tryLoadFromUrls(
     urls: string[],
     tokenId: string,
+    generationAtStart: number,
   ): Promise<Texture | null> {
     for (const url of urls) {
+      if (generationAtStart !== this.generation) return null;
       try {
         const texture = await Assets.load<Texture>(url);
+        if (generationAtStart !== this.generation) return null;
         if (texture && !texture.destroyed) {
           this.cache.set(tokenId, texture);
           return texture;
