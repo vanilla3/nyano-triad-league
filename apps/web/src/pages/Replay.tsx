@@ -227,6 +227,7 @@ export function ReplayPage() {
     }
   };
   const overlayUrl = React.useMemo(() => appAbsoluteUrl("overlay?controls=0"), []);
+  const overlayPath = React.useMemo(() => appPath("overlay"), []);
   const replayBroadcastPath = React.useMemo(() => appPath("replay?broadcast=1"), []);
 
   const pushOverlay = React.useCallback(
@@ -842,7 +843,7 @@ protocolV1: {
               <Disclosure title={<span>Streamer tools (Overlay)</span>}>
                 <div className="grid gap-3">
                   <div className="text-xs text-slate-600">
-                    Open <span className="font-mono">/overlay</span>, then moving replay <span className="font-mono">step</span> will sync the overlay snapshot.
+                    Open <span className="font-mono">{overlayPath}</span>, then moving replay <span className="font-mono">step</span> will sync the overlay snapshot.
                   </div>
 
                   <div className="flex flex-wrap items-center gap-2">
