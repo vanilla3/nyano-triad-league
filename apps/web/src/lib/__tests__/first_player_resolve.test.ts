@@ -16,6 +16,7 @@ describe("parseFirstPlayerResolutionMode", () => {
   it("parses supported values", () => {
     expect(parseFirstPlayerResolutionMode("manual")).toBe("manual");
     expect(parseFirstPlayerResolutionMode("mutual")).toBe("mutual");
+    expect(parseFirstPlayerResolutionMode("seed")).toBe("seed");
     expect(parseFirstPlayerResolutionMode("commit_reveal")).toBe("commit_reveal");
   });
 });
@@ -86,6 +87,48 @@ describe("resolveFirstPlayer", () => {
     expect(r.error).toContain("mismatch");
   });
 
+  it("seed mode resolves deterministically", () => {
+    const a = resolveFirstPlayer({
+      mode: "seed",
+      manualFirstPlayer: 0,
+      mutualChoiceA: 0,
+      mutualChoiceB: 0,
+      seedResolution: {
+        matchSalt: bytes32A,
+        seed: bytes32B,
+      },
+    });
+    const b = resolveFirstPlayer({
+      mode: "seed",
+      manualFirstPlayer: 1,
+      mutualChoiceA: 1,
+      mutualChoiceB: 1,
+      seedResolution: {
+        matchSalt: bytes32A,
+        seed: bytes32B,
+      },
+    });
+    expect(a.valid).toBe(true);
+    expect(b.valid).toBe(true);
+    expect(a.firstPlayer).toBe(b.firstPlayer);
+  });
+
+  it("seed mode falls back on invalid bytes32", () => {
+    const r = resolveFirstPlayer({
+      mode: "seed",
+      manualFirstPlayer: 1,
+      mutualChoiceA: 0,
+      mutualChoiceB: 0,
+      seedResolution: {
+        matchSalt: bytes32A,
+        seed: "0x1234",
+      },
+    });
+    expect(r.valid).toBe(false);
+    expect(r.firstPlayer).toBe(1);
+    expect(r.error).toContain("Seed must be bytes32");
+  });
+
   it("commit_reveal mode resolves deterministically", () => {
     const a = resolveFirstPlayer({
       mode: "commit_reveal",
@@ -97,6 +140,10 @@ describe("resolveFirstPlayer", () => {
         revealA: bytes32B,
         revealB: bytes32C,
       },
+      seedResolution: {
+        matchSalt: bytes32A,
+        seed: bytes32B,
+      },
     });
     const b = resolveFirstPlayer({
       mode: "commit_reveal",
@@ -107,6 +154,10 @@ describe("resolveFirstPlayer", () => {
         matchSalt: bytes32A,
         revealA: bytes32B,
         revealB: bytes32C,
+      },
+      seedResolution: {
+        matchSalt: bytes32A,
+        seed: bytes32B,
       },
     });
     expect(a.valid).toBe(true);
@@ -123,6 +174,10 @@ describe("resolveFirstPlayer", () => {
         matchSalt: "0x1234",
         revealA: bytes32B,
         revealB: bytes32C,
+      },
+      seedResolution: {
+        matchSalt: bytes32A,
+        seed: bytes32B,
       },
     });
     expect(r.valid).toBe(false);
@@ -146,6 +201,10 @@ describe("resolveFirstPlayer", () => {
         commitA,
         commitB,
       },
+      seedResolution: {
+        matchSalt: bytes32A,
+        seed: bytes32B,
+      },
     });
 
     expect(r.valid).toBe(true);
@@ -164,6 +223,10 @@ describe("resolveFirstPlayer", () => {
         revealA: bytes32B,
         revealB: bytes32C,
         commitA: badCommitA,
+      },
+      seedResolution: {
+        matchSalt: bytes32A,
+        seed: bytes32B,
       },
     });
 

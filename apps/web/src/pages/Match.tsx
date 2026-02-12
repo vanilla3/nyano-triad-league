@@ -312,6 +312,7 @@ export function MatchPage() {
   const mutualChoiceAParam = parseFirstPlayer(searchParams.get("fpa"));
   const mutualChoiceBParam = parseFirstPlayer(searchParams.get("fpb"));
   const commitRevealSaltParam = searchParams.get("fps") ?? "";
+  const seedResolutionParam = searchParams.get("fpsd") ?? "";
   const commitRevealAParam = searchParams.get("fra") ?? "";
   const commitRevealBParam = searchParams.get("frb") ?? "";
   const commitRevealCommitAParam = searchParams.get("fca") ?? "";
@@ -340,6 +341,10 @@ export function MatchPage() {
           commitA: commitRevealCommitAParam,
           commitB: commitRevealCommitBParam,
         },
+        seedResolution: {
+          matchSalt: commitRevealSaltParam,
+          seed: seedResolutionParam,
+        },
       }),
     [
       firstPlayerMode,
@@ -347,6 +352,7 @@ export function MatchPage() {
       mutualChoiceAParam,
       mutualChoiceBParam,
       commitRevealSaltParam,
+      seedResolutionParam,
       commitRevealAParam,
       commitRevealBParam,
       commitRevealCommitAParam,
@@ -1522,6 +1528,7 @@ export function MatchPage() {
             >
               <option value="manual">Manual</option>
               <option value="mutual">Mutual choice</option>
+              <option value="seed">Seed</option>
               <option value="commit_reveal">Commit-reveal</option>
             </select>
 
@@ -1637,6 +1644,40 @@ export function MatchPage() {
                     }}
                   >
                     Derive Commits
+                  </button>
+                </div>
+              </div>
+            ) : null}
+
+            {firstPlayerMode === "seed" ? (
+              <div className="grid gap-2">
+                <input
+                  className="input font-mono text-xs"
+                  placeholder="matchSalt (bytes32 hex)"
+                  value={commitRevealSaltParam}
+                  disabled={isEvent}
+                  onChange={(e) => setParam("fps", e.target.value.trim())}
+                  aria-label="Seed mode match salt"
+                />
+                <input
+                  className="input font-mono text-xs"
+                  placeholder="seed (bytes32 hex)"
+                  value={seedResolutionParam}
+                  disabled={isEvent}
+                  onChange={(e) => setParam("fpsd", e.target.value.trim())}
+                  aria-label="Seed mode seed"
+                />
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    className="btn btn-sm"
+                    disabled={isEvent}
+                    onClick={() => {
+                      setParam("fps", randomBytes32Hex());
+                      setParam("fpsd", randomBytes32Hex());
+                    }}
+                  >
+                    Randomize Inputs
                   </button>
                 </div>
               </div>

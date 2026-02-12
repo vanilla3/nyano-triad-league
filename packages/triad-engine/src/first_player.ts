@@ -74,12 +74,32 @@ export interface FirstPlayerRevealCommitV1Input {
   reveal: `0x${string}`;
 }
 
+/**
+ * Input for "mutual choice with per-player commit verification" flow.
+ *
+ * Each player reveals their previously committed choice, then both
+ * revealed choices must match to finalize first player.
+ */
+export interface FirstPlayerCommittedMutualChoiceV1Input {
+  /** Commitment from playerA side. */
+  commitA: `0x${string}`;
+  /** Revealed payload corresponding to commitA. */
+  revealA: FirstPlayerChoiceCommitV1Input;
+  /** Commitment from playerB side. */
+  commitB: `0x${string}`;
+  /** Revealed payload corresponding to commitB. */
+  revealB: FirstPlayerChoiceCommitV1Input;
+}
+
 export type FirstPlayerResolutionMethodV1 =
   | ({
       mode: "mutual_choice";
       choiceA: number;
       choiceB: number;
     })
+  | ({
+      mode: "committed_mutual_choice";
+    } & FirstPlayerCommittedMutualChoiceV1Input)
   | ({
       mode: "seed";
     } & FirstPlayerSeedV1Input)
@@ -231,10 +251,40 @@ export function resolveFirstPlayerByMutualChoiceV1(choiceA: number, choiceB: num
 }
 
 /**
+ * Resolve first player from two committed mutual choices.
+ *
+ * This path is useful when both players explicitly choose first player,
+ * but still want commit/reveal anti-front-running guarantees.
+ */
+export function resolveFirstPlayerFromCommittedMutualChoiceV1(
+  input: FirstPlayerCommittedMutualChoiceV1Input,
+): PlayerIndex {
+  const okA = verifyFirstPlayerChoiceCommitV1(input.commitA, input.revealA);
+  if (!okA) throw new Error("commitA mismatch");
+
+  const okB = verifyFirstPlayerChoiceCommitV1(input.commitB, input.revealB);
+  if (!okB) throw new Error("commitB mismatch");
+
+  if (input.revealA.matchSalt !== input.revealB.matchSalt) {
+    throw new Error("matchSalt mismatch");
+  }
+
+  const playerA = getAddress(input.revealA.player);
+  const playerB = getAddress(input.revealB.player);
+  if (playerA === playerB) throw new Error("distinct players required");
+
+  return resolveFirstPlayerByMutualChoiceV1(
+    input.revealA.firstPlayer,
+    input.revealB.firstPlayer,
+  );
+}
+
+/**
  * High-level resolver for first-player determination.
  *
- * Accepts one of three methods:
+ * Accepts one of four methods:
  * - mutual_choice
+ * - committed_mutual_choice
  * - seed
  * - commit_reveal
  */
@@ -242,6 +292,8 @@ export function resolveFirstPlayerV1(input: FirstPlayerResolutionMethodV1): Play
   switch (input.mode) {
     case "mutual_choice":
       return resolveFirstPlayerByMutualChoiceV1(input.choiceA, input.choiceB);
+    case "committed_mutual_choice":
+      return resolveFirstPlayerFromCommittedMutualChoiceV1(input);
     case "seed":
       return deriveFirstPlayerFromSeedV1(input);
     case "commit_reveal":

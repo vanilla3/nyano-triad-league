@@ -1,12 +1,13 @@
 import {
   buildFirstPlayerRevealCommitV1,
   deriveFirstPlayerFromCommitRevealV1,
+  deriveFirstPlayerFromSeedV1,
   resolveFirstPlayerByMutualChoiceV1,
   verifyFirstPlayerRevealCommitV1,
   type PlayerIndex,
 } from "@nyano/triad-engine";
 
-export type FirstPlayerResolutionMode = "manual" | "mutual" | "commit_reveal";
+export type FirstPlayerResolutionMode = "manual" | "mutual" | "seed" | "commit_reveal";
 
 export interface FirstPlayerResolution {
   firstPlayer: PlayerIndex;
@@ -19,6 +20,7 @@ const BYTES32_RE = /^0x[0-9a-fA-F]{64}$/;
 
 export function parseFirstPlayerResolutionMode(v: string | null): FirstPlayerResolutionMode {
   if (v === "mutual") return "mutual";
+  if (v === "seed") return "seed";
   if (v === "commit_reveal") return "commit_reveal";
   return "manual";
 }
@@ -50,6 +52,10 @@ export interface ResolveFirstPlayerInput {
     commitA?: string;
     commitB?: string;
   };
+  seedResolution?: {
+    matchSalt: string;
+    seed: string;
+  };
 }
 
 export function resolveFirstPlayer(input: ResolveFirstPlayerInput): FirstPlayerResolution {
@@ -69,6 +75,42 @@ export function resolveFirstPlayer(input: ResolveFirstPlayerInput): FirstPlayerR
         error: "Mutual choice mismatch (A/B must match).",
       };
     }
+  }
+
+  if (input.mode === "seed") {
+    const sr = input.seedResolution;
+    if (!sr) {
+      return {
+        firstPlayer: input.manualFirstPlayer,
+        valid: false,
+        mode: "seed",
+        error: "Seed inputs are missing.",
+      };
+    }
+
+    if (!isBytes32Hex(sr.matchSalt)) {
+      return {
+        firstPlayer: input.manualFirstPlayer,
+        valid: false,
+        mode: "seed",
+        error: "Match salt must be bytes32 hex.",
+      };
+    }
+
+    if (!isBytes32Hex(sr.seed)) {
+      return {
+        firstPlayer: input.manualFirstPlayer,
+        valid: false,
+        mode: "seed",
+        error: "Seed must be bytes32 hex.",
+      };
+    }
+
+    const fp = deriveFirstPlayerFromSeedV1({
+      matchSalt: sr.matchSalt,
+      seed: sr.seed,
+    });
+    return { firstPlayer: fp, valid: true, mode: "seed" };
   }
 
   const cr = input.commitReveal;

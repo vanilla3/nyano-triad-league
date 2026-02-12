@@ -465,3 +465,45 @@
 ### Verify
 - `pnpm -C packages/triad-engine lint`
 - `pnpm -C packages/triad-engine test`
+
+## 2026-02-12 - commit-0096: first-player flow adoption (committed mutual + web seed mode)
+
+### Why
+- `resolveFirstPlayerV1` を導入した後も、両者合意フローの「commit検証付き」導線が不足していた。
+- web 側の first-player UI は `manual / mutual / commit_reveal` の3モードのみで、seed フローを直接検証できなかった。
+
+### What
+- `packages/triad-engine/src/first_player.ts`
+  - Added `FirstPlayerCommittedMutualChoiceV1Input`.
+  - Added `resolveFirstPlayerFromCommittedMutualChoiceV1(input)`:
+    - verifies both player commits against reveals,
+    - requires same `matchSalt`,
+    - requires distinct player addresses,
+    - resolves via mutual choice agreement.
+  - Extended `FirstPlayerResolutionMethodV1` and `resolveFirstPlayerV1(input)` with `committed_mutual_choice`.
+- `packages/triad-engine/test/first_player.test.js`
+  - Added tests for committed mutual choice happy path and failure paths:
+    - commit mismatch,
+    - matchSalt mismatch,
+    - same-player reject.
+  - Added `resolveFirstPlayerV1` mode test for `committed_mutual_choice`.
+- `apps/web/src/lib/first_player_resolve.ts`
+  - Added `seed` to `FirstPlayerResolutionMode`.
+  - Added `seedResolution` input and seed-mode validation/derivation via `deriveFirstPlayerFromSeedV1`.
+- `apps/web/src/lib/__tests__/first_player_resolve.test.ts`
+  - Added mode parse test for `seed`.
+  - Added deterministic seed-mode test and invalid-seed fallback test.
+- `apps/web/src/pages/Match.tsx`
+  - Added `Seed` option to first-player mode select.
+  - Added seed-mode inputs (`fps` + `fpsd`) and randomize action.
+  - Wired seed inputs into `resolveFirstPlayer(...)`.
+- `docs/02_protocol/Nyano_Triad_League_RULESET_CONFIG_SPEC_v1_ja.md`
+  - Updated Wind fairness helper list:
+    - added `resolveFirstPlayerFromCommittedMutualChoiceV1`,
+    - clarified fairness modes include `seed`.
+
+### Verify
+- `pnpm -C packages/triad-engine lint`
+- `pnpm -C packages/triad-engine test`
+- `pnpm -C apps/web typecheck`
+- `pnpm -C apps/web test -- src/lib/__tests__/first_player_resolve.test.ts`

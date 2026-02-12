@@ -7,6 +7,7 @@ import {
   buildFirstPlayerRevealCommitV1,
   verifyFirstPlayerRevealCommitV1,
   deriveFirstPlayerFromCommitRevealV1,
+  resolveFirstPlayerFromCommittedMutualChoiceV1,
   resolveFirstPlayerFromCommitRevealV1,
   deriveFirstPlayerFromSeedV1,
   resolveFirstPlayerByMutualChoiceV1,
@@ -190,8 +191,118 @@ test("mutual-choice first-player: matches when both agree, throws on mismatch", 
   assert.throws(() => resolveFirstPlayerByMutualChoiceV1(0, 1));
 });
 
+test("committed mutual-choice resolver: verifies both commits then resolves", () => {
+  const revealA = {
+    matchSalt: "0x1111111111111111111111111111111111111111111111111111111111111111",
+    player: "0xaAaAaAaaAaAaAaaAaAAAAAAAAaaaAaAaAaaAaaAa",
+    firstPlayer: 0,
+    nonce: "0x2222222222222222222222222222222222222222222222222222222222222222",
+  };
+  const revealB = {
+    matchSalt: "0x1111111111111111111111111111111111111111111111111111111111111111",
+    player: "0xbBbBBBBbbBBBbbbBbbBbbbbBBbBbbbbBbBbbBBbB",
+    firstPlayer: 0,
+    nonce: "0x3333333333333333333333333333333333333333333333333333333333333333",
+  };
+  const commitA = buildFirstPlayerChoiceCommitV1(revealA);
+  const commitB = buildFirstPlayerChoiceCommitV1(revealB);
+
+  assert.equal(
+    resolveFirstPlayerFromCommittedMutualChoiceV1({ commitA, revealA, commitB, revealB }),
+    0,
+  );
+});
+
+test("committed mutual-choice resolver: commit mismatch throws", () => {
+  const revealA = {
+    matchSalt: "0x1111111111111111111111111111111111111111111111111111111111111111",
+    player: "0xaAaAaAaaAaAaAaaAaAAAAAAAAaaaAaAaAaaAaaAa",
+    firstPlayer: 0,
+    nonce: "0x2222222222222222222222222222222222222222222222222222222222222222",
+  };
+  const revealB = {
+    matchSalt: "0x1111111111111111111111111111111111111111111111111111111111111111",
+    player: "0xbBbBBBBbbBBBbbbBbbBbbbbBBbBbbbbBbBbbBBbB",
+    firstPlayer: 0,
+    nonce: "0x3333333333333333333333333333333333333333333333333333333333333333",
+  };
+  const commitA = buildFirstPlayerChoiceCommitV1(revealA);
+  const wrongCommitB = buildFirstPlayerChoiceCommitV1({ ...revealB, firstPlayer: 1 });
+
+  assert.throws(
+    () => resolveFirstPlayerFromCommittedMutualChoiceV1({ commitA, revealA, commitB: wrongCommitB, revealB }),
+    /commitB mismatch/,
+  );
+});
+
+test("committed mutual-choice resolver: matchSalt mismatch throws", () => {
+  const revealA = {
+    matchSalt: "0x1111111111111111111111111111111111111111111111111111111111111111",
+    player: "0xaAaAaAaaAaAaAaaAaAAAAAAAAaaaAaAaAaaAaaAa",
+    firstPlayer: 0,
+    nonce: "0x2222222222222222222222222222222222222222222222222222222222222222",
+  };
+  const revealB = {
+    matchSalt: "0x4444444444444444444444444444444444444444444444444444444444444444",
+    player: "0xbBbBBBBbbBBBbbbBbbBbbbbBBbBbbbbBbBbbBBbB",
+    firstPlayer: 0,
+    nonce: "0x3333333333333333333333333333333333333333333333333333333333333333",
+  };
+  const commitA = buildFirstPlayerChoiceCommitV1(revealA);
+  const commitB = buildFirstPlayerChoiceCommitV1(revealB);
+
+  assert.throws(
+    () => resolveFirstPlayerFromCommittedMutualChoiceV1({ commitA, revealA, commitB, revealB }),
+    /matchSalt mismatch/,
+  );
+});
+
+test("committed mutual-choice resolver: same player address throws", () => {
+  const revealA = {
+    matchSalt: "0x1111111111111111111111111111111111111111111111111111111111111111",
+    player: "0xaAaAaAaaAaAaAaaAaAAAAAAAAaaaAaAaAaaAaaAa",
+    firstPlayer: 0,
+    nonce: "0x2222222222222222222222222222222222222222222222222222222222222222",
+  };
+  const revealB = {
+    matchSalt: "0x1111111111111111111111111111111111111111111111111111111111111111",
+    player: "0xaAaAaAaaAaAaAaaAaAAAAAAAAaaaAaAaAaaAaaAa",
+    firstPlayer: 0,
+    nonce: "0x3333333333333333333333333333333333333333333333333333333333333333",
+  };
+  const commitA = buildFirstPlayerChoiceCommitV1(revealA);
+  const commitB = buildFirstPlayerChoiceCommitV1(revealB);
+
+  assert.throws(
+    () => resolveFirstPlayerFromCommittedMutualChoiceV1({ commitA, revealA, commitB, revealB }),
+    /distinct players required/,
+  );
+});
+
 test("resolveFirstPlayerV1: mutual_choice mode", () => {
   assert.equal(resolveFirstPlayerV1({ mode: "mutual_choice", choiceA: 1, choiceB: 1 }), 1);
+});
+
+test("resolveFirstPlayerV1: committed_mutual_choice mode", () => {
+  const revealA = {
+    matchSalt: "0x1111111111111111111111111111111111111111111111111111111111111111",
+    player: "0xaAaAaAaaAaAaAaaAaAAAAAAAAaaaAaAaAaaAaaAa",
+    firstPlayer: 1,
+    nonce: "0x2222222222222222222222222222222222222222222222222222222222222222",
+  };
+  const revealB = {
+    matchSalt: "0x1111111111111111111111111111111111111111111111111111111111111111",
+    player: "0xbBbBBBBbbBBBbbbBbbBbbbbBBbBbbbbBbBbbBBbB",
+    firstPlayer: 1,
+    nonce: "0x3333333333333333333333333333333333333333333333333333333333333333",
+  };
+  const commitA = buildFirstPlayerChoiceCommitV1(revealA);
+  const commitB = buildFirstPlayerChoiceCommitV1(revealB);
+
+  assert.equal(
+    resolveFirstPlayerV1({ mode: "committed_mutual_choice", commitA, revealA, commitB, revealB }),
+    1,
+  );
 });
 
 test("resolveFirstPlayerV1: seed mode", () => {
