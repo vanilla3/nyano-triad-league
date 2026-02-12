@@ -301,3 +301,40 @@ export function computeCellFrame(
     ? interpolatePlacement(easedT, cellH)
     : interpolateFlip(easedT);
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Breathe glow (selectable empty cells)
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/** Breathe animation cycle duration in ms (matches CSS 2.5s infinite). */
+export const BREATHE_CYCLE_MS = 2500;
+
+/** Return type for breathe glow frame. */
+export interface BreatheFrame {
+  /** Scale factor for the cell content container (1.0 → 1.02). */
+  scale: number;
+  /** Alpha for the glow ring stroke (0 → 0.25). */
+  glowAlpha: number;
+}
+
+/**
+ * Compute breathe glow frame at a given time.
+ *
+ * Reproduces the `mint-breathe` CSS keyframe:
+ *   0%, 100%: scale(1), box-shadow alpha = 0
+ *   50%:      scale(1.02), box-shadow alpha = 0.25
+ *
+ * Uses sin() for smooth infinite loop — no record/startMs needed.
+ *
+ * @param nowMs  Current time (performance.now())
+ */
+export function computeBreatheFrame(nowMs: number): BreatheFrame {
+  const t = (nowMs % BREATHE_CYCLE_MS) / BREATHE_CYCLE_MS;
+  const sin = Math.sin(t * Math.PI * 2);
+  // Remap sin [-1, 1] → [0, 1]
+  const p = (sin + 1) / 2;
+  return {
+    scale: 1 + 0.02 * p,    // 1.0 → 1.02
+    glowAlpha: 0.25 * p,    // 0 → 0.25
+  };
+}

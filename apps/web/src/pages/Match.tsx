@@ -1857,6 +1857,15 @@ export function MatchPage() {
                         currentPlayer={currentPlayer}
                         placedCell={boardAnim.placedCell}
                         flippedCells={boardAnim.flippedCells}
+                        showActionPrompt
+                        gamePhase={
+                          turns.length >= 9 ? "game_over"
+                            : isAiTurn ? "ai_turn"
+                            : draftCardIndex !== null ? "select_cell"
+                            : "select_card"
+                        }
+                        inlineError={error}
+                        onDismissError={() => setError(null)}
                       />
                     </DuelStageMint>
                   ) : isRpg ? (
