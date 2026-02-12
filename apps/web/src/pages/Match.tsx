@@ -253,6 +253,7 @@ export function MatchPage() {
   const isRpg = ui === "rpg";
   const isMint = ui === "mint";
   const isEngine = ui === "engine";
+  const useMintUi = isMint || isEngine;
   const decks = React.useMemo(() => listDecks(), []);
 
   // ── Telemetry (NIN-UX-003) ──
@@ -262,7 +263,7 @@ export function MatchPage() {
   }, [telemetry]);
 
   // ── SFX Engine (NIN-UX-031) ──
-  const sfx = React.useMemo<SfxEngine | null>(() => (isMint ? createSfxEngine() : null), [isMint]);
+  const sfx = React.useMemo<SfxEngine | null>(() => (useMintUi ? createSfxEngine() : null), [useMintUi]);
   const [sfxMuted, setSfxMuted] = React.useState(() => sfx?.isMuted() ?? false);
   React.useEffect(() => {
     return () => { sfx?.dispose(); };
@@ -389,7 +390,7 @@ export function MatchPage() {
 
   // F-2: UI Density toggle (minimal/standard/full)
   const [density, setDensity] = React.useState<UiDensity>(() =>
-    isMint ? readUiDensity("minimal") : "full"
+    useMintUi ? readUiDensity("minimal") : "full"
   );
   const handleDensityChange = React.useCallback((d: UiDensity) => {
     setDensity(d);
@@ -1020,8 +1021,8 @@ export function MatchPage() {
       warningMarkCell: draftWarningMarkCell === null ? undefined : draftWarningMarkCell,
     };
 
-    // Card flight animation (mint mode only)
-    if (isMint && !cardFlight.isFlying) {
+    // Card flight animation (mint / engine mode)
+    if (useMintUi && !cardFlight.isFlying) {
       const sourceEl = document.querySelector(`[data-hand-card="${draftCardIndex}"]`) as HTMLElement | null;
       const targetEl = document.querySelector(`[data-board-cell="${draftCell}"]`) as HTMLElement | null;
       const card = currentHandCards[draftCardIndex];
@@ -1227,7 +1228,7 @@ export function MatchPage() {
 
   // D-1/D-2: Extract FlipTraceArrow[] for Mint arrow overlay
   const lastFlipTraces: readonly FlipTraceArrow[] | null = React.useMemo(() => {
-    if (!isMint || !sim.ok || turns.length === 0) return null;
+    if (!useMintUi || !sim.ok || turns.length === 0) return null;
     const lastSummary = sim.previewTurns[turns.length - 1];
     if (!lastSummary?.flipTraces || lastSummary.flipTraces.length === 0) return null;
     return lastSummary.flipTraces.map((f: FlipTraceV1) => ({
@@ -1239,7 +1240,7 @@ export function MatchPage() {
       dVal: Number(f.dVal ?? 0),
       tieBreak: Boolean(f.tieBreak),
     }));
-  }, [isMint, sim, turns.length]);
+  }, [useMintUi, sim, turns.length]);
 
   // D-3: SFX trigger on board animation changes
   const prevFlipCountRef = React.useRef(0);
@@ -1298,7 +1299,7 @@ export function MatchPage() {
     <div className="grid gap-6">
       {/* ── Result Overlay ── */}
       {gameResult && (
-        isMint ? (
+        useMintUi ? (
           <GameResultOverlayMint
             show={showResultOverlay && turns.length >= 9}
             result={gameResult}
@@ -1729,7 +1730,7 @@ export function MatchPage() {
               )}
             </div>
           ) : (
-            <div className={isMint ? "grid gap-6" : "grid gap-6 lg:grid-cols-[1fr_300px]"}>
+            <div className={useMintUi ? "grid gap-6" : "grid gap-6 lg:grid-cols-[1fr_300px]"}>
               {/* ── Left: Board + Hand ── */}
               <div className="grid gap-4">
                 {/* Guest deck preview */}
@@ -1763,7 +1764,7 @@ export function MatchPage() {
 
                 {/* ScoreBar / BattleHud */}
                 {sim.ok && (
-                  isMint ? (
+                  useMintUi ? (
                     <div className="flex items-center gap-2">
                       <div className="flex-1">
                         <BattleHudMint
@@ -1847,13 +1848,15 @@ export function MatchPage() {
                       />
                     </DuelStageMint>
                   ) : isEngine ? (
-                    <BattleStageEngine
-                      board={boardNow}
-                      selectedCell={draftCell}
-                      selectableCells={selectableCells}
-                      onCellSelect={(cell) => { telemetry.recordInteraction(); handleCellSelect(cell); }}
-                      currentPlayer={currentPlayer}
-                    />
+                    <DuelStageMint>
+                      <BattleStageEngine
+                        board={boardNow}
+                        selectedCell={draftCell}
+                        selectableCells={selectableCells}
+                        onCellSelect={(cell) => { telemetry.recordInteraction(); handleCellSelect(cell); }}
+                        currentPlayer={currentPlayer}
+                      />
+                    </DuelStageMint>
                   ) : isRpg ? (
                     <BoardViewRPG
                       board={boardNow}
@@ -1898,16 +1901,16 @@ export function MatchPage() {
                 )}
 
                 {/* P1-1: Flip summary in Japanese (density >= standard) */}
-                {(!isMint || density !== "minimal") && lastFlipSummaryText && (
+                {(!useMintUi || density !== "minimal") && lastFlipSummaryText && (
                   <div className={
-                    isMint
+                    useMintUi
                       ? "rounded-xl border px-3 py-2 text-xs font-semibold"
                       : isRpg
                         ? "rounded-lg px-3 py-2 text-xs font-semibold"
                         : "rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900"
                   }
                   style={
-                    isMint ? { background: "var(--mint-warning-bg)", color: "var(--mint-flip)", borderColor: "rgba(245,158,11,0.2)" }
+                    useMintUi ? { background: "var(--mint-warning-bg)", color: "var(--mint-flip)", borderColor: "rgba(245,158,11,0.2)" }
                     : isRpg ? { background: "rgba(245,166,35,0.15)", color: "#F5A623", border: "1px solid rgba(245,166,35,0.3)" }
                     : undefined
                   }
@@ -1917,12 +1920,12 @@ export function MatchPage() {
                 )}
 
                 {/* P1-2: Nyano Reaction (density >= standard) */}
-                {(!isMint || density !== "minimal") && nyanoReactionInput && (
+                {(!useMintUi || density !== "minimal") && nyanoReactionInput && (
                   <NyanoReaction
                     input={nyanoReactionInput}
                     turnIndex={turns.length}
                     rpg={isRpg}
-                    mint={isMint}
+                    mint={useMintUi}
                     aiReasonCode={turns.length > 0 ? aiNotes[turns.length - 1]?.reasonCode : undefined}
                   />
                 )}
@@ -1932,7 +1935,7 @@ export function MatchPage() {
                     ──────────────────────────────────────────── */}
                 <div className="grid gap-3">
                   <div className={
-                    isMint ? "text-xs font-semibold text-mint-text-secondary"
+                    useMintUi ? "text-xs font-semibold text-mint-text-secondary"
                     : isRpg ? "text-xs font-bold uppercase tracking-wider"
                     : "text-xs font-medium text-slate-600"
                   }
@@ -1942,7 +1945,7 @@ export function MatchPage() {
                     {draftCell !== null && <span className={isRpg ? "" : " text-slate-400"}> · placing on cell {draftCell}</span>}
                   </div>
 
-                  {isMint && currentHandCards.length > 0 ? (
+                  {useMintUi && currentHandCards.length > 0 ? (
                     /* Mint Hand Display */
                     <HandDisplayMint
                       cards={currentHandCards}
@@ -2050,7 +2053,7 @@ export function MatchPage() {
 
               {/* ── Right: Turn Log + Info ── */}
               {/* Mint mode: content lives in slide-out drawer */}
-              {isMint ? (
+              {useMintUi ? (
                 <>
                   <DrawerToggleButton onClick={() => setDrawerOpen(true)} />
                   <MatchDrawerMint open={drawerOpen} onClose={() => setDrawerOpen(false)}>
