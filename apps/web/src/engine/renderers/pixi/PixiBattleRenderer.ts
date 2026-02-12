@@ -2,22 +2,26 @@
  * PixiBattleRenderer — PixiJS v8 implementation of IBattleRenderer.
  *
  * Renders a 3×3 board grid with:
+ * - NFT card art as Sprite textures (async loaded with Arweave fallback)
+ * - Owner-colored tint overlays on card art
+ * - Edge numbers with dark pill backgrounds for readability
+ * - Token ID labels (#XXX) in top-right corner
  * - Selectable cell highlights (cyan)
  * - Selected cell emphasis
- * - Owner-colored cards (blue / red) with edge numbers
  * - Cell coordinate labels (A1–C3)
  *
  * This file imports from "pixi.js" and must only be loaded via dynamic
  * import() inside useEffect — never at module scope in test-reachable files.
  */
 
-import { Application, Container, Graphics, Text, TextStyle } from "pixi.js";
+import { Application, Container, Graphics, Sprite, Text, TextStyle } from "pixi.js";
 import type { BoardCell } from "@nyano/triad-engine";
 import type {
   IBattleRenderer,
   BattleRendererState,
   CellSelectCallback,
 } from "../IBattleRenderer";
+import { TextureResolver } from "./textureResolver";
 
 /* ═══════════════════════════════════════════════════════════════════════════
    Constants
@@ -34,6 +38,9 @@ const COLORS = {
   ownerB: 0xef4444, // red-500
   edgeText: 0xffffff,
   coordText: 0x64748b, // slate-500
+  edgePillBg: 0x000000,
+  tokenIdBg: 0x000000,
+  tokenIdText: 0xffffff,
 } as const;
 
 const CELL_COORDS = [
@@ -63,12 +70,22 @@ interface CellLayout {
 export class PixiBattleRenderer implements IBattleRenderer {
   private app: Application | null = null;
   private boardContainer: Container | null = null;
+
+  // ── Per-cell visual objects (9 each) ──
   private cellGraphics: Graphics[] = [];
+  private cellMasks: Graphics[] = [];
+  private cellSprites: (Sprite | null)[] = [];
+  private cellTintOverlays: Graphics[] = [];
   private cellTextContainers: Container[] = [];
+  private cellTokenLabels: Text[] = [];
   private cellCoordTexts: Text[] = [];
+
   private layouts = new Map<number, CellLayout>();
   private state: BattleRendererState | null = null;
   private cellSelectCb: CellSelectCallback | null = null;
+
+  // ── Texture management ──
+  private textureResolver = new TextureResolver();
 
   /* ── Lifecycle ─────────────────────────────────────────────────────── */
 
@@ -112,9 +129,14 @@ export class PixiBattleRenderer implements IBattleRenderer {
       this.app.destroy(true, { children: true, texture: true });
       this.app = null;
     }
+    this.textureResolver.dispose();
     this.boardContainer = null;
     this.cellGraphics = [];
+    this.cellMasks = [];
+    this.cellSprites = [];
+    this.cellTintOverlays = [];
     this.cellTextContainers = [];
+    this.cellTokenLabels = [];
     this.cellCoordTexts = [];
     this.layouts.clear();
     this.state = null;
@@ -127,7 +149,7 @@ export class PixiBattleRenderer implements IBattleRenderer {
     if (!this.boardContainer || !this.app) return;
 
     for (let i = 0; i < 9; i++) {
-      // Cell graphics (background / stroke)
+      // 1. Cell graphics — background / stroke / hit area
       const cellGfx = new Graphics();
       cellGfx.eventMode = "static";
       cellGfx.cursor = "pointer";
@@ -142,12 +164,45 @@ export class PixiBattleRenderer implements IBattleRenderer {
       this.boardContainer.addChild(cellGfx);
       this.cellGraphics.push(cellGfx);
 
-      // Edge text container (will hold up to 4 Text children)
+      // 2. Mask for sprite (rounded corners)
+      const maskGfx = new Graphics();
+      this.boardContainer.addChild(maskGfx);
+      this.cellMasks.push(maskGfx);
+
+      // 3. NFT art sprite (initially hidden)
+      const sprite = new Sprite();
+      sprite.visible = false;
+      sprite.mask = maskGfx;
+      this.boardContainer.addChild(sprite);
+      this.cellSprites.push(sprite);
+
+      // 4. Owner tint overlay
+      const tintOverlay = new Graphics();
+      tintOverlay.visible = false;
+      this.boardContainer.addChild(tintOverlay);
+      this.cellTintOverlays.push(tintOverlay);
+
+      // 5. Edge text container (up to 4 Text + 4 pill bg Graphics)
       const textContainer = new Container();
       this.boardContainer.addChild(textContainer);
       this.cellTextContainers.push(textContainer);
 
-      // Cell coordinate label (A1–C3)
+      // 6. Token ID label (top-right, initially hidden)
+      const tokenLabel = new Text({
+        text: "",
+        style: new TextStyle({
+          fontSize: 10,
+          fill: COLORS.tokenIdText,
+          fontFamily: "monospace",
+          fontWeight: "bold",
+        }),
+      });
+      tokenLabel.anchor.set(1, 0);
+      tokenLabel.visible = false;
+      this.boardContainer.addChild(tokenLabel);
+      this.cellTokenLabels.push(tokenLabel);
+
+      // 7. Cell coordinate label (A1–C3)
       const coordText = new Text({
         text: CELL_COORDS[i],
         style: new TextStyle({
@@ -185,6 +240,26 @@ export class PixiBattleRenderer implements IBattleRenderer {
 
       this.layouts.set(i, { x, y, w: cw, h: ch });
 
+      // Update mask geometry
+      const mask = this.cellMasks[i];
+      mask.clear();
+      mask.roundRect(x, y, cw, ch, 6);
+      mask.fill({ color: 0xffffff });
+
+      // Update sprite position/size
+      const sprite = this.cellSprites[i];
+      if (sprite) {
+        sprite.x = x;
+        sprite.y = y;
+        sprite.width = cw;
+        sprite.height = ch;
+      }
+
+      // Update token label position
+      const tokenLabel = this.cellTokenLabels[i];
+      tokenLabel.x = x + cw - 3;
+      tokenLabel.y = y + 2;
+
       // Position coordinate text
       const coordTxt = this.cellCoordTexts[i];
       coordTxt.x = x + 3;
@@ -211,31 +286,84 @@ export class PixiBattleRenderer implements IBattleRenderer {
 
       // ── Cell fill & stroke ──
       if (cell) {
-        // Occupied cell — color by owner
         const ownerColor =
           cell.owner === 0 ? COLORS.ownerA : COLORS.ownerB;
-        gfx.roundRect(x, y, w, h, 6);
-        gfx.fill({ color: ownerColor, alpha: 0.35 });
-        gfx.roundRect(x, y, w, h, 6);
-        gfx.stroke({ color: ownerColor, width: 2 });
-      } else if (isSelected) {
-        // Selected empty cell — emphasized
-        gfx.roundRect(x, y, w, h, 6);
-        gfx.fill({ color: COLORS.cellSelectedFill, alpha: 0.6 });
-        gfx.roundRect(x, y, w, h, 6);
-        gfx.stroke({ color: COLORS.cellSelectedStroke, width: 3 });
-      } else if (isSelectable) {
-        // Selectable empty cell — subtle highlight
-        gfx.roundRect(x, y, w, h, 6);
-        gfx.fill({ color: COLORS.cellEmpty });
-        gfx.roundRect(x, y, w, h, 6);
-        gfx.stroke({ color: COLORS.cellSelectableStroke, width: 1.5, alpha: 0.6 });
+        const tokenIdStr = cell.card.tokenId.toString();
+        const texture = this.textureResolver.getTexture(tokenIdStr);
+
+        if (texture) {
+          // NFT art loaded — show sprite + tint overlay
+          const sprite = this.cellSprites[i];
+          if (sprite) {
+            sprite.texture = texture;
+            sprite.x = x;
+            sprite.y = y;
+            sprite.width = w;
+            sprite.height = h;
+            sprite.visible = true;
+          }
+
+          // Owner tint overlay
+          const tint = this.cellTintOverlays[i];
+          tint.clear();
+          tint.roundRect(x, y, w, h, 6);
+          tint.fill({ color: ownerColor, alpha: 0.25 });
+          tint.visible = true;
+
+          // Cell border only (transparent fill for hit area)
+          gfx.roundRect(x, y, w, h, 6);
+          gfx.fill({ color: 0x000000, alpha: 0 });
+          gfx.roundRect(x, y, w, h, 6);
+          gfx.stroke({ color: ownerColor, width: 2 });
+        } else {
+          // Texture not loaded yet — colored rectangle fallback
+          gfx.roundRect(x, y, w, h, 6);
+          gfx.fill({ color: ownerColor, alpha: 0.35 });
+          gfx.roundRect(x, y, w, h, 6);
+          gfx.stroke({ color: ownerColor, width: 2 });
+
+          // Hide sprite and tint
+          const sprite = this.cellSprites[i];
+          if (sprite) sprite.visible = false;
+          this.cellTintOverlays[i].visible = false;
+
+          // Kick off async load → re-render on completion
+          this.textureResolver.loadTexture(tokenIdStr).then((tex) => {
+            if (tex && this.state) this.redraw();
+          });
+        }
+
+        // Token ID label
+        const tokenLabel = this.cellTokenLabels[i];
+        tokenLabel.text = `#${tokenIdStr.slice(-3).padStart(3, "0")}`;
+        tokenLabel.visible = true;
       } else {
-        // Non-selectable empty cell
-        gfx.roundRect(x, y, w, h, 6);
-        gfx.fill({ color: COLORS.cellEmpty });
-        gfx.roundRect(x, y, w, h, 6);
-        gfx.stroke({ color: COLORS.gridLine, width: 1 });
+        // ── Empty cell ──
+        // Hide card-related objects
+        const sprite = this.cellSprites[i];
+        if (sprite) sprite.visible = false;
+        this.cellTintOverlays[i].visible = false;
+        this.cellTokenLabels[i].visible = false;
+
+        if (isSelected) {
+          // Selected empty cell — emphasized
+          gfx.roundRect(x, y, w, h, 6);
+          gfx.fill({ color: COLORS.cellSelectedFill, alpha: 0.6 });
+          gfx.roundRect(x, y, w, h, 6);
+          gfx.stroke({ color: COLORS.cellSelectedStroke, width: 3 });
+        } else if (isSelectable) {
+          // Selectable empty cell — subtle highlight
+          gfx.roundRect(x, y, w, h, 6);
+          gfx.fill({ color: COLORS.cellEmpty });
+          gfx.roundRect(x, y, w, h, 6);
+          gfx.stroke({ color: COLORS.cellSelectableStroke, width: 1.5, alpha: 0.6 });
+        } else {
+          // Non-selectable empty cell
+          gfx.roundRect(x, y, w, h, 6);
+          gfx.fill({ color: COLORS.cellEmpty });
+          gfx.roundRect(x, y, w, h, 6);
+          gfx.stroke({ color: COLORS.gridLine, width: 1 });
+        }
       }
 
       // Cursor
@@ -268,6 +396,11 @@ export class PixiBattleRenderer implements IBattleRenderer {
       fontWeight: "bold",
     });
 
+    // Check if texture is loaded (determines pill bg visibility)
+    const hasTexture = this.textureResolver.getTexture(
+      cell.card.tokenId.toString(),
+    ) !== null;
+
     // Positions: up (top-center), right (right-center), down (bottom-center), left (left-center)
     const edgeData: Array<{
       val: number;
@@ -283,6 +416,22 @@ export class PixiBattleRenderer implements IBattleRenderer {
     ];
 
     for (const { val, px, py, ax, ay } of edgeData) {
+      // Dark pill background when texture is visible
+      if (hasTexture) {
+        const pillW = fontSize * 1.3;
+        const pillH = fontSize * 1.15;
+        const pillGfx = new Graphics();
+        pillGfx.roundRect(
+          px - pillW * ax,
+          py - pillH * ay,
+          pillW,
+          pillH,
+          3,
+        );
+        pillGfx.fill({ color: COLORS.edgePillBg, alpha: 0.55 });
+        container.addChild(pillGfx);
+      }
+
       const t = new Text({
         text: String(val),
         style,
