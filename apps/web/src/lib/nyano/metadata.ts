@@ -9,7 +9,7 @@
  *
  * Supported base URL schemes:
  *   - `https://...`
- *   - `ar://...` (normalized internally to `https://arweave.net/...`)
+ *   - `ar://...` or `arweave://...` (normalized to `https://arweave.net/...`)
  */
 
 // ── Types ────────────────────────────────────────────────────────────
@@ -41,8 +41,10 @@ export const DEFAULT_NYANO_IMAGE_BASE =
 
 function normalizeMetadataBasePattern(base: string): string {
   const trimmed = base.trim();
-  if (trimmed.toLowerCase().startsWith("ar://")) {
-    const path = trimmed.slice("ar://".length).replace(/^\/+/, "");
+  const lower = trimmed.toLowerCase();
+  if (lower.startsWith("ar://") || lower.startsWith("arweave://")) {
+    const prefixLen = lower.startsWith("ar://") ? "ar://".length : "arweave://".length;
+    const path = trimmed.slice(prefixLen).replace(/^\/+/, "");
     return `https://arweave.net/${path}`;
   }
   return trimmed;
@@ -107,5 +109,6 @@ export function resolveTokenImageUrl(
 ): string | null {
   if (!config?.baseUrlPattern) return null;
   const idStr = typeof tokenId === "bigint" ? tokenId.toString() : tokenId;
-  return config.baseUrlPattern.replace("{id}", idStr);
+  const baseUrlPattern = normalizeMetadataBasePattern(config.baseUrlPattern);
+  return baseUrlPattern.replace("{id}", idStr);
 }

@@ -60,6 +60,24 @@ describe("resolveTokenImageUrl", () => {
       "https://m3c2ncchjkvsn3lc5ccd4kdsm74cdssuvxbuuaefwy43cyt4oixa.arweave.net/ZsWmiEdKqybtYuiEPihyZ_ghylStw0oAhbY5sWJ8ci4/9999.png",
     );
   });
+
+  it("normalizes ar:// pattern in direct config", () => {
+    const config: MetadataConfig = {
+      baseUrlPattern: "ar://tx-root/path/{id}.png",
+    };
+    expect(resolveTokenImageUrl(7n, config)).toBe(
+      "https://arweave.net/tx-root/path/7.png",
+    );
+  });
+
+  it("normalizes arweave:// pattern in direct config", () => {
+    const config: MetadataConfig = {
+      baseUrlPattern: "arweave://tx-root/path/{id}.png",
+    };
+    expect(resolveTokenImageUrl(7n, config)).toBe(
+      "https://arweave.net/tx-root/path/7.png",
+    );
+  });
 });
 
 describe("getMetadataConfig", () => {
@@ -91,6 +109,14 @@ describe("getMetadataConfig", () => {
     });
   });
 
+  it("normalizes arweave:// env URL to canonical arweave gateway", () => {
+    import.meta.env.VITE_NYANO_METADATA_BASE = "arweave://tx-root/path/{id}.png";
+    const result = getMetadataConfig();
+    expect(result).toEqual({
+      baseUrlPattern: "https://arweave.net/tx-root/path/{id}.png",
+    });
+  });
+
   it("returns GameIndex metadata when env is unset", () => {
     delete import.meta.env.VITE_NYANO_METADATA_BASE;
     const gameIndexMeta = { imageBaseUrl: "https://game.example.com/{id}.png" };
@@ -103,6 +129,15 @@ describe("getMetadataConfig", () => {
   it("normalizes ar:// GameIndex URL when env is unset", () => {
     delete import.meta.env.VITE_NYANO_METADATA_BASE;
     const gameIndexMeta = { imageBaseUrl: "ar://tx-root/path/{id}.png" };
+    const result = getMetadataConfig(gameIndexMeta);
+    expect(result).toEqual({
+      baseUrlPattern: "https://arweave.net/tx-root/path/{id}.png",
+    });
+  });
+
+  it("normalizes arweave:// GameIndex URL when env is unset", () => {
+    delete import.meta.env.VITE_NYANO_METADATA_BASE;
+    const gameIndexMeta = { imageBaseUrl: "arweave://tx-root/path/{id}.png" };
     const result = getMetadataConfig(gameIndexMeta);
     expect(result).toEqual({
       baseUrlPattern: "https://arweave.net/tx-root/path/{id}.png",
