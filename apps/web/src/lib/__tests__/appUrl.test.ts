@@ -141,6 +141,19 @@ describe("buildReplayShareUrl", () => {
     expect(url).toBe("/replay?z=abc123&mode=auto&ui=engine&step=9");
   });
 
+  it("includes event with mode/ui/step params together", () => {
+    import.meta.env.BASE_URL = "/";
+    const url = buildReplayShareUrl({
+      data: { key: "z", value: "abc123" },
+      eventId: "gp-1",
+      mode: "auto",
+      ui: "engine",
+      step: 9,
+      absolute: false,
+    });
+    expect(url).toBe("/replay?z=abc123&event=gp-1&mode=auto&ui=engine&step=9");
+  });
+
   it("returns absolute URL in browser env", () => {
     import.meta.env.BASE_URL = "/sub/";
     const url = buildReplayShareUrl({

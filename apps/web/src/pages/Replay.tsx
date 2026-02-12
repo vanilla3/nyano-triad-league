@@ -760,6 +760,7 @@ protocolV1: {
     const z = tryGzipCompressUtf8ToBase64Url(trimmed);
     return buildReplayShareUrl({
       data: z ? { key: "z", value: z } : { key: "t", value: base64UrlEncodeUtf8(trimmed) },
+      eventId: eventId || undefined,
       mode,
       ui: uiParam,
       step,
