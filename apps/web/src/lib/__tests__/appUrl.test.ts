@@ -123,4 +123,33 @@ describe("buildReplayShareUrl", () => {
     });
     expect(url).toContain("/sub/replay?z=test123&step=9");
   });
+
+  it("normalizes non-integer step values to integer", () => {
+    import.meta.env.BASE_URL = "/";
+    const url = buildReplayShareUrl({
+      data: { key: "z", value: "abc123" },
+      mode: "auto",
+      step: 7.9,
+      absolute: false,
+    });
+    expect(url).toBe("/replay?z=abc123&mode=auto&step=7");
+  });
+
+  it("omits invalid step values outside replay range", () => {
+    import.meta.env.BASE_URL = "/";
+
+    const tooLarge = buildReplayShareUrl({
+      data: { key: "z", value: "abc123" },
+      step: 99,
+      absolute: false,
+    });
+    expect(tooLarge).toBe("/replay?z=abc123");
+
+    const negative = buildReplayShareUrl({
+      data: { key: "z", value: "abc123" },
+      step: -1,
+      absolute: false,
+    });
+    expect(negative).toBe("/replay?z=abc123");
+  });
 });

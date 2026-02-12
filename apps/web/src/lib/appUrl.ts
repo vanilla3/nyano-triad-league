@@ -59,13 +59,22 @@ export type ReplayShareDataParam = {
   value: string;
 };
 
+export type ReplayMode = "auto" | "v1" | "v2" | "compare";
+
 export type ReplayShareUrlOptions = {
   data: ReplayShareDataParam;
-  mode?: string;
+  mode?: ReplayMode;
   step?: number;
   eventId?: string;
   absolute?: boolean;
 };
+
+function normalizeReplayStep(step: number | undefined): number | null {
+  if (typeof step !== "number" || !Number.isFinite(step)) return null;
+  const n = Math.trunc(step);
+  if (n < 0 || n > 9) return null;
+  return n;
+}
 
 /**
  * Build a replay share URL with stable query handling and BASE_URL support.
@@ -75,7 +84,8 @@ export function buildReplayShareUrl(opts: ReplayShareUrlOptions): string {
   url.searchParams.set(opts.data.key, opts.data.value);
   if (opts.eventId) url.searchParams.set("event", opts.eventId);
   if (opts.mode) url.searchParams.set("mode", opts.mode);
-  if (typeof opts.step === "number") url.searchParams.set("step", String(opts.step));
+  const step = normalizeReplayStep(opts.step);
+  if (step !== null) url.searchParams.set("step", String(step));
   if (opts.absolute === false || !hasWindowOrigin()) return `${url.pathname}${url.search}${url.hash}`;
   return url.toString();
 }
