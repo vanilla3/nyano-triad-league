@@ -7,6 +7,7 @@ import type { VfxQuality } from "@/lib/visual/visualSettings";
 export function texturePreloadConcurrencyForQuality(quality: VfxQuality): number {
   switch (quality) {
     case "off":
+      return 0;
     case "low":
       return 1;
     case "medium":

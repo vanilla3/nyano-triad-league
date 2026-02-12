@@ -112,4 +112,20 @@ describe("TextureResolver preload queue", () => {
     await flushMicrotasks();
     expect(mockAssetsLoad).toHaveBeenCalledTimes(3);
   });
+
+  it("does not start queued preloads after switching concurrency to 0", async () => {
+    const resolver = new TextureResolver();
+    const d1 = deferred<MockTexture>();
+    mockAssetsLoad.mockReturnValueOnce(d1.promise);
+
+    resolver.preloadTextures(["1", "2"], 1);
+    expect(mockAssetsLoad).toHaveBeenCalledTimes(1);
+    expect(mockAssetsLoad.mock.calls[0]?.[0]).toBe("https://img.example/1.png");
+
+    resolver.preloadTextures(["1", "2"], 0);
+
+    d1.resolve({ destroyed: false });
+    await flushMicrotasks();
+    expect(mockAssetsLoad).toHaveBeenCalledTimes(1);
+  });
 });

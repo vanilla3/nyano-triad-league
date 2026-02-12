@@ -75,9 +75,14 @@ export class TextureResolver {
    */
   preloadTextures(tokenIds: readonly string[], maxConcurrent = 2): void {
     const normalizedConcurrency = Number.isFinite(maxConcurrent)
-      ? Math.max(1, Math.trunc(maxConcurrent))
-      : 1;
+      ? Math.max(0, Math.trunc(maxConcurrent))
+      : 0;
     this.preloadMaxConcurrent = normalizedConcurrency;
+    if (normalizedConcurrency === 0) {
+      this.preloadQueue = [];
+      this.preloadQueued.clear();
+      return;
+    }
 
     for (const tokenId of normalizePreloadTokenIds(tokenIds)) {
       if (this.cache.has(tokenId)) continue;
