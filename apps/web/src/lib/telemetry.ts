@@ -40,6 +40,14 @@ function writeNumber(key: string, value: number): void {
   }
 }
 
+function removeNumber(key: string): void {
+  try {
+    localStorage.removeItem(STORAGE_PREFIX + key);
+  } catch {
+    // localStorage unavailable — silently ignore
+  }
+}
+
 // ── Cumulative stats ───────────────────────────────────────────────────
 
 export interface CumulativeStats {
@@ -48,6 +56,15 @@ export interface CumulativeStats {
   avg_first_place_ms: number | null;
   total_invalid_actions: number;
 }
+
+const CUMULATIVE_KEYS = [
+  "cum.sessions",
+  "cum.sum_first_interaction_ms",
+  "cum.sum_first_place_ms",
+  "cum.count_first_interaction",
+  "cum.count_first_place",
+  "cum.total_invalid_actions",
+] as const;
 
 export function readCumulativeStats(): CumulativeStats {
   const sessions = readNumber("cum.sessions") ?? 0;
@@ -67,6 +84,12 @@ export function readCumulativeStats(): CumulativeStats {
       countPlace > 0 && sumPlace !== null ? Math.round(sumPlace / countPlace) : null,
     total_invalid_actions: totalInvalid,
   };
+}
+
+export function clearCumulativeStats(): void {
+  for (const key of CUMULATIVE_KEYS) {
+    removeNumber(key);
+  }
 }
 
 function persistSession(session: SessionTelemetry): void {

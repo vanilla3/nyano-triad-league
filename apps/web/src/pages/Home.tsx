@@ -4,6 +4,7 @@ import { useToast } from "@/components/Toast";
 import { NyanoAvatar } from "@/components/NyanoAvatar";
 import { resetTutorialSeen } from "@/components/MiniTutorial";
 import { clearGameIndexCache } from "@/lib/nyano/gameIndex";
+import { clearCumulativeStats, readCumulativeStats } from "@/lib/telemetry";
 import type { ExpressionName } from "@/lib/expression_map";
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -218,11 +219,32 @@ const DIFFICULTIES = [
   { key: "expert", ja: "めっちゃつよい", en: "Expert" },
 ] as const;
 
+function formatSecondsFromMs(ms: number | null): string {
+  if (ms === null) return "--";
+  return `${(ms / 1000).toFixed(1)}s`;
+}
+
 export function HomePage() {
   const heroExpression = useHeroExpression();
   const toast = useToast();
   const [difficulty, setDifficulty] = React.useState<string>("normal");
+  const [uxStats, setUxStats] = React.useState(() => readCumulativeStats());
   const quickPlayUrl = `/match?mode=guest&opp=vs_nyano_ai&ai=${difficulty}&rk=v2&ui=mint`;
+  const avgInvalidPerSession = uxStats.sessions > 0
+    ? uxStats.total_invalid_actions / uxStats.sessions
+    : null;
+
+  const refreshUxStats = React.useCallback(() => {
+    setUxStats(readCumulativeStats());
+  }, []);
+
+  React.useEffect(() => {
+    const onFocus = () => {
+      refreshUxStats();
+    };
+    window.addEventListener("focus", onFocus);
+    return () => window.removeEventListener("focus", onFocus);
+  }, [refreshUxStats]);
 
   return (
     <div className="min-h-screen bg-surface-50">
@@ -450,6 +472,55 @@ export function HomePage() {
             >
               Reset Game Cache
             </button>
+          </div>
+          <div className="mt-4 rounded-2xl border border-surface-200 bg-white p-4">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <div className="text-xs font-semibold text-surface-700">UX Telemetry (Local)</div>
+                <div className="text-[11px] text-surface-500">
+                  このブラウザ内のみ保存。配信前のプレイテスト計測に使えます。
+                </div>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <button className="btn text-xs" onClick={refreshUxStats}>
+                  Refresh Metrics
+                </button>
+                <button
+                  className="btn text-xs"
+                  onClick={() => {
+                    clearCumulativeStats();
+                    refreshUxStats();
+                    toast.success("Telemetry reset", "Local UX metrics have been cleared.");
+                  }}
+                >
+                  Reset Metrics
+                </button>
+              </div>
+            </div>
+            <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+              <div className="rounded-xl border border-surface-200 bg-surface-50 px-3 py-2">
+                <div className="text-[11px] text-surface-500">Sessions</div>
+                <div className="text-sm font-semibold text-surface-800">{uxStats.sessions}</div>
+              </div>
+              <div className="rounded-xl border border-surface-200 bg-surface-50 px-3 py-2">
+                <div className="text-[11px] text-surface-500">Avg first interaction</div>
+                <div className="text-sm font-semibold text-surface-800">
+                  {formatSecondsFromMs(uxStats.avg_first_interaction_ms)}
+                </div>
+              </div>
+              <div className="rounded-xl border border-surface-200 bg-surface-50 px-3 py-2">
+                <div className="text-[11px] text-surface-500">Avg first place</div>
+                <div className="text-sm font-semibold text-surface-800">
+                  {formatSecondsFromMs(uxStats.avg_first_place_ms)}
+                </div>
+              </div>
+              <div className="rounded-xl border border-surface-200 bg-surface-50 px-3 py-2">
+                <div className="text-[11px] text-surface-500">Invalid / session</div>
+                <div className="text-sm font-semibold text-surface-800">
+                  {avgInvalidPerSession === null ? "--" : avgInvalidPerSession.toFixed(2)}
+                </div>
+              </div>
+            </div>
           </div>
         </details>
       </section>
