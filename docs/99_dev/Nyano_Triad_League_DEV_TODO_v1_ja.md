@@ -44,11 +44,13 @@
   - `season_council.ts` を追加（proposalId / vote hash / EIP-712 vote verify / tally / adopt）
   - 決定論ルールを固定（候補集合 canonicalize、同一voterは最大nonce採用、同率は rulesetId 昇順）
   - 仕様書 `SEASON_COUNCIL_SPEC` を追加
+- ✅ Commit0105: permissionless ladder format v1（transcript + settled event + 両署名）を TS 参照実装
+  - `ladder.ts` を追加（EIP-712 attestation / record verify / deterministic standings）
+  - indexer 非依存の tie-break を固定（points → wins → tileDiff → losses → address）
+  - 仕様書 `LADDER_FORMAT_SPEC` を追加
 ## 🚧 Doing (now)
 
-- 🔧 ラダー（ランキング）を“許可不要”で第三者が運用できるフォーマットを詰める
-  - transcript / events / 署名検証で再計算できる最小仕様を定義
-  - indexer 非依存で同じ順位が出る tie-break を固定する
+- 🔧 Phase 3 の未完了（エラートラッキング / リリース手順）を最小実装に落とし込む
 
 ## 🧩 Next (high priority)
 
@@ -65,8 +67,9 @@
 
 ### C. 自走するコミュニティ設計（運営が消えても回る）
 - [x] 「シーズンの議会」：ruleset proposal / vote / adopt の最小プロトコル
-- [ ] ラダー（ランキング）を“許可不要”で第三者が運用できるフォーマット
-  - 例：イベントログ＋署名検証＋ランキング算出の決定論
+- [x] ラダー（ランキング）を“許可不要”で第三者が運用できるフォーマット
+  - transcript + settled event + EIP-712 attestation で再計算可能
+  - indexer 非依存の固定 tie-break を実装（`buildLadderStandingsV1`）
 
 ---
 

@@ -466,6 +466,41 @@
 - `pnpm -C packages/triad-engine lint`
 - `pnpm -C packages/triad-engine test`
 
+## 2026-02-12 - commit-0105: permissionless ladder format v1 (record verify + deterministic standings)
+
+### Why
+- DEV_TODO の高優先項目「ラダー（ランキング）を許可不要で第三者運用できるフォーマット」が未完了だった。
+- transcript / settled event / 署名の3点を最小セットで固定しないと、同じデータでも再計算結果が揺れるリスクがあった。
+- indexer依存を避けるため、重複処理・ソート順・tie-break順を仕様として固定する必要があった。
+
+### What
+- `packages/triad-engine/src/ladder.ts` を新規追加。
+  - `LadderMatchAttestationV1`（EIP-712）を追加。
+    - typed-data payload / digest / signer recover / signature verify を実装。
+  - `LadderMatchRecordV1` 検証を実装。
+    - `hashTranscriptV1(transcript) == settled.matchId` を必須化。
+    - transcript header と settled event の ruleset/season/player 一致を検証。
+    - playerA/playerB の両署名検証を必須化。
+  - `buildLadderStandingsV1(...)` を実装。
+    - sourceキー（chainId:blockNumber:txHash:logIndex）で重複排除。
+    - 同一sourceの内容不一致を reject。
+    - points / wins / draws / losses / tileDiff を集計。
+    - tie-break順を固定（points desc → wins desc → tileDiff desc → losses asc → address asc）。
+- `packages/triad-engine/src/index.ts`
+  - `ladder` エクスポートを追加。
+- `packages/triad-engine/test/ladder.test.js`
+  - 正常系、transcript不一致、署名不一致、重複排除、conflicting duplicate rejection、固定tie-breakを追加検証。
+- `docs/02_protocol/Nyano_Triad_League_LADDER_FORMAT_SPEC_v1_ja.md`
+  - ladder v1 のフォーマット仕様を新規追加。
+- `docs/99_dev/Nyano_Triad_League_DEV_TODO_v1_ja.md`
+  - ladder項目を完了に更新。
+
+### Verify
+- `pnpm -C packages/triad-engine lint`
+- `pnpm -C packages/triad-engine build`
+- `pnpm -C packages/triad-engine test`（この実行環境では `node:test` が `spawn EPERM` のため完走不可）
+- `node -e ...` で ladder の署名検証・standings集計をスモーク実行（成功）
+
 ## 2026-02-12 - commit-0096: first-player flow adoption (committed mutual + web seed mode)
 
 ### Why
