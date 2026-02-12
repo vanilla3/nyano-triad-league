@@ -63,6 +63,7 @@ import {
   randomBytes32Hex,
   resolveFirstPlayer,
 } from "@/lib/first_player_resolve";
+import { buildFirstPlayerModeParamPatch } from "@/lib/first_player_params";
 
 type OpponentMode = "pvp" | "vs_nyano_ai";
 type DataMode = "fast" | "verified";
@@ -506,6 +507,15 @@ export function MatchPage() {
     const next = new URLSearchParams(searchParams);
     if (!value) next.delete(key);
     else next.set(key, value);
+    setSearchParams(next, { replace: true });
+  };
+
+  const setParams = (updates: Record<string, string | undefined>) => {
+    const next = new URLSearchParams(searchParams);
+    for (const [key, value] of Object.entries(updates)) {
+      if (!value) next.delete(key);
+      else next.set(key, value);
+    }
     setSearchParams(next, { replace: true });
   };
 
@@ -1547,7 +1557,13 @@ export function MatchPage() {
               className="input"
               value={firstPlayerMode}
               disabled={isEvent}
-              onChange={(e) => setParam("fpm", e.target.value)}
+              onChange={(e) => {
+                const nextMode = parseFirstPlayerResolutionMode(e.target.value);
+                setParams({
+                  fpm: nextMode,
+                  ...buildFirstPlayerModeParamPatch(nextMode),
+                });
+              }}
               aria-label="First player mode"
             >
               <option value="manual">Manual</option>
@@ -1623,7 +1639,7 @@ export function MatchPage() {
                 />
                 <input
                   className="input font-mono text-xs"
-                  placeholder="commitA (optional bytes32 hex)"
+                  placeholder="commitA (bytes32 hex; set A/B together if used)"
                   value={commitRevealCommitAParam}
                   disabled={isEvent}
                   onChange={(e) => setParam("fca", e.target.value.trim())}
@@ -1631,23 +1647,28 @@ export function MatchPage() {
                 />
                 <input
                   className="input font-mono text-xs"
-                  placeholder="commitB (optional bytes32 hex)"
+                  placeholder="commitB (bytes32 hex; set A/B together if used)"
                   value={commitRevealCommitBParam}
                   disabled={isEvent}
                   onChange={(e) => setParam("fcb", e.target.value.trim())}
                   aria-label="Commit B (optional)"
                 />
+                <div className="text-[11px] text-slate-500">
+                  If you provide commits, set both Commit A and Commit B.
+                </div>
                 <div className="flex items-center gap-2">
                   <button
                     type="button"
                     className="btn btn-sm"
                     disabled={isEvent}
                     onClick={() => {
-                      setParam("fps", randomBytes32Hex());
-                      setParam("fra", randomBytes32Hex());
-                      setParam("frb", randomBytes32Hex());
-                      setParam("fca", "");
-                      setParam("fcb", "");
+                      setParams({
+                        fps: randomBytes32Hex(),
+                        fra: randomBytes32Hex(),
+                        frb: randomBytes32Hex(),
+                        fca: "",
+                        fcb: "",
+                      });
                     }}
                   >
                     Randomize Inputs
@@ -1663,8 +1684,7 @@ export function MatchPage() {
                         toast.warn("Commit derive failed", "matchSalt/revealA/revealB must be bytes32 hex.");
                         return;
                       }
-                      setParam("fca", commitA);
-                      setParam("fcb", commitB);
+                      setParams({ fca: commitA, fcb: commitB });
                       toast.success("Commits derived", "commitA/commitB updated from reveals.");
                     }}
                   >
@@ -1754,17 +1774,22 @@ export function MatchPage() {
                   onChange={(e) => setParam("fcob", e.target.value.trim())}
                   aria-label="Committed mutual commit B"
                 />
+                <div className="text-[11px] text-slate-500">
+                  Choice A and Choice B must match to resolve first player.
+                </div>
                 <div className="flex items-center gap-2">
                   <button
                     type="button"
                     className="btn btn-sm"
                     disabled={isEvent}
                     onClick={() => {
-                      setParam("fps", randomBytes32Hex());
-                      setParam("fpna", randomBytes32Hex());
-                      setParam("fpnb", randomBytes32Hex());
-                      setParam("fcoa", "");
-                      setParam("fcob", "");
+                      setParams({
+                        fps: randomBytes32Hex(),
+                        fpna: randomBytes32Hex(),
+                        fpnb: randomBytes32Hex(),
+                        fcoa: "",
+                        fcob: "",
+                      });
                     }}
                   >
                     Randomize Inputs
@@ -1793,8 +1818,7 @@ export function MatchPage() {
                         );
                         return;
                       }
-                      setParam("fcoa", commitA);
-                      setParam("fcob", commitB);
+                      setParams({ fcoa: commitA, fcob: commitB });
                       toast.success("Commits derived", "Committed mutual choice commits were updated.");
                     }}
                   >
@@ -1828,8 +1852,10 @@ export function MatchPage() {
                     className="btn btn-sm"
                     disabled={isEvent}
                     onClick={() => {
-                      setParam("fps", randomBytes32Hex());
-                      setParam("fpsd", randomBytes32Hex());
+                      setParams({
+                        fps: randomBytes32Hex(),
+                        fpsd: randomBytes32Hex(),
+                      });
                     }}
                   >
                     Randomize Inputs

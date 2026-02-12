@@ -573,3 +573,27 @@
 - `pnpm -C apps/web lint`
 - `pnpm -C apps/web test -- src/lib/__tests__/first_player_resolve.test.ts`
 - `pnpm -C apps/web build`
+
+## 2026-02-12 - commit-0099: Match first-player params update hardening (atomic URL updates)
+
+### Why
+- `Match.tsx` の first-player 設定ボタンで `setParam(...)` を連続呼び出ししており、URLパラメータ更新が取りこぼれる可能性があった。
+- `commit_reveal` / `committed_mutual_choice` の入力条件がUI上で伝わりづらく、誤入力時の手戻りが発生しやすかった。
+
+### What
+- `apps/web/src/pages/Match.tsx`
+  - Added `setParams(updates)` helper to apply multiple query param updates in one `setSearchParams(...)` call.
+  - Replaced multi-step param writes in first-player actions with atomic updates:
+    - commit-reveal randomize
+    - commit-reveal derive commits
+    - committed-mutual randomize
+    - committed-mutual derive commits
+    - seed randomize
+  - Updated first-player field helper text:
+    - commit-reveal now explicitly says Commit A/B must be set together when used.
+    - committed-mutual now explicitly says choice A/B must match.
+
+### Verify
+- `pnpm -C apps/web typecheck`
+- `pnpm -C apps/web lint`
+- `pnpm -C apps/web build`
