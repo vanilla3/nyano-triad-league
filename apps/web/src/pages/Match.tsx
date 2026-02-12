@@ -70,6 +70,7 @@ import {
 
 type OpponentMode = "pvp" | "vs_nyano_ai";
 type DataMode = "fast" | "verified";
+type MatchBoardUi = "mint" | "engine" | "rpg";
 
 type SimOk = {
   ok: true;
@@ -198,6 +199,12 @@ function parseBool01(v: string | null, defaultValue: boolean): boolean {
   return defaultValue;
 }
 
+function parseMatchBoardUi(v: string | null): MatchBoardUi {
+  if (v === "engine") return "engine";
+  if (v === "rpg") return "rpg";
+  return "mint";
+}
+
 /** Lazy QR code for share URL — avoids computing gzip in render */
 function ShareQrCode({ sim, event, ui }: { sim: SimState; event: EventV1 | null; ui?: string }) {
   const [url, setUrl] = React.useState<string | null>(null);
@@ -260,7 +267,7 @@ function CollapsibleSection({
 export function MatchPage() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-  const ui = (searchParams.get("ui") || "mint").toLowerCase();
+  const ui = parseMatchBoardUi((searchParams.get("ui") || "").toLowerCase());
   const isRpg = ui === "rpg";
   const isMint = ui === "mint";
   const isEngine = ui === "engine";
@@ -313,7 +320,7 @@ export function MatchPage() {
   const streamMode = parseBool01(searchParams.get("stream"), false);
   const streamCtrlParam = (searchParams.get("ctrl") ?? "A").toUpperCase();
   const streamControlledSide = (streamCtrlParam === "B" ? 1 : 0) as PlayerIndex;
-  const uiParam = searchParams.get("ui") ?? undefined;
+  const uiParam: MatchBoardUi = ui;
 
   const rulesetKeyParam = parseRulesetKeyOrDefault(searchParams.get("rk"), "v2");
   const chainCapRawParam = searchParams.get("ccap");
@@ -1497,7 +1504,7 @@ export function MatchPage() {
           </div>
         </div>
 
-        <div className="grid gap-3 md:grid-cols-3">
+        <div className="grid gap-3 md:grid-cols-4">
           <div className="grid gap-2">
             <div className="text-xs font-medium text-slate-600">Opponent</div>
             <select className="input" value={opponentMode} disabled={isEvent} onChange={(e) => setParam("opp", e.target.value)} aria-label="Opponent mode">
@@ -1542,6 +1549,20 @@ export function MatchPage() {
                 <option value="B">Chat controls B</option>
               </select>
             ) : null}
+          </div>
+
+          <div className="grid gap-2">
+            <div className="text-xs font-medium text-slate-600">Board</div>
+            <select
+              className="input"
+              value={ui}
+              onChange={(e) => setParam("ui", parseMatchBoardUi(e.target.value))}
+              aria-label="Board renderer"
+            >
+              <option value="mint">mint</option>
+              <option value="engine">engine (pixi)</option>
+              <option value="rpg">rpg</option>
+            </select>
           </div>
 
           <div className="grid gap-2">
