@@ -50,6 +50,19 @@ export const CardNyanoDuel = React.memo(function CardNyanoDuel({
   const down = Number(card.edges.down);
   const left = Number(card.edges.left);
 
+  const renderEdge = (side: "up" | "right" | "down" | "left", value: number) => (
+    <div
+      className={[
+        "mint-duel-card__edge",
+        `mint-duel-card__edge--${side}`,
+        edgeStrengthClass(value),
+        highlightEdge === side && "mint-duel-card__edge--highlight",
+      ].filter(Boolean).join(" ")}
+    >
+      <span className="mint-duel-card__edge-value">{value}</span>
+    </div>
+  );
+
   return (
     <div
       className={[
@@ -89,51 +102,19 @@ export const CardNyanoDuel = React.memo(function CardNyanoDuel({
         <div className="mint-duel-card__edges">
           {/* Row 1: empty | UP | empty */}
           <div />
-          <div
-            className={[
-              "mint-duel-card__edge",
-              edgeStrengthClass(up),
-              highlightEdge === "up" && "mint-duel-card__edge--highlight",
-            ].filter(Boolean).join(" ")}
-          >
-            {up}
-          </div>
+          {renderEdge("up", up)}
           <div />
 
           {/* Row 2: LEFT | JANKEN | RIGHT */}
-          <div
-            className={[
-              "mint-duel-card__edge",
-              edgeStrengthClass(left),
-              highlightEdge === "left" && "mint-duel-card__edge--highlight",
-            ].filter(Boolean).join(" ")}
-          >
-            {left}
-          </div>
+          {renderEdge("left", left)}
           <div className="mint-duel-card__janken" title={janken.label}>
-            {janken.emoji}
+            <span className="mint-duel-card__janken-glyph">{janken.emoji}</span>
           </div>
-          <div
-            className={[
-              "mint-duel-card__edge",
-              edgeStrengthClass(right),
-              highlightEdge === "right" && "mint-duel-card__edge--highlight",
-            ].filter(Boolean).join(" ")}
-          >
-            {right}
-          </div>
+          {renderEdge("right", right)}
 
           {/* Row 3: empty | DOWN | empty */}
           <div />
-          <div
-            className={[
-              "mint-duel-card__edge",
-              edgeStrengthClass(down),
-              highlightEdge === "down" && "mint-duel-card__edge--highlight",
-            ].filter(Boolean).join(" ")}
-          >
-            {down}
-          </div>
+          {renderEdge("down", down)}
           <div />
         </div>
       </div>

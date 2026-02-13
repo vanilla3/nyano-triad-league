@@ -135,14 +135,41 @@
 
 .mint-board-frame {
   position: relative;
-  background: var(--mint-surface);
-  border: 2px solid var(--mint-accent-muted);
+  background:
+    radial-gradient(circle at 18% 10%, rgba(255, 255, 255, 0.96), rgba(233, 247, 255, 0.88) 42%, rgba(186, 230, 253, 0.6) 100%),
+    linear-gradient(160deg, #f8fdff 0%, #dbf2ff 58%, #c4e8ff 100%);
+  border: 2px solid rgba(125, 211, 252, 0.72);
   border-radius: 24px;
   padding: 16px;
-  box-shadow: 0 4px 24px -4px rgba(56, 189, 248, 0.16);
+  box-shadow:
+    0 16px 38px -22px rgba(14, 165, 233, 0.58),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    inset 0 -1px 0 rgba(14, 116, 144, 0.08);
+}
+
+.mint-board-frame::before {
+  content: "";
+  position: absolute;
+  inset: 8px;
+  border-radius: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  pointer-events: none;
+}
+
+.mint-board-frame::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background:
+    radial-gradient(circle at 78% 16%, rgba(255, 255, 255, 0.5), transparent 38%),
+    radial-gradient(circle at 24% 82%, rgba(125, 211, 252, 0.2), transparent 42%);
+  pointer-events: none;
+  mix-blend-mode: screen;
 }
 
 .mint-board-inner {
+  position: relative;
   background:
     linear-gradient(155deg, rgba(239, 249, 255, 0.9), rgba(219, 234, 254, 0.82)),
     url('/board-bg.webp');
@@ -152,16 +179,31 @@
   border-radius: 18px;
   padding: 12px;
   border: 1px solid rgba(125, 211, 252, 0.45);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.7),
+    inset 0 -12px 24px rgba(2, 132, 199, 0.08);
   overflow: hidden;
+}
+
+.mint-board-inner::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.16), transparent 35%),
+    linear-gradient(315deg, rgba(14, 165, 233, 0.12), transparent 48%);
 }
 
 
 /* ── Grid ─────────────────────────────────────────────────────────────── */
 
 .mint-grid {
+  position: relative;
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 8px;
+  gap: 10px;
+  transform-style: preserve-3d;
 }
 
 
@@ -174,11 +216,26 @@
   border: 2px solid var(--mint-cell-flat);
   background: var(--mint-surface);
   overflow: hidden;
-  transition: all 0.2s ease;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease, background 0.2s ease;
   display: flex;
   align-items: center;
   justify-content: center;
   perspective: 600px;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.62),
+    inset 0 -1px 0 rgba(148, 163, 184, 0.22),
+    0 4px 8px -7px rgba(15, 23, 42, 0.55);
+  transform: translateZ(0);
+}
+
+.mint-cell::before {
+  content: "";
+  position: absolute;
+  inset: 1px;
+  border-radius: 14px;
+  pointer-events: none;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.18), transparent 48%);
+  z-index: 1;
 }
 
 /* Selectable (empty, interactive) — puffy + glow */
@@ -195,7 +252,7 @@
 .mint-cell--selectable:hover {
   border-color: var(--mint-accent);
   box-shadow: 0 0 16px var(--mint-cell-active-glow);
-  transform: scale(1.03);
+  transform: translateY(-1px) scale(1.03);
 }
 
 .mint-cell--selectable:active {
@@ -267,11 +324,17 @@
 .mint-cell--owner-a {
   border-color: var(--mint-pa);
   background: var(--mint-pa-bg);
+  box-shadow:
+    inset 0 1px 0 rgba(224, 242, 254, 0.72),
+    0 10px 16px -12px rgba(14, 165, 233, 0.65);
 }
 
 .mint-cell--owner-b {
   border-color: var(--mint-pb);
   background: var(--mint-pb-bg);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 228, 230, 0.72),
+    0 10px 16px -12px rgba(244, 63, 94, 0.6);
 }
 
 /* Focus ring (replay) */
@@ -561,6 +624,7 @@
   --focus-hand-rot: 0deg;
   --focus-hand-drop: 0px;
   position: relative;
+  width: 92px;
   flex-shrink: 0;
   border-radius: 14px;
   border: 1px solid rgba(148, 163, 184, 0.45);
@@ -609,6 +673,9 @@
   .mint-focus-hand-row {
     justify-content: center;
     overflow-x: visible;
+  }
+  .mint-focus-hand-card {
+    width: 106px;
   }
 }
 
@@ -1986,11 +2053,14 @@
   position: relative;
   overflow: hidden;
   border-radius: 14px;
-  border: 2px solid rgba(255, 255, 255, 0.15);
-  /* dark fallback background for cards without NFT art */
+  border: 2px solid rgba(255, 255, 255, 0.2);
   background:
-    radial-gradient(circle at 20% 12%, rgba(255, 255, 255, 0.12), transparent 48%),
+    radial-gradient(circle at 20% 12%, rgba(255, 255, 255, 0.16), transparent 48%),
+    linear-gradient(165deg, rgba(30, 41, 59, 0.22), rgba(15, 23, 42, 0.52)),
     #1a1a2e;
+  box-shadow:
+    0 10px 18px -12px rgba(2, 6, 23, 0.9),
+    inset 0 1px 0 rgba(255, 255, 255, 0.24);
   transition: box-shadow 0.25s ease, border-color 0.25s ease, transform 0.25s ease;
 }
 
@@ -2005,34 +2075,47 @@
     linear-gradient(to bottom, transparent 38%, rgba(2, 6, 23, 0.28) 100%);
 }
 
+.mint-duel-card::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  z-index: 6;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.25),
+    inset 0 -1px 0 rgba(2, 6, 23, 0.35);
+}
+
 /* Owner glow — activated by parent .mint-cell--owner-X */
 .mint-cell--owner-a .mint-duel-card {
   border-color: var(--mint-pa-light);
   box-shadow:
-    0 0 14px var(--mint-pa-glow),
+    0 0 16px var(--mint-pa-glow),
     0 0 4px rgba(14, 165, 233, 0.3),
-    0 3px 10px rgba(0, 0, 0, 0.25);
+    0 10px 14px -10px rgba(0, 0, 0, 0.8);
 }
 .mint-cell--owner-b .mint-duel-card {
   border-color: var(--mint-pb-light);
   box-shadow:
-    0 0 14px var(--mint-pb-glow),
+    0 0 16px var(--mint-pb-glow),
     0 0 4px rgba(244, 63, 94, 0.3),
-    0 3px 10px rgba(0, 0, 0, 0.25);
+    0 10px 14px -10px rgba(0, 0, 0, 0.8);
 }
 
 /* Hand owner glow (no .mint-cell parent) */
 .mint-duel-card--owner-a {
   border-color: var(--mint-pa-light);
   box-shadow:
-    0 0 12px var(--mint-pa-glow),
-    0 2px 8px rgba(0, 0, 0, 0.18);
+    0 0 14px var(--mint-pa-glow),
+    0 8px 12px -10px rgba(0, 0, 0, 0.8);
 }
 .mint-duel-card--owner-b {
   border-color: var(--mint-pb-light);
   box-shadow:
-    0 0 12px var(--mint-pb-glow),
-    0 2px 8px rgba(0, 0, 0, 0.18);
+    0 0 14px var(--mint-pb-glow),
+    0 8px 12px -10px rgba(0, 0, 0, 0.8);
 }
 
 /* NFT art hero layer */
@@ -2060,15 +2143,17 @@
   left: 0;
   right: 0;
   z-index: 4;
-  backdrop-filter: blur(12px) saturate(1.4);
-  -webkit-backdrop-filter: blur(12px) saturate(1.4);
+  backdrop-filter: blur(12px) saturate(1.38);
+  -webkit-backdrop-filter: blur(12px) saturate(1.38);
   background: linear-gradient(
     180deg,
-    rgba(0, 0, 0, 0.18) 0%,
-    rgba(0, 0, 0, 0.52) 100%
+    rgba(2, 6, 23, 0.08) 0%,
+    rgba(2, 6, 23, 0.44) 56%,
+    rgba(2, 6, 23, 0.64) 100%
   );
-  padding: 4px 5px;
-  border-top: 1px solid rgba(255, 255, 255, 0.2);
+  padding: 5px 6px 6px;
+  border-top: 1px solid rgba(255, 255, 255, 0.28);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.24);
 }
 
 /* Edge cross layout inside glass panel (3x3 grid) */
@@ -2076,19 +2161,63 @@
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   grid-template-rows: repeat(3, 1fr);
-  gap: 1px;
+  gap: 2px;
 }
 
 /* Edge number cells */
 .mint-duel-card__edge {
+  --mint-edge-fg: #f1f5f9;
+  --mint-edge-glow: rgba(148, 163, 184, 0.2);
   display: flex;
   align-items: center;
   justify-content: center;
+  position: relative;
+  min-height: 16px;
+  border-radius: 7px;
+  border: 1px solid rgba(148, 163, 184, 0.34);
+  background:
+    radial-gradient(circle at 28% 20%, rgba(255, 255, 255, 0.24), transparent 58%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(15, 23, 42, 0.34));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.22),
+    inset 0 -1px 0 rgba(2, 6, 23, 0.38),
+    0 2px 3px rgba(2, 6, 23, 0.3);
+}
+
+.mint-duel-card__edge::before {
+  content: "";
+  position: absolute;
+  top: 1px;
+  left: 2px;
+  right: 2px;
+  height: 32%;
+  border-radius: 999px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.34), rgba(255, 255, 255, 0));
+  pointer-events: none;
+}
+
+.mint-duel-card__edge-value {
+  position: relative;
+  z-index: 1;
   font-size: 12px;
-  font-weight: 800;
+  font-weight: 900;
   line-height: 1;
-  color: #f1f5f9;
-  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.9), 0 0 2px rgba(0, 0, 0, 0.5);
+  letter-spacing: 0.02em;
+  color: var(--mint-edge-fg);
+  text-shadow:
+    0 1px 0 rgba(2, 6, 23, 0.95),
+    0 0 6px var(--mint-edge-glow);
+}
+
+.mint-duel-card__edge--up,
+.mint-duel-card__edge--down {
+  justify-self: center;
+  width: 88%;
+}
+
+.mint-duel-card__edge--left,
+.mint-duel-card__edge--right {
+  width: 100%;
 }
 
 /* Strength-based coloring — more vivid */
@@ -2138,6 +2267,61 @@
   color: rgba(255, 255, 255, 0.6);
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
   pointer-events: none;
+}
+
+/* CARD polish overrides: edge gem readability + center badge depth */
+.mint-duel-card__edge--high {
+  --mint-edge-fg: #fbbf24;
+  --mint-edge-glow: rgba(251, 191, 36, 0.72);
+  border-color: rgba(251, 191, 36, 0.52);
+  background:
+    radial-gradient(circle at 28% 20%, rgba(254, 240, 138, 0.36), transparent 58%),
+    linear-gradient(180deg, rgba(251, 191, 36, 0.2), rgba(120, 53, 15, 0.44));
+}
+
+.mint-duel-card__edge--mid {
+  --mint-edge-fg: #f8fafc;
+  --mint-edge-glow: rgba(241, 245, 249, 0.34);
+}
+
+.mint-duel-card__edge--low {
+  --mint-edge-fg: #cbd5e1;
+  --mint-edge-glow: rgba(148, 163, 184, 0.2);
+  border-color: rgba(100, 116, 139, 0.42);
+  background:
+    radial-gradient(circle at 28% 20%, rgba(203, 213, 225, 0.2), transparent 56%),
+    linear-gradient(180deg, rgba(30, 41, 59, 0.24), rgba(15, 23, 42, 0.45));
+}
+
+.mint-duel-card__edge--highlight {
+  transform: translateY(-1px) scale(1.06);
+  border-color: rgba(251, 191, 36, 0.88);
+  box-shadow:
+    0 0 0 1px rgba(254, 243, 199, 0.62),
+    0 0 12px rgba(251, 191, 36, 0.46);
+}
+
+.mint-duel-card__janken {
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.42);
+  background:
+    radial-gradient(circle at 28% 20%, rgba(255, 255, 255, 0.4), transparent 58%),
+    linear-gradient(180deg, rgba(14, 165, 233, 0.25), rgba(2, 6, 23, 0.44));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.3),
+    0 2px 4px rgba(2, 6, 23, 0.34);
+}
+
+.mint-duel-card__janken-glyph {
+  font-size: 14px;
+  line-height: 1;
+  filter: drop-shadow(0 1px 3px rgba(2, 6, 23, 0.75));
+}
+
+.mint-duel-card__token-id {
+  letter-spacing: 0.04em;
+  color: rgba(255, 255, 255, 0.82);
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.92);
 }
 
 /* Holo foil shimmer */
@@ -2197,11 +2381,11 @@
 .card-mini-duel .mint-duel-card__glass {
   padding: 2px 3px;
 }
-.card-mini-duel .mint-duel-card__edge {
+.card-mini-duel .mint-duel-card__edge-value {
   font-size: 10px;
-  font-weight: 700;
+  font-weight: 800;
 }
-.card-mini-duel .mint-duel-card__janken {
+.card-mini-duel .mint-duel-card__janken-glyph {
   font-size: 11px;
 }
 .card-mini-duel .mint-duel-card__token-id {
@@ -2218,7 +2402,7 @@
 .deck-preview-grid .card-mini-duel .mint-duel-card__glass {
   padding: 3px 4px;
 }
-.deck-preview-grid .card-mini-duel .mint-duel-card__edge {
+.deck-preview-grid .card-mini-duel .mint-duel-card__edge-value {
   font-size: 11px;
 }
 

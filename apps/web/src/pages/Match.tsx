@@ -2687,7 +2687,7 @@ export function MatchPage() {
                             }}
                             onDragEnd={handleHandCardDragEnd}
                           >
-                            <CardMini card={card} owner={currentPlayer} subtle={!selected} className="w-[80px] md:w-[94px]" />
+                            <CardMini card={card} owner={currentPlayer} subtle={!selected} className="w-full" />
                           </button>
                         );
                       })}

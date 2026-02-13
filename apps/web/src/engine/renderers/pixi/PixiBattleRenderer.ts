@@ -54,13 +54,17 @@ const COLORS = {
   ownerB: 0xef4444, // red-500
   edgeText: 0xffffff,
   edgeTextStroke: 0x020617,
+  edgeNumberShadow: 0x0b1220,
   edgeValueHigh: 0xfef08a,
-  edgeValueMid: 0xe2e8f0,
-  edgeValueLow: 0xbfdbfe,
+  edgeValueMid: 0xf1f5f9,
+  edgeValueLow: 0xdbeafe,
   coordText: 0x64748b, // slate-500
-  edgePillBg: 0x000000,
-  edgePillTone: 0x0f172a,
+  edgePillBg: 0x020617,
+  edgePillTone: 0x1e293b,
   edgePillStroke: 0x7dd3fc,
+  edgeChipHigh: 0x78350f,
+  edgeChipMid: 0x1e293b,
+  edgeChipLow: 0x334155,
   tokenIdBg: 0x000000,
   tokenIdText: 0xffffff,
   brightnessWhite: 0xffffff,
@@ -70,9 +74,15 @@ const COLORS = {
   boardPanelInner: 0xdff2ff,
   boardFrame: 0x73a6c9,
   boardHighlight: 0xf0f9ff,
+  boardRimLight: 0xffffff,
+  boardRimShadow: 0x0b2235,
   cellShadow: 0x4f7493,
+  cardFallbackBase: 0x0f172a,
+  cardFallbackStripe: 0x1e293b,
   cardGlass: 0xffffff,
   cardVignette: 0x020617,
+  cardFrameShadow: 0x0f172a,
+  cardBevelLight: 0xf8fafc,
   holoA: 0x67e8f9,
   holoB: 0xa78bfa,
   jankenBadgeBg: 0x020617,
@@ -85,22 +95,35 @@ const LAYOUT = {
   cellRadius: 6,
   longPressMs: 400,
   smallFontSize: 10,
-  edgeFontSizeMin: 12,
-  edgeFontSizeScale: 0.18,
-  edgePadding: 6,
+  edgeFontSizeMin: 8,
+  edgeFontSizeScale: 0.11,
+  edgePadding: 7,
   edgePillAlpha: 0.55,
-  pillWidthScale: 1.3,
-  pillHeightScale: 1.15,
+  pillWidthScale: 1.4,
+  pillHeightScale: 1.2,
   pillRadius: 3,
-  edgeStrokeThicknessScale: 0.16,
-  edgeLetterSpacing: 0.6,
-  jankenBadgeMin: 24,
-  jankenBadgeMax: 40,
-  jankenBadgeScale: 0.23,
+  edgeStrokeThicknessScale: 0.12,
+  edgeLetterSpacing: 0.24,
+  jankenBadgeMin: 14,
+  jankenBadgeMax: 24,
+  jankenBadgeScale: 0.15,
   jankenBadgeRadius: 6,
   jankenBadgeStrokeWidth: 1.2,
   tokenLabelPadX: 3,
   tokenLabelPadY: 2,
+  uiPanelTopRatio: 0.69,
+  uiPanelBottomPad: 2,
+  uiPanelInnerPad: 2,
+  uiPanelCols: 3,
+  uiPanelRows: 3,
+  edgeChipScaleV: 0.68,
+  edgeChipScaleH: 0.8,
+  edgeChipMinHeight: 8,
+  edgeChipRadius: 5,
+  ownerBadgePad: 3,
+  ownerBadgeMin: 11,
+  ownerBadgeMax: 16,
+  ownerBadgeScale: 0.16,
   coordOffsetX: 3,
   coordOffsetY: 2,
   ownerTintAlpha: 0.17,
@@ -148,10 +171,10 @@ const CELL_COORDS = [
   "C3",
 ] as const;
 
-const JANKEN_BADGES: Record<0 | 1 | 2, { short: "R" | "P" | "S"; accent: number }> = {
-  0: { short: "R", accent: 0xf59e0b }, // rock
-  1: { short: "P", accent: 0x10b981 }, // paper
-  2: { short: "S", accent: 0x8b5cf6 }, // scissors
+const JANKEN_BADGES: Record<0 | 1 | 2, { glyph: string; accent: number }> = {
+  0: { glyph: "✊", accent: 0xf59e0b }, // rock
+  1: { glyph: "✋", accent: 0x10b981 }, // paper
+  2: { glyph: "✌", accent: 0x8b5cf6 }, // scissors
 };
 
 /** Layout rectangle for a single cell. */
@@ -166,6 +189,12 @@ function edgeValueColor(value: number): number {
   if (value >= 8) return COLORS.edgeValueHigh;
   if (value >= 4) return COLORS.edgeValueMid;
   return COLORS.edgeValueLow;
+}
+
+function edgeChipToneColor(value: number): number {
+  if (value >= 8) return COLORS.edgeChipHigh;
+  if (value >= 4) return COLORS.edgeChipMid;
+  return COLORS.edgeChipLow;
 }
 
 function normalizeJankenHand(value: number): 0 | 1 | 2 {
@@ -190,12 +219,15 @@ export class PixiBattleRenderer implements IBattleRenderer {
   private cellContentContainers: Container[] = [];   // ★ animated wrapper
   private cellMasks: Graphics[] = [];
   private cellSprites: (Sprite | null)[] = [];
+  private cellFallbackOverlays: Graphics[] = [];
   private cellTintOverlays: Graphics[] = [];
   private cellFrameOverlays: Graphics[] = [];
   private cellGlassOverlays: Graphics[] = [];
   private cellFoilOverlays: Graphics[] = [];
   private cellTextContainers: Container[] = [];
   private cellTokenLabels: Text[] = [];
+  private cellOwnerBadges: Graphics[] = [];
+  private cellOwnerBadgeTexts: Text[] = [];
   private cellBrightnessOverlays: Graphics[] = [];   // ★ brightness effect
   private cellCoordTexts: Text[] = [];
 
@@ -310,12 +342,15 @@ export class PixiBattleRenderer implements IBattleRenderer {
     this.cellContentContainers = [];
     this.cellMasks = [];
     this.cellSprites = [];
+    this.cellFallbackOverlays = [];
     this.cellTintOverlays = [];
     this.cellFrameOverlays = [];
     this.cellGlassOverlays = [];
     this.cellFoilOverlays = [];
     this.cellTextContainers = [];
     this.cellTokenLabels = [];
+    this.cellOwnerBadges = [];
+    this.cellOwnerBadgeTexts = [];
     this.cellBrightnessOverlays = [];
     this.cellCoordTexts = [];
     this.layouts.clear();
@@ -416,6 +451,12 @@ export class PixiBattleRenderer implements IBattleRenderer {
       contentContainer.addChild(sprite);
       this.cellSprites.push(sprite);
 
+      const fallbackOverlay = new Graphics();
+      fallbackOverlay.visible = false;
+      fallbackOverlay.mask = maskGfx;
+      contentContainer.addChild(fallbackOverlay);
+      this.cellFallbackOverlays.push(fallbackOverlay);
+
       // 5. Owner tint overlay
       const tintOverlay = new Graphics();
       tintOverlay.visible = false;
@@ -454,12 +495,36 @@ export class PixiBattleRenderer implements IBattleRenderer {
           fill: COLORS.tokenIdText,
           fontFamily: "monospace",
           fontWeight: "bold",
+          stroke: { color: COLORS.edgeTextStroke, width: 1.8 },
+          letterSpacing: 0.5,
         }),
       });
-      tokenLabel.anchor.set(1, 0);
+      tokenLabel.anchor.set(0, 0);
       tokenLabel.visible = false;
       contentContainer.addChild(tokenLabel);
       this.cellTokenLabels.push(tokenLabel);
+
+      const ownerBadge = new Graphics();
+      ownerBadge.visible = false;
+      ownerBadge.mask = maskGfx;
+      contentContainer.addChild(ownerBadge);
+      this.cellOwnerBadges.push(ownerBadge);
+
+      const ownerBadgeText = new Text({
+        text: "",
+        style: new TextStyle({
+          fontSize: 9,
+          fill: COLORS.edgeText,
+          fontFamily: "Nunito, Trebuchet MS, Segoe UI, Arial Black, sans-serif",
+          fontWeight: "900",
+          stroke: { color: COLORS.edgeTextStroke, width: 1.2 },
+        }),
+      });
+      ownerBadgeText.anchor.set(0.5, 0.5);
+      ownerBadgeText.visible = false;
+      ownerBadgeText.mask = maskGfx;
+      contentContainer.addChild(ownerBadgeText);
+      this.cellOwnerBadgeTexts.push(ownerBadgeText);
 
       // 8. Brightness overlay — ★ white/black semi-transparent for brightness effect
       const brightnessOverlay = new Graphics();
@@ -531,8 +596,21 @@ export class PixiBattleRenderer implements IBattleRenderer {
 
       // Update token label position (container-relative, top-right)
       const tokenLabel = this.cellTokenLabels[i];
-      tokenLabel.x = cw - LAYOUT.tokenLabelPadX;
+      tokenLabel.x = LAYOUT.tokenLabelPadX;
       tokenLabel.y = LAYOUT.tokenLabelPadY;
+
+      const ownerBadgeSize = Math.max(
+        LAYOUT.ownerBadgeMin,
+        Math.min(LAYOUT.ownerBadgeMax, Math.min(cw, ch) * LAYOUT.ownerBadgeScale),
+      );
+      const ownerBadgeX = cw - ownerBadgeSize / 2 - LAYOUT.ownerBadgePad;
+      const ownerBadgeY = ownerBadgeSize / 2 + LAYOUT.ownerBadgePad;
+      const ownerBadge = this.cellOwnerBadges[i];
+      ownerBadge.x = ownerBadgeX;
+      ownerBadge.y = ownerBadgeY;
+      const ownerBadgeText = this.cellOwnerBadgeTexts[i];
+      ownerBadgeText.x = ownerBadgeX;
+      ownerBadgeText.y = ownerBadgeY;
 
       // Position coordinate text (board-absolute, NOT animated)
       const coordTxt = this.cellCoordTexts[i];
@@ -583,6 +661,11 @@ export class PixiBattleRenderer implements IBattleRenderer {
       alpha: features.boardDepth ? 0.9 : 0.75,
     });
 
+    if (features.boardDepth) {
+      base.roundRect(offsetX + 1, offsetY + 1, Math.max(0, boardSize - 2), Math.max(0, boardSize - 2), LAYOUT.boardRadius - 1);
+      base.stroke({ color: COLORS.boardRimLight, width: 1, alpha: quality === "high" ? 0.34 : 0.24 });
+    }
+
     if (!features.boardDepth) return;
 
     detail.roundRect(
@@ -593,6 +676,20 @@ export class PixiBattleRenderer implements IBattleRenderer {
       LAYOUT.boardRadius - 3,
     );
     detail.fill({ color: COLORS.boardHighlight, alpha: quality === "high" ? 0.12 : 0.08 });
+
+    const edgeInset = frameInset + 1;
+    detail.moveTo(offsetX + edgeInset, offsetY + edgeInset);
+    detail.lineTo(offsetX + boardSize - edgeInset, offsetY + edgeInset);
+    detail.stroke({ color: COLORS.boardRimLight, width: 1.5, alpha: quality === "high" ? 0.3 : 0.22 });
+    detail.moveTo(offsetX + edgeInset, offsetY + edgeInset);
+    detail.lineTo(offsetX + edgeInset, offsetY + boardSize - edgeInset);
+    detail.stroke({ color: COLORS.boardRimLight, width: 1.5, alpha: quality === "high" ? 0.24 : 0.18 });
+    detail.moveTo(offsetX + edgeInset, offsetY + boardSize - edgeInset);
+    detail.lineTo(offsetX + boardSize - edgeInset, offsetY + boardSize - edgeInset);
+    detail.stroke({ color: COLORS.boardRimShadow, width: 2, alpha: quality === "high" ? 0.26 : 0.18 });
+    detail.moveTo(offsetX + boardSize - edgeInset, offsetY + edgeInset);
+    detail.lineTo(offsetX + boardSize - edgeInset, offsetY + boardSize - edgeInset);
+    detail.stroke({ color: COLORS.boardRimShadow, width: 2, alpha: quality === "high" ? 0.22 : 0.16 });
 
     const unit = boardSize / 3;
     for (let idx = 1; idx <= 2; idx++) {
@@ -662,6 +759,20 @@ export class PixiBattleRenderer implements IBattleRenderer {
       LAYOUT.cellRadius + 2,
     );
     shadow.fill({ color: COLORS.cellShadow, alpha });
+
+    if (hasCard) {
+      shadow.roundRect(
+        layout.x - 2,
+        layout.y + LAYOUT.cellShadowOffsetY + 2,
+        layout.w + 4,
+        layout.h + 6,
+        LAYOUT.cellRadius + 1,
+      );
+      shadow.fill({
+        color: COLORS.brightnessBlack,
+        alpha: quality === "high" ? 0.14 : quality === "medium" ? 0.1 : 0.07,
+      });
+    }
     shadow.visible = true;
   }
 
@@ -681,12 +792,30 @@ export class PixiBattleRenderer implements IBattleRenderer {
 
     frame.clear();
     frame.roundRect(0, 0, w, h, LAYOUT.cardFrameCorner);
-    frame.stroke({ color: ownerColor, width: LAYOUT.cardFrameOuterWidth });
+    frame.stroke({
+      color: ownerColor,
+      width: hasTexture ? Math.max(1.2, LAYOUT.cardFrameOuterWidth - 0.4) : LAYOUT.cardFrameOuterWidth,
+      alpha: hasTexture ? 0.72 : 0.92,
+    });
     frame.roundRect(1, 1, Math.max(0, w - 2), Math.max(0, h - 2), LAYOUT.cardFrameCorner - 1);
     frame.stroke({
       color: COLORS.edgeText,
       width: LAYOUT.cardFrameInnerWidth,
       alpha: quality === "high" ? 0.32 : quality === "medium" ? 0.2 : 0.12,
+    });
+    frame.roundRect(1, 1, Math.max(0, w - 2), Math.max(0, h - 2), LAYOUT.cardFrameCorner - 1);
+    frame.stroke({
+      color: COLORS.cardFrameShadow,
+      width: 1,
+      alpha: quality === "high" ? 0.34 : quality === "medium" ? 0.24 : 0.16,
+    });
+    const topSheenH = Math.max(8, h * 0.18);
+    frame.roundRect(2, 2, Math.max(0, w - 4), topSheenH, Math.max(2, LAYOUT.cardFrameCorner - 2));
+    frame.fill({
+      color: COLORS.cardBevelLight,
+      alpha: hasTexture
+        ? quality === "high" ? 0.12 : 0.08
+        : quality === "high" ? 0.18 : 0.12,
     });
     frame.visible = true;
 
@@ -699,6 +828,13 @@ export class PixiBattleRenderer implements IBattleRenderer {
       glass.fill({ color: COLORS.cardVignette, alpha: quality === "high" ? 0.22 : 0.16 });
       glass.roundRect(0, h * 0.58, w, h * 0.2, LAYOUT.cardFrameCorner);
       glass.fill({ color: COLORS.cardGlass, alpha: 0.02 });
+      glass.roundRect(0, h * 0.78, w, h * 0.22, LAYOUT.cardFrameCorner);
+      glass.fill({ color: COLORS.cardFrameShadow, alpha: quality === "high" ? 0.12 : 0.08 });
+      glass.visible = true;
+    } else if (!hasTexture) {
+      // Keep a subtle dark pass so fallback cards remain readable.
+      glass.roundRect(0, h * 0.56, w, h * 0.44, LAYOUT.cardFrameCorner);
+      glass.fill({ color: COLORS.cardVignette, alpha: quality === "high" ? 0.28 : 0.2 });
       glass.visible = true;
     } else {
       glass.visible = false;
@@ -776,6 +912,7 @@ export class PixiBattleRenderer implements IBattleRenderer {
         const tokenIdStr = cell.card.tokenId.toString();
         const texture = this.textureResolver.getTexture(tokenIdStr);
         const hasTexture = texture !== null;
+        const fallback = this.cellFallbackOverlays[i];
 
         if (texture) {
           // NFT art loaded — show sprite + tint overlay
@@ -789,34 +926,51 @@ export class PixiBattleRenderer implements IBattleRenderer {
             sprite.visible = true;
           }
 
-          // Owner tint overlay (container-relative)
+          if (fallback) {
+            fallback.clear();
+            fallback.visible = false;
+          }
+
+          // Keep card art clean: no full-surface owner tint overlay.
           const tint = this.cellTintOverlays[i];
-          const tintAlpha = quality === "high"
-            ? LAYOUT.ownerTintAlpha + 0.05
-            : quality === "medium"
-              ? LAYOUT.ownerTintAlpha
-              : 0.16;
           tint.clear();
-          tint.roundRect(0, 0, w, h, LAYOUT.cellRadius);
-          tint.fill({ color: ownerColor, alpha: tintAlpha });
-          tint.visible = true;
+          tint.visible = false;
 
           // Cell border only (board-absolute, transparent fill for hit area)
           gfx.roundRect(x, y, w, h, LAYOUT.cellRadius);
           gfx.fill({ color: 0x000000, alpha: 0 });
           gfx.roundRect(x, y, w, h, LAYOUT.cellRadius);
-          gfx.stroke({ color: ownerColor, width: quality === "off" ? 1.4 : 2 });
+          gfx.stroke({ color: ownerColor, width: quality === "off" ? 1.3 : 1.6, alpha: hasTexture ? 0.72 : 0.9 });
         } else {
-          // Texture not loaded yet — colored rectangle fallback
-          gfx.roundRect(x, y, w, h, LAYOUT.cellRadius);
-          gfx.fill({ color: ownerColor, alpha: LAYOUT.ownerFallbackAlpha });
-          gfx.roundRect(x, y, w, h, LAYOUT.cellRadius);
-          gfx.stroke({ color: ownerColor, width: quality === "off" ? 1.4 : 2 });
+          // Texture not loaded yet — explicit fallback card surface
+          if (fallback) {
+            const stripeW = Math.max(8, w * 0.17);
+            const stripeStartY = h * 0.42;
+            fallback.clear();
+            fallback.roundRect(0, 0, w, h, LAYOUT.cellRadius);
+            fallback.fill({ color: COLORS.cardFallbackBase, alpha: 0.96 });
+            fallback.roundRect(0, 0, w, Math.max(10, h * 0.24), LAYOUT.cellRadius);
+            fallback.fill({ color: ownerColor, alpha: quality === "high" ? 0.5 : 0.42 });
+            for (let sx = -stripeW; sx < w + stripeW; sx += stripeW * 1.65) {
+              fallback.rect(sx, stripeStartY, stripeW * 0.82, h - stripeStartY);
+            }
+            fallback.fill({ color: COLORS.cardFallbackStripe, alpha: 0.38 });
+            fallback.visible = true;
+          }
 
-          // Hide sprite and tint
+          const tint = this.cellTintOverlays[i];
+          tint.clear();
+          tint.visible = false;
+
+          // Cell border only (board-absolute, transparent fill for hit area)
+          gfx.roundRect(x, y, w, h, LAYOUT.cellRadius);
+          gfx.fill({ color: 0x000000, alpha: 0 });
+          gfx.roundRect(x, y, w, h, LAYOUT.cellRadius);
+          gfx.stroke({ color: ownerColor, width: quality === "off" ? 1.4 : 2.2 });
+
+          // Hide sprite (fallback/tint layers remain visible)
           const sprite = this.cellSprites[i];
           if (sprite) sprite.visible = false;
-          this.cellTintOverlays[i].visible = false;
 
           // Kick off async load → re-render on completion
           this.textureResolver.loadTexture(tokenIdStr).then((tex) => {
@@ -829,17 +983,43 @@ export class PixiBattleRenderer implements IBattleRenderer {
         // Token ID label (container-relative)
         const tokenLabel = this.cellTokenLabels[i];
         tokenLabel.text = `#${tokenIdStr.slice(-3).padStart(3, "0")}`;
+        tokenLabel.alpha = hasTexture ? 0.78 : 0.9;
         tokenLabel.visible = true;
+
+        const ownerBadge = this.cellOwnerBadges[i];
+        const ownerBadgeText = this.cellOwnerBadgeTexts[i];
+        const ownerBadgeSize = Math.max(
+          LAYOUT.ownerBadgeMin,
+          Math.min(LAYOUT.ownerBadgeMax, Math.min(w, h) * LAYOUT.ownerBadgeScale),
+        );
+        ownerBadge.clear();
+        ownerBadge.circle(0.4, 0.8, ownerBadgeSize / 2 + 0.6);
+        ownerBadge.fill({ color: COLORS.edgeTextStroke, alpha: hasTexture ? 0.42 : 0.58 });
+        ownerBadge.circle(0, 0, ownerBadgeSize / 2);
+        ownerBadge.fill({ color: COLORS.edgePillBg, alpha: hasTexture ? 0.88 : 0.96 });
+        ownerBadge.circle(0, 0, Math.max(2.8, ownerBadgeSize / 2 - 1.1));
+        ownerBadge.fill({ color: ownerColor, alpha: 0.96 });
+        ownerBadge.circle(0, 0, ownerBadgeSize / 2);
+        ownerBadge.stroke({ color: COLORS.boardRimLight, width: 1, alpha: 0.8 });
+        ownerBadge.visible = true;
+
+        ownerBadgeText.text = cell.owner === 0 ? "A" : "B";
+        ownerBadgeText.style.fontSize = Math.max(8, ownerBadgeSize * 0.52);
+        ownerBadgeText.alpha = 0.96;
+        ownerBadgeText.visible = true;
       } else {
         // ── Empty cell ──
         // Hide card-related objects
         const sprite = this.cellSprites[i];
         if (sprite) sprite.visible = false;
+        this.cellFallbackOverlays[i].visible = false;
         this.cellTintOverlays[i].visible = false;
         this.cellFrameOverlays[i].visible = false;
         this.cellGlassOverlays[i].visible = false;
         this.cellFoilOverlays[i].visible = false;
         this.cellTokenLabels[i].visible = false;
+        this.cellOwnerBadges[i].visible = false;
+        this.cellOwnerBadgeTexts[i].visible = false;
 
         if (isSelected) {
           // Selected empty cell — emphasized
@@ -883,76 +1063,138 @@ export class PixiBattleRenderer implements IBattleRenderer {
     if (!cell) return;
 
     const { edges } = cell.card;
-    const fontSize = Math.max(LAYOUT.edgeFontSizeMin, w * LAYOUT.edgeFontSizeScale);
-    const strokeThickness = Math.max(1.5, fontSize * LAYOUT.edgeStrokeThicknessScale);
+    const baseFontSize = Math.max(LAYOUT.edgeFontSizeMin, w * LAYOUT.edgeFontSizeScale);
 
     // Check if texture is loaded (determines pill bg visibility)
     const hasTexture = this.textureResolver.getTexture(
       cell.card.tokenId.toString(),
     ) !== null;
 
-    // Positions: container-relative (0,0 = cell top-left)
+    // Mint-style bottom glass panel alignment (3x3 cross layout inside panel)
+    const panelTop = Math.max(h * LAYOUT.uiPanelTopRatio, h - baseFontSize * 3.7);
+    const panelBottom = Math.max(panelTop + baseFontSize * 2.7, h - LAYOUT.uiPanelBottomPad);
+    const panelHeight = Math.max(1, panelBottom - panelTop);
+    const panelInnerX = LAYOUT.uiPanelInnerPad;
+    const panelInnerY = panelTop + LAYOUT.uiPanelInnerPad;
+    const panelInnerW = Math.max(1, w - LAYOUT.uiPanelInnerPad * 2);
+    const panelInnerH = Math.max(1, panelHeight - LAYOUT.uiPanelInnerPad * 2);
+    const cellW = panelInnerW / LAYOUT.uiPanelCols;
+    const cellH = panelInnerH / LAYOUT.uiPanelRows;
+
     const edgeData: Array<{
       val: number;
-      px: number;
-      py: number;
-      ax: number;
-      ay: number;
+      col: 0 | 1 | 2;
+      row: 0 | 1 | 2;
+      vertical: boolean;
     }> = [
-      { val: edges.up, px: w / 2, py: LAYOUT.edgePadding, ax: 0.5, ay: 0 },
-      { val: edges.right, px: w - LAYOUT.edgePadding, py: h / 2, ax: 1, ay: 0.5 },
-      { val: edges.down, px: w / 2, py: h - LAYOUT.edgePadding, ax: 0.5, ay: 1 },
-      { val: edges.left, px: LAYOUT.edgePadding, py: h / 2, ax: 0, ay: 0.5 },
+      { val: edges.up, col: 1, row: 0, vertical: true },
+      { val: edges.right, col: 2, row: 1, vertical: false },
+      { val: edges.down, col: 1, row: 2, vertical: true },
+      { val: edges.left, col: 0, row: 1, vertical: false },
     ];
 
-    for (const { val, px, py, ax, ay } of edgeData) {
+    for (const { val, col, row, vertical } of edgeData) {
+      const px = panelInnerX + (col + 0.5) * cellW;
+      const py = panelInnerY + (row + 0.5) * cellH;
       const tone = edgeValueColor(val);
+      const toneBg = edgeChipToneColor(val);
+      const targetPillW = Math.max(
+        baseFontSize,
+        cellW * (vertical ? LAYOUT.edgeChipScaleV : LAYOUT.edgeChipScaleH),
+      );
+      const targetPillH = Math.max(LAYOUT.edgeChipMinHeight, cellH * 0.72);
+      const pillW = Math.min(cellW * 0.88, targetPillW);
+      const pillH = Math.min(cellH * 0.82, targetPillH);
+      const edgeFontSize = Math.max(
+        8,
+        Math.min(baseFontSize, pillH * 0.56, pillW * 0.5),
+      );
+      const strokeThickness = Math.max(1, edgeFontSize * LAYOUT.edgeStrokeThicknessScale);
 
-      // Dark pill background when texture is visible
-      if (hasTexture && features.edgePill) {
-        const pillW = fontSize * LAYOUT.pillWidthScale;
-        const pillH = fontSize * LAYOUT.pillHeightScale;
-        const toneAlpha = val >= 8 ? 0.34 : val >= 4 ? 0.26 : 0.2;
+      // Pill background for edge values
+      if (features.edgePill) {
+        const pillX = px - pillW / 2;
+        const pillY = py - pillH / 2;
+        const toneAlpha = val >= 8 ? 0.44 : val >= 4 ? 0.34 : 0.3;
+        const baseAlpha = hasTexture ? 0.66 : 0.82;
+        const strokeColor = val >= 8 ? COLORS.edgeValueHigh : COLORS.edgePillStroke;
         const pillGfx = new Graphics();
+
         pillGfx.roundRect(
-          px - pillW * ax,
-          py - pillH * ay,
+          pillX,
+          pillY + 1,
           pillW,
           pillH,
-          LAYOUT.pillRadius,
+          LAYOUT.edgeChipRadius,
         );
-        pillGfx.fill({ color: COLORS.edgePillBg, alpha: LAYOUT.edgePillAlpha });
+        pillGfx.fill({ color: COLORS.edgeTextStroke, alpha: hasTexture ? 0.34 : 0.48 });
+
         pillGfx.roundRect(
-          px - pillW * ax + 0.8,
-          py - pillH * ay + 0.8,
-          Math.max(0, pillW - 1.6),
-          Math.max(0, pillH - 1.6),
-          Math.max(2, LAYOUT.pillRadius - 1),
-        );
-        pillGfx.fill({ color: COLORS.edgePillTone, alpha: toneAlpha });
-        pillGfx.roundRect(
-          px - pillW * ax,
-          py - pillH * ay,
+          pillX,
+          pillY,
           pillW,
           pillH,
-          LAYOUT.pillRadius,
+          LAYOUT.edgeChipRadius,
         );
-        pillGfx.stroke({ color: COLORS.edgePillStroke, width: 1, alpha: 0.45 });
+        pillGfx.fill({ color: COLORS.edgePillBg, alpha: baseAlpha });
+
+        pillGfx.roundRect(
+          pillX + 1,
+          pillY + 1,
+          Math.max(0, pillW - 2),
+          Math.max(0, pillH - 2),
+          Math.max(2, LAYOUT.edgeChipRadius - 1),
+        );
+        pillGfx.fill({ color: toneBg, alpha: hasTexture ? toneAlpha : Math.min(0.62, toneAlpha + 0.12) });
+
+        pillGfx.roundRect(
+          pillX + 1,
+          pillY + 1,
+          Math.max(0, pillW - 2),
+          Math.max(2, pillH * 0.34),
+          Math.max(2, LAYOUT.edgeChipRadius - 1),
+        );
+        pillGfx.fill({ color: COLORS.boardRimLight, alpha: hasTexture ? 0.16 : 0.22 });
+
+        pillGfx.roundRect(
+          pillX,
+          pillY,
+          pillW,
+          pillH,
+          LAYOUT.edgeChipRadius,
+        );
+        pillGfx.stroke({ color: strokeColor, width: 1, alpha: val >= 8 ? 0.82 : 0.52 });
         container.addChild(pillGfx);
       }
+
+      const shadowT = new Text({
+        text: String(val),
+        style: new TextStyle({
+          fontSize: Math.max(9, edgeFontSize),
+          fill: COLORS.edgeNumberShadow,
+          fontFamily: "Nunito, Trebuchet MS, Segoe UI, Arial Black, sans-serif",
+          fontWeight: "900",
+          letterSpacing: LAYOUT.edgeLetterSpacing,
+        }),
+      });
+      shadowT.anchor.set(0.5, 0.5);
+      shadowT.x = px + 0.45;
+      shadowT.y = py + 0.7;
+      shadowT.alpha = hasTexture ? 0.58 : 0.74;
+      container.addChild(shadowT);
 
       const t = new Text({
         text: String(val),
         style: new TextStyle({
-          fontSize,
+          fontSize: edgeFontSize,
           fill: tone,
-          fontFamily: "Trebuchet MS, Segoe UI, Arial Black, sans-serif",
+          fontFamily: "Nunito, Trebuchet MS, Segoe UI, Arial Black, sans-serif",
           fontWeight: "900",
           stroke: { color: COLORS.edgeTextStroke, width: strokeThickness },
           letterSpacing: LAYOUT.edgeLetterSpacing,
         }),
       });
-      t.anchor.set(ax, ay);
+      t.anchor.set(0.5, 0.5);
       t.x = px;
       t.y = py;
       container.addChild(t);
@@ -960,43 +1202,67 @@ export class PixiBattleRenderer implements IBattleRenderer {
 
     const hand = normalizeJankenHand(Number(cell.card.jankenHand));
     const badge = JANKEN_BADGES[hand];
+    const badgeCenterX = panelInnerX + (1 + 0.5) * cellW;
+    const badgeCenterY = panelInnerY + (1 + 0.5) * cellH;
     const badgeSize = Math.max(
-      LAYOUT.jankenBadgeMin,
-      Math.min(LAYOUT.jankenBadgeMax, Math.min(w, h) * LAYOUT.jankenBadgeScale),
+      10,
+      Math.min(
+        LAYOUT.jankenBadgeMax,
+        Math.max(LAYOUT.jankenBadgeMin - 2, Math.min(cellW, cellH) * 0.68),
+      ),
     );
-    const badgeX = w / 2 - badgeSize / 2;
-    const badgeY = h / 2 - badgeSize / 2;
+    const badgeRadius = badgeSize / 2;
     const badgeGfx = new Graphics();
-    badgeGfx.roundRect(badgeX, badgeY, badgeSize, badgeSize, LAYOUT.jankenBadgeRadius);
-    badgeGfx.fill({ color: COLORS.jankenBadgeBg, alpha: hasTexture ? 0.66 : 0.86 });
-    badgeGfx.roundRect(
-      badgeX + 1,
-      badgeY + 1,
-      Math.max(0, badgeSize - 2),
-      Math.max(0, badgeSize - 2),
-      Math.max(2, LAYOUT.jankenBadgeRadius - 1),
+    badgeGfx.circle(badgeCenterX + 0.8, badgeCenterY + 1.1, badgeRadius + 1.1);
+    badgeGfx.fill({ color: COLORS.edgeTextStroke, alpha: hasTexture ? 0.2 : 0.26 });
+    badgeGfx.circle(badgeCenterX, badgeCenterY, badgeRadius);
+    badgeGfx.fill({ color: COLORS.jankenBadgeBg, alpha: hasTexture ? 0.6 : 0.78 });
+    badgeGfx.circle(badgeCenterX, badgeCenterY, Math.max(2, badgeRadius - 1.1));
+    badgeGfx.fill({ color: badge.accent, alpha: hasTexture ? 0.28 : 0.38 });
+    badgeGfx.ellipse(
+      badgeCenterX,
+      badgeCenterY - badgeRadius * 0.25,
+      badgeRadius * 0.72,
+      Math.max(1.1, badgeRadius * 0.28),
     );
-    badgeGfx.fill({ color: badge.accent, alpha: hasTexture ? 0.35 : 0.45 });
-    badgeGfx.roundRect(badgeX, badgeY, badgeSize, badgeSize, LAYOUT.jankenBadgeRadius);
+    badgeGfx.fill({ color: COLORS.boardRimLight, alpha: hasTexture ? 0.14 : 0.2 });
+    badgeGfx.circle(badgeCenterX, badgeCenterY, badgeRadius);
     badgeGfx.stroke({ color: COLORS.jankenBadgeStroke, width: LAYOUT.jankenBadgeStrokeWidth, alpha: 0.9 });
+    badgeGfx.circle(badgeCenterX, badgeCenterY, Math.max(2, badgeRadius - 0.6));
+    badgeGfx.stroke({ color: badge.accent, width: 1, alpha: hasTexture ? 0.38 : 0.52 });
     container.addChild(badgeGfx);
 
-    const badgeText = new Text({
-      text: badge.short,
+    const badgeTextShadow = new Text({
+      text: badge.glyph,
       style: new TextStyle({
-        fontSize: Math.max(12, badgeSize * 0.52),
+        fontSize: Math.max(8, badgeSize * 0.42),
+        fill: COLORS.edgeNumberShadow,
+        fontFamily: "Segoe UI Emoji, Apple Color Emoji, Noto Color Emoji, Nunito, sans-serif",
+        fontWeight: "900",
+      }),
+    });
+    badgeTextShadow.anchor.set(0.5, 0.5);
+    badgeTextShadow.x = badgeCenterX + 0.7;
+    badgeTextShadow.y = badgeCenterY + 1;
+    badgeTextShadow.alpha = hasTexture ? 0.7 : 0.86;
+    container.addChild(badgeTextShadow);
+
+    const badgeText = new Text({
+      text: badge.glyph,
+      style: new TextStyle({
+        fontSize: Math.max(8, badgeSize * 0.42),
         fill: COLORS.edgeText,
-        fontFamily: "Trebuchet MS, Segoe UI, Arial Black, sans-serif",
+        fontFamily: "Segoe UI Emoji, Apple Color Emoji, Noto Color Emoji, Nunito, sans-serif",
         fontWeight: "900",
         stroke: {
           color: COLORS.edgeTextStroke,
-          width: Math.max(1.3, badgeSize * 0.08),
+          width: Math.max(0.9, badgeSize * 0.05),
         },
       }),
     });
     badgeText.anchor.set(0.5, 0.5);
-    badgeText.x = w / 2;
-    badgeText.y = h / 2;
+    badgeText.x = badgeCenterX;
+    badgeText.y = badgeCenterY;
     container.addChild(badgeText);
   }
 
