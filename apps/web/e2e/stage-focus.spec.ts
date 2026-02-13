@@ -32,6 +32,13 @@ function encodeTranscriptZ(json: string): string {
   return compressed.toString("base64url");
 }
 
+async function readHorizontalOverflowPx(page: import("@playwright/test").Page): Promise<number> {
+  return page.evaluate(() => {
+    const root = document.documentElement;
+    return Math.max(0, root.scrollWidth - root.clientWidth);
+  });
+}
+
 test.describe("stage routes", () => {
   let pageErrors: string[];
 
@@ -75,5 +82,17 @@ test.describe("stage routes", () => {
     await expect(page.getByText("Replay controls are hidden for board focus.")).toBeVisible({ timeout: 10_000 });
     await page.getByRole("button", { name: "Show controls" }).click();
     await expect(page.getByLabel("Replay speed")).toBeVisible({ timeout: 10_000 });
+  });
+
+  test("/battle-stage keeps commit control in viewport on 375px width", async ({ page }) => {
+    await page.setViewportSize({ width: 375, height: 812 });
+    await page.goto("/battle-stage?mode=guest&opp=vs_nyano_ai&ai=normal&rk=v2&ui=engine&focus=1&fpm=manual&fp=0");
+
+    const commitButton = page.getByLabel("Commit move from focus hand dock");
+    await expect(commitButton).toBeVisible({ timeout: 10_000 });
+    await expect(commitButton).toBeInViewport();
+
+    const overflowPx = await readHorizontalOverflowPx(page);
+    expect(overflowPx).toBeLessThanOrEqual(1);
   });
 });

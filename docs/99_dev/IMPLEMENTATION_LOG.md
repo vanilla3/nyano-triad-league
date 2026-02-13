@@ -21,6 +21,8 @@
 - `apps/web/e2e/stage-focus.spec.ts`
   - mobile `replay-stage` で controls が初期非表示であること、
   - `Show controls` で復帰できることを追加検証。
+  - 375px 幅 `battle-stage` で Commit ボタンが viewport 内に収まることを検証。
+  - 375px 幅で横方向オーバーフローが発生しないことを検証。
 
 ### Verify
 - `pnpm -C apps/web lint`

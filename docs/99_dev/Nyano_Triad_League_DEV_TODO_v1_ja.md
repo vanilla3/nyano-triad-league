@@ -75,6 +75,9 @@
   - `shouldShowStageSecondaryControls` を導入し、ステージ補助UIの表示閾値を共通化
   - Match/Replay の stage route で resize 追従 + 手動トグル優先（manual override）を実装
   - mobile replay-stage で transport 非表示デフォルト + Show controls 復帰を E2E で検証
+- ✅ WO005-C follow-up: 375px幅で Commit 導線の可視性をE2E固定
+  - battle-stage focus 手札ドックの Commit ボタンが viewport 内に収まることを検証
+  - 横方向オーバーフロー（`scrollWidth - clientWidth`）が発生しないことを検証
 ## 🚧 Doing (now)
 
 - 🔧 Phase 4 の運用面（ランキング / 報酬導線）の最小設計を進める
