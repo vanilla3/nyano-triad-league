@@ -2,6 +2,56 @@
 
 > 1コミット=1まとまりで追記する（Why/What/Verify）。
 
+## 2026-02-13 — WO005-B follow-up: responsive stage secondary controls
+
+### Why
+- Stage focus中にウィンドウ幅が変わった場合、補助コントロール表示が初期値のままで、狭幅で情報過多/広幅で操作導線不足になることがあった。
+- Stageの「1画面導線」を維持するため、表示閾値の共通化と resize追従が必要だった。
+
+### What
+- `apps/web/src/lib/stage_layout.ts`
+  - `shouldShowStageSecondaryControls` を追加し、補助コントロール表示のブレークポイント判定を共通化。
+- `apps/web/src/lib/__tests__/stage_layout.test.ts`
+  - 補助コントロール表示判定（390/768/769/NaN）を検証。
+- `apps/web/src/pages/Match.tsx`
+  - Stage controls の初期表示/再計算を共通判定に切替。
+  - resize時の自動追従を追加（手動トグル後は manual override でユーザー設定を優先）。
+- `apps/web/src/pages/Replay.tsx`
+  - Stage transport controls に同等の resize追従 + manual override を追加。
+- `apps/web/e2e/stage-focus.spec.ts`
+  - mobile `replay-stage` で controls が初期非表示であること、
+  - `Show controls` で復帰できることを追加検証。
+
+### Verify
+- `pnpm -C apps/web lint`
+- `pnpm -C apps/web test`
+- `pnpm -C apps/web typecheck`
+- `pnpm -C apps/web build`
+- `pnpm -C apps/web e2e -- stage-focus.spec.ts`
+
+## 2026-02-13 — WO005-A follow-up: Stage route canonicalization + smoke coverage
+
+### Why
+- `/battle-stage` `/replay-stage` のクエリ正規化ロジックがページごとに重複しており、回帰時に差分を見落としやすかった。
+- Stage専用ルートのスモークが E2E で未カバーだったため、URL互換と起動安定性を自動で担保する必要があった。
+
+### What
+- `apps/web/src/lib/stage_focus_params.ts` を追加:
+  - `ui=engine` 強制、`focus=1` 正規化、legacy `layout` の除去を共通化。
+- `apps/web/src/pages/BattleStage.tsx` / `apps/web/src/pages/ReplayStage.tsx`:
+  - 重複していた `useEffect` 内のクエリ補正処理を `normalizeStageFocusParams` に統一。
+- `apps/web/src/lib/__tests__/stage_focus_params.test.ts` を追加:
+  - 欠損補完、legacy `layout=focus` 吸収、`focus=focus` 正規化、no-op ケースを検証。
+- `apps/web/e2e/stage-focus.spec.ts` を追加:
+  - `/battle-stage` `/replay-stage` のURL正規化と、主要UI（Hand Dock / replay focus guard）表示を確認。
+
+### Verify
+- `pnpm -C apps/web lint`
+- `pnpm -C apps/web test`
+- `pnpm -C apps/web typecheck`
+- `pnpm -C apps/web build`
+- `pnpm -C apps/web e2e -- stage-focus.spec.ts`
+
 ## 2026-02-13 — WO005-A: Stage UI/UX foundation (viewport fit + hierarchy)
 
 ### Why

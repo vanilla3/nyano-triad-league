@@ -46,7 +46,7 @@ import { assessBoardAdvantage, type BoardAdvantage } from "@/lib/ai/board_advant
 import { AdvantageBadge } from "@/components/AdvantageBadge";
 import { writeClipboardText } from "@/lib/clipboard";
 import { appAbsoluteUrl, appPath, buildReplayShareUrl } from "@/lib/appUrl";
-import { computeStageBoardSizing } from "@/lib/stage_layout";
+import { computeStageBoardSizing, shouldShowStageSecondaryControls } from "@/lib/stage_layout";
 import { decodeReplaySharePayload, hasReplaySharePayload, stripReplayShareParams } from "@/lib/replay_share_params";
 import {
   detectReplayHighlights,
@@ -290,10 +290,11 @@ export function ReplayPage() {
   const [verifyStatus, setVerifyStatus] = React.useState<"idle" | "ok" | "mismatch">("idle");
   const [showStagePanels, setShowStagePanels] = React.useState(() => !isStageFocus);
   const [showStageSetup, setShowStageSetup] = React.useState(() => !isStageFocus);
+  const stageTransportManualOverrideRef = React.useRef(false);
   const [showStageTransport, setShowStageTransport] = React.useState(() => {
     if (!isStageFocus) return true;
     if (typeof window === "undefined") return true;
-    return window.innerWidth > 768;
+    return shouldShowStageSecondaryControls(window.innerWidth);
   });
   const [isStageFullscreen, setIsStageFullscreen] = React.useState(
     () => typeof document !== "undefined" && Boolean(document.fullscreenElement),
@@ -316,6 +317,7 @@ export function ReplayPage() {
   }, [isStageFocus]);
 
   React.useEffect(() => {
+    stageTransportManualOverrideRef.current = false;
     if (!isStageFocus) {
       setShowStageTransport(true);
       return;
@@ -324,8 +326,23 @@ export function ReplayPage() {
       setShowStageTransport(true);
       return;
     }
-    setShowStageTransport(window.innerWidth > 768);
+    setShowStageTransport(shouldShowStageSecondaryControls(window.innerWidth));
   }, [isStageFocus]);
+
+  React.useEffect(() => {
+    if (!isStageFocus || typeof window === "undefined") return;
+    const handleResize = () => {
+      if (stageTransportManualOverrideRef.current) return;
+      setShowStageTransport(shouldShowStageSecondaryControls(window.innerWidth));
+    };
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, [isStageFocus]);
+
+  const toggleStageTransport = React.useCallback(() => {
+    stageTransportManualOverrideRef.current = true;
+    setShowStageTransport((prev) => !prev);
+  }, []);
 
   React.useEffect(() => {
     const handleFullscreenChange = () => setIsStageFullscreen(Boolean(document.fullscreenElement));
@@ -988,7 +1005,7 @@ protocolV1: {
                   <button className="btn btn-sm" onClick={toggleStageFullscreen}>
                     {isStageFullscreen ? "Exit Fullscreen" : "Fullscreen"}
                   </button>
-                  <button className="btn btn-sm" onClick={() => setShowStageTransport((prev) => !prev)}>
+                  <button className="btn btn-sm" onClick={toggleStageTransport}>
                     {showStageTransport ? "Hide controls" : "Show controls"}
                   </button>
                   <button className="btn btn-sm" onClick={() => setShowStageSetup((prev) => !prev)}>

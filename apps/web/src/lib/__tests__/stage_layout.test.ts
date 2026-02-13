@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { computeStageBoardSizing } from "../stage_layout";
+import {
+  computeStageBoardSizing,
+  shouldShowStageSecondaryControls,
+} from "../stage_layout";
 
 describe("computeStageBoardSizing", () => {
   it("keeps battle-stage board within viewport constraints on desktop", () => {
@@ -53,5 +56,15 @@ describe("computeStageBoardSizing", () => {
     expect(size.maxWidthPx).toBeGreaterThanOrEqual(260);
     expect(size.minHeightPx).toBeGreaterThanOrEqual(220);
     expect(size.minHeightPx).toBeLessThanOrEqual(size.maxWidthPx);
+  });
+
+  it("uses desktop default for stage secondary controls only above breakpoint", () => {
+    expect(shouldShowStageSecondaryControls(390)).toBe(false);
+    expect(shouldShowStageSecondaryControls(768)).toBe(false);
+    expect(shouldShowStageSecondaryControls(769)).toBe(true);
+  });
+
+  it("falls back to desktop visibility for invalid width input", () => {
+    expect(shouldShowStageSecondaryControls(Number.NaN)).toBe(true);
   });
 });

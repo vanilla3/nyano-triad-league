@@ -61,7 +61,7 @@ import type { FlipTraceArrow } from "@/components/FlipArrowOverlay";
 import { MatchDrawerMint, DrawerToggleButton } from "@/components/MatchDrawerMint";
 import { writeClipboardText } from "@/lib/clipboard";
 import { appAbsoluteUrl, buildReplayShareUrl } from "@/lib/appUrl";
-import { computeStageBoardSizing } from "@/lib/stage_layout";
+import { computeStageBoardSizing, shouldShowStageSecondaryControls } from "@/lib/stage_layout";
 import { BattleStageEngine } from "@/engine/components/BattleStageEngine";
 import { MAX_CHAIN_CAP_PER_TURN, parseChainCapPerTurnParam } from "@/lib/ruleset_meta";
 import {
@@ -531,10 +531,11 @@ export function MatchPage() {
   }, []);
   const [showStageAssist, setShowStageAssist] = React.useState(() => !isStageFocusRoute);
   const showStageAssistUi = !isStageFocusRoute || showStageAssist;
+  const stageControlsManualOverrideRef = React.useRef(false);
   const [showStageControls, setShowStageControls] = React.useState(() => {
     if (!isStageFocusRoute) return true;
     if (typeof window === "undefined") return true;
-    return window.innerWidth > 768;
+    return shouldShowStageSecondaryControls(window.innerWidth);
   });
 
   React.useEffect(() => {
@@ -546,6 +547,7 @@ export function MatchPage() {
   }, [isStageFocusRoute]);
 
   React.useEffect(() => {
+    stageControlsManualOverrideRef.current = false;
     if (!isStageFocusRoute) {
       setShowStageControls(true);
       return;
@@ -554,8 +556,23 @@ export function MatchPage() {
       setShowStageControls(true);
       return;
     }
-    setShowStageControls(window.innerWidth > 768);
+    setShowStageControls(shouldShowStageSecondaryControls(window.innerWidth));
   }, [isStageFocusRoute]);
+
+  React.useEffect(() => {
+    if (!isStageFocusRoute || typeof window === "undefined") return;
+    const handleResize = () => {
+      if (stageControlsManualOverrideRef.current) return;
+      setShowStageControls(shouldShowStageSecondaryControls(window.innerWidth));
+    };
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, [isStageFocusRoute]);
+
+  const toggleStageControls = React.useCallback(() => {
+    stageControlsManualOverrideRef.current = true;
+    setShowStageControls((prev) => !prev);
+  }, []);
 
   const resetMatch = React.useCallback(() => {
     setTurns([]);
@@ -1700,7 +1717,7 @@ export function MatchPage() {
                   <button className="btn btn-sm" onClick={toggleStageFullscreen}>
                     {isStageFullscreen ? "Exit Fullscreen" : "Fullscreen"}
                   </button>
-                  <button className="btn btn-sm" onClick={() => setShowStageControls((prev) => !prev)}>
+                  <button className="btn btn-sm" onClick={toggleStageControls}>
                     {showStageControls ? "Hide Controls" : "Show Controls"}
                   </button>
                   <button className="btn btn-sm" onClick={() => setShowStageAssist((prev) => !prev)}>

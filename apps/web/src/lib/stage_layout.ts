@@ -1,5 +1,7 @@
 export type StageLayoutKind = "battle" | "replay";
 
+export const STAGE_SECONDARY_CONTROLS_BREAKPOINT_PX = 768;
+
 export interface StageBoardSizingInput {
   viewportWidthPx: number;
   viewportHeightPx: number;
@@ -9,6 +11,15 @@ export interface StageBoardSizingInput {
 export interface StageBoardSizing {
   maxWidthPx: number;
   minHeightPx: number;
+}
+
+/**
+ * Stage routes hide secondary control groups on narrow screens by default,
+ * while keeping them visible on desktop widths.
+ */
+export function shouldShowStageSecondaryControls(viewportWidthPx: number): boolean {
+  const safeWidth = Number.isFinite(viewportWidthPx) ? viewportWidthPx : 1280;
+  return safeWidth > STAGE_SECONDARY_CONTROLS_BREAKPOINT_PX;
 }
 
 function clampInt(value: number, min: number, max: number): number {

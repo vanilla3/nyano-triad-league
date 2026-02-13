@@ -68,6 +68,13 @@
   - Events に season 切替・勝率/挑戦数サマリー・最新Replay導線・Markdownコピーを追加
   - `event_attempts` に全件取得/全消去 API を追加（ローカル運用の保守性向上）
   - `season_archive.test.ts` / `event_attempts.test.ts` で集計と storage API を検証
+- ✅ WO005-A follow-up: Stage route query正規化 + Stage E2Eスモークを追加
+  - `normalizeStageFocusParams` を導入し、`ui=engine` + `focus=1` + `layout`除去を共通化
+  - `/battle-stage` `/replay-stage` 向け `stage-focus.spec.ts` を追加し、URL正規化と主要UI出現を検証
+- ✅ WO005-B follow-up: Stage補助コントロールのレスポンシブ追従を強化
+  - `shouldShowStageSecondaryControls` を導入し、ステージ補助UIの表示閾値を共通化
+  - Match/Replay の stage route で resize 追従 + 手動トグル優先（manual override）を実装
+  - mobile replay-stage で transport 非表示デフォルト + Show controls 復帰を E2E で検証
 ## 🚧 Doing (now)
 
 - 🔧 Phase 4 の運用面（ランキング / 報酬導線）の最小設計を進める
