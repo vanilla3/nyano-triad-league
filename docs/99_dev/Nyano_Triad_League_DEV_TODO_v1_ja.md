@@ -150,3 +150,6 @@
   - `ui=engine` 縺ｧ Pixi 蛻晄悄蛹門､ｱ謨玲凾縺ｫ `BoardViewMint` 縺ｸ閾ｪ蜍輔ヵ繧ｩ繝ｼ繝ｫ繝舌ャ繧ｯ縺励※騾ｲ陦檎ｶ咏ｶ・
   - `/battle-stage` `/replay-stage` 縺ｫ `Retry Pixi` 蟆守ｷ壹ｒ霑ｽ蜉
   - stage-focus E2E 縺ｫ WebGL unavailable 繧ｱ繝ｼ繧ｹ繧定ｿｽ蜉縺励※蝗槫ｸｰ髦ｲ豁｢
+- ✅ WO005-J follow-up: replay-stage WebGL fallback の E2E回帰防止を追加
+  - `/replay-stage` の WebGL unavailable 時に Mint fallback + retry導線を stage-focus E2Eで固定
+  - 375px commit可視性テストを fallback モードも許容する判定へ強化

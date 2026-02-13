@@ -1199,3 +1199,22 @@
 - `pnpm -C apps/web test -- src/engine/__tests__/BattleStageEngine.test.ts src/engine/__tests__/rendererHardening.test.ts`
 - `pnpm -C apps/web e2e -- stage-focus.spec.ts`
 - `pnpm -C apps/web build`
+## 2026-02-13 — WO005-J follow-up: replay-stage WebGL fallback e2e coverage
+
+### Why
+- We added Pixi-init failure fallback to Mint board in both battle and replay routes, but only battle had explicit e2e protection.
+- Replay fallback path needed the same regression guard to keep stage routes resilient on WebGL-unavailable environments.
+
+### What
+- `apps/web/e2e/stage-focus.spec.ts`
+  - Added `/replay-stage` scenario that forces WebGL context failure and verifies:
+    - fallback banner visibility,
+    - replay-specific retry action (`Retry Pixi renderer in replay`).
+  - Hardened existing 375px commit-visibility assertion:
+    - pass when commit button is in viewport in normal Pixi path,
+    - also pass when Pixi fallback mode is active (`Retry Pixi renderer` visible).
+
+### Verify
+- `pnpm -C apps/web e2e -- stage-focus.spec.ts`
+- `pnpm -C apps/web typecheck`
+- `pnpm -C apps/web lint`

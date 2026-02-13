@@ -92,6 +92,29 @@ test.describe("stage routes", () => {
     await expect(page.getByText("Pixi focus needs a loaded replay")).toBeVisible({ timeout: 10_000 });
   });
 
+  test("/replay-stage falls back to mint board when WebGL is unavailable", async ({ page }) => {
+    await page.addInitScript(() => {
+      const originalGetContext = HTMLCanvasElement.prototype.getContext;
+      HTMLCanvasElement.prototype.getContext = function (contextId: string, options?: unknown) {
+        if (typeof contextId === "string" && contextId.toLowerCase().includes("webgl")) {
+          return null;
+        }
+        return originalGetContext.call(this, contextId, options);
+      };
+    });
+
+    const zParam = encodeTranscriptZ(REPLAY_TRANSCRIPT_JSON);
+    await page.goto(`/replay-stage?ui=engine&focus=1&mode=v2&z=${zParam}`);
+
+    const loadReplayButton = page.getByRole("button", { name: "Load replay" });
+    if (await loadReplayButton.count()) {
+      await loadReplayButton.first().click();
+    }
+
+    await expect(page.getByText(/Pixi renderer is unavailable\./).first()).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByLabel("Retry Pixi renderer in replay")).toBeVisible({ timeout: 10_000 });
+  });
+
   test("/replay-stage hides transport controls by default on mobile and allows toggle", async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
     const zParam = encodeTranscriptZ(REPLAY_TRANSCRIPT_JSON);
@@ -108,13 +131,23 @@ test.describe("stage routes", () => {
 
     const commitButton = page.getByLabel("Commit move from focus hand dock");
     await expect(commitButton).toBeVisible({ timeout: 10_000 });
-    const fallbackBanner = page.getByText(/Pixi renderer is unavailable\./).first();
-    if (await fallbackBanner.isVisible().catch(() => false)) {
-      // WebGL/dynamic-chunk fallback path: keep visibility guarantee.
-      await expect(commitButton).toBeVisible();
-    } else {
-      await expect(commitButton).toBeInViewport();
-    }
+    const retryPixiButton = page.getByLabel("Retry Pixi renderer");
+    await expect
+      .poll(async () => {
+        if (await retryPixiButton.isVisible().catch(() => false)) {
+          // WebGL/dynamic-chunk fallback path: keep visibility guarantee.
+          return true;
+        }
+        return commitButton.evaluate((el) => {
+          const rect = el.getBoundingClientRect();
+          const visibleHeight = Math.max(
+            0,
+            Math.min(rect.bottom, window.innerHeight) - Math.max(rect.top, 0),
+          );
+          return visibleHeight > 0;
+        });
+      })
+      .toBe(true);
 
     const overflowPx = await readHorizontalOverflowPx(page);
     expect(overflowPx).toBeLessThanOrEqual(1);
