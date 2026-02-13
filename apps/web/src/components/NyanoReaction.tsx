@@ -100,6 +100,25 @@ function cutInDurationsForImpact(impact: CutInImpact): { burstMs: number; visibl
   return { burstMs: 560, visibleMs: 3000 };
 }
 
+function burstLabelForKind(kind: ReactionKind): string {
+  switch (kind) {
+    case "victory":
+      return "VICTORY BURST";
+    case "defeat":
+      return "LAST STAND";
+    case "game_draw":
+      return "FINAL CLASH";
+    case "fever":
+      return "FEVER BURST";
+    case "chain":
+      return "CHAIN DRIVE";
+    case "domination":
+      return "DOMINATION";
+    default:
+      return "NYANO BURST";
+  }
+}
+
 /* ── Determine Reaction Kind ── */
 
 export interface NyanoReactionInput {
@@ -224,6 +243,7 @@ export function NyanoReaction({
   const pixiTone = mint && tone === "pixi";
   const cutInImpact = React.useMemo(() => resolveReactionCutInImpact(kind, aiReasonCode), [kind, aiReasonCode]);
   const cutInTiming = React.useMemo(() => cutInDurationsForImpact(cutInImpact), [cutInImpact]);
+  const burstLabel = React.useMemo(() => burstLabelForKind(kind), [kind]);
 
   // Pick dialogue: AI reason dialogue takes priority if available
   const line = React.useMemo(() => {
@@ -322,6 +342,7 @@ export function NyanoReaction({
           "mint-nyano-reaction",
           "mint-nyano-reaction--cutin",
           `mint-nyano-reaction--impact-${cutInImpact}`,
+          cutInImpact === "high" ? "mint-nyano-reaction--braveburst" : "",
           pixiTone ? "mint-nyano-reaction--pixi" : "",
           visible ? "mint-nyano-reaction--visible" : "mint-nyano-reaction--hidden",
           cutInBurst ? "mint-nyano-reaction--burst" : "",
@@ -331,6 +352,12 @@ export function NyanoReaction({
       >
         <span className="mint-nyano-reaction__cutin-flash" aria-hidden="true" />
         <span className="mint-nyano-reaction__scanline" aria-hidden="true" />
+        {cutInImpact === "high" && (
+          <div className="mint-nyano-reaction__burst-banner" aria-hidden="true">
+            <span className="mint-nyano-reaction__burst-main">{burstLabel}</span>
+            <span className="mint-nyano-reaction__burst-sub">{cfg.badge || "PIKA"}</span>
+          </div>
+        )}
         <div className="mint-nyano-reaction__inner">
           <NyanoAvatar size={32} expression={reactionToExpression(kind)} alt={cfg.emoji} />
           {cfg.badge && (

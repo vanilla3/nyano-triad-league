@@ -22,6 +22,10 @@ export interface HandDisplayMintProps {
   selectedIndex: number | null;
   onSelect?: (index: number) => void;
   disabled?: boolean;
+  /** Enable desktop drag-and-drop from hand to board */
+  enableDragDrop?: boolean;
+  onCardDragStart?: (index: number) => void;
+  onCardDragEnd?: () => void;
 }
 
 export function HandDisplayMint({
@@ -31,6 +35,9 @@ export function HandDisplayMint({
   selectedIndex,
   onSelect,
   disabled = false,
+  enableDragDrop = false,
+  onCardDragStart,
+  onCardDragEnd,
 }: HandDisplayMintProps) {
   const preview = useCardPreview();
 
@@ -46,6 +53,7 @@ export function HandDisplayMint({
           owner === 0 ? "mint-hand-card--a" : "mint-hand-card--b",
           isSelected && "mint-hand-card--selected",
           isUsed && "mint-hand-card--used",
+          enableDragDrop && !isDisabled && "mint-hand-card--draggable",
         ].filter(Boolean).join(" ");
 
         const lp = !isUsed ? preview.longPressHandlers(card, owner) : undefined;
@@ -59,8 +67,23 @@ export function HandDisplayMint({
             aria-label={`Card ${idx + 1}: edges ${card.edges.up}/${card.edges.right}/${card.edges.down}/${card.edges.left}${isUsed ? " (used)" : ""}`}
             className={classes}
             disabled={isDisabled}
+            draggable={enableDragDrop && !isDisabled}
             data-hand-card={idx}
             onClick={() => { if (!isDisabled) onSelect?.(idx); }}
+            onDragStart={(e) => {
+              if (!enableDragDrop || isDisabled) {
+                e.preventDefault();
+                return;
+              }
+              e.dataTransfer.effectAllowed = "move";
+              e.dataTransfer.setData("application/x-nytl-card-index", String(idx));
+              e.dataTransfer.setData("text/plain", String(idx));
+              onCardDragStart?.(idx);
+            }}
+            onDragEnd={() => {
+              if (!enableDragDrop) return;
+              onCardDragEnd?.();
+            }}
             onPointerEnter={(e) => { if (!isUsed) preview.show(card, owner, e.currentTarget); }}
             onPointerLeave={() => preview.hide()}
             onTouchStart={lp?.onTouchStart}

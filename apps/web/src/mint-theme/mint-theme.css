@@ -200,6 +200,20 @@
   transform: scale(0.98);
 }
 
+.mint-cell--drop-ready {
+  border-style: dashed;
+  border-width: 2px;
+  border-color: rgba(56, 189, 248, 0.72);
+  box-shadow:
+    0 0 0 1px rgba(56, 189, 248, 0.35) inset,
+    0 0 18px rgba(56, 189, 248, 0.28);
+}
+
+.mint-cell--drop-ready .mint-cell__empty-label {
+  color: #0ea5e9;
+  font-weight: 700;
+}
+
 /* Flat (empty, non-interactive) — sunken, semi-transparent on board bg */
 .mint-cell--flat {
   cursor: default;
@@ -434,6 +448,14 @@
   flex-shrink: 0;
   /* Subtle depth even at rest */
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+
+.mint-hand-card--draggable {
+  cursor: grab;
+}
+
+.mint-hand-card--draggable:active {
+  cursor: grabbing;
 }
 
 .mint-hand-card:hover:not(.mint-hand-card--used) {
@@ -860,6 +882,55 @@
     );
 }
 
+.mint-nyano-reaction__burst-banner {
+  position: absolute;
+  inset: 2px;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 0 12px;
+  border-radius: 13px;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateX(-12%) skewX(-12deg);
+  background:
+    linear-gradient(
+      102deg,
+      rgba(249, 115, 22, 0.82) 0%,
+      rgba(244, 63, 94, 0.76) 26%,
+      rgba(56, 189, 248, 0.72) 58%,
+      rgba(16, 185, 129, 0.68) 100%
+    );
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.38),
+    0 0 28px rgba(56, 189, 248, 0.32);
+}
+
+.mint-nyano-reaction__burst-main,
+.mint-nyano-reaction__burst-sub {
+  color: #f8fafc;
+  font-family: "Trebuchet MS", "Segoe UI", "Arial Black", sans-serif;
+  letter-spacing: 0.08em;
+  text-shadow: 0 1px 6px rgba(2, 6, 23, 0.85);
+  transform: skewX(12deg);
+}
+
+.mint-nyano-reaction__burst-main {
+  font-size: 11px;
+  font-weight: 900;
+}
+
+.mint-nyano-reaction__burst-sub {
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.mint-nyano-reaction--braveburst.mint-nyano-reaction--burst .mint-nyano-reaction__burst-banner {
+  animation: mint-nyano-braveburst-banner 860ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
 .mint-nyano-reaction--burst .mint-nyano-reaction__cutin-flash {
   animation: mint-nyano-cutin-flash 560ms cubic-bezier(0.16, 1, 0.3, 1);
 }
@@ -949,6 +1020,28 @@
   100% {
     opacity: 0;
     transform: translateX(112%);
+  }
+}
+
+@keyframes mint-nyano-braveburst-banner {
+  0% {
+    opacity: 0;
+    transform: translateX(-20%) skewX(-12deg);
+    filter: saturate(0.94) brightness(0.92);
+  }
+  20% {
+    opacity: 0.98;
+    transform: translateX(0) skewX(-12deg);
+    filter: saturate(1.08) brightness(1.08);
+  }
+  80% {
+    opacity: 0.95;
+    transform: translateX(0) skewX(-12deg);
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(9%) skewX(-12deg);
+    filter: saturate(0.96) brightness(0.96);
   }
 }
 
@@ -1292,6 +1385,38 @@
 .mint-stage__board > * {
   transform: rotateX(2deg);
   transform-origin: center bottom;
+}
+
+.engine-drop-grid {
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  z-index: 4;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 4px;
+  pointer-events: none;
+}
+
+.engine-drop-grid__cell {
+  border-radius: 6px;
+  pointer-events: none;
+}
+
+.engine-drop-grid--active .engine-drop-grid__cell--droppable {
+  pointer-events: auto;
+  border: 1.5px dashed rgba(56, 189, 248, 0.42);
+  background: rgba(8, 47, 73, 0.16);
+  box-shadow: inset 0 0 0 1px rgba(125, 211, 252, 0.22);
+  transition: border-color 120ms ease, background 120ms ease, box-shadow 120ms ease;
+}
+
+.engine-drop-grid--active .engine-drop-grid__cell--droppable:hover {
+  border-color: rgba(56, 189, 248, 0.88);
+  background: rgba(14, 116, 144, 0.24);
+  box-shadow:
+    inset 0 0 0 1px rgba(125, 211, 252, 0.4),
+    0 0 16px rgba(56, 189, 248, 0.32);
 }
 
 .mint-stage--impact-low {
@@ -1702,12 +1827,14 @@
   .mint-nyano-reaction,
   .mint-nyano-reaction__cutin-flash,
   .mint-nyano-reaction__scanline,
+  .mint-nyano-reaction__burst-banner,
   .mint-drawer,
   .mint-drawer-backdrop,
   .mint-stage--impact-burst,
   .mint-stage--impact-burst .mint-stage__holo,
   .mint-stage--impact-burst .mint-stage__glow,
-  .mint-stage--impact-burst .mint-stage__board > * {
+  .mint-stage--impact-burst .mint-stage__board > *,
+  .engine-drop-grid--active .engine-drop-grid__cell--droppable {
     animation: none !important;
     transition-duration: 0s !important;
   }
@@ -1756,8 +1883,21 @@
   border-radius: 14px;
   border: 2px solid rgba(255, 255, 255, 0.15);
   /* dark fallback background for cards without NFT art */
-  background-color: #1a1a2e;
+  background:
+    radial-gradient(circle at 20% 12%, rgba(255, 255, 255, 0.12), transparent 48%),
+    #1a1a2e;
   transition: box-shadow 0.25s ease, border-color 0.25s ease, transform 0.25s ease;
+}
+
+.mint-duel-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 2;
+  background:
+    radial-gradient(circle at 28% 18%, rgba(255, 255, 255, 0.14), transparent 44%),
+    linear-gradient(to bottom, transparent 38%, rgba(2, 6, 23, 0.28) 100%);
 }
 
 /* Owner glow — activated by parent .mint-cell--owner-X */
@@ -1794,13 +1934,17 @@
 .mint-duel-card__art {
   position: absolute;
   inset: 0;
+  z-index: 0;
+  transform: scale(1.015);
+  filter: saturate(1.08) contrast(1.06);
 }
 
 /* Owner tint overlay */
 .mint-duel-card__tint {
   position: absolute;
   inset: 0;
-  opacity: 0.12;
+  z-index: 1;
+  opacity: 0.09;
   pointer-events: none;
 }
 
@@ -1810,15 +1954,16 @@
   bottom: 0;
   left: 0;
   right: 0;
+  z-index: 4;
   backdrop-filter: blur(12px) saturate(1.4);
   -webkit-backdrop-filter: blur(12px) saturate(1.4);
   background: linear-gradient(
     180deg,
-    rgba(0, 0, 0, 0.35) 0%,
-    rgba(0, 0, 0, 0.55) 100%
+    rgba(0, 0, 0, 0.18) 0%,
+    rgba(0, 0, 0, 0.52) 100%
   );
   padding: 4px 5px;
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  border-top: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 /* Edge cross layout inside glass panel (3x3 grid) */
@@ -1874,6 +2019,7 @@
   left: 0;
   right: 0;
   height: 3px;
+  z-index: 5;
 }
 
 /* Token ID label */
@@ -1881,6 +2027,7 @@
   position: absolute;
   top: 3px;
   left: 5px;
+  z-index: 6;
   font-size: 8px;
   font-family: var(--font-mono, monospace);
   color: rgba(255, 255, 255, 0.6);
@@ -1892,6 +2039,7 @@
 .mint-duel-card__foil {
   position: absolute;
   inset: 0;
+  z-index: 7;
   background: linear-gradient(
     135deg,
     transparent 30%,
@@ -1902,6 +2050,8 @@
   );
   background-size: 200% 200%;
   animation: mint-holo-shift 4s ease-in-out infinite;
+  mix-blend-mode: screen;
+  opacity: 0.75;
   pointer-events: none;
 }
 
@@ -2046,6 +2196,7 @@
 [data-vfx="off"] .mint-cell--flipped                 { animation: none !important; }
 [data-vfx="off"] .mint-duel-card--placed             { animation: none !important; }
 [data-vfx="off"] .mint-duel-card--flipped            { animation: none !important; }
+[data-vfx="off"] .mint-nyano-reaction__burst-banner  { animation: none !important; }
 [data-vfx="off"] .mint-stage--impact-burst           { animation: none !important; filter: none !important; }
 [data-vfx="off"] .mint-stage--impact-burst .mint-stage__holo,
 [data-vfx="off"] .mint-stage--impact-burst .mint-stage__glow,
@@ -2062,6 +2213,7 @@
 [data-vfx="low"] .mint-cell--flipped                  { animation-duration: 0.25s !important; }
 [data-vfx="low"] .mint-duel-card--placed              { animation-duration: 0.25s !important; }
 [data-vfx="low"] .mint-duel-card--flipped             { animation-duration: 0.3s !important; }
+[data-vfx="low"] .mint-nyano-reaction__burst-banner   { animation-duration: 420ms !important; }
 [data-vfx="low"] .mint-stage--impact-burst            { animation-duration: 280ms !important; }
 [data-vfx="low"] .mint-stage--impact-burst .mint-stage__holo,
 [data-vfx="low"] .mint-stage--impact-burst .mint-stage__glow,

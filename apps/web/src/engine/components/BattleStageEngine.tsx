@@ -31,6 +31,12 @@ export interface BattleStageEngineProps {
   selectedCell?: number | null;
   selectableCells?: Set<number>;
   onCellSelect?: (cell: number) => void;
+  /** Enable drag-drop hit layer for hand card placement. */
+  dragDropActive?: boolean;
+  /** Drop callback for drag-drop placement. */
+  onCellDrop?: (cell: number) => void;
+  /** Hover callback while dragging over a board cell. */
+  onCellDragHover?: (cell: number | null) => void;
   currentPlayer?: PlayerIndex | null;
   /** Cell index where a card was just placed (animation trigger). */
   placedCell?: number | null;
@@ -61,6 +67,7 @@ export interface BattleStageEngineProps {
    ═══════════════════════════════════════════════════════════════════════════ */
 
 const EMPTY_SET = new Set<number>();
+const CELL_INDEXES: readonly number[] = [0, 1, 2, 3, 4, 5, 6, 7, 8];
 const ENGINE_BOARD_MAX_WIDTH_PX = 760;
 const ENGINE_BOARD_MIN_HEIGHT_PX = 320;
 
@@ -134,6 +141,9 @@ export function BattleStageEngine({
   selectedCell = null,
   selectableCells,
   onCellSelect,
+  dragDropActive = false,
+  onCellDrop,
+  onCellDragHover,
   currentPlayer = null,
   placedCell,
   flippedCells,
@@ -154,6 +164,7 @@ export function BattleStageEngine({
   const [initError, setInitError] = React.useState<string | null>(null);
   const resolvedBoardMaxWidthPx = boardMaxWidthPx ?? ENGINE_BOARD_MAX_WIDTH_PX;
   const resolvedBoardMinHeightPx = boardMinHeightPx ?? ENGINE_BOARD_MIN_HEIGHT_PX;
+  const dropSelectableCells = selectableCells ?? EMPTY_SET;
 
   // ── Card inspect hook ──
   const inspect = useCardPreview();
@@ -319,6 +330,56 @@ export function BattleStageEngine({
               isAnimating={isFlipAnimating}
             />
           )}
+        </div>
+
+        {/* Drop target layer — always rendered for card-flight target rects.
+            Interactions are enabled only while dragDropActive. */}
+        <div
+          className={[
+            "engine-drop-grid",
+            dragDropActive ? "engine-drop-grid--active" : "",
+          ].join(" ")}
+          style={{ width: "85%", height: "85%" }}
+          onDragLeave={() => {
+            if (!dragDropActive) return;
+            onCellDragHover?.(null);
+          }}
+        >
+          {CELL_INDEXES.map((cell) => {
+            const droppable = dropSelectableCells.has(cell);
+            return (
+              <div
+                key={`drop-${cell}`}
+                data-board-cell={cell}
+                className={[
+                  "engine-drop-grid__cell",
+                  droppable ? "engine-drop-grid__cell--droppable" : "",
+                  dragDropActive && droppable ? "engine-drop-grid__cell--active" : "",
+                ].filter(Boolean).join(" ")}
+                onDragEnter={(e) => {
+                  if (!dragDropActive || !droppable) return;
+                  e.preventDefault();
+                  onCellDragHover?.(cell);
+                }}
+                onDragOver={(e) => {
+                  if (!dragDropActive || !droppable) return;
+                  e.preventDefault();
+                  e.dataTransfer.dropEffect = "move";
+                  onCellDragHover?.(cell);
+                }}
+                onDrop={(e) => {
+                  if (!dragDropActive || !droppable) return;
+                  e.preventDefault();
+                  onCellDrop?.(cell);
+                  onCellDragHover?.(null);
+                }}
+                onClick={() => {
+                  if (!dragDropActive || !droppable) return;
+                  callbackRef.current?.(cell);
+                }}
+              />
+            );
+          })}
         </div>
       </div>
 

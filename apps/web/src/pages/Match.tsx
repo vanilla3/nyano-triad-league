@@ -448,6 +448,8 @@ export function MatchPage() {
   const [draftCell, setDraftCell] = React.useState<number | null>(null);
   const [draftCardIndex, setDraftCardIndex] = React.useState<number | null>(null);
   const [draftWarningMarkCell, setDraftWarningMarkCell] = React.useState<number | null>(null);
+  const [dragCardIndex, setDragCardIndex] = React.useState<number | null>(null);
+  const [isHandDragging, setIsHandDragging] = React.useState(false);
 
   const [selectedTurnIndex, setSelectedTurnIndex] = React.useState<number>(0);
 
@@ -534,6 +536,8 @@ export function MatchPage() {
     setDraftCell(null);
     setDraftCardIndex(null);
     setDraftWarningMarkCell(null);
+    setDragCardIndex(null);
+    setIsHandDragging(false);
     setSelectedTurnIndex(0);
     setAiNotes({});
     setAiAutoMoveDueAtMs(null);
@@ -555,6 +559,8 @@ export function MatchPage() {
     setDraftCell(null);
     setDraftCardIndex(null);
     setDraftWarningMarkCell(null);
+    setDragCardIndex(null);
+    setIsHandDragging(false);
     setSelectedTurnIndex(0);
     setAiNotes({});
     setAiAutoMoveDueAtMs(null);
@@ -692,10 +698,18 @@ export function MatchPage() {
   const currentTurnIndex = turns.length;
   const currentPlayer = turnPlayer(firstPlayer, currentTurnIndex);
   const isAiTurn = isVsNyanoAi && currentPlayer === aiPlayer;
+  const enableHandDragDrop = useMintUi
+    && !isRpg
+    && !isAiTurn
+    && turns.length < 9;
 
   const currentDeckTokens = currentPlayer === 0 ? effectiveDeckATokens : effectiveDeckBTokens;
   const currentUsed = currentPlayer === 0 ? used.usedA : used.usedB;
   const currentWarnRemaining = currentPlayer === 0 ? Math.max(0, 3 - warnUsed.A) : Math.max(0, 3 - warnUsed.B);
+  const currentHandCards: CardData[] = React.useMemo(() => {
+    if (!cards) return [];
+    return currentDeckTokens.map((tid) => cards.get(tid)).filter(Boolean) as CardData[];
+  }, [cards, currentDeckTokens]);
 
   const availableCells = React.useMemo(() => {
     const out: number[] = [];
@@ -1179,7 +1193,38 @@ export function MatchPage() {
     [turns.length, used.cells, currentUsed, currentWarnRemaining, telemetry]
   );
 
-  const commitMove = () => {
+  const commitMoveWithSelection = React.useCallback((cell: number, cardIndex: number) => {
+    const move = {
+      cell,
+      cardIndex,
+      warningMarkCell: draftWarningMarkCell === null ? undefined : draftWarningMarkCell,
+    };
+
+    // Card flight animation (mint / engine mode)
+    if (useMintUi && !cardFlight.isFlying) {
+      const sourceEl = document.querySelector(`[data-hand-card="${cardIndex}"]`) as HTMLElement | null;
+      const targetEl = document.querySelector(`[data-board-cell="${cell}"]`) as HTMLElement | null;
+      const card = currentHandCards[cardIndex];
+      if (sourceEl && targetEl && card) {
+        cardFlight.launch(card, currentPlayer, sourceEl, targetEl, () => {
+          commitTurn(move);
+        });
+        return;
+      }
+    }
+
+    // Fallback: commit immediately (non-mint or elements not found)
+    commitTurn(move);
+  }, [
+    cardFlight,
+    commitTurn,
+    currentHandCards,
+    currentPlayer,
+    draftWarningMarkCell,
+    useMintUi,
+  ]);
+
+  const commitMove = React.useCallback(() => {
     if (isAiTurn) return;
 
     if (draftCell === null) {
@@ -1193,28 +1238,60 @@ export function MatchPage() {
       return;
     }
 
-    const move = {
-      cell: draftCell,
-      cardIndex: draftCardIndex,
-      warningMarkCell: draftWarningMarkCell === null ? undefined : draftWarningMarkCell,
-    };
+    commitMoveWithSelection(draftCell, draftCardIndex);
+  }, [commitMoveWithSelection, draftCardIndex, draftCell, isAiTurn, telemetry]);
 
-    // Card flight animation (mint / engine mode)
-    if (useMintUi && !cardFlight.isFlying) {
-      const sourceEl = document.querySelector(`[data-hand-card="${draftCardIndex}"]`) as HTMLElement | null;
-      const targetEl = document.querySelector(`[data-board-cell="${draftCell}"]`) as HTMLElement | null;
-      const card = currentHandCards[draftCardIndex];
-      if (sourceEl && targetEl && card) {
-        cardFlight.launch(card, currentPlayer, sourceEl, targetEl, () => {
-          commitTurn(move);
-        });
-        return;
-      }
+  const handleHandCardDragStart = React.useCallback((idx: number) => {
+    if (!enableHandDragDrop) return;
+    telemetry.recordInteraction();
+    setDraftCardIndex(idx);
+    setDragCardIndex(idx);
+    setIsHandDragging(true);
+  }, [enableHandDragDrop, telemetry]);
+
+  const handleHandCardDragEnd = React.useCallback(() => {
+    setIsHandDragging(false);
+    setDragCardIndex(null);
+  }, []);
+
+  const handleBoardDragHover = React.useCallback((cell: number | null) => {
+    if (!isHandDragging) return;
+    setDraftCell(cell);
+  }, [isHandDragging]);
+
+  const handleBoardDrop = React.useCallback((cell: number) => {
+    if (!enableHandDragDrop || isAiTurn || turns.length >= 9) return;
+    const resolvedCardIndex = dragCardIndex ?? draftCardIndex;
+    if (resolvedCardIndex === null) {
+      setError("card を選択してください");
+      telemetry.recordInvalidAction();
+      return;
     }
+    setDraftCardIndex(resolvedCardIndex);
+    setDraftCell(cell);
+    commitMoveWithSelection(cell, resolvedCardIndex);
+    setIsHandDragging(false);
+    setDragCardIndex(null);
+  }, [
+    commitMoveWithSelection,
+    dragCardIndex,
+    draftCardIndex,
+    enableHandDragDrop,
+    isAiTurn,
+    telemetry,
+    turns.length,
+  ]);
 
-    // Fallback: commit immediately (non-mint or elements not found)
-    commitTurn(move);
-  };
+  React.useEffect(() => {
+    if (enableHandDragDrop) return;
+    setIsHandDragging(false);
+    setDragCardIndex(null);
+  }, [enableHandDragDrop]);
+
+  React.useEffect(() => {
+    setIsHandDragging(false);
+    setDragCardIndex(null);
+  }, [turns.length]);
 
   const undoMove = () => {
     setError(null);
@@ -1519,11 +1596,6 @@ export function MatchPage() {
     }));
   }, [sim, cards]);
 
-  // P0-2: Build cards array for HandDisplayRPG
-  const currentHandCards: CardData[] = React.useMemo(() => {
-    if (!cards) return [];
-    return currentDeckTokens.map((tid) => cards.get(tid)).filter(Boolean) as CardData[];
-  }, [cards, currentDeckTokens]);
   const showDesktopQuickCommit = useMintUi
     && !isRpg
     && !isAiTurn
@@ -2368,6 +2440,9 @@ export function MatchPage() {
                         onDismissError={() => setError(null)}
                         flipTraces={showStageAssistUi && density !== "minimal" ? lastFlipTraces : null}
                         isFlipAnimating={boardAnim.isAnimating}
+                        dragDropEnabled={enableHandDragDrop && isHandDragging}
+                        onCellDrop={handleBoardDrop}
+                        onCellDragHover={handleBoardDragHover}
                       />
                     </DuelStageMint>
                   ) : isEngine ? (
@@ -2394,6 +2469,9 @@ export function MatchPage() {
                         onDismissError={() => setError(null)}
                         flipTraces={showStageAssistUi && density !== "minimal" ? lastFlipTraces : null}
                         isFlipAnimating={boardAnim.isAnimating}
+                        dragDropActive={enableHandDragDrop && isHandDragging}
+                        onCellDrop={handleBoardDrop}
+                        onCellDragHover={handleBoardDragHover}
                       />
                     </DuelStageMint>
                   ) : isRpg ? (
@@ -2542,6 +2620,7 @@ export function MatchPage() {
                     >
                       {currentPlayer === 0 ? "Player A" : "Player B"} Hand
                       {draftCell !== null && <span className={isRpg ? "" : " text-slate-400"}> · placing on cell {draftCell}</span>}
+                      {isHandDragging && <span className={isRpg ? "" : " text-cyan-500"}> · drop on board to commit</span>}
                     </div>
 
                     {useMintUi && currentHandCards.length > 0 ? (
@@ -2553,6 +2632,9 @@ export function MatchPage() {
                         selectedIndex={draftCardIndex}
                         onSelect={(idx) => { telemetry.recordInteraction(); setDraftCardIndex(idx); }}
                         disabled={turns.length >= 9 || isAiTurn}
+                        enableDragDrop={enableHandDragDrop}
+                        onCardDragStart={handleHandCardDragStart}
+                        onCardDragEnd={handleHandCardDragEnd}
                       />
                     ) : isRpg && currentHandCards.length > 0 ? (
                       /* P0-2: RPG Hand Display */

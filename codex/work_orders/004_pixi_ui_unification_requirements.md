@@ -81,3 +81,6 @@
 - [x] 004-B reaction cut-in follow-up: `NyanoReaction` now plays a cinematic cut-in entrance (flash + scanline accent) in mint/pixi tone while preserving reduced-motion behavior.
 - [x] 004-B reaction cut-in v2: cut-in now has impact tiers (`low/mid/high`) based on reaction kind, with stronger burst timing/visuals for high-impact moments (chain/fever/win/lose).
 - [x] 004-B stage impact sync: `DuelStageMint` now receives Nyano reaction impact and plays short board-side burst lighting (`mid/high`) in Match/Replay pixi focus, with reduced-motion and VFX-tier fallbacks.
+- [x] 004-B reaction cut-in v3: high-impact reactions now show a brave-burst style diagonal banner layer (`NYANO BURST`-like callout) synchronized to cut-in burst timing.
+- [x] 004-A drag-drop first pass: hand cards can now be dragged and dropped onto mint/pixi board cells to commit placement directly (desktop flow).
+- [x] 004-B card art emphasis polish: mint/pixi card surface tuning reduces tint wash and improves highlight/vignette balance so NFT art stays readable and premium.

@@ -50,6 +50,12 @@ export interface BoardViewMintProps {
   flipTraces?: readonly FlipTraceArrow[] | null;
   /** Whether board flip animation is running */
   isFlipAnimating?: boolean;
+  /** Enable hand-card drag drop to cells */
+  dragDropEnabled?: boolean;
+  /** Called when a hand card is dropped onto a cell */
+  onCellDrop?: (cell: number) => void;
+  /** Called when dragging over a cell (or null when leaving) */
+  onCellDragHover?: (cell: number | null) => void;
 }
 
 // ── Helpers ────────────────────────────────────────────────────────────
@@ -107,6 +113,9 @@ interface MintCellProps {
   };
   showCoordinates: boolean;
   isWarningMode: boolean;
+  dragDropEnabled: boolean;
+  onDropCard?: (cell: number) => void;
+  onDragHover?: (cell: number | null) => void;
 }
 
 function MintCell({
@@ -124,6 +133,9 @@ function MintCell({
   inspectHandlers,
   showCoordinates,
   isWarningMode,
+  dragDropEnabled,
+  onDropCard,
+  onDragHover,
 }: MintCellProps) {
   const hasCard = !!cell?.card;
   const owner = hasCard ? (cell.owner as PlayerIndex) : null;
@@ -140,6 +152,7 @@ function MintCell({
   }
 
   if (isSelected && !hasCard) classes.push("mint-cell--selected");
+  if (dragDropEnabled && !hasCard && isSelectable) classes.push("mint-cell--drop-ready");
   if (isPlaced) classes.push("mint-cell--placed");
   if (isFlipped) {
     classes.push("mint-cell--flipped");
@@ -159,6 +172,27 @@ function MintCell({
       className={classes.join(" ")}
       data-board-cell={index}
       onClick={isSelectable && !hasCard ? onSelect : undefined}
+      onDragEnter={(e) => {
+        if (!dragDropEnabled || hasCard || !isSelectable) return;
+        e.preventDefault();
+        onDragHover?.(index);
+      }}
+      onDragOver={(e) => {
+        if (!dragDropEnabled || hasCard || !isSelectable) return;
+        e.preventDefault();
+        e.dataTransfer.dropEffect = "move";
+        onDragHover?.(index);
+      }}
+      onDragLeave={() => {
+        if (!dragDropEnabled) return;
+        onDragHover?.(null);
+      }}
+      onDrop={(e) => {
+        if (!dragDropEnabled || hasCard || !isSelectable) return;
+        e.preventDefault();
+        onDropCard?.(index);
+        onDragHover?.(null);
+      }}
       {...(hasCard && inspectHandlers ? inspectHandlers : {})}
     >
       {/* Coordinate label */}
@@ -263,6 +297,9 @@ export function BoardViewMint({
   onDismissError,
   flipTraces = null,
   isFlipAnimating = false,
+  dragDropEnabled = false,
+  onCellDrop,
+  onCellDragHover,
 }: BoardViewMintProps) {
   const gridRef = React.useRef<HTMLDivElement>(null);
   const selectableSet = toSelectableSet(selectableCells);
@@ -347,6 +384,9 @@ export function BoardViewMint({
                   inspectHandlers={cellInspect}
                   showCoordinates={showCoordinates}
                   isWarningMode={isWarningMode}
+                  dragDropEnabled={dragDropEnabled}
+                  onDropCard={onCellDrop}
+                  onDragHover={onCellDragHover}
                 />
               );
             })}

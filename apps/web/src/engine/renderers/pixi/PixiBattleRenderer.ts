@@ -72,6 +72,7 @@ const COLORS = {
   boardHighlight: 0x9cc3ff,
   cellShadow: 0x030712,
   cardGlass: 0xffffff,
+  cardVignette: 0x020617,
   holoA: 0x67e8f9,
   holoB: 0xa78bfa,
   jankenBadgeBg: 0x020617,
@@ -102,8 +103,8 @@ const LAYOUT = {
   tokenLabelPadY: 2,
   coordOffsetX: 3,
   coordOffsetY: 2,
-  ownerTintAlpha: 0.25,
-  ownerFallbackAlpha: 0.35,
+  ownerTintAlpha: 0.17,
+  ownerFallbackAlpha: 0.28,
   selectedFillAlpha: 0.6,
   selectedStrokeWidth: 3,
   selectableStrokeWidth: 1.5,
@@ -691,11 +692,13 @@ export class PixiBattleRenderer implements IBattleRenderer {
 
     glass.clear();
     if (features.cardGlass && hasTexture) {
-      const topH = Math.max(10, h * 0.34);
+      const topH = Math.max(10, h * 0.28);
       glass.roundRect(0, 0, w, topH, LAYOUT.cardFrameCorner);
-      glass.fill({ color: COLORS.cardGlass, alpha: quality === "high" ? 0.11 : 0.075 });
-      glass.roundRect(0, h * 0.58, w, h * 0.24, LAYOUT.cardFrameCorner);
-      glass.fill({ color: COLORS.cardGlass, alpha: 0.03 });
+      glass.fill({ color: COLORS.cardGlass, alpha: quality === "high" ? 0.085 : 0.06 });
+      glass.roundRect(0, h * 0.54, w, h * 0.46, LAYOUT.cardFrameCorner);
+      glass.fill({ color: COLORS.cardVignette, alpha: quality === "high" ? 0.22 : 0.16 });
+      glass.roundRect(0, h * 0.58, w, h * 0.2, LAYOUT.cardFrameCorner);
+      glass.fill({ color: COLORS.cardGlass, alpha: 0.02 });
       glass.visible = true;
     } else {
       glass.visible = false;
