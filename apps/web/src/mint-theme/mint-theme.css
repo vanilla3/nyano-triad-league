@@ -825,6 +825,27 @@
   }
 }
 
+@keyframes mint-stage-board-breathe {
+  0% {
+    transform: translate3d(-1.5%, -1%, 0) scale(1);
+  }
+  100% {
+    transform: translate3d(1.5%, 1%, 0) scale(1.03);
+  }
+}
+
+@keyframes mint-stage-board-glint {
+  0% {
+    background-position: -140% 0, 0 0;
+  }
+  48% {
+    background-position: -140% 0, 0 0;
+  }
+  100% {
+    background-position: 140% 0, 0 0;
+  }
+}
+
 .stage-focus-root {
   display: grid;
   grid-template-rows: auto minmax(0, 1fr);
@@ -1053,6 +1074,7 @@
     radial-gradient(circle at 18% 22%, rgba(255, 255, 255, 0.38), transparent 34%),
     radial-gradient(circle at 82% 16%, rgba(125, 211, 252, 0.26), transparent 38%);
   opacity: 0.66;
+  animation: mint-stage-board-breathe 12s ease-in-out infinite alternate;
 }
 
 .stage-focus-board-shell::after {
@@ -1062,6 +1084,13 @@
   pointer-events: none;
   z-index: 0;
   background:
+    linear-gradient(
+      118deg,
+      transparent 0%,
+      rgba(255, 255, 255, 0.18) 42%,
+      rgba(125, 211, 252, 0.12) 58%,
+      transparent 100%
+    ),
     repeating-linear-gradient(
       132deg,
       rgba(255, 255, 255, 0.05) 0px,
@@ -1069,7 +1098,10 @@
       transparent 5px,
       transparent 24px
     );
+  background-size: 220% 100%, auto;
+  background-position: -140% 0, 0 0;
   opacity: 0.2;
+  animation: mint-stage-board-glint 16s ease-in-out infinite;
 }
 
 .stage-focus-board-shell > * {
@@ -1213,6 +1245,10 @@
   .stage-focus-root::before {
     animation: none;
   }
+  .stage-focus-board-shell::before,
+  .stage-focus-board-shell::after {
+    animation: none;
+  }
   .stage-focus-side-panel::before {
     animation: none;
   }
@@ -1244,8 +1280,42 @@
   opacity: 0.22;
 }
 
+[data-vfx="low"] .stage-focus-board-shell::before {
+  animation: none !important;
+  opacity: 0.36;
+}
+
 [data-vfx="low"] .stage-focus-board-shell::after {
+  animation-duration: 24s !important;
   opacity: 0.12;
+}
+
+[data-vfx="medium"] .stage-focus-board-shell::before {
+  animation-duration: 14s;
+  opacity: 0.56;
+}
+
+[data-vfx="medium"] .stage-focus-board-shell::after {
+  animation-duration: 18s;
+  opacity: 0.18;
+}
+
+[data-vfx="medium"] .stage-focus-board-shell .mint-stage__board > * {
+  transform: rotateX(1.7deg);
+}
+
+[data-vfx="high"] .stage-focus-board-shell::before {
+  animation-duration: 10s;
+  opacity: 0.72;
+}
+
+[data-vfx="high"] .stage-focus-board-shell::after {
+  animation-duration: 12s;
+  opacity: 0.24;
+}
+
+[data-vfx="high"] .stage-focus-board-shell .mint-stage__board > * {
+  transform: rotateX(2deg) translateY(-1px);
 }
 
 @media (min-width: 768px) {

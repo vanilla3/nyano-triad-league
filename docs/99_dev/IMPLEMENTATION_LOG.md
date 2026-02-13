@@ -1574,6 +1574,34 @@
 - `pnpm -C apps/web build`
 - `pnpm -C apps/web e2e -- stage-focus.spec.ts`
 
+## 2026-02-13 - WO005-AG follow-up: stage VFX tiered board-shell atmosphere pass
+
+### Why
+- Stage shell quality improved, but board-shell ambient effects were still mostly static and not clearly tiered by `data-vfx`.
+- We needed stronger high-tier atmosphere while keeping low/off tiers lightweight and deterministic.
+
+### What
+- `apps/web/src/mint-theme/mint-theme.css`
+  - Added board-shell ambient keyframes:
+    - `mint-stage-board-breathe`
+    - `mint-stage-board-glint`
+  - Enhanced `stage-focus-board-shell` overlays:
+    - `::before` now uses slow atmospheric drift/breathe
+    - `::after` now includes moving glint layer + micro-pattern
+  - Added explicit VFX-tier tuning for board shell:
+    - `data-vfx="low"`: reduced opacity + slower glint + disabled breathe
+    - `data-vfx="medium"`: balanced animation intensity and board tilt
+    - `data-vfx="high"`: faster richer glint, stronger ambient overlay, deeper board tilt
+  - Extended motion safety:
+    - `prefers-reduced-motion` disables board-shell animations
+    - `data-vfx="off"` already suppresses board-shell overlays.
+
+### Verify
+- `pnpm -C apps/web lint`
+- `pnpm -C apps/web typecheck`
+- `pnpm -C apps/web build`
+- `pnpm -C apps/web e2e -- stage-focus.spec.ts`
+
 ## 2026-02-13 - WO005-AF follow-up: replay stage SFX control and action cues
 
 ### Why
