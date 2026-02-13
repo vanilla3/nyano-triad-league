@@ -1,0 +1,14 @@
+# Project-scoped Codex configuration for this repository.
+#
+# Codex reads `.codex/config.toml` inside trusted projects and layers them from repo root to CWD.
+# Keep this file free of secrets.
+
+# Default model for this repo (can be overridden from CLI with --model)
+model = "gpt-5.3-codex"
+
+# Safer default: ask for approval when running commands or editing files unless explicitly set otherwise.
+# Other common values: "never", "untrusted"
+approval_policy = "on-request"
+
+# Allow slightly larger project guidance if you later split AGENTS.md across directories.
+project_doc_max_bytes = 65536

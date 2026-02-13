@@ -1,0 +1,97 @@
+# codex/rules/nyano.project.rules
+# Project-layer execution policy rules for Nyano Triad League.
+#
+# Notes:
+# - `pattern` matches the command argv prefix (execvp-style).
+# - Use `match` / `not_match` to validate correctness at load time.
+
+# --- Allow: common safe commands ---------------------------------------------
+
+prefix_rule(
+    pattern = ["pnpm"],
+    decision = "allow",
+    justification = "pnpm is required for this monorepo (dev/build/test).",
+    match = [
+        "pnpm dev:web",
+        "pnpm lint",
+        "pnpm -C apps/web typecheck",
+    ],
+)
+
+prefix_rule(
+    pattern = ["node"],
+    decision = "allow",
+    justification = "node is used for scripts/tests in this repo.",
+    match = [
+        "node -v",
+        "node scripts/build_game_index_v1.mjs",
+    ],
+)
+
+prefix_rule(
+    pattern = ["git", ["status", "diff", "show", "log"]],
+    decision = "allow",
+    justification = "Read-only git commands are safe.",
+    match = ["git status", "git diff", "git log --oneline -5"],
+    not_match = ["git reset --hard HEAD~1"],
+)
+
+# --- Prompt: potentially destructive or external-impact commands --------------
+
+prefix_rule(
+    pattern = ["git", "commit"],
+    decision = "prompt",
+    justification = "Commit should be reviewed before finalizing.",
+    match = ["git commit -m "chore: test""],
+    not_match = ["git status"],
+)
+
+prefix_rule(
+    pattern = ["git", "push"],
+    decision = "prompt",
+    justification = "Push should be approved by a human.",
+    match = ["git push origin my-branch"],
+)
+
+prefix_rule(
+    pattern = ["git", ["reset", "clean", "rebase"]],
+    decision = "prompt",
+    justification = "These commands can rewrite history or delete files; confirm before running.",
+    match = [
+        "git reset --hard HEAD~1",
+        "git clean -fdx",
+        "git rebase -i HEAD~5",
+    ],
+)
+
+prefix_rule(
+    pattern = ["bash", ["-lc", "-c"]],
+    decision = "prompt",
+    justification = "Shell wrappers can hide multiple actions; confirm before running.",
+    match = ["bash -lc "pnpm -C apps/web test""],
+)
+
+prefix_rule(
+    pattern = ["sh", ["-lc", "-c"]],
+    decision = "prompt",
+    justification = "Shell wrappers can hide multiple actions; confirm before running.",
+    match = ["sh -lc "pnpm -C apps/web test""],
+)
+
+prefix_rule(
+    pattern = ["zsh", ["-lc", "-c"]],
+    decision = "prompt",
+    justification = "Shell wrappers can hide multiple actions; confirm before running.",
+    match = ["zsh -lc "pnpm -C apps/web test""],
+)
+
+# --- Forbidden: high-risk commands --------------------------------------------
+
+prefix_rule(
+    pattern = ["rm", ["-rf", "-fr", "-r", "-R"]],
+    decision = "forbidden",
+    justification = "Destructive delete is forbidden. Prefer reverting changes or ask a human.",
+    match = ["rm -rf dist", "rm -r ./tmp"],
+    not_match = ["rm file.txt"],
+)
+
