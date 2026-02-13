@@ -104,6 +104,24 @@ test.describe("stage routes", () => {
     await expect(page.getByText("Pixi focus needs a loaded replay")).toBeVisible({ timeout: 10_000 });
   });
 
+  test("/replay-stage keeps top transport actions visible on desktop", async ({ page }) => {
+    await page.setViewportSize({ width: 1366, height: 768 });
+    const zParam = encodeTranscriptZ(REPLAY_TRANSCRIPT_JSON);
+    await page.goto(`/replay-stage?ui=engine&focus=1&mode=v2&z=${zParam}`);
+
+    const loadReplayButton = page.getByRole("button", { name: "Load replay" });
+    if (await loadReplayButton.count()) {
+      await loadReplayButton.first().click();
+    }
+
+    const toolbarPlayButton = page.getByLabel("Play replay from focus toolbar");
+    await expect(toolbarPlayButton).toBeVisible({ timeout: 10_000 });
+    await expect(toolbarPlayButton).toBeInViewport();
+
+    const overflowPx = await readHorizontalOverflowPx(page);
+    expect(overflowPx).toBeLessThanOrEqual(1);
+  });
+
   test("/replay-stage falls back to mint board when WebGL is unavailable", async ({ page }) => {
     await page.addInitScript(() => {
       const originalGetContext = HTMLCanvasElement.prototype.getContext;

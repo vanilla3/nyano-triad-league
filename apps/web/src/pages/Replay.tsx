@@ -715,6 +715,10 @@ protocolV1: {
   const canStepBack = step > 0;
   const canStepForward = step < stepMax;
   const canPlay = sim.ok && stepMax > 0;
+  const showStageToolbarTransport = isStageFocus
+    && sim.ok
+    && showStageTransport
+    && (typeof window === "undefined" || shouldShowStageSecondaryControls(window.innerWidth));
   const phaseInfo: ReplayPhaseInfo = React.useMemo(() => replayPhaseInfo(step, stepMax), [step, stepMax]);
   const stepStatusText = replayStepStatusText(step);
   const replayTransportButtonClass = isStageFocus ? "btn h-10 px-4" : "btn btn-sm";
@@ -1069,6 +1073,79 @@ protocolV1: {
               Pixi Focus Mode · step {step}/{stepMax}
             </div>
             <div className="flex flex-wrap items-center gap-2">
+              {showStageToolbarTransport ? (
+                <div className="stage-focus-toolbar-actions stage-focus-toolbar-actions--replay">
+                  <span className="stage-focus-toolbar-status">{step}/{stepMax}</span>
+                  <button
+                    className="btn btn-sm"
+                    onClick={() => {
+                      setIsPlaying(false);
+                      setStep(0);
+                    }}
+                    disabled={!canStepBack}
+                    aria-label="Replay start from focus toolbar"
+                  >
+                    start
+                  </button>
+                  <button
+                    className="btn btn-sm"
+                    onClick={() => {
+                      setIsPlaying(false);
+                      setStep((s) => Math.max(0, s - 1));
+                    }}
+                    disabled={!canStepBack}
+                    aria-label="Replay previous from focus toolbar"
+                  >
+                    prev
+                  </button>
+                  <button
+                    className="btn btn-sm btn-primary"
+                    onClick={() => setIsPlaying((p) => !p)}
+                    disabled={!canPlay}
+                    aria-label={isPlaying ? "Pause replay from focus toolbar" : "Play replay from focus toolbar"}
+                  >
+                    {isPlaying ? "pause" : "play"}
+                  </button>
+                  <button
+                    className="btn btn-sm"
+                    onClick={() => {
+                      setIsPlaying(false);
+                      setStep((s) => Math.min(stepMax, s + 1));
+                    }}
+                    disabled={!canStepForward}
+                    aria-label="Replay next from focus toolbar"
+                  >
+                    next
+                  </button>
+                  <button
+                    className="btn btn-sm"
+                    onClick={() => {
+                      setIsPlaying(false);
+                      setStep(stepMax);
+                    }}
+                    disabled={!canStepForward}
+                    aria-label="Replay end from focus toolbar"
+                  >
+                    end
+                  </button>
+                  <label className="stage-focus-toolbar-speed">
+                    speed
+                    <select
+                      className="stage-focus-toolbar-speed-select"
+                      value={playbackSpeed}
+                      onChange={(e) => setPlaybackSpeed(normalizeReplayPlaybackSpeed(Number(e.target.value)))}
+                      disabled={!canPlay}
+                      aria-label="Replay speed from focus toolbar"
+                    >
+                      {REPLAY_PLAYBACK_SPEED_OPTIONS.map((speedOption) => (
+                        <option key={speedOption} value={speedOption}>
+                          {speedOption}x
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                </div>
+              ) : null}
               {isStageFocus ? (
                 <>
                   <button className="btn btn-sm" onClick={toggleStageFullscreen}>

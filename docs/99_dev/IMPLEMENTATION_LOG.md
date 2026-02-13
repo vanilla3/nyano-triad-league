@@ -1218,6 +1218,33 @@
 - `pnpm -C apps/web e2e -- stage-focus.spec.ts`
 - `pnpm -C apps/web typecheck`
 - `pnpm -C apps/web lint`
+## 2026-02-13 — WO005-L follow-up: replay toolbar quick transport in stage focus
+
+### Why
+- Replay stage focus still depended on lower replay transport controls, which could require scrolling on desktop flows.
+- We needed a top-level quick transport path (playback + step controls) to keep board and key replay actions in one viewport.
+
+### What
+- `apps/web/src/pages/Replay.tsx`
+  - Added `showStageToolbarTransport` gate for stage-focus replay toolbar quick controls.
+  - Added toolbar quick transport group with:
+    - `start / prev / play-pause / next / end`,
+    - speed selector (`Replay speed from focus toolbar`),
+    - step status badge.
+  - Reused existing replay state (`step`, `isPlaying`, `playbackSpeed`) so behavior stays deterministic.
+- `apps/web/src/mint-theme/mint-theme.css`
+  - Added replay-specific toolbar action styling:
+    - `stage-focus-toolbar-actions--replay`
+    - `stage-focus-toolbar-speed`
+    - `stage-focus-toolbar-speed-select`
+  - Added responsive wrapping behavior under mobile widths.
+- `apps/web/e2e/stage-focus.spec.ts`
+  - Added desktop regression test to verify top replay play button is visible/in-viewport and no horizontal overflow regression occurs.
+
+### Verify
+- `pnpm -C apps/web typecheck`
+- `pnpm -C apps/web lint`
+- `pnpm -C apps/web e2e -- stage-focus.spec.ts`
 ## 2026-02-13 — WO005-K follow-up: stage toolbar quick commit controls
 
 ### Why
