@@ -6,6 +6,7 @@ const DIFFICULTIES = ["easy", "normal", "hard", "expert"] as const;
 export function ArenaPage() {
   const [difficulty, setDifficulty] = React.useState<string>("normal");
   const quickPlayUrl = `/match?mode=guest&opp=vs_nyano_ai&ai=${difficulty}&rk=v2&ui=mint`;
+  const quickStageUrl = `/battle-stage?mode=guest&opp=vs_nyano_ai&ai=${difficulty}&rk=v2`;
 
   return (
     <div className="grid gap-6">
@@ -41,9 +42,14 @@ export function ArenaPage() {
                 ))}
               </div>
               <div className="mt-3">
-                <Link className="btn btn-primary no-underline" to={quickPlayUrl}>
-                  Play Now
-                </Link>
+                <div className="flex flex-wrap items-center gap-2">
+                  <Link className="btn btn-primary no-underline" to={quickPlayUrl}>
+                    Play Now
+                  </Link>
+                  <Link className="btn no-underline" to={quickStageUrl}>
+                    Pixi Stage
+                  </Link>
+                </div>
               </div>
             </div>
 

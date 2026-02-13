@@ -6,17 +6,17 @@ export type AiAutoMoveDelayOptions = {
   random?: () => number;
 };
 
-const BASE_DELAY_MS = 520;
-const TURN_DELAY_STEP_MS = 35;
+const BASE_DELAY_MS = 900;
+const TURN_DELAY_STEP_MS = 90;
 const MAX_TURN_INDEX = 8;
-const JITTER_RANGE_MS = 180;
-const MAX_DELAY_MS = 2000;
+const JITTER_RANGE_MS = 420;
+const MAX_DELAY_MS = 3800;
 
 const DIFFICULTY_BONUS_MS: Record<AiDifficulty, number> = {
-  easy: 120,
-  normal: 260,
-  hard: 380,
-  expert: 520,
+  easy: 260,
+  normal: 520,
+  hard: 860,
+  expert: 1200,
 };
 
 function clampTurnIndex(turnIndex: number): number {
@@ -34,7 +34,7 @@ function normalizeRandom(v: number): number {
  * Compute a human-like delay before auto-committing AI move.
  * - Harder difficulties wait a bit longer.
  * - Later turns wait a bit longer.
- * - Adds small jitter so timing does not feel robotic.
+ * - Adds jitter so timing does not feel robotic.
  */
 export function computeAiAutoMoveDelayMs(opts: AiAutoMoveDelayOptions): number {
   const turn = clampTurnIndex(opts.turnIndex);

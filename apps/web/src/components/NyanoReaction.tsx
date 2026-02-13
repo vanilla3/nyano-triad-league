@@ -66,6 +66,40 @@ function shouldSmooth(current: ReactionKind, prev: ReactionKind): boolean {
   return false;
 }
 
+export type CutInImpact = "low" | "mid" | "high";
+
+// eslint-disable-next-line react-refresh/only-export-components -- shared utility is consumed by pages/components
+export function resolveReactionCutInImpact(kind: ReactionKind, aiReasonCode?: AiReasonCode): CutInImpact {
+  if (
+    kind === "fever"
+    || kind === "chain"
+    || kind === "domination"
+    || kind === "victory"
+    || kind === "defeat"
+    || kind === "game_draw"
+  ) {
+    return "high";
+  }
+  if (
+    kind === "warning_triggered"
+    || kind === "flip_multi"
+    || kind === "momentum"
+    || kind === "advantage"
+    || kind === "disadvantage"
+    || aiReasonCode === "MINIMAX_D3"
+    || aiReasonCode === "SET_WARNING"
+  ) {
+    return "mid";
+  }
+  return "low";
+}
+
+function cutInDurationsForImpact(impact: CutInImpact): { burstMs: number; visibleMs: number } {
+  if (impact === "high") return { burstMs: 860, visibleMs: 3600 };
+  if (impact === "mid") return { burstMs: 700, visibleMs: 3300 };
+  return { burstMs: 560, visibleMs: 3000 };
+}
+
 /* ── Determine Reaction Kind ── */
 
 export interface NyanoReactionInput {
@@ -145,6 +179,8 @@ export interface NyanoReactionProps {
   rpg?: boolean;
   /** Mint mode styling (Nintendo-level soft UI) */
   mint?: boolean;
+  /** Mint tone variant */
+  tone?: "mint" | "pixi";
   /** Display language for dialogue */
   lang?: DialogueLanguage;
   /** AI reason code for reason-aware dialogue (RM04-030) */
@@ -157,6 +193,7 @@ export function NyanoReaction({
   turnIndex = 0,
   rpg = false,
   mint = false,
+  tone = "mint",
   lang,
   aiReasonCode,
   className = "",
@@ -184,6 +221,9 @@ export function NyanoReaction({
   }, [rawKind]);
 
   const cfg = REACTIONS[kind];
+  const pixiTone = mint && tone === "pixi";
+  const cutInImpact = React.useMemo(() => resolveReactionCutInImpact(kind, aiReasonCode), [kind, aiReasonCode]);
+  const cutInTiming = React.useMemo(() => cutInDurationsForImpact(cutInImpact), [cutInImpact]);
 
   // Pick dialogue: AI reason dialogue takes priority if available
   const line = React.useMemo(() => {
@@ -195,12 +235,18 @@ export function NyanoReaction({
   }, [kind, turnIndex, detectedLang, aiReasonCode]);
 
   const [visible, setVisible] = React.useState(false);
+  const [cutInBurst, setCutInBurst] = React.useState(false);
 
   React.useEffect(() => {
     setVisible(true);
-    const t = setTimeout(() => setVisible(false), 3200);
-    return () => clearTimeout(t);
-  }, [turnIndex, kind]);
+    setCutInBurst(true);
+    const burstTimer = setTimeout(() => setCutInBurst(false), cutInTiming.burstMs);
+    const visibleTimer = setTimeout(() => setVisible(false), cutInTiming.visibleMs);
+    return () => {
+      clearTimeout(burstTimer);
+      clearTimeout(visibleTimer);
+    };
+  }, [turnIndex, kind, cutInTiming.burstMs, cutInTiming.visibleMs]);
 
   if (kind === "idle" && !input.finished) return null;
 
@@ -249,60 +295,74 @@ export function NyanoReaction({
 
   // Mint (Nintendo-soft) style — frosted white, rounded, accent glow
   if (mint) {
+    const reactionStyle = {
+      display: "flex",
+      alignItems: "center",
+      gap: 8,
+      padding: "8px 14px",
+      borderRadius: 16,
+      background: pixiTone
+        ? "linear-gradient(145deg, rgba(8,21,40,0.88), rgba(5,13,28,0.84))"
+        : "rgba(255,255,255,0.85)",
+      backdropFilter: "blur(8px)",
+      WebkitBackdropFilter: "blur(8px)",
+      border: pixiTone
+        ? "1px solid rgba(56, 189, 248, 0.35)"
+        : "1px solid var(--mint-accent-muted, #A7F3D0)",
+      boxShadow: pixiTone
+        ? `0 10px 28px rgba(2, 6, 23, 0.45), 0 0 0 1px rgba(56, 189, 248, 0.12), 0 0 16px ${cfg.glow}`
+        : `0 2px 12px ${cfg.glow}, 0 0 0 1px rgba(16,185,129,0.08)`,
+      fontFamily: "'Nunito', system-ui, sans-serif",
+      ["--nyano-reaction-glow" as const]: cfg.glow,
+    } satisfies React.CSSProperties & Record<"--nyano-reaction-glow", string>;
+
     return (
       <div
-        className={`mint-nyano-reaction ${className}`}
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: 8,
-          padding: "8px 14px",
-          borderRadius: 16,
-          background: "rgba(255,255,255,0.85)",
-          backdropFilter: "blur(8px)",
-          WebkitBackdropFilter: "blur(8px)",
-          border: "1px solid var(--mint-accent-muted, #A7F3D0)",
-          boxShadow: `0 2px 12px ${cfg.glow}, 0 0 0 1px rgba(16,185,129,0.08)`,
-          opacity: visible ? 1 : 0,
-          transform: visible ? "translateY(0)" : "translateY(6px)",
-          transition: "opacity 0.3s ease, transform 0.3s ease",
-          fontFamily: "'Nunito', system-ui, sans-serif",
-        }}
+        className={[
+          "mint-nyano-reaction",
+          "mint-nyano-reaction--cutin",
+          `mint-nyano-reaction--impact-${cutInImpact}`,
+          pixiTone ? "mint-nyano-reaction--pixi" : "",
+          visible ? "mint-nyano-reaction--visible" : "mint-nyano-reaction--hidden",
+          cutInBurst ? "mint-nyano-reaction--burst" : "",
+          className,
+        ].filter(Boolean).join(" ")}
+        style={reactionStyle}
       >
-        <NyanoAvatar size={32} expression={reactionToExpression(kind)} alt={cfg.emoji} />
-        {cfg.badge && (
-          <span style={{
-            fontSize: 11,
-            fontWeight: 700,
-            padding: "2px 8px",
-            borderRadius: 8,
-            background: `linear-gradient(135deg, ${cfg.glow}, transparent)`,
-            border: `1px solid ${cfg.glow}`,
-            color: "var(--mint-text-primary, #1F2937)",
-          }}>
-            {cfg.badge}
+        <span className="mint-nyano-reaction__cutin-flash" aria-hidden="true" />
+        <span className="mint-nyano-reaction__scanline" aria-hidden="true" />
+        <div className="mint-nyano-reaction__inner">
+          <NyanoAvatar size={32} expression={reactionToExpression(kind)} alt={cfg.emoji} />
+          {cfg.badge && (
+            <span
+              className={`mint-nyano-reaction__badge mint-nyano-reaction__badge--${cutInImpact}`}
+              style={{
+                background: `linear-gradient(135deg, ${cfg.glow}, transparent)`,
+                border: `1px solid ${cfg.glow}`,
+                color: pixiTone ? "#E2E8F0" : "var(--mint-text-primary, #1F2937)",
+              }}
+            >
+              {cfg.badge}
+            </span>
+          )}
+          <span
+            className={`mint-nyano-reaction__line mint-nyano-reaction__line--${cutInImpact}`}
+            style={{ color: pixiTone ? "#F8FAFC" : "var(--mint-text-primary, #1F2937)" }}
+          >
+            {line}
           </span>
-        )}
-        <span style={{
-          fontSize: 13,
-          color: "var(--mint-text-primary, #1F2937)",
-          fontWeight: 600,
-        }}>
-          {line}
-        </span>
-        {aiReasonCode && (
-          <span style={{
-            fontSize: 10,
-            fontWeight: 600,
-            padding: "1px 6px",
-            borderRadius: 6,
-            background: "var(--mint-accent-muted, #A7F3D0)",
-            color: "var(--mint-text-accent, #059669)",
-            marginLeft: "auto",
-          }}>
-            {aiReasonCode}
-          </span>
-        )}
+          {aiReasonCode && (
+            <span
+              className="mint-nyano-reaction__reason"
+              style={{
+                background: pixiTone ? "rgba(56, 189, 248, 0.16)" : "var(--mint-accent-muted, #A7F3D0)",
+                color: pixiTone ? "#BAE6FD" : "var(--mint-text-accent, #059669)",
+              }}
+            >
+              {aiReasonCode}
+            </span>
+          )}
+        </div>
       </div>
     );
   }

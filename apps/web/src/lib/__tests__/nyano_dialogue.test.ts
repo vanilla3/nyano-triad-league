@@ -47,6 +47,24 @@ describe("REACTION_DIALOGUES", () => {
       }
     }
   });
+
+  it("uses the new Japanese suffix style (ぴかっ✨)", () => {
+    const jaLines: string[] = [];
+
+    for (const lines of Object.values(REACTION_DIALOGUES)) {
+      for (const line of lines) jaLines.push(line.ja);
+    }
+    for (const lines of Object.values(REASON_DIALOGUES)) {
+      if (!lines) continue;
+      for (const line of lines) jaLines.push(line.ja);
+    }
+
+    expect(jaLines.some((line) => line.includes("ぴかっ✨"))).toBe(true);
+    for (const line of jaLines) {
+      expect(line).not.toMatch(/にゃっ([！？?!…。．♪]*)$/u);
+      expect(line).not.toMatch(/にゃ[ー〜~]*([！？?!…。．♪]*)$/u);
+    }
+  });
 });
 
 describe("REASON_DIALOGUES", () => {

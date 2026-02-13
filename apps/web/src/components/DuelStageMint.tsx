@@ -1,4 +1,5 @@
 import React from "react";
+import type { CutInImpact } from "./NyanoReaction";
 
 /* ═══════════════════════════════════════════════════════════════════════════
    DuelStageMint — 3D Perspective + Holo Grid stage wrapper (P2-200)
@@ -10,14 +11,28 @@ import React from "react";
 export interface DuelStageMintProps {
   children: React.ReactNode;
   className?: string;
+  impact?: CutInImpact | null;
+  impactBurst?: boolean;
 }
 
 /** Paw print SVG path (reused across decorative watermarks). */
 const PAW = "M20,12a8,8 0 1,0-16,0 8,8 0 0,0 16,0M46,6a7,7 0 1,0-14,0 7,7 0 0,0 14,0M62,12a8,8 0 1,0-16,0 8,8 0 0,0 16,0M9,6a7,7 0 1,0-14,0 7,7 0 0,0 14,0M46,30a18,14 0 1,0-36,0 18,14 0 0,0 36,0";
 
-export function DuelStageMint({ children, className = "" }: DuelStageMintProps) {
+export function DuelStageMint({
+  children,
+  className = "",
+  impact = null,
+  impactBurst = false,
+}: DuelStageMintProps) {
+  const stageClassName = [
+    "mint-stage",
+    impact ? `mint-stage--impact-${impact}` : "",
+    impactBurst ? "mint-stage--impact-burst" : "",
+    className,
+  ].filter(Boolean).join(" ");
+
   return (
-    <div className={["mint-stage", className].join(" ")}>
+    <div className={stageClassName}>
       {/* Holo grid background (pure CSS, no image assets) */}
       <div className="mint-stage__holo" aria-hidden="true" />
 

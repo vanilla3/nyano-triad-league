@@ -4,7 +4,8 @@
  * Renders a 3×3 board grid with:
  * - NFT card art as Sprite textures (async loaded with Arweave fallback)
  * - Owner-colored tint overlays on card art
- * - Edge numbers with dark pill backgrounds for readability
+ * - Edge numbers with premium pill backgrounds and stronger typography
+ * - Center R/P/S (janken) badge on each occupied card
  * - Token ID labels (#XXX) in top-right corner
  * - Selectable cell highlights (cyan)
  * - Selected cell emphasis
@@ -52,8 +53,14 @@ const COLORS = {
   ownerA: 0x3b82f6, // blue-500
   ownerB: 0xef4444, // red-500
   edgeText: 0xffffff,
+  edgeTextStroke: 0x020617,
+  edgeValueHigh: 0xfef08a,
+  edgeValueMid: 0xe2e8f0,
+  edgeValueLow: 0xbfdbfe,
   coordText: 0x64748b, // slate-500
   edgePillBg: 0x000000,
+  edgePillTone: 0x0f172a,
+  edgePillStroke: 0x7dd3fc,
   tokenIdBg: 0x000000,
   tokenIdText: 0xffffff,
   brightnessWhite: 0xffffff,
@@ -67,6 +74,8 @@ const COLORS = {
   cardGlass: 0xffffff,
   holoA: 0x67e8f9,
   holoB: 0xa78bfa,
+  jankenBadgeBg: 0x020617,
+  jankenBadgeStroke: 0xffffff,
 } as const;
 
 const LAYOUT = {
@@ -82,6 +91,13 @@ const LAYOUT = {
   pillWidthScale: 1.3,
   pillHeightScale: 1.15,
   pillRadius: 3,
+  edgeStrokeThicknessScale: 0.16,
+  edgeLetterSpacing: 0.6,
+  jankenBadgeMin: 24,
+  jankenBadgeMax: 40,
+  jankenBadgeScale: 0.23,
+  jankenBadgeRadius: 6,
+  jankenBadgeStrokeWidth: 1.2,
   tokenLabelPadX: 3,
   tokenLabelPadY: 2,
   coordOffsetX: 3,
@@ -131,12 +147,29 @@ const CELL_COORDS = [
   "C3",
 ] as const;
 
+const JANKEN_BADGES: Record<0 | 1 | 2, { short: "R" | "P" | "S"; accent: number }> = {
+  0: { short: "R", accent: 0xf59e0b }, // rock
+  1: { short: "P", accent: 0x10b981 }, // paper
+  2: { short: "S", accent: 0x8b5cf6 }, // scissors
+};
+
 /** Layout rectangle for a single cell. */
 interface CellLayout {
   x: number;
   y: number;
   w: number;
   h: number;
+}
+
+function edgeValueColor(value: number): number {
+  if (value >= 8) return COLORS.edgeValueHigh;
+  if (value >= 4) return COLORS.edgeValueMid;
+  return COLORS.edgeValueLow;
+}
+
+function normalizeJankenHand(value: number): 0 | 1 | 2 {
+  if (value === 1 || value === 2) return value;
+  return 0;
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -848,12 +881,7 @@ export class PixiBattleRenderer implements IBattleRenderer {
 
     const { edges } = cell.card;
     const fontSize = Math.max(LAYOUT.edgeFontSizeMin, w * LAYOUT.edgeFontSizeScale);
-    const style = new TextStyle({
-      fontSize,
-      fill: COLORS.edgeText,
-      fontFamily: "monospace",
-      fontWeight: "bold",
-    });
+    const strokeThickness = Math.max(1.5, fontSize * LAYOUT.edgeStrokeThicknessScale);
 
     // Check if texture is loaded (determines pill bg visibility)
     const hasTexture = this.textureResolver.getTexture(
@@ -875,10 +903,13 @@ export class PixiBattleRenderer implements IBattleRenderer {
     ];
 
     for (const { val, px, py, ax, ay } of edgeData) {
+      const tone = edgeValueColor(val);
+
       // Dark pill background when texture is visible
       if (hasTexture && features.edgePill) {
         const pillW = fontSize * LAYOUT.pillWidthScale;
         const pillH = fontSize * LAYOUT.pillHeightScale;
+        const toneAlpha = val >= 8 ? 0.34 : val >= 4 ? 0.26 : 0.2;
         const pillGfx = new Graphics();
         pillGfx.roundRect(
           px - pillW * ax,
@@ -888,18 +919,82 @@ export class PixiBattleRenderer implements IBattleRenderer {
           LAYOUT.pillRadius,
         );
         pillGfx.fill({ color: COLORS.edgePillBg, alpha: LAYOUT.edgePillAlpha });
+        pillGfx.roundRect(
+          px - pillW * ax + 0.8,
+          py - pillH * ay + 0.8,
+          Math.max(0, pillW - 1.6),
+          Math.max(0, pillH - 1.6),
+          Math.max(2, LAYOUT.pillRadius - 1),
+        );
+        pillGfx.fill({ color: COLORS.edgePillTone, alpha: toneAlpha });
+        pillGfx.roundRect(
+          px - pillW * ax,
+          py - pillH * ay,
+          pillW,
+          pillH,
+          LAYOUT.pillRadius,
+        );
+        pillGfx.stroke({ color: COLORS.edgePillStroke, width: 1, alpha: 0.45 });
         container.addChild(pillGfx);
       }
 
       const t = new Text({
         text: String(val),
-        style,
+        style: new TextStyle({
+          fontSize,
+          fill: tone,
+          fontFamily: "Trebuchet MS, Segoe UI, Arial Black, sans-serif",
+          fontWeight: "900",
+          stroke: { color: COLORS.edgeTextStroke, width: strokeThickness },
+          letterSpacing: LAYOUT.edgeLetterSpacing,
+        }),
       });
       t.anchor.set(ax, ay);
       t.x = px;
       t.y = py;
       container.addChild(t);
     }
+
+    const hand = normalizeJankenHand(Number(cell.card.jankenHand));
+    const badge = JANKEN_BADGES[hand];
+    const badgeSize = Math.max(
+      LAYOUT.jankenBadgeMin,
+      Math.min(LAYOUT.jankenBadgeMax, Math.min(w, h) * LAYOUT.jankenBadgeScale),
+    );
+    const badgeX = w / 2 - badgeSize / 2;
+    const badgeY = h / 2 - badgeSize / 2;
+    const badgeGfx = new Graphics();
+    badgeGfx.roundRect(badgeX, badgeY, badgeSize, badgeSize, LAYOUT.jankenBadgeRadius);
+    badgeGfx.fill({ color: COLORS.jankenBadgeBg, alpha: hasTexture ? 0.66 : 0.86 });
+    badgeGfx.roundRect(
+      badgeX + 1,
+      badgeY + 1,
+      Math.max(0, badgeSize - 2),
+      Math.max(0, badgeSize - 2),
+      Math.max(2, LAYOUT.jankenBadgeRadius - 1),
+    );
+    badgeGfx.fill({ color: badge.accent, alpha: hasTexture ? 0.35 : 0.45 });
+    badgeGfx.roundRect(badgeX, badgeY, badgeSize, badgeSize, LAYOUT.jankenBadgeRadius);
+    badgeGfx.stroke({ color: COLORS.jankenBadgeStroke, width: LAYOUT.jankenBadgeStrokeWidth, alpha: 0.9 });
+    container.addChild(badgeGfx);
+
+    const badgeText = new Text({
+      text: badge.short,
+      style: new TextStyle({
+        fontSize: Math.max(12, badgeSize * 0.52),
+        fill: COLORS.edgeText,
+        fontFamily: "Trebuchet MS, Segoe UI, Arial Black, sans-serif",
+        fontWeight: "900",
+        stroke: {
+          color: COLORS.edgeTextStroke,
+          width: Math.max(1.3, badgeSize * 0.08),
+        },
+      }),
+    });
+    badgeText.anchor.set(0.5, 0.5);
+    badgeText.x = w / 2;
+    badgeText.y = h / 2;
+    container.addChild(badgeText);
   }
 
   /* ── Animation trigger detection ──────────────────────────────────── */

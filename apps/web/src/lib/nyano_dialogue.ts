@@ -15,6 +15,32 @@ export type DialogueLine = {
   en: string;
 };
 
+const NYANO_NEW_SUFFIX = "ぴかっ✨";
+const TRAILING_NYANO_SUFFIX_PATTERNS: readonly RegExp[] = [
+  /にゃ[〜~]?ん([！？?!…。．♪]*)$/u,
+  /にゃっ([！？?!…。．♪]*)$/u,
+  /にゃ[ー〜~]*([！？?!…。．♪]*)$/u,
+];
+
+function rewriteNyanoJaLine(line: string): string {
+  if (!line || line.includes(NYANO_NEW_SUFFIX)) return line;
+  for (const pattern of TRAILING_NYANO_SUFFIX_PATTERNS) {
+    if (pattern.test(line)) {
+      return line.replace(pattern, `${NYANO_NEW_SUFFIX}$1`);
+    }
+  }
+  return line;
+}
+
+function rewriteDialogueSetJaSuffix(set: Partial<Record<string, DialogueLine[]>>): void {
+  for (const lines of Object.values(set)) {
+    if (!lines) continue;
+    for (const line of lines) {
+      line.ja = rewriteNyanoJaLine(line.ja);
+    }
+  }
+}
+
 // ── Reaction Dialogues ──────────────────────────────────────────────
 
 export const REACTION_DIALOGUES: Record<ReactionKind, DialogueLine[]> = {
@@ -127,6 +153,9 @@ export const REASON_DIALOGUES: Partial<Record<AiReasonCode, DialogueLine[]>> = {
     { ja: "計算済みにゃ", en: "All calculated!" },
   ],
 };
+
+rewriteDialogueSetJaSuffix(REACTION_DIALOGUES);
+rewriteDialogueSetJaSuffix(REASON_DIALOGUES);
 
 // ── Helpers ─────────────────────────────────────────────────────────
 

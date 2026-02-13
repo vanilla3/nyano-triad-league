@@ -1,5 +1,5 @@
 import React from "react";
-import { NavLink, Link, useSearchParams } from "react-router-dom";
+import { NavLink, Link, useLocation, useSearchParams } from "react-router-dom";
 import { AnimatedOutlet } from "@/components/AnimatedOutlet";
 import { AppErrorBoundary } from "@/components/EmptyState";
 import { ToastProvider } from "./components/Toast";
@@ -29,8 +29,16 @@ const NavGroup = (props: { title: string; children: React.ReactNode }) => {
 };
 
 export function AppLayout() {
+  const location = useLocation();
   const [searchParams] = useSearchParams();
   const theme = searchParams.get("theme") ?? localStorage.getItem("nytl.theme") ?? "mint";
+  const focusParam = (searchParams.get("focus") ?? searchParams.get("layout") ?? "").toLowerCase();
+  const focusEnabled = focusParam === "1" || focusParam === "focus";
+  const isStageRoute = /\/(battle-stage|replay-stage)$/.test(location.pathname);
+  const focusRoute = isStageRoute || (focusEnabled && /\/(match|replay)$/.test(location.pathname));
+  const mainClassName = isStageRoute
+    ? "flex-1 stage-page"
+    : ["flex-1 container-page", focusRoute ? "container-page--focus" : ""].join(" ").trim();
 
   React.useEffect(() => {
     document.documentElement.dataset.theme = theme;
@@ -45,7 +53,7 @@ export function AppLayout() {
   return (
     <ToastProvider>
       <div className="min-h-screen flex flex-col">
-      <header className="app-header sticky top-0 z-30">
+      {!focusRoute && <header className="app-header sticky top-0 z-30">
         <div className="mx-auto max-w-7xl flex flex-col gap-2 px-4 py-3 md:flex-row md:items-center md:justify-between">
           {/* Brand lockup */}
           <Link to="/" className="flex items-center gap-2.5 no-underline group">
@@ -81,18 +89,19 @@ export function AppLayout() {
 
             <NavGroup title="">
               <NavItem to="/match" label="Match" emoji="🎮" />
+              <NavItem to="/battle-stage" label="Stage" emoji="🎬" />
             </NavGroup>
           </nav>
         </div>
-      </header>
+      </header>}
 
-      <main className="flex-1 container-page">
+      <main className={mainClassName}>
         <AppErrorBoundary fallbackTitle="ページの読み込みに失敗しました">
           <AnimatedOutlet />
         </AppErrorBoundary>
       </main>
 
-      <footer className="app-footer">
+      {!focusRoute && <footer className="app-footer">
         <div className="mx-auto max-w-7xl px-4 py-6 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div className="flex items-center gap-3">
             <img src="/favicon-32.png" alt="" width={16} height={16} className="opacity-50" />
@@ -108,7 +117,7 @@ export function AppLayout() {
             <span>deterministic · community-driven</span>
           </div>
         </div>
-      </footer>
+      </footer>}
       </div>
     </ToastProvider>
   );

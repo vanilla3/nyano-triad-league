@@ -1,7 +1,7 @@
 import React from "react";
 import { useToast } from "@/components/Toast";
 import { Disclosure } from "@/components/Disclosure";
-import { Link, useSearchParams } from "react-router-dom";
+import { Link, useLocation, useSearchParams } from "react-router-dom";
 
 import type { BoardCell, CardData, MatchResultWithHistory, RulesetConfigV1, TranscriptV1, TurnSummary } from "@nyano/triad-engine";
 import {
@@ -17,10 +17,16 @@ import { BoardView } from "@/components/BoardView";
 import { BoardViewRPG } from "@/components/BoardViewRPG";
 import { DuelStageMint } from "@/components/DuelStageMint";
 import { ScoreBar } from "@/components/ScoreBar";
+import { BattleHudMint } from "@/components/BattleHudMint";
 import { CardMini } from "@/components/CardMini";
 import { TurnLog } from "@/components/TurnLog";
 import { GameResultBanner } from "@/components/GameResultOverlay";
-import { NyanoReaction, pickReactionKind, type NyanoReactionInput } from "@/components/NyanoReaction";
+import {
+  NyanoReaction,
+  pickReactionKind,
+  resolveReactionCutInImpact,
+  type NyanoReactionInput,
+} from "@/components/NyanoReaction";
 import { NyanoAvatar } from "@/components/NyanoAvatar";
 import { BattleStageEngine } from "@/engine/components/BattleStageEngine";
 import { reactionToExpression } from "@/lib/expression_map";
@@ -96,6 +102,12 @@ function parseReplayBoardUi(v: string | null): ReplayBoardUi {
   if (v === "rpg") return "rpg";
   if (v === "engine") return "engine";
   return "classic";
+}
+
+function parseFocusMode(v: string | null): boolean {
+  if (!v) return false;
+  const normalized = v.toLowerCase();
+  return normalized === "1" || normalized === "focus";
 }
 
 function toMatchBoardUi(v: ReplayBoardUi): MatchBoardUi {
@@ -189,12 +201,29 @@ function pickDefaultMode(rulesetId: string): Mode {
 const HIGHLIGHT_KIND_ORDER: ReplayHighlightKind[] = ["big_flip", "chain", "combo", "warning"];
 
 export function ReplayPage() {
+  const location = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
   const uiMode = parseReplayBoardUi((searchParams.get("ui") || "").toLowerCase());
   const uiParam = uiMode === "classic" ? undefined : uiMode;
   const matchUi = toMatchBoardUi(uiMode);
   const isEngine = uiMode === "engine";
   const isRpg = uiMode === "rpg";
+  const focusParam = searchParams.get("focus") ?? searchParams.get("layout");
+  const isFocusMode = parseFocusMode(focusParam);
+  const isEngineFocus = isEngine && isFocusMode;
+  const stageReplayUrl = React.useMemo(() => {
+    const next = new URLSearchParams(searchParams);
+    next.set("ui", "engine");
+    next.set("focus", "1");
+    next.delete("layout");
+    const query = next.toString();
+    return query ? `/replay-stage?${query}` : "/replay-stage";
+  }, [searchParams]);
+  const isReplayStageRoute = /\/replay-stage$/.test(location.pathname);
+  const engineBoardMaxWidthPx = isReplayStageRoute ? 1120 : undefined;
+  const engineBoardMinHeightPx = isReplayStageRoute ? 420 : undefined;
+  const isStageFocus = isEngineFocus && isReplayStageRoute;
+  const stageViewportRef = React.useRef<HTMLDivElement>(null);
 
   const eventId = searchParams.get("event") ?? "";
   const event = React.useMemo(() => (eventId ? getEventById(eventId) : null), [eventId]);
@@ -233,6 +262,50 @@ export function ReplayPage() {
   const [broadcastOverlay, setBroadcastOverlay] = React.useState<boolean>(initialBroadcast);
 
   const [verifyStatus, setVerifyStatus] = React.useState<"idle" | "ok" | "mismatch">("idle");
+  const [showStagePanels, setShowStagePanels] = React.useState(() => !isStageFocus);
+  const [showStageSetup, setShowStageSetup] = React.useState(() => !isStageFocus);
+  const [showStageTransport, setShowStageTransport] = React.useState(() => {
+    if (!isStageFocus) return true;
+    if (typeof window === "undefined") return true;
+    return window.innerWidth > 768;
+  });
+  const [isStageFullscreen, setIsStageFullscreen] = React.useState(
+    () => typeof document !== "undefined" && Boolean(document.fullscreenElement),
+  );
+
+  React.useEffect(() => {
+    if (!isStageFocus) {
+      setShowStagePanels(true);
+      return;
+    }
+    setShowStagePanels(false);
+  }, [isStageFocus]);
+
+  React.useEffect(() => {
+    if (!isStageFocus) {
+      setShowStageSetup(true);
+      return;
+    }
+    setShowStageSetup(false);
+  }, [isStageFocus]);
+
+  React.useEffect(() => {
+    if (!isStageFocus) {
+      setShowStageTransport(true);
+      return;
+    }
+    if (typeof window === "undefined") {
+      setShowStageTransport(true);
+      return;
+    }
+    setShowStageTransport(window.innerWidth > 768);
+  }, [isStageFocus]);
+
+  React.useEffect(() => {
+    const handleFullscreenChange = () => setIsStageFullscreen(Boolean(document.fullscreenElement));
+    document.addEventListener("fullscreenchange", handleFullscreenChange);
+    return () => document.removeEventListener("fullscreenchange", handleFullscreenChange);
+  }, []);
 
   const handleVerify = React.useCallback(() => {
     if (!sim.ok) return;
@@ -253,12 +326,47 @@ export function ReplayPage() {
     }
   };
 
+  const toggleStageFullscreen = React.useCallback(async () => {
+    if (!isStageFocus) return;
+    try {
+      if (document.fullscreenElement) {
+        await document.exitFullscreen();
+        return;
+      }
+      const target = stageViewportRef.current;
+      if (!target) return;
+      await target.requestFullscreen();
+    } catch (e: unknown) {
+      toast.warn("Fullscreen", errorMessage(e));
+    }
+  }, [isStageFocus, toast]);
+
   const setReplayBoardUi = React.useCallback((nextUi: ReplayBoardUi) => {
     const next = new URLSearchParams(searchParams);
     if (nextUi === "classic") next.delete("ui");
     else next.set("ui", nextUi);
+    if (nextUi !== "engine") {
+      next.delete("focus");
+      next.delete("layout");
+    }
     setSearchParams(next, { replace: true });
   }, [searchParams, setSearchParams]);
+
+  const setFocusMode = React.useCallback((enabled: boolean) => {
+    const next = new URLSearchParams(searchParams);
+    if (enabled) next.set("focus", "1");
+    else next.delete("focus");
+    next.delete("layout");
+    setSearchParams(next, { replace: true });
+  }, [searchParams, setSearchParams]);
+
+  React.useEffect(() => {
+    if (isEngine || !isFocusMode) return;
+    const next = new URLSearchParams(searchParams);
+    next.delete("focus");
+    next.delete("layout");
+    setSearchParams(next, { replace: true });
+  }, [isEngine, isFocusMode, searchParams, setSearchParams]);
 
   const overlayUrl = React.useMemo(() => appAbsoluteUrl("overlay?controls=0"), []);
   const overlayPath = React.useMemo(() => appPath("overlay"), []);
@@ -535,6 +643,11 @@ protocolV1: {
   const canPlay = sim.ok && stepMax > 0;
   const phaseInfo: ReplayPhaseInfo = React.useMemo(() => replayPhaseInfo(step, stepMax), [step, stepMax]);
   const stepStatusText = replayStepStatusText(step);
+  const replayTransportButtonClass = isStageFocus ? "btn h-10 px-4" : "btn btn-sm";
+  const replayTransportPrimaryButtonClass = isStageFocus ? "btn btn-primary h-10 px-4" : "btn btn-sm btn-primary";
+  const replaySpeedSelectClass = isStageFocus
+    ? "rounded-md border border-surface-300 bg-white h-10 px-2 text-sm"
+    : "rounded-md border border-surface-300 bg-white px-2 py-1 text-xs";
 
   React.useEffect(() => {
     if (canPlay || !isPlaying) return;
@@ -601,6 +714,30 @@ protocolV1: {
 
   const compare = sim.ok && (mode === "compare" || (mode === "auto" && pickDefaultMode(sim.transcript.header.rulesetId) === "compare"));
   const diverged = sim.ok ? !boardEquals(sim.v1.boardHistory[step], sim.v2.boardHistory[step]) : false;
+  const replayNyanoReactionInput = React.useMemo(
+    () => (sim.ok ? buildNyanoReactionInput(sim.current, step) : null),
+    [sim, step],
+  );
+  const replayNyanoReactionImpact = React.useMemo(() => {
+    if (!replayNyanoReactionInput) return "low" as const;
+    return resolveReactionCutInImpact(pickReactionKind(replayNyanoReactionInput));
+  }, [replayNyanoReactionInput]);
+  const [replayStageImpactBurst, setReplayStageImpactBurst] = React.useState(false);
+
+  React.useEffect(() => {
+    if (!isEngineFocus || !isEngine || compare || !replayNyanoReactionInput) {
+      setReplayStageImpactBurst(false);
+      return;
+    }
+    if (replayNyanoReactionImpact === "low") {
+      setReplayStageImpactBurst(false);
+      return;
+    }
+    setReplayStageImpactBurst(true);
+    const burstMs = replayNyanoReactionImpact === "high" ? 960 : 760;
+    const timer = window.setTimeout(() => setReplayStageImpactBurst(false), burstMs);
+    return () => window.clearTimeout(timer);
+  }, [isEngineFocus, isEngine, compare, replayNyanoReactionInput, replayNyanoReactionImpact, step]);
 
   const annotations = React.useMemo(
     () => sim.ok ? annotateReplayMoves(sim.current, sim.transcript.header.firstPlayer as 0 | 1) : [],
@@ -629,6 +766,7 @@ protocolV1: {
     }
     return out;
   }, [sim]);
+  const replayFirstPlayer: 0 | 1 = sim.ok ? (sim.transcript.header.firstPlayer as 0 | 1) : 0;
 
   const renderReplay = (label: string, res: MatchResultWithHistory) => {
     const boardNow = res.boardHistory[step];
@@ -636,6 +774,10 @@ protocolV1: {
     const { placedCell, flippedCells } = step === 0 ? { placedCell: null, flippedCells: [] } : computeDelta(boardPrev, boardNow);
     const nyanoReactionInput = buildNyanoReactionInput(res, step);
     const focusCell = focusTurnIndex !== null ? (res.turns[focusTurnIndex]?.cell ?? null) : null;
+    const replayCurrentPlayer = turnPlayer(replayFirstPlayer, Math.min(step, 8));
+    const isPrimaryReplay = sim.ok && res === sim.current;
+    const stageImpact = isPrimaryReplay ? replayNyanoReactionImpact : "low";
+    const stageImpactBurst = isPrimaryReplay ? replayStageImpactBurst : false;
 
     return (
       <div className="grid gap-3">
@@ -647,33 +789,54 @@ protocolV1: {
         </div>
 
         <div className="mt-2 grid gap-2">
-          <div className="flex items-center gap-3">
-            <NyanoAvatar
-              size={48}
-              expression={nyanoReactionInput
-                ? reactionToExpression(pickReactionKind(nyanoReactionInput))
-                : "calm"}
-              className="flex-shrink-0"
+          {isEngine ? (
+            <BattleHudMint
+              board={boardNow}
+              turnCount={step}
+              maxTurns={9}
+              currentPlayer={replayCurrentPlayer}
+              gamePhase={step >= 9 ? "game_over" : "select_cell"}
+              tone="pixi"
             />
-            <div className="flex-1">
-              <ScoreBar board={boardNow} moveCount={step} maxMoves={9} winner={res.winner} />
-              {boardAdvantages[step] && (
-                <div className="mt-1 flex items-center gap-1.5">
-                  <span className="text-[10px] text-slate-400">Advantage</span>
-                  <AdvantageBadge advantage={boardAdvantages[step]} size="sm" showScore />
-                </div>
-              )}
+          ) : (
+            <div className="flex items-center gap-3">
+              <NyanoAvatar
+                size={48}
+                expression={nyanoReactionInput
+                  ? reactionToExpression(pickReactionKind(nyanoReactionInput))
+                  : "calm"}
+                className="flex-shrink-0"
+              />
+              <div className="flex-1">
+                <ScoreBar board={boardNow} moveCount={step} maxMoves={9} winner={res.winner} />
+                {boardAdvantages[step] && (
+                  <div className="mt-1 flex items-center gap-1.5">
+                    <span className="text-[10px] text-slate-400">Advantage</span>
+                    <AdvantageBadge advantage={boardAdvantages[step]} size="sm" showScore />
+                  </div>
+                )}
+              </div>
             </div>
-          </div>
-          {nyanoReactionInput ? <NyanoReaction input={nyanoReactionInput} turnIndex={step} rpg={isRpg} /> : null}
+          )}
+          {nyanoReactionInput ? (
+            <NyanoReaction
+              input={nyanoReactionInput}
+              turnIndex={step}
+              rpg={isRpg}
+              mint={isEngine}
+              tone={isEngine ? "pixi" : "mint"}
+            />
+          ) : null}
         </div>
 
         {isEngine && !compare ? (
-          <DuelStageMint>
+          <DuelStageMint impact={stageImpact} impactBurst={stageImpactBurst}>
             <BattleStageEngine
               board={boardNow}
               selectedCell={null}
               currentPlayer={0}
+              boardMaxWidthPx={engineBoardMaxWidthPx}
+              boardMinHeightPx={engineBoardMinHeightPx}
               preloadTokenIds={replayPreloadTokenIds}
               placedCell={placedCell}
               flippedCells={flippedCells}
@@ -767,10 +930,56 @@ protocolV1: {
       absolute: true,
     });
   };
+  const showReplaySetupPanel = !isStageFocus || !sim.ok || showStageSetup;
 
   return (
-    <div className="grid gap-6">
-      {eventId ? (
+    <div
+      ref={stageViewportRef}
+      className={
+        isStageFocus
+          ? "grid min-h-[100dvh] gap-3 px-2 py-2 md:px-3 md:py-3"
+          : isEngineFocus
+            ? "grid gap-4"
+            : "grid gap-6"
+      }
+    >
+      {isEngineFocus ? (
+        <section
+          className="rounded-2xl border px-3 py-2"
+          style={{ background: "var(--mint-surface, #fff)", borderColor: "var(--mint-accent-muted, #A7F3D0)" }}
+        >
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div className="text-xs font-semibold" style={{ color: "var(--mint-text-secondary, #4B5563)" }}>
+              Pixi Focus Mode · step {step}/{stepMax}
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              {isStageFocus ? (
+                <>
+                  <button className="btn btn-sm" onClick={toggleStageFullscreen}>
+                    {isStageFullscreen ? "Exit Fullscreen" : "Fullscreen"}
+                  </button>
+                  <button className="btn btn-sm" onClick={() => setShowStageTransport((prev) => !prev)}>
+                    {showStageTransport ? "Hide controls" : "Show controls"}
+                  </button>
+                  <button className="btn btn-sm" onClick={() => setShowStageSetup((prev) => !prev)}>
+                    {showStageSetup ? "Hide setup" : "Show setup"}
+                  </button>
+                </>
+              ) : null}
+              <button className="btn btn-sm" onClick={() => setFocusMode(false)}>
+                Exit Focus
+              </button>
+              {sim.ok ? (
+                <button className="btn btn-sm" onClick={() => copyWithToast("share link", buildShareLink())}>
+                  Copy Share
+                </button>
+              ) : null}
+            </div>
+          </div>
+        </section>
+      ) : null}
+
+      {!isEngineFocus && eventId ? (
         <section className="card">
           <div className="card-hd flex flex-wrap items-center justify-between gap-2">
             <div className="grid gap-1">
@@ -811,6 +1020,7 @@ protocolV1: {
         </section>
       ) : null}
 
+      {showReplaySetupPanel && (
       <section className="card">
         <div className="card-hd">
           <div className="text-base font-semibold">Replay from transcript</div>
@@ -844,6 +1054,16 @@ protocolV1: {
                 </select>
                 {isEngine && compare ? (
                   <span className="text-[11px] text-slate-500">compare mode renders classic board.</span>
+                ) : null}
+                {isEngine && !isEngineFocus ? (
+                  <div className="flex flex-wrap items-center gap-2">
+                    <button className="btn btn-sm" onClick={() => setFocusMode(true)}>
+                      Enter Pixi Focus
+                    </button>
+                    <Link className="btn btn-sm no-underline" to={stageReplayUrl}>
+                      Open Stage Page
+                    </Link>
+                  </div>
                 ) : null}
 
                 <button className="btn btn-primary" onClick={() => load()} disabled={loading}>
@@ -1008,6 +1228,21 @@ protocolV1: {
           </div>
         </div>
       </section>
+      )}
+
+      {isEngineFocus && !sim.ok ? (
+        <section className="rounded-2xl border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div>Pixi focus needs a loaded replay. Load transcript first, or exit focus mode.</div>
+            <div className="flex flex-wrap items-center gap-2">
+              <button className="btn btn-sm" onClick={() => setFocusMode(false)}>Exit Focus</button>
+              <button className="btn btn-sm btn-primary" onClick={() => load()} disabled={loading}>
+                {loading ? "Loading..." : "Load replay"}
+              </button>
+            </div>
+          </div>
+        </section>
+      ) : null}
 
       {sim.ok ? (
         <>
@@ -1094,7 +1329,7 @@ protocolV1: {
             </section>
           ) : null}
 
-          <section className="grid gap-6 lg:grid-cols-2">
+          <section className={isEngineFocus ? "grid gap-4" : "grid gap-6 lg:grid-cols-2"}>
             <div className="card">
               <div className="card-hd replay-header-grid">
                 <div className="flex items-center gap-3">
@@ -1114,82 +1349,88 @@ protocolV1: {
                     </span>
                   ) : null}
                 </div>
-                <div className="replay-transport">
-                  <button
-                    className="btn btn-sm"
-                    onClick={() => {
-                      setIsPlaying(false);
-                      setStep(0);
-                    }}
-                    disabled={!canStepBack}
-                    title="Jump to start"
-                  >
-                    start
-                  </button>
-                  <button
-                    className="btn btn-sm"
-                    onClick={() => {
-                      setIsPlaying(false);
-                      setStep((s) => Math.max(0, s - 1));
-                    }}
-                    disabled={!canStepBack}
-                    aria-label="Previous step"
-                  >
-                    prev
-                  </button>
-
-                  <button
-                    className="btn btn-sm btn-primary"
-                    onClick={() => setIsPlaying((p) => !p)}
-                    disabled={!canPlay}
-                    title="Auto play"
-                    aria-label={isPlaying ? "Pause replay" : "Play replay"}
-                  >
-                    {isPlaying ? "pause" : "play"}
-                  </button>
-
-                  <button
-                    className="btn btn-sm"
-                    onClick={() => {
-                      setIsPlaying(false);
-                      setStep((s) => Math.min(stepMax, s + 1));
-                    }}
-                    disabled={!canStepForward}
-                    aria-label="Next step"
-                  >
-                    next
-                  </button>
-
-                  <button
-                    className="btn btn-sm"
-                    onClick={() => {
-                      setIsPlaying(false);
-                      setStep(stepMax);
-                    }}
-                    disabled={!canStepForward}
-                    title="Jump to end"
-                  >
-                    end
-                  </button>
-
-                  <label className="replay-speed">
-                    speed
-                    <select
-                      className="rounded-md border border-surface-300 bg-white px-2 py-1 text-xs"
-                      value={playbackSpeed}
-                      onChange={(e) => setPlaybackSpeed(normalizeReplayPlaybackSpeed(Number(e.target.value)))}
-                      disabled={!canPlay}
-                      aria-label="Replay speed"
+                {(!isStageFocus || showStageTransport) ? (
+                  <div className="replay-transport">
+                    <button
+                      className={replayTransportButtonClass}
+                      onClick={() => {
+                        setIsPlaying(false);
+                        setStep(0);
+                      }}
+                      disabled={!canStepBack}
+                      title="Jump to start"
                     >
-                      {REPLAY_PLAYBACK_SPEED_OPTIONS.map((speedOption) => (
-                        <option key={speedOption} value={speedOption}>
-                          {speedOption}x
-                        </option>
-                      ))}
-                    </select>
-                  </label>
+                      start
+                    </button>
+                    <button
+                      className={replayTransportButtonClass}
+                      onClick={() => {
+                        setIsPlaying(false);
+                        setStep((s) => Math.max(0, s - 1));
+                      }}
+                      disabled={!canStepBack}
+                      aria-label="Previous step"
+                    >
+                      prev
+                    </button>
 
-                </div>
+                    <button
+                      className={replayTransportPrimaryButtonClass}
+                      onClick={() => setIsPlaying((p) => !p)}
+                      disabled={!canPlay}
+                      title="Auto play"
+                      aria-label={isPlaying ? "Pause replay" : "Play replay"}
+                    >
+                      {isPlaying ? "pause" : "play"}
+                    </button>
+
+                    <button
+                      className={replayTransportButtonClass}
+                      onClick={() => {
+                        setIsPlaying(false);
+                        setStep((s) => Math.min(stepMax, s + 1));
+                      }}
+                      disabled={!canStepForward}
+                      aria-label="Next step"
+                    >
+                      next
+                    </button>
+
+                    <button
+                      className={replayTransportButtonClass}
+                      onClick={() => {
+                        setIsPlaying(false);
+                        setStep(stepMax);
+                      }}
+                      disabled={!canStepForward}
+                      title="Jump to end"
+                    >
+                      end
+                    </button>
+
+                    <label className="replay-speed">
+                      speed
+                      <select
+                        className={replaySpeedSelectClass}
+                        value={playbackSpeed}
+                        onChange={(e) => setPlaybackSpeed(normalizeReplayPlaybackSpeed(Number(e.target.value)))}
+                        disabled={!canPlay}
+                        aria-label="Replay speed"
+                      >
+                        {REPLAY_PLAYBACK_SPEED_OPTIONS.map((speedOption) => (
+                          <option key={speedOption} value={speedOption}>
+                            {speedOption}x
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+
+                  </div>
+                ) : (
+                  <div className="rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600">
+                    Replay controls are hidden for board focus.
+                  </div>
+                )}
               </div>
 
               <div className="card-bd grid gap-4">
@@ -1205,167 +1446,180 @@ protocolV1: {
                   renderReplay(sim.currentRulesetLabel, sim.current)
                 )}
 
-                <div className="replay-timeline-shell">
-                  <div className="replay-timeline-head">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <span className="replay-step-pill">{step === 0 ? "Initial board" : `After turn ${step}`}</span>
-                      <span className={`replay-phase replay-phase--${phaseInfo.tone}`}>{phaseInfo.label}</span>
-                      <span className="text-xs text-slate-500">
-                        {step}/{stepMax} | {stepProgress}%
-                      </span>
-                    </div>
-                    {highlights.length > 0 ? (
-                      <div className="flex items-center gap-1.5">
-                        <button
-                          className="btn btn-sm"
-                          onClick={jumpToPrevHighlight}
-                          disabled={highlights.length === 0}
-                          title="Previous highlight ([)"
-                        >
-                          Prev
-                        </button>
-                        <span className="replay-highlight-index">
-                          {currentHighlightIdx >= 0
-                            ? `${currentHighlightIdx + 1}/${highlights.length}`
-                            : `${highlights.length} highlights`}
-                        </span>
-                        <button
-                          className="btn btn-sm"
-                          onClick={jumpToNextHighlight}
-                          disabled={highlights.length === 0}
-                          title="Next highlight (])"
-                        >
-                          Next
-                        </button>
+                {isStageFocus ? (
+                  <div className="flex justify-end">
+                    <button className={replayTransportButtonClass} onClick={() => setShowStagePanels((prev) => !prev)}>
+                      {showStagePanels ? "Hide timeline/details" : "Show timeline/details"}
+                    </button>
+                  </div>
+                ) : null}
+
+                {(!isStageFocus || showStagePanels) && (
+                  <>
+                    <div className="replay-timeline-shell">
+                      <div className="replay-timeline-head">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="replay-step-pill">{step === 0 ? "Initial board" : `After turn ${step}`}</span>
+                          <span className={`replay-phase replay-phase--${phaseInfo.tone}`}>{phaseInfo.label}</span>
+                          <span className="text-xs text-slate-500">
+                            {step}/{stepMax} | {stepProgress}%
+                          </span>
+                        </div>
+                        {highlights.length > 0 ? (
+                          <div className="flex items-center gap-1.5">
+                            <button
+                              className={replayTransportButtonClass}
+                              onClick={jumpToPrevHighlight}
+                              disabled={highlights.length === 0}
+                              title="Previous highlight ([)"
+                            >
+                              Prev
+                            </button>
+                            <span className="replay-highlight-index">
+                              {currentHighlightIdx >= 0
+                                ? `${currentHighlightIdx + 1}/${highlights.length}`
+                                : `${highlights.length} highlights`}
+                            </span>
+                            <button
+                              className={replayTransportButtonClass}
+                              onClick={jumpToNextHighlight}
+                              disabled={highlights.length === 0}
+                              title="Next highlight (])"
+                            >
+                              Next
+                            </button>
+                          </div>
+                        ) : null}
                       </div>
-                    ) : null}
-                  </div>
-                  <div className="replay-progress" aria-hidden="true">
-                    <div className="replay-progress__bar" style={{ width: `${stepProgress}%` }} />
-                  </div>
+                      <div className="replay-progress" aria-hidden="true">
+                        <div className="replay-progress__bar" style={{ width: `${stepProgress}%` }} />
+                      </div>
 
-                  <div className="replay-range-wrap">
-                    <input
-                      type="range"
-                      min={0}
-                      max={stepMax}
-                      value={step}
-                      onChange={(e) => { setIsPlaying(false); setStep(Number(e.target.value)); }}
-                      className="replay-range w-full"
-                      aria-label="Replay step"
-                      aria-valuetext={stepStatusText}
-                    />
-                    {stepMax > 0 && highlights.map((highlight, i) => (
-                      <button
-                        key={`${highlight.kind}-${highlight.step}-${i}`}
-                        className="replay-highlight-marker"
-                        data-kind={highlight.kind}
-                        style={{ left: `${(highlight.step / stepMax) * 100}%` }}
-                        title={`Turn ${highlight.step}: ${highlight.label}`}
-                        aria-label={`Jump to turn ${highlight.step} (${replayHighlightKindLabel(highlight.kind)})`}
-                        onClick={() => { setIsPlaying(false); setStep(highlight.step); }}
-                      />
-                    ))}
-                  </div>
-
-                  {highlights.length > 0 ? (
-                    <div className="replay-highlight-summary">
-                      {HIGHLIGHT_KIND_ORDER.map((kind) => {
-                        const count = highlightSummary[kind];
-                        if (count <= 0) return null;
-                        const isActive = activeHighlights.some((highlight) => highlight.kind === kind);
-                        return (
-                          <span
-                            key={kind}
-                            className={`replay-highlight-chip${isActive ? " replay-highlight-chip--active" : ""}`}
-                            data-kind={kind}
-                          >
-                            {replayHighlightKindLabel(kind)} {count}
-                          </span>
-                        );
-                      })}
-                    </div>
-                  ) : (
-                    <div className="text-xs text-slate-500">No tactical highlights yet.</div>
-                  )}
-                  <div className="text-[11px] text-slate-500">
-                    Keyboard: <span className="font-mono">[</span>/<span className="font-mono">]</span> jump highlights, <span className="font-mono">Space</span> play/pause.
-                  </div>
-
-                  {activeHighlights.length > 0 ? (
-                    <div className="replay-highlight-callout">
-                      <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Now highlighted</div>
-                      <div className="mt-1 flex flex-wrap gap-1.5">
-                        {activeHighlights.map((highlight, i) => (
-                          <span
+                      <div className="replay-range-wrap">
+                        <input
+                          type="range"
+                          min={0}
+                          max={stepMax}
+                          value={step}
+                          onChange={(e) => { setIsPlaying(false); setStep(Number(e.target.value)); }}
+                          className="replay-range w-full"
+                          aria-label="Replay step"
+                          aria-valuetext={stepStatusText}
+                        />
+                        {stepMax > 0 && highlights.map((highlight, i) => (
+                          <button
                             key={`${highlight.kind}-${highlight.step}-${i}`}
-                            className="replay-highlight-chip replay-highlight-chip--active"
+                            className="replay-highlight-marker"
                             data-kind={highlight.kind}
-                          >
-                            {replayHighlightKindLabel(highlight.kind)}: {highlight.label}
-                          </span>
+                            style={{ left: `${(highlight.step / stepMax) * 100}%` }}
+                            title={`Turn ${highlight.step}: ${highlight.label}`}
+                            aria-label={`Jump to turn ${highlight.step} (${replayHighlightKindLabel(highlight.kind)})`}
+                            onClick={() => { setIsPlaying(false); setStep(highlight.step); }}
+                          />
                         ))}
                       </div>
-                    </div>
-                  ) : null}
-                </div>
 
-                <div className="rounded-lg border border-slate-200 bg-white p-3 text-sm">
-                  <div className="flex flex-wrap items-center justify-between gap-2">
-                    <div className="font-medium">
-                      current winner: {formatReplayWinnerLabel(sim.current.winner)} | tiles A:{sim.current.tiles.A} / B:{sim.current.tiles.B}
-                    </div>
-                    <div className="text-xs text-slate-500">tieBreak: {sim.current.tieBreak}</div>
-                  </div>
-
-                  <div className="mt-2 grid gap-2 text-xs text-slate-600">
-                    <div>
-                      <span className="font-medium">rulesetId</span>: <code>{sim.transcript.header.rulesetId}</code>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className="font-medium">matchId</span>: <code>{sim.current.matchId}</code>
-                      {verifyStatus === "ok" && <span className="text-emerald-600 font-semibold" title="Replay verified">Verified</span>}
-                      {verifyStatus === "mismatch" && <span className="text-red-600 font-semibold" title="Replay mismatch">Mismatch</span>}
-                    </div>
-                  </div>
-
-                  <div className="mt-3 flex flex-wrap items-center gap-2">
-                    <button className="btn" onClick={() => copyWithToast("transcript", stringifyWithBigInt(sim.transcript))}>
-                      Copy transcript JSON
-                    </button>
-                    <button className="btn" onClick={() => copyWithToast("result", stringifyWithBigInt(sim.current))}>
-                      Copy result JSON
-                    </button>
-                    <button
-                      className={`btn ${verifyStatus === "ok" ? "border-emerald-400 bg-emerald-50 text-emerald-700" : verifyStatus === "mismatch" ? "btn-danger" : ""}`}
-                      onClick={handleVerify}
-                    >
-                      {verifyStatus === "ok" ? "Verified" : verifyStatus === "mismatch" ? "Mismatch!" : "Verify Replay"}
-                    </button>
-                  </div>
-
-                  <div className="mt-3">
-                    <Disclosure title={<span>Show raw JSON (debug)</span>}>
-                      <div className="grid gap-3">
-                        <div>
-                          <div className="text-xs font-medium text-slate-600">transcript</div>
-                          <pre className="mt-1 overflow-x-auto rounded-xl border border-slate-200 bg-white/70 p-3 text-xs">
-                            {stringifyWithBigInt(sim.transcript)}
-                          </pre>
+                      {highlights.length > 0 ? (
+                        <div className="replay-highlight-summary">
+                          {HIGHLIGHT_KIND_ORDER.map((kind) => {
+                            const count = highlightSummary[kind];
+                            if (count <= 0) return null;
+                            const isActive = activeHighlights.some((highlight) => highlight.kind === kind);
+                            return (
+                              <span
+                                key={kind}
+                                className={`replay-highlight-chip${isActive ? " replay-highlight-chip--active" : ""}`}
+                                data-kind={kind}
+                              >
+                                {replayHighlightKindLabel(kind)} {count}
+                              </span>
+                            );
+                          })}
                         </div>
+                      ) : (
+                        <div className="text-xs text-slate-500">No tactical highlights yet.</div>
+                      )}
+                      <div className="text-[11px] text-slate-500">
+                        Keyboard: <span className="font-mono">[</span>/<span className="font-mono">]</span> jump highlights, <span className="font-mono">Space</span> play/pause.
+                      </div>
+
+                      {activeHighlights.length > 0 ? (
+                        <div className="replay-highlight-callout">
+                          <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Now highlighted</div>
+                          <div className="mt-1 flex flex-wrap gap-1.5">
+                            {activeHighlights.map((highlight, i) => (
+                              <span
+                                key={`${highlight.kind}-${highlight.step}-${i}`}
+                                className="replay-highlight-chip replay-highlight-chip--active"
+                                data-kind={highlight.kind}
+                              >
+                                {replayHighlightKindLabel(highlight.kind)}: {highlight.label}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      ) : null}
+                    </div>
+
+                    <div className="rounded-lg border border-slate-200 bg-white p-3 text-sm">
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <div className="font-medium">
+                          current winner: {formatReplayWinnerLabel(sim.current.winner)} | tiles A:{sim.current.tiles.A} / B:{sim.current.tiles.B}
+                        </div>
+                        <div className="text-xs text-slate-500">tieBreak: {sim.current.tieBreak}</div>
+                      </div>
+
+                      <div className="mt-2 grid gap-2 text-xs text-slate-600">
                         <div>
-                          <div className="text-xs font-medium text-slate-600">result</div>
-                          <pre className="mt-1 overflow-x-auto rounded-xl border border-slate-200 bg-white/70 p-3 text-xs">
-                            {stringifyWithBigInt(sim.current)}
-                          </pre>
+                          <span className="font-medium">rulesetId</span>: <code>{sim.transcript.header.rulesetId}</code>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="font-medium">matchId</span>: <code>{sim.current.matchId}</code>
+                          {verifyStatus === "ok" && <span className="text-emerald-600 font-semibold" title="Replay verified">Verified</span>}
+                          {verifyStatus === "mismatch" && <span className="text-red-600 font-semibold" title="Replay mismatch">Mismatch</span>}
                         </div>
                       </div>
-                    </Disclosure>
-                  </div>
-                </div>
+
+                      <div className="mt-3 flex flex-wrap items-center gap-2">
+                        <button className="btn" onClick={() => copyWithToast("transcript", stringifyWithBigInt(sim.transcript))}>
+                          Copy transcript JSON
+                        </button>
+                        <button className="btn" onClick={() => copyWithToast("result", stringifyWithBigInt(sim.current))}>
+                          Copy result JSON
+                        </button>
+                        <button
+                          className={`btn ${verifyStatus === "ok" ? "border-emerald-400 bg-emerald-50 text-emerald-700" : verifyStatus === "mismatch" ? "btn-danger" : ""}`}
+                          onClick={handleVerify}
+                        >
+                          {verifyStatus === "ok" ? "Verified" : verifyStatus === "mismatch" ? "Mismatch!" : "Verify Replay"}
+                        </button>
+                      </div>
+
+                      <div className="mt-3">
+                        <Disclosure title={<span>Show raw JSON (debug)</span>}>
+                          <div className="grid gap-3">
+                            <div>
+                              <div className="text-xs font-medium text-slate-600">transcript</div>
+                              <pre className="mt-1 overflow-x-auto rounded-xl border border-slate-200 bg-white/70 p-3 text-xs">
+                                {stringifyWithBigInt(sim.transcript)}
+                              </pre>
+                            </div>
+                            <div>
+                              <div className="text-xs font-medium text-slate-600">result</div>
+                              <pre className="mt-1 overflow-x-auto rounded-xl border border-slate-200 bg-white/70 p-3 text-xs">
+                                {stringifyWithBigInt(sim.current)}
+                              </pre>
+                            </div>
+                          </div>
+                        </Disclosure>
+                      </div>
+                    </div>
+                  </>
+                )}
               </div>
             </div>
 
+            {!isEngineFocus && (
             <div className="card">
               <div className="card-hd">
                 <div className="text-base font-semibold">Turn log</div>
@@ -1382,8 +1636,10 @@ protocolV1: {
                 />
               </div>
             </div>
+            )}
           </section>
 
+          {!isEngineFocus && (
           <section className="card">
             <div className="card-hd">
               <div className="text-base font-semibold">Deck inspector</div>
@@ -1425,6 +1681,7 @@ protocolV1: {
               </div>
             </div>
           </section>
+          )}
         </>
       ) : null}
     </div>

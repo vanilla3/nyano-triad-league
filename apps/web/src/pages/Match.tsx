@@ -1,6 +1,6 @@
 import React from "react";
 import { useToast } from "@/components/Toast";
-import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { Link, useLocation, useNavigate, useSearchParams } from "react-router-dom";
 
 import type { BoardState, CardData, FlipTraceV1, MatchResultWithHistory, PlayerIndex, RulesetConfigV1, TranscriptV1, Turn, TurnSummary } from "@nyano/triad-engine";
 import {
@@ -26,7 +26,12 @@ import { NyanoImage } from "@/components/NyanoImage";
 import { CardMini } from "@/components/CardMini";
 import { TurnLog } from "@/components/TurnLog";
 import { GameResultOverlay, type GameResult } from "@/components/GameResultOverlay";
-import { NyanoReaction, type NyanoReactionInput } from "@/components/NyanoReaction";
+import {
+  NyanoReaction,
+  pickReactionKind,
+  resolveReactionCutInImpact,
+  type NyanoReactionInput,
+} from "@/components/NyanoReaction";
 import { flipTracesSummary } from "@/components/flipTraceDescribe";
 import { base64UrlEncodeUtf8, tryGzipCompressUtf8ToBase64Url } from "@/lib/base64url";
 import { getDeck, listDecks, upsertDeck, type DeckV1 } from "@/lib/deck_store";
@@ -201,6 +206,12 @@ function parseBool01(v: string | null, defaultValue: boolean): boolean {
   return defaultValue;
 }
 
+function parseFocusMode(v: string | null): boolean {
+  if (!v) return false;
+  const normalized = v.toLowerCase();
+  return normalized === "1" || normalized === "focus";
+}
+
 function parseMatchBoardUi(v: string | null): MatchBoardUi {
   if (v === "engine") return "engine";
   if (v === "rpg") return "rpg";
@@ -268,12 +279,29 @@ function CollapsibleSection({
 
 export function MatchPage() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
   const ui = parseMatchBoardUi((searchParams.get("ui") || "").toLowerCase());
   const isRpg = ui === "rpg";
   const isMint = ui === "mint";
   const isEngine = ui === "engine";
   const useMintUi = isMint || isEngine;
+  const focusParam = searchParams.get("focus") ?? searchParams.get("layout");
+  const isFocusMode = parseFocusMode(focusParam);
+  const isEngineFocus = isEngine && isFocusMode;
+  const stageMatchUrl = React.useMemo(() => {
+    const next = new URLSearchParams(searchParams);
+    next.set("ui", "engine");
+    next.set("focus", "1");
+    next.delete("layout");
+    const query = next.toString();
+    return query ? `/battle-stage?${query}` : "/battle-stage";
+  }, [searchParams]);
+  const isBattleStageRoute = /\/battle-stage$/.test(location.pathname);
+  const engineBoardMaxWidthPx = isBattleStageRoute ? 1120 : undefined;
+  const engineBoardMinHeightPx = isBattleStageRoute ? 420 : undefined;
+  const isStageFocusRoute = isBattleStageRoute && isEngineFocus;
+  const stageViewportRef = React.useRef<HTMLDivElement>(null);
   const decks = React.useMemo(() => listDecks(), []);
 
   // ── Telemetry (NIN-UX-003) ──
@@ -428,12 +456,38 @@ export function MatchPage() {
   const overlayUrl = React.useMemo(() => appAbsoluteUrl("overlay?controls=0"), []);
   const lastStreamCmdIdRef = React.useRef<string>("");
   const [error, setError] = React.useState<string | null>(null);
+  const [isStageFullscreen, setIsStageFullscreen] = React.useState(
+    () => typeof document !== "undefined" && Boolean(document.fullscreenElement),
+  );
+
+  React.useEffect(() => {
+    const handleFullscreenChange = () => setIsStageFullscreen(Boolean(document.fullscreenElement));
+    document.addEventListener("fullscreenchange", handleFullscreenChange);
+    return () => document.removeEventListener("fullscreenchange", handleFullscreenChange);
+  }, []);
+
+  const toggleStageFullscreen = React.useCallback(async () => {
+    if (!isStageFocusRoute) return;
+    try {
+      if (document.fullscreenElement) {
+        await document.exitFullscreen();
+        return;
+      }
+      const target = stageViewportRef.current;
+      if (!target) return;
+      await target.requestFullscreen();
+    } catch (e: unknown) {
+      toast.warn("Fullscreen", errorMessage(e));
+    }
+  }, [isStageFocusRoute, toast]);
 
   // RPC status tracking for overlay propagation (Phase 0 stability)
   const rpcStatusRef = React.useRef<{ ok: boolean; message?: string; timestampMs: number } | undefined>(undefined);
 
   type AiNoteEntry = { reason: string; reasonCode: AiReasonCode };
   const [aiNotes, setAiNotes] = React.useState<Record<number, AiNoteEntry>>({});
+  const [aiAutoMoveDueAtMs, setAiAutoMoveDueAtMs] = React.useState<number | null>(null);
+  const [aiCountdownMs, setAiCountdownMs] = React.useState<number | null>(null);
   const [guestDeckSaved, setGuestDeckSaved] = React.useState(false);
 
   // F-1: Mint drawer state
@@ -447,6 +501,33 @@ export function MatchPage() {
     setDensity(d);
     writeUiDensity(d);
   }, []);
+  const [showStageAssist, setShowStageAssist] = React.useState(() => !isStageFocusRoute);
+  const showStageAssistUi = !isStageFocusRoute || showStageAssist;
+  const [showStageControls, setShowStageControls] = React.useState(() => {
+    if (!isStageFocusRoute) return true;
+    if (typeof window === "undefined") return true;
+    return window.innerWidth > 768;
+  });
+
+  React.useEffect(() => {
+    if (!isStageFocusRoute) {
+      setShowStageAssist(true);
+      return;
+    }
+    setShowStageAssist(false);
+  }, [isStageFocusRoute]);
+
+  React.useEffect(() => {
+    if (!isStageFocusRoute) {
+      setShowStageControls(true);
+      return;
+    }
+    if (typeof window === "undefined") {
+      setShowStageControls(true);
+      return;
+    }
+    setShowStageControls(window.innerWidth > 768);
+  }, [isStageFocusRoute]);
 
   const resetMatch = React.useCallback(() => {
     setTurns([]);
@@ -455,6 +536,8 @@ export function MatchPage() {
     setDraftWarningMarkCell(null);
     setSelectedTurnIndex(0);
     setAiNotes({});
+    setAiAutoMoveDueAtMs(null);
+    setAiCountdownMs(null);
     setGuestDeckSaved(false);
     setSalt(randomSalt());
     setDeadline(Math.floor(Date.now() / 1000) + 24 * 3600);
@@ -474,6 +557,8 @@ export function MatchPage() {
     setDraftWarningMarkCell(null);
     setSelectedTurnIndex(0);
     setAiNotes({});
+    setAiAutoMoveDueAtMs(null);
+    setAiCountdownMs(null);
     setGuestDeckSaved(false);
     setSalt(randomSalt());
     setDeadline(Math.floor(Date.now() / 1000) + 24 * 3600);
@@ -554,6 +639,23 @@ export function MatchPage() {
     const { next, changed } = applySearchParamPatch(searchParams, updates);
     if (changed) setSearchParams(next, { replace: true });
   };
+
+  const setFocusMode = React.useCallback((enabled: boolean) => {
+    const { next, changed } = applySearchParamPatch(searchParams, {
+      focus: enabled ? "1" : undefined,
+      layout: undefined,
+    });
+    if (changed) setSearchParams(next, { replace: true });
+  }, [searchParams, setSearchParams]);
+
+  React.useEffect(() => {
+    if (isEngine || !isFocusMode) return;
+    const { next, changed } = applySearchParamPatch(searchParams, {
+      focus: undefined,
+      layout: undefined,
+    });
+    if (changed) setSearchParams(next, { replace: true });
+  }, [isEngine, isFocusMode, searchParams, setSearchParams]);
 
   const clearEvent = () => {
     const next = new URLSearchParams(searchParams);
@@ -1159,17 +1261,38 @@ export function MatchPage() {
   }, [isVsNyanoAi, cards, turns.length, currentPlayer, aiPlayer, aiDifficulty, boardNow, effectiveDeckBTokens, used.usedB, used.cells, commitTurn, warnUsed.B]);
 
   React.useEffect(() => {
-    if (!isVsNyanoAi || !aiAutoPlay) return;
-    if (!cards) return;
-    if (turns.length >= 9) return;
-    if (currentPlayer !== aiPlayer) return;
+    if (!isVsNyanoAi || !aiAutoPlay || !cards || turns.length >= 9 || currentPlayer !== aiPlayer) {
+      setAiAutoMoveDueAtMs(null);
+      setAiCountdownMs(null);
+      return;
+    }
     const delayMs = computeAiAutoMoveDelayMs({
       difficulty: aiDifficulty,
       turnIndex: turns.length,
     });
-    const t = window.setTimeout(() => doAiMove(), delayMs);
-    return () => window.clearTimeout(t);
+    const dueAt = Date.now() + delayMs;
+    setAiAutoMoveDueAtMs(dueAt);
+    setAiCountdownMs(delayMs);
+    const t = window.setTimeout(() => {
+      setAiAutoMoveDueAtMs(null);
+      setAiCountdownMs(null);
+      doAiMove();
+    }, delayMs);
+    return () => {
+      window.clearTimeout(t);
+    };
   }, [isVsNyanoAi, aiAutoPlay, cards, turns.length, currentPlayer, aiPlayer, aiDifficulty, doAiMove]);
+
+  React.useEffect(() => {
+    if (aiAutoMoveDueAtMs === null) return;
+    const updateCountdown = () => {
+      const remaining = aiAutoMoveDueAtMs - Date.now();
+      setAiCountdownMs(Math.max(0, remaining));
+    };
+    updateCountdown();
+    const timer = window.setInterval(updateCountdown, 120);
+    return () => window.clearInterval(timer);
+  }, [aiAutoMoveDueAtMs]);
 
   // Stream commands (from /stream)
   React.useEffect(() => {
@@ -1303,6 +1426,31 @@ export function MatchPage() {
       winner: turns.length >= 9 ? sim.full.winner : null,
     };
   }, [sim, turns.length, boardNow]);
+  const currentAiReasonCode = React.useMemo(
+    () => (turns.length > 0 ? aiNotes[turns.length - 1]?.reasonCode : undefined),
+    [aiNotes, turns.length],
+  );
+  const nyanoReactionImpact = React.useMemo(() => {
+    if (!nyanoReactionInput) return "low" as const;
+    const kind = pickReactionKind(nyanoReactionInput);
+    return resolveReactionCutInImpact(kind, currentAiReasonCode);
+  }, [nyanoReactionInput, currentAiReasonCode]);
+  const [stageImpactBurst, setStageImpactBurst] = React.useState(false);
+
+  React.useEffect(() => {
+    if (!isEngineFocus || !nyanoReactionInput) {
+      setStageImpactBurst(false);
+      return;
+    }
+    if (nyanoReactionImpact === "low") {
+      setStageImpactBurst(false);
+      return;
+    }
+    setStageImpactBurst(true);
+    const burstMs = nyanoReactionImpact === "high" ? 960 : 760;
+    const timer = window.setTimeout(() => setStageImpactBurst(false), burstMs);
+    return () => window.clearTimeout(timer);
+  }, [isEngineFocus, nyanoReactionInput, nyanoReactionImpact, turns.length]);
 
   // P1-1: flipTraces summary for last turn
   const lastFlipSummaryText: string | null = React.useMemo(() => {
@@ -1376,13 +1524,27 @@ export function MatchPage() {
     if (!cards) return [];
     return currentDeckTokens.map((tid) => cards.get(tid)).filter(Boolean) as CardData[];
   }, [cards, currentDeckTokens]);
+  const showDesktopQuickCommit = useMintUi
+    && !isRpg
+    && !isAiTurn
+    && turns.length < 9
+    && (draftCardIndex !== null || draftCell !== null);
 
   /* ═══════════════════════════════════════════════════════════════════════
      RENDER
      ═══════════════════════════════════════════════════════════════════════ */
 
   return (
-    <div className="grid gap-6">
+    <div
+      ref={stageViewportRef}
+      className={
+        isStageFocusRoute
+          ? "grid min-h-[100dvh] gap-3 px-2 py-2 md:px-3 md:py-3"
+          : isEngineFocus
+            ? "grid gap-4"
+            : "grid gap-6"
+      }
+    >
       {/* ── Result Overlay ── */}
       {gameResult && (
         useMintUi ? (
@@ -1416,8 +1578,42 @@ export function MatchPage() {
         )
       )}
 
+      {isEngineFocus && (
+        <section
+          className="rounded-2xl border px-3 py-2"
+          style={{ background: "var(--mint-surface, #fff)", borderColor: "var(--mint-accent-muted, #A7F3D0)" }}
+        >
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div className="text-xs font-semibold" style={{ color: "var(--mint-text-secondary, #4B5563)" }}>
+              Pixi Focus Mode · turn {currentTurnIndex}/9 · warning left {currentWarnRemaining}
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              {isStageFocusRoute ? (
+                <>
+                  <button className="btn btn-sm" onClick={toggleStageFullscreen}>
+                    {isStageFullscreen ? "Exit Fullscreen" : "Fullscreen"}
+                  </button>
+                  <button className="btn btn-sm" onClick={() => setShowStageControls((prev) => !prev)}>
+                    {showStageControls ? "Hide Controls" : "Show Controls"}
+                  </button>
+                  <button className="btn btn-sm" onClick={() => setShowStageAssist((prev) => !prev)}>
+                    {showStageAssist ? "Hide HUD" : "Show HUD"}
+                  </button>
+                </>
+              ) : null}
+              <button className="btn btn-sm" onClick={() => setFocusMode(false)}>
+                Exit Focus
+              </button>
+              <button className="btn btn-sm" onClick={() => { void openReplay(); }} disabled={!canFinalize}>
+                Replay
+              </button>
+            </div>
+          </div>
+        </section>
+      )}
+
       {/* ── Hero ── */}
-      <section className="relative overflow-hidden rounded-2xl border border-slate-200 bg-white">
+      {!isEngineFocus && (<section className="relative overflow-hidden rounded-2xl border border-slate-200 bg-white">
         <div className="flex flex-col items-start gap-4 p-4 md:flex-row md:items-center md:p-6">
           <NyanoImage size={96} className="shadow-sm" alt="Nyano" />
           <div className="min-w-0">
@@ -1432,10 +1628,10 @@ export function MatchPage() {
             </div>
           </div>
         </div>
-      </section>
+      </section>)}
 
       {/* ── Event ── */}
-      {event ? (
+      {!isEngineFocus && event ? (
         <section className="card">
           <div className="card-hd flex flex-wrap items-center justify-between gap-2">
             <div>
@@ -1459,7 +1655,7 @@ export function MatchPage() {
       ) : null}
 
       {/* ── Guest mode banner ── */}
-      {isGuestMode && (
+      {!isEngineFocus && isGuestMode && (
         <section className="rounded-2xl border border-nyano-200 bg-nyano-50 p-4">
           <div className="flex items-center gap-3">
             <NyanoAvatar size={48} expression="playful" />
@@ -1474,10 +1670,10 @@ export function MatchPage() {
       )}
 
       {/* ── Mini Tutorial (guest mode, first visit only) ── */}
-      {isGuestMode && <MiniTutorial />}
+      {!isEngineFocus && isGuestMode && <MiniTutorial />}
 
       {/* ── Match Setup (collapsed in guest mode, collapsible after cards are loaded) ── */}
-      {!isGuestMode && (
+      {!isEngineFocus && !isGuestMode && (
       <CollapsibleSection
         title="Match Setup"
         subtitle="デッキ選択・ルールセット・対戦設定"
@@ -1573,13 +1769,30 @@ export function MatchPage() {
             <select
               className="input"
               value={ui}
-              onChange={(e) => setParam("ui", parseMatchBoardUi(e.target.value))}
+              onChange={(e) => {
+                const nextUi = parseMatchBoardUi(e.target.value);
+                if (nextUi === "engine") {
+                  setParam("ui", nextUi);
+                } else {
+                  setParams({ ui: nextUi, focus: undefined, layout: undefined });
+                }
+              }}
               aria-label="Board renderer"
             >
               <option value="mint">mint</option>
               <option value="engine">engine (pixi)</option>
               <option value="rpg">rpg</option>
             </select>
+            {isEngine ? (
+              <div className="flex flex-wrap items-center gap-2">
+                <button className="btn btn-sm" onClick={() => setFocusMode(true)}>
+                  Enter Pixi Focus
+                </button>
+                <Link className="btn btn-sm no-underline" to={stageMatchUrl}>
+                  Open Stage Page
+                </Link>
+              </div>
+            ) : null}
           </div>
 
           <div className="grid gap-2">
@@ -1975,9 +2188,19 @@ export function MatchPage() {
       {/* ═══════════════════════════════════════════════════════════════════
          GAME ARENA — unified play section (P0-1 / P0-2)
          ═══════════════════════════════════════════════════════════════════ */}
-      <section className={isRpg ? "rounded-2xl" : "card"} style={isRpg ? { background: "#0A0A0A" } : undefined}>
-        {!isRpg && (
-          <div className="card-hd">
+      <section
+        className={isEngineFocus ? "rounded-2xl border" : isRpg ? "rounded-2xl" : "card"}
+        style={
+          isRpg
+            ? { background: "#0A0A0A" }
+            : isEngineFocus
+              ? { background: "var(--mint-surface, #fff)", borderColor: "var(--mint-accent-muted, #A7F3D0)" }
+              : undefined
+        }
+      >
+        {!isRpg && !isEngineFocus && (
+          <div className="card-hd flex flex-wrap items-start justify-between gap-2">
+            <div>
             <div className="text-base font-semibold">
               Game · turn {currentTurnIndex}/9
               {isAiTurn ? " · Nyano AI" : ` · Player ${currentPlayer === 0 ? "A" : "B"}`}
@@ -1992,10 +2215,21 @@ export function MatchPage() {
                 </span>
               )}
             </div>
+            </div>
+            {isEngine ? (
+              <div className="flex flex-wrap items-center gap-2">
+                <button className="btn btn-sm" onClick={() => setFocusMode(true)}>
+                  Enter Pixi Focus
+                </button>
+                <Link className="btn btn-sm no-underline" to={stageMatchUrl}>
+                  Open Stage Page
+                </Link>
+              </div>
+            ) : null}
           </div>
         )}
 
-        <div className={isRpg ? "p-4" : "card-bd"}>
+        <div className={isRpg ? "p-4" : isEngineFocus ? "p-2 md:p-3" : "card-bd"}>
           {!cards ? (
             <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-8 text-center text-sm text-slate-600">
               {loading ? (
@@ -2011,11 +2245,11 @@ export function MatchPage() {
               )}
             </div>
           ) : (
-            <div className={useMintUi ? "grid gap-6" : "grid gap-6 lg:grid-cols-[1fr_300px]"}>
+            <div className={useMintUi ? (isEngineFocus ? "grid gap-4" : "grid gap-6") : "grid gap-6 lg:grid-cols-[1fr_300px]"}>
               {/* ── Left: Board + Hand ── */}
               <div className="grid gap-4">
                 {/* Guest deck preview */}
-                {isGuestMode && cards && (
+                {!isEngineFocus && isGuestMode && cards && (
                   <details open={turns.length === 0} className="rounded-lg border border-surface-200 bg-surface-50 p-3">
                     <summary className="cursor-pointer text-sm font-medium text-surface-700">
                       Deck Preview
@@ -2044,7 +2278,7 @@ export function MatchPage() {
                 )}
 
                 {/* ScoreBar / BattleHud */}
-                {sim.ok && (
+                {showStageAssistUi && sim.ok && (
                   useMintUi ? (
                     <div className="flex items-center gap-2">
                       <div className="flex-1">
@@ -2053,6 +2287,7 @@ export function MatchPage() {
                           turnCount={turns.length}
                           maxTurns={9}
                           currentPlayer={currentPlayer}
+                          tone={isEngine ? "pixi" : "mint"}
                           gamePhase={
                             turns.length >= 9 ? "game_over"
                               : isAiTurn ? "ai_turn"
@@ -2089,9 +2324,16 @@ export function MatchPage() {
                 )}
 
                 {/* AI turn notice */}
-                {isAiTurn && (
+                {showStageAssistUi && isAiTurn && (
                   <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900">
-                    Nyano の手番です。{aiAutoPlay ? "自動で進みます…" : "「Nyano Move」を押してください。"}
+                    {aiAutoPlay ? (
+                      <span>
+                        <span className="font-semibold animate-pulse">Nyano is thinking...</span>
+                        {aiCountdownMs !== null ? ` ${Math.max(0.1, aiCountdownMs / 1000).toFixed(1)}s` : ""}
+                      </span>
+                    ) : (
+                      "Nyano turn. Press \"Nyano Move\"."
+                    )}
                   </div>
                 )}
 
@@ -2105,7 +2347,7 @@ export function MatchPage() {
                     ──────────────────────────────────────────── */}
                 {sim.ok ? (
                   isMint ? (
-                    <DuelStageMint>
+                    <DuelStageMint impact={nyanoReactionImpact} impactBurst={stageImpactBurst}>
                       <BoardViewMint
                         board={boardNow}
                         selectedCell={draftCell}
@@ -2124,22 +2366,24 @@ export function MatchPage() {
                         }
                         inlineError={error}
                         onDismissError={() => setError(null)}
-                        flipTraces={density !== "minimal" ? lastFlipTraces : null}
+                        flipTraces={showStageAssistUi && density !== "minimal" ? lastFlipTraces : null}
                         isFlipAnimating={boardAnim.isAnimating}
                       />
                     </DuelStageMint>
                   ) : isEngine ? (
-                    <DuelStageMint>
+                    <DuelStageMint impact={nyanoReactionImpact} impactBurst={stageImpactBurst}>
                       <BattleStageEngine
                         board={boardNow}
                         selectedCell={draftCell}
                         selectableCells={selectableCells}
                         onCellSelect={(cell) => { telemetry.recordInteraction(); handleCellSelect(cell); }}
                         currentPlayer={currentPlayer}
+                        boardMaxWidthPx={engineBoardMaxWidthPx}
+                        boardMinHeightPx={engineBoardMinHeightPx}
                         preloadTokenIds={currentDeckTokens}
                         placedCell={boardAnim.placedCell}
                         flippedCells={boardAnim.flippedCells}
-                        showActionPrompt
+                        showActionPrompt={showStageAssistUi}
                         gamePhase={
                           turns.length >= 9 ? "game_over"
                             : isAiTurn ? "ai_turn"
@@ -2148,7 +2392,7 @@ export function MatchPage() {
                         }
                         inlineError={error}
                         onDismissError={() => setError(null)}
-                        flipTraces={density !== "minimal" ? lastFlipTraces : null}
+                        flipTraces={showStageAssistUi && density !== "minimal" ? lastFlipTraces : null}
                         isFlipAnimating={boardAnim.isAnimating}
                       />
                     </DuelStageMint>
@@ -2183,6 +2427,64 @@ export function MatchPage() {
                   </div>
                 )}
 
+                {showDesktopQuickCommit ? (
+                  <div
+                    className="hidden lg:flex flex-wrap items-center justify-between gap-3 rounded-xl border px-3 py-2"
+                    style={{ background: "var(--mint-surface, #ffffff)", borderColor: "var(--mint-accent-muted, #A7F3D0)" }}
+                  >
+                    <div className="grid gap-0.5 text-xs">
+                      <div className="font-semibold" style={{ color: "var(--mint-text, #111827)" }}>
+                        Quick Commit
+                      </div>
+                      <div style={{ color: "var(--mint-text-secondary, #4B5563)" }}>
+                        card {draftCardIndex !== null ? draftCardIndex + 1 : "-"} → cell {draftCell ?? "-"}
+                      </div>
+                    </div>
+
+                    <div className="flex flex-wrap items-center gap-2">
+                      <label
+                        className="inline-flex items-center gap-2 text-xs font-semibold"
+                        style={{ color: "var(--mint-text-secondary, #4B5563)" }}
+                      >
+                        warning
+                        <select
+                          className="input h-10 min-w-[170px]"
+                          value={draftWarningMarkCell === null ? "" : String(draftWarningMarkCell)}
+                          onChange={(e) => {
+                            const v = e.target.value;
+                            setDraftWarningMarkCell(v === "" ? null : Number(v));
+                          }}
+                          disabled={turns.length >= 9 || isAiTurn || currentWarnRemaining <= 0}
+                          aria-label="Quick warning mark cell"
+                        >
+                          <option value="">None</option>
+                          {availableCells
+                            .filter((c) => c !== draftCell)
+                            .map((c) => (
+                              <option key={`quick-${c}`} value={String(c)}>cell {c}</option>
+                            ))}
+                        </select>
+                      </label>
+                      <button
+                        className="btn btn-primary h-10 px-4"
+                        onClick={commitMove}
+                        disabled={turns.length >= 9 || isAiTurn || draftCell === null || draftCardIndex === null}
+                        aria-label="Quick commit move"
+                      >
+                        Commit Move
+                      </button>
+                      <button
+                        className="btn h-10 px-4"
+                        onClick={undoMove}
+                        disabled={turns.length === 0}
+                        aria-label="Quick undo move"
+                      >
+                        Undo
+                      </button>
+                    </div>
+                  </div>
+                ) : null}
+
                 {/* FLIGHT-0100: Card flight animation portal */}
                 {cardFlight.state && <CardFlight {...cardFlight.state} />}
 
@@ -2196,7 +2498,7 @@ export function MatchPage() {
                 )}
 
                 {/* P1-1: Flip summary in Japanese (density >= standard) */}
-                {(!useMintUi || density !== "minimal") && lastFlipSummaryText && (
+                {showStageAssistUi && (!useMintUi || density !== "minimal") && lastFlipSummaryText && (
                   <div className={
                     useMintUi
                       ? "rounded-xl border px-3 py-2 text-xs font-semibold"
@@ -2214,131 +2516,143 @@ export function MatchPage() {
                   </div>
                 )}
 
-                {/* P1-2: Nyano Reaction (density >= standard) */}
-                {(!useMintUi || density !== "minimal") && nyanoReactionInput && (
+                {/* P1-2: Nyano Reaction (always visible in RPG/Mint/Pixi) */}
+                {nyanoReactionInput && (
                   <NyanoReaction
                     input={nyanoReactionInput}
                     turnIndex={turns.length}
                     rpg={isRpg}
                     mint={useMintUi}
-                    aiReasonCode={turns.length > 0 ? aiNotes[turns.length - 1]?.reasonCode : undefined}
+                    tone={isEngine ? "pixi" : "mint"}
+                    aiReasonCode={currentAiReasonCode}
                   />
                 )}
 
                 {/* ────────────────────────────────────────────
                     P0-2: Hand Display (RPG or standard)
                     ──────────────────────────────────────────── */}
-                <div className="grid gap-3">
-                  <div className={
-                    useMintUi ? "text-xs font-semibold text-mint-text-secondary"
-                    : isRpg ? "text-xs font-bold uppercase tracking-wider"
-                    : "text-xs font-medium text-slate-600"
-                  }
-                    style={isRpg ? { fontFamily: "'Cinzel', serif", color: "var(--rpg-text-gold, #E8D48B)" } : undefined}
-                  >
-                    {currentPlayer === 0 ? "Player A" : "Player B"} Hand
-                    {draftCell !== null && <span className={isRpg ? "" : " text-slate-400"}> · placing on cell {draftCell}</span>}
-                  </div>
-
-                  {useMintUi && currentHandCards.length > 0 ? (
-                    /* Mint Hand Display */
-                    <HandDisplayMint
-                      cards={currentHandCards}
-                      owner={currentPlayer}
-                      usedIndices={currentUsed}
-                      selectedIndex={draftCardIndex}
-                      onSelect={(idx) => { telemetry.recordInteraction(); setDraftCardIndex(idx); }}
-                      disabled={turns.length >= 9 || isAiTurn}
-                    />
-                  ) : isRpg && currentHandCards.length > 0 ? (
-                    /* P0-2: RPG Hand Display */
-                    <HandDisplayRPG
-                      cards={currentHandCards}
-                      owner={currentPlayer}
-                      usedIndices={currentUsed}
-                      selectedIndex={draftCardIndex}
-                      onSelect={(idx) => setDraftCardIndex(idx)}
-                      disabled={turns.length >= 9 || isAiTurn}
-                    />
-                  ) : (
-                    /* Standard card buttons */
-                    <div className="flex flex-wrap gap-2">
-                      {currentDeckTokens.map((tid, idx) => {
-                        const c = cards.get(tid);
-                        const usedHere = currentUsed.has(idx);
-                        const selected = draftCardIndex === idx;
-                        return (
-                          <button
-                            key={idx}
-                            disabled={usedHere || turns.length >= 9 || isAiTurn}
-                            onClick={() => setDraftCardIndex(idx)}
-                            aria-label={`Card slot ${idx + 1}${usedHere ? " (used)" : ""}${selected ? " (selected)" : ""}`}
-                            className={[
-                              "w-[120px] rounded-xl border p-2",
-                              selected ? "border-slate-900 ring-2 ring-nyano-400/60" : "border-slate-200",
-                              usedHere || isAiTurn ? "bg-slate-50 opacity-50" : "bg-white hover:bg-slate-50",
-                            ].join(" ")}
-                          >
-                            {c ? <CardMini card={c} owner={currentPlayer} subtle={!selected} /> : <div className="text-xs text-slate-500 font-mono">#{tid.toString()}</div>}
-                            <div className="mt-1 text-[10px] text-slate-500">idx {idx}</div>
-                          </button>
-                        );
-                      })}
+                {(!isStageFocusRoute || showStageControls) ? (
+                  <div className="grid gap-3">
+                    <div className={
+                      useMintUi ? "text-xs font-semibold text-mint-text-secondary"
+                      : isRpg ? "text-xs font-bold uppercase tracking-wider"
+                      : "text-xs font-medium text-slate-600"
+                    }
+                      style={isRpg ? { fontFamily: "'Cinzel', serif", color: "var(--rpg-text-gold, #E8D48B)" } : undefined}
+                    >
+                      {currentPlayer === 0 ? "Player A" : "Player B"} Hand
+                      {draftCell !== null && <span className={isRpg ? "" : " text-slate-400"}> · placing on cell {draftCell}</span>}
                     </div>
-                  )}
 
-                  {/* Warning mark + Commit/Undo */}
-                  <div className="flex flex-wrap items-end gap-4">
-                    <div className="grid gap-1">
-                      <div className={isRpg ? "text-[10px] uppercase tracking-wider" : "text-[11px] text-slate-600"}
-                        style={isRpg ? { fontFamily: "'Cinzel', serif", color: "var(--rpg-text-dim, #8A7E6B)" } : undefined}
-                      >
-                        Warning Mark ({currentWarnRemaining} left)
+                    {useMintUi && currentHandCards.length > 0 ? (
+                      /* Mint Hand Display */
+                      <HandDisplayMint
+                        cards={currentHandCards}
+                        owner={currentPlayer}
+                        usedIndices={currentUsed}
+                        selectedIndex={draftCardIndex}
+                        onSelect={(idx) => { telemetry.recordInteraction(); setDraftCardIndex(idx); }}
+                        disabled={turns.length >= 9 || isAiTurn}
+                      />
+                    ) : isRpg && currentHandCards.length > 0 ? (
+                      /* P0-2: RPG Hand Display */
+                      <HandDisplayRPG
+                        cards={currentHandCards}
+                        owner={currentPlayer}
+                        usedIndices={currentUsed}
+                        selectedIndex={draftCardIndex}
+                        onSelect={(idx) => setDraftCardIndex(idx)}
+                        disabled={turns.length >= 9 || isAiTurn}
+                      />
+                    ) : (
+                      /* Standard card buttons */
+                      <div className="flex flex-wrap gap-2">
+                        {currentDeckTokens.map((tid, idx) => {
+                          const c = cards.get(tid);
+                          const usedHere = currentUsed.has(idx);
+                          const selected = draftCardIndex === idx;
+                          return (
+                            <button
+                              key={idx}
+                              disabled={usedHere || turns.length >= 9 || isAiTurn}
+                              onClick={() => setDraftCardIndex(idx)}
+                              aria-label={`Card slot ${idx + 1}${usedHere ? " (used)" : ""}${selected ? " (selected)" : ""}`}
+                              className={[
+                                "w-[120px] rounded-xl border p-2",
+                                selected ? "border-slate-900 ring-2 ring-nyano-400/60" : "border-slate-200",
+                                usedHere || isAiTurn ? "bg-slate-50 opacity-50" : "bg-white hover:bg-slate-50",
+                              ].join(" ")}
+                            >
+                              {c ? <CardMini card={c} owner={currentPlayer} subtle={!selected} /> : <div className="text-xs text-slate-500 font-mono">#{tid.toString()}</div>}
+                              <div className="mt-1 text-[10px] text-slate-500">idx {idx}</div>
+                            </button>
+                          );
+                        })}
                       </div>
-                      <select
-                        className="input"
-                        value={draftWarningMarkCell === null ? "" : String(draftWarningMarkCell)}
-                        onChange={(e) => {
-                          const v = e.target.value;
-                          setDraftWarningMarkCell(v === "" ? null : Number(v));
-                        }}
-                        disabled={turns.length >= 9 || isAiTurn || currentWarnRemaining <= 0}
-                        aria-label="Warning mark cell"
-                      >
-                        <option value="">None</option>
-                        {availableCells
-                          .filter((c) => c !== draftCell)
-                          .map((c) => (
-                            <option key={c} value={String(c)}>cell {c}</option>
-                          ))}
-                      </select>
-                    </div>
+                    )}
 
-                    <div className="flex flex-wrap items-center gap-2">
-                      <button
-                        className={isRpg ? "rpg-result__btn rpg-result__btn--primary" : "btn btn-primary"}
-                        onClick={commitMove}
-                        disabled={turns.length >= 9 || isAiTurn || draftCell === null || draftCardIndex === null}
-                        aria-label="Commit move"
-                      >
-                        Commit Move
-                      </button>
-                      <button
-                        className={isRpg ? "rpg-result__btn" : "btn"}
-                        onClick={undoMove}
-                        disabled={turns.length === 0}
-                        aria-label="Undo last move"
-                      >
-                        Undo
-                      </button>
-                      {isVsNyanoAi && !aiAutoPlay && isAiTurn ? (
-                        <button className={isRpg ? "rpg-result__btn rpg-result__btn--primary" : "btn btn-primary"} onClick={doAiMove} aria-label="Nyano AI move">
-                          Nyano Move
+                    {/* Warning mark + Commit/Undo */}
+                    <div className="flex flex-wrap items-end gap-4">
+                      <div className="grid gap-1">
+                        <div className={isRpg ? "text-[10px] uppercase tracking-wider" : "text-[11px] text-slate-600"}
+                          style={isRpg ? { fontFamily: "'Cinzel', serif", color: "var(--rpg-text-dim, #8A7E6B)" } : undefined}
+                        >
+                          Warning Mark ({currentWarnRemaining} left)
+                        </div>
+                        <select
+                          className={["input", isStageFocusRoute ? "h-10 min-w-[180px]" : ""].join(" ").trim()}
+                          value={draftWarningMarkCell === null ? "" : String(draftWarningMarkCell)}
+                          onChange={(e) => {
+                            const v = e.target.value;
+                            setDraftWarningMarkCell(v === "" ? null : Number(v));
+                          }}
+                          disabled={turns.length >= 9 || isAiTurn || currentWarnRemaining <= 0}
+                          aria-label="Warning mark cell"
+                        >
+                          <option value="">None</option>
+                          {availableCells
+                            .filter((c) => c !== draftCell)
+                            .map((c) => (
+                              <option key={c} value={String(c)}>cell {c}</option>
+                            ))}
+                        </select>
+                      </div>
+
+                      <div className="flex flex-wrap items-center gap-2">
+                        <button
+                          className={isRpg ? "rpg-result__btn rpg-result__btn--primary" : ["btn btn-primary", isStageFocusRoute ? "h-10 px-4" : ""].join(" ").trim()}
+                          onClick={commitMove}
+                          disabled={turns.length >= 9 || isAiTurn || draftCell === null || draftCardIndex === null}
+                          aria-label="Commit move"
+                        >
+                          Commit Move
                         </button>
-                      ) : null}
+                        <button
+                          className={isRpg ? "rpg-result__btn" : ["btn", isStageFocusRoute ? "h-10 px-4" : ""].join(" ").trim()}
+                          onClick={undoMove}
+                          disabled={turns.length === 0}
+                          aria-label="Undo last move"
+                        >
+                          Undo
+                        </button>
+                        {isVsNyanoAi && !aiAutoPlay && isAiTurn ? (
+                          <button className={isRpg ? "rpg-result__btn rpg-result__btn--primary" : ["btn btn-primary", isStageFocusRoute ? "h-10 px-4" : ""].join(" ").trim()} onClick={doAiMove} aria-label="Nyano AI move">
+                            Nyano Move
+                          </button>
+                        ) : null}
+                      </div>
                     </div>
                   </div>
-                </div>
+                ) : (
+                  <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600">
+                    Controls are hidden for board focus.
+                    {draftCardIndex !== null || draftCell !== null ? (
+                      <span className="ml-1">
+                        (selected: card {draftCardIndex !== null ? draftCardIndex + 1 : "-"}, cell {draftCell ?? "-"})
+                      </span>
+                    ) : null}
+                  </div>
+                )}
 
                 {/* Error display */}
                 {error && cards ? (

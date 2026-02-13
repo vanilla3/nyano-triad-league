@@ -31,6 +31,7 @@ export interface BattleHudMintProps {
   gamePhase: "select_card" | "select_cell" | "ai_turn" | "game_over";
   moveTip?: MoveTip | null;
   aiReasonCode?: AiReasonCode | null;
+  tone?: "mint" | "pixi";
 }
 
 const PHASE_LABELS: Record<BattleHudMintProps["gamePhase"], string> = {
@@ -48,12 +49,13 @@ export function BattleHudMint({
   gamePhase,
   moveTip,
   aiReasonCode,
+  tone = "mint",
 }: BattleHudMintProps) {
   const adv = assessBoardAdvantage(board);
   const progress = Math.round((turnCount / maxTurns) * 100);
 
   return (
-    <div className="mint-battle-hud">
+    <div className={["mint-battle-hud", tone === "pixi" ? "mint-battle-hud--pixi" : ""].filter(Boolean).join(" ")}>
       {/* Turn counter + progress */}
       <div className="mint-battle-hud__turn">
         <span className="mint-battle-hud__turn-label">TURN</span>

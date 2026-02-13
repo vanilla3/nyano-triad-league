@@ -15,6 +15,7 @@ installGlobalErrorTracking();
 // ── Eager imports — critical path (home + match) ────────────────────
 import { HomePage } from "./pages/Home";
 import { MatchPage } from "./pages/Match";
+import { BattleStagePage } from "./pages/BattleStage";
 
 // ── Lazy imports — loaded on demand per route ───────────────────────
 const ArenaPage = React.lazy(() => import("./pages/Arena").then((m) => ({ default: m.ArenaPage })));
@@ -22,6 +23,7 @@ const EventsPage = React.lazy(() => import("./pages/Events").then((m) => ({ defa
 const DecksPage = React.lazy(() => import("./pages/Decks").then((m) => ({ default: m.DecksPage })));
 const PlaygroundPage = React.lazy(() => import("./pages/Playground").then((m) => ({ default: m.PlaygroundPage })));
 const ReplayPage = React.lazy(() => import("./pages/Replay").then((m) => ({ default: m.ReplayPage })));
+const ReplayStagePage = React.lazy(() => import("./pages/ReplayStage").then((m) => ({ default: m.ReplayStagePage })));
 const NyanoPage = React.lazy(() => import("./pages/Nyano").then((m) => ({ default: m.NyanoPage })));
 const RulesetsPage = React.lazy(() => import("./pages/Rulesets").then((m) => ({ default: m.RulesetsPage })));
 const StreamPage = React.lazy(() => import("./pages/Stream").then((m) => ({ default: m.StreamPage })));
@@ -58,8 +60,10 @@ const router = createBrowserRouter([
       { path: "events", element: <Lazy><EventsPage /></Lazy> },
       { path: "decks", element: <Lazy><DecksPage /></Lazy> },
       { path: "match", element: <MatchPage /> },
+      { path: "battle-stage", element: <BattleStagePage /> },
       { path: "playground", element: <Lazy><PlaygroundPage /></Lazy> },
       { path: "replay", element: <Lazy><ReplayPage /></Lazy> },
+      { path: "replay-stage", element: <Lazy><ReplayStagePage /></Lazy> },
       { path: "nyano", element: <Lazy><NyanoPage /></Lazy> },
       { path: "rulesets", element: <Lazy><RulesetsPage /></Lazy> },
       { path: "stream", element: <Lazy><StreamPage /></Lazy> },

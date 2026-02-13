@@ -24,6 +24,15 @@ a {
   @apply mx-auto max-w-6xl px-4 py-6;
 }
 
+.container-page--focus {
+  @apply max-w-none px-2 py-2 md:px-4 md:py-4;
+}
+
+.stage-page {
+  @apply p-0;
+  min-height: 100dvh;
+}
+
 .card {
   @apply rounded-2xl border border-slate-200/70 bg-white/80 shadow-sm backdrop-blur;
 }

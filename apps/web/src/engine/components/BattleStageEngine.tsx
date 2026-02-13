@@ -14,7 +14,7 @@
 
 import React from "react";
 import type { BoardState, PlayerIndex } from "@nyano/triad-engine";
-import type { IBattleRenderer } from "../renderers/IBattleRenderer";
+import type { IBattleRenderer, BattleRendererState } from "../renderers/IBattleRenderer";
 import { resolveVfxQuality } from "@/lib/visual/visualSettings";
 import { errorMessage } from "@/lib/errorMessage";
 import { FlipArrowOverlay, type FlipTraceArrow } from "@/components/FlipArrowOverlay";
@@ -50,6 +50,10 @@ export interface BattleStageEngineProps {
   flipTraces?: readonly FlipTraceArrow[] | null;
   /** Whether board flip animation is currently running. */
   isFlipAnimating?: boolean;
+  /** Optional board width cap override (px). */
+  boardMaxWidthPx?: number;
+  /** Optional board min height override (px). */
+  boardMinHeightPx?: number;
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -57,6 +61,8 @@ export interface BattleStageEngineProps {
    ═══════════════════════════════════════════════════════════════════════════ */
 
 const EMPTY_SET = new Set<number>();
+const ENGINE_BOARD_MAX_WIDTH_PX = 760;
+const ENGINE_BOARD_MIN_HEIGHT_PX = 320;
 
 /* ═══════════════════════════════════════════════════════════════════════════
    Local UI Components — Action Prompt (NIN-UX-011) & Inline Error (NIN-UX-012)
@@ -138,12 +144,16 @@ export function BattleStageEngine({
   onDismissError,
   flipTraces,
   isFlipAnimating,
+  boardMaxWidthPx,
+  boardMinHeightPx,
 }: BattleStageEngineProps) {
   const containerRef = React.useRef<HTMLDivElement>(null);
   const gridOverlayRef = React.useRef<HTMLDivElement>(null);
   const rendererRef = React.useRef<IBattleRenderer | null>(null);
   const callbackRef = React.useRef(onCellSelect);
   const [initError, setInitError] = React.useState<string | null>(null);
+  const resolvedBoardMaxWidthPx = boardMaxWidthPx ?? ENGINE_BOARD_MAX_WIDTH_PX;
+  const resolvedBoardMinHeightPx = boardMinHeightPx ?? ENGINE_BOARD_MIN_HEIGHT_PX;
 
   // ── Card inspect hook ──
   const inspect = useCardPreview();
@@ -153,6 +163,19 @@ export function BattleStageEngine({
   // Keep board ref current for inspect callback
   const boardRef = React.useRef(board);
   React.useEffect(() => { boardRef.current = board; }, [board]);
+
+  const rendererState = React.useMemo<BattleRendererState>(() => ({
+    board,
+    selectedCell: selectedCell ?? null,
+    selectableCells: selectableCells ?? EMPTY_SET,
+    currentPlayer: (currentPlayer ?? 0) as PlayerIndex,
+    vfxQuality: resolveVfxQuality(),
+    preloadTokenIds: preloadTokenIds?.map((tid) => tid.toString()),
+    placedCell,
+    flippedCells,
+  }), [board, selectedCell, selectableCells, currentPlayer, preloadTokenIds, placedCell, flippedCells]);
+  const rendererStateRef = React.useRef<BattleRendererState>(rendererState);
+  rendererStateRef.current = rendererState;
 
   // Keep callback ref current without triggering effect re-runs
   React.useEffect(() => {
@@ -212,6 +235,9 @@ export function BattleStageEngine({
         canvasEl.addEventListener("contextmenu", (e) => e.preventDefault());
       }
 
+      // Push the latest state once after init so first interaction works
+      // even if no React prop changed during async renderer boot.
+      renderer.setState(rendererStateRef.current);
       rendererRef.current = renderer;
     })();
 
@@ -231,17 +257,8 @@ export function BattleStageEngine({
     const renderer = rendererRef.current;
     if (!renderer) return;
 
-    renderer.setState({
-      board,
-      selectedCell: selectedCell ?? null,
-      selectableCells: selectableCells ?? EMPTY_SET,
-      currentPlayer: (currentPlayer ?? 0) as PlayerIndex,
-      vfxQuality: resolveVfxQuality(),
-      preloadTokenIds: preloadTokenIds?.map((tid) => tid.toString()),
-      placedCell,
-      flippedCells,
-    });
-  }, [board, selectedCell, selectableCells, currentPlayer, preloadTokenIds, placedCell, flippedCells]);
+    renderer.setState(rendererState);
+  }, [rendererState]);
 
   // ── Resize: ResizeObserver on container ─────────────────────────────
   React.useEffect(() => {
@@ -266,8 +283,8 @@ export function BattleStageEngine({
     return (
       <div className="grid gap-3">
         <div
-          className="relative mx-auto flex aspect-square w-full max-w-md flex-col items-center justify-center rounded-lg border border-red-800/40 bg-slate-900/80"
-          style={{ minHeight: 280 }}
+          className="relative mx-auto flex aspect-square w-full flex-col items-center justify-center rounded-lg border border-red-800/40 bg-slate-900/80"
+          style={{ minHeight: resolvedBoardMinHeightPx, maxWidth: resolvedBoardMaxWidthPx }}
           role="alert"
         >
           <p className="text-sm font-medium text-red-400">レンダラー初期化エラー</p>
@@ -284,8 +301,8 @@ export function BattleStageEngine({
       {/* PixiJS Canvas + overlays */}
       <div
         ref={containerRef}
-        className="relative mx-auto aspect-square w-full max-w-md"
-        style={{ minHeight: 280 }}
+        className="relative mx-auto aspect-square w-full"
+        style={{ minHeight: resolvedBoardMinHeightPx, maxWidth: resolvedBoardMaxWidthPx }}
         aria-label="Game board (engine renderer)"
         role="img"
       >
