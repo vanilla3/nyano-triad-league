@@ -85,3 +85,4 @@
 - [x] 004-A drag-drop first pass: hand cards can now be dragged and dropped onto mint/pixi board cells to commit placement directly (desktop flow).
 - [x] 004-B card art emphasis polish: mint/pixi card surface tuning reduces tint wash and improves highlight/vignette balance so NFT art stays readable and premium.
 - [x] 004-D focus flow follow-up: `Match` in pixi focus now shows a sticky hand dock (card select + warning + commit/undo) near the board so hand-to-place flow works without page scrolling.
+- [x] 004-B dialogue/readability follow-up: Nyano JP suffix rewrite now places punctuation before `ぴかっ✨` (e.g. `!ぴかっ✨`) and reaction comment typography is scaled up for stronger visibility.

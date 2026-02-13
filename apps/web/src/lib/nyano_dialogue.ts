@@ -21,15 +21,24 @@ const TRAILING_NYANO_SUFFIX_PATTERNS: readonly RegExp[] = [
   /にゃっ([！？?!…。．♪]*)$/u,
   /にゃ[ー〜~]*([！？?!…。．♪]*)$/u,
 ];
+const TRAILING_NEW_SUFFIX_PUNCT_PATTERN = /ぴかっ✨([！？?!…。．♪]+)$/u;
 
 function rewriteNyanoJaLine(line: string): string {
-  if (!line || line.includes(NYANO_NEW_SUFFIX)) return line;
+  if (!line) return line;
+
+  // Normalize legacy ordering like "...ぴかっ✨！" -> "...！ぴかっ✨"
+  const normalized = line.replace(TRAILING_NEW_SUFFIX_PUNCT_PATTERN, "$1ぴかっ✨");
+  if (normalized.includes(NYANO_NEW_SUFFIX)) return normalized;
+
   for (const pattern of TRAILING_NYANO_SUFFIX_PATTERNS) {
-    if (pattern.test(line)) {
-      return line.replace(pattern, `${NYANO_NEW_SUFFIX}$1`);
+    if (pattern.test(normalized)) {
+      return normalized.replace(
+        pattern,
+        (_match, punct: string = "", offset: number = 0) => `${punct || (offset > 0 ? "！" : "")}${NYANO_NEW_SUFFIX}`,
+      );
     }
   }
-  return line;
+  return normalized;
 }
 
 function rewriteDialogueSetJaSuffix(set: Partial<Record<string, DialogueLine[]>>): void {

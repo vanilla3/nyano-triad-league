@@ -63,7 +63,23 @@ describe("REACTION_DIALOGUES", () => {
     for (const line of jaLines) {
       expect(line).not.toMatch(/にゃっ([！？?!…。．♪]*)$/u);
       expect(line).not.toMatch(/にゃ[ー〜~]*([！？?!…。．♪]*)$/u);
+      expect(line).not.toMatch(/ぴかっ✨([！？?!…。．♪]+)$/u);
     }
+  });
+
+  it("places punctuation before ぴかっ✨ when converting former にゃ lines", () => {
+    const flipSingle = REACTION_DIALOGUES.flip_single.find((line) => line.en === "Got one!");
+    const drawState = REACTION_DIALOGUES.draw_state.find((line) => line.en === "Who'll win?");
+    const blockCorner = REASON_DIALOGUES.BLOCK_CORNER?.find((line) => line.en === "Corner secured!");
+
+    expect(flipSingle?.ja).toMatch(/！ぴかっ✨$/u);
+    expect(flipSingle?.ja).not.toMatch(/ぴかっ✨！$/u);
+
+    expect(drawState?.ja).toMatch(/？ぴかっ✨$/u);
+    expect(drawState?.ja).not.toMatch(/ぴかっ✨？$/u);
+
+    // No trailing punctuation in source should still become conversational ("！ぴかっ✨")
+    expect(blockCorner?.ja).toMatch(/！ぴかっ✨$/u);
   });
 });
 

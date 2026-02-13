@@ -277,9 +277,9 @@ export function NyanoReaction({
         style={{
           display: "flex",
           alignItems: "center",
-          gap: 8,
-          padding: "6px 12px",
-          borderRadius: 8,
+          gap: 10,
+          padding: "9px 16px",
+          borderRadius: 10,
           background: "rgba(0,0,0,0.5)",
           border: `1px solid ${cfg.glow}`,
           boxShadow: `0 0 12px ${cfg.glow}`,
@@ -289,13 +289,13 @@ export function NyanoReaction({
           fontFamily: "'Nunito', system-ui, sans-serif",
         }}
       >
-        <NyanoAvatar size={32} expression={reactionToExpression(kind)} alt={cfg.emoji} />
+        <NyanoAvatar size={40} expression={reactionToExpression(kind)} alt={cfg.emoji} />
         {cfg.badge && (
           <span style={{
-            fontSize: 11,
+            fontSize: 13,
             fontWeight: 700,
-            padding: "1px 6px",
-            borderRadius: 4,
+            padding: "2px 8px",
+            borderRadius: 6,
             background: cfg.glow,
             color: "white",
           }}>
@@ -303,9 +303,10 @@ export function NyanoReaction({
           </span>
         )}
         <span style={{
-          fontSize: 12,
+          fontSize: 16,
           color: "#F5F0E1",
-          fontWeight: 600,
+          fontWeight: 700,
+          lineHeight: 1.25,
         }}>
           {line}
         </span>
@@ -318,9 +319,9 @@ export function NyanoReaction({
     const reactionStyle = {
       display: "flex",
       alignItems: "center",
-      gap: 8,
-      padding: "8px 14px",
-      borderRadius: 16,
+      gap: 10,
+      padding: "12px 18px",
+      borderRadius: 20,
       background: pixiTone
         ? "linear-gradient(145deg, rgba(8,21,40,0.88), rgba(5,13,28,0.84))"
         : "rgba(255,255,255,0.85)",
@@ -359,7 +360,7 @@ export function NyanoReaction({
           </div>
         )}
         <div className="mint-nyano-reaction__inner">
-          <NyanoAvatar size={32} expression={reactionToExpression(kind)} alt={cfg.emoji} />
+          <NyanoAvatar size={44} expression={reactionToExpression(kind)} alt={cfg.emoji} />
           {cfg.badge && (
             <span
               className={`mint-nyano-reaction__badge mint-nyano-reaction__badge--${cutInImpact}`}
@@ -398,7 +399,7 @@ export function NyanoReaction({
   return (
     <div
       className={[
-        "flex items-center gap-2 rounded-lg px-3 py-2 text-sm transition-all duration-300",
+        "flex items-center gap-2.5 rounded-lg px-3 py-2 text-base transition-all duration-300",
         visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-2",
         className,
       ].join(" ")}
@@ -407,16 +408,16 @@ export function NyanoReaction({
         border: `1px solid ${cfg.glow}`,
       }}
     >
-      <NyanoAvatar size={28} expression={reactionToExpression(kind)} alt={cfg.emoji} />
+      <NyanoAvatar size={34} expression={reactionToExpression(kind)} alt={cfg.emoji} />
       {cfg.badge && (
         <span
-          className="rounded px-1.5 py-0.5 text-xs font-bold text-white"
+          className="rounded px-2 py-0.5 text-sm font-bold text-white"
           style={{ background: cfg.glow }}
         >
           {cfg.badge}
         </span>
       )}
-      <span className="font-semibold text-slate-800">{line}</span>
+      <span className="font-semibold leading-tight text-slate-800">{line}</span>
     </div>
   );
 }
