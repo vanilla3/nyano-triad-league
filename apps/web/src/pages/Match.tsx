@@ -1764,6 +1764,26 @@ export function MatchPage() {
                   <span className="stage-focus-toolbar-status">
                     {draftCardIndex !== null ? `card ${draftCardIndex + 1}` : "pick card"} | {draftCell !== null ? `cell ${draftCell}` : "pick cell"}
                   </span>
+                  <label className="stage-focus-toolbar-speed">
+                    warning
+                    <select
+                      className="stage-focus-toolbar-speed-select"
+                      value={draftWarningMarkCell === null ? "" : String(draftWarningMarkCell)}
+                      onChange={(e) => {
+                        const v = e.target.value;
+                        setDraftWarningMarkCell(v === "" ? null : Number(v));
+                      }}
+                      disabled={isAiTurn || turns.length >= 9 || currentWarnRemaining <= 0}
+                      aria-label="Warning mark from focus toolbar"
+                    >
+                      <option value="">none</option>
+                      {availableCells
+                        .filter((c) => c !== draftCell)
+                        .map((c) => (
+                          <option key={`focus-toolbar-w-${c}`} value={String(c)}>cell {c}</option>
+                        ))}
+                    </select>
+                  </label>
                   <button
                     className="btn btn-sm btn-primary"
                     onClick={commitMove}

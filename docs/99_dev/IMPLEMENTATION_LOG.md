@@ -1245,6 +1245,26 @@
 - `pnpm -C apps/web typecheck`
 - `pnpm -C apps/web lint`
 - `pnpm -C apps/web e2e -- stage-focus.spec.ts`
+## 2026-02-13 — WO005-M follow-up: battle toolbar warning mark selector
+
+### Why
+- Battle stage focus already had top `Commit/Undo`, but warning-mark selection still depended on lower controls.
+- We needed the full placement-confirmation flow to complete from top toolbar in desktop focus view.
+
+### What
+- `apps/web/src/pages/Match.tsx`
+  - Added `warning` selector to stage-focus toolbar action group.
+  - Selector reuses existing warning-mark state (`draftWarningMarkCell`) and option rules:
+    - excludes selected placement cell,
+    - disables when AI turn / game over / warning limit reached.
+  - Keeps existing lower hand-dock warning selector for continuity.
+- `apps/web/e2e/stage-focus.spec.ts`
+  - Extended desktop top-toolbar test to assert `Warning mark from focus toolbar` visibility.
+
+### Verify
+- `pnpm -C apps/web typecheck`
+- `pnpm -C apps/web lint`
+- `pnpm -C apps/web e2e -- stage-focus.spec.ts`
 ## 2026-02-13 — WO005-K follow-up: stage toolbar quick commit controls
 
 ### Why
