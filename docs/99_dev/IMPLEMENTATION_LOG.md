@@ -1219,6 +1219,25 @@
 - `pnpm -C apps/web typecheck`
 - `pnpm -C apps/web lint`
 
+## 2026-02-13 - WO005-T follow-up: replay load-failure e2e determinism
+
+### Why
+- `stage-focus` e2e had intermittent failure in the replay load-failure scenario due cached local data (GameIndex / RPC preference) changing runtime behavior across runs.
+- We needed deterministic preconditions so the regression test always validates recovery UI under the intended failure path.
+
+### What
+- `apps/web/e2e/stage-focus.spec.ts`
+  - In `/replay-stage keeps recovery controls when replay load fails`:
+    - clear `localStorage` keys before navigation:
+      - `nyano.gameIndex.v1`
+      - `nytl.rpc.user`
+      - `nytl.rpc.lastOk`
+    - keep existing network abort routes (`game/index` + known RPC hosts).
+  - This ensures replay card resolution cannot silently succeed from stale cache.
+
+### Verify
+- `pnpm -C apps/web e2e -- stage-focus.spec.ts`
+
 ## 2026-02-13 - WO005-S follow-up: stage action feedback chips
 
 ### Why

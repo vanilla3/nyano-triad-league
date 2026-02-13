@@ -266,6 +266,15 @@ test.describe("stage routes", () => {
   });
 
   test("/replay-stage keeps recovery controls when replay load fails", async ({ page }) => {
+    await page.addInitScript(() => {
+      try {
+        localStorage.removeItem("nyano.gameIndex.v1");
+        localStorage.removeItem("nytl.rpc.user");
+        localStorage.removeItem("nytl.rpc.lastOk");
+      } catch {
+        // ignore
+      }
+    });
     await page.route("**/game/index.v1.json", (route) => route.abort());
     await page.route("**/*publicnode*", (route) => route.abort());
     await page.route("**/*ankr*", (route) => route.abort());
