@@ -1550,6 +1550,30 @@
 - `pnpm -C apps/web build`
 - `pnpm -C apps/web e2e -- stage-focus.spec.ts`
 
+## 2026-02-13 - WO005-AC follow-up: Pixi card info panel readability pass
+
+### Why
+- Pixi board depth was improved, but card stat overlays still felt crowded over NFT art compared with Mint card composition.
+- We needed cleaner art visibility while keeping edge/janken information immediately readable in `ui=engine`.
+
+### What
+- `apps/web/src/engine/renderers/pixi/PixiBattleRenderer.ts`
+  - Added a dedicated bottom glass info panel layer in `updateEdgeTexts(...)` so edge values and janken sit on a coherent panel instead of directly floating over art.
+  - Rebalanced card lower overlays in `drawCardSurface(...)`:
+    - reduced heavy lower vignette/shadow intensity
+    - shifted dark emphasis further toward the lower band to preserve main art region.
+  - Tuned card UI layout metrics for cleaner hierarchy:
+    - raised panel top ratio (more art space)
+    - reduced edge chip footprint and font sizing
+    - reduced janken badge size and alpha to avoid visual dominance.
+  - Added explicit panel palette tokens (`infoPanelBase/light/dark/border`) for future Pixi/Mint parity tuning.
+
+### Verify
+- `pnpm -C apps/web lint`
+- `pnpm -C apps/web typecheck`
+- `pnpm -C apps/web build`
+- `pnpm -C apps/web e2e -- stage-focus.spec.ts`
+
 ## 2026-02-13 - WO005-Z follow-up: Nyano cut-in and focus hand dock premium pass
 
 ### Why

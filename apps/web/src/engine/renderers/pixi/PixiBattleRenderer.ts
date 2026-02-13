@@ -3,7 +3,6 @@
  *
  * Renders a 3×3 board grid with:
  * - NFT card art as Sprite textures (async loaded with Arweave fallback)
- * - Owner-colored tint overlays on card art
  * - Edge numbers with premium pill backgrounds and stronger typography
  * - Center R/P/S (janken) badge on each occupied card
  * - Token ID labels (#XXX) in top-right corner
@@ -69,6 +68,10 @@ const COLORS = {
   edgeChipHigh: 0x78350f,
   edgeChipMid: 0x1e293b,
   edgeChipLow: 0x334155,
+  infoPanelBase: 0x020617,
+  infoPanelLight: 0xffffff,
+  infoPanelDark: 0x0b1220,
+  infoPanelBorder: 0x9bdcff,
   tokenIdBg: 0x000000,
   tokenIdText: 0xffffff,
   brightnessWhite: 0xffffff,
@@ -116,14 +119,14 @@ const LAYOUT = {
   jankenBadgeStrokeWidth: 1.2,
   tokenLabelPadX: 3,
   tokenLabelPadY: 2,
-  uiPanelTopRatio: 0.69,
-  uiPanelBottomPad: 2,
-  uiPanelInnerPad: 2,
+  uiPanelTopRatio: 0.74,
+  uiPanelBottomPad: 3,
+  uiPanelInnerPad: 3,
   uiPanelCols: 3,
   uiPanelRows: 3,
-  edgeChipScaleV: 0.68,
-  edgeChipScaleH: 0.8,
-  edgeChipMinHeight: 8,
+  edgeChipScaleV: 0.62,
+  edgeChipScaleH: 0.72,
+  edgeChipMinHeight: 7,
   edgeChipRadius: 5,
   ownerBadgePad: 3,
   ownerBadgeMin: 11,
@@ -904,13 +907,13 @@ export class PixiBattleRenderer implements IBattleRenderer {
     if (features.cardGlass && hasTexture) {
       const topH = Math.max(10, h * 0.28);
       glass.roundRect(0, 0, w, topH, LAYOUT.cardFrameCorner);
-      glass.fill({ color: COLORS.cardGlass, alpha: quality === "high" ? 0.085 : 0.06 });
-      glass.roundRect(0, h * 0.54, w, h * 0.46, LAYOUT.cardFrameCorner);
-      glass.fill({ color: COLORS.cardVignette, alpha: quality === "high" ? 0.22 : 0.16 });
-      glass.roundRect(0, h * 0.58, w, h * 0.2, LAYOUT.cardFrameCorner);
+      glass.fill({ color: COLORS.cardGlass, alpha: quality === "high" ? 0.072 : 0.052 });
+      glass.roundRect(0, h * 0.62, w, h * 0.38, LAYOUT.cardFrameCorner);
+      glass.fill({ color: COLORS.cardVignette, alpha: quality === "high" ? 0.14 : 0.1 });
+      glass.roundRect(0, h * 0.64, w, h * 0.16, LAYOUT.cardFrameCorner);
       glass.fill({ color: COLORS.cardGlass, alpha: 0.02 });
-      glass.roundRect(0, h * 0.78, w, h * 0.22, LAYOUT.cardFrameCorner);
-      glass.fill({ color: COLORS.cardFrameShadow, alpha: quality === "high" ? 0.12 : 0.08 });
+      glass.roundRect(0, h * 0.74, w, h * 0.26, LAYOUT.cardFrameCorner);
+      glass.fill({ color: COLORS.cardFrameShadow, alpha: quality === "high" ? 0.07 : 0.05 });
       glass.visible = true;
     } else if (!hasTexture) {
       // Keep a subtle dark pass so fallback cards remain readable.
@@ -1191,6 +1194,25 @@ export class PixiBattleRenderer implements IBattleRenderer {
     const panelInnerH = Math.max(1, panelHeight - LAYOUT.uiPanelInnerPad * 2);
     const cellW = panelInnerW / LAYOUT.uiPanelCols;
     const cellH = panelInnerH / LAYOUT.uiPanelRows;
+    const panelRadius = Math.max(3, LAYOUT.cardFrameCorner - 1);
+
+    // Dedicated bottom glass panel keeps stats readable while preserving card art.
+    const panelGfx = new Graphics();
+    const panelY = Math.max(0, panelTop - 1);
+    const panelH = Math.max(1, h - panelY);
+    panelGfx.roundRect(0.8, panelY + 1.2, Math.max(1, w - 1.6), Math.max(1, panelH - 1.2), panelRadius);
+    panelGfx.fill({ color: COLORS.edgeTextStroke, alpha: hasTexture ? 0.2 : 0.32 });
+    panelGfx.roundRect(0, panelY, w, panelH, panelRadius);
+    panelGfx.fill({ color: COLORS.infoPanelBase, alpha: hasTexture ? 0.54 : 0.72 });
+    panelGfx.roundRect(0, panelY, w, Math.max(6, panelH * 0.4), panelRadius);
+    panelGfx.fill({ color: COLORS.infoPanelLight, alpha: hasTexture ? 0.14 : 0.2 });
+    panelGfx.roundRect(0, panelY + panelH * 0.56, w, panelH * 0.44, panelRadius);
+    panelGfx.fill({ color: COLORS.infoPanelDark, alpha: hasTexture ? 0.24 : 0.33 });
+    panelGfx.roundRect(0.5, panelY + 0.5, Math.max(0, w - 1), Math.max(0, panelH - 0.5), panelRadius);
+    panelGfx.stroke({ color: COLORS.infoPanelBorder, width: 1, alpha: hasTexture ? 0.48 : 0.64 });
+    panelGfx.roundRect(1.1, panelY + 1.1, Math.max(0, w - 2.2), Math.max(2, panelH * 0.2), Math.max(2, panelRadius - 1));
+    panelGfx.fill({ color: COLORS.boardRimLight, alpha: hasTexture ? 0.12 : 0.18 });
+    container.addChild(panelGfx);
 
     const edgeData: Array<{
       val: number;
@@ -1217,17 +1239,17 @@ export class PixiBattleRenderer implements IBattleRenderer {
       const pillW = Math.min(cellW * 0.88, targetPillW);
       const pillH = Math.min(cellH * 0.82, targetPillH);
       const edgeFontSize = Math.max(
-        8,
-        Math.min(baseFontSize, pillH * 0.56, pillW * 0.5),
+        7.5,
+        Math.min(baseFontSize * 0.9, pillH * 0.52, pillW * 0.46),
       );
-      const strokeThickness = Math.max(1, edgeFontSize * LAYOUT.edgeStrokeThicknessScale);
+      const strokeThickness = Math.max(0.9, edgeFontSize * LAYOUT.edgeStrokeThicknessScale);
 
       // Pill background for edge values
       if (features.edgePill) {
         const pillX = px - pillW / 2;
         const pillY = py - pillH / 2;
-        const toneAlpha = val >= 8 ? 0.44 : val >= 4 ? 0.34 : 0.3;
-        const baseAlpha = hasTexture ? 0.66 : 0.82;
+        const toneAlpha = val >= 8 ? 0.38 : val >= 4 ? 0.3 : 0.27;
+        const baseAlpha = hasTexture ? 0.58 : 0.78;
         const strokeColor = val >= 8 ? COLORS.edgeValueHigh : COLORS.edgePillStroke;
         const pillGfx = new Graphics();
 
@@ -1238,7 +1260,7 @@ export class PixiBattleRenderer implements IBattleRenderer {
           pillH,
           LAYOUT.edgeChipRadius,
         );
-        pillGfx.fill({ color: COLORS.edgeTextStroke, alpha: hasTexture ? 0.34 : 0.48 });
+        pillGfx.fill({ color: COLORS.edgeTextStroke, alpha: hasTexture ? 0.26 : 0.42 });
 
         pillGfx.roundRect(
           pillX,
@@ -1274,7 +1296,7 @@ export class PixiBattleRenderer implements IBattleRenderer {
           pillH,
           LAYOUT.edgeChipRadius,
         );
-        pillGfx.stroke({ color: strokeColor, width: 1, alpha: val >= 8 ? 0.82 : 0.52 });
+        pillGfx.stroke({ color: strokeColor, width: 1, alpha: val >= 8 ? 0.74 : 0.48 });
         container.addChild(pillGfx);
       }
 
@@ -1291,7 +1313,7 @@ export class PixiBattleRenderer implements IBattleRenderer {
       shadowT.anchor.set(0.5, 0.5);
       shadowT.x = px + 0.45;
       shadowT.y = py + 0.7;
-      shadowT.alpha = hasTexture ? 0.58 : 0.74;
+      shadowT.alpha = hasTexture ? 0.54 : 0.68;
       container.addChild(shadowT);
 
       const t = new Text({
@@ -1316,20 +1338,20 @@ export class PixiBattleRenderer implements IBattleRenderer {
     const badgeCenterX = panelInnerX + (1 + 0.5) * cellW;
     const badgeCenterY = panelInnerY + (1 + 0.5) * cellH;
     const badgeSize = Math.max(
-      10,
+      9,
       Math.min(
-        LAYOUT.jankenBadgeMax,
-        Math.max(LAYOUT.jankenBadgeMin - 2, Math.min(cellW, cellH) * 0.68),
+        LAYOUT.jankenBadgeMax - 2,
+        Math.max(LAYOUT.jankenBadgeMin - 4, Math.min(cellW, cellH) * 0.58),
       ),
     );
     const badgeRadius = badgeSize / 2;
     const badgeGfx = new Graphics();
     badgeGfx.circle(badgeCenterX + 0.8, badgeCenterY + 1.1, badgeRadius + 1.1);
-    badgeGfx.fill({ color: COLORS.edgeTextStroke, alpha: hasTexture ? 0.2 : 0.26 });
+    badgeGfx.fill({ color: COLORS.edgeTextStroke, alpha: hasTexture ? 0.18 : 0.24 });
     badgeGfx.circle(badgeCenterX, badgeCenterY, badgeRadius);
-    badgeGfx.fill({ color: COLORS.jankenBadgeBg, alpha: hasTexture ? 0.6 : 0.78 });
+    badgeGfx.fill({ color: COLORS.jankenBadgeBg, alpha: hasTexture ? 0.58 : 0.74 });
     badgeGfx.circle(badgeCenterX, badgeCenterY, Math.max(2, badgeRadius - 1.1));
-    badgeGfx.fill({ color: badge.accent, alpha: hasTexture ? 0.28 : 0.38 });
+    badgeGfx.fill({ color: badge.accent, alpha: hasTexture ? 0.24 : 0.34 });
     badgeGfx.ellipse(
       badgeCenterX,
       badgeCenterY - badgeRadius * 0.25,
@@ -1338,15 +1360,15 @@ export class PixiBattleRenderer implements IBattleRenderer {
     );
     badgeGfx.fill({ color: COLORS.boardRimLight, alpha: hasTexture ? 0.14 : 0.2 });
     badgeGfx.circle(badgeCenterX, badgeCenterY, badgeRadius);
-    badgeGfx.stroke({ color: COLORS.jankenBadgeStroke, width: LAYOUT.jankenBadgeStrokeWidth, alpha: 0.9 });
+    badgeGfx.stroke({ color: COLORS.jankenBadgeStroke, width: LAYOUT.jankenBadgeStrokeWidth, alpha: 0.84 });
     badgeGfx.circle(badgeCenterX, badgeCenterY, Math.max(2, badgeRadius - 0.6));
-    badgeGfx.stroke({ color: badge.accent, width: 1, alpha: hasTexture ? 0.38 : 0.52 });
+    badgeGfx.stroke({ color: badge.accent, width: 1, alpha: hasTexture ? 0.32 : 0.44 });
     container.addChild(badgeGfx);
 
     const badgeTextShadow = new Text({
       text: badge.glyph,
       style: new TextStyle({
-        fontSize: Math.max(8, badgeSize * 0.42),
+        fontSize: Math.max(7.5, badgeSize * 0.38),
         fill: COLORS.edgeNumberShadow,
         fontFamily: "Segoe UI Emoji, Apple Color Emoji, Noto Color Emoji, Nunito, sans-serif",
         fontWeight: "900",
@@ -1361,7 +1383,7 @@ export class PixiBattleRenderer implements IBattleRenderer {
     const badgeText = new Text({
       text: badge.glyph,
       style: new TextStyle({
-        fontSize: Math.max(8, badgeSize * 0.42),
+        fontSize: Math.max(7.5, badgeSize * 0.38),
         fill: COLORS.edgeText,
         fontFamily: "Segoe UI Emoji, Apple Color Emoji, Noto Color Emoji, Nunito, sans-serif",
         fontWeight: "900",
