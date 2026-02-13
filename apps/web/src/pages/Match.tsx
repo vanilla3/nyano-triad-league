@@ -1772,7 +1772,7 @@ export function MatchPage() {
     && !isRpg
     && turns.length < 9
     && currentDeckTokens.length > 0;
-  const showFocusToolbarActions = isStageFocusRoute && showFocusHandDock;
+  const showFocusToolbarActions = isStageFocusRoute && showFocusHandDock && showStageControls;
   const canCommitFromFocusToolbar = !isAiTurn && draftCell !== null && draftCardIndex !== null;
   const canUndoFromFocusToolbar = !isAiTurn && turns.length > 0;
   const canManualAiMoveFromFocusToolbar = isVsNyanoAi && !aiAutoPlay && isAiTurn;
@@ -1908,9 +1908,6 @@ export function MatchPage() {
                   <span className="stage-focus-toolbar-hint" aria-label="Battle focus toolbar hint">
                     tap/drag then commit · Enter/Backspace · F/C/H/R/Esc
                   </span>
-                  <span className="stage-focus-toolbar-feedback" role="status" aria-live="polite" aria-label="Battle focus action feedback">
-                    {stageActionFeedback || "Ready"}
-                  </span>
                   <label className="stage-focus-toolbar-speed">
                     warning
                     <select
@@ -1957,6 +1954,11 @@ export function MatchPage() {
                     </button>
                   ) : null}
                 </div>
+              ) : null}
+              {isStageFocusRoute ? (
+                <span className="stage-focus-toolbar-feedback" role="status" aria-live="polite" aria-label="Battle focus action feedback">
+                  {stageActionFeedback || "Ready"}
+                </span>
               ) : null}
               {isStageFocusRoute ? (
                 <>

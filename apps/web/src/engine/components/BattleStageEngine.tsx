@@ -83,6 +83,17 @@ const EMPTY_TEXTURE_STATUS: BattleRendererTextureStatus = {
   failedTextureCount: 0,
 };
 
+function hasWebGlContextSupport(): boolean {
+  if (typeof document === "undefined") return true;
+  try {
+    const canvas = document.createElement("canvas");
+    const contextIds = ["webgl2", "webgl", "experimental-webgl"];
+    return contextIds.some((contextId) => canvas.getContext(contextId) !== null);
+  } catch {
+    return false;
+  }
+}
+
 /* ═══════════════════════════════════════════════════════════════════════════
    Local UI Components — Action Prompt (NIN-UX-011) & Inline Error (NIN-UX-012)
 
@@ -220,6 +231,13 @@ export function BattleStageEngine({
     let renderer: IBattleRenderer | null = null;
 
     if (import.meta.env.DEV) console.debug("[BattleStageEngine] mount");
+
+    if (!hasWebGlContextSupport()) {
+      const message = "WebGL context unavailable";
+      setInitError(message);
+      onInitError?.(message);
+      return;
+    }
 
     (async () => {
       try {

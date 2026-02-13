@@ -1519,3 +1519,57 @@
 - `pnpm -C apps/web e2e -- stage-focus.spec.ts`
 - `pnpm -C apps/web typecheck`
 - `pnpm -C apps/web lint`
+
+## 2026-02-13 - WO005-W follow-up: replay timeline glass premium pass
+
+### Why
+- We improved global/stage glass visuals, but replay timeline area was still flatter than the updated stage shell.
+- We needed stronger material depth in replay timeline controls while keeping information hierarchy and existing interaction flow unchanged.
+
+### What
+- `apps/web/src/styles.css`
+  - Upgraded `.replay-timeline-shell` to layered frosted glass with depth shadow and subtle specular sheen.
+  - Added timeline glint animation (`replay-timeline-glint`) via pseudo-layer for premium panel feel.
+  - Refined timeline chips and pills:
+    - `.replay-step-pill`
+    - `.replay-phase`
+    - `.replay-highlight-index`
+    - `.replay-highlight-chip`
+    - `.replay-highlight-callout`
+  - Refined progress/marker polish:
+    - `.replay-progress`
+    - `.replay-progress__bar`
+    - `.replay-highlight-marker`
+  - Added safety gates for accessibility/perf:
+    - disable glint animation in `prefers-reduced-motion`
+    - hide timeline pseudo-layers when `data-vfx="off"`
+    - reduce glint intensity/speed for `data-vfx="low"`.
+
+### Verify
+- `pnpm -C apps/web lint`
+- `pnpm -C apps/web build`
+- `pnpm -C apps/web e2e -- stage-focus.spec.ts`
+
+## 2026-02-13 - WO005-X follow-up: deterministic stage fallback and mobile shortcut feedback
+
+### Why
+- Stage fallback E2E checks became flaky because renderer init could still succeed depending on runtime GPU paths.
+- Mobile focus improvements hid toolbar action content, which also removed the keyboard feedback live region used by stage shortcut UX checks.
+
+### What
+- `apps/web/src/engine/components/BattleStageEngine.tsx`
+  - Added `hasWebGlContextSupport()` preflight (`webgl2/webgl/experimental-webgl`) before Pixi dynamic import.
+  - If unavailable, immediately routes through existing `onInitError` fallback path so Mint board fallback is deterministic.
+- `apps/web/e2e/stage-focus.spec.ts`
+  - Consolidated GPU-unavailable setup into `mockGpuUnavailable(page)` and extended it to patch:
+    - `HTMLCanvasElement.getContext`
+    - `OffscreenCanvas.getContext` (when present)
+    - `navigator.gpu`
+- `apps/web/src/pages/Match.tsx`
+  - Kept stage action feedback (`Battle focus action feedback`) rendered in stage toolbar even when controls are hidden.
+  - Preserved compact mobile layout by still hiding heavy toolbar action cluster when controls are toggled off.
+
+### Verify
+- `pnpm -C apps/web lint`
+- `pnpm -C apps/web build`
+- `pnpm -C apps/web e2e -- stage-focus.spec.ts`

@@ -32,6 +32,37 @@ function encodeTranscriptZ(json: string): string {
   return compressed.toString("base64url");
 }
 
+async function mockGpuUnavailable(page: import("@playwright/test").Page): Promise<void> {
+  await page.addInitScript(() => {
+    const shouldDisableContext = (contextId: unknown): boolean =>
+      typeof contextId === "string"
+      && ["webgl", "webgl2", "webgpu"].some((key) => contextId.toLowerCase().includes(key));
+
+    const patchGetContext = (prototype: { getContext?: (contextId: unknown, options?: unknown) => unknown } | undefined) => {
+      if (!prototype || typeof prototype.getContext !== "function") return;
+      const original = prototype.getContext;
+      prototype.getContext = function (contextId: unknown, options?: unknown) {
+        if (shouldDisableContext(contextId)) return null;
+        return original.call(this, contextId, options);
+      };
+    };
+
+    patchGetContext(HTMLCanvasElement.prototype);
+    if (typeof OffscreenCanvas !== "undefined") {
+      patchGetContext(OffscreenCanvas.prototype);
+    }
+
+    try {
+      Object.defineProperty(navigator, "gpu", {
+        configurable: true,
+        value: undefined,
+      });
+    } catch {
+      // ignore readonly navigator fields
+    }
+  });
+}
+
 async function readHorizontalOverflowPx(page: import("@playwright/test").Page): Promise<number> {
   return page.evaluate(() => {
     const root = document.documentElement;
@@ -112,15 +143,7 @@ test.describe("stage routes", () => {
   });
 
   test("/battle-stage falls back to mint board when WebGL is unavailable", async ({ page }) => {
-    await page.addInitScript(() => {
-      const originalGetContext = HTMLCanvasElement.prototype.getContext;
-      HTMLCanvasElement.prototype.getContext = function (contextId: string, options?: unknown) {
-        if (typeof contextId === "string" && contextId.toLowerCase().includes("webgl")) {
-          return null;
-        }
-        return originalGetContext.call(this, contextId, options);
-      };
-    });
+    await mockGpuUnavailable(page);
 
     await page.goto("/battle-stage?mode=guest&opp=vs_nyano_ai&ai=normal&rk=v2&ui=engine&focus=1&fpm=manual&fp=0");
 
@@ -205,15 +228,7 @@ test.describe("stage routes", () => {
   });
 
   test("/replay-stage falls back to mint board when WebGL is unavailable", async ({ page }) => {
-    await page.addInitScript(() => {
-      const originalGetContext = HTMLCanvasElement.prototype.getContext;
-      HTMLCanvasElement.prototype.getContext = function (contextId: string, options?: unknown) {
-        if (typeof contextId === "string" && contextId.toLowerCase().includes("webgl")) {
-          return null;
-        }
-        return originalGetContext.call(this, contextId, options);
-      };
-    });
+    await mockGpuUnavailable(page);
 
     const zParam = encodeTranscriptZ(REPLAY_TRANSCRIPT_JSON);
     await page.goto(`/replay-stage?ui=engine&focus=1&mode=v2&z=${zParam}`);
