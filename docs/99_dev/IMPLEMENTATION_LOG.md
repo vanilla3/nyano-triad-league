@@ -1574,6 +1574,32 @@
 - `pnpm -C apps/web build`
 - `pnpm -C apps/web e2e -- stage-focus.spec.ts`
 
+## 2026-02-13 - WO005-AE follow-up: stage board-shell token unification pass
+
+### Why
+- Stage side panels were upgraded, but board-side hero framing still relied on local hardcoded values and replay board shell parity was incomplete.
+- We needed a token-driven stage material system so board shell and side panels stay visually coherent across `/battle-stage` and `/replay-stage`.
+
+### What
+- `apps/web/src/styles.css`
+  - Added stage material tokens for board/side surfaces:
+    - `--stage-board-shell-bg`, `--stage-board-shell-border`, `--stage-board-shell-shadow`
+    - `--stage-side-panel-bg`, `--stage-side-panel-bg-muted`, `--stage-side-panel-border`
+    - `--stage-side-panel-shadow`, `--stage-side-panel-shadow-strong`
+- `apps/web/src/mint-theme/mint-theme.css`
+  - Updated `stage-focus-board-shell` to use new board shell tokens and added layered hero shell overlays (`::before`, `::after`).
+  - Added `stage-focus-board-shell--replay` variant for tighter replay composition.
+  - Updated side panel classes to read from stage side-panel tokens instead of hardcoded values.
+  - Extended VFX safety gates so board shell overlays are disabled in `data-vfx="off"` and softened in `data-vfx="low"`.
+- `apps/web/src/pages/Replay.tsx`
+  - Wrapped replay board output with `stage-focus-board-shell stage-focus-board-shell--replay` in stage focus mode, matching battle-stage board shell hierarchy.
+
+### Verify
+- `pnpm -C apps/web lint`
+- `pnpm -C apps/web typecheck`
+- `pnpm -C apps/web build`
+- `pnpm -C apps/web e2e -- stage-focus.spec.ts`
+
 ## 2026-02-13 - WO005-AD follow-up: stage side-panel glass hierarchy pass
 
 ### Why

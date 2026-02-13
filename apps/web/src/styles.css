@@ -10,6 +10,14 @@
   --stage-panel-bg: linear-gradient(180deg, rgba(255, 255, 255, 0.94), rgba(235, 248, 255, 0.9));
   --stage-panel-border: rgba(56, 189, 248, 0.42);
   --stage-panel-shadow: 0 10px 28px rgba(2, 6, 23, 0.16), 0 0 0 1px rgba(125, 211, 252, 0.24);
+  --stage-board-shell-bg: linear-gradient(165deg, rgba(255, 255, 255, 0.74), rgba(227, 245, 255, 0.56));
+  --stage-board-shell-border: rgba(125, 211, 252, 0.52);
+  --stage-board-shell-shadow: 0 22px 38px -26px rgba(2, 132, 199, 0.6), 0 10px 24px rgba(2, 6, 23, 0.14);
+  --stage-side-panel-bg: linear-gradient(180deg, rgba(255, 255, 255, 0.86), rgba(236, 248, 255, 0.7));
+  --stage-side-panel-bg-muted: linear-gradient(180deg, rgba(247, 252, 255, 0.9), rgba(232, 243, 252, 0.78));
+  --stage-side-panel-border: rgba(125, 211, 252, 0.48);
+  --stage-side-panel-shadow: 0 16px 30px -22px rgba(2, 132, 199, 0.52), 0 8px 18px rgba(2, 6, 23, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.72);
+  --stage-side-panel-shadow-strong: 0 20px 34px -24px rgba(2, 132, 199, 0.5), 0 10px 22px rgba(15, 23, 42, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.72);
   --stage-focus-gap: clamp(10px, 1.2vw, 16px);
   --nytl-glass-bg: linear-gradient(165deg, rgba(255, 255, 255, 0.84), rgba(239, 249, 255, 0.74));
   --nytl-glass-bg-soft: linear-gradient(180deg, rgba(255, 255, 255, 0.72), rgba(248, 252, 255, 0.66));

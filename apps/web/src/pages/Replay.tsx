@@ -1118,51 +1118,53 @@ protocolV1: {
           </div>
         ) : null}
 
-        {isEngine && !compare && useEngineRenderer ? (
-          <DuelStageMint impact={stageImpact} impactBurst={stageImpactBurst}>
-            <BattleStageEngine
+        <div className={isStageFocus ? "stage-focus-board-shell stage-focus-board-shell--replay" : ""}>
+          {isEngine && !compare && useEngineRenderer ? (
+            <DuelStageMint impact={stageImpact} impactBurst={stageImpactBurst}>
+              <BattleStageEngine
+                board={boardNow}
+                selectedCell={null}
+                currentPlayer={0}
+                boardMaxWidthPx={engineBoardMaxWidthPx}
+                boardMinHeightPx={engineBoardMinHeightPx}
+                preloadTokenIds={replayPreloadTokenIds}
+                placedCell={placedCell}
+                flippedCells={flippedCells}
+                onInitError={handleEngineRendererInitError}
+              />
+            </DuelStageMint>
+          ) : isEngine && !compare ? (
+            <DuelStageMint impact={stageImpact} impactBurst={stageImpactBurst}>
+              <BoardViewMint
+                board={boardNow}
+                selectedCell={null}
+                placedCell={placedCell}
+                flippedCells={flippedCells}
+                currentPlayer={replayCurrentPlayer}
+                showCoordinates
+                showActionPrompt
+                gamePhase={step >= 9 ? "game_over" : "select_cell"}
+              />
+            </DuelStageMint>
+          ) : isRpg ? (
+            <BoardViewRPG
               board={boardNow}
-              selectedCell={null}
-              currentPlayer={0}
-              boardMaxWidthPx={engineBoardMaxWidthPx}
-              boardMinHeightPx={engineBoardMinHeightPx}
-              preloadTokenIds={replayPreloadTokenIds}
+              focusCell={focusCell}
               placedCell={placedCell}
               flippedCells={flippedCells}
-              onInitError={handleEngineRendererInitError}
-            />
-          </DuelStageMint>
-        ) : isEngine && !compare ? (
-          <DuelStageMint impact={stageImpact} impactBurst={stageImpactBurst}>
-            <BoardViewMint
-              board={boardNow}
-              selectedCell={null}
-              placedCell={placedCell}
-              flippedCells={flippedCells}
-              currentPlayer={replayCurrentPlayer}
               showCoordinates
-              showActionPrompt
-              gamePhase={step >= 9 ? "game_over" : "select_cell"}
+              showCandles
+              showParticles
             />
-          </DuelStageMint>
-        ) : isRpg ? (
-          <BoardViewRPG
-            board={boardNow}
-            focusCell={focusCell}
-            placedCell={placedCell}
-            flippedCells={flippedCells}
-            showCoordinates
-            showCandles
-            showParticles
-          />
-        ) : (
-          <BoardView
-            board={boardNow}
-            focusCell={focusCell}
-            placedCell={placedCell}
-            flippedCells={flippedCells}
-          />
-        )}
+          ) : (
+            <BoardView
+              board={boardNow}
+              focusCell={focusCell}
+              placedCell={placedCell}
+              flippedCells={flippedCells}
+            />
+          )}
+        </div>
 
         {step > 0 ? (
           <div className="flex flex-wrap gap-2 text-xs text-slate-600">
