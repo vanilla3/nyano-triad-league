@@ -1071,6 +1071,7 @@ protocolV1: {
             "rounded-2xl border px-3 py-2",
             isStageFocus ? "stage-focus-toolbar" : "",
           ].filter(Boolean).join(" ")}
+          aria-label={isStageFocus ? "Replay focus toolbar" : "Engine replay toolbar"}
           style={{ background: "var(--mint-surface, #fff)", borderColor: "var(--mint-accent-muted, #A7F3D0)" }}
         >
           <div className="flex flex-wrap items-center justify-between gap-2">

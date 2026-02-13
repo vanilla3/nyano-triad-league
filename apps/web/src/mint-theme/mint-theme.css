@@ -687,6 +687,9 @@
 }
 
 .stage-focus-toolbar {
+  position: sticky;
+  top: max(6px, env(safe-area-inset-top));
+  z-index: 34;
   border-color: var(--stage-panel-border, rgba(56, 189, 248, 0.42)) !important;
   background: var(--stage-panel-bg, linear-gradient(180deg, rgba(255, 255, 255, 0.94), rgba(235, 248, 255, 0.9))) !important;
   box-shadow: var(--stage-panel-shadow, 0 10px 28px rgba(2, 6, 23, 0.16));

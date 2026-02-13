@@ -78,6 +78,19 @@ test.describe("stage routes", () => {
     expect(overflowPx).toBeLessThanOrEqual(1);
   });
 
+  test("/battle-stage keeps focus toolbar visible after scroll", async ({ page }) => {
+    await page.setViewportSize({ width: 1280, height: 680 });
+    await page.goto("/battle-stage?mode=guest&opp=vs_nyano_ai&ai=normal&rk=v2&ui=engine&focus=1&fpm=manual&fp=0");
+
+    await page.evaluate(() => {
+      window.scrollTo(0, document.documentElement.scrollHeight);
+    });
+
+    const toolbar = page.getByRole("region", { name: "Stage focus toolbar" });
+    await expect(toolbar).toBeVisible({ timeout: 10_000 });
+    await expect(toolbar).toBeInViewport();
+  });
+
   test("/battle-stage falls back to mint board when WebGL is unavailable", async ({ page }) => {
     await page.addInitScript(() => {
       const originalGetContext = HTMLCanvasElement.prototype.getContext;
@@ -125,6 +138,25 @@ test.describe("stage routes", () => {
 
     const overflowPx = await readHorizontalOverflowPx(page);
     expect(overflowPx).toBeLessThanOrEqual(1);
+  });
+
+  test("/replay-stage keeps focus toolbar visible after scroll", async ({ page }) => {
+    await page.setViewportSize({ width: 1280, height: 680 });
+    const zParam = encodeTranscriptZ(REPLAY_TRANSCRIPT_JSON);
+    await page.goto(`/replay-stage?ui=engine&focus=1&mode=v2&z=${zParam}`);
+
+    const loadReplayButton = page.getByRole("button", { name: "Load replay" });
+    if (await loadReplayButton.count()) {
+      await loadReplayButton.first().click();
+    }
+
+    await page.evaluate(() => {
+      window.scrollTo(0, document.documentElement.scrollHeight);
+    });
+
+    const toolbar = page.getByRole("region", { name: "Replay focus toolbar" });
+    await expect(toolbar).toBeVisible({ timeout: 10_000 });
+    await expect(toolbar).toBeInViewport();
   });
 
   test("/replay-stage falls back to mint board when WebGL is unavailable", async ({ page }) => {

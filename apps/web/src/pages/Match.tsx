@@ -1752,6 +1752,7 @@ export function MatchPage() {
             "rounded-2xl border px-3 py-2",
             isStageFocusRoute ? "stage-focus-toolbar" : "",
           ].filter(Boolean).join(" ")}
+          aria-label={isStageFocusRoute ? "Stage focus toolbar" : "Engine focus toolbar"}
           style={{ background: "var(--mint-surface, #fff)", borderColor: "var(--mint-accent-muted, #A7F3D0)" }}
         >
           <div className="flex flex-wrap items-center justify-between gap-2">

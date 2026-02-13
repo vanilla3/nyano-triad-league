@@ -1311,6 +1311,35 @@
 - `pnpm -C apps/web typecheck`
 - `pnpm -C apps/web lint`
 - `pnpm -C apps/web e2e -- stage-focus.spec.ts`
+## 2026-02-13 — WO005-P follow-up: sticky stage focus toolbars
+
+### Why
+- Stage focus routes now have richer top toolbars, but long pages could still push users to scroll and lose context.
+- We needed top controls to remain reachable while scrolling in both battle and replay stage pages.
+
+### What
+- `apps/web/src/mint-theme/mint-theme.css`
+  - Made `.stage-focus-toolbar` sticky:
+    - `position: sticky`
+    - `top: max(6px, env(safe-area-inset-top))`
+    - `z-index: 34`
+- `apps/web/src/pages/Match.tsx`
+  - Added accessible label for toolbar container:
+    - `Stage focus toolbar` (stage route),
+    - `Engine focus toolbar` (non-stage engine focus).
+- `apps/web/src/pages/Replay.tsx`
+  - Added accessible label for toolbar container:
+    - `Replay focus toolbar` (stage route),
+    - `Engine replay toolbar` (non-stage engine focus).
+- `apps/web/e2e/stage-focus.spec.ts`
+  - Added scroll regression tests:
+    - `/battle-stage keeps focus toolbar visible after scroll`
+    - `/replay-stage keeps focus toolbar visible after scroll`
+
+### Verify
+- `pnpm -C apps/web typecheck`
+- `pnpm -C apps/web lint`
+- `pnpm -C apps/web e2e -- stage-focus.spec.ts`
 ## 2026-02-13 — WO005-K follow-up: stage toolbar quick commit controls
 
 ### Why
