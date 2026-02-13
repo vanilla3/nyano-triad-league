@@ -1,6 +1,6 @@
 # Nyano Triad League LONG TERM ROADMAP v1（超長期計画・作業指針）
 
-最終更新: 2026-02-12（Sprint 24: Phase 3 品質硬化 — エラートラッキング + リリース運用手順）
+最終更新: 2026-02-13（Sprint 25: Phase 4 導入 — local season points と reward tier 導線）
 
 このドキュメントは、移行先作業者が **チャットを追わずに**「次に何を作り、何に注意し、どの順で改善すべきか」を把握できるようにするための **超長期ロードマップ**です。
 “細部の実装”よりも、まず **品質の柱・変更の原則・作業の安全策**を共有し、迷いと手戻りを減らすことを優先します。
@@ -157,6 +157,8 @@
 - [Participation]
   - [ ] シーズン制（ランキング、報酬、アーカイブ）
     - Sprint 24: `/events` に local season archive（season切替 / 勝率サマリー / 最新Replay導線 / Markdownコピー）を追加
+    - Sprint 25: `/events` に local season points / tier / points board を追加（provisional）
+    - Next: `pointsDelta` 連携の公式standingsに段階移行
   - [x] 新規参加者向けチュートリアル（3分で理解→1分で参加）
     - Sprint 24: Home に quickstart checklist（進捗保存）を追加し、Match の初手確定で進捗を自動更新
 - [Visual]

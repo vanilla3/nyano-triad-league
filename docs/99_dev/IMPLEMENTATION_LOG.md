@@ -549,6 +549,109 @@
 - `pnpm -C packages/triad-engine lint`
 - `pnpm -C packages/triad-engine test`
 
+## 2026-02-13 - commit-0112: settled event JSON import for local pointsDelta migration
+
+### Why
+- DEV_TODO の Doing では、Phase 4 の pointsDelta 連携を URL 手入力から `on-chain settled event` 取り込みへ進める段階だった。
+- 既存フローは Replay URL の `pda` 依存のため、後から settled event を一括反映する導線がなく、season points の移行効率が低かった。
+- ローカル保存の event attempts に対して、安全に `pointsDeltaA` を適用するには、`matchId` 一致だけでなく winner / tiles 整合チェックが必要だった。
+
+### What
+- `apps/web/src/lib/settled_points_import.ts` を追加。
+  - 入力 schema 対応:
+    - settled event 配列
+    - `{ settledEvents: [...] }`
+    - `{ records: [{ settled: ... }] }`
+  - `validateLadderMatchSettledEventV1(...)` を使って settled event を検証。
+  - `matchId` 単位で正規化し、競合 duplicate を issue として報告。
+  - `applySettledPointsToAttempts(...)` でローカル attempt へ適用:
+    - no local / winner mismatch / tiles mismatch / draw を安全にスキップ
+    - 整合した attempt のみ `pointsDeltaA` + `pointsDeltaSource=settled_attested` を更新
+- `apps/web/src/pages/Events.tsx`
+  - `Settled points import (local)` UI を追加（JSON貼り付け、適用、入力クリア）。
+  - import 結果サマリ（input/valid/updated/matched/unchanged/no-local/mismatch）と issue 抜粋表示を追加。
+  - `Apply settled JSON` 実行時に更新対象 attempt を `upsertEventAttempt(...)` で永続化。
+  - My Pawprints 一覧に `deltaA` バッジ表示を追加。
+- `apps/web/src/lib/__tests__/settled_points_import.test.ts`
+  - parse（複数schema）・duplicate conflict・apply（正常更新/不整合/ローカル未一致）を検証。
+- `docs/99_dev/Nyano_Triad_League_DEV_TODO_v1_ja.md`
+  - Commit0112 完了を追記し、Doing を「取得自動化と署名検証フロー統合」へ更新。
+
+### Verify
+- `pnpm -C apps/web test -- src/lib/__tests__/settled_points_import.test.ts`
+- `pnpm -C apps/web typecheck`
+- `pnpm -C apps/web lint`
+- `pnpm -C apps/web build`
+
+## 2026-02-13 - commit-0111: phased pointsDelta integration for season progress
+
+### Why
+- DEV_TODO の Doing「pointsDelta 連携へ段階拡張」に対し、現状の season points は provisional ルールのみだった。
+- on-chain settled event の自動取り込み前に、`pointsDeltaA` を安全に受け取って集計に反映できる移行レイヤーが必要だった。
+- 既存履歴との互換性を守るため、部分データで順位が不安定化しない採用条件を固定したかった。
+
+### What
+- `apps/web/src/lib/event_attempts.ts`
+  - `EventAttemptV1` に optional `pointsDeltaA` / `pointsDeltaSource` を追加。
+- `apps/web/src/lib/appUrl.ts`
+  - replay share URL に `pda`（pointsDeltaA）を追加できるよう拡張。
+- `apps/web/src/pages/Replay.tsx`
+  - `?pda=` を int32 で解析。
+  - Event attempt 保存時に `pointsDeltaA` を保持。
+  - share/canonical link でも `pda` を維持。
+- `apps/web/src/lib/season_archive.ts`
+  - event単位の `pointsDeltaTotal` / `pointsDeltaAttemptCount` / `pointsDeltaCoveragePercent` を追加。
+  - archive markdown に delta 列を追加。
+- `apps/web/src/lib/season_progress.ts`
+  - source 概念（`provisional` / `points_delta`）を追加。
+  - event内で `pointsDeltaA` が100%揃った場合のみ `points_delta` 採用、未充足は provisional 維持。
+  - source mix 集計と markdown 出力を追加。
+- `apps/web/src/pages/Events.tsx`
+  - progress パネルに source mix 表示を追加。
+  - board に source badge（delta/provisional）と coverage 表示を追加。
+  - event行に delta total / coverage を追加。
+- Tests
+  - `apps/web/src/lib/__tests__/appUrl.test.ts`
+  - `apps/web/src/lib/__tests__/season_archive.test.ts`
+  - `apps/web/src/lib/__tests__/season_progress.test.ts`
+  - pointsDelta 入力・集計・採用条件を追加検証。
+
+### Verify
+- `pnpm -C apps/web typecheck`
+- `pnpm -C apps/web lint`
+- `pnpm -C apps/web build`
+- `pnpm -C apps/web test -- src/lib/__tests__/appUrl.test.ts src/lib/__tests__/season_archive.test.ts src/lib/__tests__/season_progress.test.ts`
+  - この実行環境では `vite/vitest` 起動時に `spawn EPERM` で完走不可
+
+## 2026-02-13 - commit-0110: local season points and reward-tier guidance on /events
+
+### Why
+- Phase 4 の未完了項目「シーズン制（ランキング/報酬/アーカイブ）」に対して、archive は実装済みだが ranking/reward の導線が不足していた。
+- 公式の on-chain `pointsDelta` 連携を入れる前段として、ローカル履歴から決定的に再計算できる暫定進行指標が必要だった。
+- 集計ロジックを UI に埋め込むと将来の pointsDelta 移行時に回帰しやすいため、pure function として分離する必要があった。
+
+### What
+- `apps/web/src/lib/season_progress.ts` を追加。
+  - `Win +3 / Loss +1 / Event clear +2` のローカル points ルールを固定。
+  - reward tier（Rookie/Bronze/Silver/Gold/Legend）判定を追加。
+  - event別 points board を決定的 tie-break で生成。
+  - progress markdown 出力を追加。
+- `apps/web/src/pages/Events.tsx`
+  - `Local season points (provisional)` パネルを追加（tier / next / progress bar / hint）。
+  - `Season points board`（event別）を追加。
+  - `Copy summary` を archive + progress の結合出力へ拡張。
+- `apps/web/src/lib/__tests__/season_progress.test.ts`
+  - points算出、tier遷移、tie-break、markdown 出力を検証。
+- Docs
+  - `docs/99_dev/Nyano_Triad_League_DEV_TODO_v1_ja.md` に Commit0110 を追記。
+  - `docs/00_handoff/Nyano_Triad_League_LONG_TERM_ROADMAP_v1_ja.md` の Phase 4 進捗を更新。
+
+### Verify
+- `pnpm -C apps/web test`
+- `pnpm -C apps/web typecheck`
+- `pnpm -C apps/web lint`
+- `pnpm -C apps/web build`
+
 ## 2026-02-12 - commit-0107: phase4 onboarding quickstart (Home checklist + Match progress sync)
 
 ### Why

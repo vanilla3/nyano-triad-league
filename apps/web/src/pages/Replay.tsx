@@ -85,6 +85,15 @@ function clampInt(n: number, min: number, max: number): number {
   return Math.max(min, Math.min(max, n));
 }
 
+function parseInt32Param(v: string | null): number | null {
+  if (!v) return null;
+  if (!/^-?\d+$/.test(v)) return null;
+  const n = Number(v);
+  if (!Number.isInteger(n)) return null;
+  if (n < -2147483648 || n > 2147483647) return null;
+  return n;
+}
+
 
 function turnPlayer(firstPlayer: 0 | 1, turnIndex: number): 0 | 1 {
   return ((firstPlayer + (turnIndex % 2)) % 2) as 0 | 1;
@@ -254,6 +263,7 @@ export function ReplayPage() {
   const eventId = searchParams.get("event") ?? "";
   const event = React.useMemo(() => (eventId ? getEventById(eventId) : null), [eventId]);
   const eventStatus = event ? getEventStatus(event) : null;
+  const pointsDeltaA = React.useMemo(() => parseInt32Param(searchParams.get("pda")), [searchParams]);
 
 
   // Initial values from shareable URL
@@ -926,6 +936,7 @@ protocolV1: {
     return buildReplayShareUrl({
       data: z ? { key: "z", value: z } : { key: "t", value: base64UrlEncodeUtf8(trimmed) },
       eventId: eventId || undefined,
+      pointsDeltaA: pointsDeltaA ?? undefined,
       mode: "auto",
       ui: uiParam,
       step: 9,
@@ -954,6 +965,12 @@ protocolV1: {
       rulesetLabel: sim.currentRulesetLabel,
       deckA: sim.transcript.header.deckA.map((x) => x.toString()),
       deckB: sim.transcript.header.deckB.map((x) => x.toString()),
+      ...(pointsDeltaA !== null
+        ? {
+            pointsDeltaA,
+            pointsDeltaSource: "settled_attested" as const,
+          }
+        : {}),
     };
 
     upsertEventAttempt(a);
@@ -968,6 +985,7 @@ protocolV1: {
     return buildReplayShareUrl({
       data: z ? { key: "z", value: z } : { key: "t", value: base64UrlEncodeUtf8(trimmed) },
       eventId: eventId || undefined,
+      pointsDeltaA: pointsDeltaA ?? undefined,
       mode,
       ui: uiParam,
       step,
@@ -1059,6 +1077,15 @@ protocolV1: {
           {event ? (
             <div className="card-bd grid gap-2 text-sm text-slate-700">
               <p>{event.description}</p>
+              {pointsDeltaA !== null ? (
+                <div className="rounded-lg border border-sky-200 bg-sky-50 px-3 py-2 text-xs text-sky-800">
+                  Settled pointsDeltaA detected from URL: <span className="font-mono">{pointsDeltaA}</span>
+                </div>
+              ) : (
+                <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600">
+                  pointsDeltaA is not set. This replay will be scored with provisional local season points.
+                </div>
+              )}
               <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-700">
                 Nyano deck tokenIds: <span className="font-mono">{event.nyanoDeckTokenIds.join(", ")}</span>
               </div>

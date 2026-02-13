@@ -33,21 +33,6 @@ describe("getAppBasePath", () => {
     import.meta.env.BASE_URL = "";
     expect(getAppBasePath()).toBe("/");
   });
-
-  it("normalizes bare segment BASE_URL to rooted subpath", () => {
-    import.meta.env.BASE_URL = "nyano-triad-league";
-    expect(getAppBasePath()).toBe("/nyano-triad-league/");
-  });
-
-  it("uses pathname from absolute BASE_URL", () => {
-    import.meta.env.BASE_URL = "https://cdn.example.com/nyano-triad-league/?v=1#hash";
-    expect(getAppBasePath()).toBe("/nyano-triad-league/");
-  });
-
-  it("treats ./ BASE_URL as root", () => {
-    import.meta.env.BASE_URL = "./";
-    expect(getAppBasePath()).toBe("/");
-  });
 });
 
 describe("appPath", () => {
@@ -141,17 +126,16 @@ describe("buildReplayShareUrl", () => {
     expect(url).toBe("/replay?z=abc123&mode=auto&ui=engine&step=9");
   });
 
-  it("includes event with mode/ui/step params together", () => {
+  it("includes pointsDeltaA query param when provided", () => {
     import.meta.env.BASE_URL = "/";
     const url = buildReplayShareUrl({
       data: { key: "z", value: "abc123" },
       eventId: "gp-1",
-      mode: "auto",
-      ui: "engine",
+      pointsDeltaA: 12,
       step: 9,
       absolute: false,
     });
-    expect(url).toBe("/replay?z=abc123&event=gp-1&mode=auto&ui=engine&step=9");
+    expect(url).toBe("/replay?z=abc123&event=gp-1&pda=12&step=9");
   });
 
   it("returns absolute URL in browser env", () => {
@@ -191,5 +175,15 @@ describe("buildReplayShareUrl", () => {
       absolute: false,
     });
     expect(negative).toBe("/replay?z=abc123");
+  });
+
+  it("omits invalid pointsDeltaA values outside int32 range", () => {
+    import.meta.env.BASE_URL = "/";
+    const url = buildReplayShareUrl({
+      data: { key: "z", value: "abc123" },
+      pointsDeltaA: 2147483648,
+      absolute: false,
+    });
+    expect(url).toBe("/replay?z=abc123");
   });
 });

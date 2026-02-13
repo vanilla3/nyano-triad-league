@@ -12,6 +12,9 @@ export type SeasonArchiveEventSummary = {
   bestTileDiff: number | null;
   latestAttemptAt: string | null;
   latestReplayUrl: string | null;
+  pointsDeltaTotal: number | null;
+  pointsDeltaAttemptCount: number;
+  pointsDeltaCoveragePercent: number;
 };
 
 export type SeasonArchiveSummary = {
@@ -47,6 +50,12 @@ function summarizeEvent(event: EventV1, attempts: EventAttemptV1[], nowMs: numbe
   const lossCount = attemptCount - winCount;
   const bestTileDiff = attemptCount > 0 ? Math.max(...list.map((a) => a.tilesA - a.tilesB)) : null;
   const latest = list[0] ?? null;
+  const pointsDeltaValues = list
+    .map((a) => a.pointsDeltaA)
+    .filter((v): v is number => typeof v === "number" && Number.isInteger(v) && v >= -2147483648 && v <= 2147483647);
+  const pointsDeltaAttemptCount = pointsDeltaValues.length;
+  const pointsDeltaTotal = pointsDeltaAttemptCount > 0 ? pointsDeltaValues.reduce((sum, v) => sum + v, 0) : null;
+  const pointsDeltaCoveragePercent = attemptCount > 0 ? round1((pointsDeltaAttemptCount / attemptCount) * 100) : 0;
 
   return {
     eventId: event.id,
@@ -59,6 +68,9 @@ function summarizeEvent(event: EventV1, attempts: EventAttemptV1[], nowMs: numbe
     bestTileDiff,
     latestAttemptAt: latest?.createdAt ?? null,
     latestReplayUrl: latest?.replayUrl ?? null,
+    pointsDeltaTotal,
+    pointsDeltaAttemptCount,
+    pointsDeltaCoveragePercent,
   };
 }
 
@@ -119,11 +131,11 @@ export function formatSeasonArchiveMarkdown(summary: SeasonArchiveSummary): stri
   lines.push(`- Win rate: ${summary.winRatePercent.toFixed(1)}%`);
   lines.push(`- Latest: ${summary.latestAttemptAt ?? "-"}`);
   lines.push("");
-  lines.push("| Event | Status | Attempts | Win rate | Best diff | Latest |");
-  lines.push("| --- | --- | ---: | ---: | ---: | --- |");
+  lines.push("| Event | Status | Attempts | Win rate | Best diff | Delta A | Delta cov | Latest |");
+  lines.push("| --- | --- | ---: | ---: | ---: | ---: | ---: | --- |");
   for (const event of summary.events) {
     lines.push(
-      `| ${event.eventTitle} | ${event.status} | ${event.attemptCount} | ${event.winRatePercent.toFixed(1)}% | ${event.bestTileDiff ?? "-"} | ${event.latestAttemptAt ?? "-"} |`,
+      `| ${event.eventTitle} | ${event.status} | ${event.attemptCount} | ${event.winRatePercent.toFixed(1)}% | ${event.bestTileDiff ?? "-"} | ${event.pointsDeltaTotal ?? "-"} | ${event.pointsDeltaCoveragePercent.toFixed(1)}% | ${event.latestAttemptAt ?? "-"} |`,
     );
   }
   return lines.join("\n");

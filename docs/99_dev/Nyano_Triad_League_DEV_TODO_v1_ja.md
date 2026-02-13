@@ -78,10 +78,24 @@
 - ✅ WO005-C follow-up: 375px幅で Commit 導線の可視性をE2E固定
   - battle-stage focus 手札ドックの Commit ボタンが viewport 内に収まることを検証
   - 横方向オーバーフロー（`scrollWidth - clientWidth`）が発生しないことを検証
+- ✅ Commit0110: /events に Local Season Points（ランキング/報酬導線）を追加
+  - `season_progress.ts` を追加（points算出・tier判定・event別ランキングを pure function 化）
+  - Events に `Local season points (provisional)` パネル（Tier/次Tierまで/進捗バー）を追加
+  - `Season points board` と markdown 出力（archive + progress）を追加
+  - `season_progress.test.ts` を追加（points/tier/tie-break/markdown）
+- ✅ Commit0111: /events の season points を pointsDelta 段階連携へ拡張
+  - Replay URL の `pda`（pointsDeltaA）を Event attempt に保存可能化
+  - `season_archive.ts` に pointsDelta 合計/カバレッジ集計を追加
+  - `season_progress.ts` で「event内の全attemptに pointsDelta がある場合のみ」pointsDelta採用（未充足は provisional 維持）
+  - Events UI と markdown に source mix（pointsDelta/provisional）表示を追加
+- ✅ Commit0112: /events に settled event JSON 取り込みを追加（ローカル pointsDelta 反映）
+  - `settled_points_import.ts` を追加（schema対応・settled event検証・winner/tiles整合チェック）
+  - Events に `Settled points import (local)` UI を追加（貼り付け→適用→集計結果表示）
+  - matchId 一致かつ結果整合の local attempt に `pointsDeltaA` / `pointsDeltaSource=settled_attested` を反映
 ## 🚧 Doing (now)
 
-- 🔧 Phase 4 の運用面（ランキング / 報酬導線）の最小設計を進める
-- 🔧 WO005-A（Stage UI/UX基盤）: `/battle-stage` `/replay-stage` の viewport適応盤面サイズ + 情報階層レイアウトを整備
+- 🔧 Phase 4 の運用面（ランキング / 報酬導線）を pointsDelta 連携へ段階拡張する（ローカル取り込みUIまで完了。次は取得自動化と署名検証フロー統合）
+- 🔧 WO005（Stage UI/UX基盤）: `/battle-stage` `/replay-stage` の低速/失敗時体験と導線検証を継続する
 
 ## 🧩 Next (high priority)
 

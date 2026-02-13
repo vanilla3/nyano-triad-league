@@ -4,9 +4,22 @@ import { Link } from "react-router-dom";
 
 import { EVENTS, formatEventPeriod, getEventStatus } from "@/lib/events";
 import { parseDeckRestriction } from "@/lib/deck_restriction";
-import { clearAllEventAttempts, clearEventAttempts, deleteEventAttempt, listAllEventAttempts, listEventAttempts } from "@/lib/event_attempts";
+import {
+  clearAllEventAttempts,
+  clearEventAttempts,
+  deleteEventAttempt,
+  listAllEventAttempts,
+  listEventAttempts,
+  upsertEventAttempt,
+} from "@/lib/event_attempts";
 import { writeClipboardText } from "@/lib/clipboard";
 import { buildSeasonArchiveSummaries, formatSeasonArchiveMarkdown } from "@/lib/season_archive";
+import { buildSeasonProgressSummary, formatSeasonProgressMarkdown } from "@/lib/season_progress";
+import {
+  applySettledPointsToAttempts,
+  parseSettledPointsImportJson,
+  type SettledPointsImportIssue,
+} from "@/lib/settled_points_import";
 
 function StatusBadge(props: { status: string }) {
   const variant =
@@ -33,6 +46,17 @@ function winnerLabel(w: number): string {
 function formatPercent(v: number): string {
   return `${v.toFixed(1)}%`;
 }
+
+type SettledImportUiReport = {
+  inputCount: number;
+  validCount: number;
+  updatedCount: number;
+  matchedCount: number;
+  unchangedCount: number;
+  noLocalAttemptCount: number;
+  mismatchCount: number;
+  issues: SettledPointsImportIssue[];
+};
 
 /**
  * Determine the "best" attempt for an event.
@@ -69,6 +93,8 @@ function findBestAttemptId(
 export function EventsPage() {
   const [refresh, setRefresh] = React.useState(0);
   const [selectedSeasonId, setSelectedSeasonId] = React.useState<number | null>(null);
+  const [settledImportText, setSettledImportText] = React.useState("");
+  const [settledImportReport, setSettledImportReport] = React.useState<SettledImportUiReport | null>(null);
   const toast = useToast();
 
   const seasonArchive = React.useMemo(() => {
@@ -90,6 +116,10 @@ export function EventsPage() {
     selectedSeasonId !== null
       ? seasonArchive.find((s) => s.seasonId === selectedSeasonId) ?? seasonArchive[0] ?? null
       : seasonArchive[0] ?? null;
+  const selectedSeasonProgress = React.useMemo(
+    () => (selectedSeason ? buildSeasonProgressSummary(selectedSeason) : null),
+    [selectedSeason],
+  );
 
   const copyWithToast = async (label: string, v: string) => {
     await writeClipboardText(v);
@@ -98,8 +128,66 @@ export function EventsPage() {
 
   const copySeasonSummary = async () => {
     if (!selectedSeason) return;
-    await writeClipboardText(formatSeasonArchiveMarkdown(selectedSeason));
-    toast.success("Copied", "season archive markdown");
+    const chunks = [formatSeasonArchiveMarkdown(selectedSeason)];
+    if (selectedSeasonProgress) chunks.push(formatSeasonProgressMarkdown(selectedSeasonProgress));
+    await writeClipboardText(chunks.join("\n\n"));
+    toast.success("Copied", "season archive + progress markdown");
+  };
+
+  const applySettledImport = () => {
+    const text = settledImportText.trim();
+    if (!text) {
+      toast.warn("Import skipped", "Paste settled event JSON first.");
+      return;
+    }
+
+    const parsed = parseSettledPointsImportJson(text);
+    if (parsed.events.length === 0) {
+      setSettledImportReport({
+        inputCount: parsed.inputCount,
+        validCount: 0,
+        updatedCount: 0,
+        matchedCount: 0,
+        unchangedCount: 0,
+        noLocalAttemptCount: 0,
+        mismatchCount: 0,
+        issues: parsed.issues,
+      });
+      const message = parsed.issues[0]?.message ?? "No valid settled events found.";
+      toast.error("Import failed", message);
+      return;
+    }
+
+    const currentAttempts = listAllEventAttempts();
+    const applied = applySettledPointsToAttempts(currentAttempts, parsed.events);
+
+    if (applied.updatedMatchIds.length > 0) {
+      const updatedSet = new Set(applied.updatedMatchIds);
+      for (const attempt of applied.attempts) {
+        if (updatedSet.has(attempt.matchId.toLowerCase())) {
+          upsertEventAttempt(attempt);
+        }
+      }
+      setRefresh((v) => v + 1);
+    }
+
+    const issues = [...parsed.issues, ...applied.issues];
+    setSettledImportReport({
+      inputCount: parsed.inputCount,
+      validCount: parsed.events.length,
+      updatedCount: applied.updatedCount,
+      matchedCount: applied.matchedCount,
+      unchangedCount: applied.unchangedCount,
+      noLocalAttemptCount: applied.noLocalAttemptCount,
+      mismatchCount: applied.mismatchCount,
+      issues,
+    });
+
+    if (applied.updatedCount > 0) {
+      toast.success("Settled import applied", `Updated ${applied.updatedCount} local attempt(s).`);
+    } else {
+      toast.warn("Settled import applied", "No local attempts were updated.");
+    }
   };
 
   return (
@@ -150,6 +238,57 @@ export function EventsPage() {
           </div>
 
           <div className="card-bd grid gap-3">
+            <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div>
+                  <div className="text-xs font-semibold text-slate-700">Settled points import (local)</div>
+                  <div className="text-[11px] text-slate-500">
+                    on-chain settled event JSON を貼り付け、matchId一致のローカル履歴に pointsDeltaA を反映します。
+                  </div>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <button className="btn" onClick={applySettledImport}>
+                    Apply settled JSON
+                  </button>
+                  <button
+                    className="btn"
+                    onClick={() => {
+                      setSettledImportText("");
+                      setSettledImportReport(null);
+                    }}
+                  >
+                    Clear input
+                  </button>
+                </div>
+              </div>
+              <textarea
+                className="mt-2 h-28 w-full rounded-lg border border-slate-200 bg-white p-2 font-mono text-[11px] text-slate-700"
+                placeholder='{"settledEvents":[...]} or {"records":[{"settled":...}]}'
+                value={settledImportText}
+                onChange={(e) => setSettledImportText(e.target.value)}
+                spellCheck={false}
+              />
+              {settledImportReport ? (
+                <div className="mt-2 rounded-md border border-slate-200 bg-white px-2 py-1.5 text-[11px] text-slate-600">
+                  <div className="flex flex-wrap items-center gap-3">
+                    <span>input {settledImportReport.inputCount}</span>
+                    <span>valid {settledImportReport.validCount}</span>
+                    <span>updated {settledImportReport.updatedCount}</span>
+                    <span>matched {settledImportReport.matchedCount}</span>
+                    <span>unchanged {settledImportReport.unchangedCount}</span>
+                    <span>no-local {settledImportReport.noLocalAttemptCount}</span>
+                    <span>mismatch {settledImportReport.mismatchCount}</span>
+                  </div>
+                  {settledImportReport.issues.length > 0 ? (
+                    <div className="mt-1 text-[10px] text-amber-700">
+                      issues: {settledImportReport.issues.slice(0, 3).map((issue) => issue.message).join(" | ")}
+                      {settledImportReport.issues.length > 3 ? ` | ... +${settledImportReport.issues.length - 3}` : ""}
+                    </div>
+                  ) : null}
+                </div>
+              ) : null}
+            </div>
+
             {seasonArchive.length === 0 || !selectedSeason ? (
               <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600">
                 まだローカルアーカイブがありません。Event をプレイして Replay で Save するとここに集計されます。
@@ -197,6 +336,93 @@ export function EventsPage() {
                   </div>
                 </div>
 
+                {selectedSeasonProgress ? (
+                  <div className="rounded-lg border border-slate-200 bg-white p-3">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <div className="text-xs font-semibold text-slate-700">Local season points (provisional)</div>
+                      <span className="badge badge-nyano">{selectedSeasonProgress.currentTier.label}</span>
+                    </div>
+                    <div className="mt-2 grid gap-2 md:grid-cols-4">
+                      <div>
+                        <div className="text-[11px] text-slate-500">Points</div>
+                        <div className="text-sm font-semibold text-slate-800">{selectedSeasonProgress.totalPoints}</div>
+                      </div>
+                      <div>
+                        <div className="text-[11px] text-slate-500">Clears</div>
+                        <div className="text-sm font-semibold text-slate-800">{selectedSeasonProgress.clearCount}</div>
+                      </div>
+                      <div>
+                        <div className="text-[11px] text-slate-500">Next</div>
+                        <div className="text-sm font-semibold text-slate-800">
+                          {selectedSeasonProgress.nextTier ? selectedSeasonProgress.nextTier.label : "MAX"}
+                        </div>
+                      </div>
+                      <div>
+                        <div className="text-[11px] text-slate-500">To next</div>
+                        <div className="text-sm font-semibold text-slate-800">
+                          {selectedSeasonProgress.nextTier ? `+${selectedSeasonProgress.pointsToNextTier}` : "0"}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="mt-2 h-2 overflow-hidden rounded-full bg-slate-100">
+                      <div
+                        className="h-full rounded-full bg-emerald-500 transition-all"
+                        style={{ width: `${Math.round(selectedSeasonProgress.progressToNextTier * 100)}%` }}
+                      />
+                    </div>
+                    <div className="mt-2 text-[11px] text-slate-500">
+                      Source mix: pointsDelta {selectedSeasonProgress.pointsDeltaEvents} / provisional {selectedSeasonProgress.provisionalEvents}
+                    </div>
+                    <div className="mt-2 text-[11px] text-slate-500">
+                      Rule: Win +{selectedSeasonProgress.scoringRule.winPoints} / Loss +{selectedSeasonProgress.scoringRule.lossPoints} / Event clear +
+                      {selectedSeasonProgress.scoringRule.clearBonusPoints}
+                    </div>
+                    {selectedSeasonProgress.nextTier ? (
+                      <div className="mt-1 text-[11px] text-slate-500">
+                        Reward hint: {selectedSeasonProgress.nextTier.rewardHint}
+                      </div>
+                    ) : (
+                      <div className="mt-1 text-[11px] text-slate-500">
+                        Reward hint: {selectedSeasonProgress.currentTier.rewardHint}
+                      </div>
+                    )}
+                  </div>
+                ) : null}
+
+                {selectedSeasonProgress ? (
+                  <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2">
+                    <div className="text-xs font-semibold text-slate-700">Season points board (local provisional)</div>
+                    <div className="mt-2 grid gap-1">
+                      {selectedSeasonProgress.rankedEvents.map((entry) => (
+                        <div
+                          key={entry.eventId}
+                          className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-slate-200 bg-white px-2 py-1 text-xs text-slate-600"
+                        >
+                          <div className="flex items-center gap-2">
+                            <span className="w-6 font-mono text-[11px] text-slate-500">#{entry.rank}</span>
+                            <span className="font-medium text-slate-800">{entry.eventTitle}</span>
+                          </div>
+                          <div className="flex flex-wrap items-center gap-2">
+                            <span className="font-semibold text-slate-800">{entry.points} pts</span>
+                            {entry.pointsSource === "points_delta" ? (
+                              <span className="badge badge-sky">delta</span>
+                            ) : (
+                              <span className="badge badge-slate">provisional</span>
+                            )}
+                            <span>
+                              W/L {entry.wins}/{entry.losses}
+                            </span>
+                            {entry.pointsSource === "provisional" && entry.pointsDeltaTotal !== null ? (
+                              <span>delta coverage {entry.pointsDeltaCoveragePercent.toFixed(0)}%</span>
+                            ) : null}
+                            {entry.clearAchieved ? <span className="badge badge-emerald">clear</span> : null}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ) : null}
+
                 <div className="grid gap-2">
                   {selectedSeason.events.map((eventSummary) => (
                     <div key={eventSummary.eventId} className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2">
@@ -218,6 +444,8 @@ export function EventsPage() {
                         <span>win/loss: <span className="font-medium text-slate-800">{eventSummary.winCount}/{eventSummary.lossCount}</span></span>
                         <span>win rate: <span className="font-medium text-slate-800">{formatPercent(eventSummary.winRatePercent)}</span></span>
                         <span>best diff: <span className="font-medium text-slate-800">{eventSummary.bestTileDiff ?? "—"}</span></span>
+                        <span>delta A total: <span className="font-medium text-slate-800">{eventSummary.pointsDeltaTotal ?? "—"}</span></span>
+                        <span>delta coverage: <span className="font-medium text-slate-800">{eventSummary.pointsDeltaCoveragePercent.toFixed(1)}%</span></span>
                         <span>latest: <span className="font-mono text-slate-700">{eventSummary.latestAttemptAt ?? "—"}</span></span>
                       </div>
                     </div>
@@ -331,6 +559,11 @@ export function EventsPage() {
                               <div className="text-xs">
                                 winner: <span className="font-medium">{winnerLabel(a.winner)}</span> · tiles A:{a.tilesA}/B:{a.tilesB}
                                 {a.winner === 0 && <span className="ml-1 text-emerald-600 font-medium">WIN</span>}
+                                {typeof a.pointsDeltaA === "number" ? (
+                                  <span className="ml-1 rounded-full border border-sky-300 bg-sky-100 px-1.5 py-0.5 text-[10px] font-semibold text-sky-700">
+                                    deltaA {a.pointsDeltaA}
+                                  </span>
+                                ) : null}
                               </div>
                               <div className="text-[11px] text-slate-500 font-mono">matchId: {a.matchId}</div>
                             </div>
