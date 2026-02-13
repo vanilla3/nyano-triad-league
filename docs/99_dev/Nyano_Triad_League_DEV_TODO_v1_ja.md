@@ -78,9 +78,13 @@
   - `season_archive.ts` に pointsDelta 合計/カバレッジ集計を追加
   - `season_progress.ts` で「event内の全attemptに pointsDelta がある場合のみ」pointsDelta採用（未充足は provisional 維持）
   - Events UI と markdown に source mix（pointsDelta/provisional）表示を追加
+- ✅ Commit0112: /events に settled event JSON 取り込みを追加（ローカル pointsDelta 反映）
+  - `settled_points_import.ts` を追加（schema対応・settled event検証・winner/tiles整合チェック）
+  - Events に `Settled points import (local)` UI を追加（貼り付け→適用→集計結果表示）
+  - matchId 一致かつ結果整合の local attempt に `pointsDeltaA` / `pointsDeltaSource=settled_attested` を反映
 ## 🚧 Doing (now)
 
-- 🔧 Phase 4 の運用面（ランキング / 報酬導線）を pointsDelta 連携へ段階拡張する（URL経由の入力対応まで完了。次は on-chain settled event 取り込み）
+- 🔧 Phase 4 の運用面（ランキング / 報酬導線）を pointsDelta 連携へ段階拡張する（ローカル取り込みUIまで完了。次は取得自動化と署名検証フロー統合）
 
 ## 🧩 Next (high priority)
 

@@ -466,6 +466,40 @@
 - `pnpm -C packages/triad-engine lint`
 - `pnpm -C packages/triad-engine test`
 
+## 2026-02-13 - commit-0112: settled event JSON import for local pointsDelta migration
+
+### Why
+- DEV_TODO の Doing では、Phase 4 の pointsDelta 連携を URL 手入力から `on-chain settled event` 取り込みへ進める段階だった。
+- 既存フローは Replay URL の `pda` 依存のため、後から settled event を一括反映する導線がなく、season points の移行効率が低かった。
+- ローカル保存の event attempts に対して、安全に `pointsDeltaA` を適用するには、`matchId` 一致だけでなく winner / tiles 整合チェックが必要だった。
+
+### What
+- `apps/web/src/lib/settled_points_import.ts` を追加。
+  - 入力 schema 対応:
+    - settled event 配列
+    - `{ settledEvents: [...] }`
+    - `{ records: [{ settled: ... }] }`
+  - `validateLadderMatchSettledEventV1(...)` を使って settled event を検証。
+  - `matchId` 単位で正規化し、競合 duplicate を issue として報告。
+  - `applySettledPointsToAttempts(...)` でローカル attempt へ適用:
+    - no local / winner mismatch / tiles mismatch / draw を安全にスキップ
+    - 整合した attempt のみ `pointsDeltaA` + `pointsDeltaSource=settled_attested` を更新
+- `apps/web/src/pages/Events.tsx`
+  - `Settled points import (local)` UI を追加（JSON貼り付け、適用、入力クリア）。
+  - import 結果サマリ（input/valid/updated/matched/unchanged/no-local/mismatch）と issue 抜粋表示を追加。
+  - `Apply settled JSON` 実行時に更新対象 attempt を `upsertEventAttempt(...)` で永続化。
+  - My Pawprints 一覧に `deltaA` バッジ表示を追加。
+- `apps/web/src/lib/__tests__/settled_points_import.test.ts`
+  - parse（複数schema）・duplicate conflict・apply（正常更新/不整合/ローカル未一致）を検証。
+- `docs/99_dev/Nyano_Triad_League_DEV_TODO_v1_ja.md`
+  - Commit0112 完了を追記し、Doing を「取得自動化と署名検証フロー統合」へ更新。
+
+### Verify
+- `pnpm -C apps/web test -- src/lib/__tests__/settled_points_import.test.ts`
+- `pnpm -C apps/web typecheck`
+- `pnpm -C apps/web lint`
+- `pnpm -C apps/web build`
+
 ## 2026-02-13 - commit-0111: phased pointsDelta integration for season progress
 
 ### Why

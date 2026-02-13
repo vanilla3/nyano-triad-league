@@ -4,10 +4,22 @@ import { Link } from "react-router-dom";
 
 import { EVENTS, formatEventPeriod, getEventStatus } from "@/lib/events";
 import { parseDeckRestriction } from "@/lib/deck_restriction";
-import { clearAllEventAttempts, clearEventAttempts, deleteEventAttempt, listAllEventAttempts, listEventAttempts } from "@/lib/event_attempts";
+import {
+  clearAllEventAttempts,
+  clearEventAttempts,
+  deleteEventAttempt,
+  listAllEventAttempts,
+  listEventAttempts,
+  upsertEventAttempt,
+} from "@/lib/event_attempts";
 import { writeClipboardText } from "@/lib/clipboard";
 import { buildSeasonArchiveSummaries, formatSeasonArchiveMarkdown } from "@/lib/season_archive";
 import { buildSeasonProgressSummary, formatSeasonProgressMarkdown } from "@/lib/season_progress";
+import {
+  applySettledPointsToAttempts,
+  parseSettledPointsImportJson,
+  type SettledPointsImportIssue,
+} from "@/lib/settled_points_import";
 
 function StatusBadge(props: { status: string }) {
   const variant =
@@ -34,6 +46,17 @@ function winnerLabel(w: number): string {
 function formatPercent(v: number): string {
   return `${v.toFixed(1)}%`;
 }
+
+type SettledImportUiReport = {
+  inputCount: number;
+  validCount: number;
+  updatedCount: number;
+  matchedCount: number;
+  unchangedCount: number;
+  noLocalAttemptCount: number;
+  mismatchCount: number;
+  issues: SettledPointsImportIssue[];
+};
 
 /**
  * Determine the "best" attempt for an event.
@@ -70,6 +93,8 @@ function findBestAttemptId(
 export function EventsPage() {
   const [refresh, setRefresh] = React.useState(0);
   const [selectedSeasonId, setSelectedSeasonId] = React.useState<number | null>(null);
+  const [settledImportText, setSettledImportText] = React.useState("");
+  const [settledImportReport, setSettledImportReport] = React.useState<SettledImportUiReport | null>(null);
   const toast = useToast();
 
   const seasonArchive = React.useMemo(() => {
@@ -107,6 +132,62 @@ export function EventsPage() {
     if (selectedSeasonProgress) chunks.push(formatSeasonProgressMarkdown(selectedSeasonProgress));
     await writeClipboardText(chunks.join("\n\n"));
     toast.success("Copied", "season archive + progress markdown");
+  };
+
+  const applySettledImport = () => {
+    const text = settledImportText.trim();
+    if (!text) {
+      toast.warn("Import skipped", "Paste settled event JSON first.");
+      return;
+    }
+
+    const parsed = parseSettledPointsImportJson(text);
+    if (parsed.events.length === 0) {
+      setSettledImportReport({
+        inputCount: parsed.inputCount,
+        validCount: 0,
+        updatedCount: 0,
+        matchedCount: 0,
+        unchangedCount: 0,
+        noLocalAttemptCount: 0,
+        mismatchCount: 0,
+        issues: parsed.issues,
+      });
+      const message = parsed.issues[0]?.message ?? "No valid settled events found.";
+      toast.error("Import failed", message);
+      return;
+    }
+
+    const currentAttempts = listAllEventAttempts();
+    const applied = applySettledPointsToAttempts(currentAttempts, parsed.events);
+
+    if (applied.updatedMatchIds.length > 0) {
+      const updatedSet = new Set(applied.updatedMatchIds);
+      for (const attempt of applied.attempts) {
+        if (updatedSet.has(attempt.matchId.toLowerCase())) {
+          upsertEventAttempt(attempt);
+        }
+      }
+      setRefresh((v) => v + 1);
+    }
+
+    const issues = [...parsed.issues, ...applied.issues];
+    setSettledImportReport({
+      inputCount: parsed.inputCount,
+      validCount: parsed.events.length,
+      updatedCount: applied.updatedCount,
+      matchedCount: applied.matchedCount,
+      unchangedCount: applied.unchangedCount,
+      noLocalAttemptCount: applied.noLocalAttemptCount,
+      mismatchCount: applied.mismatchCount,
+      issues,
+    });
+
+    if (applied.updatedCount > 0) {
+      toast.success("Settled import applied", `Updated ${applied.updatedCount} local attempt(s).`);
+    } else {
+      toast.warn("Settled import applied", "No local attempts were updated.");
+    }
   };
 
   return (
@@ -157,6 +238,57 @@ export function EventsPage() {
           </div>
 
           <div className="card-bd grid gap-3">
+            <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div>
+                  <div className="text-xs font-semibold text-slate-700">Settled points import (local)</div>
+                  <div className="text-[11px] text-slate-500">
+                    on-chain settled event JSON を貼り付け、matchId一致のローカル履歴に pointsDeltaA を反映します。
+                  </div>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <button className="btn" onClick={applySettledImport}>
+                    Apply settled JSON
+                  </button>
+                  <button
+                    className="btn"
+                    onClick={() => {
+                      setSettledImportText("");
+                      setSettledImportReport(null);
+                    }}
+                  >
+                    Clear input
+                  </button>
+                </div>
+              </div>
+              <textarea
+                className="mt-2 h-28 w-full rounded-lg border border-slate-200 bg-white p-2 font-mono text-[11px] text-slate-700"
+                placeholder='{"settledEvents":[...]} or {"records":[{"settled":...}]}'
+                value={settledImportText}
+                onChange={(e) => setSettledImportText(e.target.value)}
+                spellCheck={false}
+              />
+              {settledImportReport ? (
+                <div className="mt-2 rounded-md border border-slate-200 bg-white px-2 py-1.5 text-[11px] text-slate-600">
+                  <div className="flex flex-wrap items-center gap-3">
+                    <span>input {settledImportReport.inputCount}</span>
+                    <span>valid {settledImportReport.validCount}</span>
+                    <span>updated {settledImportReport.updatedCount}</span>
+                    <span>matched {settledImportReport.matchedCount}</span>
+                    <span>unchanged {settledImportReport.unchangedCount}</span>
+                    <span>no-local {settledImportReport.noLocalAttemptCount}</span>
+                    <span>mismatch {settledImportReport.mismatchCount}</span>
+                  </div>
+                  {settledImportReport.issues.length > 0 ? (
+                    <div className="mt-1 text-[10px] text-amber-700">
+                      issues: {settledImportReport.issues.slice(0, 3).map((issue) => issue.message).join(" | ")}
+                      {settledImportReport.issues.length > 3 ? ` | ... +${settledImportReport.issues.length - 3}` : ""}
+                    </div>
+                  ) : null}
+                </div>
+              ) : null}
+            </div>
+
             {seasonArchive.length === 0 || !selectedSeason ? (
               <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600">
                 まだローカルアーカイブがありません。Event をプレイして Replay で Save するとここに集計されます。
@@ -427,6 +559,11 @@ export function EventsPage() {
                               <div className="text-xs">
                                 winner: <span className="font-medium">{winnerLabel(a.winner)}</span> · tiles A:{a.tilesA}/B:{a.tilesB}
                                 {a.winner === 0 && <span className="ml-1 text-emerald-600 font-medium">WIN</span>}
+                                {typeof a.pointsDeltaA === "number" ? (
+                                  <span className="ml-1 rounded-full border border-sky-300 bg-sky-100 px-1.5 py-0.5 text-[10px] font-semibold text-sky-700">
+                                    deltaA {a.pointsDeltaA}
+                                  </span>
+                                ) : null}
                               </div>
                               <div className="text-[11px] text-slate-500 font-mono">matchId: {a.matchId}</div>
                             </div>
