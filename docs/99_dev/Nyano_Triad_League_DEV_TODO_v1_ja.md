@@ -68,9 +68,14 @@
   - Events に season 切替・勝率/挑戦数サマリー・最新Replay導線・Markdownコピーを追加
   - `event_attempts` に全件取得/全消去 API を追加（ローカル運用の保守性向上）
   - `season_archive.test.ts` / `event_attempts.test.ts` で集計と storage API を検証
+- ✅ Commit0110: /events に Local Season Points（ランキング/報酬導線）を追加
+  - `season_progress.ts` を追加（points算出・tier判定・event別ランキングを pure function 化）
+  - Events に `Local season points (provisional)` パネル（Tier/次Tierまで/進捗バー）を追加
+  - `Season points board` と markdown 出力（archive + progress）を追加
+  - `season_progress.test.ts` を追加（points/tier/tie-break/markdown）
 ## 🚧 Doing (now)
 
-- 🔧 Phase 4 の運用面（ランキング / 報酬導線）の最小設計を進める
+- 🔧 Phase 4 の運用面（ランキング / 報酬導線）を pointsDelta 連携へ段階拡張する
 
 ## 🧩 Next (high priority)
 

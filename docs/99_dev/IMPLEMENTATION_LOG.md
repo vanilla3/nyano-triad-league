@@ -466,6 +466,35 @@
 - `pnpm -C packages/triad-engine lint`
 - `pnpm -C packages/triad-engine test`
 
+## 2026-02-13 - commit-0110: local season points and reward-tier guidance on /events
+
+### Why
+- Phase 4 の未完了項目「シーズン制（ランキング/報酬/アーカイブ）」に対して、archive は実装済みだが ranking/reward の導線が不足していた。
+- 公式の on-chain `pointsDelta` 連携を入れる前段として、ローカル履歴から決定的に再計算できる暫定進行指標が必要だった。
+- 集計ロジックを UI に埋め込むと将来の pointsDelta 移行時に回帰しやすいため、pure function として分離する必要があった。
+
+### What
+- `apps/web/src/lib/season_progress.ts` を追加。
+  - `Win +3 / Loss +1 / Event clear +2` のローカル points ルールを固定。
+  - reward tier（Rookie/Bronze/Silver/Gold/Legend）判定を追加。
+  - event別 points board を決定的 tie-break で生成。
+  - progress markdown 出力を追加。
+- `apps/web/src/pages/Events.tsx`
+  - `Local season points (provisional)` パネルを追加（tier / next / progress bar / hint）。
+  - `Season points board`（event別）を追加。
+  - `Copy summary` を archive + progress の結合出力へ拡張。
+- `apps/web/src/lib/__tests__/season_progress.test.ts`
+  - points算出、tier遷移、tie-break、markdown 出力を検証。
+- Docs
+  - `docs/99_dev/Nyano_Triad_League_DEV_TODO_v1_ja.md` に Commit0110 を追記。
+  - `docs/00_handoff/Nyano_Triad_League_LONG_TERM_ROADMAP_v1_ja.md` の Phase 4 進捗を更新。
+
+### Verify
+- `pnpm -C apps/web test`
+- `pnpm -C apps/web typecheck`
+- `pnpm -C apps/web lint`
+- `pnpm -C apps/web build`
+
 ## 2026-02-12 - commit-0107: phase4 onboarding quickstart (Home checklist + Match progress sync)
 
 ### Why
