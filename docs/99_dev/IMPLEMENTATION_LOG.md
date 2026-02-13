@@ -1577,6 +1577,37 @@
 - `pnpm -C apps/web build`
 - `pnpm -C apps/web e2e -- stage-focus.spec.ts`
 
+## 2026-02-13 - WO005-AA follow-up: board depth and placement tactility pass
+
+### Why
+- Stage HUD/cut-in/hand dock quality improved, but board cells still felt flatter compared to surrounding premium panels.
+- We needed stronger card placement tactility and board depth without changing interaction logic.
+
+### What
+- `apps/web/src/mint-theme/mint-theme.css`
+  - Upgraded board base surface:
+    - `.mint-board-inner` now uses richer layered gradients and depth shadow.
+    - Added `.mint-board-inner::after` micro-pattern/specular layer to avoid flat fill look.
+  - Upgraded board grid foundation:
+    - `.mint-grid` now uses responsive gap, slight perspective, and ambient center glow layer.
+  - Upgraded cell material quality:
+    - `.mint-cell` now uses layered glass-like fill and stronger contact shadow.
+    - Enhanced `.mint-cell::before` highlight shading for improved bevel feel.
+  - Upgraded interaction and ownership states:
+    - `.mint-cell--selectable` / `:hover` / `:active` now provide stronger lift and readable active affordance.
+    - `.mint-cell--drop-ready` now has clearer readiness depth.
+    - `.mint-cell--flat` refined to matte recessed look.
+    - `.mint-cell--selected` gets stronger ring + elevation.
+    - `.mint-cell--placed` / `.mint-cell--flipped` now include deeper impact shadows.
+    - `.mint-cell--owner-a` / `--owner-b` now include subtle owner-themed top highlights.
+    - `.mint-cell--focus` ring readability strengthened for replay focus.
+
+### Verify
+- `pnpm -C apps/web lint`
+- `pnpm -C apps/web typecheck`
+- `pnpm -C apps/web build`
+- `pnpm -C apps/web e2e -- stage-focus.spec.ts`
+
 ## 2026-02-13 - WO005-Y follow-up: premium HUD glass pass (battle/replay stage)
 
 ### Why
