@@ -1601,6 +1601,13 @@ export function MatchPage() {
     && !isAiTurn
     && turns.length < 9
     && (draftCardIndex !== null || draftCell !== null);
+  const showFocusHandDock = isEngineFocus
+    && useMintUi
+    && !isRpg
+    && (!isStageFocusRoute || showStageControls)
+    && !isAiTurn
+    && turns.length < 9
+    && currentDeckTokens.length > 0;
 
   /* ═══════════════════════════════════════════════════════════════════════
      RENDER
@@ -2606,10 +2613,105 @@ export function MatchPage() {
                   />
                 )}
 
+                {showFocusHandDock && (
+                  <div
+                    className="sticky bottom-2 z-20 grid gap-2 rounded-2xl border p-2 shadow-xl backdrop-blur"
+                    style={{
+                      background: "color-mix(in srgb, var(--mint-surface, #ffffff) 88%, transparent)",
+                      borderColor: "rgba(56, 189, 248, 0.42)",
+                    }}
+                  >
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="text-[11px] font-semibold text-slate-600">Hand Dock</div>
+                      <div className="text-[10px] text-slate-500">
+                        {draftCardIndex !== null ? `card ${draftCardIndex + 1}` : "pick card"} → {draftCell !== null ? `cell ${draftCell}` : "tap cell"}
+                      </div>
+                    </div>
+
+                    <div className="flex gap-2 overflow-x-auto pb-1">
+                      {currentDeckTokens.map((tid, idx) => {
+                        const card = cards?.get(tid);
+                        const usedHere = currentUsed.has(idx);
+                        const selected = draftCardIndex === idx;
+                        if (!card) return null;
+                        return (
+                          <button
+                            key={`focus-dock-${idx}`}
+                            type="button"
+                            className={[
+                              "relative flex-shrink-0 rounded-xl border p-1 transition",
+                              selected ? "border-cyan-400 ring-2 ring-cyan-300/60" : "border-slate-300",
+                              usedHere ? "opacity-40" : "hover:-translate-y-0.5 hover:shadow-md",
+                            ].join(" ")}
+                            aria-label={`Focus hand card ${idx + 1}${usedHere ? " (used)" : ""}${selected ? " (selected)" : ""}`}
+                            data-hand-card={idx}
+                            disabled={usedHere}
+                            draggable={enableHandDragDrop && !usedHere}
+                            onClick={() => {
+                              telemetry.recordInteraction();
+                              setDraftCardIndex(idx);
+                            }}
+                            onDragStart={(e) => {
+                              if (!enableHandDragDrop || usedHere) {
+                                e.preventDefault();
+                                return;
+                              }
+                              e.dataTransfer.effectAllowed = "move";
+                              e.dataTransfer.setData("application/x-nytl-card-index", String(idx));
+                              e.dataTransfer.setData("text/plain", String(idx));
+                              handleHandCardDragStart(idx);
+                            }}
+                            onDragEnd={handleHandCardDragEnd}
+                          >
+                            <CardMini card={card} owner={currentPlayer} subtle={!selected} className="w-[64px]" />
+                          </button>
+                        );
+                      })}
+                    </div>
+
+                    <div className="flex flex-wrap items-center gap-2">
+                      <select
+                        className="input h-9 min-w-[150px] text-xs"
+                        value={draftWarningMarkCell === null ? "" : String(draftWarningMarkCell)}
+                        onChange={(e) => {
+                          const v = e.target.value;
+                          setDraftWarningMarkCell(v === "" ? null : Number(v));
+                        }}
+                        disabled={currentWarnRemaining <= 0}
+                        aria-label="Focus dock warning mark cell"
+                      >
+                        <option value="">Warning: none</option>
+                        {availableCells
+                          .filter((c) => c !== draftCell)
+                          .map((c) => (
+                            <option key={`focus-w-${c}`} value={String(c)}>warning {c}</option>
+                          ))}
+                      </select>
+
+                      <button
+                        className="btn btn-primary h-9 px-3 text-xs"
+                        onClick={commitMove}
+                        disabled={draftCell === null || draftCardIndex === null}
+                        aria-label="Commit move from focus hand dock"
+                      >
+                        Commit
+                      </button>
+                      <button
+                        className="btn h-9 px-3 text-xs"
+                        onClick={undoMove}
+                        disabled={turns.length === 0}
+                        aria-label="Undo move from focus hand dock"
+                      >
+                        Undo
+                      </button>
+                    </div>
+                  </div>
+                )}
+
                 {/* ────────────────────────────────────────────
                     P0-2: Hand Display (RPG or standard)
                     ──────────────────────────────────────────── */}
-                {(!isStageFocusRoute || showStageControls) ? (
+                {(!isStageFocusRoute || showStageControls) && !showFocusHandDock ? (
                   <div className="grid gap-3">
                     <div className={
                       useMintUi ? "text-xs font-semibold text-mint-text-secondary"
