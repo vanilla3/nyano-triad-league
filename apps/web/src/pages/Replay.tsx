@@ -1845,13 +1845,18 @@ protocolV1: {
 
                   </div>
                 ) : (
-                  <div className="rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600">
+                  <div
+                    className={[
+                      "rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600",
+                      isStageFocus ? "stage-focus-side-panel stage-focus-side-panel--muted" : "",
+                    ].filter(Boolean).join(" ")}
+                  >
                     Replay controls are hidden for board focus.
                   </div>
                 )}
               </div>
 
-              <div className={["card-bd grid gap-4", isStageFocus ? "stage-focus-arena-inner" : ""].filter(Boolean).join(" ")}>
+              <div className={["card-bd grid gap-4", isStageFocus ? "stage-focus-arena-inner stage-focus-replay-shell" : ""].filter(Boolean).join(" ")}>
                 <div className="sr-only" aria-live="polite">
                   {`${stepStatusText}. ${phaseInfo.label} phase. Progress ${stepProgress} percent.`}
                 </div>
@@ -1874,7 +1879,7 @@ protocolV1: {
 
                 {(!isStageFocus || showStagePanels) && (
                   <>
-                    <div className="replay-timeline-shell">
+                    <div className={["replay-timeline-shell", isStageFocus ? "stage-focus-side-panel stage-focus-side-panel--timeline" : ""].filter(Boolean).join(" ")}>
                       <div className="replay-timeline-head">
                         <div className="flex flex-wrap items-center gap-2">
                           <span className="replay-step-pill">{step === 0 ? "Initial board" : `After turn ${step}`}</span>
@@ -1979,7 +1984,7 @@ protocolV1: {
                       ) : null}
                     </div>
 
-                    <div className="rounded-lg border border-slate-200 bg-white p-3 text-sm">
+                    <div className={["rounded-lg border border-slate-200 bg-white p-3 text-sm", isStageFocus ? "stage-focus-side-panel" : ""].filter(Boolean).join(" ")}>
                       <div className="flex flex-wrap items-center justify-between gap-2">
                         <div className="font-medium">
                           current winner: {formatReplayWinnerLabel(sim.current.winner)} | tiles A:{sim.current.tiles.A} / B:{sim.current.tiles.B}

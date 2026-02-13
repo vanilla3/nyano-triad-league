@@ -1574,6 +1574,38 @@
 - `pnpm -C apps/web build`
 - `pnpm -C apps/web e2e -- stage-focus.spec.ts`
 
+## 2026-02-13 - WO005-AD follow-up: stage side-panel glass hierarchy pass
+
+### Why
+- Stage focus mode improved board/HUD quality, but side information areas (turn log/result/debug blocks) still looked visually flatter.
+- We needed stronger visual hierarchy between main board and side support panels without changing gameplay flow.
+
+### What
+- `apps/web/src/pages/Match.tsx`
+  - Added `stage-focus-side-column` to the non-mint right column in stage routes.
+  - Applied `stage-focus-side-panel` (and muted variant where appropriate) to winner/info, guest CTA, and Nyano AI debug blocks in stage focus.
+- `apps/web/src/pages/Replay.tsx`
+  - Added `stage-focus-replay-shell` to stage focus replay content wrapper.
+  - Applied `stage-focus-side-panel` to replay timeline, replay metadata card, and stage-hidden transport notice.
+- `apps/web/src/mint-theme/mint-theme.css`
+  - Added stage side-panel visual system:
+    - `stage-focus-side-column`
+    - `stage-focus-replay-shell`
+    - `stage-focus-side-panel`
+    - `stage-focus-side-panel--muted`
+    - `stage-focus-side-panel--timeline`
+  - Added subtle glint animation (`mint-stage-side-glint`) and layered frosted styling for side panels.
+  - Added accessibility/perf gates:
+    - disable side-panel glint in `prefers-reduced-motion`
+    - hide side-panel overlays in `data-vfx="off"`
+    - lower animation intensity/speed in `data-vfx="low"`.
+
+### Verify
+- `pnpm -C apps/web lint`
+- `pnpm -C apps/web typecheck`
+- `pnpm -C apps/web build`
+- `pnpm -C apps/web e2e -- stage-focus.spec.ts`
+
 ## 2026-02-13 - WO005-Z follow-up: Nyano cut-in and focus hand dock premium pass
 
 ### Why

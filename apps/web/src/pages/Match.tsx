@@ -3283,7 +3283,7 @@ export function MatchPage() {
                   </MatchDrawerMint>
                 </>
               ) : (
-              <div className="grid gap-4 content-start">
+              <div className={["grid gap-4 content-start", isStageFocusRoute ? "stage-focus-side-column" : ""].filter(Boolean).join(" ")}>
                 {/* P0-2: RPG or standard Turn Log */}
                 {isRpg ? (
                   <TurnLogRPG entries={rpgLogEntries} />
@@ -3305,7 +3305,7 @@ export function MatchPage() {
                   <div className={
                     isRpg
                       ? "rounded-lg p-3 text-xs"
-                      : "rounded-lg border border-slate-200 bg-white p-3 text-xs text-slate-700"
+                      : ["rounded-lg border border-slate-200 bg-white p-3 text-xs text-slate-700", isStageFocusRoute ? "stage-focus-side-panel" : ""].filter(Boolean).join(" ")
                   }
                   style={isRpg ? { background: "rgba(0,0,0,0.4)", color: "#F5F0E1", border: "1px solid rgba(201,168,76,0.2)" } : undefined}
                   >
@@ -3316,7 +3316,7 @@ export function MatchPage() {
                   <div className={
                     isRpg
                       ? "rounded-lg p-3 text-xs"
-                      : "rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600"
+                      : ["rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600", isStageFocusRoute ? "stage-focus-side-panel stage-focus-side-panel--muted" : ""].filter(Boolean).join(" ")
                   }
                   style={isRpg ? { background: "rgba(0,0,0,0.3)", color: "var(--rpg-text-dim, #8A7E6B)" } : undefined}
                   >
@@ -3341,7 +3341,7 @@ export function MatchPage() {
 
                 {/* Guest mode post-game CTA */}
                 {isGuestMode && turns.length >= 9 && (
-                  <div className="grid gap-2 rounded-lg border border-nyano-200 bg-nyano-50 p-3">
+                  <div className={["grid gap-2 rounded-lg border border-nyano-200 bg-nyano-50 p-3", isStageFocusRoute ? "stage-focus-side-panel" : ""].filter(Boolean).join(" ")}>
                     <div className="text-sm font-medium text-nyano-800">Ready for the real thing?</div>
                     <div className="flex flex-wrap gap-2">
                       <Link className="btn btn-primary no-underline text-xs" to="/decks">Create Your Own Deck</Link>
@@ -3398,7 +3398,7 @@ export function MatchPage() {
                   <details className={
                     isRpg
                       ? "rounded-lg p-2 text-xs"
-                      : "rounded-lg border border-slate-200 bg-white p-3 text-xs text-slate-700"
+                      : ["rounded-lg border border-slate-200 bg-white p-3 text-xs text-slate-700", isStageFocusRoute ? "stage-focus-side-panel" : ""].filter(Boolean).join(" ")
                   }
                   style={isRpg ? { background: "rgba(0,0,0,0.3)", color: "var(--rpg-text-dim, #8A7E6B)" } : undefined}
                   >
