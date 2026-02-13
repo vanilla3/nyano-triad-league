@@ -1237,6 +1237,32 @@
 - `pnpm -C apps/web typecheck`
 - `pnpm -C apps/web lint`
 - `pnpm -C apps/web e2e -- stage-focus.spec.ts`
+
+## 2026-02-13 - WO005-V follow-up: glassmorphism + cinematic stage polish
+
+### Why
+- Stage and shared UI already had baseline polish, but we needed stronger "game screen" atmosphere and richer material depth without changing interaction flow.
+- The user requested further visual quality with glassmorphism while preserving existing design intent.
+
+### What
+- `apps/web/src/styles.css`
+  - Added shared glass tokens (`--nytl-glass-*`) for panel/button depth consistency.
+  - Upgraded global page background to multi-layer soft cyan ambience with slow drift animation.
+  - Refined shared `card`, `card-hd`, `card-bd`, `btn`, `btn-primary` to frosted glass treatment with brighter specular highlights.
+  - Added reduced-motion guard for ambient background drift.
+- `apps/web/src/mint-theme/mint-theme.css`
+  - Enhanced `stage-focus-root` with atmospheric gradient layers and subtle cinematic texture.
+  - Added animated ambient glow layer (`mint-stage-atmo-drift`) behind stage content.
+  - Upgraded `stage-focus-toolbar` and `stage-focus-toolbar-actions` with stronger glass depth and top sheen highlight.
+  - Upgraded `stage-focus-arena-shell` and stage board shell with richer translucency + depth shadows.
+  - Added VFX safety controls:
+    - disable stage ambient overlays when `data-vfx="off"`
+    - tone down ambient intensity for `data-vfx="low"`
+    - disable stage ambient animation under `prefers-reduced-motion`.
+
+### Verify
+- `pnpm -C apps/web build`
+- `pnpm -C apps/web lint`
 - `pnpm -C apps/web typecheck`
 - `pnpm -C apps/web lint`
 
