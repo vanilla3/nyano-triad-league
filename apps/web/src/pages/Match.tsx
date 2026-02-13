@@ -59,7 +59,7 @@ import {
 import { markOnboardingStepDone } from "@/lib/onboarding";
 import { QrCode } from "@/components/QrCode";
 import { createTelemetryTracker } from "@/lib/telemetry";
-import { createSfxEngine, type SfxEngine } from "@/lib/sfx";
+import { createSfxEngine, type SfxEngine, type SfxName } from "@/lib/sfx";
 import { readUiDensity, writeUiDensity, type UiDensity } from "@/lib/local_settings";
 import type { FlipTraceArrow } from "@/components/FlipArrowOverlay";
 import { MatchDrawerMint, DrawerToggleButton } from "@/components/MatchDrawerMint";
@@ -361,6 +361,10 @@ export function MatchPage() {
     const next = !sfx.isMuted();
     sfx.setMuted(next);
     setSfxMuted(next);
+  }, [sfx]);
+
+  const playMatchUiSfx = React.useCallback((name: SfxName) => {
+    sfx?.play(name);
   }, [sfx]);
 
   const isGuestMode = searchParams.get("mode") === "guest";
@@ -1598,38 +1602,44 @@ export function MatchPage() {
 
   const toggleStageControlsWithFeedback = React.useCallback(() => {
     pushStageActionFeedback(showStageControls ? "Controls hidden" : "Controls shown");
+    playMatchUiSfx("card_place");
     toggleStageControls();
-  }, [pushStageActionFeedback, showStageControls, toggleStageControls]);
+  }, [playMatchUiSfx, pushStageActionFeedback, showStageControls, toggleStageControls]);
 
   const toggleStageAssistWithFeedback = React.useCallback(() => {
     setShowStageAssist((prev) => {
       const next = !prev;
       if (isStageFocusRoute) {
         pushStageActionFeedback(next ? "HUD shown" : "HUD hidden");
+        playMatchUiSfx("card_place");
       }
       return next;
     });
-  }, [isStageFocusRoute, pushStageActionFeedback]);
+  }, [isStageFocusRoute, playMatchUiSfx, pushStageActionFeedback]);
 
   const toggleStageFullscreenWithFeedback = React.useCallback(() => {
     pushStageActionFeedback(isStageFullscreen ? "Exit fullscreen" : "Enter fullscreen");
+    playMatchUiSfx("card_place");
     void toggleStageFullscreen();
-  }, [isStageFullscreen, pushStageActionFeedback, toggleStageFullscreen]);
+  }, [isStageFullscreen, playMatchUiSfx, pushStageActionFeedback, toggleStageFullscreen]);
 
   const exitFocusModeWithFeedback = React.useCallback(() => {
     pushStageActionFeedback("Exiting focus mode");
+    playMatchUiSfx("flip");
     setFocusMode(false);
-  }, [pushStageActionFeedback, setFocusMode]);
+  }, [playMatchUiSfx, pushStageActionFeedback, setFocusMode]);
 
   const openReplayWithFeedback = React.useCallback(() => {
     pushStageActionFeedback("Opening replay");
+    playMatchUiSfx("card_place");
     void openReplay();
-  }, [openReplay, pushStageActionFeedback]);
+  }, [openReplay, playMatchUiSfx, pushStageActionFeedback]);
 
   const doAiMoveWithFeedback = React.useCallback(() => {
     pushStageActionFeedback("Nyano move requested");
+    playMatchUiSfx("card_place");
     doAiMove();
-  }, [doAiMove, pushStageActionFeedback]);
+  }, [doAiMove, playMatchUiSfx, pushStageActionFeedback]);
 
   // P0-1: Cell select handler for BoardView / BoardViewRPG
   const handleCellSelect = React.useCallback(
@@ -1962,6 +1972,19 @@ export function MatchPage() {
               ) : null}
               {isStageFocusRoute ? (
                 <>
+                  {sfx ? (
+                    <button
+                      className={[
+                        "mint-sfx-toggle",
+                        sfxMuted && "mint-sfx-toggle--muted",
+                      ].filter(Boolean).join(" ")}
+                      onClick={handleSfxToggle}
+                      title={sfxMuted ? "サウンド ON" : "サウンド OFF"}
+                      aria-label={sfxMuted ? "Unmute sound effects" : "Mute sound effects"}
+                    >
+                      {sfxMuted ? "🔇" : "🔊"}
+                    </button>
+                  ) : null}
                   <button className="btn btn-sm" onClick={toggleStageFullscreenWithFeedback}>
                     {isStageFullscreen ? "Exit Fullscreen" : "Fullscreen"}
                   </button>
@@ -2693,7 +2716,7 @@ export function MatchPage() {
                         />
                       </div>
                       {/* D-3: SFX Mute Toggle */}
-                      {sfx && (
+                      {sfx && !isStageFocusRoute && (
                         <button
                           className={[
                             "mint-sfx-toggle",

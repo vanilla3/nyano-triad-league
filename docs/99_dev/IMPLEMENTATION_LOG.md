@@ -1574,6 +1574,29 @@
 - `pnpm -C apps/web build`
 - `pnpm -C apps/web e2e -- stage-focus.spec.ts`
 
+## 2026-02-13 - WO005-AH follow-up: battle stage SFX parity on focus toolbar
+
+### Why
+- Replay stage gained top-toolbar SFX control and UI action cues, but battle stage still handled SFX toggle primarily near HUD.
+- We needed consistent focus-toolbar behavior between `/battle-stage` and `/replay-stage` for better control discoverability and interaction feel.
+
+### What
+- `apps/web/src/pages/Match.tsx`
+  - Added reusable `playMatchUiSfx(...)` helper (`SfxName`) for battle stage toolbar actions.
+  - Added focus-toolbar SFX toggle button (`mint-sfx-toggle`) in stage route controls.
+  - Added light UI action cues to focus-toolbar handlers:
+    - fullscreen / controls / HUD toggle
+    - exit focus
+    - open replay
+    - manual Nyano move request
+  - Avoided duplicate SFX controls by hiding the HUD-row SFX toggle while on stage route (`isStageFocusRoute`), keeping it on non-stage layouts.
+
+### Verify
+- `pnpm -C apps/web lint`
+- `pnpm -C apps/web typecheck`
+- `pnpm -C apps/web build`
+- `pnpm -C apps/web e2e -- stage-focus.spec.ts`
+
 ## 2026-02-13 - WO005-AG follow-up: stage VFX tiered board-shell atmosphere pass
 
 ### Why
