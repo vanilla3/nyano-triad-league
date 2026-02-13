@@ -762,6 +762,29 @@ protocolV1: {
     const onKey = (e: KeyboardEvent) => {
       const tag = (e.target as HTMLElement)?.tagName;
       if (tag === "TEXTAREA" || tag === "INPUT" || tag === "SELECT") return;
+      const lower = e.key.toLowerCase();
+
+      if (isStageFocus && lower === "f") {
+        e.preventDefault();
+        void toggleStageFullscreen();
+        return;
+      }
+      if (isStageFocus && lower === "c") {
+        e.preventDefault();
+        toggleStageTransport();
+        return;
+      }
+      if (isStageFocus && lower === "s") {
+        e.preventDefault();
+        setShowStageSetup((prev) => !prev);
+        return;
+      }
+      if (isStageFocus && lower === "d") {
+        e.preventDefault();
+        setShowStagePanels((prev) => !prev);
+        return;
+      }
+
       if (e.key === "ArrowLeft") { setIsPlaying(false); setStep((s) => Math.max(0, s - 1)); }
       if (e.key === "ArrowRight") { setIsPlaying(false); setStep((s) => Math.min(stepMax, s + 1)); }
       if (e.key === " ") {
@@ -776,7 +799,15 @@ protocolV1: {
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [canPlay, stepMax, jumpToNextHighlight, jumpToPrevHighlight]);
+  }, [
+    canPlay,
+    stepMax,
+    jumpToNextHighlight,
+    jumpToPrevHighlight,
+    isStageFocus,
+    toggleStageFullscreen,
+    toggleStageTransport,
+  ]);
 
   // Autoplay timer
   React.useEffect(() => {
@@ -1083,7 +1114,7 @@ protocolV1: {
                 <div className="stage-focus-toolbar-actions stage-focus-toolbar-actions--replay">
                   <span className="stage-focus-toolbar-status">{stepStatusText} · {phaseInfo.label}</span>
                   <span className="stage-focus-toolbar-hint" aria-label="Replay focus toolbar hint">
-                    hotkeys: ← → space [ ]
+                    hotkeys: ← → space [ ] · F/C/S/D
                   </span>
                   <button
                     className="btn btn-sm"

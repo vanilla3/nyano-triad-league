@@ -1379,7 +1379,7 @@ export function MatchPage() {
     setDragCardIndex(null);
   }, [turns.length]);
 
-  const undoMove = () => {
+  const undoMove = React.useCallback(() => {
     setError(null);
     setStatus(null);
     setTurns((prev) => prev.slice(0, -1));
@@ -1392,7 +1392,7 @@ export function MatchPage() {
     setDraftCardIndex(null);
     setDraftWarningMarkCell(null);
     setSelectedTurnIndex((x) => Math.max(0, Math.min(x, Math.max(0, turns.length - 2))));
-  };
+  }, [turns.length]);
 
   const doAiMove = React.useCallback(() => {
     if (!isVsNyanoAi) return;
@@ -1539,7 +1539,7 @@ export function MatchPage() {
     }
   };
 
-  const openReplay = async () => {
+  const openReplay = React.useCallback(async () => {
     setError(null);
     setStatus(null);
     try {
@@ -1550,7 +1550,7 @@ export function MatchPage() {
     } catch (e: unknown) {
       toast.error("Replay failed", errorMessage(e));
     }
-  };
+  }, [buildReplayUrl, navigate, toast]);
 
   // P0-1: Cell select handler for BoardView / BoardViewRPG
   const handleCellSelect = React.useCallback(
@@ -1698,6 +1698,59 @@ export function MatchPage() {
   const canUndoFromFocusToolbar = !isAiTurn && turns.length > 0;
   const canManualAiMoveFromFocusToolbar = isVsNyanoAi && !aiAutoPlay && isAiTurn;
 
+  React.useEffect(() => {
+    if (!isStageFocusRoute || typeof window === "undefined") return;
+    const onKey = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement | null;
+      const tag = target?.tagName;
+      if (tag === "TEXTAREA" || tag === "INPUT" || tag === "SELECT" || target?.isContentEditable) return;
+
+      const lower = e.key.toLowerCase();
+      if (lower === "f") {
+        e.preventDefault();
+        void toggleStageFullscreen();
+        return;
+      }
+      if (lower === "c") {
+        e.preventDefault();
+        toggleStageControls();
+        return;
+      }
+      if (lower === "h") {
+        e.preventDefault();
+        setShowStageAssist((prev) => !prev);
+        return;
+      }
+      if (lower === "r" && canFinalize) {
+        e.preventDefault();
+        void openReplay();
+        return;
+      }
+      if (e.key === "Enter" && canCommitFromFocusToolbar) {
+        e.preventDefault();
+        commitMove();
+        return;
+      }
+      if (e.key === "Backspace" && canUndoFromFocusToolbar) {
+        e.preventDefault();
+        undoMove();
+      }
+    };
+
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [
+    isStageFocusRoute,
+    toggleStageFullscreen,
+    toggleStageControls,
+    canFinalize,
+    openReplay,
+    canCommitFromFocusToolbar,
+    commitMove,
+    canUndoFromFocusToolbar,
+    undoMove,
+  ]);
+
   /* ═══════════════════════════════════════════════════════════════════════
      RENDER
      ═══════════════════════════════════════════════════════════════════════ */
@@ -1766,7 +1819,7 @@ export function MatchPage() {
                     {draftCardIndex !== null ? `card ${draftCardIndex + 1}` : "pick card"} | {draftCell !== null ? `cell ${draftCell}` : "pick cell"}
                   </span>
                   <span className="stage-focus-toolbar-hint" aria-label="Battle focus toolbar hint">
-                    tap or drag to board, then commit
+                    tap/drag then commit · Enter/Backspace · F/C/H/R
                   </span>
                   <label className="stage-focus-toolbar-speed">
                     warning

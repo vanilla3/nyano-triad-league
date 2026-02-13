@@ -1340,6 +1340,39 @@
 - `pnpm -C apps/web typecheck`
 - `pnpm -C apps/web lint`
 - `pnpm -C apps/web e2e -- stage-focus.spec.ts`
+## 2026-02-13 — WO005-Q follow-up: stage keyboard shortcuts
+
+### Why
+- Stage focus controls became rich enough that keyboard shortcuts are useful for PC play/replay flow.
+- We wanted parity between visible toolbar actions and keyboard-triggered quick operations without requiring pointer travel.
+
+### What
+- `apps/web/src/pages/Match.tsx`
+  - Added stage-focus keyboard shortcuts:
+    - `Enter`: commit
+    - `Backspace`: undo
+    - `F`: fullscreen
+    - `C`: show/hide controls
+    - `H`: show/hide HUD
+    - `R`: open replay (when available)
+  - Added input-focus guard to avoid hijacking typing in form fields.
+  - Updated battle toolbar hint text with shortcut summary.
+- `apps/web/src/pages/Replay.tsx`
+  - Extended existing replay keyboard handler with stage-only toggles:
+    - `F`: fullscreen
+    - `C`: show/hide controls
+    - `S`: show/hide setup
+    - `D`: show/hide timeline/details panel
+  - Updated replay toolbar hint text to include stage shortcut keys.
+- `apps/web/e2e/stage-focus.spec.ts`
+  - Added keyboard regression tests:
+    - `/battle-stage supports stage keyboard shortcuts`
+    - `/replay-stage supports stage keyboard shortcuts`
+
+### Verify
+- `pnpm -C apps/web typecheck`
+- `pnpm -C apps/web lint`
+- `pnpm -C apps/web e2e -- stage-focus.spec.ts`
 ## 2026-02-13 — WO005-K follow-up: stage toolbar quick commit controls
 
 ### Why

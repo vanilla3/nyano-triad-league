@@ -91,6 +91,19 @@ test.describe("stage routes", () => {
     await expect(toolbar).toBeInViewport();
   });
 
+  test("/battle-stage supports stage keyboard shortcuts", async ({ page }) => {
+    await page.setViewportSize({ width: 1366, height: 768 });
+    await page.goto("/battle-stage?mode=guest&opp=vs_nyano_ai&ai=normal&rk=v2&ui=engine&focus=1&fpm=manual&fp=0");
+
+    await expect(page.getByRole("button", { name: "Show HUD" })).toBeVisible({ timeout: 10_000 });
+    await page.keyboard.press("h");
+    await expect(page.getByRole("button", { name: "Hide HUD" })).toBeVisible({ timeout: 10_000 });
+
+    await expect(page.getByRole("button", { name: "Hide Controls" })).toBeVisible({ timeout: 10_000 });
+    await page.keyboard.press("c");
+    await expect(page.getByRole("button", { name: "Show Controls" })).toBeVisible({ timeout: 10_000 });
+  });
+
   test("/battle-stage falls back to mint board when WebGL is unavailable", async ({ page }) => {
     await page.addInitScript(() => {
       const originalGetContext = HTMLCanvasElement.prototype.getContext;
@@ -157,6 +170,24 @@ test.describe("stage routes", () => {
     const toolbar = page.getByRole("region", { name: "Replay focus toolbar" });
     await expect(toolbar).toBeVisible({ timeout: 10_000 });
     await expect(toolbar).toBeInViewport();
+  });
+
+  test("/replay-stage supports stage keyboard shortcuts", async ({ page }) => {
+    await page.setViewportSize({ width: 1366, height: 768 });
+    const zParam = encodeTranscriptZ(REPLAY_TRANSCRIPT_JSON);
+    await page.goto(`/replay-stage?ui=engine&focus=1&mode=v2&z=${zParam}`);
+
+    const loadReplayButton = page.getByRole("button", { name: "Load replay" });
+    if (await loadReplayButton.count()) {
+      await loadReplayButton.first().click();
+    }
+
+    await expect(page.getByRole("button", { name: "Hide controls" })).toBeVisible({ timeout: 10_000 });
+    await page.keyboard.press("c");
+    await expect(page.getByRole("button", { name: "Show controls" })).toBeVisible({ timeout: 10_000 });
+
+    await page.keyboard.press("s");
+    await expect(page.getByText("Replay from transcript")).toBeVisible({ timeout: 10_000 });
   });
 
   test("/replay-stage falls back to mint board when WebGL is unavailable", async ({ page }) => {
