@@ -1783,6 +1783,7 @@ export function MatchPage() {
       const target = e.target as HTMLElement | null;
       const tag = target?.tagName;
       if (tag === "TEXTAREA" || tag === "INPUT" || tag === "SELECT" || target?.isContentEditable) return;
+      if (e.altKey || e.ctrlKey || e.metaKey) return;
 
       const lower = e.key.toLowerCase();
       if (e.key === "Escape") {

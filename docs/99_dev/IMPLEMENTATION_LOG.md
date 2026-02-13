@@ -1216,6 +1216,27 @@
 
 ### Verify
 - `pnpm -C apps/web e2e -- stage-focus.spec.ts`
+
+## 2026-02-13 - WO005-U follow-up: stage keyboard guard hardening
+
+### Why
+- Stage keyboard shortcuts should not hijack browser/OS shortcuts (Ctrl/Alt/Meta combinations).
+- Replay keyboard updates introduced stronger key handling, so we hardened behavior to reduce accidental default-prevent side effects.
+
+### What
+- `apps/web/src/pages/Match.tsx`
+  - Stage keyboard handler now ignores modified key presses (`Alt/Ctrl/Meta`).
+- `apps/web/src/pages/Replay.tsx`
+  - Keyboard handler now:
+    - ignores modified key presses (`Alt/Ctrl/Meta`),
+    - ignores `contentEditable` targets,
+    - keeps Arrow step shortcuts without forcing `preventDefault`,
+    - only prevents default on `Space` when replay can actually play.
+
+### Verify
+- `pnpm -C apps/web typecheck`
+- `pnpm -C apps/web lint`
+- `pnpm -C apps/web e2e -- stage-focus.spec.ts`
 - `pnpm -C apps/web typecheck`
 - `pnpm -C apps/web lint`
 

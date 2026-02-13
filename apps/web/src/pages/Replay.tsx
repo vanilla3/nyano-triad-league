@@ -888,8 +888,10 @@ protocolV1: {
   // keyboard
   React.useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      const tag = (e.target as HTMLElement)?.tagName;
-      if (tag === "TEXTAREA" || tag === "INPUT" || tag === "SELECT") return;
+      const target = e.target as HTMLElement | null;
+      const tag = target?.tagName;
+      if (tag === "TEXTAREA" || tag === "INPUT" || tag === "SELECT" || target?.isContentEditable) return;
+      if (e.altKey || e.ctrlKey || e.metaKey) return;
       const lower = e.key.toLowerCase();
       if (isStageFocus && e.key === "Escape") {
         e.preventDefault();
@@ -919,14 +921,13 @@ protocolV1: {
       }
 
       if (e.key === "ArrowLeft") {
-        e.preventDefault();
         jumpToPrevStepWithFeedback();
       }
       if (e.key === "ArrowRight") {
-        e.preventDefault();
         jumpToNextStepWithFeedback();
       }
       if (e.key === " ") {
+        if (!canPlay) return;
         e.preventDefault();
         toggleReplayPlayWithFeedback();
       }
@@ -950,6 +951,7 @@ protocolV1: {
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [
+    canPlay,
     isStageFocus,
     exitFocusModeWithFeedback,
     toggleStageFullscreenWithFeedback,
