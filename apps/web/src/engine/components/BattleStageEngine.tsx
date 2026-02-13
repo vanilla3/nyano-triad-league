@@ -19,7 +19,7 @@ import type {
   BattleRendererState,
   BattleRendererTextureStatus,
 } from "../renderers/IBattleRenderer";
-import { resolveVfxQuality } from "@/lib/visual/visualSettings";
+import { resolveVfxQuality, type VfxQuality } from "@/lib/visual/visualSettings";
 import { errorMessage } from "@/lib/errorMessage";
 import { FlipArrowOverlay, type FlipTraceArrow } from "@/components/FlipArrowOverlay";
 import { CardPreviewPanel } from "@/components/CardPreviewPanel";
@@ -64,6 +64,8 @@ export interface BattleStageEngineProps {
   boardMaxWidthPx?: number;
   /** Optional board min height override (px). */
   boardMinHeightPx?: number;
+  /** Optional VFX tier override (used by stage toolbar selector). */
+  vfxQuality?: VfxQuality;
   /** Optional callback when Pixi renderer init fails. */
   onInitError?: (message: string) => void;
 }
@@ -179,6 +181,7 @@ export function BattleStageEngine({
   isFlipAnimating,
   boardMaxWidthPx,
   boardMinHeightPx,
+  vfxQuality,
   onInitError,
 }: BattleStageEngineProps) {
   const containerRef = React.useRef<HTMLDivElement>(null);
@@ -205,11 +208,11 @@ export function BattleStageEngine({
     selectedCell: selectedCell ?? null,
     selectableCells: selectableCells ?? EMPTY_SET,
     currentPlayer: (currentPlayer ?? 0) as PlayerIndex,
-    vfxQuality: resolveVfxQuality(),
+    vfxQuality: vfxQuality ?? resolveVfxQuality(),
     preloadTokenIds: preloadTokenIds?.map((tid) => tid.toString()),
     placedCell,
     flippedCells,
-  }), [board, selectedCell, selectableCells, currentPlayer, preloadTokenIds, placedCell, flippedCells]);
+  }), [board, selectedCell, selectableCells, currentPlayer, vfxQuality, preloadTokenIds, placedCell, flippedCells]);
   const rendererStateRef = React.useRef<BattleRendererState>(rendererState);
   rendererStateRef.current = rendererState;
 

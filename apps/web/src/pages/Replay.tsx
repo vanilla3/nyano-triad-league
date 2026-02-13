@@ -49,6 +49,8 @@ import { writeClipboardText } from "@/lib/clipboard";
 import { appAbsoluteUrl, appPath, buildReplayShareUrl } from "@/lib/appUrl";
 import { computeStageBoardSizing, shouldShowStageSecondaryControls } from "@/lib/stage_layout";
 import { createSfxEngine, type SfxEngine, type SfxName } from "@/lib/sfx";
+import { readVfxQuality, writeVfxQuality, type VfxPreference } from "@/lib/local_settings";
+import { applyVfxQualityToDocument, resolveVfxQuality, type VfxQuality } from "@/lib/visual/visualSettings";
 import { decodeReplaySharePayload, hasReplaySharePayload, stripReplayShareParams } from "@/lib/replay_share_params";
 import {
   detectReplayHighlights,
@@ -109,6 +111,18 @@ function parseMode(v: string | null): Mode {
 
 type ReplayBoardUi = "classic" | "rpg" | "engine";
 type MatchBoardUi = "mint" | "rpg" | "engine";
+const STAGE_VFX_OPTIONS: ReadonlyArray<{ value: VfxPreference; label: string }> = [
+  { value: "auto", label: "auto" },
+  { value: "off", label: "off" },
+  { value: "low", label: "low" },
+  { value: "medium", label: "medium" },
+  { value: "high", label: "high" },
+];
+
+function formatStageVfxLabel(pref: VfxPreference, resolved: VfxQuality): string {
+  if (pref === "auto") return `auto (${resolved})`;
+  return pref;
+}
 
 function parseReplayBoardUi(v: string | null): ReplayBoardUi {
   if (v === "rpg") return "rpg";
@@ -329,6 +343,8 @@ export function ReplayPage() {
   const stageActionFeedbackTimerRef = React.useRef<number | null>(null);
   const [stageActionFeedback, setStageActionFeedback] = React.useState("");
   const [stageActionFeedbackTone, setStageActionFeedbackTone] = React.useState<"info" | "success" | "warn">("info");
+  const [vfxPreference, setVfxPreference] = React.useState<VfxPreference>(() => readVfxQuality("auto"));
+  const [resolvedVfxQuality, setResolvedVfxQuality] = React.useState<VfxQuality>(() => resolveVfxQuality());
   const [showStageTransport, setShowStageTransport] = React.useState(() => {
     if (!isStageFocus) return true;
     if (typeof window === "undefined") return true;
@@ -429,6 +445,16 @@ export function ReplayPage() {
       window.clearTimeout(stageActionFeedbackTimerRef.current);
     }
   }, []);
+
+  const handleStageVfxChange = React.useCallback((nextPreference: VfxPreference) => {
+    setVfxPreference(nextPreference);
+    writeVfxQuality(nextPreference);
+    const nextResolved = resolveVfxQuality();
+    setResolvedVfxQuality(nextResolved);
+    applyVfxQualityToDocument(nextResolved);
+    playReplaySfx("card_place");
+    pushStageActionFeedback(`VFX ${formatStageVfxLabel(nextPreference, nextResolved)}`, "info");
+  }, [playReplaySfx, pushStageActionFeedback]);
 
   React.useEffect(() => {
     const handleFullscreenChange = () => setIsStageFullscreen(Boolean(document.fullscreenElement));
@@ -1166,6 +1192,7 @@ protocolV1: {
                 preloadTokenIds={replayPreloadTokenIds}
                 placedCell={placedCell}
                 flippedCells={flippedCells}
+                vfxQuality={resolvedVfxQuality}
                 onInitError={handleEngineRendererInitError}
               />
             </DuelStageMint>
@@ -1404,6 +1431,21 @@ protocolV1: {
               ) : null}
               {isStageFocus ? (
                 <>
+                  <label className="stage-focus-toolbar-speed">
+                    vfx
+                    <select
+                      className="stage-focus-toolbar-speed-select"
+                      value={vfxPreference}
+                      onChange={(e) => handleStageVfxChange(e.target.value as VfxPreference)}
+                      aria-label="Replay VFX quality from focus toolbar"
+                    >
+                      {STAGE_VFX_OPTIONS.map((option) => (
+                        <option key={option.value} value={option.value}>
+                          {option.value === "auto" ? `auto (${resolvedVfxQuality})` : option.label}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
                   {sfx ? (
                     <button
                       className={[

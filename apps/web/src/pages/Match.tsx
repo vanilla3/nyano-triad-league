@@ -60,13 +60,14 @@ import { markOnboardingStepDone } from "@/lib/onboarding";
 import { QrCode } from "@/components/QrCode";
 import { createTelemetryTracker } from "@/lib/telemetry";
 import { createSfxEngine, type SfxEngine, type SfxName } from "@/lib/sfx";
-import { readUiDensity, writeUiDensity, type UiDensity } from "@/lib/local_settings";
+import { readUiDensity, readVfxQuality, writeUiDensity, writeVfxQuality, type UiDensity, type VfxPreference } from "@/lib/local_settings";
 import type { FlipTraceArrow } from "@/components/FlipArrowOverlay";
 import { MatchDrawerMint, DrawerToggleButton } from "@/components/MatchDrawerMint";
 import { writeClipboardText } from "@/lib/clipboard";
 import { appAbsoluteUrl, buildReplayShareUrl } from "@/lib/appUrl";
 import { computeStageBoardSizing, shouldShowStageSecondaryControls } from "@/lib/stage_layout";
 import { BattleStageEngine } from "@/engine/components/BattleStageEngine";
+import { applyVfxQualityToDocument, resolveVfxQuality, type VfxQuality } from "@/lib/visual/visualSettings";
 import { MAX_CHAIN_CAP_PER_TURN, parseChainCapPerTurnParam } from "@/lib/ruleset_meta";
 import {
   deriveChoiceCommitHex,
@@ -83,6 +84,19 @@ import {
 type OpponentMode = "pvp" | "vs_nyano_ai";
 type DataMode = "fast" | "verified";
 type MatchBoardUi = "mint" | "engine" | "rpg";
+
+const STAGE_VFX_OPTIONS: ReadonlyArray<{ value: VfxPreference; label: string }> = [
+  { value: "auto", label: "auto" },
+  { value: "off", label: "off" },
+  { value: "low", label: "low" },
+  { value: "medium", label: "medium" },
+  { value: "high", label: "high" },
+];
+
+function formatStageVfxLabel(pref: VfxPreference, resolved: VfxQuality): string {
+  if (pref === "auto") return `auto (${resolved})`;
+  return pref;
+}
 
 type SimOk = {
   ok: true;
@@ -555,6 +569,8 @@ export function MatchPage() {
     setDensity(d);
     writeUiDensity(d);
   }, []);
+  const [vfxPreference, setVfxPreference] = React.useState<VfxPreference>(() => readVfxQuality("auto"));
+  const [resolvedVfxQuality, setResolvedVfxQuality] = React.useState<VfxQuality>(() => resolveVfxQuality());
   const [showStageAssist, setShowStageAssist] = React.useState(() => !isStageFocusRoute);
   const showStageAssistUi = !isStageFocusRoute || showStageAssist;
   const stageControlsManualOverrideRef = React.useRef(false);
@@ -633,6 +649,16 @@ export function MatchPage() {
       window.clearTimeout(stageActionFeedbackTimerRef.current);
     }
   }, []);
+
+  const handleStageVfxChange = React.useCallback((nextPreference: VfxPreference) => {
+    setVfxPreference(nextPreference);
+    writeVfxQuality(nextPreference);
+    const nextResolved = resolveVfxQuality();
+    setResolvedVfxQuality(nextResolved);
+    applyVfxQualityToDocument(nextResolved);
+    playMatchUiSfx("card_place");
+    pushStageActionFeedback(`VFX ${formatStageVfxLabel(nextPreference, nextResolved)}`, "info");
+  }, [playMatchUiSfx, pushStageActionFeedback]);
 
   const resetMatch = React.useCallback(() => {
     setTurns([]);
@@ -1984,6 +2010,21 @@ export function MatchPage() {
               ) : null}
               {isStageFocusRoute ? (
                 <>
+                  <label className="stage-focus-toolbar-speed">
+                    vfx
+                    <select
+                      className="stage-focus-toolbar-speed-select"
+                      value={vfxPreference}
+                      onChange={(e) => handleStageVfxChange(e.target.value as VfxPreference)}
+                      aria-label="VFX quality from focus toolbar"
+                    >
+                      {STAGE_VFX_OPTIONS.map((option) => (
+                        <option key={option.value} value={option.value}>
+                          {option.value === "auto" ? `auto (${resolvedVfxQuality})` : option.label}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
                   {sfx ? (
                     <button
                       className={[
@@ -2837,6 +2878,7 @@ export function MatchPage() {
                           preloadTokenIds={currentDeckTokens}
                           placedCell={boardAnim.placedCell}
                           flippedCells={boardAnim.flippedCells}
+                          vfxQuality={resolvedVfxQuality}
                           showActionPrompt={showStageAssistUi}
                           gamePhase={
                             turns.length >= 9 ? "game_over"

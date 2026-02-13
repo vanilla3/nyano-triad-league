@@ -1882,3 +1882,24 @@
 - `pnpm -C apps/web lint`
 - `pnpm -C apps/web build`
 - `pnpm -C apps/web e2e -- stage-focus.spec.ts`
+## 2026-02-13 · WO005-C follow-up: Stage toolbar VFX selector (match/replay)
+
+### Why
+- Stage focus routes (`/battle-stage`, `/replay-stage`) had adaptive `data-vfx` tiers but no in-session control for users.
+- Pixi VFX quality should switch immediately after preference updates, not only on first app load.
+
+### What
+- `apps/web/src/pages/Match.tsx`
+  - Added focus toolbar VFX selector (`auto/off/low/medium/high`) and persisted preference.
+  - Applied VFX tier immediately via `applyVfxQualityToDocument`, surfaced feedback via stage action chip, and passed tier to Pixi renderer.
+- `apps/web/src/pages/Replay.tsx`
+  - Added the same VFX selector and immediate-apply flow to replay focus toolbar.
+  - Kept replay stage behavior consistent with battle stage behavior.
+- `apps/web/src/engine/components/BattleStageEngine.tsx`
+  - Added optional `vfxQuality` prop and wired it into renderer state updates.
+
+### Verify
+- `pnpm -C apps/web lint`
+- `pnpm -C apps/web typecheck`
+- `pnpm -C apps/web build`
+- `pnpm -C apps/web e2e -- stage-focus.spec.ts`
