@@ -29,6 +29,12 @@
   - 「早すぎて機械的」に見えるテンポを抑え、思考演出の体感を改善。
 - `apps/web/src/lib/ai/__tests__/turn_timing.test.ts`
   - baseline と upper bound の期待値を更新し、調整後の決定論を検証。
+- `apps/web/src/components/NyanoReaction.tsx`
+  - `reduced-motion` と `data-vfx`（off/low/medium/high）に応じて cut-in timing を切替。
+  - `vfx=off` / reduced-motion 時は burst 無効 + 表示時間短縮で負荷と過演出を抑制。
+  - `vfx=low` 時は impact を抑えつつ burst を無効化。
+- `apps/web/src/components/__tests__/NyanoReaction.timing.test.ts`
+  - reduced-motion / vfx off / vfx low / vfx high の timing 分岐を検証。
 
 ### Verify
 - `pnpm -C apps/web lint`
@@ -37,6 +43,7 @@
 - `pnpm -C apps/web build`
 - `pnpm -C apps/web e2e -- stage-focus.spec.ts`
 - `pnpm -C apps/web test -- src/lib/ai/__tests__/turn_timing.test.ts`
+- `pnpm -C apps/web test -- src/components/__tests__/NyanoReaction.timing.test.ts`
 
 ## 2026-02-13 — WO005-A follow-up: Stage route canonicalization + smoke coverage
 

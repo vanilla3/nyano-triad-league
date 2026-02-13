@@ -68,6 +68,14 @@ function shouldSmooth(current: ReactionKind, prev: ReactionKind): boolean {
 
 export type CutInImpact = "low" | "mid" | "high";
 
+export type ReactionVfxQuality = "off" | "low" | "medium" | "high" | null;
+
+export interface ReactionCutInTiming {
+  burstMs: number;
+  visibleMs: number;
+  allowBurst: boolean;
+}
+
 // eslint-disable-next-line react-refresh/only-export-components -- shared utility is consumed by pages/components
 export function resolveReactionCutInImpact(kind: ReactionKind, aiReasonCode?: AiReasonCode): CutInImpact {
   if (
@@ -98,6 +106,62 @@ function cutInDurationsForImpact(impact: CutInImpact): { burstMs: number; visibl
   if (impact === "high") return { burstMs: 860, visibleMs: 3600 };
   if (impact === "mid") return { burstMs: 700, visibleMs: 3300 };
   return { burstMs: 560, visibleMs: 3000 };
+}
+
+function normalizeReactionVfxQuality(v: string | null | undefined): ReactionVfxQuality {
+  if (v === "off" || v === "low" || v === "medium" || v === "high") return v;
+  return null;
+}
+
+function usePrefersReducedMotion(): boolean {
+  const [reduced, setReduced] = React.useState(() => {
+    if (typeof window === "undefined") return false;
+    return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  });
+
+  React.useEffect(() => {
+    if (typeof window === "undefined") return undefined;
+    const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const handler = (e: MediaQueryListEvent) => setReduced(e.matches);
+    mq.addEventListener("change", handler);
+    return () => mq.removeEventListener("change", handler);
+  }, []);
+
+  return reduced;
+}
+
+// eslint-disable-next-line react-refresh/only-export-components -- utility fn export alongside component is intentional
+export function resolveReactionCutInTiming(
+  impact: CutInImpact,
+  prefs: {
+    reducedMotion: boolean;
+    vfxQuality: ReactionVfxQuality;
+  },
+): ReactionCutInTiming {
+  if (prefs.reducedMotion || prefs.vfxQuality === "off") {
+    return {
+      burstMs: 0,
+      visibleMs: 1800,
+      allowBurst: false,
+    };
+  }
+
+  const baseImpact = prefs.vfxQuality === "low" && impact === "high" ? "mid" : impact;
+  const base = cutInDurationsForImpact(baseImpact);
+
+  if (prefs.vfxQuality === "low") {
+    return {
+      burstMs: Math.max(0, Math.round(base.burstMs * 0.58)),
+      visibleMs: Math.max(1200, Math.round(base.visibleMs * 0.72)),
+      allowBurst: false,
+    };
+  }
+
+  return {
+    burstMs: base.burstMs,
+    visibleMs: base.visibleMs,
+    allowBurst: true,
+  };
 }
 
 function burstLabelForKind(kind: ReactionKind): string {
@@ -242,7 +306,14 @@ export function NyanoReaction({
   const cfg = REACTIONS[kind];
   const pixiTone = mint && tone === "pixi";
   const cutInImpact = React.useMemo(() => resolveReactionCutInImpact(kind, aiReasonCode), [kind, aiReasonCode]);
-  const cutInTiming = React.useMemo(() => cutInDurationsForImpact(cutInImpact), [cutInImpact]);
+  const reducedMotion = usePrefersReducedMotion();
+  const vfxQuality = normalizeReactionVfxQuality(
+    typeof document === "undefined" ? null : document.documentElement.dataset.vfx,
+  );
+  const cutInTiming = React.useMemo(
+    () => resolveReactionCutInTiming(cutInImpact, { reducedMotion, vfxQuality }),
+    [cutInImpact, reducedMotion, vfxQuality],
+  );
   const burstLabel = React.useMemo(() => burstLabelForKind(kind), [kind]);
 
   // Pick dialogue: AI reason dialogue takes priority if available
@@ -259,14 +330,16 @@ export function NyanoReaction({
 
   React.useEffect(() => {
     setVisible(true);
-    setCutInBurst(true);
-    const burstTimer = setTimeout(() => setCutInBurst(false), cutInTiming.burstMs);
+    setCutInBurst(cutInTiming.allowBurst);
+    const burstTimer = cutInTiming.allowBurst
+      ? setTimeout(() => setCutInBurst(false), cutInTiming.burstMs)
+      : null;
     const visibleTimer = setTimeout(() => setVisible(false), cutInTiming.visibleMs);
     return () => {
-      clearTimeout(burstTimer);
+      if (burstTimer !== null) clearTimeout(burstTimer);
       clearTimeout(visibleTimer);
     };
-  }, [turnIndex, kind, cutInTiming.burstMs, cutInTiming.visibleMs]);
+  }, [turnIndex, kind, cutInTiming.allowBurst, cutInTiming.burstMs, cutInTiming.visibleMs]);
 
   if (kind === "idle" && !input.finished) return null;
 
@@ -353,7 +426,7 @@ export function NyanoReaction({
       >
         <span className="mint-nyano-reaction__cutin-flash" aria-hidden="true" />
         <span className="mint-nyano-reaction__scanline" aria-hidden="true" />
-        {cutInImpact === "high" && (
+        {cutInTiming.allowBurst && cutInImpact === "high" && (
           <div className="mint-nyano-reaction__burst-banner" aria-hidden="true">
             <span className="mint-nyano-reaction__burst-main">{burstLabel}</span>
             <span className="mint-nyano-reaction__burst-sub">{cfg.badge || "PIKA"}</span>
