@@ -71,6 +71,7 @@
 ## 🚧 Doing (now)
 
 - 🔧 Phase 4 の運用面（ランキング / 報酬導線）の最小設計を進める
+- 🔧 WO005-A（Stage UI/UX基盤）: `/battle-stage` `/replay-stage` の viewport適応盤面サイズ + 情報階層レイアウトを整備
 
 ## 🧩 Next (high priority)
 

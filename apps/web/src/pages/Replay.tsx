@@ -46,6 +46,7 @@ import { assessBoardAdvantage, type BoardAdvantage } from "@/lib/ai/board_advant
 import { AdvantageBadge } from "@/components/AdvantageBadge";
 import { writeClipboardText } from "@/lib/clipboard";
 import { appAbsoluteUrl, appPath, buildReplayShareUrl } from "@/lib/appUrl";
+import { computeStageBoardSizing } from "@/lib/stage_layout";
 import { decodeReplaySharePayload, hasReplaySharePayload, stripReplayShareParams } from "@/lib/replay_share_params";
 import {
   detectReplayHighlights,
@@ -220,10 +221,35 @@ export function ReplayPage() {
     return query ? `/replay-stage?${query}` : "/replay-stage";
   }, [searchParams]);
   const isReplayStageRoute = /\/replay-stage$/.test(location.pathname);
-  const engineBoardMaxWidthPx = isReplayStageRoute ? 1120 : undefined;
-  const engineBoardMinHeightPx = isReplayStageRoute ? 420 : undefined;
   const isStageFocus = isEngineFocus && isReplayStageRoute;
   const stageViewportRef = React.useRef<HTMLDivElement>(null);
+  const [stageBoardSizing, setStageBoardSizing] = React.useState(() =>
+    computeStageBoardSizing({
+      viewportWidthPx: typeof window === "undefined" ? 1366 : window.innerWidth,
+      viewportHeightPx: typeof window === "undefined" ? 900 : window.innerHeight,
+      kind: "replay",
+    })
+  );
+  const engineBoardMaxWidthPx = isReplayStageRoute ? stageBoardSizing.maxWidthPx : undefined;
+  const engineBoardMinHeightPx = isReplayStageRoute ? stageBoardSizing.minHeightPx : undefined;
+
+  React.useEffect(() => {
+    if (!isReplayStageRoute) return;
+
+    const updateSizing = () => {
+      setStageBoardSizing(
+        computeStageBoardSizing({
+          viewportWidthPx: window.innerWidth,
+          viewportHeightPx: window.innerHeight,
+          kind: "replay",
+        })
+      );
+    };
+
+    updateSizing();
+    window.addEventListener("resize", updateSizing);
+    return () => window.removeEventListener("resize", updateSizing);
+  }, [isReplayStageRoute]);
 
   const eventId = searchParams.get("event") ?? "";
   const event = React.useMemo(() => (eventId ? getEventById(eventId) : null), [eventId]);
@@ -780,7 +806,7 @@ protocolV1: {
     const stageImpactBurst = isPrimaryReplay ? replayStageImpactBurst : false;
 
     return (
-      <div className="grid gap-3">
+      <div className={["grid gap-3", isStageFocus ? "stage-focus-replay-column" : ""].filter(Boolean).join(" ")}>
         <div className="flex items-center justify-between">
           <div className="text-sm font-semibold">{label}</div>
           <div className="text-xs text-slate-500">
@@ -825,6 +851,7 @@ protocolV1: {
               rpg={isRpg}
               mint={isEngine}
               tone={isEngine ? "pixi" : "mint"}
+              className={isStageFocus ? "stage-focus-cutin" : ""}
             />
           ) : null}
         </div>
@@ -937,7 +964,7 @@ protocolV1: {
       ref={stageViewportRef}
       className={
         isStageFocus
-          ? "grid min-h-[100dvh] gap-3 px-2 py-2 md:px-3 md:py-3"
+          ? "stage-focus-root"
           : isEngineFocus
             ? "grid gap-4"
             : "grid gap-6"
@@ -945,7 +972,10 @@ protocolV1: {
     >
       {isEngineFocus ? (
         <section
-          className="rounded-2xl border px-3 py-2"
+          className={[
+            "rounded-2xl border px-3 py-2",
+            isStageFocus ? "stage-focus-toolbar" : "",
+          ].filter(Boolean).join(" ")}
           style={{ background: "var(--mint-surface, #fff)", borderColor: "var(--mint-accent-muted, #A7F3D0)" }}
         >
           <div className="flex flex-wrap items-center justify-between gap-2">
@@ -1329,7 +1359,13 @@ protocolV1: {
             </section>
           ) : null}
 
-          <section className={isEngineFocus ? "grid gap-4" : "grid gap-6 lg:grid-cols-2"}>
+          <section
+            className={
+              isEngineFocus
+                ? "grid gap-4"
+                : "grid gap-6 lg:grid-cols-2"
+            }
+          >
             <div className="card">
               <div className="card-hd replay-header-grid">
                 <div className="flex items-center gap-3">
@@ -1433,7 +1469,7 @@ protocolV1: {
                 )}
               </div>
 
-              <div className="card-bd grid gap-4">
+              <div className={["card-bd grid gap-4", isStageFocus ? "stage-focus-arena-inner" : ""].filter(Boolean).join(" ")}>
                 <div className="sr-only" aria-live="polite">
                   {`${stepStatusText}. ${phaseInfo.label} phase. Progress ${stepProgress} percent.`}
                 </div>

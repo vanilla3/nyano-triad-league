@@ -4,6 +4,13 @@
 
 :root {
   color-scheme: light;
+  --stage-shell-bg: linear-gradient(165deg, rgba(255, 255, 255, 0.96), rgba(235, 248, 255, 0.92));
+  --stage-shell-border: rgba(125, 211, 252, 0.46);
+  --stage-shell-shadow: 0 20px 40px -26px rgba(2, 132, 199, 0.46);
+  --stage-panel-bg: linear-gradient(180deg, rgba(255, 255, 255, 0.94), rgba(235, 248, 255, 0.9));
+  --stage-panel-border: rgba(56, 189, 248, 0.42);
+  --stage-panel-shadow: 0 10px 28px rgba(2, 6, 23, 0.16), 0 0 0 1px rgba(125, 211, 252, 0.24);
+  --stage-focus-gap: clamp(10px, 1.2vw, 16px);
 }
 
 html,

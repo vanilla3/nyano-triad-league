@@ -2,6 +2,37 @@
 
 > 1コミット=1まとまりで追記する（Why/What/Verify）。
 
+## 2026-02-13 — WO005-A: Stage UI/UX foundation (viewport fit + hierarchy)
+
+### Why
+- `/battle-stage` と `/replay-stage` の Pixi 盤面サイズが固定寄りで、PC環境によっては主要操作導線が縦方向に伸びやすかった。
+- AGENTS/Work Order更新に合わせ、Stage-firstで UI/UX 基盤（情報階層 + 1画面導線）を先に安定化する必要があった。
+
+### What
+- `codex/execplans/005_uiux_foundation.md` を新規作成し、Milestone A の実装計画を文書化。
+- `apps/web/src/lib/stage_layout.ts` を追加:
+  - viewport と stage種別（battle/replay）から `maxWidthPx` / `minHeightPx` を算出。
+- `apps/web/src/lib/__tests__/stage_layout.test.ts` を追加:
+  - desktop/mobile/invalid入力の境界を検証。
+- `apps/web/src/pages/Match.tsx`:
+  - battle-stage で viewport追従サイズを使用。
+  - stage専用レイアウトクラス（root/toolbar/arena/board/cutin/dock）を適用。
+  - stage routeでは desktop quick-commit 重複表示を抑止。
+- `apps/web/src/pages/Replay.tsx`:
+  - replay-stage で viewport追従サイズを使用。
+  - stage専用レイアウトクラス（root/toolbar/cutin/arena-inner）を適用。
+- `apps/web/src/styles.css`:
+  - stage shell/panel のトークン変数を追加。
+- `apps/web/src/mint-theme/mint-theme.css`:
+  - `stage-focus-*` と `mint-focus-hand-dock--stage` スタイルを追加し、視線誘導と下部操作導線を強化。
+
+### Verify
+- `pnpm -C apps/web lint`
+- `pnpm -C apps/web test`
+- `pnpm -C apps/web typecheck`
+- `pnpm -C apps/web build`
+- `pnpm -C apps/web e2e -- smoke.spec.ts`
+
 
 ## 2026-02-01 — commit-0002
 

@@ -669,7 +669,82 @@
   z-index: 1;
 }
 
+.mint-focus-hand-dock--stage {
+  position: sticky;
+  bottom: max(6px, env(safe-area-inset-bottom));
+  z-index: 26;
+}
+
+/* Stage page hierarchy */
+.stage-focus-root {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  gap: var(--stage-focus-gap, 12px);
+  min-height: 100dvh;
+  padding: 8px;
+  padding-bottom: max(8px, env(safe-area-inset-bottom));
+  overflow-x: hidden;
+}
+
+.stage-focus-toolbar {
+  border-color: var(--stage-panel-border, rgba(56, 189, 248, 0.42)) !important;
+  background: var(--stage-panel-bg, linear-gradient(180deg, rgba(255, 255, 255, 0.94), rgba(235, 248, 255, 0.9))) !important;
+  box-shadow: var(--stage-panel-shadow, 0 10px 28px rgba(2, 6, 23, 0.16));
+  backdrop-filter: blur(14px) saturate(1.08);
+  -webkit-backdrop-filter: blur(14px) saturate(1.08);
+}
+
+.stage-focus-arena-shell {
+  border-color: var(--stage-shell-border, rgba(125, 211, 252, 0.46)) !important;
+  background: var(--stage-shell-bg, linear-gradient(165deg, rgba(255, 255, 255, 0.96), rgba(235, 248, 255, 0.92))) !important;
+  box-shadow: var(--stage-shell-shadow, 0 20px 40px -26px rgba(2, 132, 199, 0.46));
+  min-height: 0;
+  overflow: hidden;
+}
+
+.stage-focus-arena-inner {
+  min-height: 0;
+  display: grid;
+  gap: var(--stage-focus-gap, 12px);
+  align-content: start;
+}
+
+.stage-focus-columns {
+  min-height: 0;
+}
+
+.stage-focus-main-column {
+  min-height: 0;
+  align-content: start;
+}
+
+.stage-focus-board-shell {
+  min-height: 0;
+  display: grid;
+  align-content: start;
+}
+
+.stage-focus-board-shell .mint-stage {
+  padding: clamp(16px, 2vw, 28px) clamp(10px, 1.6vw, 18px) clamp(12px, 1.8vw, 22px);
+}
+
+.stage-focus-board-shell .mint-stage__board > * {
+  transform: rotateX(1.4deg);
+}
+
+.stage-focus-cutin {
+  margin-top: -2px;
+  margin-bottom: 2px;
+}
+
+.stage-focus-replay-column .mint-nyano-reaction {
+  margin-top: 2px;
+}
+
 @media (min-width: 768px) {
+  .stage-focus-root {
+    padding: 12px;
+  }
   .mint-focus-hand-row {
     justify-content: center;
     overflow-x: visible;
