@@ -970,6 +970,24 @@
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.66);
 }
 
+.stage-focus-toolbar-feedback--info {
+  border-color: rgba(56, 189, 248, 0.35);
+  background: linear-gradient(180deg, rgba(240, 249, 255, 0.82), rgba(224, 242, 254, 0.65));
+  color: #0f4c6b;
+}
+
+.stage-focus-toolbar-feedback--success {
+  border-color: rgba(16, 185, 129, 0.42);
+  background: linear-gradient(180deg, rgba(236, 253, 245, 0.88), rgba(209, 250, 229, 0.7));
+  color: #065f46;
+}
+
+.stage-focus-toolbar-feedback--warn {
+  border-color: rgba(245, 158, 11, 0.46);
+  background: linear-gradient(180deg, rgba(255, 251, 235, 0.9), rgba(254, 243, 199, 0.72));
+  color: #92400e;
+}
+
 .stage-focus-toolbar-actions .btn {
   min-height: 30px;
 }

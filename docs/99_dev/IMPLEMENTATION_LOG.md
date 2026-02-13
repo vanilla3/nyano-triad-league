@@ -1574,6 +1574,39 @@
 - `pnpm -C apps/web build`
 - `pnpm -C apps/web e2e -- stage-focus.spec.ts`
 
+## 2026-02-13 - WO005-AI follow-up: stage action feedback tone states
+
+### Why
+- Stage toolbars already exposed action feedback text, but every state used the same visual chip style.
+- We needed clearer at-a-glance feedback priority (info/success/warn) without changing existing command flow.
+
+### What
+- `apps/web/src/pages/Match.tsx`
+  - Added `stageActionFeedbackTone` state and extended `pushStageActionFeedback(...)` to accept `tone`.
+  - Applied tone mapping:
+    - `Move committed` -> `success`
+    - `Exiting focus mode` -> `warn`
+    - other toolbar updates -> `info`
+  - Rendered tone-aware class on stage feedback chip (`stage-focus-toolbar-feedback--*`).
+- `apps/web/src/pages/Replay.tsx`
+  - Added same tone-aware feedback state pattern.
+  - Applied tone mapping:
+    - playback start / highlight jumps / jump-to-start -> `success`
+    - exiting focus -> `warn`
+    - other replay controls -> `info`
+  - Rendered tone-aware class on replay stage feedback chip.
+- `apps/web/src/mint-theme/mint-theme.css`
+  - Added feedback tone variants:
+    - `.stage-focus-toolbar-feedback--info`
+    - `.stage-focus-toolbar-feedback--success`
+    - `.stage-focus-toolbar-feedback--warn`
+
+### Verify
+- `pnpm -C apps/web lint`
+- `pnpm -C apps/web typecheck`
+- `pnpm -C apps/web build`
+- `pnpm -C apps/web e2e -- stage-focus.spec.ts`
+
 ## 2026-02-13 - WO005-AH follow-up: battle stage SFX parity on focus toolbar
 
 ### Why

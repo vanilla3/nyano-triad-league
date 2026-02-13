@@ -560,6 +560,7 @@ export function MatchPage() {
   const stageControlsManualOverrideRef = React.useRef(false);
   const stageActionFeedbackTimerRef = React.useRef<number | null>(null);
   const [stageActionFeedback, setStageActionFeedback] = React.useState("");
+  const [stageActionFeedbackTone, setStageActionFeedbackTone] = React.useState<"info" | "success" | "warn">("info");
   const [showStageControls, setShowStageControls] = React.useState(() => {
     if (!isStageFocusRoute) return true;
     if (typeof window === "undefined") return true;
@@ -602,9 +603,10 @@ export function MatchPage() {
     setShowStageControls((prev) => !prev);
   }, []);
 
-  const pushStageActionFeedback = React.useCallback((message: string) => {
+  const pushStageActionFeedback = React.useCallback((message: string, tone: "info" | "success" | "warn" = "info") => {
     if (!isStageFocusRoute) return;
     setStageActionFeedback(message);
+    setStageActionFeedbackTone(tone);
     if (typeof window === "undefined") return;
     if (stageActionFeedbackTimerRef.current !== null) {
       window.clearTimeout(stageActionFeedbackTimerRef.current);
@@ -612,12 +614,14 @@ export function MatchPage() {
     stageActionFeedbackTimerRef.current = window.setTimeout(() => {
       stageActionFeedbackTimerRef.current = null;
       setStageActionFeedback("");
+      setStageActionFeedbackTone("info");
     }, 1800);
   }, [isStageFocusRoute]);
 
   React.useEffect(() => {
     if (isStageFocusRoute) return;
     setStageActionFeedback("");
+    setStageActionFeedbackTone("info");
     if (typeof window !== "undefined" && stageActionFeedbackTimerRef.current !== null) {
       window.clearTimeout(stageActionFeedbackTimerRef.current);
       stageActionFeedbackTimerRef.current = null;
@@ -1326,7 +1330,7 @@ export function MatchPage() {
     };
 
     if (isStageFocusRoute) {
-      pushStageActionFeedback("Move committed");
+      pushStageActionFeedback("Move committed", "success");
     }
 
     // Card flight animation (mint / engine mode)
@@ -1438,7 +1442,7 @@ export function MatchPage() {
     setDraftWarningMarkCell(null);
     setSelectedTurnIndex((x) => Math.max(0, Math.min(x, Math.max(0, turns.length - 2))));
     if (isStageFocusRoute) {
-      pushStageActionFeedback("Move undone");
+      pushStageActionFeedback("Move undone", "info");
     }
   }, [isStageFocusRoute, pushStageActionFeedback, turns.length]);
 
@@ -1624,7 +1628,7 @@ export function MatchPage() {
   }, [isStageFullscreen, playMatchUiSfx, pushStageActionFeedback, toggleStageFullscreen]);
 
   const exitFocusModeWithFeedback = React.useCallback(() => {
-    pushStageActionFeedback("Exiting focus mode");
+    pushStageActionFeedback("Exiting focus mode", "warn");
     playMatchUiSfx("flip");
     setFocusMode(false);
   }, [playMatchUiSfx, pushStageActionFeedback, setFocusMode]);
@@ -1966,7 +1970,15 @@ export function MatchPage() {
                 </div>
               ) : null}
               {isStageFocusRoute ? (
-                <span className="stage-focus-toolbar-feedback" role="status" aria-live="polite" aria-label="Battle focus action feedback">
+                <span
+                  className={[
+                    "stage-focus-toolbar-feedback",
+                    `stage-focus-toolbar-feedback--${stageActionFeedbackTone}`,
+                  ].join(" ")}
+                  role="status"
+                  aria-live="polite"
+                  aria-label="Battle focus action feedback"
+                >
                   {stageActionFeedback || "Ready"}
                 </span>
               ) : null}

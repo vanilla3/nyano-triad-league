@@ -328,6 +328,7 @@ export function ReplayPage() {
   const stageTransportManualOverrideRef = React.useRef(false);
   const stageActionFeedbackTimerRef = React.useRef<number | null>(null);
   const [stageActionFeedback, setStageActionFeedback] = React.useState("");
+  const [stageActionFeedbackTone, setStageActionFeedbackTone] = React.useState<"info" | "success" | "warn">("info");
   const [showStageTransport, setShowStageTransport] = React.useState(() => {
     if (!isStageFocus) return true;
     if (typeof window === "undefined") return true;
@@ -398,9 +399,10 @@ export function ReplayPage() {
     setShowStageTransport((prev) => !prev);
   }, []);
 
-  const pushStageActionFeedback = React.useCallback((message: string) => {
+  const pushStageActionFeedback = React.useCallback((message: string, tone: "info" | "success" | "warn" = "info") => {
     if (!isStageFocus) return;
     setStageActionFeedback(message);
+    setStageActionFeedbackTone(tone);
     if (typeof window === "undefined") return;
     if (stageActionFeedbackTimerRef.current !== null) {
       window.clearTimeout(stageActionFeedbackTimerRef.current);
@@ -408,12 +410,14 @@ export function ReplayPage() {
     stageActionFeedbackTimerRef.current = window.setTimeout(() => {
       stageActionFeedbackTimerRef.current = null;
       setStageActionFeedback("");
+      setStageActionFeedbackTone("info");
     }, 1800);
   }, [isStageFocus]);
 
   React.useEffect(() => {
     if (isStageFocus) return;
     setStageActionFeedback("");
+    setStageActionFeedbackTone("info");
     if (typeof window !== "undefined" && stageActionFeedbackTimerRef.current !== null) {
       window.clearTimeout(stageActionFeedbackTimerRef.current);
       stageActionFeedbackTimerRef.current = null;
@@ -526,7 +530,7 @@ export function ReplayPage() {
   }, [isStageFocus, playReplaySfx, pushStageActionFeedback]);
 
   const exitFocusModeWithFeedback = React.useCallback(() => {
-    pushStageActionFeedback("Exiting focus mode");
+    pushStageActionFeedback("Exiting focus mode", "warn");
     setFocusMode(false);
   }, [pushStageActionFeedback, setFocusMode]);
 
@@ -858,7 +862,7 @@ protocolV1: {
     setStep(0);
     playReplaySfx("card_place");
     if (isStageFocus) {
-      pushStageActionFeedback("Jumped to start");
+      pushStageActionFeedback("Jumped to start", "success");
     }
   }, [isStageFocus, playReplaySfx, pushStageActionFeedback]);
 
@@ -877,7 +881,7 @@ protocolV1: {
     setIsPlaying(nextIsPlaying);
     playReplaySfx(nextIsPlaying ? "card_place" : "flip");
     if (isStageFocus) {
-      pushStageActionFeedback(nextIsPlaying ? "Playback started" : "Playback paused");
+      pushStageActionFeedback(nextIsPlaying ? "Playback started" : "Playback paused", nextIsPlaying ? "success" : "info");
     }
   }, [canPlay, isPlaying, isStageFocus, playReplaySfx, pushStageActionFeedback]);
 
@@ -904,7 +908,7 @@ protocolV1: {
     jumpToPrevHighlight();
     playReplaySfx("chain_flip");
     if (isStageFocus) {
-      pushStageActionFeedback("Previous highlight");
+      pushStageActionFeedback("Previous highlight", "success");
     }
   }, [highlights.length, isStageFocus, jumpToPrevHighlight, playReplaySfx, pushStageActionFeedback]);
 
@@ -913,7 +917,7 @@ protocolV1: {
     jumpToNextHighlight();
     playReplaySfx("chain_flip");
     if (isStageFocus) {
-      pushStageActionFeedback("Next highlight");
+      pushStageActionFeedback("Next highlight", "success");
     }
   }, [highlights.length, isStageFocus, jumpToNextHighlight, playReplaySfx, pushStageActionFeedback]);
 
@@ -1386,7 +1390,15 @@ protocolV1: {
                 </div>
               ) : null}
               {isStageFocus ? (
-                <span className="stage-focus-toolbar-feedback" role="status" aria-live="polite" aria-label="Replay focus action feedback">
+                <span
+                  className={[
+                    "stage-focus-toolbar-feedback",
+                    `stage-focus-toolbar-feedback--${stageActionFeedbackTone}`,
+                  ].join(" ")}
+                  role="status"
+                  aria-live="polite"
+                  aria-label="Replay focus action feedback"
+                >
                   {stageActionFeedback || "Ready"}
                 </span>
               ) : null}
