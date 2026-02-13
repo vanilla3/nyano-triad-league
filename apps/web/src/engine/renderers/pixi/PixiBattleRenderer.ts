@@ -44,12 +44,12 @@ import { errorMessage } from "@/lib/errorMessage";
    ═══════════════════════════════════════════════════════════════════════════ */
 
 const COLORS = {
-  background: 0x1a1a2e,
-  gridLine: 0x334155,
-  cellEmpty: 0x0f172a,
+  background: 0xeaf7ff,
+  gridLine: 0x90b4ce,
+  cellEmpty: 0xd9efff,
   cellSelectableStroke: 0x22d3ee, // cyan-400
-  cellSelectedFill: 0x164e63, // cyan-900
-  cellSelectedStroke: 0x06b6d4, // cyan-500
+  cellSelectedFill: 0xbfe8ff, // sky-200-ish
+  cellSelectedStroke: 0x0ea5e9, // sky-500
   ownerA: 0x3b82f6, // blue-500
   ownerB: 0xef4444, // red-500
   edgeText: 0xffffff,
@@ -65,12 +65,12 @@ const COLORS = {
   tokenIdText: 0xffffff,
   brightnessWhite: 0xffffff,
   brightnessBlack: 0x000000,
-  breatheGlow: 0x34d399, // emerald-400 (matches --mint-cell-active-glow)
-  boardPanel: 0x0b1220,
-  boardPanelInner: 0x111c2f,
-  boardFrame: 0x3e5b7f,
-  boardHighlight: 0x9cc3ff,
-  cellShadow: 0x030712,
+  breatheGlow: 0x7dd3fc, // sky-300
+  boardPanel: 0xcce7fb,
+  boardPanelInner: 0xdff2ff,
+  boardFrame: 0x73a6c9,
+  boardHighlight: 0xf0f9ff,
+  cellShadow: 0x4f7493,
   cardGlass: 0xffffff,
   cardVignette: 0x020617,
   holoA: 0x67e8f9,

@@ -14,22 +14,22 @@
 
 :root {
   /* Surface */
-  --mint-bg: #F0FAF5;
+  --mint-bg: #EFF8FF;
   --mint-surface: #FFFFFF;
-  --mint-surface-dim: #E6F5EE;
+  --mint-surface-dim: #E8F6FF;
 
   /* Accent */
-  --mint-accent: #10B981;
-  --mint-accent-light: #34D399;
-  --mint-accent-dark: #059669;
-  --mint-accent-muted: #A7F3D0;
+  --mint-accent: #38BDF8;
+  --mint-accent-light: #7DD3FC;
+  --mint-accent-dark: #0284C7;
+  --mint-accent-muted: #BAE6FD;
 
   /* Cell */
-  --mint-cell-active: #A7F3D0;
-  --mint-cell-active-glow: rgba(52, 211, 153, 0.35);
-  --mint-cell-flat: #E5E7EB;
-  --mint-cell-flat-dark: #D1D5DB;
-  --mint-cell-selected: rgba(16, 185, 129, 0.5);
+  --mint-cell-active: #BAE6FD;
+  --mint-cell-active-glow: rgba(56, 189, 248, 0.35);
+  --mint-cell-flat: #DAEAF6;
+  --mint-cell-flat-dark: #C4D9E8;
+  --mint-cell-selected: rgba(56, 189, 248, 0.42);
 
   /* Player A (Sky) */
   --mint-pa: #0EA5E9;
@@ -53,7 +53,7 @@
   --mint-text-primary: #1F2937;
   --mint-text-secondary: #4B5563;
   --mint-text-hint: #9CA3AF;
-  --mint-text-accent: #059669;
+  --mint-text-accent: #0284C7;
 
   /* Feedback */
   --mint-error: #F87171;
@@ -61,21 +61,21 @@
   --mint-warning-bg: rgba(251, 191, 36, 0.15);
 
   /* Prompt */
-  --mint-prompt-bg: rgba(240, 250, 245, 0.95);
-  --mint-prompt-border: rgba(167, 243, 208, 0.6);
+  --mint-prompt-bg: rgba(239, 249, 255, 0.95);
+  --mint-prompt-border: rgba(125, 211, 252, 0.6);
 }
 
 
 /* ── Keyframe Animations ─────────────────────────────────────────────── */
 
 @keyframes mint-breathe {
-  0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(52, 211, 153, 0); }
-  50% { transform: scale(1.02); box-shadow: 0 0 12px 2px rgba(52, 211, 153, 0.25); }
+  0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(56, 189, 248, 0); }
+  50% { transform: scale(1.02); box-shadow: 0 0 12px 2px rgba(56, 189, 248, 0.26); }
 }
 
 @keyframes mint-glow-pulse {
-  0%, 100% { box-shadow: 0 0 8px rgba(16, 185, 129, 0.3); }
-  50% { box-shadow: 0 0 20px rgba(16, 185, 129, 0.5); }
+  0%, 100% { box-shadow: 0 0 8px rgba(56, 189, 248, 0.28); }
+  50% { box-shadow: 0 0 20px rgba(56, 189, 248, 0.5); }
 }
 
 @keyframes mint-pop-in {
@@ -139,17 +139,19 @@
   border: 2px solid var(--mint-accent-muted);
   border-radius: 24px;
   padding: 16px;
-  box-shadow: 0 4px 24px -4px rgba(16, 185, 129, 0.12);
+  box-shadow: 0 4px 24px -4px rgba(56, 189, 248, 0.16);
 }
 
 .mint-board-inner {
-  background: var(--mint-bg);
-  background-image: url('/board-bg.webp');
-  background-size: cover;
-  background-position: center;
+  background:
+    linear-gradient(155deg, rgba(239, 249, 255, 0.9), rgba(219, 234, 254, 0.82)),
+    url('/board-bg.webp');
+  background-size: cover, cover;
+  background-position: center, center;
+  background-blend-mode: screen, normal;
   border-radius: 18px;
   padding: 12px;
-  border: 1px solid rgba(167, 243, 208, 0.4);
+  border: 1px solid rgba(125, 211, 252, 0.45);
   overflow: hidden;
 }
 
@@ -183,7 +185,7 @@
 .mint-cell--selectable {
   cursor: pointer;
   border-color: var(--mint-accent-muted);
-  background: linear-gradient(135deg, rgba(240, 253, 244, 0.6), rgba(255, 255, 255, 0.4));
+  background: linear-gradient(135deg, rgba(239, 249, 255, 0.72), rgba(255, 255, 255, 0.5));
   backdrop-filter: blur(4px);
   -webkit-backdrop-filter: blur(4px);
   animation: mint-breathe 2.5s ease-in-out infinite;
@@ -274,7 +276,7 @@
 
 /* Focus ring (replay) */
 .mint-cell--focus {
-  box-shadow: 0 0 0 2px var(--mint-accent), 0 0 0 4px rgba(16, 185, 129, 0.2);
+  box-shadow: 0 0 0 2px var(--mint-accent), 0 0 0 4px rgba(56, 189, 248, 0.24);
 }
 
 /* Coordinate label */
@@ -333,7 +335,7 @@
   border-radius: 16px;
   background: var(--mint-surface);
   border: 1px solid var(--mint-accent-muted);
-  box-shadow: 0 2px 8px -2px rgba(16, 185, 129, 0.1);
+  box-shadow: 0 2px 8px -2px rgba(56, 189, 248, 0.16);
 }
 
 .mint-scorebar__player {
@@ -708,7 +710,7 @@
 
 .mint-result__btn:hover {
   border-color: var(--mint-accent);
-  box-shadow: 0 0 12px rgba(16, 185, 129, 0.15);
+  box-shadow: 0 0 12px rgba(56, 189, 248, 0.2);
 }
 
 .mint-result__btn--primary {
@@ -1257,11 +1259,11 @@
   /* Deeper, richer gradient — dark center pulls focus to the board */
   background: linear-gradient(
     170deg,
-    #d4f0e1 0%,
-    #e8f8f0 15%,
+    #d9f2ff 0%,
+    #eaf8ff 15%,
     var(--mint-bg) 40%,
-    #e0f2ea 70%,
-    #d1ede0 100%
+    #dff2ff 70%,
+    #d2ebff 100%
   );
   isolation: isolate;
   /* Subtle inner border for premium depth */
@@ -1307,8 +1309,8 @@
   background: radial-gradient(
     ellipse 70% 60% at 50% 45%,
     transparent 40%,
-    rgba(0, 60, 40, 0.04) 70%,
-    rgba(0, 40, 30, 0.08) 100%
+    rgba(8, 47, 73, 0.05) 70%,
+    rgba(8, 47, 73, 0.1) 100%
   );
 }
 
@@ -1354,7 +1356,7 @@
   top: -40px;
   background: radial-gradient(
     ellipse at center,
-    rgba(167, 243, 208, 0.5) 0%,
+    rgba(125, 211, 252, 0.48) 0%,
     transparent 70%
   );
   opacity: 0.6;
@@ -1364,7 +1366,7 @@
   bottom: -40px;
   background: radial-gradient(
     ellipse at center,
-    rgba(16, 185, 129, 0.2) 0%,
+    rgba(56, 189, 248, 0.22) 0%,
     transparent 70%
   );
   opacity: 0.5;
