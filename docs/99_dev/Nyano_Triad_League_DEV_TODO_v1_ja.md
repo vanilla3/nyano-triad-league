@@ -82,9 +82,14 @@
   - `settled_points_import.ts` を追加（schema対応・settled event検証・winner/tiles整合チェック）
   - Events に `Settled points import (local)` UI を追加（貼り付け→適用→集計結果表示）
   - matchId 一致かつ結果整合の local attempt に `pointsDeltaA` / `pointsDeltaSource=settled_attested` を反映
+- ✅ Commit0113: /events の settled import を「取得自動化 + 署名検証モード」に拡張
+  - `parseVerifiedLadderRecordsImportJson` を追加（`{domain, records}` を `verifyLadderMatchRecordV1` で検証）
+  - import UI に mode 切替（`settled events` / `verified records`）を追加
+  - `/game/settled_events.json` 自動読込ボタンを追加
+  - verified import の失敗理由（`attestation_invalid`）を issue に集約
 ## 🚧 Doing (now)
 
-- 🔧 Phase 4 の運用面（ランキング / 報酬導線）を pointsDelta 連携へ段階拡張する（ローカル取り込みUIまで完了。次は取得自動化と署名検証フロー統合）
+- 🔧 Phase 4 の運用面（ランキング / 報酬導線）を pointsDelta 連携へ段階拡張する（手動取り込み/検証UIまで完了。次はバックエンド経由の自動供給と定期同期）
 
 ## 🧩 Next (high priority)
 
