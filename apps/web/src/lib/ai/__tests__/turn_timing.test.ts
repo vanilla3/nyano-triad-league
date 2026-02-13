@@ -8,7 +8,7 @@ describe("computeAiAutoMoveDelayMs", () => {
       turnIndex: 0,
       random: () => 0,
     });
-    expect(ms).toBe(1160);
+    expect(ms).toBe(1400);
   });
 
   it("increases delay for harder difficulties", () => {
@@ -59,8 +59,8 @@ describe("computeAiAutoMoveDelayMs", () => {
       turnIndex: 8,
       random: () => 0.999999,
     });
-    expect(ms).toBeLessThanOrEqual(3800);
-    expect(ms).toBe(3239);
+    expect(ms).toBeLessThanOrEqual(4200);
+    expect(ms).toBe(3959);
   });
 
   it("handles invalid random values safely", () => {

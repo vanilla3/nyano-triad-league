@@ -6,17 +6,17 @@ export type AiAutoMoveDelayOptions = {
   random?: () => number;
 };
 
-const BASE_DELAY_MS = 900;
-const TURN_DELAY_STEP_MS = 90;
+const BASE_DELAY_MS = 1080;
+const TURN_DELAY_STEP_MS = 120;
 const MAX_TURN_INDEX = 8;
-const JITTER_RANGE_MS = 420;
-const MAX_DELAY_MS = 3800;
+const JITTER_RANGE_MS = 560;
+const MAX_DELAY_MS = 4200;
 
 const DIFFICULTY_BONUS_MS: Record<AiDifficulty, number> = {
-  easy: 260,
-  normal: 520,
-  hard: 860,
-  expert: 1200,
+  easy: 320,
+  normal: 620,
+  hard: 980,
+  expert: 1360,
 };
 
 function clampTurnIndex(turnIndex: number): number {

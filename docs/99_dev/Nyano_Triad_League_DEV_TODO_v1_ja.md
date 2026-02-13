@@ -81,6 +81,9 @@
 - ✅ WO005-D follow-up: replay-stage の失敗時リカバリ導線をE2E固定
   - game index / RPC 失敗時でも replay-stage の `Load replay` 導線が残ることを検証
   - `Retry load` と `Clear share params` が表示され、再試行可能であることを検証
+- ✅ WO005-E follow-up: Nyano AI の思考待機テンポを調整
+  - `computeAiAutoMoveDelayMs` の基準値/難易度係数/ジッターを見直し、即打ち感を抑制
+  - `turn_timing.test.ts` の境界・上限期待値を更新し、決定論を維持
 - ✅ Commit0110: /events に Local Season Points（ランキング/報酬導線）を追加
   - `season_progress.ts` を追加（points算出・tier判定・event別ランキングを pure function 化）
   - Events に `Local season points (provisional)` パネル（Tier/次Tierまで/進捗バー）を追加

@@ -24,6 +24,11 @@
   - 375px 幅 `battle-stage` で Commit ボタンが viewport 内に収まることを検証。
   - 375px 幅で横方向オーバーフローが発生しないことを検証。
   - game index / RPC 失敗時でも `replay-stage` の `Load replay` / `Retry load` / `Clear share params` が表示され、リカバリ導線が維持されることを検証。
+- `apps/web/src/lib/ai/turn_timing.ts`
+  - AI自動打ちの待機時間を再調整（base/turn-step/difficulty/jitter を引き上げ）。
+  - 「早すぎて機械的」に見えるテンポを抑え、思考演出の体感を改善。
+- `apps/web/src/lib/ai/__tests__/turn_timing.test.ts`
+  - baseline と upper bound の期待値を更新し、調整後の決定論を検証。
 
 ### Verify
 - `pnpm -C apps/web lint`
@@ -31,6 +36,7 @@
 - `pnpm -C apps/web typecheck`
 - `pnpm -C apps/web build`
 - `pnpm -C apps/web e2e -- stage-focus.spec.ts`
+- `pnpm -C apps/web test -- src/lib/ai/__tests__/turn_timing.test.ts`
 
 ## 2026-02-13 — WO005-A follow-up: Stage route canonicalization + smoke coverage
 
