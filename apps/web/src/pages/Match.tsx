@@ -2613,12 +2613,7 @@ export function MatchPage() {
 
                 {showFocusHandDock && (
                   <div
-                    className="sticky bottom-2 z-20 grid gap-2 rounded-2xl border p-2 shadow-xl backdrop-blur"
-                    style={{
-                      background: "color-mix(in srgb, var(--mint-surface, #ffffff) 84%, transparent)",
-                      borderColor: "rgba(56, 189, 248, 0.5)",
-                      boxShadow: "0 10px 28px rgba(2, 6, 23, 0.18), 0 0 0 1px rgba(125, 211, 252, 0.3)",
-                    }}
+                    className="mint-focus-hand-dock sticky bottom-2 z-20 grid gap-2 rounded-2xl border p-2 shadow-xl backdrop-blur"
                   >
                     <div className="flex items-center justify-between gap-2">
                       <div className="text-[11px] font-semibold text-slate-700">Hand Dock</div>
@@ -2627,22 +2622,32 @@ export function MatchPage() {
                       </div>
                     </div>
 
-                    <div className="flex gap-2 overflow-x-auto pb-1">
+                    <div className="mint-focus-hand-row">
                       {currentDeckTokens.map((tid, idx) => {
                         const card = cards?.get(tid);
                         const usedHere = currentUsed.has(idx);
                         const selected = draftCardIndex === idx;
                         const dockDisabled = usedHere || isAiTurn || turns.length >= 9;
+                        const center = (currentDeckTokens.length - 1) / 2;
+                        const fanOffset = idx - center;
+                        const fanRotate = Math.max(-12, Math.min(12, fanOffset * 4));
+                        const fanDrop = Math.min(10, Math.abs(fanOffset) * 2.2);
+                        const fanStyle = {
+                          ["--focus-hand-rot" as const]: `${fanRotate}deg`,
+                          ["--focus-hand-drop" as const]: `${fanDrop}px`,
+                        } satisfies React.CSSProperties & Record<"--focus-hand-rot" | "--focus-hand-drop", string>;
                         if (!card) {
                           return (
                             <button
                               key={`focus-dock-loading-${idx}`}
                               type="button"
                               className={[
-                                "relative flex h-[96px] w-[72px] flex-shrink-0 flex-col items-center justify-center rounded-xl border p-1 text-center transition",
-                                selected ? "border-cyan-400 ring-2 ring-cyan-300/60" : "border-slate-300",
-                                dockDisabled ? "opacity-45" : "hover:-translate-y-0.5 hover:shadow-md",
+                                "mint-focus-hand-card",
+                                "mint-focus-hand-card--loading",
+                                selected && "mint-focus-hand-card--selected",
+                                dockDisabled && "mint-focus-hand-card--used",
                               ].join(" ")}
+                              style={fanStyle}
                               aria-label={`Focus hand card ${idx + 1} loading`}
                               disabled
                             >
@@ -2656,10 +2661,11 @@ export function MatchPage() {
                             key={`focus-dock-${idx}`}
                             type="button"
                             className={[
-                              "relative flex-shrink-0 rounded-xl border p-1 transition",
-                              selected ? "border-cyan-400 ring-2 ring-cyan-300/60" : "border-slate-300",
-                              dockDisabled ? "opacity-40" : "hover:-translate-y-0.5 hover:shadow-md",
+                              "mint-focus-hand-card",
+                              selected && "mint-focus-hand-card--selected",
+                              dockDisabled && "mint-focus-hand-card--used",
                             ].join(" ")}
+                            style={fanStyle}
                             aria-label={`Focus hand card ${idx + 1}${usedHere ? " (used)" : ""}${selected ? " (selected)" : ""}`}
                             data-hand-card={idx}
                             disabled={dockDisabled}
@@ -2681,13 +2687,13 @@ export function MatchPage() {
                             }}
                             onDragEnd={handleHandCardDragEnd}
                           >
-                            <CardMini card={card} owner={currentPlayer} subtle={!selected} className="w-[74px] md:w-[82px]" />
+                            <CardMini card={card} owner={currentPlayer} subtle={!selected} className="w-[80px] md:w-[94px]" />
                           </button>
                         );
                       })}
                     </div>
 
-                    <div className="flex flex-wrap items-center gap-2">
+                    <div className="mint-focus-hand-actions flex flex-wrap items-center gap-2">
                       <select
                         className="input h-9 min-w-[150px] text-xs"
                         value={draftWarningMarkCell === null ? "" : String(draftWarningMarkCell)}
