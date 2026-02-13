@@ -1550,6 +1550,33 @@
 - `pnpm -C apps/web build`
 - `pnpm -C apps/web e2e -- stage-focus.spec.ts`
 
+## 2026-02-13 - WO005-Z follow-up: Nyano cut-in and focus hand dock premium pass
+
+### Why
+- Stage shell and HUD were upgraded, but Nyano cut-in and focus hand dock still looked comparatively flat.
+- We wanted stronger “battle feel” in moment-to-moment interactions while keeping existing controls and route behavior unchanged.
+
+### What
+- `apps/web/src/mint-theme/mint-theme.css`
+  - Focus hand dock polish:
+    - Added layered glass background depth and highlight sheen for `.mint-focus-hand-dock`.
+    - Added animated sheen overlay (`mint-focus-hand-sheen`) with `vfx off/low` gating.
+    - Enhanced `.mint-focus-hand-row` and `.mint-focus-hand-card` with perspective, snap alignment, edge highlights, and richer selected/hover depth.
+    - Tuned mobile sizing and stage sticky blur for hand dock readability.
+  - Nyano cut-in polish:
+    - Upgraded `.mint-nyano-reaction` shell depth, frame line, and burst banner impact.
+    - Increased dialogue headline readability and stage-focus emphasis (`.stage-focus-cutin ... __line`).
+    - Improved pixi-tone cut-in depth and reason-chip finish.
+  - Accessibility/perf safety:
+    - Added reduced-motion fallback for new hand dock sheen.
+    - Added `data-vfx="off"` / `data-vfx="low"` behavior for new hand dock animation layer.
+
+### Verify
+- `pnpm -C apps/web lint`
+- `pnpm -C apps/web typecheck`
+- `pnpm -C apps/web build`
+- `pnpm -C apps/web e2e -- stage-focus.spec.ts`
+
 ## 2026-02-13 - WO005-Y follow-up: premium HUD glass pass (battle/replay stage)
 
 ### Why
