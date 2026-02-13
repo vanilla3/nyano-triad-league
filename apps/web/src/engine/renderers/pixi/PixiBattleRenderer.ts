@@ -47,8 +47,10 @@ import { errorMessage } from "@/lib/errorMessage";
 
 const COLORS = {
   background: 0xeaf7ff,
-  gridLine: 0x90b4ce,
-  cellEmpty: 0xd9efff,
+  gridLine: 0x94b9d5,
+  cellEmpty: 0xe7f4ff,
+  cellEmptyInset: 0xd8ebfb,
+  cellSelectableFill: 0xd2efff,
   cellSelectableStroke: 0x22d3ee, // cyan-400
   cellSelectedFill: 0xbfe8ff, // sky-200-ish
   cellSelectedStroke: 0x0ea5e9, // sky-500
@@ -72,13 +74,14 @@ const COLORS = {
   brightnessWhite: 0xffffff,
   brightnessBlack: 0x000000,
   breatheGlow: 0x7dd3fc, // sky-300
-  boardPanel: 0xcce7fb,
-  boardPanelInner: 0xdff2ff,
-  boardFrame: 0x73a6c9,
-  boardHighlight: 0xf0f9ff,
+  boardPanel: 0xd8efff,
+  boardPanelInner: 0xeaf7ff,
+  boardFrame: 0x6ea9d2,
+  boardHighlight: 0xf6fbff,
+  boardAura: 0x67c7ff,
   boardRimLight: 0xffffff,
   boardRimShadow: 0x0b2235,
-  cellShadow: 0x4f7493,
+  cellShadow: 0x355a78,
   cardFallbackBase: 0x0f172a,
   cardFallbackStripe: 0x1e293b,
   cardGlass: 0xffffff,
@@ -656,6 +659,17 @@ export class PixiBattleRenderer implements IBattleRenderer {
     detail.clear();
 
     if (features.boardDepth) {
+      const auraAlpha = quality === "high" ? 0.2 : quality === "medium" ? 0.14 : 0.09;
+      const auraSpread = LAYOUT.boardShadowSpread * 1.25;
+      base.roundRect(
+        offsetX - auraSpread,
+        offsetY - auraSpread * 0.55,
+        boardSize + auraSpread * 2,
+        boardSize + auraSpread * 2,
+        LAYOUT.boardRadius + 8,
+      );
+      base.fill({ color: COLORS.boardAura, alpha: auraAlpha });
+
       const shadowAlpha = quality === "high" ? 0.34 : quality === "medium" ? 0.28 : 0.2;
       base.roundRect(
         offsetX - LAYOUT.boardShadowSpread,
@@ -694,7 +708,15 @@ export class PixiBattleRenderer implements IBattleRenderer {
       Math.max(14, boardSize * 0.16),
       LAYOUT.boardRadius - 3,
     );
-    detail.fill({ color: COLORS.boardHighlight, alpha: quality === "high" ? 0.12 : 0.08 });
+    detail.fill({ color: COLORS.boardHighlight, alpha: quality === "high" ? 0.16 : 0.11 });
+    detail.roundRect(
+      offsetX + frameInset,
+      offsetY + frameInset + innerSize * 0.62,
+      innerSize,
+      Math.max(12, boardSize * 0.14),
+      LAYOUT.boardRadius - 3,
+    );
+    detail.fill({ color: COLORS.brightnessBlack, alpha: quality === "high" ? 0.045 : 0.03 });
 
     const edgeInset = frameInset + 1;
     detail.moveTo(offsetX + edgeInset, offsetY + edgeInset);
@@ -713,14 +735,35 @@ export class PixiBattleRenderer implements IBattleRenderer {
     const unit = boardSize / 3;
     for (let idx = 1; idx <= 2; idx++) {
       const px = offsetX + unit * idx;
+      const axisBoost = idx === 1 ? 0.028 : 0;
+      const gridAlpha = quality === "high" ? 0.22 : quality === "medium" ? 0.18 : 0.14;
       detail.moveTo(px, offsetY + frameInset);
       detail.lineTo(px, offsetY + boardSize - frameInset);
-      detail.stroke({ color: COLORS.boardFrame, width: 1, alpha: 0.18 });
+      detail.stroke({ color: COLORS.boardFrame, width: 1, alpha: gridAlpha + axisBoost });
+      detail.moveTo(px + 0.5, offsetY + frameInset + 2);
+      detail.lineTo(px + 0.5, offsetY + boardSize - frameInset - 2);
+      detail.stroke({ color: COLORS.boardRimLight, width: 1, alpha: 0.11 + axisBoost * 0.4 });
 
       const py = offsetY + unit * idx;
       detail.moveTo(offsetX + frameInset, py);
       detail.lineTo(offsetX + boardSize - frameInset, py);
-      detail.stroke({ color: COLORS.boardFrame, width: 1, alpha: 0.18 });
+      detail.stroke({ color: COLORS.boardFrame, width: 1, alpha: gridAlpha + axisBoost });
+      detail.moveTo(offsetX + frameInset + 2, py + 0.5);
+      detail.lineTo(offsetX + boardSize - frameInset - 2, py + 0.5);
+      detail.stroke({ color: COLORS.boardRimLight, width: 1, alpha: 0.1 + axisBoost * 0.36 });
+    }
+
+    const cornerGlowR = Math.max(4, boardSize * 0.015);
+    const corners: ReadonlyArray<[number, number]> = [
+      [offsetX + frameInset + 3, offsetY + frameInset + 3],
+      [offsetX + boardSize - frameInset - 3, offsetY + frameInset + 3],
+      [offsetX + frameInset + 3, offsetY + boardSize - frameInset - 3],
+      [offsetX + boardSize - frameInset - 3, offsetY + boardSize - frameInset - 3],
+    ];
+    const cornerAlpha = quality === "high" ? 0.16 : quality === "medium" ? 0.11 : 0.08;
+    for (const [cx, cy] of corners) {
+      detail.circle(cx, cy, cornerGlowR);
+      detail.fill({ color: COLORS.boardRimLight, alpha: cornerAlpha });
     }
 
     if (features.boardPattern) {
@@ -756,6 +799,8 @@ export class PixiBattleRenderer implements IBattleRenderer {
     index: number,
     layout: CellLayout,
     hasCard: boolean,
+    isSelectable: boolean,
+    isSelected: boolean,
     quality: BattleRendererState["vfxQuality"],
     features: VfxFeatureFlags,
   ): void {
@@ -768,8 +813,9 @@ export class PixiBattleRenderer implements IBattleRenderer {
       return;
     }
 
-    const alphaBase = quality === "high" ? 0.22 : quality === "medium" ? 0.17 : 0.12;
-    const alpha = hasCard ? alphaBase : alphaBase * 0.6;
+    const alphaBase = quality === "high" ? 0.24 : quality === "medium" ? 0.18 : 0.13;
+    const interactionBoost = isSelected ? 1.24 : isSelectable ? 1.12 : 1;
+    const alpha = Math.min(0.38, (hasCard ? alphaBase : alphaBase * 0.62) * interactionBoost);
     shadow.roundRect(
       layout.x - LAYOUT.cellShadowSpread,
       layout.y + LAYOUT.cellShadowOffsetY,
@@ -779,7 +825,7 @@ export class PixiBattleRenderer implements IBattleRenderer {
     );
     shadow.fill({ color: COLORS.cellShadow, alpha });
 
-    if (hasCard) {
+    if (hasCard || isSelectable || isSelected) {
       shadow.roundRect(
         layout.x - 2,
         layout.y + LAYOUT.cellShadowOffsetY + 2,
@@ -789,7 +835,23 @@ export class PixiBattleRenderer implements IBattleRenderer {
       );
       shadow.fill({
         color: COLORS.brightnessBlack,
-        alpha: quality === "high" ? 0.14 : quality === "medium" ? 0.1 : 0.07,
+        alpha: quality === "high" ? 0.16 : quality === "medium" ? 0.11 : 0.08,
+      });
+    }
+
+    if (isSelected || (!hasCard && isSelectable)) {
+      shadow.roundRect(
+        layout.x - 1,
+        layout.y + 1,
+        layout.w + 2,
+        layout.h + 2,
+        LAYOUT.cellRadius + 1,
+      );
+      shadow.fill({
+        color: COLORS.boardAura,
+        alpha: isSelected
+          ? quality === "high" ? 0.14 : 0.1
+          : quality === "high" ? 0.08 : 0.06,
       });
     }
     shadow.visible = true;
@@ -922,7 +984,7 @@ export class PixiBattleRenderer implements IBattleRenderer {
       const isSelected = this.state.selectedCell === i;
 
       gfx.clear();
-      this.drawCellShadow(i, layout, !!cell, quality, features);
+      this.drawCellShadow(i, layout, !!cell, isSelectable, isSelected, quality, features);
 
       // ── Cell fill & stroke (board-absolute coordinates, NOT animated) ──
       if (cell) {
@@ -1049,21 +1111,43 @@ export class PixiBattleRenderer implements IBattleRenderer {
         if (isSelected) {
           // Selected empty cell — emphasized
           gfx.roundRect(x, y, w, h, LAYOUT.cellRadius);
+          gfx.fill({ color: COLORS.cellEmpty, alpha: 0.96 });
+          if (features.boardDepth) {
+            gfx.roundRect(x + 1, y + 1, Math.max(0, w - 2), Math.max(6, h * 0.44), Math.max(2, LAYOUT.cellRadius - 1));
+            gfx.fill({ color: COLORS.boardHighlight, alpha: quality === "high" ? 0.26 : 0.18 });
+          }
+          gfx.roundRect(x, y, w, h, LAYOUT.cellRadius);
           gfx.fill({ color: COLORS.cellSelectedFill, alpha: LAYOUT.selectedFillAlpha });
           gfx.roundRect(x, y, w, h, LAYOUT.cellRadius);
           gfx.stroke({ color: COLORS.cellSelectedStroke, width: LAYOUT.selectedStrokeWidth });
+          gfx.roundRect(x + 1, y + 1, Math.max(0, w - 2), Math.max(0, h - 2), Math.max(2, LAYOUT.cellRadius - 1));
+          gfx.stroke({ color: COLORS.boardRimLight, width: 1, alpha: quality === "high" ? 0.35 : 0.24 });
         } else if (isSelectable) {
           // Selectable empty cell — subtle highlight
           gfx.roundRect(x, y, w, h, LAYOUT.cellRadius);
-          gfx.fill({ color: COLORS.cellEmpty });
+          gfx.fill({ color: COLORS.cellEmpty, alpha: 0.98 });
+          gfx.roundRect(x + 1, y + 1, Math.max(0, w - 2), Math.max(0, h - 2), Math.max(2, LAYOUT.cellRadius - 1));
+          gfx.fill({ color: COLORS.cellSelectableFill, alpha: quality === "high" ? 0.3 : 0.22 });
+          if (features.boardDepth) {
+            gfx.roundRect(x + 1, y + 1, Math.max(0, w - 2), Math.max(7, h * 0.34), Math.max(2, LAYOUT.cellRadius - 1));
+            gfx.fill({ color: COLORS.boardHighlight, alpha: quality === "high" ? 0.2 : 0.14 });
+          }
           gfx.roundRect(x, y, w, h, LAYOUT.cellRadius);
           gfx.stroke({ color: COLORS.cellSelectableStroke, width: LAYOUT.selectableStrokeWidth, alpha: LAYOUT.selectableStrokeAlpha });
+          gfx.roundRect(x + 1, y + 1, Math.max(0, w - 2), Math.max(0, h - 2), Math.max(2, LAYOUT.cellRadius - 1));
+          gfx.stroke({ color: COLORS.boardRimLight, width: 1, alpha: quality === "high" ? 0.22 : 0.14 });
         } else {
           // Non-selectable empty cell
           gfx.roundRect(x, y, w, h, LAYOUT.cellRadius);
-          gfx.fill({ color: COLORS.cellEmpty });
+          gfx.fill({ color: COLORS.cellEmpty, alpha: 0.95 });
+          if (features.boardDepth) {
+            gfx.roundRect(x + 1, y + 1, Math.max(0, w - 2), Math.max(0, h - 2), Math.max(2, LAYOUT.cellRadius - 1));
+            gfx.fill({ color: COLORS.cellEmptyInset, alpha: quality === "high" ? 0.52 : 0.44 });
+            gfx.roundRect(x + 1, y + 1, Math.max(0, w - 2), Math.max(7, h * 0.3), Math.max(2, LAYOUT.cellRadius - 1));
+            gfx.fill({ color: COLORS.boardHighlight, alpha: quality === "high" ? 0.1 : 0.07 });
+          }
           gfx.roundRect(x, y, w, h, LAYOUT.cellRadius);
-          gfx.stroke({ color: COLORS.gridLine, width: 1 });
+          gfx.stroke({ color: COLORS.gridLine, width: 1, alpha: features.boardDepth ? 0.86 : 0.72 });
         }
       }
 

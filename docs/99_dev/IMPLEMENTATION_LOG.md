@@ -1577,6 +1577,37 @@
 - `pnpm -C apps/web build`
 - `pnpm -C apps/web e2e -- stage-focus.spec.ts`
 
+## 2026-02-13 - WO005-AB follow-up: Pixi board depth parity pass
+
+### Why
+- Mint-side board/cell materials were upgraded, but Pixi renderer still looked flatter in comparison.
+- We needed visual parity so `ui=engine` retains the same premium stage feeling without changing game behavior.
+
+### What
+- `apps/web/src/engine/renderers/pixi/PixiBattleRenderer.ts`
+  - Refined board/cell color palette to softer cyan glass tones:
+    - `boardPanel`, `boardPanelInner`, `boardFrame`, `cellEmpty`, `cellShadow`, `gridLine`.
+    - Added helper tones: `cellEmptyInset`, `cellSelectableFill`, `boardAura`.
+  - Enhanced `drawBoardBackdrop(...)`:
+    - added outer board aura layer before depth shadow
+    - strengthened top highlight and added subtle lower shade band
+    - refined internal grid separator readability with light accent pass
+    - added corner glow accents for premium board frame finish
+  - Enhanced `drawCellShadow(...)`:
+    - now considers `isSelectable` / `isSelected` to boost contact shadow and lift clarity
+    - added selective aura under interactive empty cells
+  - Enhanced empty-cell drawing in `redraw()`:
+    - selected cells now layer base + highlight + selected fill + rim
+    - selectable cells now use inset fill and top sheen for tactile affordance
+    - flat cells now use recessed inset material
+    - placed/flipped/owner/focus states got deeper contact shadows for stronger board tactility
+
+### Verify
+- `pnpm -C apps/web lint`
+- `pnpm -C apps/web typecheck`
+- `pnpm -C apps/web build`
+- `pnpm -C apps/web e2e -- stage-focus.spec.ts`
+
 ## 2026-02-13 - WO005-AA follow-up: board depth and placement tactility pass
 
 ### Why
