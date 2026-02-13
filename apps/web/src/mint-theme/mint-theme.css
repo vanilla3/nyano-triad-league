@@ -1514,25 +1514,37 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  border: 1px solid var(--mint-accent-muted);
-  background: var(--mint-surface);
+  width: 34px;
+  height: 34px;
+  border-radius: 11px;
+  border: 1px solid rgba(125, 211, 252, 0.52);
+  background:
+    linear-gradient(165deg, rgba(255, 255, 255, 0.84), rgba(238, 250, 255, 0.7));
   cursor: pointer;
   font-size: 16px;
-  transition: background 0.2s, border-color 0.2s;
+  color: #0f4c6b;
+  box-shadow:
+    0 8px 18px -14px rgba(14, 116, 144, 0.7),
+    inset 0 1px 0 rgba(255, 255, 255, 0.72);
+  transition: background 0.2s, border-color 0.2s, transform 0.2s, box-shadow 0.2s, color 0.2s;
   padding: 0;
   line-height: 1;
 }
 
 .mint-sfx-toggle:hover {
-  background: var(--mint-surface-dim);
-  border-color: var(--mint-accent);
+  transform: translateY(-1px);
+  background:
+    linear-gradient(165deg, rgba(255, 255, 255, 0.92), rgba(224, 242, 254, 0.78));
+  border-color: rgba(56, 189, 248, 0.72);
+  box-shadow:
+    0 12px 22px -14px rgba(14, 116, 144, 0.82),
+    inset 0 1px 0 rgba(255, 255, 255, 0.82);
 }
 
 .mint-sfx-toggle--muted {
-  opacity: 0.5;
+  opacity: 0.65;
+  color: #64748b;
+  filter: saturate(0.72);
 }
 
 
@@ -2006,27 +2018,90 @@
 
 /* ── BattleHudMint (P3-300) ──────────────────────────────────────────── */
 
+@keyframes mint-hud-glint-sweep {
+  0% {
+    transform: translateX(-118%);
+    opacity: 0;
+  }
+  20% {
+    opacity: 0.38;
+  }
+  38% {
+    transform: translateX(132%);
+    opacity: 0;
+  }
+  100% {
+    transform: translateX(132%);
+    opacity: 0;
+  }
+}
+
 .mint-battle-hud {
+  position: relative;
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 8px 16px;
-  border-radius: 16px;
-  background: rgba(255, 255, 255, 0.7);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.5);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 10px 14px;
+  border-radius: 18px;
+  border: 1px solid rgba(148, 211, 252, 0.58);
+  background:
+    radial-gradient(circle at 14% -20%, rgba(125, 211, 252, 0.24), transparent 42%),
+    linear-gradient(165deg, rgba(255, 255, 255, 0.82), rgba(238, 250, 255, 0.68));
+  box-shadow:
+    0 14px 28px -20px rgba(14, 116, 144, 0.6),
+    0 6px 18px rgba(15, 23, 42, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.72);
+  backdrop-filter: blur(14px) saturate(1.08);
+  -webkit-backdrop-filter: blur(14px) saturate(1.08);
+  overflow: hidden;
   font-size: 12px;
 }
 
+.mint-battle-hud::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: -28%;
+  width: 28%;
+  pointer-events: none;
+  background: linear-gradient(102deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+  animation: mint-hud-glint-sweep 10.5s ease-in-out infinite;
+}
+
+.mint-battle-hud::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border-radius: inherit;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.2), transparent 44%),
+    repeating-linear-gradient(
+      118deg,
+      rgba(255, 255, 255, 0.05) 0px,
+      rgba(255, 255, 255, 0.05) 5px,
+      transparent 5px,
+      transparent 24px
+    );
+  opacity: 0.52;
+}
+
+.mint-battle-hud > * {
+  position: relative;
+  z-index: 1;
+}
+
 .mint-battle-hud--pixi {
-  background: linear-gradient(145deg, rgba(7, 22, 42, 0.88), rgba(6, 15, 30, 0.86));
-  border-color: rgba(56, 189, 248, 0.28);
+  border-color: rgba(56, 189, 248, 0.34);
+  background:
+    radial-gradient(circle at 12% -22%, rgba(34, 211, 238, 0.2), transparent 40%),
+    linear-gradient(148deg, rgba(7, 22, 42, 0.9), rgba(6, 15, 30, 0.88));
   box-shadow:
-    0 12px 30px rgba(2, 6, 23, 0.45),
+    0 16px 32px rgba(2, 6, 23, 0.48),
     inset 0 1px 0 rgba(148, 163, 184, 0.18),
-    0 0 18px rgba(56, 189, 248, 0.18);
+    0 0 24px rgba(56, 189, 248, 0.2);
 }
 
 .mint-battle-hud--pixi .mint-battle-hud__turn-label,
@@ -2039,7 +2114,7 @@
 }
 
 .mint-battle-hud--pixi .mint-battle-hud__progress {
-  background: rgba(51, 65, 85, 0.95);
+  background: rgba(30, 41, 59, 0.9);
 }
 
 .mint-battle-hud--pixi .mint-battle-hud__progress-fill {
@@ -2068,21 +2143,38 @@
 
 .mint-battle-hud--pixi .mint-battle-hud__tip {
   border-color: rgba(56, 189, 248, 0.32);
-  background: rgba(14, 116, 144, 0.22);
+  background: rgba(14, 116, 144, 0.24);
   color: #e0f2fe;
 }
 
 .mint-battle-hud--pixi .mint-battle-hud__ai-reason {
   border-color: rgba(56, 189, 248, 0.28);
-  background: rgba(14, 116, 144, 0.2);
+  background: rgba(14, 116, 144, 0.22);
   color: #bae6fd;
+}
+
+.mint-battle-hud--pixi .mint-battle-hud__turn,
+.mint-battle-hud--pixi .mint-battle-hud__phase {
+  border-color: rgba(56, 189, 248, 0.28);
+  background: linear-gradient(180deg, rgba(15, 23, 42, 0.54), rgba(15, 23, 42, 0.32));
+  box-shadow: inset 0 1px 0 rgba(148, 163, 184, 0.12);
+}
+
+.mint-battle-hud--pixi .mint-battle-hud__phase-dot {
+  background: radial-gradient(circle at 35% 35%, rgba(255, 255, 255, 0.96), rgba(34, 211, 238, 0.82));
+  box-shadow: 0 0 10px rgba(34, 211, 238, 0.46);
 }
 
 .mint-battle-hud__turn {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 6px;
   flex-shrink: 0;
+  padding: 2px 9px;
+  border-radius: 999px;
+  border: 1px solid rgba(148, 163, 184, 0.28);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.56), rgba(241, 245, 249, 0.42));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6);
 }
 
 .mint-battle-hud__turn-label {
@@ -2097,31 +2189,48 @@
 .mint-battle-hud__turn-value {
   font-family: var(--font-mono, monospace);
   font-weight: 700;
-  font-size: 14px;
+  font-size: 15px;
   color: var(--mint-text-primary, #1e293b);
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.45);
 }
 
 .mint-battle-hud__progress {
-  width: 40px;
-  height: 3px;
-  border-radius: 2px;
-  background: var(--mint-surface-200, #e2e8f0);
+  position: relative;
+  width: 48px;
+  height: 4px;
+  border-radius: 999px;
+  background: rgba(148, 163, 184, 0.3);
+  box-shadow: inset 0 1px 2px rgba(15, 23, 42, 0.24);
   overflow: hidden;
 }
 
 .mint-battle-hud__progress-fill {
+  position: relative;
   height: 100%;
-  border-radius: 2px;
-  background: var(--mint-accent, #10b981);
+  border-radius: 999px;
+  background: linear-gradient(90deg, #22d3ee 0%, #34d399 100%);
+  box-shadow: 0 0 10px rgba(20, 184, 166, 0.34);
   transition: width 0.3s ease;
 }
 
+.mint-battle-hud__progress-fill::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+  transform: translateX(-100%);
+  animation: mint-hud-glint-sweep 2.8s ease-in-out infinite;
+}
+
 .mint-battle-hud__advantage {
-  padding: 2px 8px;
-  border-radius: 8px;
+  padding: 3px 10px;
+  border-radius: 10px;
   font-weight: 700;
   font-size: 11px;
   white-space: nowrap;
+  border: 1px solid rgba(148, 163, 184, 0.28);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.55);
 }
 
 .mint-battle-hud__advantage--emerald {
@@ -2147,8 +2256,13 @@
 .mint-battle-hud__phase {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 6px;
   margin-left: auto;
+  padding: 2px 8px;
+  border-radius: 999px;
+  border: 1px solid rgba(148, 163, 184, 0.24);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.58), rgba(241, 245, 249, 0.42));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.58);
 }
 
 .mint-battle-hud__player-tag {
@@ -2156,8 +2270,9 @@
   align-items: center;
   justify-content: center;
   min-width: 24px;
-  padding: 1px 6px;
-  border-radius: 6px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.22);
   font-size: 11px;
   font-weight: 700;
   letter-spacing: 0.02em;
@@ -2178,7 +2293,16 @@
 
 .mint-battle-hud__phase-label {
   font-size: 11px;
-  color: var(--mint-text-muted, #94a3b8);
+  color: var(--mint-text-secondary, #64748b);
+  white-space: nowrap;
+}
+
+.mint-battle-hud__phase-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.92), rgba(14, 165, 233, 0.84));
+  box-shadow: 0 0 10px rgba(14, 165, 233, 0.4);
 }
 
 
@@ -2205,15 +2329,16 @@
 .mint-battle-hud__tip {
   display: inline-flex;
   align-items: center;
-  gap: 3px;
-  padding: 2px 8px;
-  border-radius: 10px;
+  gap: 4px;
+  padding: 3px 9px;
+  border-radius: 999px;
   font-size: 11px;
   font-weight: 700;
   white-space: nowrap;
   background: rgba(16, 185, 129, 0.10);
   color: #059669;
   border: 1px solid rgba(167, 243, 208, 0.6);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.55);
   animation: mint-slide-up 0.3s ease-out;
 }
 
@@ -2254,20 +2379,62 @@
 .mint-battle-hud__ai-reason {
   display: inline-flex;
   align-items: center;
-  gap: 3px;
-  padding: 2px 7px;
-  border-radius: 8px;
+  gap: 4px;
+  padding: 3px 9px;
+  border-radius: 999px;
   font-size: 10px;
   font-weight: 600;
   white-space: nowrap;
   background: rgba(139, 92, 246, 0.08);
   color: #8B5CF6;
   border: 1px solid rgba(139, 92, 246, 0.2);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.55);
   animation: mint-slide-up 0.3s ease-out;
 }
 
 .mint-battle-hud__ai-reason-icon { font-size: 11px; line-height: 1; }
 .mint-battle-hud__ai-reason-label { font-size: 10px; }
+
+@media (max-width: 760px) {
+  .mint-battle-hud {
+    gap: 8px;
+    padding: 8px 10px;
+    border-radius: 14px;
+  }
+
+  .mint-battle-hud__turn {
+    padding: 2px 7px;
+  }
+
+  .mint-battle-hud__turn-value {
+    font-size: 13px;
+  }
+
+  .mint-battle-hud__progress {
+    width: 38px;
+  }
+
+  .mint-battle-hud__advantage,
+  .mint-battle-hud__tip,
+  .mint-battle-hud__ai-reason {
+    font-size: 10px;
+  }
+
+  .mint-battle-hud__phase {
+    margin-left: 0;
+  }
+}
+
+@media (max-width: 480px) {
+  .mint-battle-hud {
+    justify-content: space-between;
+  }
+
+  .mint-battle-hud__phase {
+    width: 100%;
+    justify-content: flex-start;
+  }
+}
 
 
 /* ── Reduced Motion ──────────────────────────────────────────────────── */
@@ -2323,6 +2490,12 @@
   /* P1-120 / P3-312: Disable tip & reason badge entrance animation */
   .mint-battle-hud__tip,
   .mint-battle-hud__ai-reason {
+    animation: none !important;
+  }
+
+  .mint-battle-hud::before,
+  .mint-battle-hud::after,
+  .mint-battle-hud__progress-fill::after {
     animation: none !important;
   }
 
@@ -2773,6 +2946,9 @@
 [data-vfx="off"] .mint-cell--flipped                 { animation: none !important; }
 [data-vfx="off"] .mint-duel-card--placed             { animation: none !important; }
 [data-vfx="off"] .mint-duel-card--flipped            { animation: none !important; }
+[data-vfx="off"] .mint-battle-hud::before,
+[data-vfx="off"] .mint-battle-hud::after             { display: none !important; }
+[data-vfx="off"] .mint-battle-hud__progress-fill::after { animation: none !important; }
 [data-vfx="off"] .mint-nyano-reaction__burst-banner  { animation: none !important; }
 [data-vfx="off"] .mint-stage--impact-burst           { animation: none !important; filter: none !important; }
 [data-vfx="off"] .mint-stage--impact-burst .mint-stage__holo,
@@ -2790,6 +2966,9 @@
 [data-vfx="low"] .mint-cell--flipped                  { animation-duration: 0.25s !important; }
 [data-vfx="low"] .mint-duel-card--placed              { animation-duration: 0.25s !important; }
 [data-vfx="low"] .mint-duel-card--flipped             { animation-duration: 0.3s !important; }
+[data-vfx="low"] .mint-battle-hud::before             { animation-duration: 16s !important; opacity: 0.2; }
+[data-vfx="low"] .mint-battle-hud::after              { opacity: 0.2; }
+[data-vfx="low"] .mint-battle-hud__progress-fill::after { animation-duration: 5s !important; opacity: 0.26; }
 [data-vfx="low"] .mint-nyano-reaction__burst-banner   { animation-duration: 420ms !important; }
 [data-vfx="low"] .mint-stage--impact-burst            { animation-duration: 280ms !important; }
 [data-vfx="low"] .mint-stage--impact-burst .mint-stage__holo,

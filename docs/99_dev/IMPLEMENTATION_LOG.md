@@ -1550,6 +1550,35 @@
 - `pnpm -C apps/web build`
 - `pnpm -C apps/web e2e -- stage-focus.spec.ts`
 
+## 2026-02-13 - WO005-Y follow-up: premium HUD glass pass (battle/replay stage)
+
+### Why
+- Stage and replay shells already gained stronger glass depth, but the in-battle HUD and SFX toggle still looked flatter than the upgraded environment.
+- We wanted the HUD to feel like a cohesive "game control module" without changing interaction logic.
+
+### What
+- `apps/web/src/mint-theme/mint-theme.css`
+  - Upgraded `.mint-battle-hud` to layered frosted-glass treatment with:
+    - richer depth shadow
+    - sheen and subtle stripe overlays
+    - glint sweep animation (`mint-hud-glint-sweep`)
+  - Refined HUD internals for legibility and premium polish:
+    - `.mint-battle-hud__turn`, `__turn-value`, `__progress`, `__progress-fill`
+    - `.mint-battle-hud__advantage`
+    - `.mint-battle-hud__phase`, `__phase-dot`, `__phase-label`
+    - `.mint-battle-hud__tip`, `.mint-battle-hud__ai-reason`
+  - Improved Pixi-tone variant parity (`.mint-battle-hud--pixi`) so dark HUD keeps glass depth while matching engine tone.
+  - Added responsive tuning for narrow screens (`@media (max-width: 760px/480px)`).
+  - Upgraded `.mint-sfx-toggle` to glass chip style with hover lift and muted-state polish.
+  - Added VFX safety gates for HUD layers:
+    - `prefers-reduced-motion`: disables HUD glint animations
+    - `data-vfx="off"` / `data-vfx="low"`: disables or softens HUD overlay effects.
+
+### Verify
+- `pnpm -C apps/web lint`
+- `pnpm -C apps/web build`
+- `pnpm -C apps/web e2e -- stage-focus.spec.ts`
+
 ## 2026-02-13 - WO005-X follow-up: deterministic stage fallback and mobile shortcut feedback
 
 ### Why
