@@ -48,6 +48,7 @@ import { AdvantageBadge } from "@/components/AdvantageBadge";
 import { writeClipboardText } from "@/lib/clipboard";
 import { appAbsoluteUrl, appPath, buildReplayShareUrl } from "@/lib/appUrl";
 import { computeStageBoardSizing, shouldShowStageSecondaryControls } from "@/lib/stage_layout";
+import { createSfxEngine, type SfxEngine, type SfxName } from "@/lib/sfx";
 import { decodeReplaySharePayload, hasReplaySharePayload, stripReplayShareParams } from "@/lib/replay_share_params";
 import {
   detectReplayHighlights,
@@ -301,6 +302,25 @@ export function ReplayPage() {
   const useEngineRenderer = isEngine && !engineRendererFailed;
   const initialBroadcast = searchParams.get("broadcast") === "1";
   const [broadcastOverlay, setBroadcastOverlay] = React.useState<boolean>(initialBroadcast);
+  const sfx = React.useMemo<SfxEngine | null>(() => (isEngine ? createSfxEngine() : null), [isEngine]);
+  const [sfxMuted, setSfxMuted] = React.useState(() => sfx?.isMuted() ?? false);
+
+  React.useEffect(() => {
+    return () => {
+      sfx?.dispose();
+    };
+  }, [sfx]);
+
+  const handleSfxToggle = React.useCallback(() => {
+    if (!sfx) return;
+    const next = !sfx.isMuted();
+    sfx.setMuted(next);
+    setSfxMuted(next);
+  }, [sfx]);
+
+  const playReplaySfx = React.useCallback((name: SfxName) => {
+    sfx?.play(name);
+  }, [sfx]);
 
   const [verifyStatus, setVerifyStatus] = React.useState<"idle" | "ok" | "mismatch">("idle");
   const [showStagePanels, setShowStagePanels] = React.useState(() => !isStageFocus);
@@ -416,7 +436,8 @@ export function ReplayPage() {
     if (!sim.ok) return;
     const result = verifyReplayV1(sim.transcript, sim.cards, sim.current.matchId);
     setVerifyStatus(result.ok ? "ok" : "mismatch");
-  }, [sim]);
+    playReplaySfx(result.ok ? "victory_fanfare" : "error_buzz");
+  }, [playReplaySfx, sim]);
 
   const copy = async (v: string) => {
     await writeClipboardText(v);
@@ -472,33 +493,37 @@ export function ReplayPage() {
 
   const toggleStageFullscreenWithFeedback = React.useCallback(() => {
     pushStageActionFeedback(isStageFullscreen ? "Exit fullscreen" : "Enter fullscreen");
+    playReplaySfx("card_place");
     void toggleStageFullscreen();
-  }, [isStageFullscreen, pushStageActionFeedback, toggleStageFullscreen]);
+  }, [isStageFullscreen, playReplaySfx, pushStageActionFeedback, toggleStageFullscreen]);
 
   const toggleStageTransportWithFeedback = React.useCallback(() => {
     pushStageActionFeedback(showStageTransport ? "Controls hidden" : "Controls shown");
+    playReplaySfx("card_place");
     toggleStageTransport();
-  }, [pushStageActionFeedback, showStageTransport, toggleStageTransport]);
+  }, [playReplaySfx, pushStageActionFeedback, showStageTransport, toggleStageTransport]);
 
   const toggleStageSetupWithFeedback = React.useCallback(() => {
     setShowStageSetup((prev) => {
       const next = !prev;
       if (isStageFocus) {
         pushStageActionFeedback(next ? "Setup shown" : "Setup hidden");
+        playReplaySfx("card_place");
       }
       return next;
     });
-  }, [isStageFocus, pushStageActionFeedback]);
+  }, [isStageFocus, playReplaySfx, pushStageActionFeedback]);
 
   const toggleStagePanelsWithFeedback = React.useCallback(() => {
     setShowStagePanels((prev) => {
       const next = !prev;
       if (isStageFocus) {
         pushStageActionFeedback(next ? "Timeline shown" : "Timeline hidden");
+        playReplaySfx("card_place");
       }
       return next;
     });
-  }, [isStageFocus, pushStageActionFeedback]);
+  }, [isStageFocus, playReplaySfx, pushStageActionFeedback]);
 
   const exitFocusModeWithFeedback = React.useCallback(() => {
     pushStageActionFeedback("Exiting focus mode");
@@ -831,59 +856,66 @@ protocolV1: {
   const jumpToStartWithFeedback = React.useCallback(() => {
     setIsPlaying(false);
     setStep(0);
+    playReplaySfx("card_place");
     if (isStageFocus) {
       pushStageActionFeedback("Jumped to start");
     }
-  }, [isStageFocus, pushStageActionFeedback]);
+  }, [isStageFocus, playReplaySfx, pushStageActionFeedback]);
 
   const jumpToPrevStepWithFeedback = React.useCallback(() => {
     setIsPlaying(false);
     setStep((s) => Math.max(0, s - 1));
+    playReplaySfx("flip");
     if (isStageFocus) {
       pushStageActionFeedback("Step back");
     }
-  }, [isStageFocus, pushStageActionFeedback]);
+  }, [isStageFocus, playReplaySfx, pushStageActionFeedback]);
 
   const toggleReplayPlayWithFeedback = React.useCallback(() => {
     if (!canPlay) return;
     const nextIsPlaying = !isPlaying;
     setIsPlaying(nextIsPlaying);
+    playReplaySfx(nextIsPlaying ? "card_place" : "flip");
     if (isStageFocus) {
       pushStageActionFeedback(nextIsPlaying ? "Playback started" : "Playback paused");
     }
-  }, [canPlay, isPlaying, isStageFocus, pushStageActionFeedback]);
+  }, [canPlay, isPlaying, isStageFocus, playReplaySfx, pushStageActionFeedback]);
 
   const jumpToNextStepWithFeedback = React.useCallback(() => {
     setIsPlaying(false);
     setStep((s) => Math.min(stepMax, s + 1));
+    playReplaySfx("flip");
     if (isStageFocus) {
       pushStageActionFeedback("Step forward");
     }
-  }, [isStageFocus, pushStageActionFeedback, stepMax]);
+  }, [isStageFocus, playReplaySfx, pushStageActionFeedback, stepMax]);
 
   const jumpToEndWithFeedback = React.useCallback(() => {
     setIsPlaying(false);
     setStep(stepMax);
+    playReplaySfx("card_place");
     if (isStageFocus) {
       pushStageActionFeedback("Jumped to end");
     }
-  }, [isStageFocus, pushStageActionFeedback, stepMax]);
+  }, [isStageFocus, playReplaySfx, pushStageActionFeedback, stepMax]);
 
   const jumpToPrevHighlightWithFeedback = React.useCallback(() => {
     if (highlights.length === 0) return;
     jumpToPrevHighlight();
+    playReplaySfx("chain_flip");
     if (isStageFocus) {
       pushStageActionFeedback("Previous highlight");
     }
-  }, [highlights.length, isStageFocus, jumpToPrevHighlight, pushStageActionFeedback]);
+  }, [highlights.length, isStageFocus, jumpToPrevHighlight, playReplaySfx, pushStageActionFeedback]);
 
   const jumpToNextHighlightWithFeedback = React.useCallback(() => {
     if (highlights.length === 0) return;
     jumpToNextHighlight();
+    playReplaySfx("chain_flip");
     if (isStageFocus) {
       pushStageActionFeedback("Next highlight");
     }
-  }, [highlights.length, isStageFocus, jumpToNextHighlight, pushStageActionFeedback]);
+  }, [highlights.length, isStageFocus, jumpToNextHighlight, playReplaySfx, pushStageActionFeedback]);
 
   // keyboard
   React.useEffect(() => {
@@ -1360,6 +1392,19 @@ protocolV1: {
               ) : null}
               {isStageFocus ? (
                 <>
+                  {sfx ? (
+                    <button
+                      className={[
+                        "mint-sfx-toggle",
+                        sfxMuted && "mint-sfx-toggle--muted",
+                      ].filter(Boolean).join(" ")}
+                      onClick={handleSfxToggle}
+                      title={sfxMuted ? "サウンド ON" : "サウンド OFF"}
+                      aria-label={sfxMuted ? "Unmute replay sound effects" : "Mute replay sound effects"}
+                    >
+                      {sfxMuted ? "🔇" : "🔊"}
+                    </button>
+                  ) : null}
                   <button className="btn btn-sm" onClick={toggleStageFullscreenWithFeedback}>
                     {isStageFullscreen ? "Exit Fullscreen" : "Fullscreen"}
                   </button>

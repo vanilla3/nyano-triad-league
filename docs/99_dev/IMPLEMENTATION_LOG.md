@@ -1574,6 +1574,31 @@
 - `pnpm -C apps/web build`
 - `pnpm -C apps/web e2e -- stage-focus.spec.ts`
 
+## 2026-02-13 - WO005-AF follow-up: replay stage SFX control and action cues
+
+### Why
+- Stage battle flow already had SFX toggle + event sounds, but replay stage interactions were still silent.
+- We needed parity so replay controls feel tactile in `ui=engine` without changing replay logic.
+
+### What
+- `apps/web/src/pages/Replay.tsx`
+  - Added replay-side SFX engine wiring (`createSfxEngine`) for engine UI mode.
+  - Added stage toolbar SFX mute toggle button (`mint-sfx-toggle`) in replay focus mode.
+  - Added `playReplaySfx(...)` cues to replay interaction handlers:
+    - transport/toolbar toggles (`fullscreen`, controls/setup/timeline show-hide)
+    - replay navigation (`start/prev/play-next/end`)
+    - highlight navigation (`prev hl` / `next hl`)
+  - Added verification result cues in `handleVerify`:
+    - success: `victory_fanfare`
+    - mismatch: `error_buzz`
+  - Kept all URL, replay payload, and keyboard shortcut behavior unchanged (sound-only enhancement).
+
+### Verify
+- `pnpm -C apps/web lint`
+- `pnpm -C apps/web typecheck`
+- `pnpm -C apps/web build`
+- `pnpm -C apps/web e2e -- stage-focus.spec.ts`
+
 ## 2026-02-13 - WO005-AE follow-up: stage board-shell token unification pass
 
 ### Why
