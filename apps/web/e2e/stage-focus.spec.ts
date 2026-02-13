@@ -102,6 +102,10 @@ test.describe("stage routes", () => {
     await expect(page.getByRole("button", { name: "Hide Controls" })).toBeVisible({ timeout: 10_000 });
     await page.keyboard.press("c");
     await expect(page.getByRole("button", { name: "Show Controls" })).toBeVisible({ timeout: 10_000 });
+
+    await page.keyboard.press("Escape");
+    await expect.poll(() => new URL(page.url()).pathname).toBe("/match");
+    await expect.poll(() => new URL(page.url()).searchParams.get("focus")).toBeNull();
   });
 
   test("/battle-stage falls back to mint board when WebGL is unavailable", async ({ page }) => {
@@ -188,6 +192,10 @@ test.describe("stage routes", () => {
 
     await page.keyboard.press("s");
     await expect(page.getByText("Replay from transcript")).toBeVisible({ timeout: 10_000 });
+
+    await page.keyboard.press("Escape");
+    await expect.poll(() => new URL(page.url()).pathname).toBe("/replay");
+    await expect.poll(() => new URL(page.url()).searchParams.get("focus")).toBeNull();
   });
 
   test("/replay-stage falls back to mint board when WebGL is unavailable", async ({ page }) => {

@@ -1,7 +1,7 @@
 import React from "react";
 import { useToast } from "@/components/Toast";
 import { Disclosure } from "@/components/Disclosure";
-import { Link, useLocation, useSearchParams } from "react-router-dom";
+import { Link, useLocation, useNavigate, useSearchParams } from "react-router-dom";
 
 import type { BoardCell, CardData, MatchResultWithHistory, RulesetConfigV1, TranscriptV1, TurnSummary } from "@nyano/triad-engine";
 import {
@@ -212,6 +212,7 @@ function pickDefaultMode(rulesetId: string): Mode {
 const HIGHLIGHT_KIND_ORDER: ReplayHighlightKind[] = ["big_flip", "chain", "combo", "warning"];
 
 export function ReplayPage() {
+  const navigate = useNavigate();
   const location = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
   const uiMode = parseReplayBoardUi((searchParams.get("ui") || "").toLowerCase());
@@ -431,8 +432,13 @@ export function ReplayPage() {
     if (enabled) next.set("focus", "1");
     else next.delete("focus");
     next.delete("layout");
+    if (!enabled && isReplayStageRoute) {
+      const query = next.toString();
+      navigate(query ? `/replay?${query}` : "/replay", { replace: true });
+      return;
+    }
     setSearchParams(next, { replace: true });
-  }, [searchParams, setSearchParams]);
+  }, [searchParams, setSearchParams, isReplayStageRoute, navigate]);
 
   React.useEffect(() => {
     if (isEngine || !isFocusMode) return;
@@ -763,6 +769,11 @@ protocolV1: {
       const tag = (e.target as HTMLElement)?.tagName;
       if (tag === "TEXTAREA" || tag === "INPUT" || tag === "SELECT") return;
       const lower = e.key.toLowerCase();
+      if (isStageFocus && e.key === "Escape") {
+        e.preventDefault();
+        setFocusMode(false);
+        return;
+      }
 
       if (isStageFocus && lower === "f") {
         e.preventDefault();
@@ -805,6 +816,7 @@ protocolV1: {
     jumpToNextHighlight,
     jumpToPrevHighlight,
     isStageFocus,
+    setFocusMode,
     toggleStageFullscreen,
     toggleStageTransport,
   ]);
@@ -1114,7 +1126,7 @@ protocolV1: {
                 <div className="stage-focus-toolbar-actions stage-focus-toolbar-actions--replay">
                   <span className="stage-focus-toolbar-status">{stepStatusText} · {phaseInfo.label}</span>
                   <span className="stage-focus-toolbar-hint" aria-label="Replay focus toolbar hint">
-                    hotkeys: ← → space [ ] · F/C/S/D
+                    hotkeys: ← → space [ ] · F/C/S/D/Esc
                   </span>
                   <button
                     className="btn btn-sm"

@@ -1373,6 +1373,30 @@
 - `pnpm -C apps/web typecheck`
 - `pnpm -C apps/web lint`
 - `pnpm -C apps/web e2e -- stage-focus.spec.ts`
+## 2026-02-13 — WO005-R follow-up: Escape-to-exit focus mode
+
+### Why
+- Stage keyboard shortcuts improved flow, but exiting focus mode still required pointer interaction (`Exit Focus` button).
+- We needed a fast keyboard exit for both battle/replay stage routes.
+
+### What
+- `apps/web/src/pages/Match.tsx`
+  - Added `Escape` shortcut in stage keyboard handler to call `setFocusMode(false)`.
+  - In `/battle-stage`, `setFocusMode(false)` now exits to `/match` instead of being re-canonicalized to focus mode.
+  - Updated battle toolbar hint to include `Esc`.
+- `apps/web/src/pages/Replay.tsx`
+  - Added `Escape` shortcut in stage keyboard handler to call `setFocusMode(false)`.
+  - In `/replay-stage`, `setFocusMode(false)` now exits to `/replay` instead of being re-canonicalized to focus mode.
+  - Updated replay toolbar hint to include `Esc`.
+- `apps/web/e2e/stage-focus.spec.ts`
+  - Extended keyboard shortcut tests:
+    - battle: `Escape` navigates to `/match` and removes `focus` query param.
+    - replay: `Escape` navigates to `/replay` and removes `focus` query param.
+
+### Verify
+- `pnpm -C apps/web typecheck`
+- `pnpm -C apps/web lint`
+- `pnpm -C apps/web e2e -- stage-focus.spec.ts`
 ## 2026-02-13 — WO005-K follow-up: stage toolbar quick commit controls
 
 ### Why

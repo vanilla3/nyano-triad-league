@@ -716,8 +716,13 @@ export function MatchPage() {
       focus: enabled ? "1" : undefined,
       layout: undefined,
     });
+    if (!enabled && isBattleStageRoute) {
+      const query = next.toString();
+      navigate(query ? `/match?${query}` : "/match", { replace: true });
+      return;
+    }
     if (changed) setSearchParams(next, { replace: true });
-  }, [searchParams, setSearchParams]);
+  }, [searchParams, setSearchParams, isBattleStageRoute, navigate]);
 
   React.useEffect(() => {
     if (isEngine || !isFocusMode) return;
@@ -1706,6 +1711,11 @@ export function MatchPage() {
       if (tag === "TEXTAREA" || tag === "INPUT" || tag === "SELECT" || target?.isContentEditable) return;
 
       const lower = e.key.toLowerCase();
+      if (e.key === "Escape") {
+        e.preventDefault();
+        setFocusMode(false);
+        return;
+      }
       if (lower === "f") {
         e.preventDefault();
         void toggleStageFullscreen();
@@ -1741,6 +1751,7 @@ export function MatchPage() {
     return () => window.removeEventListener("keydown", onKey);
   }, [
     isStageFocusRoute,
+    setFocusMode,
     toggleStageFullscreen,
     toggleStageControls,
     canFinalize,
@@ -1819,7 +1830,7 @@ export function MatchPage() {
                     {draftCardIndex !== null ? `card ${draftCardIndex + 1}` : "pick card"} | {draftCell !== null ? `cell ${draftCell}` : "pick cell"}
                   </span>
                   <span className="stage-focus-toolbar-hint" aria-label="Battle focus toolbar hint">
-                    tap/drag then commit · Enter/Backspace · F/C/H/R
+                    tap/drag then commit · Enter/Backspace · F/C/H/R/Esc
                   </span>
                   <label className="stage-focus-toolbar-speed">
                     warning
