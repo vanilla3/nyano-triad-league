@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import type { EventAttemptV1 } from "../event_attempts";
 import {
   applySettledPointsToAttempts,
+  parseVerifiedLadderRecordsImportJson,
   parseSettledPointsImportJson,
   type NormalizedSettledPointsEvent,
 } from "../settled_points_import";
@@ -81,6 +82,33 @@ describe("parseSettledPointsImportJson", () => {
     const parsed = parseSettledPointsImportJson(JSON.stringify([a, b]));
     expect(parsed.events).toHaveLength(1);
     expect(parsed.issues.some((x) => x.code === "duplicate_conflict")).toBe(true);
+  });
+});
+
+describe("parseVerifiedLadderRecordsImportJson", () => {
+  it("rejects unsupported schema", () => {
+    const parsed = parseVerifiedLadderRecordsImportJson(JSON.stringify({ settledEvents: [makeSettled()] }));
+    expect(parsed.events).toHaveLength(0);
+    expect(parsed.issues.some((x) => x.code === "schema_unsupported")).toBe(true);
+  });
+
+  it("reports attestation_invalid when records cannot be verified", () => {
+    const payload = {
+      domain: {
+        chainId: 8453,
+        verifyingContract: "0x0000000000000000000000000000000000000001",
+      },
+      records: [{
+        transcript: { invalid: true },
+        settled: makeSettled(),
+        signatureA: "0x1234",
+        signatureB: "0x5678",
+      }],
+    };
+    const parsed = parseVerifiedLadderRecordsImportJson(JSON.stringify(payload));
+    expect(parsed.inputCount).toBe(1);
+    expect(parsed.events).toHaveLength(0);
+    expect(parsed.issues.some((x) => x.code === "attestation_invalid")).toBe(true);
   });
 });
 

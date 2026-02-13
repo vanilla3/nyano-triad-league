@@ -1,147 +1,152 @@
-# Nyano Triad League — 開発TODO（v1）
+﻿# Nyano Triad League 窶・髢狗匱TODO・・1・・
 
-このファイルは「今なにを作っているか」「次になにを作るか」を、コミュニティと共有するための実装TODOです。
+縺薙・繝輔ぃ繧､繝ｫ縺ｯ縲御ｻ翫↑縺ｫ繧剃ｽ懊▲縺ｦ縺・ｋ縺九阪梧ｬ｡縺ｫ縺ｪ縺ｫ繧剃ｽ懊ｋ縺九阪ｒ縲√さ繝溘Η繝九ユ繧｣縺ｨ蜈ｱ譛峨☆繧九◆繧√・螳溯｣・ODO縺ｧ縺吶・
 
 ---
 
-## ✅ Done
+## 笨・Done
 
-- ✅ Commit0001: 初期セットアップ（docs雛形、triad-engine skeleton）
-- ✅ Commit0002: トランスクリプトv1（EIP-712 / matchId方針）+ ruleset config spec（概念）
-- ✅ Commit0003: オートノミー視点（運営不在でも回る仕組み）のロードマップ草案 + ERC-6551 / staking検討メモ
-- ✅ Commit0004: triad-engine Layer2（warning mark / combo bonus / second-player balance）実装 + ゴールデンテスト
-- ✅ Commit0005: triad-engine Layer3（Trait効果 v1）実装 + 仕様更新
-- ✅ Commit0006: Nyano Peace オンチェーン Trait → ゲーム内 TraitType の導出（v1）
-  - `synergy.traitDerivation` を ruleset に追加
-  - TSヘルパ（`makeCardDataFromNyano` / `deriveTraitTypeFromNyanoTraitV1`）
-  - `TRAIT_DERIVATION_SPEC` 追加
+- 笨・Commit0001: 蛻晄悄繧ｻ繝・ヨ繧｢繝・・・・ocs髮帛ｽ｢縲》riad-engine skeleton・・
+- 笨・Commit0002: 繝医Λ繝ｳ繧ｹ繧ｯ繝ｪ繝励ヨv1・・IP-712 / matchId譁ｹ驥晢ｼ・ ruleset config spec・域ｦょｿｵ・・
+- 笨・Commit0003: 繧ｪ繝ｼ繝医ヮ繝溘・隕也せ・磯°蝟ｶ荳榊惠縺ｧ繧ょ屓繧倶ｻ慕ｵ・∩・峨・繝ｭ繝ｼ繝峨・繝・・闕画｡・+ ERC-6551 / staking讀懆ｨ弱Γ繝｢
+- 笨・Commit0004: triad-engine Layer2・・arning mark / combo bonus / second-player balance・牙ｮ溯｣・+ 繧ｴ繝ｼ繝ｫ繝・Φ繝・せ繝・
+- 笨・Commit0005: triad-engine Layer3・・rait蜉ｹ譫・v1・牙ｮ溯｣・+ 莉墓ｧ俶峩譁ｰ
+- 笨・Commit0006: Nyano Peace 繧ｪ繝ｳ繝√ぉ繝ｼ繝ｳ Trait 竊・繧ｲ繝ｼ繝蜀・TraitType 縺ｮ蟆主・・・1・・
+  - `synergy.traitDerivation` 繧・ruleset 縺ｫ霑ｽ蜉
+  - TS繝倥Ν繝托ｼ・makeCardDataFromNyano` / `deriveTraitTypeFromNyanoTraitV1`・・
+  - `TRAIT_DERIVATION_SPEC` 霑ｽ蜉
 
   - Shadow / Forest / Earth / Thunder / Light
   - Cosmic / Metal / Flame / Aqua / Wind
-  - `TRAIT_EFFECTS_SPEC` 追加、既存仕様（ruleset/transcript）を実装に追従
+  - `TRAIT_EFFECTS_SPEC` 霑ｽ蜉縲∵里蟄倅ｻ墓ｧ假ｼ・uleset/transcript・峨ｒ螳溯｣・↓霑ｽ蠕・
 
 ---
 
-- ✅ Commit0007: Formation bonuses（Layer3拡張）v1 実装 + 仕様追加
-  - 五行調和（Five Elements Harmony）：comboBonus の triadPlus を倍率適用
-  - 日食（Eclipse）：Light+Shadow のクロス（Lightが警戒無効／ShadowがLight光源）
-  - MatchResult に `formations` を追加（UI/解析が “運営なし” でも作りやすい）
-  - `FORMATION_BONUS_SPEC` 追加、ruleset/transcript 追従
+- 笨・Commit0007: Formation bonuses・・ayer3諡｡蠑ｵ・益1 螳溯｣・+ 莉墓ｧ倩ｿｽ蜉
+  - 莠碑｡瑚ｪｿ蜥鯉ｼ・ive Elements Harmony・会ｼ喞omboBonus 縺ｮ triadPlus 繧貞咲紫驕ｩ逕ｨ
+  - 譌･鬟滂ｼ・clipse・会ｼ哭ight+Shadow 縺ｮ繧ｯ繝ｭ繧ｹ・・ight縺瑚ｭｦ謌堤┌蜉ｹ・輯hadow縺鍬ight蜈画ｺ撰ｼ・
+  - MatchResult 縺ｫ `formations` 繧定ｿｽ蜉・・I/隗｣譫舌′ 窶憺°蝟ｶ縺ｪ縺冷・縺ｧ繧ゆｽ懊ｊ繧・☆縺・ｼ・
+  - `FORMATION_BONUS_SPEC` 霑ｽ蜉縲〉uleset/transcript 霑ｽ蠕・
 
 
-- ✅ Commit0008: rulesetId 参照実装（固定ABIエンコード）+ RULESET_ID_SPEC + テストベクタ
-  - 無効化セクションを正規化（同挙動でIDが分裂しない）
-  - 五行調和の requiredElements を集合扱い（順序を無視）
-  - `computeRulesetIdV1(ruleset)` を追加（TS参照実装）
-- ✅ Sprint UX: Home「すぐ遊ぶ」→初手配置までの時間計測を追加（`quickplay_to_first_place_ms`）
-- ✅ Sprint UX: Home LCP のローカル計測を追加（`home_lcp_ms`）
-- ✅ Sprint UX: Home Settings に UX目標の PASS/FAIL 判定を追加（A-1/B-1/B-4/G-3）
-- ✅ Sprint UX: `Copy Snapshot` と `PLAYTEST_LOG.md` を追加し、計測ログ運用を固定
-- ✅ Sprint UX: web lint warning 2件を解消（`pnpm -C apps/web lint` warning 0）
-- ✅ Sprint UX: Snapshotに環境コンテキスト（route/viewport/language/UA）を含め、比較ログ精度を向上
-- ✅ Sprint UX: NyanoCardArt の失敗時に Retry 導線を追加（retry nonce 付き再読込）
-- ✅ Commit0104: 「シーズンの議会」最小プロトコル（proposal / vote / adopt）を TS 参照実装
-  - `season_council.ts` を追加（proposalId / vote hash / EIP-712 vote verify / tally / adopt）
-  - 決定論ルールを固定（候補集合 canonicalize、同一voterは最大nonce採用、同率は rulesetId 昇順）
-  - 仕様書 `SEASON_COUNCIL_SPEC` を追加
-- ✅ Commit0105: permissionless ladder format v1（transcript + settled event + 両署名）を TS 参照実装
-  - `ladder.ts` を追加（EIP-712 attestation / record verify / deterministic standings）
-  - indexer 非依存の tie-break を固定（points → wins → tileDiff → losses → address）
-  - 仕様書 `LADDER_FORMAT_SPEC` を追加
-- ✅ Commit0106: Phase 3 hardening（error tracking + release runbook）を最小実装
-  - `apps/web/src/lib/error_tracking.ts` を追加（global error / unhandledrejection の収集）
-  - sink を切替可能化（local / console / remote, env設定）
-  - `docs/99_dev/RELEASE_RUNBOOK_v1_ja.md` を追加（versioning/changelog/rollback/feature flag）
-  - `pnpm run release:check` を追加（出荷前チェックの標準化）
-- ✅ Commit0107: 新規参加者向け quickstart 導線（3ステップ進捗）を実装
-  - `apps/web/src/lib/onboarding.ts` を追加（localStorage永続化・進捗集計・リセット）
-  - Home に「はじめての1分スタート」チェックリストと1分ルールモーダルを追加
-  - Match のゲスト対戦導線で `start_first_match` / `commit_first_move` を自動更新
-  - `onboarding.test.ts` を追加（既定値、永続化、異常値fallback、reset）
-- ✅ Commit0108: /stream モデレーション（NGワード / BAN / slow mode）を実装
-  - `stream_moderation.ts` を追加（判定ロジックを pure function 化）
-  - VoteControlPanel に moderation 設定UI（slow mode秒数 / banned users / blocked words）を追加
-  - 投票受理前に BAN / NGワード / slow mode を適用し、audit に reject 理由を記録
-  - `local_settings` に moderation 永続化キーを追加（roundtrip test 付き）
-- ✅ Commit0109: /events に Season Archive（local）を追加
-  - `season_archive.ts` を追加（season/event単位の集計を pure function 化）
-  - Events に season 切替・勝率/挑戦数サマリー・最新Replay導線・Markdownコピーを追加
-  - `event_attempts` に全件取得/全消去 API を追加（ローカル運用の保守性向上）
-  - `season_archive.test.ts` / `event_attempts.test.ts` で集計と storage API を検証
-- ✅ WO005-A follow-up: Stage route query正規化 + Stage E2Eスモークを追加
-  - `normalizeStageFocusParams` を導入し、`ui=engine` + `focus=1` + `layout`除去を共通化
-  - `/battle-stage` `/replay-stage` 向け `stage-focus.spec.ts` を追加し、URL正規化と主要UI出現を検証
-- ✅ WO005-B follow-up: Stage補助コントロールのレスポンシブ追従を強化
-  - `shouldShowStageSecondaryControls` を導入し、ステージ補助UIの表示閾値を共通化
-  - Match/Replay の stage route で resize 追従 + 手動トグル優先（manual override）を実装
-  - mobile replay-stage で transport 非表示デフォルト + Show controls 復帰を E2E で検証
-- ✅ WO005-C follow-up: 375px幅で Commit 導線の可視性をE2E固定
-  - battle-stage focus 手札ドックの Commit ボタンが viewport 内に収まることを検証
-  - 横方向オーバーフロー（`scrollWidth - clientWidth`）が発生しないことを検証
-- ✅ WO005-D follow-up: replay-stage の失敗時リカバリ導線をE2E固定
-  - game index / RPC 失敗時でも replay-stage の `Load replay` 導線が残ることを検証
-  - `Retry load` と `Clear share params` が表示され、再試行可能であることを検証
-- ✅ WO005-E follow-up: Nyano AI の思考待機テンポを調整
-  - `computeAiAutoMoveDelayMs` の基準値/難易度係数/ジッターを見直し、即打ち感を抑制
-  - `turn_timing.test.ts` の境界・上限期待値を更新し、決定論を維持
-- ✅ WO005-F follow-up: Nyano cut-in を reduced-motion / low-vfx で軽量化
-  - `NyanoReaction` の cut-in timing を `reduced-motion` と `data-vfx` で段階制御
-  - `vfx=off/low` 時に burst 演出を抑制し、表示時間を短縮
-  - `NyanoReaction.timing.test.ts` を追加し、挙動をユニット検証
-- ✅ WO005-G follow-up: Game Index 失敗時の guest battle フォールバックを追加
-  - Game Index 読込失敗時に guest mode で緊急デッキへ自動フォールバック
-  - stage battle が継続可能（カードロード失敗で詰まらない）ことを E2E で検証
-- ✅ Commit0110: /events に Local Season Points（ランキング/報酬導線）を追加
-  - `season_progress.ts` を追加（points算出・tier判定・event別ランキングを pure function 化）
-  - Events に `Local season points (provisional)` パネル（Tier/次Tierまで/進捗バー）を追加
-  - `Season points board` と markdown 出力（archive + progress）を追加
-  - `season_progress.test.ts` を追加（points/tier/tie-break/markdown）
-- ✅ Commit0111: /events の season points を pointsDelta 段階連携へ拡張
-  - Replay URL の `pda`（pointsDeltaA）を Event attempt に保存可能化
-  - `season_archive.ts` に pointsDelta 合計/カバレッジ集計を追加
-  - `season_progress.ts` で「event内の全attemptに pointsDelta がある場合のみ」pointsDelta採用（未充足は provisional 維持）
-  - Events UI と markdown に source mix（pointsDelta/provisional）表示を追加
-- ✅ Commit0112: /events に settled event JSON 取り込みを追加（ローカル pointsDelta 反映）
-  - `settled_points_import.ts` を追加（schema対応・settled event検証・winner/tiles整合チェック）
-  - Events に `Settled points import (local)` UI を追加（貼り付け→適用→集計結果表示）
-  - matchId 一致かつ結果整合の local attempt に `pointsDeltaA` / `pointsDeltaSource=settled_attested` を反映
-## 🚧 Doing (now)
+- 笨・Commit0008: rulesetId 蜿ら・螳溯｣・ｼ亥崋螳哂BI繧ｨ繝ｳ繧ｳ繝ｼ繝会ｼ・ RULESET_ID_SPEC + 繝・せ繝医・繧ｯ繧ｿ
+  - 辟｡蜉ｹ蛹悶そ繧ｯ繧ｷ繝ｧ繝ｳ繧呈ｭ｣隕丞喧・亥酔謖吝虚縺ｧID縺悟・陬ゅ＠縺ｪ縺・ｼ・
+  - 莠碑｡瑚ｪｿ蜥後・ requiredElements 繧帝寔蜷域桶縺・ｼ磯・ｺ上ｒ辟｡隕厄ｼ・
+  - `computeRulesetIdV1(ruleset)` 繧定ｿｽ蜉・・S蜿ら・螳溯｣・ｼ・
+- 笨・Sprint UX: Home縲後☆縺宣♀縺ｶ縲坂・蛻晄焔驟咲ｽｮ縺ｾ縺ｧ縺ｮ譎る俣險域ｸｬ繧定ｿｽ蜉・・quickplay_to_first_place_ms`・・
+- 笨・Sprint UX: Home LCP 縺ｮ繝ｭ繝ｼ繧ｫ繝ｫ險域ｸｬ繧定ｿｽ蜉・・home_lcp_ms`・・
+- 笨・Sprint UX: Home Settings 縺ｫ UX逶ｮ讓吶・ PASS/FAIL 蛻､螳壹ｒ霑ｽ蜉・・-1/B-1/B-4/G-3・・
+- 笨・Sprint UX: `Copy Snapshot` 縺ｨ `PLAYTEST_LOG.md` 繧定ｿｽ蜉縺励∬ｨ域ｸｬ繝ｭ繧ｰ驕狗畑繧貞崋螳・
+- 笨・Sprint UX: web lint warning 2莉ｶ繧定ｧ｣豸茨ｼ・pnpm -C apps/web lint` warning 0・・
+- 笨・Sprint UX: Snapshot縺ｫ迺ｰ蠅・さ繝ｳ繝・く繧ｹ繝茨ｼ・oute/viewport/language/UA・峨ｒ蜷ｫ繧√∵ｯ碑ｼ・Ο繧ｰ邊ｾ蠎ｦ繧貞髄荳・
+- 笨・Sprint UX: NyanoCardArt 縺ｮ螟ｱ謨玲凾縺ｫ Retry 蟆守ｷ壹ｒ霑ｽ蜉・・etry nonce 莉倥″蜀崎ｪｭ霎ｼ・・
+- 笨・Commit0104: 縲後す繝ｼ繧ｺ繝ｳ縺ｮ隴ｰ莨壹肴怙蟆上・繝ｭ繝医さ繝ｫ・・roposal / vote / adopt・峨ｒ TS 蜿ら・螳溯｣・
+  - `season_council.ts` 繧定ｿｽ蜉・・roposalId / vote hash / EIP-712 vote verify / tally / adopt・・
+  - 豎ｺ螳夊ｫ悶Ν繝ｼ繝ｫ繧貞崋螳夲ｼ亥呵｣憺寔蜷・canonicalize縲∝酔荳voter縺ｯ譛螟ｧnonce謗｡逕ｨ縲∝酔邇・・ rulesetId 譏・・ｼ・
+  - 莉墓ｧ俶嶌 `SEASON_COUNCIL_SPEC` 繧定ｿｽ蜉
+- 笨・Commit0105: permissionless ladder format v1・・ranscript + settled event + 荳｡鄂ｲ蜷搾ｼ峨ｒ TS 蜿ら・螳溯｣・
+  - `ladder.ts` 繧定ｿｽ蜉・・IP-712 attestation / record verify / deterministic standings・・
+  - indexer 髱樔ｾ晏ｭ倥・ tie-break 繧貞崋螳夲ｼ・oints 竊・wins 竊・tileDiff 竊・losses 竊・address・・
+  - 莉墓ｧ俶嶌 `LADDER_FORMAT_SPEC` 繧定ｿｽ蜉
+- 笨・Commit0106: Phase 3 hardening・・rror tracking + release runbook・峨ｒ譛蟆丞ｮ溯｣・
+  - `apps/web/src/lib/error_tracking.ts` 繧定ｿｽ蜉・・lobal error / unhandledrejection 縺ｮ蜿朱寔・・
+  - sink 繧貞・譖ｿ蜿ｯ閭ｽ蛹厄ｼ・ocal / console / remote, env險ｭ螳夲ｼ・
+  - `docs/99_dev/RELEASE_RUNBOOK_v1_ja.md` 繧定ｿｽ蜉・・ersioning/changelog/rollback/feature flag・・
+  - `pnpm run release:check` 繧定ｿｽ蜉・亥・闕ｷ蜑阪メ繧ｧ繝・け縺ｮ讓呎ｺ門喧・・
+- 笨・Commit0107: 譁ｰ隕丞盾蜉閠・髄縺・quickstart 蟆守ｷ夲ｼ・繧ｹ繝・ャ繝鈴ｲ謐暦ｼ峨ｒ螳溯｣・
+  - `apps/web/src/lib/onboarding.ts` 繧定ｿｽ蜉・・ocalStorage豌ｸ邯壼喧繝ｻ騾ｲ謐鈴寔險医・繝ｪ繧ｻ繝・ヨ・・
+  - Home 縺ｫ縲後・縺倥ａ縺ｦ縺ｮ1蛻・せ繧ｿ繝ｼ繝医阪メ繧ｧ繝・け繝ｪ繧ｹ繝医→1蛻・Ν繝ｼ繝ｫ繝｢繝ｼ繝繝ｫ繧定ｿｽ蜉
+  - Match 縺ｮ繧ｲ繧ｹ繝亥ｯｾ謌ｦ蟆守ｷ壹〒 `start_first_match` / `commit_first_move` 繧定・蜍墓峩譁ｰ
+  - `onboarding.test.ts` 繧定ｿｽ蜉・域里螳壼､縲∵ｰｸ邯壼喧縲∫焚蟶ｸ蛟､fallback縲〉eset・・
+- 笨・Commit0108: /stream 繝｢繝・Ξ繝ｼ繧ｷ繝ｧ繝ｳ・・G繝ｯ繝ｼ繝・/ BAN / slow mode・峨ｒ螳溯｣・
+  - `stream_moderation.ts` 繧定ｿｽ蜉・亥愛螳壹Ο繧ｸ繝・け繧・pure function 蛹厄ｼ・
+  - VoteControlPanel 縺ｫ moderation 險ｭ螳啅I・・low mode遘呈焚 / banned users / blocked words・峨ｒ霑ｽ蜉
+  - 謚慕･ｨ蜿礼炊蜑阪↓ BAN / NG繝ｯ繝ｼ繝・/ slow mode 繧帝←逕ｨ縺励∥udit 縺ｫ reject 逅・罰繧定ｨ倬鹸
+  - `local_settings` 縺ｫ moderation 豌ｸ邯壼喧繧ｭ繝ｼ繧定ｿｽ蜉・・oundtrip test 莉倥″・・
+- 笨・Commit0109: /events 縺ｫ Season Archive・・ocal・峨ｒ霑ｽ蜉
+  - `season_archive.ts` 繧定ｿｽ蜉・・eason/event蜊倅ｽ阪・髮・ｨ医ｒ pure function 蛹厄ｼ・
+  - Events 縺ｫ season 蛻・崛繝ｻ蜍晉紫/謖第姶謨ｰ繧ｵ繝槭Μ繝ｼ繝ｻ譛譁ｰReplay蟆守ｷ壹・Markdown繧ｳ繝斐・繧定ｿｽ蜉
+  - `event_attempts` 縺ｫ蜈ｨ莉ｶ蜿門ｾ・蜈ｨ豸亥悉 API 繧定ｿｽ蜉・医Ο繝ｼ繧ｫ繝ｫ驕狗畑縺ｮ菫晏ｮ域ｧ蜷台ｸ奇ｼ・
+  - `season_archive.test.ts` / `event_attempts.test.ts` 縺ｧ髮・ｨ医→ storage API 繧呈､懆ｨｼ
+- 笨・WO005-A follow-up: Stage route query豁｣隕丞喧 + Stage E2E繧ｹ繝｢繝ｼ繧ｯ繧定ｿｽ蜉
+  - `normalizeStageFocusParams` 繧貞ｰ主・縺励～ui=engine` + `focus=1` + `layout`髯､蜴ｻ繧貞・騾壼喧
+  - `/battle-stage` `/replay-stage` 蜷代￠ `stage-focus.spec.ts` 繧定ｿｽ蜉縺励ゞRL豁｣隕丞喧縺ｨ荳ｻ隕ゞI蜃ｺ迴ｾ繧呈､懆ｨｼ
+- 笨・WO005-B follow-up: Stage陬懷勧繧ｳ繝ｳ繝医Ο繝ｼ繝ｫ縺ｮ繝ｬ繧ｹ繝昴Φ繧ｷ繝冶ｿｽ蠕薙ｒ蠑ｷ蛹・
+  - `shouldShowStageSecondaryControls` 繧貞ｰ主・縺励√せ繝・・繧ｸ陬懷勧UI縺ｮ陦ｨ遉ｺ髢ｾ蛟､繧貞・騾壼喧
+  - Match/Replay 縺ｮ stage route 縺ｧ resize 霑ｽ蠕・+ 謇句虚繝医げ繝ｫ蜆ｪ蜈茨ｼ・anual override・峨ｒ螳溯｣・
+  - mobile replay-stage 縺ｧ transport 髱櫁｡ｨ遉ｺ繝・ヵ繧ｩ繝ｫ繝・+ Show controls 蠕ｩ蟶ｰ繧・E2E 縺ｧ讀懆ｨｼ
+- 笨・WO005-C follow-up: 375px蟷・〒 Commit 蟆守ｷ壹・蜿ｯ隕匁ｧ繧脱2E蝗ｺ螳・
+  - battle-stage focus 謇区惆繝峨ャ繧ｯ縺ｮ Commit 繝懊ち繝ｳ縺・viewport 蜀・↓蜿弱∪繧九％縺ｨ繧呈､懆ｨｼ
+  - 讓ｪ譁ｹ蜷代が繝ｼ繝舌・繝輔Ο繝ｼ・・scrollWidth - clientWidth`・峨′逋ｺ逕溘＠縺ｪ縺・％縺ｨ繧呈､懆ｨｼ
+- 笨・WO005-D follow-up: replay-stage 縺ｮ螟ｱ謨玲凾繝ｪ繧ｫ繝舌Μ蟆守ｷ壹ｒE2E蝗ｺ螳・
+  - game index / RPC 螟ｱ謨玲凾縺ｧ繧・replay-stage 縺ｮ `Load replay` 蟆守ｷ壹′谿九ｋ縺薙→繧呈､懆ｨｼ
+  - `Retry load` 縺ｨ `Clear share params` 縺瑚｡ｨ遉ｺ縺輔ｌ縲∝・隧ｦ陦悟庄閭ｽ縺ｧ縺ゅｋ縺薙→繧呈､懆ｨｼ
+- 笨・WO005-E follow-up: Nyano AI 縺ｮ諤晁・ｾ・ｩ溘ユ繝ｳ繝昴ｒ隱ｿ謨ｴ
+  - `computeAiAutoMoveDelayMs` 縺ｮ蝓ｺ貅門､/髮｣譏灘ｺｦ菫よ焚/繧ｸ繝・ち繝ｼ繧定ｦ狗峩縺励∝叉謇薙■諢溘ｒ謚大宛
+  - `turn_timing.test.ts` 縺ｮ蠅・阜繝ｻ荳企剞譛溷ｾ・､繧呈峩譁ｰ縺励∵ｱｺ螳夊ｫ悶ｒ邯ｭ謖・
+- 笨・WO005-F follow-up: Nyano cut-in 繧・reduced-motion / low-vfx 縺ｧ霆ｽ驥丞喧
+  - `NyanoReaction` 縺ｮ cut-in timing 繧・`reduced-motion` 縺ｨ `data-vfx` 縺ｧ谿ｵ髫主宛蠕｡
+  - `vfx=off/low` 譎ゅ↓ burst 貍泌・繧呈椛蛻ｶ縺励∬｡ｨ遉ｺ譎る俣繧堤洒邵ｮ
+  - `NyanoReaction.timing.test.ts` 繧定ｿｽ蜉縺励∵嫌蜍輔ｒ繝ｦ繝九ャ繝域､懆ｨｼ
+- 笨・WO005-G follow-up: Game Index 螟ｱ謨玲凾縺ｮ guest battle 繝輔か繝ｼ繝ｫ繝舌ャ繧ｯ繧定ｿｽ蜉
+  - Game Index 隱ｭ霎ｼ螟ｱ謨玲凾縺ｫ guest mode 縺ｧ邱頑･繝・ャ繧ｭ縺ｸ閾ｪ蜍輔ヵ繧ｩ繝ｼ繝ｫ繝舌ャ繧ｯ
+  - stage battle 縺檎ｶ咏ｶ壼庄閭ｽ・医き繝ｼ繝峨Ο繝ｼ繝牙､ｱ謨励〒隧ｰ縺ｾ繧峨↑縺・ｼ峨％縺ｨ繧・E2E 縺ｧ讀懆ｨｼ
+- 笨・Commit0110: /events 縺ｫ Local Season Points・医Λ繝ｳ繧ｭ繝ｳ繧ｰ/蝣ｱ驟ｬ蟆守ｷ夲ｼ峨ｒ霑ｽ蜉
+  - `season_progress.ts` 繧定ｿｽ蜉・・oints邂怜・繝ｻtier蛻､螳壹・event蛻･繝ｩ繝ｳ繧ｭ繝ｳ繧ｰ繧・pure function 蛹厄ｼ・
+  - Events 縺ｫ `Local season points (provisional)` 繝代ロ繝ｫ・・ier/谺｡Tier縺ｾ縺ｧ/騾ｲ謐励ヰ繝ｼ・峨ｒ霑ｽ蜉
+  - `Season points board` 縺ｨ markdown 蜃ｺ蜉幢ｼ・rchive + progress・峨ｒ霑ｽ蜉
+  - `season_progress.test.ts` 繧定ｿｽ蜉・・oints/tier/tie-break/markdown・・
+- 笨・Commit0111: /events 縺ｮ season points 繧・pointsDelta 谿ｵ髫朱｣謳ｺ縺ｸ諡｡蠑ｵ
+  - Replay URL 縺ｮ `pda`・・ointsDeltaA・峨ｒ Event attempt 縺ｫ菫晏ｭ伜庄閭ｽ蛹・
+  - `season_archive.ts` 縺ｫ pointsDelta 蜷郁ｨ・繧ｫ繝舌Ξ繝・ず髮・ｨ医ｒ霑ｽ蜉
+  - `season_progress.ts` 縺ｧ縲憩vent蜀・・蜈ｨattempt縺ｫ pointsDelta 縺後≠繧句ｴ蜷医・縺ｿ縲膏ointsDelta謗｡逕ｨ・域悴蜈・ｶｳ縺ｯ provisional 邯ｭ謖・ｼ・
+  - Events UI 縺ｨ markdown 縺ｫ source mix・・ointsDelta/provisional・芽｡ｨ遉ｺ繧定ｿｽ蜉
+- 笨・Commit0112: /events 縺ｫ settled event JSON 蜿悶ｊ霎ｼ縺ｿ繧定ｿｽ蜉・医Ο繝ｼ繧ｫ繝ｫ pointsDelta 蜿肴丐・・
+  - `settled_points_import.ts` 繧定ｿｽ蜉・・chema蟇ｾ蠢懊・settled event讀懆ｨｼ繝ｻwinner/tiles謨ｴ蜷医メ繧ｧ繝・け・・
+  - Events 縺ｫ `Settled points import (local)` UI 繧定ｿｽ蜉・郁ｲｼ繧贋ｻ倥￠竊帝←逕ｨ竊帝寔險育ｵ先棡陦ｨ遉ｺ・・
+  - matchId 荳閾ｴ縺九▽邨先棡謨ｴ蜷医・ local attempt 縺ｫ `pointsDeltaA` / `pointsDeltaSource=settled_attested` 繧貞渚譏
+- 笨・Commit0113: /events 縺ｮ settled import 繧偵悟叙蠕苓・蜍募喧 + 鄂ｲ蜷肴､懆ｨｼ繝｢繝ｼ繝峨阪↓諡｡蠑ｵ
+  - `parseVerifiedLadderRecordsImportJson` 繧定ｿｽ蜉・・{domain, records}` 繧・`verifyLadderMatchRecordV1` 縺ｧ讀懆ｨｼ・・
+  - import UI 縺ｫ mode 蛻・崛・・settled events` / `verified records`・峨ｒ霑ｽ蜉
+  - `/game/settled_events.json` 閾ｪ蜍戊ｪｭ霎ｼ繝懊ち繝ｳ繧定ｿｽ蜉
+  - verified import 縺ｮ螟ｱ謨礼炊逕ｱ・・attestation_invalid`・峨ｒ issue 縺ｫ髮・ｴ・
+## 圦 Doing (now)
 
-- 🔧 Phase 4 の運用面（ランキング / 報酬導線）を pointsDelta 連携へ段階拡張する（ローカル取り込みUIまで完了。次は取得自動化と署名検証フロー統合）
-- 🔧 WO005（Stage UI/UX基盤）: `/battle-stage` `/replay-stage` の低速/失敗時体験と導線検証を継続する
+- 肌 Phase 4 縺ｮ驕狗畑髱｢・医Λ繝ｳ繧ｭ繝ｳ繧ｰ / 蝣ｱ驟ｬ蟆守ｷ夲ｼ峨ｒ pointsDelta 騾｣謳ｺ縺ｸ谿ｵ髫取僑蠑ｵ縺吶ｋ・域焔蜍募叙繧願ｾｼ縺ｿ/讀懆ｨｼUI縺ｾ縺ｧ螳御ｺ・よｬ｡縺ｯ繝舌ャ繧ｯ繧ｨ繝ｳ繝臥ｵ檎罰縺ｮ閾ｪ蜍穂ｾ帷ｵｦ縺ｨ螳壽悄蜷梧悄・・
+- 肌 WO005・・tage UI/UX蝓ｺ逶､・・ `/battle-stage` `/replay-stage` 縺ｮ菴朱・螟ｱ謨玲凾菴馴ｨ薙→蟆守ｷ壽､懆ｨｼ繧堤ｶ咏ｶ壹☆繧・
 
-## 🧩 Next (high priority)
+## ｧｩ Next (high priority)
 
 
-### A. ルール・プロトコルの安定化
-- [x] 公式戦向け：Solidity側のTranscript検証（v1 ABI-encode hash）
-- [x] RulesetRegistry（permissionless）最小実装：rulesetId -> config hash / metadata を登録できる
-- [x] 「Wind（先攻/後攻選択）」の公平な表現（commit-reveal / seed / 両者合意など）
+### A. 繝ｫ繝ｼ繝ｫ繝ｻ繝励Ο繝医さ繝ｫ縺ｮ螳牙ｮ壼喧
+- [x] 蜈ｬ蠑乗姶蜷代￠・售olidity蛛ｴ縺ｮTranscript讀懆ｨｼ・・1 ABI-encode hash・・
+- [x] RulesetRegistry・・ermissionless・画怙蟆丞ｮ溯｣・ｼ嗷ulesetId -> config hash / metadata 繧堤匳骭ｲ縺ｧ縺阪ｋ
+- [x] 縲係ind・亥・謾ｻ/蠕梧判驕ｸ謚橸ｼ峨阪・蜈ｬ蟷ｳ縺ｪ陦ｨ迴ｾ・・ommit-reveal / seed / 荳｡閠・粋諢上↑縺ｩ・・
 
-### B. ゲームの“面白さ”を積み増す（ただし決定論で）
-- [x] メタ（Layer4）の小さな可変（例：corner boost / center locked / chain cap）を1つ追加
-  - `meta.chainCapPerTurn` を TS参照エンジンに追加（1ターンの成功フリップ数を上限化可能）
-  - v1では engine-only（rulesetId canonicalization には未反映）
+### B. 繧ｲ繝ｼ繝縺ｮ窶憺擇逋ｽ縺補昴ｒ遨阪∩蠅励☆・医◆縺縺玲ｱｺ螳夊ｫ悶〒・・
+- [x] 繝｡繧ｿ・・ayer4・峨・蟆上＆縺ｪ蜿ｯ螟会ｼ井ｾ具ｼ喞orner boost / center locked / chain cap・峨ｒ1縺､霑ｽ蜉
+  - `meta.chainCapPerTurn` 繧・TS蜿ら・繧ｨ繝ｳ繧ｸ繝ｳ縺ｫ霑ｽ蜉・・繧ｿ繝ｼ繝ｳ縺ｮ謌仙粥繝輔Μ繝・・謨ｰ繧剃ｸ企剞蛹門庄閭ｽ・・
+  - v1縺ｧ縺ｯ engine-only・・ulesetId canonicalization 縺ｫ縺ｯ譛ｪ蜿肴丐・・
 
-### C. 自走するコミュニティ設計（運営が消えても回る）
-- [x] 「シーズンの議会」：ruleset proposal / vote / adopt の最小プロトコル
-- [x] ラダー（ランキング）を“許可不要”で第三者が運用できるフォーマット
-  - transcript + settled event + EIP-712 attestation で再計算可能
-  - indexer 非依存の固定 tie-break を実装（`buildLadderStandingsV1`）
+### C. 閾ｪ襍ｰ縺吶ｋ繧ｳ繝溘Η繝九ユ繧｣險ｭ險茨ｼ磯°蝟ｶ縺梧ｶ医∴縺ｦ繧ょ屓繧具ｼ・
+- [x] 縲後す繝ｼ繧ｺ繝ｳ縺ｮ隴ｰ莨壹搾ｼ嗷uleset proposal / vote / adopt 縺ｮ譛蟆上・繝ｭ繝医さ繝ｫ
+- [x] 繝ｩ繝繝ｼ・医Λ繝ｳ繧ｭ繝ｳ繧ｰ・峨ｒ窶懆ｨｱ蜿ｯ荳崎ｦ≫昴〒隨ｬ荳芽・′驕狗畑縺ｧ縺阪ｋ繝輔か繝ｼ繝槭ャ繝・
+  - transcript + settled event + EIP-712 attestation 縺ｧ蜀崎ｨ育ｮ怜庄閭ｽ
+  - indexer 髱樔ｾ晏ｭ倥・蝗ｺ螳・tie-break 繧貞ｮ溯｣・ｼ・buildLadderStandingsV1`・・
 
 ---
 
-## 🔬 Research / Optional
+## 溌 Research / Optional
 
-- [ ] ERC-6551（Nyanoトークン境界のアカウント）を使った「チーム/ギルド」
-- [ ] NFTステーキングで Season Pass / ルール投票権 / 参加枠（sybil対策）を提供する設計
-- [ ] 互換性：過去のOasysエコシステムからの資産移行方針（必要なら）
+- [ ] ERC-6551・・yano繝医・繧ｯ繝ｳ蠅・阜縺ｮ繧｢繧ｫ繧ｦ繝ｳ繝茨ｼ峨ｒ菴ｿ縺｣縺溘後メ繝ｼ繝/繧ｮ繝ｫ繝峨・
+- [ ] NFT繧ｹ繝・・繧ｭ繝ｳ繧ｰ縺ｧ Season Pass / 繝ｫ繝ｼ繝ｫ謚慕･ｨ讓ｩ / 蜿ょ刈譫・・ybil蟇ｾ遲厄ｼ峨ｒ謠蝉ｾ帙☆繧玖ｨｭ險・
+- [ ] 莠呈鋤諤ｧ・夐℃蜴ｻ縺ｮOasys繧ｨ繧ｳ繧ｷ繧ｹ繝・Β縺九ｉ縺ｮ雉・肇遘ｻ陦梧婿驥晢ｼ亥ｿ・ｦ√↑繧会ｼ・
 - Sprint UX: Home Settings now keeps local UX snapshot history (save on copy, view recent 5, clear history).
-- ✅ WO005-H follow-up: Pixi card-art texture failure guidance + manual retry
-  - `BattleStageEngine` に card-art の読み込み状態/失敗状態を表示し、`Retry card art` を追加
-  - `TextureResolver` に failed/pending 状態管理と status event を追加して、失敗時の無限再試行を防止
-  - `textureResolverPreload.test.ts` に failed->retry success の検証を追加
-- ✅ WO005-I follow-up: Pixi/WebGL init failure auto fallback
-  - `ui=engine` で Pixi 初期化失敗時に `BoardViewMint` へ自動フォールバックして進行継続
-  - `/battle-stage` `/replay-stage` に `Retry Pixi` 導線を追加
-  - stage-focus E2E に WebGL unavailable ケースを追加して回帰防止
+- 笨・WO005-H follow-up: Pixi card-art texture failure guidance + manual retry
+  - `BattleStageEngine` 縺ｫ card-art 縺ｮ隱ｭ縺ｿ霎ｼ縺ｿ迥ｶ諷・螟ｱ謨礼憾諷九ｒ陦ｨ遉ｺ縺励～Retry card art` 繧定ｿｽ蜉
+  - `TextureResolver` 縺ｫ failed/pending 迥ｶ諷狗ｮ｡逅・→ status event 繧定ｿｽ蜉縺励※縲∝､ｱ謨玲凾縺ｮ辟｡髯仙・隧ｦ陦後ｒ髦ｲ豁｢
+  - `textureResolverPreload.test.ts` 縺ｫ failed->retry success 縺ｮ讀懆ｨｼ繧定ｿｽ蜉
+- 笨・WO005-I follow-up: Pixi/WebGL init failure auto fallback
+  - `ui=engine` 縺ｧ Pixi 蛻晄悄蛹門､ｱ謨玲凾縺ｫ `BoardViewMint` 縺ｸ閾ｪ蜍輔ヵ繧ｩ繝ｼ繝ｫ繝舌ャ繧ｯ縺励※騾ｲ陦檎ｶ咏ｶ・
+  - `/battle-stage` `/replay-stage` 縺ｫ `Retry Pixi` 蟆守ｷ壹ｒ霑ｽ蜉
+  - stage-focus E2E 縺ｫ WebGL unavailable 繧ｱ繝ｼ繧ｹ繧定ｿｽ蜉縺励※蝗槫ｸｰ髦ｲ豁｢

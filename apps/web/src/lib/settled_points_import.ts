@@ -1,11 +1,16 @@
-import type { LadderMatchSettledEventV1 } from "@nyano/triad-engine";
-import { validateLadderMatchSettledEventV1 } from "@nyano/triad-engine";
+import type {
+  LadderMatchAttestationDomainV1Input,
+  LadderMatchRecordV1,
+  LadderMatchSettledEventV1,
+} from "@nyano/triad-engine";
+import { validateLadderMatchSettledEventV1, verifyLadderMatchRecordV1 } from "@nyano/triad-engine";
 import type { EventAttemptV1 } from "./event_attempts";
 
 export type SettledPointsImportIssueCode =
   | "json_parse_failed"
   | "schema_unsupported"
   | "settled_invalid"
+  | "attestation_invalid"
   | "duplicate_conflict"
   | "no_local_attempt"
   | "winner_mismatch"
@@ -44,6 +49,11 @@ export type ApplySettledPointsResult = {
   noLocalAttemptCount: number;
   mismatchCount: number;
   issues: SettledPointsImportIssue[];
+};
+
+type VerifiedLadderRecordImportPayload = {
+  domain: LadderMatchAttestationDomainV1Input;
+  records: LadderMatchRecordV1[];
 };
 
 function isObjectRecord(v: unknown): v is Record<string, unknown> {
@@ -102,6 +112,27 @@ function sameSettledEvent(a: NormalizedSettledPointsEvent, b: NormalizedSettledP
     a.tilesB === b.tilesB;
 }
 
+function pushUniqueSettledEvent(
+  map: Map<string, NormalizedSettledPointsEvent>,
+  issues: SettledPointsImportIssue[],
+  input: NormalizedSettledPointsEvent,
+  issueIndex?: number,
+): void {
+  const existing = map.get(input.matchId);
+  if (!existing) {
+    map.set(input.matchId, input);
+    return;
+  }
+  if (!sameSettledEvent(existing, input)) {
+    issues.push({
+      code: "duplicate_conflict",
+      message: "Conflicting duplicate settled event for matchId.",
+      index: issueIndex,
+      matchId: input.matchId,
+    });
+  }
+}
+
 export function parseSettledPointsImportJson(text: string): SettledPointsParseResult {
   let payload: unknown;
   try {
@@ -136,19 +167,7 @@ export function parseSettledPointsImportJson(text: string): SettledPointsParseRe
     const candidate = candidates[i];
     try {
       const normalized = normalizeSettledEvent(candidate as LadderMatchSettledEventV1);
-      const existing = uniqueByMatchId.get(normalized.matchId);
-      if (!existing) {
-        uniqueByMatchId.set(normalized.matchId, normalized);
-        continue;
-      }
-      if (!sameSettledEvent(existing, normalized)) {
-        issues.push({
-          code: "duplicate_conflict",
-          message: "Conflicting duplicate settled event for matchId.",
-          index: i,
-          matchId: normalized.matchId,
-        });
-      }
+      pushUniqueSettledEvent(uniqueByMatchId, issues, normalized, i);
     } catch (error: unknown) {
       issues.push({
         code: "settled_invalid",
@@ -160,6 +179,90 @@ export function parseSettledPointsImportJson(text: string): SettledPointsParseRe
 
   return {
     inputCount: candidates.length,
+    events: Array.from(uniqueByMatchId.values()),
+    issues,
+  };
+}
+
+function isVerifiedLadderRecordImportPayload(v: unknown): v is VerifiedLadderRecordImportPayload {
+  if (!isObjectRecord(v)) return false;
+  if (!isObjectRecord(v.domain)) return false;
+  if (!Array.isArray(v.records)) return false;
+  return true;
+}
+
+function normalizeSettledEventFromVerifiedRecord(
+  record: LadderMatchRecordV1,
+  domain: LadderMatchAttestationDomainV1Input,
+): NormalizedSettledPointsEvent {
+  const verified = verifyLadderMatchRecordV1(record, domain);
+  const settled = verified.settled;
+  const winner: SettledPointsWinner = settled.winner === settled.playerA
+    ? 0
+    : settled.winner === settled.playerB
+      ? 1
+      : "draw";
+  return {
+    matchId: settled.matchId.toLowerCase(),
+    pointsDeltaA: settled.pointsDeltaA,
+    winner,
+    tilesA: settled.tilesA,
+    tilesB: settled.tilesB,
+  };
+}
+
+/**
+ * Parse verified ladder records:
+ * {
+ *   "domain": { "chainId": 8453, "verifyingContract": "0x..." },
+ *   "records": [{ "transcript": ..., "settled": ..., "signatureA": "0x...", "signatureB": "0x..." }]
+ * }
+ */
+export function parseVerifiedLadderRecordsImportJson(text: string): SettledPointsParseResult {
+  let payload: unknown;
+  try {
+    payload = JSON.parse(text);
+  } catch (error: unknown) {
+    return {
+      events: [],
+      inputCount: 0,
+      issues: [{
+        code: "json_parse_failed",
+        message: error instanceof Error ? error.message : "Invalid JSON input",
+      }],
+    };
+  }
+
+  if (!isVerifiedLadderRecordImportPayload(payload)) {
+    return {
+      events: [],
+      inputCount: 0,
+      issues: [{
+        code: "schema_unsupported",
+        message: "Unsupported schema. Use { domain, records } for verified ladder record import.",
+      }],
+    };
+  }
+
+  const { domain, records } = payload;
+  const issues: SettledPointsImportIssue[] = [];
+  const uniqueByMatchId = new Map<string, NormalizedSettledPointsEvent>();
+
+  for (let i = 0; i < records.length; i++) {
+    try {
+      const normalized = normalizeSettledEventFromVerifiedRecord(records[i], domain);
+      pushUniqueSettledEvent(uniqueByMatchId, issues, normalized, i);
+    } catch (error: unknown) {
+      issues.push({
+        code: "attestation_invalid",
+        message: error instanceof Error ? error.message : "Failed to verify ladder record attestation",
+        index: i,
+      });
+    }
+  }
+
+  return {
+    inputCount: records.length,
     events: Array.from(uniqueByMatchId.values()),
     issues,
   };

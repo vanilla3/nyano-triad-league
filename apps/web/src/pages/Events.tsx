@@ -17,6 +17,7 @@ import { buildSeasonArchiveSummaries, formatSeasonArchiveMarkdown } from "@/lib/
 import { buildSeasonProgressSummary, formatSeasonProgressMarkdown } from "@/lib/season_progress";
 import {
   applySettledPointsToAttempts,
+  parseVerifiedLadderRecordsImportJson,
   parseSettledPointsImportJson,
   type SettledPointsImportIssue,
 } from "@/lib/settled_points_import";
@@ -58,6 +59,8 @@ type SettledImportUiReport = {
   issues: SettledPointsImportIssue[];
 };
 
+type SettledImportMode = "settled_events" | "verified_records";
+
 /**
  * Determine the "best" attempt for an event.
  * Priority: win (A=0) > tile advantage (tilesA - tilesB) > newest.
@@ -93,6 +96,7 @@ function findBestAttemptId(
 export function EventsPage() {
   const [refresh, setRefresh] = React.useState(0);
   const [selectedSeasonId, setSelectedSeasonId] = React.useState<number | null>(null);
+  const [settledImportMode, setSettledImportMode] = React.useState<SettledImportMode>("settled_events");
   const [settledImportText, setSettledImportText] = React.useState("");
   const [settledImportReport, setSettledImportReport] = React.useState<SettledImportUiReport | null>(null);
   const toast = useToast();
@@ -134,14 +138,28 @@ export function EventsPage() {
     toast.success("Copied", "season archive + progress markdown");
   };
 
+  const loadDefaultSettledJson = async () => {
+    try {
+      const res = await fetch("/game/settled_events.json");
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const text = await res.text();
+      setSettledImportText(text);
+      toast.success("Loaded", "Fetched /game/settled_events.json");
+    } catch (error: unknown) {
+      toast.error("Load failed", error instanceof Error ? error.message : "Could not fetch /game/settled_events.json");
+    }
+  };
+
   const applySettledImport = () => {
     const text = settledImportText.trim();
     if (!text) {
-      toast.warn("Import skipped", "Paste settled event JSON first.");
+      toast.warn("Import skipped", "Paste import JSON first.");
       return;
     }
 
-    const parsed = parseSettledPointsImportJson(text);
+    const parsed = settledImportMode === "verified_records"
+      ? parseVerifiedLadderRecordsImportJson(text)
+      : parseSettledPointsImportJson(text);
     if (parsed.events.length === 0) {
       setSettledImportReport({
         inputCount: parsed.inputCount,
@@ -153,7 +171,7 @@ export function EventsPage() {
         mismatchCount: 0,
         issues: parsed.issues,
       });
-      const message = parsed.issues[0]?.message ?? "No valid settled events found.";
+      const message = parsed.issues[0]?.message ?? "No valid import records found.";
       toast.error("Import failed", message);
       return;
     }
@@ -243,12 +261,15 @@ export function EventsPage() {
                 <div>
                   <div className="text-xs font-semibold text-slate-700">Settled points import (local)</div>
                   <div className="text-[11px] text-slate-500">
-                    on-chain settled event JSON を貼り付け、matchId一致のローカル履歴に pointsDeltaA を反映します。
+                    settled event 直取り込みと、署名検証付き ladder records 取り込みを切り替えて適用できます。
                   </div>
                 </div>
                 <div className="flex flex-wrap gap-2">
+                  <button className="btn" onClick={() => void loadDefaultSettledJson()}>
+                    Load /game/settled_events.json
+                  </button>
                   <button className="btn" onClick={applySettledImport}>
-                    Apply settled JSON
+                    Apply import JSON
                   </button>
                   <button
                     className="btn"
@@ -261,9 +282,37 @@ export function EventsPage() {
                   </button>
                 </div>
               </div>
+              <div className="mt-2 flex flex-wrap items-center gap-2 text-[11px] text-slate-600">
+                <button
+                  className={[
+                    "rounded-md border px-2 py-1",
+                    settledImportMode === "settled_events"
+                      ? "border-nyano-300 bg-nyano-50 text-nyano-700"
+                      : "border-slate-200 bg-white text-slate-600",
+                  ].join(" ")}
+                  onClick={() => setSettledImportMode("settled_events")}
+                >
+                  Settled events (fast)
+                </button>
+                <button
+                  className={[
+                    "rounded-md border px-2 py-1",
+                    settledImportMode === "verified_records"
+                      ? "border-emerald-300 bg-emerald-50 text-emerald-700"
+                      : "border-slate-200 bg-white text-slate-600",
+                  ].join(" ")}
+                  onClick={() => setSettledImportMode("verified_records")}
+                >
+                  Verified records (domain + signatures)
+                </button>
+              </div>
               <textarea
                 className="mt-2 h-28 w-full rounded-lg border border-slate-200 bg-white p-2 font-mono text-[11px] text-slate-700"
-                placeholder='{"settledEvents":[...]} or {"records":[{"settled":...}]}'
+                placeholder={
+                  settledImportMode === "verified_records"
+                    ? '{"domain":{"chainId":8453,"verifyingContract":"0x..."}, "records":[{"transcript":...,"settled":...,"signatureA":"0x...","signatureB":"0x..."}]}'
+                    : '{"settledEvents":[...]} or [{"matchId":"0x...","pointsDeltaA":...}]'
+                }
                 value={settledImportText}
                 onChange={(e) => setSettledImportText(e.target.value)}
                 spellCheck={false}

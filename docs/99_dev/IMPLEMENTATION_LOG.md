@@ -573,6 +573,37 @@
 - `pnpm -C packages/triad-engine lint`
 - `pnpm -C packages/triad-engine test`
 
+## 2026-02-13 - commit-0113: settled import automation + verified ladder record mode
+
+### Why
+- Commit0112 でローカル import UI は入ったが、入力が手貼り前提で運用負荷が残っていた。
+- pointsDelta を `settled_attested` として扱う導線には、署名検証済み record を選べるモードが必要だった。
+- 既存の season points 移行を壊さずに、`fast import` と `verified import` を段階導入する必要があった。
+
+### What
+- `apps/web/src/lib/settled_points_import.ts`
+  - `parseVerifiedLadderRecordsImportJson(...)` を追加。
+  - payload 形式 `{ domain, records }` を受け取り、`verifyLadderMatchRecordV1(...)` で record ごとに検証。
+  - issue code `attestation_invalid` を追加し、検証失敗理由を集約。
+  - duplicate 判定ロジックを `pushUniqueSettledEvent(...)` に共通化。
+- `apps/web/src/lib/__tests__/settled_points_import.test.ts`
+  - verified import の schema 不正ケース・attestation 失敗ケースを追加。
+- `apps/web/src/pages/Events.tsx`
+  - import mode 切替 UI を追加：
+    - `Settled events (fast)`
+    - `Verified records (domain + signatures)`
+  - `/game/settled_events.json` 自動読込ボタンを追加。
+  - mode に応じて parser を切り替え、同じ apply フローで local attempts に反映。
+- `docs/99_dev/Nyano_Triad_League_DEV_TODO_v1_ja.md`
+  - Commit0113 完了を追記し、Doing を「バックエンド経由の自動供給と定期同期」へ更新。
+
+### Verify
+- `pnpm -C apps/web typecheck`
+- `pnpm -C apps/web lint`
+- `pnpm -C apps/web test -- src/lib/__tests__/settled_points_import.test.ts`
+- `pnpm -C apps/web test`
+- `pnpm -C apps/web build`
+
 ## 2026-02-13 - commit-0112: settled event JSON import for local pointsDelta migration
 
 ### Why
