@@ -78,6 +78,9 @@
 - ✅ WO005-C follow-up: 375px幅で Commit 導線の可視性をE2E固定
   - battle-stage focus 手札ドックの Commit ボタンが viewport 内に収まることを検証
   - 横方向オーバーフロー（`scrollWidth - clientWidth`）が発生しないことを検証
+- ✅ WO005-D follow-up: replay-stage の失敗時リカバリ導線をE2E固定
+  - game index / RPC 失敗時でも replay-stage の `Load replay` 導線が残ることを検証
+  - `Retry load` と `Clear share params` が表示され、再試行可能であることを検証
 - ✅ Commit0110: /events に Local Season Points（ランキング/報酬導線）を追加
   - `season_progress.ts` を追加（points算出・tier判定・event別ランキングを pure function 化）
   - Events に `Local season points (provisional)` パネル（Tier/次Tierまで/進捗バー）を追加

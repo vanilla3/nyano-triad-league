@@ -23,6 +23,7 @@
   - `Show controls` で復帰できることを追加検証。
   - 375px 幅 `battle-stage` で Commit ボタンが viewport 内に収まることを検証。
   - 375px 幅で横方向オーバーフローが発生しないことを検証。
+  - game index / RPC 失敗時でも `replay-stage` の `Load replay` / `Retry load` / `Clear share params` が表示され、リカバリ導線が維持されることを検証。
 
 ### Verify
 - `pnpm -C apps/web lint`

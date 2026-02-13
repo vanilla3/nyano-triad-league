@@ -95,4 +95,23 @@ test.describe("stage routes", () => {
     const overflowPx = await readHorizontalOverflowPx(page);
     expect(overflowPx).toBeLessThanOrEqual(1);
   });
+
+  test("/replay-stage keeps recovery controls when replay load fails", async ({ page }) => {
+    await page.route("**/game/index.v1.json", (route) => route.abort());
+    await page.route("**/*publicnode*", (route) => route.abort());
+    await page.route("**/*ankr*", (route) => route.abort());
+    await page.route("**/*llamarpc*", (route) => route.abort());
+    await page.route("**/*cloudflare*", (route) => route.abort());
+
+    const zParam = encodeTranscriptZ(REPLAY_TRANSCRIPT_JSON);
+    await page.goto(`/replay-stage?ui=engine&focus=1&z=${zParam}`);
+
+    const loadReplayButton = page.getByRole("button", { name: "Load replay" });
+    await expect(loadReplayButton).toBeVisible({ timeout: 10_000 });
+    await loadReplayButton.click();
+
+    await expect(page.getByText("Error:").first()).toBeVisible({ timeout: 30_000 });
+    await expect(page.getByRole("button", { name: "Retry load" })).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByRole("button", { name: "Clear share params" })).toBeVisible({ timeout: 10_000 });
+  });
 });
