@@ -87,3 +87,4 @@
 - [x] 004-D focus flow follow-up: `Match` in pixi focus now shows a sticky hand dock (card select + warning + commit/undo) near the board so hand-to-place flow works without page scrolling.
 - [x] 004-B dialogue/readability follow-up: Nyano JP suffix rewrite now places punctuation before `ぴかっ✨` (e.g. `!ぴかっ✨`) and reaction comment typography is scaled up for stronger visibility.
 - [x] 004-B color identity follow-up: board/stage palette tuned to Nyano water-blue with soft pastel gradients in both Mint CSS board layers and Pixi renderer board constants.
+- [x] 004-D hand visibility follow-up: focus hand dock now stays available even when stage controls are collapsed and renders token placeholder cards while metadata loads, keeping board+hand visible together.

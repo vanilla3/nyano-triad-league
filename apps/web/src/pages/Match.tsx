@@ -1604,8 +1604,6 @@ export function MatchPage() {
   const showFocusHandDock = isEngineFocus
     && useMintUi
     && !isRpg
-    && (!isStageFocusRoute || showStageControls)
-    && !isAiTurn
     && turns.length < 9
     && currentDeckTokens.length > 0;
 
@@ -2617,14 +2615,15 @@ export function MatchPage() {
                   <div
                     className="sticky bottom-2 z-20 grid gap-2 rounded-2xl border p-2 shadow-xl backdrop-blur"
                     style={{
-                      background: "color-mix(in srgb, var(--mint-surface, #ffffff) 88%, transparent)",
-                      borderColor: "rgba(56, 189, 248, 0.42)",
+                      background: "color-mix(in srgb, var(--mint-surface, #ffffff) 84%, transparent)",
+                      borderColor: "rgba(56, 189, 248, 0.5)",
+                      boxShadow: "0 10px 28px rgba(2, 6, 23, 0.18), 0 0 0 1px rgba(125, 211, 252, 0.3)",
                     }}
                   >
                     <div className="flex items-center justify-between gap-2">
-                      <div className="text-[11px] font-semibold text-slate-600">Hand Dock</div>
+                      <div className="text-[11px] font-semibold text-slate-700">Hand Dock</div>
                       <div className="text-[10px] text-slate-500">
-                        {draftCardIndex !== null ? `card ${draftCardIndex + 1}` : "pick card"} → {draftCell !== null ? `cell ${draftCell}` : "tap cell"}
+                        {isAiTurn ? "Nyano is thinking..." : `${draftCardIndex !== null ? `card ${draftCardIndex + 1}` : "pick card"} → ${draftCell !== null ? `cell ${draftCell}` : "tap cell"}`}
                       </div>
                     </div>
 
@@ -2633,7 +2632,25 @@ export function MatchPage() {
                         const card = cards?.get(tid);
                         const usedHere = currentUsed.has(idx);
                         const selected = draftCardIndex === idx;
-                        if (!card) return null;
+                        const dockDisabled = usedHere || isAiTurn || turns.length >= 9;
+                        if (!card) {
+                          return (
+                            <button
+                              key={`focus-dock-loading-${idx}`}
+                              type="button"
+                              className={[
+                                "relative flex h-[96px] w-[72px] flex-shrink-0 flex-col items-center justify-center rounded-xl border p-1 text-center transition",
+                                selected ? "border-cyan-400 ring-2 ring-cyan-300/60" : "border-slate-300",
+                                dockDisabled ? "opacity-45" : "hover:-translate-y-0.5 hover:shadow-md",
+                              ].join(" ")}
+                              aria-label={`Focus hand card ${idx + 1} loading`}
+                              disabled
+                            >
+                              <div className="text-[10px] font-semibold text-slate-500">#{tid.toString()}</div>
+                              <div className="mt-1 text-[10px] text-slate-400">loading</div>
+                            </button>
+                          );
+                        }
                         return (
                           <button
                             key={`focus-dock-${idx}`}
@@ -2641,18 +2658,19 @@ export function MatchPage() {
                             className={[
                               "relative flex-shrink-0 rounded-xl border p-1 transition",
                               selected ? "border-cyan-400 ring-2 ring-cyan-300/60" : "border-slate-300",
-                              usedHere ? "opacity-40" : "hover:-translate-y-0.5 hover:shadow-md",
+                              dockDisabled ? "opacity-40" : "hover:-translate-y-0.5 hover:shadow-md",
                             ].join(" ")}
                             aria-label={`Focus hand card ${idx + 1}${usedHere ? " (used)" : ""}${selected ? " (selected)" : ""}`}
                             data-hand-card={idx}
-                            disabled={usedHere}
-                            draggable={enableHandDragDrop && !usedHere}
+                            disabled={dockDisabled}
+                            draggable={enableHandDragDrop && !dockDisabled}
                             onClick={() => {
+                              if (dockDisabled) return;
                               telemetry.recordInteraction();
                               setDraftCardIndex(idx);
                             }}
                             onDragStart={(e) => {
-                              if (!enableHandDragDrop || usedHere) {
+                              if (!enableHandDragDrop || dockDisabled) {
                                 e.preventDefault();
                                 return;
                               }
@@ -2663,7 +2681,7 @@ export function MatchPage() {
                             }}
                             onDragEnd={handleHandCardDragEnd}
                           >
-                            <CardMini card={card} owner={currentPlayer} subtle={!selected} className="w-[64px]" />
+                            <CardMini card={card} owner={currentPlayer} subtle={!selected} className="w-[74px] md:w-[82px]" />
                           </button>
                         );
                       })}
@@ -2677,7 +2695,7 @@ export function MatchPage() {
                           const v = e.target.value;
                           setDraftWarningMarkCell(v === "" ? null : Number(v));
                         }}
-                        disabled={currentWarnRemaining <= 0}
+                        disabled={currentWarnRemaining <= 0 || isAiTurn}
                         aria-label="Focus dock warning mark cell"
                       >
                         <option value="">Warning: none</option>
@@ -2691,7 +2709,7 @@ export function MatchPage() {
                       <button
                         className="btn btn-primary h-9 px-3 text-xs"
                         onClick={commitMove}
-                        disabled={draftCell === null || draftCardIndex === null}
+                        disabled={isAiTurn || draftCell === null || draftCardIndex === null}
                         aria-label="Commit move from focus hand dock"
                       >
                         Commit
@@ -2699,7 +2717,7 @@ export function MatchPage() {
                       <button
                         className="btn h-9 px-3 text-xs"
                         onClick={undoMove}
-                        disabled={turns.length === 0}
+                        disabled={isAiTurn || turns.length === 0}
                         aria-label="Undo move from focus hand dock"
                       >
                         Undo
