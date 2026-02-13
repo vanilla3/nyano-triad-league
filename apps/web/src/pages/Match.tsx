@@ -1764,6 +1764,9 @@ export function MatchPage() {
                   <span className="stage-focus-toolbar-status">
                     {draftCardIndex !== null ? `card ${draftCardIndex + 1}` : "pick card"} | {draftCell !== null ? `cell ${draftCell}` : "pick cell"}
                   </span>
+                  <span className="stage-focus-toolbar-hint" aria-label="Battle focus toolbar hint">
+                    tap or drag to board, then commit
+                  </span>
                   <label className="stage-focus-toolbar-speed">
                     warning
                     <select

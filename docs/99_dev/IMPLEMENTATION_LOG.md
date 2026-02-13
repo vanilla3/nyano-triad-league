@@ -1265,6 +1265,31 @@
 - `pnpm -C apps/web typecheck`
 - `pnpm -C apps/web lint`
 - `pnpm -C apps/web e2e -- stage-focus.spec.ts`
+## 2026-02-13 — WO005-N follow-up: stage toolbar guidance hints
+
+### Why
+- As top toolbar actions expanded on battle/replay stage routes, first-time users still needed quick guidance for how to use this row.
+- We wanted persistent but low-noise hints in the same action zone, with e2e protection against accidental regressions.
+
+### What
+- `apps/web/src/pages/Match.tsx`
+  - Added `Battle focus toolbar hint` text in the top battle action group:
+    - `tap or drag to board, then commit`.
+- `apps/web/src/pages/Replay.tsx`
+  - Upgraded replay toolbar status from raw step fraction to semantic text:
+    - `stepStatusText · phaseInfo.label`.
+  - Added `Replay focus toolbar hint` text:
+    - `hotkeys: ← → space [ ]`.
+- `apps/web/src/mint-theme/mint-theme.css`
+  - Added shared `stage-focus-toolbar-hint` style.
+  - Added responsive wrapping for hint text under mobile widths.
+- `apps/web/e2e/stage-focus.spec.ts`
+  - Extended desktop battle/replay toolbar tests to assert hint visibility.
+
+### Verify
+- `pnpm -C apps/web typecheck`
+- `pnpm -C apps/web lint`
+- `pnpm -C apps/web e2e -- stage-focus.spec.ts`
 ## 2026-02-13 — WO005-K follow-up: stage toolbar quick commit controls
 
 ### Why

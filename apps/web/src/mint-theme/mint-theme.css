@@ -712,6 +712,13 @@
   white-space: nowrap;
 }
 
+.stage-focus-toolbar-hint {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--mint-text-hint, #94a3b8);
+  white-space: nowrap;
+}
+
 .stage-focus-toolbar-actions .btn {
   min-height: 30px;
 }
@@ -812,6 +819,10 @@
   }
 
   .stage-focus-toolbar-status {
+    width: 100%;
+  }
+
+  .stage-focus-toolbar-hint {
     width: 100%;
   }
 

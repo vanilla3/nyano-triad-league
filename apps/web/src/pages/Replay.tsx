@@ -1075,7 +1075,10 @@ protocolV1: {
             <div className="flex flex-wrap items-center gap-2">
               {showStageToolbarTransport ? (
                 <div className="stage-focus-toolbar-actions stage-focus-toolbar-actions--replay">
-                  <span className="stage-focus-toolbar-status">{step}/{stepMax}</span>
+                  <span className="stage-focus-toolbar-status">{stepStatusText} · {phaseInfo.label}</span>
+                  <span className="stage-focus-toolbar-hint" aria-label="Replay focus toolbar hint">
+                    hotkeys: ← → space [ ]
+                  </span>
                   <button
                     className="btn btn-sm"
                     onClick={() => {

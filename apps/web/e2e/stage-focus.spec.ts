@@ -72,6 +72,7 @@ test.describe("stage routes", () => {
     await expect(toolbarCommit).toBeVisible({ timeout: 10_000 });
     await expect(toolbarCommit).toBeInViewport();
     await expect(page.getByLabel("Warning mark from focus toolbar")).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByLabel("Battle focus toolbar hint")).toBeVisible({ timeout: 10_000 });
 
     const overflowPx = await readHorizontalOverflowPx(page);
     expect(overflowPx).toBeLessThanOrEqual(1);
@@ -118,6 +119,7 @@ test.describe("stage routes", () => {
     const toolbarPlayButton = page.getByLabel("Play replay from focus toolbar");
     await expect(toolbarPlayButton).toBeVisible({ timeout: 10_000 });
     await expect(toolbarPlayButton).toBeInViewport();
+    await expect(page.getByLabel("Replay focus toolbar hint")).toBeVisible({ timeout: 10_000 });
 
     const overflowPx = await readHorizontalOverflowPx(page);
     expect(overflowPx).toBeLessThanOrEqual(1);
