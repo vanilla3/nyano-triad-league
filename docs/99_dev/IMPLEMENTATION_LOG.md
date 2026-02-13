@@ -35,6 +35,15 @@
   - `vfx=low` 時は impact を抑えつつ burst を無効化。
 - `apps/web/src/components/__tests__/NyanoReaction.timing.test.ts`
   - reduced-motion / vfx off / vfx low / vfx high の timing 分岐を検証。
+- `apps/web/src/lib/demo_decks.ts`
+  - `buildEmergencyGuestFallbackData` を追加し、index非依存で guest 5v5 を生成可能化。
+- `apps/web/src/pages/Match.tsx`
+  - Game Index 読込失敗時、guest mode では緊急フォールバックを適用して対戦継続。
+  - `error/status` と toast でフォールバック状態を明示。
+- `apps/web/src/lib/__tests__/demo_decks.test.ts`
+  - 緊急フォールバックデッキの構成（5v5/10枚 map）を検証。
+- `apps/web/e2e/stage-focus.spec.ts`
+  - battle-stage guest で index 読込失敗時にフォールバックで継続できることを検証。
 
 ### Verify
 - `pnpm -C apps/web lint`
@@ -44,6 +53,7 @@
 - `pnpm -C apps/web e2e -- stage-focus.spec.ts`
 - `pnpm -C apps/web test -- src/lib/ai/__tests__/turn_timing.test.ts`
 - `pnpm -C apps/web test -- src/components/__tests__/NyanoReaction.timing.test.ts`
+- `pnpm -C apps/web test -- src/lib/__tests__/demo_decks.test.ts`
 
 ## 2026-02-13 — WO005-A follow-up: Stage route canonicalization + smoke coverage
 
@@ -1095,3 +1105,39 @@
 ### Verify
 - `pnpm -C packages/triad-engine lint`
 - `pnpm -C packages/triad-engine test`
+## 2026-02-13 — WO005-H follow-up: Pixi texture failure status + retry controls
+
+### Why
+- Stage routes now keep gameplay available during index/RPC failures, but card-art texture failures in Pixi mode had no explicit feedback path.
+- We needed a non-blocking UX that explains when placeholder cards are shown and allows user-triggered retry without creating tight auto-retry loops.
+
+### What
+- `apps/web/src/engine/renderers/IBattleRenderer.ts`
+  - Added optional texture status contract:
+    - `BattleRendererTextureStatus`
+    - `onTextureStatus?(...)`
+    - `retryTextureLoads?()`
+- `apps/web/src/engine/renderers/pixi/textureResolver.ts`
+  - Added failed/pending state introspection:
+    - `isPending(...)`, `isFailed(...)`, `clearFailed(...)`
+  - Added load outcome events via `onStatus(...)`.
+  - Mark failed tokenIds when all URLs fail, clear failure mark on successful retry.
+- `apps/web/src/engine/renderers/pixi/PixiBattleRenderer.ts`
+  - Added texture status aggregation for visible board tokenIds.
+  - Emits status snapshots to React through `onTextureStatus`.
+  - Prevents immediate re-request loops for failed tokenIds until explicit retry.
+  - Added `retryTextureLoads()` to clear failed flags and re-attempt loading.
+- `apps/web/src/engine/components/BattleStageEngine.tsx`
+  - Added stage-local status banner:
+    - loading progress while textures are pending
+    - failure guidance when placeholders are active
+    - `Retry card art` action wired to renderer retry hook
+- `apps/web/src/engine/__tests__/textureResolverPreload.test.ts`
+  - Added tests for failed status marking/events and successful retry recovery.
+
+### Verify
+- `pnpm -C apps/web test -- src/engine/__tests__/textureResolverPreload.test.ts`
+- `pnpm -C apps/web lint`
+- `pnpm -C apps/web typecheck`
+- `pnpm -C apps/web e2e -- stage-focus.spec.ts`
+- `pnpm -C apps/web build`

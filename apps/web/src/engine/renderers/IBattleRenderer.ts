@@ -42,6 +42,17 @@ export type CellSelectCallback = (cellIndex: number) => void;
 /** Callback from renderer to React when a cell card is inspected (long-press / right-click). */
 export type CellInspectCallback = (cellIndex: number, screenRect: DOMRect) => void;
 
+/** Snapshot of board-card texture loading state for fallback UX. */
+export interface BattleRendererTextureStatus {
+  visibleTokenCount: number;
+  loadedTextureCount: number;
+  pendingTextureCount: number;
+  failedTextureCount: number;
+}
+
+/** Callback from renderer to React when texture status changes. */
+export type TextureStatusCallback = (status: BattleRendererTextureStatus) => void;
+
 /* ═══════════════════════════════════════════════════════════════════════════
    Interface
    ═══════════════════════════════════════════════════════════════════════════ */
@@ -71,6 +82,18 @@ export interface IBattleRenderer {
    * Provides the cell index and its screen-space bounding rect for positioning UI.
    */
   onCellInspect(cb: CellInspectCallback): void;
+
+  /**
+   * Optional texture-status callback for low-speed/failure UX.
+   * Renderers that don't manage textures can omit this.
+   */
+  onTextureStatus?(cb: TextureStatusCallback): void;
+
+  /**
+   * Optional retry hook for previously failed texture loads.
+   * Renderers that don't manage textures can omit this.
+   */
+  retryTextureLoads?(): void;
 
   /**
    * Handle container resize. Called by ResizeObserver.

@@ -15,6 +15,15 @@ import { errorMessage } from "@/lib/errorMessage";
 import { buildTokenImageUrls } from "./tokenImageUrls";
 import { normalizePreloadTokenIds } from "./preloadPolicy";
 
+export type TextureLoadResult = "loaded" | "failed";
+
+export interface TextureLoadStatusEvent {
+  tokenId: string;
+  result: TextureLoadResult;
+}
+
+type TextureStatusListener = (event: TextureLoadStatusEvent) => void;
+
 /**
  * Manages NFT card image texture loading, caching, and URL fallback.
  *
@@ -28,6 +37,8 @@ export class TextureResolver {
   private config: MetadataConfig | null = null;
   private cache = new Map<string, Texture>();
   private pending = new Map<string, Promise<Texture | null>>();
+  private failed = new Set<string>();
+  private statusListeners = new Set<TextureStatusListener>();
   private preloadQueue: string[] = [];
   private preloadQueued = new Set<string>();
   private preloadInFlight = 0;
@@ -40,6 +51,37 @@ export class TextureResolver {
    */
   getTexture(tokenId: string): Texture | null {
     return this.cache.get(tokenId) ?? null;
+  }
+
+  isPending(tokenId: string): boolean {
+    return this.pending.has(tokenId);
+  }
+
+  isFailed(tokenId: string): boolean {
+    return this.failed.has(tokenId);
+  }
+
+  /**
+   * Clear failed flags so caller can re-attempt texture loads.
+   * If tokenIds omitted, clears all failed markers.
+   */
+  clearFailed(tokenIds?: readonly string[]): void {
+    if (!tokenIds) {
+      this.failed.clear();
+      return;
+    }
+    for (const tokenId of tokenIds) this.failed.delete(tokenId);
+  }
+
+  /**
+   * Subscribe texture load outcomes (loaded/failed).
+   * Returns unsubscribe function.
+   */
+  onStatus(listener: TextureStatusListener): () => void {
+    this.statusListeners.add(listener);
+    return () => {
+      this.statusListeners.delete(listener);
+    };
   }
 
   /**
@@ -55,8 +97,15 @@ export class TextureResolver {
     const existing = this.pending.get(tokenId);
     if (existing) return existing;
 
+    // New attempt replaces previous failed marker.
+    this.failed.delete(tokenId);
+
     const urls = buildTokenImageUrls(tokenId, this.ensureConfig());
-    if (urls.length === 0) return null;
+    if (urls.length === 0) {
+      this.failed.add(tokenId);
+      this.emitStatus({ tokenId, result: "failed" });
+      return null;
+    }
 
     const generationAtStart = this.generation;
     const promise = this.tryLoadFromUrls(urls, tokenId, generationAtStart);
@@ -100,6 +149,8 @@ export class TextureResolver {
     this.generation += 1;
     this.cache.clear();
     this.pending.clear();
+    this.failed.clear();
+    this.statusListeners.clear();
     this.preloadQueue = [];
     this.preloadQueued.clear();
     this.preloadInFlight = 0;
@@ -135,6 +186,8 @@ export class TextureResolver {
         if (generationAtStart !== this.generation) return null;
         if (texture && !texture.destroyed) {
           this.cache.set(tokenId, texture);
+          this.failed.delete(tokenId);
+          this.emitStatus({ tokenId, result: "loaded" });
           return texture;
         }
       } catch (e: unknown) {
@@ -146,6 +199,11 @@ export class TextureResolver {
 
     if (import.meta.env.DEV) {
       console.warn(`[TextureResolver] All ${urls.length} URLs failed for #${tokenId}`);
+    }
+
+    if (generationAtStart === this.generation) {
+      this.failed.add(tokenId);
+      this.emitStatus({ tokenId, result: "failed" });
     }
 
     return null;
@@ -169,6 +227,16 @@ export class TextureResolver {
         this.preloadInFlight = Math.max(0, this.preloadInFlight - 1);
         this.drainPreloadQueue();
       });
+    }
+  }
+
+  private emitStatus(event: TextureLoadStatusEvent): void {
+    for (const listener of this.statusListeners) {
+      try {
+        listener(event);
+      } catch {
+        // Ignore listener errors to keep texture pipeline stable.
+      }
     }
   }
 }

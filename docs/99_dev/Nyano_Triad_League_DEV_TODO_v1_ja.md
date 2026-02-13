@@ -88,6 +88,9 @@
   - `NyanoReaction` の cut-in timing を `reduced-motion` と `data-vfx` で段階制御
   - `vfx=off/low` 時に burst 演出を抑制し、表示時間を短縮
   - `NyanoReaction.timing.test.ts` を追加し、挙動をユニット検証
+- ✅ WO005-G follow-up: Game Index 失敗時の guest battle フォールバックを追加
+  - Game Index 読込失敗時に guest mode で緊急デッキへ自動フォールバック
+  - stage battle が継続可能（カードロード失敗で詰まらない）ことを E2E で検証
 - ✅ Commit0110: /events に Local Season Points（ランキング/報酬導線）を追加
   - `season_progress.ts` を追加（points算出・tier判定・event別ランキングを pure function 化）
   - Events に `Local season points (provisional)` パネル（Tier/次Tierまで/進捗バー）を追加
@@ -134,3 +137,7 @@
 - [ ] NFTステーキングで Season Pass / ルール投票権 / 参加枠（sybil対策）を提供する設計
 - [ ] 互換性：過去のOasysエコシステムからの資産移行方針（必要なら）
 - Sprint UX: Home Settings now keeps local UX snapshot history (save on copy, view recent 5, clear history).
+- ✅ WO005-H follow-up: Pixi card-art texture failure guidance + manual retry
+  - `BattleStageEngine` に card-art の読み込み状態/失敗状態を表示し、`Retry card art` を追加
+  - `TextureResolver` に failed/pending 状態管理と status event を追加して、失敗時の無限再試行を防止
+  - `textureResolverPreload.test.ts` に failed->retry success の検証を追加

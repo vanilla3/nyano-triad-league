@@ -24,6 +24,8 @@ import type {
   BattleRendererState,
   CellSelectCallback,
   CellInspectCallback,
+  TextureStatusCallback,
+  BattleRendererTextureStatus,
 } from "../IBattleRenderer";
 import { TextureResolver } from "./textureResolver";
 import {
@@ -235,6 +237,8 @@ export class PixiBattleRenderer implements IBattleRenderer {
   private state: BattleRendererState | null = null;
   private cellSelectCb: CellSelectCallback | null = null;
   private cellInspectCb: CellInspectCallback | null = null;
+  private textureStatusCb: TextureStatusCallback | null = null;
+  private lastTextureStatusKey = "";
 
   // ── Texture management ──
   private textureResolver = new TextureResolver();
@@ -318,6 +322,19 @@ export class PixiBattleRenderer implements IBattleRenderer {
     this.cellInspectCb = cb;
   }
 
+  onTextureStatus(cb: TextureStatusCallback): void {
+    this.textureStatusCb = cb;
+    this.emitTextureStatus();
+  }
+
+  retryTextureLoads(): void {
+    const visibleTokenIds = this.collectVisibleTokenIds();
+    if (visibleTokenIds.length === 0) return;
+    this.textureResolver.clearFailed(visibleTokenIds);
+    this.lastTextureStatusKey = "";
+    this.redraw();
+  }
+
   resize(width: number, height: number): void {
     if (!this.app) return;
     this.app.renderer.resize(width, height);
@@ -357,6 +374,8 @@ export class PixiBattleRenderer implements IBattleRenderer {
     this.state = null;
     this.cellSelectCb = null;
     this.cellInspectCb = null;
+    this.textureStatusCb = null;
+    this.lastTextureStatusKey = "";
     this.longPressTimers.forEach(t => { if (t) clearTimeout(t); });
     this.longPressTimers = Array.from({ length: 9 }, () => null);
     this.cellAnims = Array.from({ length: 9 }, () => null);
@@ -912,6 +931,8 @@ export class PixiBattleRenderer implements IBattleRenderer {
         const tokenIdStr = cell.card.tokenId.toString();
         const texture = this.textureResolver.getTexture(tokenIdStr);
         const hasTexture = texture !== null;
+        const failedTexture = this.textureResolver.isFailed(tokenIdStr);
+        const pendingTexture = this.textureResolver.isPending(tokenIdStr);
         const fallback = this.cellFallbackOverlays[i];
 
         if (texture) {
@@ -973,9 +994,13 @@ export class PixiBattleRenderer implements IBattleRenderer {
           if (sprite) sprite.visible = false;
 
           // Kick off async load → re-render on completion
-          this.textureResolver.loadTexture(tokenIdStr).then((tex) => {
-            if (tex && this.state) this.redraw();
-          });
+          if (!pendingTexture && !failedTexture) {
+            this.textureResolver.loadTexture(tokenIdStr).finally(() => {
+              if (!this.state) return;
+              this.lastTextureStatusKey = "";
+              this.redraw();
+            });
+          }
         }
 
         this.drawCardSurface(i, w, h, ownerColor, hasTexture, quality, features);
@@ -1048,6 +1073,8 @@ export class PixiBattleRenderer implements IBattleRenderer {
       // ── Edge numbers for occupied cells (container-relative) ──
       this.updateEdgeTexts(i, cell, w, h, features);
     }
+
+    this.emitTextureStatus();
   }
 
   private updateEdgeTexts(
@@ -1547,5 +1574,48 @@ export class PixiBattleRenderer implements IBattleRenderer {
     }
 
     overlay.visible = true;
+  }
+
+  private collectVisibleTokenIds(): string[] {
+    if (!this.state) return [];
+    const tokenIds = new Set<string>();
+    for (const cell of this.state.board) {
+      if (!cell) continue;
+      tokenIds.add(cell.card.tokenId.toString());
+    }
+    return [...tokenIds];
+  }
+
+  private emitTextureStatus(): void {
+    if (!this.state || !this.textureStatusCb) return;
+    const visibleTokenIds = this.collectVisibleTokenIds();
+    let loadedTextureCount = 0;
+    let pendingTextureCount = 0;
+    let failedTextureCount = 0;
+
+    for (const tokenId of visibleTokenIds) {
+      if (this.textureResolver.getTexture(tokenId)) {
+        loadedTextureCount += 1;
+        continue;
+      }
+      if (this.textureResolver.isPending(tokenId)) {
+        pendingTextureCount += 1;
+        continue;
+      }
+      if (this.textureResolver.isFailed(tokenId)) {
+        failedTextureCount += 1;
+      }
+    }
+
+    const status: BattleRendererTextureStatus = {
+      visibleTokenCount: visibleTokenIds.length,
+      loadedTextureCount,
+      pendingTextureCount,
+      failedTextureCount,
+    };
+    const key = `${status.visibleTokenCount}:${status.loadedTextureCount}:${status.pendingTextureCount}:${status.failedTextureCount}`;
+    if (key === this.lastTextureStatusKey) return;
+    this.lastTextureStatusKey = key;
+    this.textureStatusCb(status);
   }
 }

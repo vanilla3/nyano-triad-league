@@ -6,6 +6,7 @@ import {
   generateRandomDemoDeck,
   generateBalancedDemoPair,
   buildCardDataFromIndex,
+  buildEmergencyGuestFallbackData,
   _sampleWithout,
   _tokenScore,
 } from "../demo_decks";
@@ -217,5 +218,28 @@ describe("buildCardDataFromIndex", () => {
     expect(cards.size).toBe(1);
     expect(cards.has(BigInt(1))).toBe(true);
     expect(cards.has(BigInt(999))).toBe(false);
+  });
+});
+
+/* ------------------------------------------------------------------ */
+/* buildEmergencyGuestFallbackData                                    */
+/* ------------------------------------------------------------------ */
+
+describe("buildEmergencyGuestFallbackData", () => {
+  it("returns deterministic 5v5 fallback decks with card map", () => {
+    const fallback = buildEmergencyGuestFallbackData();
+    expect(fallback.deckATokenIds).toHaveLength(5);
+    expect(fallback.deckBTokenIds).toHaveLength(5);
+    expect(fallback.cardsByTokenId.size).toBe(10);
+  });
+
+  it("contains every fallback deck token in cardsByTokenId", () => {
+    const fallback = buildEmergencyGuestFallbackData();
+    for (const tid of [...fallback.deckATokenIds, ...fallback.deckBTokenIds]) {
+      const card = fallback.cardsByTokenId.get(tid);
+      expect(card).toBeDefined();
+      expect(card?.tokenId).toBe(tid);
+      expect(card?.trait).toBe("none");
+    }
   });
 });

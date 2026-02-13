@@ -128,4 +128,48 @@ describe("TextureResolver preload queue", () => {
     await flushMicrotasks();
     expect(mockAssetsLoad).toHaveBeenCalledTimes(1);
   });
+
+  it("marks token as failed and emits status when all URLs fail", async () => {
+    const resolver = new TextureResolver();
+    const statuses: string[] = [];
+    resolver.onStatus((event) => {
+      statuses.push(`${event.tokenId}:${event.result}`);
+    });
+
+    mockBuildTokenImageUrls.mockReturnValue([
+      "https://img.example/77-a.png",
+      "https://img.example/77-b.png",
+    ]);
+    mockAssetsLoad.mockRejectedValue(new Error("network down"));
+
+    const result = await resolver.loadTexture("77");
+
+    expect(result).toBeNull();
+    expect(mockAssetsLoad).toHaveBeenCalledTimes(2);
+    expect(resolver.isPending("77")).toBe(false);
+    expect(resolver.isFailed("77")).toBe(true);
+    expect(statuses).toEqual(["77:failed"]);
+  });
+
+  it("clears failed marker after successful retry and emits loaded status", async () => {
+    const resolver = new TextureResolver();
+    const statuses: string[] = [];
+    resolver.onStatus((event) => {
+      statuses.push(`${event.tokenId}:${event.result}`);
+    });
+
+    mockAssetsLoad
+      .mockRejectedValueOnce(new Error("first try failed"))
+      .mockResolvedValueOnce({ destroyed: false });
+
+    const first = await resolver.loadTexture("88");
+    expect(first).toBeNull();
+    expect(resolver.isFailed("88")).toBe(true);
+
+    const second = await resolver.loadTexture("88");
+    expect(second).not.toBeNull();
+    expect(resolver.isFailed("88")).toBe(false);
+    expect(resolver.getTexture("88")).toBe(second);
+    expect(statuses).toEqual(["88:failed", "88:loaded"]);
+  });
 });

@@ -51,7 +51,11 @@ import { NyanoAvatar } from "@/components/NyanoAvatar";
 import { MiniTutorial } from "@/components/MiniTutorial";
 import { SkeletonBoard, SkeletonHand } from "@/components/Skeleton";
 import { fetchGameIndex } from "@/lib/nyano/gameIndex";
-import { generateBalancedDemoPair, buildCardDataFromIndex } from "@/lib/demo_decks";
+import {
+  buildCardDataFromIndex,
+  buildEmergencyGuestFallbackData,
+  generateBalancedDemoPair,
+} from "@/lib/demo_decks";
 import { markOnboardingStepDone } from "@/lib/onboarding";
 import { QrCode } from "@/components/QrCode";
 import { createTelemetryTracker } from "@/lib/telemetry";
@@ -779,9 +783,26 @@ export function MatchPage() {
     setStatus(null);
     setLoading(true);
 
+    const applyGuestFallback = (reason: string) => {
+      const fallback = buildEmergencyGuestFallbackData();
+      setGuestDeckATokens(fallback.deckATokenIds);
+      setGuestDeckBTokens(fallback.deckBTokenIds);
+      setCards(fallback.cardsByTokenId);
+      setOwners(null);
+      setPlayerA("0x0000000000000000000000000000000000000001" as `0x${string}`);
+      setPlayerB("0x0000000000000000000000000000000000000002" as `0x${string}`);
+      setError(`Game Index の読み込みに失敗しました。フォールバック用のゲストカードで続行します。(${reason})`);
+      setStatus(`Guest mode: fallback deck loaded (${fallback.cardsByTokenId.size} cards)`);
+      toast.warn("Game Index unavailable", "Fallback guest cards loaded");
+    };
+
     try {
       const index = await fetchGameIndex();
       if (!index) {
+        if (isGuestMode) {
+          applyGuestFallback("index unavailable");
+          return;
+        }
         setError("Game Index の読み込みに失敗しました。ネットワーク接続を確認してください。");
         return;
       }
@@ -829,6 +850,10 @@ export function MatchPage() {
       }
     } catch (e: unknown) {
       const msg = errorMessage(e);
+      if (isGuestMode) {
+        applyGuestFallback(msg);
+        return;
+      }
       setError(`Game Index load failed: ${msg}`);
     } finally {
       setLoading(false);

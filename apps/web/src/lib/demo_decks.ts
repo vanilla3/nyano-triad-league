@@ -159,6 +159,66 @@ export function buildCardDataFromIndex(
   return cards;
 }
 
+export interface EmergencyGuestFallbackData {
+  deckATokenIds: bigint[];
+  deckBTokenIds: bigint[];
+  cardsByTokenId: Map<bigint, CardData>;
+}
+
+type EmergencySeed = {
+  tokenId: bigint;
+  hand: 0 | 1 | 2;
+  edges: [up: number, right: number, down: number, left: number];
+  combatStatSum: number;
+};
+
+const EMERGENCY_DECK_A: readonly EmergencySeed[] = [
+  { tokenId: 910001n, hand: 0, edges: [6, 4, 7, 5], combatStatSum: 348 },
+  { tokenId: 910002n, hand: 1, edges: [4, 7, 5, 6], combatStatSum: 332 },
+  { tokenId: 910003n, hand: 2, edges: [7, 5, 6, 4], combatStatSum: 336 },
+  { tokenId: 910004n, hand: 0, edges: [5, 6, 4, 7], combatStatSum: 330 },
+  { tokenId: 910005n, hand: 1, edges: [6, 6, 5, 5], combatStatSum: 342 },
+];
+
+const EMERGENCY_DECK_B: readonly EmergencySeed[] = [
+  { tokenId: 920001n, hand: 2, edges: [5, 7, 6, 4], combatStatSum: 346 },
+  { tokenId: 920002n, hand: 0, edges: [7, 4, 5, 6], combatStatSum: 334 },
+  { tokenId: 920003n, hand: 1, edges: [4, 6, 7, 5], combatStatSum: 338 },
+  { tokenId: 920004n, hand: 2, edges: [6, 5, 4, 7], combatStatSum: 329 },
+  { tokenId: 920005n, hand: 0, edges: [5, 5, 6, 6], combatStatSum: 341 },
+];
+
+/**
+ * Build a deterministic emergency fallback set for guest mode.
+ * Used only when Game Index loading fails and we still want the user to play.
+ */
+export function buildEmergencyGuestFallbackData(): EmergencyGuestFallbackData {
+  const cardsByTokenId = new Map<bigint, CardData>();
+  const deckATokenIds = EMERGENCY_DECK_A.map((x) => x.tokenId);
+  const deckBTokenIds = EMERGENCY_DECK_B.map((x) => x.tokenId);
+
+  for (const seed of [...EMERGENCY_DECK_A, ...EMERGENCY_DECK_B]) {
+    cardsByTokenId.set(seed.tokenId, {
+      tokenId: seed.tokenId,
+      edges: {
+        up: seed.edges[0],
+        right: seed.edges[1],
+        down: seed.edges[2],
+        left: seed.edges[3],
+      },
+      jankenHand: seed.hand,
+      combatStatSum: seed.combatStatSum,
+      trait: "none",
+    });
+  }
+
+  return {
+    deckATokenIds,
+    deckBTokenIds,
+    cardsByTokenId,
+  };
+}
+
 // ── Recommended Deck Presets ─────────────────────────────────────────
 
 export type DeckStrategy = "balanced" | "aggressive" | "defensive" | "janken_mix";

@@ -114,4 +114,20 @@ test.describe("stage routes", () => {
     await expect(page.getByRole("button", { name: "Retry load" })).toBeVisible({ timeout: 10_000 });
     await expect(page.getByRole("button", { name: "Clear share params" })).toBeVisible({ timeout: 10_000 });
   });
+
+  test("/battle-stage guest mode falls back when game index load fails", async ({ page }) => {
+    await page.addInitScript(() => {
+      try {
+        localStorage.removeItem("nyano.gameIndex.v1");
+      } catch {
+        // ignore
+      }
+    });
+    await page.route("**/game/index.v1.json", (route) => route.abort());
+
+    await page.goto("/battle-stage?mode=guest&opp=vs_nyano_ai&ai=normal&rk=v2&ui=engine&focus=1&fpm=manual&fp=0");
+
+    await expect(page.getByLabel("Commit move from focus hand dock")).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByText(/フォールバック用のゲストカードで続行します。/).first()).toBeVisible({ timeout: 10_000 });
+  });
 });

@@ -14,7 +14,11 @@
 
 import React from "react";
 import type { BoardState, PlayerIndex } from "@nyano/triad-engine";
-import type { IBattleRenderer, BattleRendererState } from "../renderers/IBattleRenderer";
+import type {
+  IBattleRenderer,
+  BattleRendererState,
+  BattleRendererTextureStatus,
+} from "../renderers/IBattleRenderer";
 import { resolveVfxQuality } from "@/lib/visual/visualSettings";
 import { errorMessage } from "@/lib/errorMessage";
 import { FlipArrowOverlay, type FlipTraceArrow } from "@/components/FlipArrowOverlay";
@@ -70,6 +74,12 @@ const EMPTY_SET = new Set<number>();
 const CELL_INDEXES: readonly number[] = [0, 1, 2, 3, 4, 5, 6, 7, 8];
 const ENGINE_BOARD_MAX_WIDTH_PX = 760;
 const ENGINE_BOARD_MIN_HEIGHT_PX = 320;
+const EMPTY_TEXTURE_STATUS: BattleRendererTextureStatus = {
+  visibleTokenCount: 0,
+  loadedTextureCount: 0,
+  pendingTextureCount: 0,
+  failedTextureCount: 0,
+};
 
 /* ═══════════════════════════════════════════════════════════════════════════
    Local UI Components — Action Prompt (NIN-UX-011) & Inline Error (NIN-UX-012)
@@ -162,6 +172,7 @@ export function BattleStageEngine({
   const rendererRef = React.useRef<IBattleRenderer | null>(null);
   const callbackRef = React.useRef(onCellSelect);
   const [initError, setInitError] = React.useState<string | null>(null);
+  const [textureStatus, setTextureStatus] = React.useState<BattleRendererTextureStatus>(EMPTY_TEXTURE_STATUS);
   const resolvedBoardMaxWidthPx = boardMaxWidthPx ?? ENGINE_BOARD_MAX_WIDTH_PX;
   const resolvedBoardMinHeightPx = boardMinHeightPx ?? ENGINE_BOARD_MIN_HEIGHT_PX;
   const dropSelectableCells = selectableCells ?? EMPTY_SET;
@@ -192,6 +203,10 @@ export function BattleStageEngine({
   React.useEffect(() => {
     callbackRef.current = onCellSelect;
   }, [onCellSelect]);
+
+  const handleRetryTextureLoads = React.useCallback(() => {
+    rendererRef.current?.retryTextureLoads?.();
+  }, []);
 
   // ── Mount: dynamically import + init renderer ──────────────────────
   React.useEffect(() => {
@@ -238,6 +253,11 @@ export function BattleStageEngine({
           const fakeAnchor = { getBoundingClientRect: () => screenRect } as HTMLElement;
           inspectRef.current.showImmediate(cell.card, cell.owner, fakeAnchor);
         }
+      });
+
+      renderer.onTextureStatus?.((status) => {
+        if (destroyed) return;
+        setTextureStatus(status);
       });
 
       // Prevent browser context menu on canvas (right-click → inspect instead)
@@ -385,6 +405,31 @@ export function BattleStageEngine({
 
       {/* Action Prompt (NIN-UX-011) */}
       {showActionPrompt && <EngineActionPrompt gamePhase={gamePhase} />}
+
+      {(textureStatus.pendingTextureCount > 0 || textureStatus.failedTextureCount > 0) && (
+        <div className="mx-auto flex w-full max-w-[760px] items-center justify-between gap-2 rounded-xl border border-sky-200 bg-sky-50 px-3 py-2 text-xs text-sky-900">
+          <div className="leading-tight">
+            {textureStatus.failedTextureCount > 0 ? (
+              <span>
+                カード画像の一部を読み込めませんでした（{textureStatus.failedTextureCount}/{textureStatus.visibleTokenCount}）。
+                プレースホルダ表示で続行しています。
+              </span>
+            ) : (
+              <span>カード画像を読み込み中です… ({textureStatus.loadedTextureCount}/{textureStatus.visibleTokenCount})</span>
+            )}
+          </div>
+          {textureStatus.failedTextureCount > 0 && (
+            <button
+              type="button"
+              className="btn btn-sm shrink-0"
+              onClick={handleRetryTextureLoads}
+              aria-label="Retry card art loading"
+            >
+              Retry card art
+            </button>
+          )}
+        </div>
+      )}
 
       {/* Inline Error (NIN-UX-012) */}
       {inlineError && (
