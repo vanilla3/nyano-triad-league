@@ -1693,6 +1693,10 @@ export function MatchPage() {
     && !isRpg
     && turns.length < 9
     && currentDeckTokens.length > 0;
+  const showFocusToolbarActions = isStageFocusRoute && showFocusHandDock;
+  const canCommitFromFocusToolbar = !isAiTurn && draftCell !== null && draftCardIndex !== null;
+  const canUndoFromFocusToolbar = !isAiTurn && turns.length > 0;
+  const canManualAiMoveFromFocusToolbar = isVsNyanoAi && !aiAutoPlay && isAiTurn;
 
   /* ═══════════════════════════════════════════════════════════════════════
      RENDER
@@ -1755,6 +1759,38 @@ export function MatchPage() {
               Pixi Focus Mode · turn {currentTurnIndex}/9 · warning left {currentWarnRemaining}
             </div>
             <div className="flex flex-wrap items-center gap-2">
+              {showFocusToolbarActions ? (
+                <div className="stage-focus-toolbar-actions">
+                  <span className="stage-focus-toolbar-status">
+                    {draftCardIndex !== null ? `card ${draftCardIndex + 1}` : "pick card"} | {draftCell !== null ? `cell ${draftCell}` : "pick cell"}
+                  </span>
+                  <button
+                    className="btn btn-sm btn-primary"
+                    onClick={commitMove}
+                    disabled={!canCommitFromFocusToolbar}
+                    aria-label="Commit move from focus toolbar"
+                  >
+                    Commit
+                  </button>
+                  <button
+                    className="btn btn-sm"
+                    onClick={undoMove}
+                    disabled={!canUndoFromFocusToolbar}
+                    aria-label="Undo move from focus toolbar"
+                  >
+                    Undo
+                  </button>
+                  {canManualAiMoveFromFocusToolbar ? (
+                    <button
+                      className="btn btn-sm btn-primary"
+                      onClick={doAiMove}
+                      aria-label="Nyano AI move from focus toolbar"
+                    >
+                      Nyano Move
+                    </button>
+                  ) : null}
+                </div>
+              ) : null}
               {isStageFocusRoute ? (
                 <>
                   <button className="btn btn-sm" onClick={toggleStageFullscreen}>

@@ -694,6 +694,28 @@
   -webkit-backdrop-filter: blur(14px) saturate(1.08);
 }
 
+.stage-focus-toolbar-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+  border-radius: 999px;
+  border: 1px solid rgba(56, 189, 248, 0.42);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(239, 249, 255, 0.88));
+}
+
+.stage-focus-toolbar-status {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--mint-text-secondary, #475569);
+  white-space: nowrap;
+}
+
+.stage-focus-toolbar-actions .btn {
+  min-height: 30px;
+}
+
 .stage-focus-arena-shell {
   border-color: var(--stage-shell-border, rgba(125, 211, 252, 0.46)) !important;
   background: var(--stage-shell-bg, linear-gradient(165deg, rgba(255, 255, 255, 0.96), rgba(235, 248, 255, 0.92))) !important;
@@ -751,6 +773,18 @@
   }
   .mint-focus-hand-card {
     width: 106px;
+  }
+}
+
+@media (max-width: 768px) {
+  .stage-focus-toolbar-actions {
+    width: 100%;
+    border-radius: 12px;
+    justify-content: flex-start;
+  }
+
+  .stage-focus-toolbar-status {
+    width: 100%;
   }
 }
 

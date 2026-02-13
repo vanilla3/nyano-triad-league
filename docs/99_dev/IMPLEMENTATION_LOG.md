@@ -1218,3 +1218,27 @@
 - `pnpm -C apps/web e2e -- stage-focus.spec.ts`
 - `pnpm -C apps/web typecheck`
 - `pnpm -C apps/web lint`
+## 2026-02-13 — WO005-K follow-up: stage toolbar quick commit controls
+
+### Why
+- In stage focus mode, commit controls existed in the hand dock only, so users could still feel commit confirmation is far from the top flow.
+- We needed a always-visible top action path on desktop focus layout, while keeping existing hand-dock actions unchanged.
+
+### What
+- `apps/web/src/pages/Match.tsx`
+  - Added stage-focus toolbar action group with:
+    - selection status (`card/cell`),
+    - `Commit` action (`Commit move from focus toolbar`),
+    - `Undo` action (`Undo move from focus toolbar`),
+    - `Nyano Move` when manual AI turn action is available.
+  - Kept existing focus hand dock controls as-is, so both top and bottom commit flows remain valid.
+- `apps/web/src/mint-theme/mint-theme.css`
+  - Added `stage-focus-toolbar-actions` and `stage-focus-toolbar-status` styles.
+  - Added mobile responsive behavior for toolbar action wrapping.
+- `apps/web/e2e/stage-focus.spec.ts`
+  - Added desktop stage-route check that `Commit move from focus toolbar` is visible/in-viewport and no horizontal overflow regression appears.
+
+### Verify
+- `pnpm -C apps/web e2e -- stage-focus.spec.ts`
+- `pnpm -C apps/web typecheck`
+- `pnpm -C apps/web lint`

@@ -64,6 +64,18 @@ test.describe("stage routes", () => {
     await expect(page.getByLabel("Commit move from focus hand dock")).toBeVisible({ timeout: 10_000 });
   });
 
+  test("/battle-stage keeps top commit action visible on desktop", async ({ page }) => {
+    await page.setViewportSize({ width: 1366, height: 768 });
+    await page.goto("/battle-stage?mode=guest&opp=vs_nyano_ai&ai=normal&rk=v2&ui=engine&focus=1&fpm=manual&fp=0");
+
+    const toolbarCommit = page.getByLabel("Commit move from focus toolbar");
+    await expect(toolbarCommit).toBeVisible({ timeout: 10_000 });
+    await expect(toolbarCommit).toBeInViewport();
+
+    const overflowPx = await readHorizontalOverflowPx(page);
+    expect(overflowPx).toBeLessThanOrEqual(1);
+  });
+
   test("/battle-stage falls back to mint board when WebGL is unavailable", async ({ page }) => {
     await page.addInitScript(() => {
       const originalGetContext = HTMLCanvasElement.prototype.getContext;
