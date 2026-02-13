@@ -554,6 +554,8 @@ export function MatchPage() {
   const [showStageAssist, setShowStageAssist] = React.useState(() => !isStageFocusRoute);
   const showStageAssistUi = !isStageFocusRoute || showStageAssist;
   const stageControlsManualOverrideRef = React.useRef(false);
+  const stageActionFeedbackTimerRef = React.useRef<number | null>(null);
+  const [stageActionFeedback, setStageActionFeedback] = React.useState("");
   const [showStageControls, setShowStageControls] = React.useState(() => {
     if (!isStageFocusRoute) return true;
     if (typeof window === "undefined") return true;
@@ -594,6 +596,34 @@ export function MatchPage() {
   const toggleStageControls = React.useCallback(() => {
     stageControlsManualOverrideRef.current = true;
     setShowStageControls((prev) => !prev);
+  }, []);
+
+  const pushStageActionFeedback = React.useCallback((message: string) => {
+    if (!isStageFocusRoute) return;
+    setStageActionFeedback(message);
+    if (typeof window === "undefined") return;
+    if (stageActionFeedbackTimerRef.current !== null) {
+      window.clearTimeout(stageActionFeedbackTimerRef.current);
+    }
+    stageActionFeedbackTimerRef.current = window.setTimeout(() => {
+      stageActionFeedbackTimerRef.current = null;
+      setStageActionFeedback("");
+    }, 1800);
+  }, [isStageFocusRoute]);
+
+  React.useEffect(() => {
+    if (isStageFocusRoute) return;
+    setStageActionFeedback("");
+    if (typeof window !== "undefined" && stageActionFeedbackTimerRef.current !== null) {
+      window.clearTimeout(stageActionFeedbackTimerRef.current);
+      stageActionFeedbackTimerRef.current = null;
+    }
+  }, [isStageFocusRoute]);
+
+  React.useEffect(() => () => {
+    if (typeof window !== "undefined" && stageActionFeedbackTimerRef.current !== null) {
+      window.clearTimeout(stageActionFeedbackTimerRef.current);
+    }
   }, []);
 
   const resetMatch = React.useCallback(() => {
@@ -1291,6 +1321,10 @@ export function MatchPage() {
       warningMarkCell: draftWarningMarkCell === null ? undefined : draftWarningMarkCell,
     };
 
+    if (isStageFocusRoute) {
+      pushStageActionFeedback("Move committed");
+    }
+
     // Card flight animation (mint / engine mode)
     if (useMintUi && !cardFlight.isFlying) {
       const sourceEl = document.querySelector(`[data-hand-card="${cardIndex}"]`) as HTMLElement | null;
@@ -1312,6 +1346,8 @@ export function MatchPage() {
     currentHandCards,
     currentPlayer,
     draftWarningMarkCell,
+    isStageFocusRoute,
+    pushStageActionFeedback,
     useMintUi,
   ]);
 
@@ -1397,7 +1433,10 @@ export function MatchPage() {
     setDraftCardIndex(null);
     setDraftWarningMarkCell(null);
     setSelectedTurnIndex((x) => Math.max(0, Math.min(x, Math.max(0, turns.length - 2))));
-  }, [turns.length]);
+    if (isStageFocusRoute) {
+      pushStageActionFeedback("Move undone");
+    }
+  }, [isStageFocusRoute, pushStageActionFeedback, turns.length]);
 
   const doAiMove = React.useCallback(() => {
     if (!isVsNyanoAi) return;
@@ -1557,6 +1596,41 @@ export function MatchPage() {
     }
   }, [buildReplayUrl, navigate, toast]);
 
+  const toggleStageControlsWithFeedback = React.useCallback(() => {
+    pushStageActionFeedback(showStageControls ? "Controls hidden" : "Controls shown");
+    toggleStageControls();
+  }, [pushStageActionFeedback, showStageControls, toggleStageControls]);
+
+  const toggleStageAssistWithFeedback = React.useCallback(() => {
+    setShowStageAssist((prev) => {
+      const next = !prev;
+      if (isStageFocusRoute) {
+        pushStageActionFeedback(next ? "HUD shown" : "HUD hidden");
+      }
+      return next;
+    });
+  }, [isStageFocusRoute, pushStageActionFeedback]);
+
+  const toggleStageFullscreenWithFeedback = React.useCallback(() => {
+    pushStageActionFeedback(isStageFullscreen ? "Exit fullscreen" : "Enter fullscreen");
+    void toggleStageFullscreen();
+  }, [isStageFullscreen, pushStageActionFeedback, toggleStageFullscreen]);
+
+  const exitFocusModeWithFeedback = React.useCallback(() => {
+    pushStageActionFeedback("Exiting focus mode");
+    setFocusMode(false);
+  }, [pushStageActionFeedback, setFocusMode]);
+
+  const openReplayWithFeedback = React.useCallback(() => {
+    pushStageActionFeedback("Opening replay");
+    void openReplay();
+  }, [openReplay, pushStageActionFeedback]);
+
+  const doAiMoveWithFeedback = React.useCallback(() => {
+    pushStageActionFeedback("Nyano move requested");
+    doAiMove();
+  }, [doAiMove, pushStageActionFeedback]);
+
   // P0-1: Cell select handler for BoardView / BoardViewRPG
   const handleCellSelect = React.useCallback(
     (cell: number) => {
@@ -1713,27 +1787,27 @@ export function MatchPage() {
       const lower = e.key.toLowerCase();
       if (e.key === "Escape") {
         e.preventDefault();
-        setFocusMode(false);
+        exitFocusModeWithFeedback();
         return;
       }
       if (lower === "f") {
         e.preventDefault();
-        void toggleStageFullscreen();
+        toggleStageFullscreenWithFeedback();
         return;
       }
       if (lower === "c") {
         e.preventDefault();
-        toggleStageControls();
+        toggleStageControlsWithFeedback();
         return;
       }
       if (lower === "h") {
         e.preventDefault();
-        setShowStageAssist((prev) => !prev);
+        toggleStageAssistWithFeedback();
         return;
       }
       if (lower === "r" && canFinalize) {
         e.preventDefault();
-        void openReplay();
+        openReplayWithFeedback();
         return;
       }
       if (e.key === "Enter" && canCommitFromFocusToolbar) {
@@ -1751,11 +1825,12 @@ export function MatchPage() {
     return () => window.removeEventListener("keydown", onKey);
   }, [
     isStageFocusRoute,
-    setFocusMode,
-    toggleStageFullscreen,
-    toggleStageControls,
+    exitFocusModeWithFeedback,
+    toggleStageFullscreenWithFeedback,
+    toggleStageControlsWithFeedback,
+    toggleStageAssistWithFeedback,
     canFinalize,
-    openReplay,
+    openReplayWithFeedback,
     canCommitFromFocusToolbar,
     commitMove,
     canUndoFromFocusToolbar,
@@ -1832,6 +1907,9 @@ export function MatchPage() {
                   <span className="stage-focus-toolbar-hint" aria-label="Battle focus toolbar hint">
                     tap/drag then commit · Enter/Backspace · F/C/H/R/Esc
                   </span>
+                  <span className="stage-focus-toolbar-feedback" role="status" aria-live="polite" aria-label="Battle focus action feedback">
+                    {stageActionFeedback || "Ready"}
+                  </span>
                   <label className="stage-focus-toolbar-speed">
                     warning
                     <select
@@ -1871,7 +1949,7 @@ export function MatchPage() {
                   {canManualAiMoveFromFocusToolbar ? (
                     <button
                       className="btn btn-sm btn-primary"
-                      onClick={doAiMove}
+                      onClick={doAiMoveWithFeedback}
                       aria-label="Nyano AI move from focus toolbar"
                     >
                       Nyano Move
@@ -1881,21 +1959,21 @@ export function MatchPage() {
               ) : null}
               {isStageFocusRoute ? (
                 <>
-                  <button className="btn btn-sm" onClick={toggleStageFullscreen}>
+                  <button className="btn btn-sm" onClick={toggleStageFullscreenWithFeedback}>
                     {isStageFullscreen ? "Exit Fullscreen" : "Fullscreen"}
                   </button>
-                  <button className="btn btn-sm" onClick={toggleStageControls}>
+                  <button className="btn btn-sm" onClick={toggleStageControlsWithFeedback}>
                     {showStageControls ? "Hide Controls" : "Show Controls"}
                   </button>
-                  <button className="btn btn-sm" onClick={() => setShowStageAssist((prev) => !prev)}>
+                  <button className="btn btn-sm" onClick={toggleStageAssistWithFeedback}>
                     {showStageAssist ? "Hide HUD" : "Show HUD"}
                   </button>
                 </>
               ) : null}
-              <button className="btn btn-sm" onClick={() => setFocusMode(false)}>
+              <button className="btn btn-sm" onClick={exitFocusModeWithFeedback}>
                 Exit Focus
               </button>
-              <button className="btn btn-sm" onClick={() => { void openReplay(); }} disabled={!canFinalize}>
+              <button className="btn btn-sm" onClick={openReplayWithFeedback} disabled={!canFinalize}>
                 Replay
               </button>
             </div>

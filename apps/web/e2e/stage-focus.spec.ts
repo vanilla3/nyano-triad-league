@@ -94,14 +94,17 @@ test.describe("stage routes", () => {
   test("/battle-stage supports stage keyboard shortcuts", async ({ page }) => {
     await page.setViewportSize({ width: 1366, height: 768 });
     await page.goto("/battle-stage?mode=guest&opp=vs_nyano_ai&ai=normal&rk=v2&ui=engine&focus=1&fpm=manual&fp=0");
+    const actionFeedback = page.getByLabel("Battle focus action feedback");
 
     await expect(page.getByRole("button", { name: "Show HUD" })).toBeVisible({ timeout: 10_000 });
     await page.keyboard.press("h");
     await expect(page.getByRole("button", { name: "Hide HUD" })).toBeVisible({ timeout: 10_000 });
+    await expect(actionFeedback).toContainText("HUD shown");
 
     await expect(page.getByRole("button", { name: "Hide Controls" })).toBeVisible({ timeout: 10_000 });
     await page.keyboard.press("c");
     await expect(page.getByRole("button", { name: "Show Controls" })).toBeVisible({ timeout: 10_000 });
+    await expect(actionFeedback).toContainText("Controls hidden");
 
     await page.keyboard.press("Escape");
     await expect.poll(() => new URL(page.url()).pathname).toBe("/match");
@@ -185,13 +188,16 @@ test.describe("stage routes", () => {
     if (await loadReplayButton.count()) {
       await loadReplayButton.first().click();
     }
+    const actionFeedback = page.getByLabel("Replay focus action feedback");
 
     await expect(page.getByRole("button", { name: "Hide controls" })).toBeVisible({ timeout: 10_000 });
     await page.keyboard.press("c");
     await expect(page.getByRole("button", { name: "Show controls" })).toBeVisible({ timeout: 10_000 });
+    await expect(actionFeedback).toContainText("Controls hidden");
 
     await page.keyboard.press("s");
     await expect(page.getByText("Replay from transcript")).toBeVisible({ timeout: 10_000 });
+    await expect(actionFeedback).toContainText("Setup shown");
 
     await page.keyboard.press("Escape");
     await expect.poll(() => new URL(page.url()).pathname).toBe("/replay");

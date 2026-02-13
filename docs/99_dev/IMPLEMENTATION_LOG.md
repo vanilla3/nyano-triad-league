@@ -1218,6 +1218,38 @@
 - `pnpm -C apps/web e2e -- stage-focus.spec.ts`
 - `pnpm -C apps/web typecheck`
 - `pnpm -C apps/web lint`
+
+## 2026-02-13 - WO005-S follow-up: stage action feedback chips
+
+### Why
+- Stage keyboard shortcuts and toolbar actions were functional, but users had little immediate confirmation that a command was accepted.
+- We needed lightweight, non-blocking feedback in the same top action area (battle/replay), without adding modal/toast noise.
+
+### What
+- `apps/web/src/pages/Match.tsx`
+  - Added short-lived stage action feedback state (`Ready` / action message) with auto-clear timer.
+  - Wired feedback updates to stage key actions and top toolbar actions:
+    - focus exit, fullscreen, controls, HUD, replay open, manual Nyano move.
+  - Added commit/undo feedback when actions are accepted in stage focus flow.
+  - Added visible+accessible feedback chip in battle focus toolbar (`aria-live`).
+- `apps/web/src/pages/Replay.tsx`
+  - Added the same short-lived stage action feedback state with auto-clear timer.
+  - Wired feedback to replay stage key actions and toolbar actions:
+    - focus exit, fullscreen, controls/setup/panels toggles,
+    - start/prev/play/next/end transport,
+    - highlight jumps.
+  - Reused feedback-aware handlers in keyboard and toolbar paths for consistency.
+  - Added visible+accessible feedback chip in replay focus toolbar (`aria-live`).
+- `apps/web/src/mint-theme/mint-theme.css`
+  - Added `stage-focus-toolbar-feedback` style tokenized as a compact pill.
+  - Added mobile responsive behavior so feedback wraps cleanly under 768px.
+- `apps/web/e2e/stage-focus.spec.ts`
+  - Extended stage keyboard shortcut tests to assert battle/replay feedback text updates.
+
+### Verify
+- `pnpm -C apps/web typecheck`
+- `pnpm -C apps/web lint`
+- `pnpm -C apps/web e2e -- stage-focus.spec.ts`
 ## 2026-02-13 — WO005-L follow-up: replay toolbar quick transport in stage focus
 
 ### Why

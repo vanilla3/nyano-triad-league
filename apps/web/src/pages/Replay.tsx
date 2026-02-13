@@ -306,6 +306,8 @@ export function ReplayPage() {
   const [showStagePanels, setShowStagePanels] = React.useState(() => !isStageFocus);
   const [showStageSetup, setShowStageSetup] = React.useState(() => !isStageFocus);
   const stageTransportManualOverrideRef = React.useRef(false);
+  const stageActionFeedbackTimerRef = React.useRef<number | null>(null);
+  const [stageActionFeedback, setStageActionFeedback] = React.useState("");
   const [showStageTransport, setShowStageTransport] = React.useState(() => {
     if (!isStageFocus) return true;
     if (typeof window === "undefined") return true;
@@ -376,6 +378,34 @@ export function ReplayPage() {
     setShowStageTransport((prev) => !prev);
   }, []);
 
+  const pushStageActionFeedback = React.useCallback((message: string) => {
+    if (!isStageFocus) return;
+    setStageActionFeedback(message);
+    if (typeof window === "undefined") return;
+    if (stageActionFeedbackTimerRef.current !== null) {
+      window.clearTimeout(stageActionFeedbackTimerRef.current);
+    }
+    stageActionFeedbackTimerRef.current = window.setTimeout(() => {
+      stageActionFeedbackTimerRef.current = null;
+      setStageActionFeedback("");
+    }, 1800);
+  }, [isStageFocus]);
+
+  React.useEffect(() => {
+    if (isStageFocus) return;
+    setStageActionFeedback("");
+    if (typeof window !== "undefined" && stageActionFeedbackTimerRef.current !== null) {
+      window.clearTimeout(stageActionFeedbackTimerRef.current);
+      stageActionFeedbackTimerRef.current = null;
+    }
+  }, [isStageFocus]);
+
+  React.useEffect(() => () => {
+    if (typeof window !== "undefined" && stageActionFeedbackTimerRef.current !== null) {
+      window.clearTimeout(stageActionFeedbackTimerRef.current);
+    }
+  }, []);
+
   React.useEffect(() => {
     const handleFullscreenChange = () => setIsStageFullscreen(Boolean(document.fullscreenElement));
     document.addEventListener("fullscreenchange", handleFullscreenChange);
@@ -439,6 +469,41 @@ export function ReplayPage() {
     }
     setSearchParams(next, { replace: true });
   }, [searchParams, setSearchParams, isReplayStageRoute, navigate]);
+
+  const toggleStageFullscreenWithFeedback = React.useCallback(() => {
+    pushStageActionFeedback(isStageFullscreen ? "Exit fullscreen" : "Enter fullscreen");
+    void toggleStageFullscreen();
+  }, [isStageFullscreen, pushStageActionFeedback, toggleStageFullscreen]);
+
+  const toggleStageTransportWithFeedback = React.useCallback(() => {
+    pushStageActionFeedback(showStageTransport ? "Controls hidden" : "Controls shown");
+    toggleStageTransport();
+  }, [pushStageActionFeedback, showStageTransport, toggleStageTransport]);
+
+  const toggleStageSetupWithFeedback = React.useCallback(() => {
+    setShowStageSetup((prev) => {
+      const next = !prev;
+      if (isStageFocus) {
+        pushStageActionFeedback(next ? "Setup shown" : "Setup hidden");
+      }
+      return next;
+    });
+  }, [isStageFocus, pushStageActionFeedback]);
+
+  const toggleStagePanelsWithFeedback = React.useCallback(() => {
+    setShowStagePanels((prev) => {
+      const next = !prev;
+      if (isStageFocus) {
+        pushStageActionFeedback(next ? "Timeline shown" : "Timeline hidden");
+      }
+      return next;
+    });
+  }, [isStageFocus, pushStageActionFeedback]);
+
+  const exitFocusModeWithFeedback = React.useCallback(() => {
+    pushStageActionFeedback("Exiting focus mode");
+    setFocusMode(false);
+  }, [pushStageActionFeedback, setFocusMode]);
 
   React.useEffect(() => {
     if (isEngine || !isFocusMode) return;
@@ -763,6 +828,63 @@ protocolV1: {
     return `${highlights.length} highlights`;
   }, [highlights.length, currentHighlightIdx]);
 
+  const jumpToStartWithFeedback = React.useCallback(() => {
+    setIsPlaying(false);
+    setStep(0);
+    if (isStageFocus) {
+      pushStageActionFeedback("Jumped to start");
+    }
+  }, [isStageFocus, pushStageActionFeedback]);
+
+  const jumpToPrevStepWithFeedback = React.useCallback(() => {
+    setIsPlaying(false);
+    setStep((s) => Math.max(0, s - 1));
+    if (isStageFocus) {
+      pushStageActionFeedback("Step back");
+    }
+  }, [isStageFocus, pushStageActionFeedback]);
+
+  const toggleReplayPlayWithFeedback = React.useCallback(() => {
+    if (!canPlay) return;
+    const nextIsPlaying = !isPlaying;
+    setIsPlaying(nextIsPlaying);
+    if (isStageFocus) {
+      pushStageActionFeedback(nextIsPlaying ? "Playback started" : "Playback paused");
+    }
+  }, [canPlay, isPlaying, isStageFocus, pushStageActionFeedback]);
+
+  const jumpToNextStepWithFeedback = React.useCallback(() => {
+    setIsPlaying(false);
+    setStep((s) => Math.min(stepMax, s + 1));
+    if (isStageFocus) {
+      pushStageActionFeedback("Step forward");
+    }
+  }, [isStageFocus, pushStageActionFeedback, stepMax]);
+
+  const jumpToEndWithFeedback = React.useCallback(() => {
+    setIsPlaying(false);
+    setStep(stepMax);
+    if (isStageFocus) {
+      pushStageActionFeedback("Jumped to end");
+    }
+  }, [isStageFocus, pushStageActionFeedback, stepMax]);
+
+  const jumpToPrevHighlightWithFeedback = React.useCallback(() => {
+    if (highlights.length === 0) return;
+    jumpToPrevHighlight();
+    if (isStageFocus) {
+      pushStageActionFeedback("Previous highlight");
+    }
+  }, [highlights.length, isStageFocus, jumpToPrevHighlight, pushStageActionFeedback]);
+
+  const jumpToNextHighlightWithFeedback = React.useCallback(() => {
+    if (highlights.length === 0) return;
+    jumpToNextHighlight();
+    if (isStageFocus) {
+      pushStageActionFeedback("Next highlight");
+    }
+  }, [highlights.length, isStageFocus, jumpToNextHighlight, pushStageActionFeedback]);
+
   // keyboard
   React.useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -771,54 +893,76 @@ protocolV1: {
       const lower = e.key.toLowerCase();
       if (isStageFocus && e.key === "Escape") {
         e.preventDefault();
-        setFocusMode(false);
+        exitFocusModeWithFeedback();
         return;
       }
 
       if (isStageFocus && lower === "f") {
         e.preventDefault();
-        void toggleStageFullscreen();
+        toggleStageFullscreenWithFeedback();
         return;
       }
       if (isStageFocus && lower === "c") {
         e.preventDefault();
-        toggleStageTransport();
+        toggleStageTransportWithFeedback();
         return;
       }
       if (isStageFocus && lower === "s") {
         e.preventDefault();
-        setShowStageSetup((prev) => !prev);
+        toggleStageSetupWithFeedback();
         return;
       }
       if (isStageFocus && lower === "d") {
         e.preventDefault();
-        setShowStagePanels((prev) => !prev);
+        toggleStagePanelsWithFeedback();
         return;
       }
 
-      if (e.key === "ArrowLeft") { setIsPlaying(false); setStep((s) => Math.max(0, s - 1)); }
-      if (e.key === "ArrowRight") { setIsPlaying(false); setStep((s) => Math.min(stepMax, s + 1)); }
-      if (e.key === " ") {
-        if (!canPlay) return;
+      if (e.key === "ArrowLeft") {
         e.preventDefault();
-        setIsPlaying((p) => !p);
+        jumpToPrevStepWithFeedback();
       }
-      if (e.key === "Home") { e.preventDefault(); setIsPlaying(false); setStep(0); }
-      if (e.key === "End") { e.preventDefault(); setIsPlaying(false); setStep(stepMax); }
-      if (e.key === "[") { e.preventDefault(); jumpToPrevHighlight(); }
-      if (e.key === "]") { e.preventDefault(); jumpToNextHighlight(); }
+      if (e.key === "ArrowRight") {
+        e.preventDefault();
+        jumpToNextStepWithFeedback();
+      }
+      if (e.key === " ") {
+        e.preventDefault();
+        toggleReplayPlayWithFeedback();
+      }
+      if (e.key === "Home") {
+        e.preventDefault();
+        jumpToStartWithFeedback();
+      }
+      if (e.key === "End") {
+        e.preventDefault();
+        jumpToEndWithFeedback();
+      }
+      if (e.key === "[") {
+        e.preventDefault();
+        jumpToPrevHighlightWithFeedback();
+      }
+      if (e.key === "]") {
+        e.preventDefault();
+        jumpToNextHighlightWithFeedback();
+      }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [
-    canPlay,
-    stepMax,
-    jumpToNextHighlight,
-    jumpToPrevHighlight,
     isStageFocus,
-    setFocusMode,
-    toggleStageFullscreen,
-    toggleStageTransport,
+    exitFocusModeWithFeedback,
+    toggleStageFullscreenWithFeedback,
+    toggleStageTransportWithFeedback,
+    toggleStageSetupWithFeedback,
+    toggleStagePanelsWithFeedback,
+    jumpToPrevStepWithFeedback,
+    jumpToNextStepWithFeedback,
+    toggleReplayPlayWithFeedback,
+    jumpToStartWithFeedback,
+    jumpToEndWithFeedback,
+    jumpToPrevHighlightWithFeedback,
+    jumpToNextHighlightWithFeedback,
   ]);
 
   // Autoplay timer
@@ -1130,10 +1274,7 @@ protocolV1: {
                   </span>
                   <button
                     className="btn btn-sm"
-                    onClick={() => {
-                      setIsPlaying(false);
-                      setStep(0);
-                    }}
+                    onClick={jumpToStartWithFeedback}
                     disabled={!canStepBack}
                     aria-label="Replay start from focus toolbar"
                   >
@@ -1141,10 +1282,7 @@ protocolV1: {
                   </button>
                   <button
                     className="btn btn-sm"
-                    onClick={() => {
-                      setIsPlaying(false);
-                      setStep((s) => Math.max(0, s - 1));
-                    }}
+                    onClick={jumpToPrevStepWithFeedback}
                     disabled={!canStepBack}
                     aria-label="Replay previous from focus toolbar"
                   >
@@ -1152,7 +1290,7 @@ protocolV1: {
                   </button>
                   <button
                     className="btn btn-sm btn-primary"
-                    onClick={() => setIsPlaying((p) => !p)}
+                    onClick={toggleReplayPlayWithFeedback}
                     disabled={!canPlay}
                     aria-label={isPlaying ? "Pause replay from focus toolbar" : "Play replay from focus toolbar"}
                   >
@@ -1160,10 +1298,7 @@ protocolV1: {
                   </button>
                   <button
                     className="btn btn-sm"
-                    onClick={() => {
-                      setIsPlaying(false);
-                      setStep((s) => Math.min(stepMax, s + 1));
-                    }}
+                    onClick={jumpToNextStepWithFeedback}
                     disabled={!canStepForward}
                     aria-label="Replay next from focus toolbar"
                   >
@@ -1171,10 +1306,7 @@ protocolV1: {
                   </button>
                   <button
                     className="btn btn-sm"
-                    onClick={() => {
-                      setIsPlaying(false);
-                      setStep(stepMax);
-                    }}
+                    onClick={jumpToEndWithFeedback}
                     disabled={!canStepForward}
                     aria-label="Replay end from focus toolbar"
                   >
@@ -1182,7 +1314,7 @@ protocolV1: {
                   </button>
                   <button
                     className="btn btn-sm"
-                    onClick={jumpToPrevHighlight}
+                    onClick={jumpToPrevHighlightWithFeedback}
                     disabled={highlights.length === 0}
                     aria-label="Previous highlight from focus toolbar"
                   >
@@ -1190,7 +1322,7 @@ protocolV1: {
                   </button>
                   <button
                     className="btn btn-sm"
-                    onClick={jumpToNextHighlight}
+                    onClick={jumpToNextHighlightWithFeedback}
                     disabled={highlights.length === 0}
                     aria-label="Next highlight from focus toolbar"
                   >
@@ -1218,19 +1350,24 @@ protocolV1: {
                 </div>
               ) : null}
               {isStageFocus ? (
+                <span className="stage-focus-toolbar-feedback" role="status" aria-live="polite" aria-label="Replay focus action feedback">
+                  {stageActionFeedback || "Ready"}
+                </span>
+              ) : null}
+              {isStageFocus ? (
                 <>
-                  <button className="btn btn-sm" onClick={toggleStageFullscreen}>
+                  <button className="btn btn-sm" onClick={toggleStageFullscreenWithFeedback}>
                     {isStageFullscreen ? "Exit Fullscreen" : "Fullscreen"}
                   </button>
-                  <button className="btn btn-sm" onClick={toggleStageTransport}>
+                  <button className="btn btn-sm" onClick={toggleStageTransportWithFeedback}>
                     {showStageTransport ? "Hide controls" : "Show controls"}
                   </button>
-                  <button className="btn btn-sm" onClick={() => setShowStageSetup((prev) => !prev)}>
+                  <button className="btn btn-sm" onClick={toggleStageSetupWithFeedback}>
                     {showStageSetup ? "Hide setup" : "Show setup"}
                   </button>
                 </>
               ) : null}
-              <button className="btn btn-sm" onClick={() => setFocusMode(false)}>
+              <button className="btn btn-sm" onClick={exitFocusModeWithFeedback}>
                 Exit Focus
               </button>
               {sim.ok ? (
@@ -1727,7 +1864,7 @@ protocolV1: {
 
                 {isStageFocus ? (
                   <div className="flex justify-end">
-                    <button className={replayTransportButtonClass} onClick={() => setShowStagePanels((prev) => !prev)}>
+                    <button className={replayTransportButtonClass} onClick={toggleStagePanelsWithFeedback}>
                       {showStagePanels ? "Hide timeline/details" : "Show timeline/details"}
                     </button>
                   </div>

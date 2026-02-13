@@ -722,6 +722,20 @@
   white-space: nowrap;
 }
 
+.stage-focus-toolbar-feedback {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  padding: 0 8px;
+  border-radius: 999px;
+  border: 1px solid rgba(56, 189, 248, 0.35);
+  background: rgba(240, 249, 255, 0.72);
+  color: #0f4c6b;
+  font-size: 10px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
 .stage-focus-toolbar-actions .btn {
   min-height: 30px;
 }
@@ -827,6 +841,11 @@
 
   .stage-focus-toolbar-hint {
     width: 100%;
+  }
+
+  .stage-focus-toolbar-feedback {
+    width: 100%;
+    justify-content: flex-start;
   }
 
   .stage-focus-toolbar-actions--replay {
