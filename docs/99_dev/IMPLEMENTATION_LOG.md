@@ -1290,6 +1290,27 @@
 - `pnpm -C apps/web typecheck`
 - `pnpm -C apps/web lint`
 - `pnpm -C apps/web e2e -- stage-focus.spec.ts`
+## 2026-02-13 — WO005-O follow-up: replay toolbar highlight jump controls
+
+### Why
+- Replay stage focus already had transport controls at the top, but highlight jump controls still lived in the timeline panel below.
+- We needed top-toolbar access to highlight navigation so key tactical moments can be reached without scrolling.
+
+### What
+- `apps/web/src/pages/Replay.tsx`
+  - Added top-toolbar highlight controls:
+    - `Previous highlight from focus toolbar`
+    - `Next highlight from focus toolbar`
+  - Added top-toolbar highlight status:
+    - `Replay highlight status in focus toolbar` (`N/M highlights` or `0 highlights`).
+  - Reused existing highlight jump helpers and state (`jumpToPrevHighlight`, `jumpToNextHighlight`, `currentHighlightIdx`) to keep behavior consistent.
+- `apps/web/e2e/stage-focus.spec.ts`
+  - Extended desktop replay toolbar test to assert highlight jump controls/status visibility.
+
+### Verify
+- `pnpm -C apps/web typecheck`
+- `pnpm -C apps/web lint`
+- `pnpm -C apps/web e2e -- stage-focus.spec.ts`
 ## 2026-02-13 — WO005-K follow-up: stage toolbar quick commit controls
 
 ### Why

@@ -120,6 +120,8 @@ test.describe("stage routes", () => {
     await expect(toolbarPlayButton).toBeVisible({ timeout: 10_000 });
     await expect(toolbarPlayButton).toBeInViewport();
     await expect(page.getByLabel("Replay focus toolbar hint")).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByLabel("Next highlight from focus toolbar")).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByLabel("Replay highlight status in focus toolbar")).toBeVisible({ timeout: 10_000 });
 
     const overflowPx = await readHorizontalOverflowPx(page);
     expect(overflowPx).toBeLessThanOrEqual(1);

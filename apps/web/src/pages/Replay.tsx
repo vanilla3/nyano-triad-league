@@ -751,6 +751,11 @@ protocolV1: {
     if (highlights.length === 0) return -1;
     return highlights.findIndex((h) => h.step === step);
   }, [highlights, step]);
+  const focusToolbarHighlightStatus = React.useMemo(() => {
+    if (highlights.length === 0) return "0 highlights";
+    if (currentHighlightIdx >= 0) return `${currentHighlightIdx + 1}/${highlights.length} highlights`;
+    return `${highlights.length} highlights`;
+  }, [highlights.length, currentHighlightIdx]);
 
   // keyboard
   React.useEffect(() => {
@@ -1131,6 +1136,25 @@ protocolV1: {
                   >
                     end
                   </button>
+                  <button
+                    className="btn btn-sm"
+                    onClick={jumpToPrevHighlight}
+                    disabled={highlights.length === 0}
+                    aria-label="Previous highlight from focus toolbar"
+                  >
+                    prev hl
+                  </button>
+                  <button
+                    className="btn btn-sm"
+                    onClick={jumpToNextHighlight}
+                    disabled={highlights.length === 0}
+                    aria-label="Next highlight from focus toolbar"
+                  >
+                    next hl
+                  </button>
+                  <span className="stage-focus-toolbar-hint" aria-label="Replay highlight status in focus toolbar">
+                    {focusToolbarHighlightStatus}
+                  </span>
                   <label className="stage-focus-toolbar-speed">
                     speed
                     <select
