@@ -24,6 +24,16 @@ export type EventAttemptV1 = {
   /** Token IDs as decimal strings */
   deckA: string[];
   deckB: string[];
+
+  /**
+   * Optional ladder-like points delta for playerA.
+   * When present for all attempts in an event, season progress can migrate
+   * from provisional scoring to pointsDelta-based scoring.
+   */
+  pointsDeltaA?: number;
+
+  /** Metadata for where pointsDeltaA came from. */
+  pointsDeltaSource?: "settled_attested";
 };
 
 type StoreV1 = Record<string, EventAttemptV1[]>;

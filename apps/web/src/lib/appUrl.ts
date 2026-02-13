@@ -67,6 +67,7 @@ export type ReplayShareUrlOptions = {
   step?: number;
   eventId?: string;
   ui?: string;
+  pointsDeltaA?: number;
   absolute?: boolean;
 };
 
@@ -75,6 +76,13 @@ function normalizeReplayStep(step: number | undefined): number | null {
   const n = Math.trunc(step);
   if (n < 0 || n > 9) return null;
   return n;
+}
+
+function normalizeInt32(n: number | undefined): number | null {
+  if (typeof n !== "number" || !Number.isFinite(n)) return null;
+  const x = Math.trunc(n);
+  if (x < -2147483648 || x > 2147483647) return null;
+  return x;
 }
 
 /**
@@ -86,6 +94,8 @@ export function buildReplayShareUrl(opts: ReplayShareUrlOptions): string {
   if (opts.eventId) url.searchParams.set("event", opts.eventId);
   if (opts.mode) url.searchParams.set("mode", opts.mode);
   if (opts.ui) url.searchParams.set("ui", opts.ui);
+  const pointsDeltaA = normalizeInt32(opts.pointsDeltaA);
+  if (pointsDeltaA !== null) url.searchParams.set("pda", String(pointsDeltaA));
   const step = normalizeReplayStep(opts.step);
   if (step !== null) url.searchParams.set("step", String(step));
   if (opts.absolute === false || !hasWindowOrigin()) return `${url.pathname}${url.search}${url.hash}`;

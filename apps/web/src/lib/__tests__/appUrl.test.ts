@@ -126,6 +126,18 @@ describe("buildReplayShareUrl", () => {
     expect(url).toBe("/replay?z=abc123&mode=auto&ui=engine&step=9");
   });
 
+  it("includes pointsDeltaA query param when provided", () => {
+    import.meta.env.BASE_URL = "/";
+    const url = buildReplayShareUrl({
+      data: { key: "z", value: "abc123" },
+      eventId: "gp-1",
+      pointsDeltaA: 12,
+      step: 9,
+      absolute: false,
+    });
+    expect(url).toBe("/replay?z=abc123&event=gp-1&pda=12&step=9");
+  });
+
   it("returns absolute URL in browser env", () => {
     import.meta.env.BASE_URL = "/sub/";
     const url = buildReplayShareUrl({
@@ -163,5 +175,15 @@ describe("buildReplayShareUrl", () => {
       absolute: false,
     });
     expect(negative).toBe("/replay?z=abc123");
+  });
+
+  it("omits invalid pointsDeltaA values outside int32 range", () => {
+    import.meta.env.BASE_URL = "/";
+    const url = buildReplayShareUrl({
+      data: { key: "z", value: "abc123" },
+      pointsDeltaA: 2147483648,
+      absolute: false,
+    });
+    expect(url).toBe("/replay?z=abc123");
   });
 });

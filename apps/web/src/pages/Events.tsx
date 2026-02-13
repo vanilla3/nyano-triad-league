@@ -239,6 +239,9 @@ export function EventsPage() {
                       />
                     </div>
                     <div className="mt-2 text-[11px] text-slate-500">
+                      Source mix: pointsDelta {selectedSeasonProgress.pointsDeltaEvents} / provisional {selectedSeasonProgress.provisionalEvents}
+                    </div>
+                    <div className="mt-2 text-[11px] text-slate-500">
                       Rule: Win +{selectedSeasonProgress.scoringRule.winPoints} / Loss +{selectedSeasonProgress.scoringRule.lossPoints} / Event clear +
                       {selectedSeasonProgress.scoringRule.clearBonusPoints}
                     </div>
@@ -269,9 +272,17 @@ export function EventsPage() {
                           </div>
                           <div className="flex flex-wrap items-center gap-2">
                             <span className="font-semibold text-slate-800">{entry.points} pts</span>
+                            {entry.pointsSource === "points_delta" ? (
+                              <span className="badge badge-sky">delta</span>
+                            ) : (
+                              <span className="badge badge-slate">provisional</span>
+                            )}
                             <span>
                               W/L {entry.wins}/{entry.losses}
                             </span>
+                            {entry.pointsSource === "provisional" && entry.pointsDeltaTotal !== null ? (
+                              <span>delta coverage {entry.pointsDeltaCoveragePercent.toFixed(0)}%</span>
+                            ) : null}
                             {entry.clearAchieved ? <span className="badge badge-emerald">clear</span> : null}
                           </div>
                         </div>
@@ -301,6 +312,8 @@ export function EventsPage() {
                         <span>win/loss: <span className="font-medium text-slate-800">{eventSummary.winCount}/{eventSummary.lossCount}</span></span>
                         <span>win rate: <span className="font-medium text-slate-800">{formatPercent(eventSummary.winRatePercent)}</span></span>
                         <span>best diff: <span className="font-medium text-slate-800">{eventSummary.bestTileDiff ?? "—"}</span></span>
+                        <span>delta A total: <span className="font-medium text-slate-800">{eventSummary.pointsDeltaTotal ?? "—"}</span></span>
+                        <span>delta coverage: <span className="font-medium text-slate-800">{eventSummary.pointsDeltaCoveragePercent.toFixed(1)}%</span></span>
                         <span>latest: <span className="font-mono text-slate-700">{eventSummary.latestAttemptAt ?? "—"}</span></span>
                       </div>
                     </div>

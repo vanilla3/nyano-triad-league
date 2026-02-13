@@ -466,6 +466,46 @@
 - `pnpm -C packages/triad-engine lint`
 - `pnpm -C packages/triad-engine test`
 
+## 2026-02-13 - commit-0111: phased pointsDelta integration for season progress
+
+### Why
+- DEV_TODO の Doing「pointsDelta 連携へ段階拡張」に対し、現状の season points は provisional ルールのみだった。
+- on-chain settled event の自動取り込み前に、`pointsDeltaA` を安全に受け取って集計に反映できる移行レイヤーが必要だった。
+- 既存履歴との互換性を守るため、部分データで順位が不安定化しない採用条件を固定したかった。
+
+### What
+- `apps/web/src/lib/event_attempts.ts`
+  - `EventAttemptV1` に optional `pointsDeltaA` / `pointsDeltaSource` を追加。
+- `apps/web/src/lib/appUrl.ts`
+  - replay share URL に `pda`（pointsDeltaA）を追加できるよう拡張。
+- `apps/web/src/pages/Replay.tsx`
+  - `?pda=` を int32 で解析。
+  - Event attempt 保存時に `pointsDeltaA` を保持。
+  - share/canonical link でも `pda` を維持。
+- `apps/web/src/lib/season_archive.ts`
+  - event単位の `pointsDeltaTotal` / `pointsDeltaAttemptCount` / `pointsDeltaCoveragePercent` を追加。
+  - archive markdown に delta 列を追加。
+- `apps/web/src/lib/season_progress.ts`
+  - source 概念（`provisional` / `points_delta`）を追加。
+  - event内で `pointsDeltaA` が100%揃った場合のみ `points_delta` 採用、未充足は provisional 維持。
+  - source mix 集計と markdown 出力を追加。
+- `apps/web/src/pages/Events.tsx`
+  - progress パネルに source mix 表示を追加。
+  - board に source badge（delta/provisional）と coverage 表示を追加。
+  - event行に delta total / coverage を追加。
+- Tests
+  - `apps/web/src/lib/__tests__/appUrl.test.ts`
+  - `apps/web/src/lib/__tests__/season_archive.test.ts`
+  - `apps/web/src/lib/__tests__/season_progress.test.ts`
+  - pointsDelta 入力・集計・採用条件を追加検証。
+
+### Verify
+- `pnpm -C apps/web typecheck`
+- `pnpm -C apps/web lint`
+- `pnpm -C apps/web build`
+- `pnpm -C apps/web test -- src/lib/__tests__/appUrl.test.ts src/lib/__tests__/season_archive.test.ts src/lib/__tests__/season_progress.test.ts`
+  - この実行環境では `vite/vitest` 起動時に `spawn EPERM` で完走不可
+
 ## 2026-02-13 - commit-0110: local season points and reward-tier guidance on /events
 
 ### Why

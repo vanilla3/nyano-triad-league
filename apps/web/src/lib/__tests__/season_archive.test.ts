@@ -45,7 +45,7 @@ describe("buildSeasonArchiveSummaries", () => {
     const attempts: EventAttemptV1[] = [
       makeAttempt({ id: "x1", eventId: "ev-s1-a", winner: 0, tilesA: 5, tilesB: 4, createdAt: "2026-02-10T00:00:00.000Z" }),
       makeAttempt({ id: "x2", eventId: "ev-s1-a", winner: 1, tilesA: 3, tilesB: 6, createdAt: "2026-02-11T00:00:00.000Z" }),
-      makeAttempt({ id: "x3", eventId: "ev-s2-a", winner: 0, tilesA: 7, tilesB: 2, createdAt: "2026-02-12T00:00:00.000Z" }),
+      makeAttempt({ id: "x3", eventId: "ev-s2-a", winner: 0, tilesA: 7, tilesB: 2, pointsDeltaA: 8, createdAt: "2026-02-12T00:00:00.000Z" }),
     ];
 
     const seasons = buildSeasonArchiveSummaries(events, attempts, Date.parse("2026-02-12T12:00:00.000Z"));
@@ -56,6 +56,9 @@ describe("buildSeasonArchiveSummaries", () => {
     expect(s2.totalWins).toBe(1);
     expect(s2.winRatePercent).toBe(100);
     expect(s2.latestAttemptAt).toBe("2026-02-12T00:00:00.000Z");
+    expect(s2.events[0]?.pointsDeltaTotal).toBe(8);
+    expect(s2.events[0]?.pointsDeltaAttemptCount).toBe(1);
+    expect(s2.events[0]?.pointsDeltaCoveragePercent).toBe(100);
 
     const s1 = seasons[1];
     expect(s1.totalAttempts).toBe(2);
@@ -68,11 +71,17 @@ describe("buildSeasonArchiveSummaries", () => {
     expect(s1A).toBeTruthy();
     expect(s1A?.attemptCount).toBe(2);
     expect(s1A?.bestTileDiff).toBe(1);
+    expect(s1A?.pointsDeltaTotal).toBeNull();
+    expect(s1A?.pointsDeltaAttemptCount).toBe(0);
+    expect(s1A?.pointsDeltaCoveragePercent).toBe(0);
 
     const s1B = s1.events.find((e) => e.eventId === "ev-s1-b");
     expect(s1B).toBeTruthy();
     expect(s1B?.attemptCount).toBe(0);
     expect(s1B?.bestTileDiff).toBeNull();
+    expect(s1B?.pointsDeltaTotal).toBeNull();
+    expect(s1B?.pointsDeltaAttemptCount).toBe(0);
+    expect(s1B?.pointsDeltaCoveragePercent).toBe(0);
   });
 });
 
@@ -86,7 +95,7 @@ describe("formatSeasonArchiveMarkdown", () => {
 
     const md = formatSeasonArchiveMarkdown(summary);
     expect(md).toContain("### Season 1 (local archive)");
-    expect(md).toContain("| Event | Status | Attempts | Win rate | Best diff | Latest |");
+    expect(md).toContain("| Event | Status | Attempts | Win rate | Best diff | Delta A | Delta cov | Latest |");
     expect(md).toContain("| Event One |");
     expect(md).toContain("Win rate: 100.0%");
   });

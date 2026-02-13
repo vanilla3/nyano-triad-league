@@ -15,11 +15,17 @@ export type SeasonRewardTier = {
   rewardHint: string;
 };
 
+export type SeasonPointsSource = "provisional" | "points_delta";
+
 export type SeasonEventPointsEntry = {
   rank: number;
   eventId: string;
   eventTitle: string;
   points: number;
+  pointsSource: SeasonPointsSource;
+  provisionalPoints: number;
+  pointsDeltaTotal: number | null;
+  pointsDeltaCoveragePercent: number;
   clearAchieved: boolean;
   attempts: number;
   wins: number;
@@ -36,6 +42,8 @@ export type SeasonProgressSummary = {
   nextTier: SeasonRewardTier | null;
   pointsToNextTier: number;
   progressToNextTier: number;
+  pointsDeltaEvents: number;
+  provisionalEvents: number;
   scoringRule: SeasonScoringRule;
   rankedEvents: SeasonEventPointsEntry[];
 };
@@ -73,15 +81,32 @@ function normalizeRewardTiers(tiers: SeasonRewardTier[]): SeasonRewardTier[] {
   return out;
 }
 
-function eventPoints(eventSummary: SeasonArchiveEventSummary, scoringRule: SeasonScoringRule): { points: number; clearAchieved: boolean } {
+function eventPoints(eventSummary: SeasonArchiveEventSummary, scoringRule: SeasonScoringRule): {
+  points: number;
+  clearAchieved: boolean;
+  pointsSource: SeasonPointsSource;
+  provisionalPoints: number;
+  pointsDeltaTotal: number | null;
+  pointsDeltaCoveragePercent: number;
+} {
   const clearAchieved = eventSummary.winCount > 0;
-  const points =
+  const provisionalPoints =
     eventSummary.winCount * scoringRule.winPoints +
     eventSummary.lossCount * scoringRule.lossPoints +
     (clearAchieved ? scoringRule.clearBonusPoints : 0);
+  const hasFullPointsDeltaCoverage =
+    eventSummary.attemptCount > 0 &&
+    eventSummary.pointsDeltaTotal !== null &&
+    eventSummary.pointsDeltaAttemptCount === eventSummary.attemptCount;
+  const pointsSource: SeasonPointsSource = hasFullPointsDeltaCoverage ? "points_delta" : "provisional";
+  const points = hasFullPointsDeltaCoverage ? (eventSummary.pointsDeltaTotal as number) : provisionalPoints;
   return {
     points,
     clearAchieved,
+    pointsSource,
+    provisionalPoints,
+    pointsDeltaTotal: eventSummary.pointsDeltaTotal,
+    pointsDeltaCoveragePercent: eventSummary.pointsDeltaCoveragePercent,
   };
 }
 
@@ -133,6 +158,10 @@ export function buildSeasonProgressSummary(
     eventId: x.eventSummary.eventId,
     eventTitle: x.eventSummary.eventTitle,
     points: x.points,
+    pointsSource: x.pointsSource,
+    provisionalPoints: x.provisionalPoints,
+    pointsDeltaTotal: x.pointsDeltaTotal,
+    pointsDeltaCoveragePercent: x.pointsDeltaCoveragePercent,
     clearAchieved: x.clearAchieved,
     attempts: x.eventSummary.attemptCount,
     wins: x.eventSummary.winCount,
@@ -144,6 +173,8 @@ export function buildSeasonProgressSummary(
 
   const totalPoints = rankedEvents.reduce((n, x) => n + x.points, 0);
   const clearCount = rankedEvents.reduce((n, x) => n + (x.clearAchieved ? 1 : 0), 0);
+  const pointsDeltaEvents = rankedEvents.reduce((n, x) => n + (x.pointsSource === "points_delta" ? 1 : 0), 0);
+  const provisionalEvents = rankedEvents.length - pointsDeltaEvents;
   const { currentTier, nextTier } = resolveTiers(totalPoints, rewardTiers);
   const pointsToNextTier = nextTier ? Math.max(0, nextTier.minPoints - totalPoints) : 0;
 
@@ -161,6 +192,8 @@ export function buildSeasonProgressSummary(
     nextTier,
     pointsToNextTier,
     progressToNextTier,
+    pointsDeltaEvents,
+    provisionalEvents,
     scoringRule,
     rankedEvents,
   };
@@ -174,15 +207,21 @@ export function formatSeasonProgressMarkdown(progress: SeasonProgressSummary): s
   lines.push(`- Clears: ${progress.clearCount}`);
   if (progress.nextTier) lines.push(`- Next tier: ${progress.nextTier.label} (+${progress.pointsToNextTier})`);
   else lines.push("- Next tier: max reached");
+  lines.push(`- Source mix: pointsDelta ${progress.pointsDeltaEvents} / provisional ${progress.provisionalEvents}`);
   lines.push(
     `- Rule: Win +${progress.scoringRule.winPoints} / Loss +${progress.scoringRule.lossPoints} / Event clear +${progress.scoringRule.clearBonusPoints}`,
   );
   lines.push("");
-  lines.push("| # | Event | Points | W/L | Win rate | Clear |");
-  lines.push("| ---: | --- | ---: | ---: | ---: | --- |");
+  lines.push("| # | Event | Points | Source | W/L | Win rate | Clear |");
+  lines.push("| ---: | --- | ---: | --- | ---: | ---: | --- |");
   for (const entry of progress.rankedEvents) {
+    const sourceLabel = entry.pointsSource === "points_delta"
+      ? "delta"
+      : entry.pointsDeltaTotal !== null
+        ? `rule (${entry.pointsDeltaCoveragePercent.toFixed(0)}%)`
+        : "rule";
     lines.push(
-      `| ${entry.rank} | ${entry.eventTitle} | ${entry.points} | ${entry.wins}/${entry.losses} | ${entry.winRatePercent.toFixed(1)}% | ${entry.clearAchieved ? "yes" : "no"} |`,
+      `| ${entry.rank} | ${entry.eventTitle} | ${entry.points} | ${sourceLabel} | ${entry.wins}/${entry.losses} | ${entry.winRatePercent.toFixed(1)}% | ${entry.clearAchieved ? "yes" : "no"} |`,
     );
   }
   return lines.join("\n");

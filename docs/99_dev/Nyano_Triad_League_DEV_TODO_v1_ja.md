@@ -73,9 +73,14 @@
   - Events に `Local season points (provisional)` パネル（Tier/次Tierまで/進捗バー）を追加
   - `Season points board` と markdown 出力（archive + progress）を追加
   - `season_progress.test.ts` を追加（points/tier/tie-break/markdown）
+- ✅ Commit0111: /events の season points を pointsDelta 段階連携へ拡張
+  - Replay URL の `pda`（pointsDeltaA）を Event attempt に保存可能化
+  - `season_archive.ts` に pointsDelta 合計/カバレッジ集計を追加
+  - `season_progress.ts` で「event内の全attemptに pointsDelta がある場合のみ」pointsDelta採用（未充足は provisional 維持）
+  - Events UI と markdown に source mix（pointsDelta/provisional）表示を追加
 ## 🚧 Doing (now)
 
-- 🔧 Phase 4 の運用面（ランキング / 報酬導線）を pointsDelta 連携へ段階拡張する
+- 🔧 Phase 4 の運用面（ランキング / 報酬導線）を pointsDelta 連携へ段階拡張する（URL経由の入力対応まで完了。次は on-chain settled event 取り込み）
 
 ## 🧩 Next (high priority)
 
