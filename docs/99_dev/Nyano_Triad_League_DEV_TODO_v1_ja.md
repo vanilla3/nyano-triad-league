@@ -141,3 +141,7 @@
   - `BattleStageEngine` に card-art の読み込み状態/失敗状態を表示し、`Retry card art` を追加
   - `TextureResolver` に failed/pending 状態管理と status event を追加して、失敗時の無限再試行を防止
   - `textureResolverPreload.test.ts` に failed->retry success の検証を追加
+- ✅ WO005-I follow-up: Pixi/WebGL init failure auto fallback
+  - `ui=engine` で Pixi 初期化失敗時に `BoardViewMint` へ自動フォールバックして進行継続
+  - `/battle-stage` `/replay-stage` に `Retry Pixi` 導線を追加
+  - stage-focus E2E に WebGL unavailable ケースを追加して回帰防止

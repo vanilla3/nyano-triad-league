@@ -1141,3 +1141,30 @@
 - `pnpm -C apps/web typecheck`
 - `pnpm -C apps/web e2e -- stage-focus.spec.ts`
 - `pnpm -C apps/web build`
+## 2026-02-13 — WO005-I follow-up: auto fallback to Mint board when Pixi/WebGL init fails
+
+### Why
+- `ui=engine` stage routes previously showed an init error placeholder when Pixi failed, but did not keep an interactive board path.
+- This could block play/replay flow on devices or sessions where WebGL or dynamic chunk load failed.
+
+### What
+- `apps/web/src/engine/components/BattleStageEngine.tsx`
+  - Added `onInitError` callback prop.
+  - Wrapped dynamic import + renderer init in a unified try/catch and report init failures through callback.
+- `apps/web/src/pages/Match.tsx`
+  - Added engine renderer failure state and automatic fallback from `BattleStageEngine` to `BoardViewMint`.
+  - Added compact fallback banner with `Retry Pixi` action.
+  - Kept focus-hand commit controls available while fallback board is active.
+- `apps/web/src/pages/Replay.tsx`
+  - Added the same engine-failure state and fallback to `BoardViewMint` when Pixi init fails.
+  - Added `Retry Pixi` action in replay view.
+- `apps/web/e2e/stage-focus.spec.ts`
+  - Added WebGL-unavailable scenario for `/battle-stage` and verification that fallback + retry UI appears.
+  - Hardened 375px commit-visibility assertion to handle transient fallback mode without flakiness.
+
+### Verify
+- `pnpm -C apps/web typecheck`
+- `pnpm -C apps/web lint`
+- `pnpm -C apps/web test -- src/engine/__tests__/BattleStageEngine.test.ts src/engine/__tests__/rendererHardening.test.ts`
+- `pnpm -C apps/web e2e -- stage-focus.spec.ts`
+- `pnpm -C apps/web build`

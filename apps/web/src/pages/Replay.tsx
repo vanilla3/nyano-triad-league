@@ -14,6 +14,7 @@ import {
 import OFFICIAL from "@root/rulesets/official_onchain_rulesets.json";
 
 import { BoardView } from "@/components/BoardView";
+import { BoardViewMint } from "@/components/BoardViewMint";
 import { BoardViewRPG } from "@/components/BoardViewRPG";
 import { DuelStageMint } from "@/components/DuelStageMint";
 import { ScoreBar } from "@/components/ScoreBar";
@@ -294,6 +295,9 @@ export function ReplayPage() {
   const [isPlaying, setIsPlaying] = React.useState<boolean>(false);
   const [playbackSpeed, setPlaybackSpeed] = React.useState<number>(1);
   const toast = useToast();
+  const [engineRendererFailed, setEngineRendererFailed] = React.useState(false);
+  const [engineRendererError, setEngineRendererError] = React.useState<string | null>(null);
+  const useEngineRenderer = isEngine && !engineRendererFailed;
   const initialBroadcast = searchParams.get("broadcast") === "1";
   const [broadcastOverlay, setBroadcastOverlay] = React.useState<boolean>(initialBroadcast);
 
@@ -317,6 +321,23 @@ export function ReplayPage() {
     }
     setShowStagePanels(false);
   }, [isStageFocus]);
+
+  React.useEffect(() => {
+    if (isEngine) return;
+    setEngineRendererFailed(false);
+    setEngineRendererError(null);
+  }, [isEngine]);
+
+  const handleEngineRendererInitError = React.useCallback((message: string) => {
+    setEngineRendererFailed(true);
+    setEngineRendererError(message);
+    toast.warn("Pixi renderer unavailable", "Switched to Mint fallback board");
+  }, [toast]);
+
+  const handleRetryEngineRenderer = React.useCallback(() => {
+    setEngineRendererFailed(false);
+    setEngineRendererError(null);
+  }, []);
 
   React.useEffect(() => {
     if (!isStageFocus) {
@@ -883,7 +904,23 @@ protocolV1: {
           ) : null}
         </div>
 
-        {isEngine && !compare ? (
+        {isEngine && !compare && engineRendererFailed ? (
+          <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900">
+            <span title={engineRendererError ?? undefined}>
+              Pixi renderer is unavailable. Showing Mint fallback board.
+            </span>
+            <button
+              type="button"
+              className="btn btn-sm"
+              onClick={handleRetryEngineRenderer}
+              aria-label="Retry Pixi renderer in replay"
+            >
+              Retry Pixi
+            </button>
+          </div>
+        ) : null}
+
+        {isEngine && !compare && useEngineRenderer ? (
           <DuelStageMint impact={stageImpact} impactBurst={stageImpactBurst}>
             <BattleStageEngine
               board={boardNow}
@@ -894,6 +931,20 @@ protocolV1: {
               preloadTokenIds={replayPreloadTokenIds}
               placedCell={placedCell}
               flippedCells={flippedCells}
+              onInitError={handleEngineRendererInitError}
+            />
+          </DuelStageMint>
+        ) : isEngine && !compare ? (
+          <DuelStageMint impact={stageImpact} impactBurst={stageImpactBurst}>
+            <BoardViewMint
+              board={boardNow}
+              selectedCell={null}
+              placedCell={placedCell}
+              flippedCells={flippedCells}
+              currentPlayer={replayCurrentPlayer}
+              showCoordinates
+              showActionPrompt
+              gamePhase={step >= 9 ? "game_over" : "select_cell"}
             />
           </DuelStageMint>
         ) : isRpg ? (

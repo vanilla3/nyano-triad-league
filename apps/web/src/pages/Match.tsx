@@ -290,6 +290,9 @@ export function MatchPage() {
   const isRpg = ui === "rpg";
   const isMint = ui === "mint";
   const isEngine = ui === "engine";
+  const [engineRendererFailed, setEngineRendererFailed] = React.useState(false);
+  const [engineRendererError, setEngineRendererError] = React.useState<string | null>(null);
+  const useEngineRenderer = isEngine && !engineRendererFailed;
   const useMintUi = isMint || isEngine;
   const focusParam = searchParams.get("focus") ?? searchParams.get("layout");
   const isFocusMode = parseFocusMode(focusParam);
@@ -333,6 +336,12 @@ export function MatchPage() {
     window.addEventListener("resize", updateSizing);
     return () => window.removeEventListener("resize", updateSizing);
   }, [isBattleStageRoute]);
+
+  React.useEffect(() => {
+    if (isEngine) return;
+    setEngineRendererFailed(false);
+    setEngineRendererError(null);
+  }, [isEngine]);
 
   // ── Telemetry (NIN-UX-003) ──
   const telemetry = React.useMemo(() => createTelemetryTracker(), []);
@@ -485,6 +494,15 @@ export function MatchPage() {
 
   const [status, setStatus] = React.useState<string | null>(null);
   const toast = useToast();
+  const handleEngineRendererInitError = React.useCallback((message: string) => {
+    setEngineRendererFailed(true);
+    setEngineRendererError(message);
+    toast.warn("Pixi renderer unavailable", "Switched to Mint fallback board");
+  }, [toast]);
+  const handleRetryEngineRenderer = React.useCallback(() => {
+    setEngineRendererFailed(false);
+    setEngineRendererError(null);
+  }, []);
   const overlayUrl = React.useMemo(() => appAbsoluteUrl("overlay?controls=0"), []);
   const lastStreamCmdIdRef = React.useRef<string>("");
   const [error, setError] = React.useState<string | null>(null);
@@ -2508,6 +2526,27 @@ export function MatchPage() {
                   </div>
                 )}
 
+                {isEngine && engineRendererFailed && (
+                  <div
+                    className={[
+                      "flex flex-wrap items-center justify-between gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900",
+                      isStageFocusRoute ? "fixed left-3 right-3 top-20 z-40 shadow-lg" : "",
+                    ].join(" ")}
+                  >
+                    <span title={engineRendererError ?? undefined}>
+                      Pixi renderer is unavailable. Showing Mint fallback board.
+                    </span>
+                    <button
+                      type="button"
+                      className="btn btn-sm"
+                      onClick={handleRetryEngineRenderer}
+                      aria-label="Retry Pixi renderer"
+                    >
+                      Retry Pixi
+                    </button>
+                  </div>
+                )}
+
                 {/* ────────────────────────────────────────────
                     P0-1: Interactive Board (unified input)
                     
@@ -2518,7 +2557,7 @@ export function MatchPage() {
                     ──────────────────────────────────────────── */}
                 <div className={isStageFocusRoute ? "stage-focus-board-shell" : ""}>
                   {sim.ok ? (
-                    isMint ? (
+                    isMint || (isEngine && engineRendererFailed) ? (
                       <DuelStageMint impact={nyanoReactionImpact} impactBurst={stageImpactBurst}>
                         <BoardViewMint
                           board={boardNow}
@@ -2545,7 +2584,7 @@ export function MatchPage() {
                           onCellDragHover={handleBoardDragHover}
                         />
                       </DuelStageMint>
-                    ) : isEngine ? (
+                    ) : useEngineRenderer ? (
                       <DuelStageMint impact={nyanoReactionImpact} impactBurst={stageImpactBurst}>
                         <BattleStageEngine
                           board={boardNow}
@@ -2572,6 +2611,7 @@ export function MatchPage() {
                           dragDropActive={enableHandDragDrop && isHandDragging}
                           onCellDrop={handleBoardDrop}
                           onCellDragHover={handleBoardDragHover}
+                          onInitError={handleEngineRendererInitError}
                         />
                       </DuelStageMint>
                     ) : isRpg ? (

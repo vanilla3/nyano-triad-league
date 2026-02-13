@@ -64,6 +64,8 @@ export interface BattleStageEngineProps {
   boardMaxWidthPx?: number;
   /** Optional board min height override (px). */
   boardMinHeightPx?: number;
+  /** Optional callback when Pixi renderer init fails. */
+  onInitError?: (message: string) => void;
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -166,6 +168,7 @@ export function BattleStageEngine({
   isFlipAnimating,
   boardMaxWidthPx,
   boardMinHeightPx,
+  onInitError,
 }: BattleStageEngineProps) {
   const containerRef = React.useRef<HTMLDivElement>(null);
   const gridOverlayRef = React.useRef<HTMLDivElement>(null);
@@ -219,19 +222,21 @@ export function BattleStageEngine({
     if (import.meta.env.DEV) console.debug("[BattleStageEngine] mount");
 
     (async () => {
-      const { PixiBattleRenderer } = await import(
-        "../renderers/pixi/PixiBattleRenderer"
-      );
-
-      if (destroyed) return; // component unmounted during async import
-
-      renderer = new PixiBattleRenderer();
-
       try {
+        const { PixiBattleRenderer } = await import(
+          "../renderers/pixi/PixiBattleRenderer"
+        );
+
+        if (destroyed) return; // component unmounted during async import
+
+        renderer = new PixiBattleRenderer();
         await renderer.init(container);
       } catch (e: unknown) {
-        if (import.meta.env.DEV) console.error("[BattleStageEngine] init failed:", errorMessage(e));
-        setInitError(errorMessage(e));
+        if (destroyed) return;
+        const message = errorMessage(e);
+        if (import.meta.env.DEV) console.error("[BattleStageEngine] init failed:", message);
+        setInitError(message);
+        onInitError?.(message);
         return;
       }
 
@@ -281,7 +286,7 @@ export function BattleStageEngine({
       if (import.meta.env.DEV) console.debug("[BattleStageEngine] unmount");
     };
     // Mount-only effect: renderer lifecycle is independent of React state.
-  }, []);
+  }, [onInitError]);
 
   // ── Update: push state changes to renderer ─────────────────────────
   React.useEffect(() => {
