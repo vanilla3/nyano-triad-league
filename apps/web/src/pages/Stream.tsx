@@ -101,6 +101,10 @@ function formatClassicOpenSlots(indices: readonly number[]): string {
   return indices.map((idx) => String(idx + 1)).join(", ");
 }
 
+function formatClassicSwapSlots(swap: ClassicStateJsonSwap): string {
+  return `A${swap.playerA + 1} <-> B${swap.playerB + 1}`;
+}
+
 type ClassicStateJsonOpen = {
   mode: "all_open" | "three_open";
   playerA: number[];
@@ -1305,6 +1309,11 @@ return (
                         ? "all cards revealed"
                         : `A[${formatClassicOpenSlots(liveClassicOpen.playerA)}] / B[${formatClassicOpenSlots(liveClassicOpen.playerB)}]`}
                     </span>
+                  </div>
+                ) : null}
+                {liveClassic?.swap ? (
+                  <div className="mt-1 text-xs text-slate-700">
+                    Classic Swap: <span className="font-mono">{formatClassicSwapSlots(liveClassic.swap)}</span>
                   </div>
                 ) : null}
                 {live?.lastMove ? (

@@ -34,7 +34,7 @@ import {
 } from "@/lib/streamer_bus";
 import { readStringSetting, writeStringSetting } from "@/lib/local_settings";
 import { appAbsoluteUrl, appPath } from "@/lib/appUrl";
-import { resolveClassicOpenCardIndices } from "@nyano/triad-engine";
+import { resolveClassicOpenCardIndices, resolveClassicSwapIndices } from "@nyano/triad-engine";
 import type { CardData, FlipTraceV1, PlayerIndex } from "@nyano/triad-engine";
 import { resolveRulesetById } from "@/lib/ruleset_registry";
 
@@ -180,6 +180,10 @@ function formatClassicOpenSlots(indices: readonly number[]): string {
   return indices.map((idx) => String(idx + 1)).join(", ");
 }
 
+function formatClassicSwapSlots(aIndex: number, bIndex: number): string {
+  return `A${aIndex + 1} <-> B${bIndex + 1}`;
+}
+
 export function OverlayPage() {
   const [searchParams] = useSearchParams();
   const controls = searchParams.get("controls") !== "0";
@@ -311,21 +315,29 @@ export function OverlayPage() {
   const toPlayLabel = sideLabel(toPlay);
 
   const strictAllowed = React.useMemo(() => computeStrictAllowed(state), [state]);
-  const overlayClassicOpen = React.useMemo(() => {
+  const overlayClassic = React.useMemo(() => {
     const header = state?.protocolV1?.header;
     if (!header) return null;
     const ruleset = resolveRulesetById(header.rulesetId);
     if (!ruleset) return null;
-    return resolveClassicOpenCardIndices({
+    const classicHeader = {
+      rulesetId: header.rulesetId,
+      playerA: header.playerA,
+      playerB: header.playerB,
+      salt: header.salt,
+    };
+    const open = resolveClassicOpenCardIndices({
       ruleset,
-      header: {
-        rulesetId: header.rulesetId,
-        playerA: header.playerA,
-        playerB: header.playerB,
-        salt: header.salt,
-      },
+      header: classicHeader,
     });
+    const swap = resolveClassicSwapIndices({
+      ruleset,
+      header: classicHeader,
+    });
+    if (!open && !swap) return null;
+    return { open, swap };
   }, [state]);
+  const overlayClassicOpen = overlayClassic?.open ?? null;
 
   const lastCell = typeof state?.lastMove?.cell === "number" ? state.lastMove.cell : null;
   const markCell = typeof state?.lastMove?.warningMarkCell === "number" ? state.lastMove.warningMarkCell : null;
@@ -694,6 +706,11 @@ export function OverlayPage() {
                       ? "all cards revealed"
                       : `A[${formatClassicOpenSlots(overlayClassicOpen.playerA)}] / B[${formatClassicOpenSlots(overlayClassicOpen.playerB)}]`}
                   </span>
+                </div>
+              ) : null}
+              {overlayClassic?.swap ? (
+                <div className={controls ? "mt-1 text-xs text-slate-500" : "mt-1 ol-detail-text text-slate-300"}>
+                  Classic Swap: <span className="font-mono">{formatClassicSwapSlots(overlayClassic.swap.aIndex, overlayClassic.swap.bIndex)}</span>
                 </div>
               ) : null}
 

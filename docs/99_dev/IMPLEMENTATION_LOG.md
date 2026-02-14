@@ -2216,3 +2216,19 @@
 ### Verify
 - `pnpm.cmd -C apps/web lint` OK
 - `pnpm.cmd -C apps/web build` OK
+
+## 2026-02-14 - WO007 follow-up: show Classic Swap in Stream/Overlay operator HUD
+
+### Why
+- Classic Swap was already visible in Match/Replay details and in `state_json`, but stream operators watching only `/stream` and `/overlay` still missed swap mapping.
+
+### What
+- `apps/web/src/pages/Stream.tsx`
+  - Added `Classic Swap` line in live status using the same deterministic classic metadata resolver as `state_json`.
+- `apps/web/src/pages/Overlay.tsx`
+  - Extended Classic metadata resolution to include both `open` and `swap`.
+  - Added `Classic Swap` line in the "Now Playing" panel.
+
+### Verify
+- `pnpm.cmd -C apps/web lint` OK
+- `pnpm.cmd -C apps/web build` OK
