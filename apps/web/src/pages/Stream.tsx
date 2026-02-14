@@ -1,5 +1,6 @@
 import React from "react";
 import { Link } from "react-router-dom";
+import { resolveClassicOpenCardIndices } from "@nyano/triad-engine";
 
 import { StreamOperationsHUD, computeConnectionHealth, type ExternalResult, type OpsLogEntry } from "@/components/StreamOperationsHUD";
 
@@ -47,6 +48,7 @@ import { postNyanoWarudoSnapshot } from "@/lib/nyano_warudo_bridge";
 import { errorMessage } from "@/lib/errorMessage";
 import { writeClipboardText } from "@/lib/clipboard";
 import { formatViewerMoveText, parseChatMoveLoose, parseViewerMoveText } from "@/lib/triad_viewer_command";
+import { resolveRulesetById } from "@/lib/ruleset_registry";
 import {
   cellIndexToCoord,
   computeEmptyCells,
@@ -93,6 +95,10 @@ function moveDisplay(m: ViewerMove, side: 0 | 1): string {
     cell: m.cell,
     warningMarkCell: typeof m.warningMarkCell === "number" ? m.warningMarkCell : null,
   });
+}
+
+function formatClassicOpenSlots(indices: readonly number[]): string {
+  return indices.map((idx) => String(idx + 1)).join(", ");
 }
 
 
@@ -576,6 +582,21 @@ const downloadAiPrompt = React.useCallback(() => {
 
   const liveTurn = typeof live?.turn === "number" ? live.turn : null;
   const liveCurrent = computeToPlay(live);
+  const liveClassicOpen = React.useMemo(() => {
+    const header = live?.protocolV1?.header;
+    if (!header) return null;
+    const ruleset = resolveRulesetById(header.rulesetId);
+    if (!ruleset) return null;
+    return resolveClassicOpenCardIndices({
+      ruleset,
+      header: {
+        rulesetId: header.rulesetId,
+        playerA: header.playerA,
+        playerB: header.playerB,
+        salt: header.salt,
+      },
+    });
+  }, [live]);
 
 const canVoteNow =
   live?.mode === "live" &&
@@ -1222,6 +1243,16 @@ return (
                   Turn: <span className="font-mono">{typeof liveTurn === "number" ? liveTurn : "—"}</span> · to play:{" "}
                   <span className="font-mono">{liveCurrent === 0 ? "A" : liveCurrent === 1 ? "B" : "—"}</span>
                 </div>
+                {liveClassicOpen ? (
+                  <div className="mt-1 text-xs text-slate-700">
+                    Classic Open:{" "}
+                    <span className="font-mono">
+                      {liveClassicOpen.mode === "all_open"
+                        ? "all cards revealed"
+                        : `A[${formatClassicOpenSlots(liveClassicOpen.playerA)}] / B[${formatClassicOpenSlots(liveClassicOpen.playerB)}]`}
+                    </span>
+                  </div>
+                ) : null}
                 {live?.lastMove ? (
                   <div className="mt-1 text-xs text-slate-700">
                     Last: <span className="font-mono">{live.lastMove.by === 0 ? "A" : "B"}{" "}

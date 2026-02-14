@@ -2120,6 +2120,25 @@
 - `pnpm.cmd -C apps/web lint` OK
 - `pnpm.cmd -C apps/web build` OK
 
+## 2026-02-14 - WO007 follow-up: Stream live status shows Classic Open metadata
+
+### Why
+- Stream operators could not confirm Classic Open reveal mapping from the Stream page without opening Match/Replay.
+- Overlay state already included `protocolV1.header`, so the mapping can be resolved deterministically client-side.
+
+### What
+- `apps/web/src/pages/Stream.tsx`
+  - Added Classic Open resolver path:
+    - `ruleset = resolveRulesetById(protocolV1.header.rulesetId)`
+    - `open = resolveClassicOpenCardIndices({ ruleset, header })`
+  - Added Live status line:
+    - `all_open` -> `all cards revealed`
+    - `three_open` -> `A[...] / B[...]`
+
+### Verify
+- `pnpm.cmd -C apps/web lint` OK
+- `pnpm.cmd -C apps/web build` OK
+
 ## 2026-02-14 - WO007 follow-up: Replay auto mode resolves Classic rulesetId via local registry
 
 ### Why
