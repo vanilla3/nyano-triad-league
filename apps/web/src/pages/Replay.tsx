@@ -258,6 +258,19 @@ function formatClassicOpenSlots(indices: readonly number[]): string {
   return indices.map((idx) => String(idx + 1)).join(", ");
 }
 
+function HiddenDeckPreviewCard({ slotIndex }: { slotIndex: number }) {
+  return (
+    <div className="aspect-[3/4] rounded-2xl border border-slate-300 bg-slate-100/80 p-2">
+      <div className="h-full rounded-xl border border-dashed border-slate-300 bg-gradient-to-br from-slate-200 to-slate-100 text-slate-500">
+        <div className="flex h-full flex-col items-center justify-center gap-1">
+          <div className="text-lg font-semibold">?</div>
+          <div className="text-[10px] font-mono">slot {slotIndex + 1}</div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 const HIGHLIGHT_KIND_ORDER: ReplayHighlightKind[] = ["big_flip", "chain", "combo", "warning"];
 
 export function ReplayPage() {
@@ -906,6 +919,14 @@ protocolV1: {
       header: sim.transcript.header,
     });
   }, [sim]);
+  const replayOpenVisibleA = React.useMemo(() => {
+    if (!replayClassicOpen) return null;
+    return new Set<number>(replayClassicOpen.playerA);
+  }, [replayClassicOpen]);
+  const replayOpenVisibleB = React.useMemo(() => {
+    if (!replayClassicOpen) return null;
+    return new Set<number>(replayClassicOpen.playerB);
+  }, [replayClassicOpen]);
   const replayTransportButtonClass = isStageFocus ? "btn h-10 px-4" : "btn btn-sm";
   const replayTransportPrimaryButtonClass = isStageFocus ? "btn btn-primary h-10 px-4" : "btn btn-sm btn-primary";
   const replaySpeedSelectClass = isStageFocus
@@ -2244,20 +2265,42 @@ protocolV1: {
             <div className="card-bd grid gap-6 md:grid-cols-2">
               <div className="grid gap-2">
                 <div className="text-xs font-medium text-slate-600">playerA deck</div>
+                {replayClassicOpen ? (
+                  <div className="text-[11px] text-slate-500">
+                    {replayClassicOpen.mode === "all_open"
+                      ? "Open rule: all cards revealed"
+                      : `Open rule: slots ${formatClassicOpenSlots(replayClassicOpen.playerA)} revealed`}
+                  </div>
+                ) : null}
                 <div className="deck-preview-grid grid grid-cols-3 gap-2 sm:grid-cols-5">
-                  {sim.transcript.header.deckA.map((tid) => {
+                  {sim.transcript.header.deckA.map((tid, idx) => {
                     const card = sim.cards.get(tid);
-                    return card ? <CardMini key={tid.toString()} card={card} owner={0} subtle /> : null;
+                    if (!card) return null;
+                    if (!replayOpenVisibleA || replayOpenVisibleA.has(idx)) {
+                      return <CardMini key={tid.toString()} card={card} owner={0} subtle />;
+                    }
+                    return <HiddenDeckPreviewCard key={`${tid.toString()}-hidden-a`} slotIndex={idx} />;
                   })}
                 </div>
               </div>
 
               <div className="grid gap-2">
                 <div className="text-xs font-medium text-slate-600">playerB deck</div>
+                {replayClassicOpen ? (
+                  <div className="text-[11px] text-slate-500">
+                    {replayClassicOpen.mode === "all_open"
+                      ? "Open rule: all cards revealed"
+                      : `Open rule: slots ${formatClassicOpenSlots(replayClassicOpen.playerB)} revealed`}
+                  </div>
+                ) : null}
                 <div className="deck-preview-grid grid grid-cols-3 gap-2 sm:grid-cols-5">
-                  {sim.transcript.header.deckB.map((tid) => {
+                  {sim.transcript.header.deckB.map((tid, idx) => {
                     const card = sim.cards.get(tid);
-                    return card ? <CardMini key={tid.toString()} card={card} owner={1} subtle /> : null;
+                    if (!card) return null;
+                    if (!replayOpenVisibleB || replayOpenVisibleB.has(idx)) {
+                      return <CardMini key={tid.toString()} card={card} owner={1} subtle />;
+                    }
+                    return <HiddenDeckPreviewCard key={`${tid.toString()}-hidden-b`} slotIndex={idx} />;
                   })}
                 </div>
               </div>

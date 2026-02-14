@@ -2068,6 +2068,24 @@
 - `pnpm.cmd -C apps/web lint` OK
 - `pnpm.cmd -C apps/web build` OK
 
+## 2026-02-14 - WO007 follow-up: Replay deck inspector Open-rule masking
+
+### Why
+- Replay had deterministic Classic Open metadata text, but Deck inspector still displayed all cards unconditionally.
+- That made `threeOpen` visibility semantics unclear in replay review.
+
+### What
+- `apps/web/src/pages/Replay.tsx`
+  - Added `HiddenDeckPreviewCard` placeholder for unrevealed slots.
+  - Added Open-rule-aware masking in Deck inspector:
+    - `allOpen`: all slots visible.
+    - `threeOpen`: only deterministic revealed slot indices are visible for each player, others are masked.
+  - Added per-player hint text showing revealed slot indices.
+
+### Verify
+- `pnpm.cmd -C apps/web lint` OK
+- `pnpm.cmd -C apps/web build` OK
+
 ## 2026-02-14 - WO007 follow-up: Replay auto mode resolves Classic rulesetId via local registry
 
 ### Why
