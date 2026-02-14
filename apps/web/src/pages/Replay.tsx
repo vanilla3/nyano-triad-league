@@ -356,6 +356,7 @@ export function ReplayPage() {
 
   const [step, setStep] = React.useState<number>(initialStep);
   const [isPlaying, setIsPlaying] = React.useState<boolean>(false);
+  const [replayRevealHiddenSlots, setReplayRevealHiddenSlots] = React.useState(false);
   const [playbackSpeed, setPlaybackSpeed] = React.useState<number>(1);
   const toast = useToast();
   const [engineRendererFailed, setEngineRendererFailed] = React.useState(false);
@@ -927,6 +928,7 @@ protocolV1: {
     if (!replayClassicOpen) return null;
     return new Set<number>(replayClassicOpen.playerB);
   }, [replayClassicOpen]);
+  const shouldMaskReplayDeckSlots = replayClassicOpen?.mode === "three_open" && !replayRevealHiddenSlots;
   const replayTransportButtonClass = isStageFocus ? "btn h-10 px-4" : "btn btn-sm";
   const replayTransportPrimaryButtonClass = isStageFocus ? "btn btn-primary h-10 px-4" : "btn btn-sm btn-primary";
   const replaySpeedSelectClass = isStageFocus
@@ -2260,6 +2262,16 @@ protocolV1: {
             <div className="card-hd">
               <div className="text-base font-semibold">Deck inspector</div>
               <div className="text-xs text-slate-500">Read-only deck cards loaded from on-chain data.</div>
+              {replayClassicOpen?.mode === "three_open" ? (
+                <label className="mt-2 inline-flex items-center gap-2 text-xs text-slate-600">
+                  <input
+                    type="checkbox"
+                    checked={replayRevealHiddenSlots}
+                    onChange={(e) => setReplayRevealHiddenSlots(e.target.checked)}
+                  />
+                  Show hidden slots (post-match analysis)
+                </label>
+              ) : null}
             </div>
 
             <div className="card-bd grid gap-6 md:grid-cols-2">
@@ -2276,7 +2288,7 @@ protocolV1: {
                   {sim.transcript.header.deckA.map((tid, idx) => {
                     const card = sim.cards.get(tid);
                     if (!card) return null;
-                    if (!replayOpenVisibleA || replayOpenVisibleA.has(idx)) {
+                    if (!shouldMaskReplayDeckSlots || !replayOpenVisibleA || replayOpenVisibleA.has(idx)) {
                       return <CardMini key={tid.toString()} card={card} owner={0} subtle />;
                     }
                     return <HiddenDeckPreviewCard key={`${tid.toString()}-hidden-a`} slotIndex={idx} />;
@@ -2297,7 +2309,7 @@ protocolV1: {
                   {sim.transcript.header.deckB.map((tid, idx) => {
                     const card = sim.cards.get(tid);
                     if (!card) return null;
-                    if (!replayOpenVisibleB || replayOpenVisibleB.has(idx)) {
+                    if (!shouldMaskReplayDeckSlots || !replayOpenVisibleB || replayOpenVisibleB.has(idx)) {
                       return <CardMini key={tid.toString()} card={card} owner={1} subtle />;
                     }
                     return <HiddenDeckPreviewCard key={`${tid.toString()}-hidden-b`} slotIndex={idx} />;

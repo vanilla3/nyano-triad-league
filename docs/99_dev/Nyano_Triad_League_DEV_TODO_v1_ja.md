@@ -161,3 +161,4 @@
 - [x] Follow-up: add deterministic Classic Open visibility (`allOpen` / `threeOpen`) metadata in Match/Replay, and expose `classic_swap`, `classic_all_open`, `classic_three_open` presets in ruleset selector.
 - [x] Follow-up: in Guest Match deck preview, hide Nyano cards unless revealed by Classic Open rules (`allOpen` / `threeOpen`).
 - [x] Follow-up: in Replay Deck inspector, mask unrevealed slots for both players under Classic Three Open (and keep all visible under All Open).
+- [x] Follow-up: add Replay Deck inspector toggle to reveal hidden Three Open slots for post-match analysis.

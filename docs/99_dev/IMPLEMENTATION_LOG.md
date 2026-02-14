@@ -2086,6 +2086,21 @@
 - `pnpm.cmd -C apps/web lint` OK
 - `pnpm.cmd -C apps/web build` OK
 
+## 2026-02-14 - WO007 follow-up: Replay Three Open hidden-slot reveal toggle
+
+### Why
+- Masking unrevealed slots by default improves rule-faithful visibility, but replay review sometimes needs full deck inspection.
+
+### What
+- `apps/web/src/pages/Replay.tsx`
+  - Added `Show hidden slots (post-match analysis)` toggle in Deck inspector when Classic `threeOpen` is active.
+  - Kept default behavior as masked; enabling toggle reveals full cards for both players.
+  - `allOpen` behavior remains unchanged (all visible without toggle).
+
+### Verify
+- `pnpm.cmd -C apps/web lint` OK
+- `pnpm.cmd -C apps/web build` OK
+
 ## 2026-02-14 - WO007 follow-up: Replay auto mode resolves Classic rulesetId via local registry
 
 ### Why
