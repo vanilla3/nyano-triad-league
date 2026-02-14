@@ -2315,6 +2315,8 @@ export function MatchPage() {
               <option value="v2">v2 (shadow ignores warning mark)</option>
               <option value="full">full (tactics+traits+formations)</option>
               <option value="classic_plus_same">classic (plus+same)</option>
+              <option value="classic_order">classic (order)</option>
+              <option value="classic_chaos">classic (chaos)</option>
             </select>
             <select
               className="input"

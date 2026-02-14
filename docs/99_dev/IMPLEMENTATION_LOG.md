@@ -1972,3 +1972,40 @@
 - `pnpm.cmd -C apps/web typecheck` ❌ (env issue: TS cannot resolve `pixi.js` / `fflate` in this sandbox run)
 - `pnpm.cmd -C apps/web test -- ...` ❌ (sandbox `spawn EPERM` while loading vite/esbuild)
 - `pnpm.cmd build:web` ❌ (sandbox `spawn EPERM` in nested pnpm/vite invocation)
+
+## 2026-02-14 - WO007 follow-up: stream strict allowlist parity for Classic Order/Chaos
+
+### Why
+- Stream/overlay strict allowlist still assumed "remaining cards x empty cells", which diverged from engine legality when Classic `Order/Chaos` was active.
+- `/stream` AI prompt generation also listed non-legal moves under Classic constraints.
+
+### What
+- `apps/web/src/lib/ruleset_registry.ts`
+  - Added Classic preset keys:
+    - `classic_order`
+    - `classic_chaos`
+  - Added ruleset-id reverse lookup:
+    - `resolveRulesetById(rulesetId)`
+  - Kept existing presets (`v1`, `v2`, `full`, `classic_plus_same`) intact.
+- `apps/web/src/pages/Match.tsx`
+  - Added ruleset selector options for `classic_order` and `classic_chaos`.
+- `apps/web/src/lib/triad_vote_utils.ts`
+  - Updated `computeStrictAllowed` to apply deterministic forced-card constraints via:
+    - `resolveRulesetById(...)`
+    - `resolveClassicForcedCardIndex(...)`
+  - Behavior:
+    - Order/Chaos ruleset + protocol snapshot present -> allowlist uses forced slot only.
+    - Unknown/missing ruleset context -> preserves previous fallback behavior.
+- `apps/web/src/pages/Stream.tsx`
+  - Updated `buildAiPrompt` to list legal moves from `computeStrictAllowed(...).allowlist` (single source of truth).
+  - WarningMark candidate line now prefers strict-allowlist-derived candidates.
+- `apps/web/src/lib/__tests__/ruleset_registry.test.ts`
+  - Added coverage for new preset keys and `resolveRulesetById`.
+- `apps/web/src/lib/__tests__/triad_vote_utils.test.ts`
+  - Added Classic Order/Chaos allowlist constraint tests.
+
+### Verify
+- `pnpm.cmd -C apps/web lint` OK
+- `pnpm.cmd -C apps/web build` OK
+- `pnpm.cmd -C apps/web typecheck` FAIL in this sandbox due module resolution (`pixi.js`, `fflate`) access issue.
+- `pnpm.cmd -C apps/web test -- ...` FAIL in this sandbox (`spawn EPERM` during Vite/esbuild startup).

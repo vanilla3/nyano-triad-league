@@ -8,23 +8,60 @@
 import type { RulesetConfig } from "@nyano/triad-engine";
 import {
   CLASSIC_PLUS_SAME_RULESET_CONFIG_V2,
+  computeRulesetId,
+  DEFAULT_RULESET_CONFIG_V2,
   DEFAULT_RULESET_CONFIG_V1,
   ONCHAIN_CORE_TACTICS_RULESET_CONFIG_V1,
   ONCHAIN_CORE_TACTICS_SHADOW_RULESET_CONFIG_V2,
 } from "@nyano/triad-engine";
 
 /** Canonical ruleset key strings used across the application. */
-export type RulesetKey = "v1" | "v2" | "full" | "classic_plus_same";
+export type RulesetKey =
+  | "v1"
+  | "v2"
+  | "full"
+  | "classic_plus_same"
+  | "classic_order"
+  | "classic_chaos";
 
 /** All valid ruleset keys as a readonly array. */
-export const RULESET_KEYS: readonly RulesetKey[] = ["v1", "v2", "full", "classic_plus_same"] as const;
+export const RULESET_KEYS: readonly RulesetKey[] = [
+  "v1",
+  "v2",
+  "full",
+  "classic_plus_same",
+  "classic_order",
+  "classic_chaos",
+] as const;
+
+const CLASSIC_ORDER_RULESET_CONFIG_V2: RulesetConfig = {
+  ...DEFAULT_RULESET_CONFIG_V2,
+  classic: {
+    ...DEFAULT_RULESET_CONFIG_V2.classic,
+    order: true,
+  },
+};
+
+const CLASSIC_CHAOS_RULESET_CONFIG_V2: RulesetConfig = {
+  ...DEFAULT_RULESET_CONFIG_V2,
+  classic: {
+    ...DEFAULT_RULESET_CONFIG_V2.classic,
+    chaos: true,
+  },
+};
 
 const REGISTRY: Record<RulesetKey, RulesetConfig> = {
   v1: ONCHAIN_CORE_TACTICS_RULESET_CONFIG_V1,
   v2: ONCHAIN_CORE_TACTICS_SHADOW_RULESET_CONFIG_V2,
   full: DEFAULT_RULESET_CONFIG_V1,
   classic_plus_same: CLASSIC_PLUS_SAME_RULESET_CONFIG_V2,
+  classic_order: CLASSIC_ORDER_RULESET_CONFIG_V2,
+  classic_chaos: CLASSIC_CHAOS_RULESET_CONFIG_V2,
 };
+
+const REGISTRY_BY_RULESET_ID = new Map<string, RulesetConfig>(
+  RULESET_KEYS.map((key) => [computeRulesetId(REGISTRY[key]).toLowerCase(), REGISTRY[key]])
+);
 
 /**
  * Type guard: returns true if `key` is a valid RulesetKey.
@@ -49,6 +86,15 @@ export function parseRulesetKeyOrDefault(
  */
 export function resolveRuleset(key: string): RulesetConfig | null {
   return isValidRulesetKey(key) ? REGISTRY[key] : null;
+}
+
+/**
+ * Resolve RulesetConfig from a rulesetId (bytes32 hex string).
+ * Returns null when the rulesetId is unknown to the local registry.
+ */
+export function resolveRulesetById(rulesetId: string | null | undefined): RulesetConfig | null {
+  if (typeof rulesetId !== "string" || rulesetId.length === 0) return null;
+  return REGISTRY_BY_RULESET_ID.get(rulesetId.toLowerCase()) ?? null;
 }
 
 /**

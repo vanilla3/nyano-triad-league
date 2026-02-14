@@ -1,3 +1,5 @@
+import { resolveClassicForcedCardIndex } from "@nyano/triad-engine";
+import { resolveRulesetById } from "@/lib/ruleset_registry";
 import type { OverlayStateV1 } from "@/lib/streamer_bus";
 import { formatViewerMoveText, cellCoordToIndex, cellIndexToCoord, parseCellAny } from "@/lib/triad_viewer_command";
 
@@ -138,6 +140,44 @@ export function computeWarningMarksRemaining(state: OverlayStateV1 | null, side:
   return Math.max(0, maxUses - used);
 }
 
+function computeClassicForcedCardIndex(state: OverlayStateV1, toPlay: PlayerSide): number | null {
+  if (!Number.isInteger(state.turn)) return null;
+  const turnIndex = Number(state.turn);
+  if (turnIndex < 0 || turnIndex > 8) return null;
+
+  const header = state.protocolV1?.header;
+  if (!header) return null;
+  if (
+    typeof header.salt !== "string" ||
+    typeof header.playerA !== "string" ||
+    typeof header.playerB !== "string" ||
+    typeof header.rulesetId !== "string"
+  ) {
+    return null;
+  }
+
+  const ruleset = resolveRulesetById(header.rulesetId) ?? resolveRulesetById(state.rulesetId);
+  if (!ruleset) return null;
+
+  const usedCardIndices = new Set(computeUsedCardIndices(state, toPlay));
+  try {
+    return resolveClassicForcedCardIndex({
+      ruleset,
+      header: {
+        salt: header.salt as `0x${string}`,
+        playerA: header.playerA as `0x${string}`,
+        playerB: header.playerB as `0x${string}`,
+        rulesetId: header.rulesetId as `0x${string}`,
+      },
+      turnIndex,
+      player: toPlay,
+      usedCardIndices,
+    });
+  } catch {
+    return null;
+  }
+}
+
 export type StrictAllowedComputed = {
   toPlay: PlayerSide;
   turn: number;
@@ -172,10 +212,17 @@ export function computeStrictAllowed(state: OverlayStateV1 | null): StrictAllowe
 
   const emptyCells = computeEmptyCells(state);
   const remainCards = computeRemainingCardIndices(state, toPlay);
+  const forcedCardIndex = computeClassicForcedCardIndex(state, toPlay);
+  const legalCardIndices =
+    forcedCardIndex === null
+      ? remainCards
+      : remainCards.includes(forcedCardIndex)
+        ? [forcedCardIndex]
+        : [];
 
   const allowlist: string[] = [];
   for (const cell of emptyCells) {
-    for (const cardIndex of remainCards) {
+    for (const cardIndex of legalCardIndices) {
       allowlist.push(toViewerMoveText({ cell, cardIndex }));
     }
   }

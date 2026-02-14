@@ -399,7 +399,7 @@ function buildAiPrompt(state: OverlayStateV1 | null, controlled: 0 | 1): string 
   const turn = typeof state?.turn === "number" ? Number(state!.turn) : null;
   const toPlay = computeToPlay(state);
 
-  const _strict = computeStrictAllowed(state);
+  const strict = computeStrictAllowed(state);
   const emptyCells = computeEmptyCells(state);
   const remain = toPlay !== null ? computeRemainingCardIndices(state, toPlay) : [];
   const wUsed = toPlay !== null ? computeWarningMarksUsed(state, toPlay) : 0;
@@ -435,21 +435,22 @@ function buildAiPrompt(state: OverlayStateV1 | null, controlled: 0 | 1): string 
   lines.push("");
   lines.push(`Empty cells: ${emptyCells.map(cellIndexToCoord).join(", ")}`);
   lines.push(`Remaining hand slots for to_play: ${remain.map((i) => `A${i + 1}`).join(", ") || "—"}`);
-  lines.push(`WarningMark: remaining=${wRemain} (used=${wUsed}) candidates=${wRemain > 0 ? emptyCells.map(cellIndexToCoord).join(", ") : "—"}`);
+  lines.push(
+    `WarningMark: remaining=${wRemain} (used=${wUsed}) candidates=${
+      wRemain > 0 ? (strict?.warningMark.candidates.join(", ") ?? emptyCells.map(cellIndexToCoord).join(", ")) : "—"
+    }`
+  );
   lines.push("");
   lines.push("Legal moves (cell+slot):");
   // Print up to 30 moves to keep prompt readable
   const max = 30;
-  let printed = 0;
-  for (const cell of emptyCells) {
-    for (const cardIndex of remain) {
-      if (printed >= max) break;
-      lines.push(`- ${formatViewerMoveText({ side: 0, slot: cardIndex + 1, cell })}`);
-      printed += 1;
-    }
-    if (printed >= max) break;
+  const legalMoves = strict?.allowlist ?? [];
+  if (legalMoves.length === 0) {
+    lines.push("- (none)");
+  } else {
+    for (const move of legalMoves.slice(0, max)) lines.push(`- ${move}`);
+    if (legalMoves.length > max) lines.push(`... (${legalMoves.length} total)`);
   }
-  if (emptyCells.length * remain.length > max) lines.push(`... (${emptyCells.length * remain.length} total)`);
   lines.push("");
   lines.push("Return format: ONLY one line, e.g. '#triad A2->B2' or '#triad A2->B2 wm=C1'");
 

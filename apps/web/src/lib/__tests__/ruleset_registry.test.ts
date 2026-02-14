@@ -4,10 +4,12 @@ import {
   isValidRulesetKey,
   parseRulesetKeyOrDefault,
   resolveRuleset,
+  resolveRulesetById,
   resolveRulesetOrThrow,
 } from "../ruleset_registry";
 import {
   CLASSIC_PLUS_SAME_RULESET_CONFIG_V2,
+  computeRulesetId,
   DEFAULT_RULESET_CONFIG_V1,
   ONCHAIN_CORE_TACTICS_RULESET_CONFIG_V1,
   ONCHAIN_CORE_TACTICS_SHADOW_RULESET_CONFIG_V2,
@@ -40,6 +42,26 @@ describe("Ruleset registry (P2-370)", () => {
       expect(resolveRuleset("classic_plus_same")).toBe(CLASSIC_PLUS_SAME_RULESET_CONFIG_V2);
     });
 
+    it('"classic_order" has order=true', () => {
+      const cfg = resolveRuleset("classic_order");
+      expect(cfg).not.toBeNull();
+      expect(cfg!.version).toBe(2);
+      if (cfg!.version === 2) {
+        expect(cfg!.classic.order).toBe(true);
+        expect(cfg!.classic.chaos).toBe(false);
+      }
+    });
+
+    it('"classic_chaos" has chaos=true', () => {
+      const cfg = resolveRuleset("classic_chaos");
+      expect(cfg).not.toBeNull();
+      expect(cfg!.version).toBe(2);
+      if (cfg!.version === 2) {
+        expect(cfg!.classic.order).toBe(false);
+        expect(cfg!.classic.chaos).toBe(true);
+      }
+    });
+
     it('"unknown" → null', () => {
       expect(resolveRuleset("unknown")).toBeNull();
     });
@@ -65,7 +87,7 @@ describe("Ruleset registry (P2-370)", () => {
   /* ─── isValidRulesetKey ─── */
 
   describe("isValidRulesetKey", () => {
-    it.each(["v1", "v2", "full", "classic_plus_same"] as const)('"%s" → true', (key) => {
+    it.each(["v1", "v2", "full", "classic_plus_same", "classic_order", "classic_chaos"] as const)('"%s" → true', (key) => {
       expect(isValidRulesetKey(key)).toBe(true);
     });
 
@@ -107,16 +129,32 @@ describe("Ruleset registry (P2-370)", () => {
       expect(RULESET_KEYS).toContain("v2");
       expect(RULESET_KEYS).toContain("full");
       expect(RULESET_KEYS).toContain("classic_plus_same");
+      expect(RULESET_KEYS).toContain("classic_order");
+      expect(RULESET_KEYS).toContain("classic_chaos");
     });
 
-    it("has length 4", () => {
-      expect(RULESET_KEYS.length).toBe(4);
+    it("has length 6", () => {
+      expect(RULESET_KEYS.length).toBe(6);
     });
 
     it("every key resolves to a non-null config", () => {
       for (const key of RULESET_KEYS) {
         expect(resolveRuleset(key)).not.toBeNull();
       }
+    });
+  });
+
+  describe("resolveRulesetById", () => {
+    it("resolves every known rulesetId to the same config object", () => {
+      for (const key of RULESET_KEYS) {
+        const cfg = resolveRulesetOrThrow(key);
+        const id = computeRulesetId(cfg);
+        expect(resolveRulesetById(id)).toBe(cfg);
+      }
+    });
+
+    it("returns null for unknown rulesetId", () => {
+      expect(resolveRulesetById(`0x${"00".repeat(32)}`)).toBeNull();
     });
   });
 });

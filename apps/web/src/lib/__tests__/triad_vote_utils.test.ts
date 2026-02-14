@@ -1,4 +1,5 @@
 import { describe, it, expect } from "vitest";
+import { computeRulesetId, resolveClassicForcedCardIndex } from "@nyano/triad-engine";
 import {
   fnv1a32Hex,
   cellCoordToIndex,
@@ -12,6 +13,7 @@ import {
   computeWarningMarksRemaining,
   computeStrictAllowed,
 } from "../triad_vote_utils";
+import { resolveRulesetOrThrow } from "../ruleset_registry";
 import type { OverlayStateV1 } from "../streamer_bus";
 
 /* ═══════════════════════════════════════════════════════════════════
@@ -27,6 +29,21 @@ function makeState(overrides: Partial<OverlayStateV1> & Record<string, unknown> 
     mode: "live",
     ...overrides,
   } as OverlayStateV1;
+}
+
+function makeProtocolV1Header(rulesetId: string) {
+  return {
+    version: 1,
+    rulesetId,
+    seasonId: 1,
+    playerA: "0xaAaAaAaaAaAaAaaAaAAAAAAAAaaaAaAaAaaAaaAa",
+    playerB: "0xbBbBBBBbbBBBbbbBbbBbbbbBBbBbbbbBbBbbBBbB",
+    deckA: ["1", "2", "3", "4", "5"],
+    deckB: ["6", "7", "8", "9", "10"],
+    firstPlayer: 0 as const,
+    deadline: 0,
+    salt: `0x${"11".repeat(32)}`,
+  };
 }
 
 // ── fnv1a32Hex ──────────────────────────────────────────────────────
@@ -255,6 +272,63 @@ describe("computeStrictAllowed", () => {
     const result = computeStrictAllowed(state);
     expect(result!.warningMark.remaining).toBe(3);
     expect(result!.warningMark.candidates.length).toBe(9);
+  });
+
+  it("applies classic Order constraint when protocolV1 has a classic_order rulesetId", () => {
+    const ruleset = resolveRulesetOrThrow("classic_order");
+    const rulesetId = computeRulesetId(ruleset);
+    const header = makeProtocolV1Header(rulesetId);
+    const state = makeState({
+      turn: 0,
+      firstPlayer: 0,
+      protocolV1: { header, turns: [] },
+      rulesetId,
+    });
+
+    const result = computeStrictAllowed(state);
+    expect(result).not.toBeNull();
+    expect(result!.count).toBe(9); // 9 cells × forced 1 card
+    for (let cell = 0; cell < 9; cell++) {
+      expect(result!.allowlist).toContain(`#triad A1->${cellIndexToCoord(cell)}`);
+      expect(result!.allowlist).not.toContain(`#triad A2->${cellIndexToCoord(cell)}`);
+    }
+  });
+
+  it("applies classic Chaos constraint deterministically when protocolV1 has a classic_chaos rulesetId", () => {
+    const ruleset = resolveRulesetOrThrow("classic_chaos");
+    const rulesetId = computeRulesetId(ruleset);
+    const header = makeProtocolV1Header(rulesetId);
+
+    const state = makeState({
+      turn: 2,
+      firstPlayer: 0,
+      usedCells: [0, 4],
+      usedCardIndicesA: [1, 4],
+      protocolV1: { header, turns: [{ cell: 0, cardIndex: 1 }, { cell: 4, cardIndex: 0 }] },
+      rulesetId,
+    });
+
+    const expectedForced = resolveClassicForcedCardIndex({
+      ruleset,
+      header: {
+        salt: header.salt as `0x${string}`,
+        playerA: header.playerA as `0x${string}`,
+        playerB: header.playerB as `0x${string}`,
+        rulesetId: header.rulesetId as `0x${string}`,
+      },
+      turnIndex: 2,
+      player: 0,
+      usedCardIndices: new Set([1, 4]),
+    });
+    expect(expectedForced).not.toBeNull();
+
+    const result = computeStrictAllowed(state);
+    expect(result).not.toBeNull();
+    expect(result!.count).toBe(7); // 7 cells × forced 1 card
+    const forcedSlot = `A${Number(expectedForced) + 1}`;
+    for (const m of result!.allowlist) {
+      expect(m.startsWith(`#triad ${forcedSlot}->`)).toBe(true);
+    }
   });
 });
 
