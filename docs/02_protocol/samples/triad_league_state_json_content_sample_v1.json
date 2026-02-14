@@ -113,6 +113,18 @@
     ],
     "hash": "0x533fb719"
   },
+  "classic": {
+    "rulesetId": "0x1111111111111111111111111111111111111111111111111111111111111111",
+    "open": {
+      "mode": "three_open",
+      "playerA": [0, 2, 4],
+      "playerB": [1, 2, 3]
+    },
+    "swap": {
+      "playerA": 1,
+      "playerB": 3
+    }
+  },
   "status": {
     "finished": false,
     "winner": null,

@@ -168,3 +168,4 @@
 - [x] Follow-up: show resolved Classic Open metadata in Overlay “Now Playing” panel for operator/OBS visibility.
 - [x] Follow-up: add additive Classic metadata (`classic.open` / `classic.swap`) to `/stream` `state_json v1` and ai_prompt context for nyano-warudo/operator parity.
 - [x] Follow-up: show deterministic Classic Swap mapping in Stream live status and Overlay “Now Playing”.
+- [x] Follow-up: update `state_json v1` sample/spec docs to include additive optional `classic` metadata.

@@ -2232,3 +2232,17 @@
 ### Verify
 - `pnpm.cmd -C apps/web lint` OK
 - `pnpm.cmd -C apps/web build` OK
+
+## 2026-02-14 - Classic state_json sample/spec update (additive docs)
+
+### Why
+- `state_json` now emits additive `classic` metadata, so protocol samples/spec should show the field explicitly for integration consumers.
+
+### What
+- `docs/02_protocol/samples/triad_league_state_json_content_sample_v1.json`
+  - Added `classic` sample object (`rulesetId`, `open`, `swap`).
+- `docs/01_product/Nyano_Triad_League_NYANO_WARUDO_BRIDGE_SPEC_v1_ja.md`
+  - Added `classic` optional/additive field note in `state_json schema (v1)`.
+
+### Verify
+- JSON sample parses as valid JSON.
