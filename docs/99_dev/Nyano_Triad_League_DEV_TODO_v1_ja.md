@@ -169,3 +169,4 @@
 - [x] Follow-up: add additive Classic metadata (`classic.open` / `classic.swap`) to `/stream` `state_json v1` and ai_prompt context for nyano-warudo/operator parity.
 - [x] Follow-up: show deterministic Classic Swap mapping in Stream live status and Overlay “Now Playing”.
 - [x] Follow-up: update `state_json v1` sample/spec docs to include additive optional `classic` metadata.
+- [x] Follow-up: sync `triad_league_snapshot_request_sample_v1.json` embedded `content` with latest `state_json` sample.

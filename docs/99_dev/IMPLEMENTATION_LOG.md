@@ -2246,3 +2246,15 @@
 
 ### Verify
 - JSON sample parses as valid JSON.
+
+## 2026-02-14 - Sync snapshot request sample with latest state_json sample
+
+### Why
+- `triad_league_snapshot_request_sample_v1.json` embeds `state_json` as a string; it should stay in sync with the canonical `state_json` sample.
+
+### What
+- Re-generated `docs/02_protocol/samples/triad_league_snapshot_request_sample_v1.json` from:
+  - `docs/02_protocol/samples/triad_league_state_json_content_sample_v1.json`
+
+### Verify
+- Snapshot request sample parses as valid JSON.
