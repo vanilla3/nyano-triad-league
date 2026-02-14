@@ -1,5 +1,12 @@
 import { AbiCoder, keccak256 } from "ethers";
 import { DEFAULT_NYANO_TRAIT_DERIVATION_CONFIG_V1 } from "./nyano.js";
+import {
+  applyClassicSwapToDecks,
+  DEFAULT_CLASSIC_RULES_CONFIG_V1,
+  resolveClassicConfig,
+  resolveClassicForcedCardIndex,
+  resolveClassicSwapIndices,
+} from "./classic_rules.js";
 import type {
   BoardState,
   CardData,
@@ -10,7 +17,9 @@ import type {
   MatchResult,
   MatchResultWithHistory,
   PlayerIndex,
+  RulesetConfig,
   RulesetConfigV1,
+  RulesetConfigV2,
   TranscriptV1,
   TurnSummary,
   TraitType,
@@ -172,6 +181,23 @@ export const ONCHAIN_CORE_TACTICS_SHADOW_RULESET_CONFIG_V2: RulesetConfigV1 = {
     },
 
     formationBonuses: { ...DEFAULT_RULESET_CONFIG_V1.synergy.formationBonuses, enabled: false },
+  },
+};
+
+export const DEFAULT_RULESET_CONFIG_V2: RulesetConfigV2 = {
+  version: 2,
+  tactics: DEFAULT_RULESET_CONFIG_V1.tactics,
+  synergy: DEFAULT_RULESET_CONFIG_V1.synergy,
+  classic: DEFAULT_CLASSIC_RULES_CONFIG_V1,
+  meta: DEFAULT_RULESET_CONFIG_V1.meta,
+};
+
+export const CLASSIC_PLUS_SAME_RULESET_CONFIG_V2: RulesetConfigV2 = {
+  ...DEFAULT_RULESET_CONFIG_V2,
+  classic: {
+    ...DEFAULT_CLASSIC_RULES_CONFIG_V1,
+    plus: true,
+    same: true,
   },
 };
 
@@ -347,17 +373,30 @@ function isCornerCell(cell: number): boolean {
 export function simulateMatchV1(
   t: TranscriptV1,
   cardsByTokenId: Map<bigint, CardData>,
-  ruleset: RulesetConfigV1 = DEFAULT_RULESET_CONFIG_V1,
+  ruleset: RulesetConfig = DEFAULT_RULESET_CONFIG_V1,
   options?: SimulateMatchOptions
 ): MatchResult {
   validateTranscriptBasic(t);
 
-  if (ruleset.version !== 1) throw new Error(`unsupported ruleset version: ${ruleset.version}`);
-  const rules = ruleset;
+  const classic = resolveClassicConfig(ruleset);
+  const rules: RulesetConfigV1 = ruleset.version === 1
+    ? ruleset
+    : {
+        version: 1,
+        tactics: ruleset.tactics,
+        synergy: ruleset.synergy,
+        meta: ruleset.meta,
+        onchainSettlementCompat: ruleset.onchainSettlementCompat,
+      };
   validateTranscriptForRuleset(t, rules);
 
   const board: BoardState = Array.from({ length: 9 }, () => null);
   if (options?.boardHistory) options.boardHistory.push(cloneBoardState(board));
+
+  const swap = resolveClassicSwapIndices({ ruleset, header: t.header });
+  const effectiveDecks = applyClassicSwapToDecks(t.header.deckA, t.header.deckB, swap);
+  const deckA = effectiveDecks.deckA;
+  const deckB = effectiveDecks.deckB;
 
   // Layer 2 (TACTICS): Warning marks (警戒マーク)
   const warningMarks: WarningMark[] = [];
@@ -408,7 +447,7 @@ export function simulateMatchV1(
 
   const deckTraits: [TraitType[], TraitType[]] = [[], []];
   for (const p of [0, 1] as PlayerIndex[]) {
-    const deck = p === 0 ? t.header.deckA : t.header.deckB;
+    const deck = p === 0 ? deckA : deckB;
     for (const tokenId of deck) {
       const c = cardsByTokenId.get(tokenId);
       if (!c) throw new Error(`missing CardData for tokenId=${tokenId}`);
@@ -455,6 +494,17 @@ export function simulateMatchV1(
       throw new Error("meta.chainCapPerTurn must be a non-negative integer");
     }
   }
+  const typePlacementCount = new Map<TraitType, number>();
+
+  const getClassicTypeDelta = (card: CardData): number => {
+    const trait = getTrait(card);
+    if (trait === "none") return 0;
+    const k = typePlacementCount.get(trait) ?? 0;
+    let delta = 0;
+    if (classic.typeAscend) delta += k;
+    if (classic.typeDescend) delta -= k;
+    return delta;
+  };
 
   const traitActive = (trait: TraitType): boolean => {
     if (!traitEffectsEnabled) return false;
@@ -540,6 +590,9 @@ export function simulateMatchV1(
       }
     }
 
+    // Classic Type Ascend/Descend: placement-count modifier by trait.
+    v = v + getClassicTypeDelta(cell.card);
+
     return clampEdge(v);
   };
 
@@ -565,9 +618,66 @@ export function simulateMatchV1(
     return jankenOutcome(attacker.jankenHand, defender.jankenHand) === 1;
   };
 
+  type FlipWinBy = NonNullable<FlipTraceV1["winBy"]>;
   type AttackMode =
     | { kind: "ortho"; dir: Direction; opp: Direction }
     | { kind: "diag"; vert: Direction; horiz: Direction; oppVert: Direction; oppHoriz: Direction };
+
+  const tryFlipDefender = (
+    attackerIdx: number,
+    defenderIdx: number,
+    attackIsChain: boolean,
+    mode: AttackMode,
+    values: { aVal: number; dVal: number; tieBreak: boolean; winBy: FlipWinBy },
+    flipTraces?: FlipTraceV1[]
+  ): boolean => {
+    const attacker = board[attackerIdx];
+    const defender = board[defenderIdx];
+    if (!attacker || !defender) return false;
+    if (attacker.owner === defender.owner) return false;
+
+    // Metal: cannot be flipped by chain attacks.
+    if (attackIsChain && traitEffectsEnabled && te.metal.enabled && cardHasTrait(defender.card, "metal")) {
+      return false;
+    }
+
+    // Forest: first flip attempt(s) are negated.
+    if (defender.state.forestShield > 0) {
+      defender.state.forestShield -= 1;
+      return false;
+    }
+
+    board[defenderIdx] = { owner: attacker.owner, card: defender.card, state: defender.state };
+
+    if (!flipTraces) return true;
+    if (mode.kind === "ortho") {
+      flipTraces.push({
+        from: attackerIdx,
+        to: defenderIdx,
+        isChain: attackIsChain,
+        kind: "ortho",
+        dir: mode.dir,
+        aVal: values.aVal,
+        dVal: values.dVal,
+        tieBreak: values.tieBreak,
+        winBy: values.winBy,
+      });
+    } else {
+      flipTraces.push({
+        from: attackerIdx,
+        to: defenderIdx,
+        isChain: attackIsChain,
+        kind: "diag",
+        vert: mode.vert,
+        horiz: mode.horiz,
+        aVal: values.aVal,
+        dVal: values.dVal,
+        tieBreak: values.tieBreak,
+        winBy: values.winBy,
+      });
+    }
+    return true;
+  };
 
   const compareAndMaybeFlip = (
     attackerIdx: number,
@@ -580,11 +690,6 @@ export function simulateMatchV1(
     const defender = board[defenderIdx];
     if (!attacker || !defender) return false;
     if (attacker.owner === defender.owner) return false;
-
-    // Metal: cannot be flipped by chain attacks.
-    if (attackIsChain && traitEffectsEnabled && te.metal.enabled && cardHasTrait(defender.card, "metal")) {
-      return false;
-    }
 
     let aVal = 0;
     let dVal = 0;
@@ -599,51 +704,33 @@ export function simulateMatchV1(
 
     let attackerWins = false;
     let tieBreak = false;
-    if (aVal > dVal) attackerWins = true;
-    else if (aVal < dVal) attackerWins = false;
-    else {
+    let winBy: FlipWinBy | null = null;
+
+    if (classic.aceKiller && ((aVal === 1 && dVal === 10) || (aVal === 10 && dVal === 1))) {
+      attackerWins = aVal === 1;
+      if (attackerWins) winBy = "aceKiller";
+    } else if (aVal === dVal) {
       tieBreak = true;
       attackerWins = attackerWinsTie(attacker.card, defender.card);
+      if (attackerWins) winBy = "tieBreak";
+    } else if (classic.reverse) {
+      attackerWins = aVal < dVal;
+      if (attackerWins) winBy = "lt";
+    } else {
+      attackerWins = aVal > dVal;
+      if (attackerWins) winBy = "gt";
     }
 
     if (!attackerWins) return false;
-
-    // Forest: first flip attempt(s) are negated.
-    if (defender.state.forestShield > 0) {
-      defender.state.forestShield -= 1;
-      return false;
-    }
-
-board[defenderIdx] = { owner: attacker.owner, card: defender.card, state: defender.state };
-
-if (flipTraces) {
-  if (mode.kind === "ortho") {
-    flipTraces.push({
-      from: attackerIdx,
-      to: defenderIdx,
-      isChain: attackIsChain,
-      kind: "ortho",
-      dir: mode.dir,
-      aVal,
-      dVal,
-      tieBreak,
-    });
-  } else {
-    flipTraces.push({
-      from: attackerIdx,
-      to: defenderIdx,
-      isChain: attackIsChain,
-      kind: "diag",
-      vert: mode.vert,
-      horiz: mode.horiz,
-      aVal,
-      dVal,
-      tieBreak,
-    });
-  }
-}
-
-return true;
+    if (!winBy) return false;
+    return tryFlipDefender(
+      attackerIdx,
+      defenderIdx,
+      attackIsChain,
+      mode,
+      { aVal, dVal, tieBreak, winBy },
+      flipTraces
+    );
   };
 
   const applyThunderDebuff = (placedIdx: number): void => {
@@ -665,13 +752,77 @@ return true;
     }
   };
 
-  const applyChainFlips = (startIdx: number, flipTraces: FlipTraceV1[]): number => {
+  type ClassicSpecialCapture = {
+    defenderIdx: number;
+    dir: Direction;
+    opp: Direction;
+    aVal: number;
+    dVal: number;
+    winBy: "same" | "plus";
+  };
+
+  const evaluateClassicSpecialCaptures = (placedIdx: number, owner: PlayerIndex): ClassicSpecialCapture[] => {
+    if (!classic.same && !classic.plus) return [];
+
+    const edgeCompares: Array<{ defenderIdx: number; dir: Direction; opp: Direction; aVal: number; dVal: number; sum: number }> = [];
+    for (const { dir, opp } of DIRS) {
+      const n = neighborIndex(placedIdx, dir);
+      if (n === null) continue;
+      const defender = board[n];
+      if (!defender || defender.owner === owner) continue;
+      const aVal = effectiveEdge(placedIdx, dir);
+      const dVal = effectiveEdge(n, opp);
+      edgeCompares.push({ defenderIdx: n, dir, opp, aVal, dVal, sum: aVal + dVal });
+    }
+    if (edgeCompares.length < 2) return [];
+
+    const selected = new Map<number, ClassicSpecialCapture>();
+    const upsert = (cmp: { defenderIdx: number; dir: Direction; opp: Direction; aVal: number; dVal: number }, winBy: "same" | "plus") => {
+      const prev = selected.get(cmp.defenderIdx);
+      if (prev && prev.winBy === "plus") return;
+      selected.set(cmp.defenderIdx, { ...cmp, winBy });
+    };
+
+    if (classic.same) {
+      const matched = edgeCompares.filter((c) => c.aVal === c.dVal);
+      if (matched.length >= 2) {
+        for (const m of matched) upsert(m, "same");
+      }
+    }
+
+    if (classic.plus) {
+      const grouped = new Map<number, Array<{ defenderIdx: number; dir: Direction; opp: Direction; aVal: number; dVal: number }>>();
+      for (const c of edgeCompares) {
+        const list = grouped.get(c.sum) ?? [];
+        list.push(c);
+        grouped.set(c.sum, list);
+      }
+      for (const list of grouped.values()) {
+        if (list.length < 2) continue;
+        for (const m of list) upsert(m, "plus");
+      }
+    }
+
+    return [...selected.values()];
+  };
+
+  const applyChainFlips = (
+    startIdx: number,
+    flipTraces: FlipTraceV1[],
+    seedChainIdxs: readonly number[] = [],
+    initialFlipCount = 0
+  ): number => {
     // Returns number of flips that happened during this placement (for combo bonus).
-    let flipCount = 0;
+    let flipCount = initialFlipCount;
     const canFlipMore = (): boolean => chainCapPerTurn === undefined || flipCount < chainCapPerTurn;
 
     const queue: Array<{ idx: number; isChain: boolean }> = [{ idx: startIdx, isChain: false }];
     const inQueue = new Set<number>([startIdx]);
+    for (const idx of seedChainIdxs) {
+      if (idx === startIdx || inQueue.has(idx)) continue;
+      queue.push({ idx, isChain: true });
+      inQueue.add(idx);
+    }
 
     while (queue.length) {
       if (!canFlipMore()) break;
@@ -761,10 +912,20 @@ return true;
 
     const cardIndex = turn.cardIndex;
     const used = p === 0 ? usedA : usedB;
+    const forcedCardIndex = resolveClassicForcedCardIndex({
+      ruleset,
+      header: t.header,
+      turnIndex: i,
+      player: p,
+      usedCardIndices: used,
+    });
+    if (forcedCardIndex !== null && cardIndex !== forcedCardIndex) {
+      throw new Error(`classic cardIndex constraint violated at turn ${i}: expected ${forcedCardIndex}, got ${cardIndex}`);
+    }
     if (used.has(cardIndex)) throw new Error(`cardIndex reused by player ${p}: ${cardIndex}`);
     used.add(cardIndex);
 
-    const tokenId = p === 0 ? t.header.deckA[cardIndex] : t.header.deckB[cardIndex];
+    const tokenId = p === 0 ? deckA[cardIndex] : deckB[cardIndex];
     const baseCard = cardsByTokenId.get(tokenId);
     if (!baseCard) throw new Error(`missing CardData for tokenId=${tokenId}`);
 
@@ -809,12 +970,37 @@ return true;
     // Place card (with runtime state).
     board[turn.cell] = { owner: p, card: placedCard, state: initCellState(placedCard) };
 
+    if (classic.typeAscend || classic.typeDescend) {
+      const placedTrait = getTrait(placedCard);
+      if (placedTrait !== "none") {
+        typePlacementCount.set(placedTrait, (typePlacementCount.get(placedTrait) ?? 0) + 1);
+      }
+    }
+
     // Layer3: Thunder debuff happens immediately on placement (before captures/chain).
     applyThunderDebuff(turn.cell);
 
     // Chain flips (core rule)
     const flipTracesThisTurn: FlipTraceV1[] = [];
-    const flipCount = applyChainFlips(turn.cell, flipTracesThisTurn);
+    let flipCount = 0;
+    const specialSeedChain: number[] = [];
+    const specialCaptures = evaluateClassicSpecialCaptures(turn.cell, p);
+    for (const sc of specialCaptures) {
+      if (chainCapPerTurn !== undefined && flipCount >= chainCapPerTurn) break;
+      const flipped = tryFlipDefender(
+        turn.cell,
+        sc.defenderIdx,
+        false,
+        { kind: "ortho", dir: sc.dir, opp: sc.opp },
+        { aVal: sc.aVal, dVal: sc.dVal, tieBreak: false, winBy: sc.winBy },
+        flipTracesThisTurn
+      );
+      if (flipped) {
+        flipCount += 1;
+        specialSeedChain.push(sc.defenderIdx);
+      }
+    }
+    flipCount = applyChainFlips(turn.cell, flipTracesThisTurn, specialSeedChain, flipCount);
 
     // Determine combo bonus (Design v2 default), if enabled by ruleset.
     const comboCount = 1 + flipCount;
@@ -917,7 +1103,7 @@ return true;
 export function simulateMatchV1WithHistory(
   t: TranscriptV1,
   cardsByTokenId: Map<bigint, CardData>,
-  ruleset: RulesetConfigV1 = DEFAULT_RULESET_CONFIG_V1
+  ruleset: RulesetConfig = DEFAULT_RULESET_CONFIG_V1
 ): MatchResultWithHistory {
   const boardHistory: BoardState[] = [];
   const result = simulateMatchV1(t, cardsByTokenId, ruleset, { boardHistory });

@@ -1,8 +1,11 @@
 import { AbiCoder, keccak256 } from "ethers";
 import { DEFAULT_RULESET_CONFIG_V1 } from "./engine.js";
+import { DEFAULT_CLASSIC_RULES_CONFIG_V1 } from "./classic_rules.js";
 import type {
   NyanoTraitDerivationConfigV1,
+  RulesetConfig,
   RulesetConfigV1,
+  RulesetConfigV2,
   TraitEffectsConfigV1,
   TraitType,
 } from "./types.js";
@@ -423,4 +426,62 @@ const merged: RulesetConfigV1 = {
   );
 
   return keccak256(encoded) as `0x${string}`;
+}
+
+export function encodeRulesetConfigV2(ruleset: RulesetConfigV2): string {
+  if (ruleset.version !== 2) throw new Error(`unsupported ruleset.version: ${ruleset.version}`);
+
+  const classic = { ...DEFAULT_CLASSIC_RULES_CONFIG_V1, ...ruleset.classic };
+  const baseV1: RulesetConfigV1 = {
+    version: 1,
+    tactics: ruleset.tactics,
+    synergy: ruleset.synergy,
+    meta: ruleset.meta,
+    onchainSettlementCompat: ruleset.onchainSettlementCompat,
+  };
+  const baseId = computeRulesetIdV1(baseV1);
+  const coder = AbiCoder.defaultAbiCoder();
+
+  return coder.encode(
+    [
+      "uint8",
+      "bytes32",
+      "uint8",
+      "uint8",
+      "uint8",
+      "uint8",
+      "uint8",
+      "uint8",
+      "uint8",
+      "uint8",
+      "uint8",
+      "uint8",
+      "uint8",
+    ],
+    [
+      2,
+      baseId,
+      boolU8(classic.order),
+      boolU8(classic.chaos),
+      boolU8(classic.swap),
+      boolU8(classic.reverse),
+      boolU8(classic.aceKiller),
+      boolU8(classic.plus),
+      boolU8(classic.same),
+      boolU8(classic.typeAscend),
+      boolU8(classic.typeDescend),
+      boolU8(classic.allOpen),
+      boolU8(classic.threeOpen),
+    ]
+  );
+}
+
+export function computeRulesetIdV2(ruleset: RulesetConfigV2): `0x${string}` {
+  return keccak256(encodeRulesetConfigV2(ruleset)) as `0x${string}`;
+}
+
+export function computeRulesetId(ruleset: RulesetConfig): `0x${string}` {
+  if (ruleset.version === 1) return computeRulesetIdV1(ruleset);
+  if (ruleset.version === 2) return computeRulesetIdV2(ruleset);
+  throw new Error(`unsupported ruleset.version: ${(ruleset as { version?: unknown }).version}`);
 }

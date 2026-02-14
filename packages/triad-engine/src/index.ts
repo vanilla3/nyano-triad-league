@@ -1,5 +1,7 @@
 export * from "./types.js";
 export * from "./engine.js";
+export * from "./classic_rng.js";
+export * from "./classic_rules.js";
 export * from "./nyano.js";
 export * from "./ruleset_id.js";
 export * from "./codes.js";

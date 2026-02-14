@@ -86,6 +86,12 @@ describe("flipTraceShort", () => {
       ),
     ).toBe("↙ 3>1 斜め");
   });
+
+  it("reverse winBy=lt uses '<' expression", () => {
+    expect(
+      flipTraceShort(makeTrace({ aVal: 2, dVal: 8, winBy: "lt" })),
+    ).toBe("↑ 2<8");
+  });
 });
 
 /* ------------------------------------------------------------------ */
@@ -137,6 +143,12 @@ describe("flipTraceFull", () => {
         }),
       ),
     ).toBe("【連鎖】C3→B2: 上左斜め 6=6 じゃんけんで勝ち");
+  });
+
+  it("plus/same/ace killer descriptions", () => {
+    expect(flipTraceFull(makeTrace({ winBy: "plus", aVal: 3, dVal: 4 }))).toBe("B2→B1: 上方向 3+4 Plusで奪取");
+    expect(flipTraceFull(makeTrace({ winBy: "same", aVal: 4, dVal: 4 }))).toBe("B2→B1: 上方向 4=4 Sameで奪取");
+    expect(flipTraceFull(makeTrace({ winBy: "aceKiller", aVal: 1, dVal: 10 }))).toBe("B2→B1: 上方向 1×10 Ace Killerで奪取");
   });
 });
 

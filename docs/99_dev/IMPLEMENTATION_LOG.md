@@ -1903,3 +1903,72 @@
 - `pnpm -C apps/web typecheck`
 - `pnpm -C apps/web build`
 - `pnpm -C apps/web e2e -- stage-focus.spec.ts`
+
+## 2026-02-14 · WO006/WO007: Classic Rules (engine + web integration)
+
+### Why
+- Added Classic rules spec/work-order docs needed actual implementation to avoid drift between spec and runtime behavior.
+- Needed deterministic engine behavior + replay-safe web integration without breaking existing v1 protocol paths.
+
+### What
+- `packages/triad-engine/src/types.ts`
+  - Added additive `FlipTraceV1.winBy`.
+  - Added `ClassicRulesConfigV1`, `RulesetConfigV2`, `RulesetConfig` union.
+- `packages/triad-engine/src/classic_rng.ts` (new)
+  - Added deterministic Classic RNG (`buildClassicSeed0`, `classicSeed`, `classicRandUint`).
+- `packages/triad-engine/src/classic_rules.ts` (new)
+  - Added Classic config defaults and helpers:
+    - `resolveClassicForcedCardIndex` (Order/Chaos)
+    - `resolveClassicSwapIndices` / `applyClassicSwapToDecks` (Swap)
+- `packages/triad-engine/src/ruleset_id.ts`
+  - Added `encodeRulesetConfigV2`, `computeRulesetIdV2`, `computeRulesetId`.
+- `packages/triad-engine/src/engine.ts`
+  - Added `DEFAULT_RULESET_CONFIG_V2`, `CLASSIC_PLUS_SAME_RULESET_CONFIG_V2`.
+  - Implemented Classic semantics:
+    - Order / Chaos move validation
+    - Swap pre-turn deck transform
+    - Reverse / Ace Killer comparison behavior
+    - Same / Plus special captures + chain seeding
+    - Type Ascend / Descend trait placement counters
+  - Extended flip trace emission with `winBy`.
+- `packages/triad-engine/src/verify.ts`, `packages/triad-engine/src/index.ts`
+  - Updated to `RulesetConfig` union and exported Classic modules.
+- Added new engine tests:
+  - `packages/triad-engine/test/classic_ruleset_id_v2.test.js`
+  - `packages/triad-engine/test/classic_order_chaos_swap.test.js`
+  - `packages/triad-engine/test/classic_reverse_ace.test.js`
+  - `packages/triad-engine/test/classic_plus_same.test.js`
+  - `packages/triad-engine/test/classic_type_ascend_descend.test.js`
+- `apps/web/src/lib/ruleset_registry.ts`
+  - Added `classic_plus_same` preset key and registry mapping.
+- `apps/web/src/pages/Match.tsx`
+  - Switched to generic `computeRulesetId`.
+  - Added deterministic Order/Chaos enforcement in turn completion + commit validation.
+  - Added forced-card UI behavior (non-legal cards become non-selectable).
+  - Added Classic ruleset option in ruleset selector.
+  - Propagated `winBy` in overlay payload mapping.
+- `apps/web/src/pages/Playground.tsx`, `apps/web/src/pages/Replay.tsx`
+  - Updated ruleset typing to `RulesetConfig`.
+  - Replay overlay payload now includes `winBy`.
+- `apps/web/src/components/flipTraceDescribe.ts`
+  - Updated text rendering for `winBy` (`lt`, `same`, `plus`, `aceKiller`).
+- `apps/web/src/lib/streamer_bus.ts`
+  - Added additive `winBy` field to `lastTurnSummary.flips`.
+- Updated web tests:
+  - `apps/web/src/lib/__tests__/ruleset_registry.test.ts`
+  - `apps/web/src/components/__tests__/flipTraceDescribe.test.ts`
+
+### Verify
+- `pnpm.cmd lint` ✅
+- `pnpm.cmd test` ✅
+- `pnpm.cmd -C packages/triad-engine build` ✅
+- `pnpm.cmd -C packages/triad-engine lint` ✅
+- `node packages/triad-engine/test/classic_ruleset_id_v2.test.js` ✅
+- `node packages/triad-engine/test/classic_order_chaos_swap.test.js` ✅
+- `node packages/triad-engine/test/classic_reverse_ace.test.js` ✅
+- `node packages/triad-engine/test/classic_plus_same.test.js` ✅
+- `node packages/triad-engine/test/classic_type_ascend_descend.test.js` ✅
+- `pnpm.cmd -C apps/web build` ✅
+- `pnpm.cmd -C apps/web typecheck` ❌ (env issue: TS cannot resolve `pixi.js` / `fflate` in this sandbox run)
+- `pnpm.cmd -C apps/web test -- ...` ❌ (sandbox `spawn EPERM` while loading vite/esbuild)
+- `pnpm.cmd build:web` ❌ (sandbox `spawn EPERM` in nested pnpm/vite invocation)

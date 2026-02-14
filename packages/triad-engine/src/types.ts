@@ -26,6 +26,8 @@ export interface FlipTraceV1 {
   dVal: number;
   /** true if aVal == dVal and janken tie-break decided the outcome */
   tieBreak: boolean;
+  /** Optional win cause for classic rules / richer UI explainability (additive). */
+  winBy?: "gt" | "lt" | "tieBreak" | "same" | "plus" | "aceKiller";
 }
 
 
@@ -342,3 +344,36 @@ export interface RulesetConfigV1 {
   // Future: meta layers
 }
 
+export interface ClassicRulesConfigV1 {
+  order: boolean;
+  chaos: boolean;
+  swap: boolean;
+  reverse: boolean;
+  aceKiller: boolean;
+  plus: boolean;
+  same: boolean;
+  typeAscend: boolean;
+  typeDescend: boolean;
+  allOpen: boolean;
+  threeOpen: boolean;
+}
+
+export interface RulesetConfigV2 {
+  version: 2;
+  tactics: TacticsConfigV1;
+  synergy: SynergyConfigV1;
+  classic: ClassicRulesConfigV1;
+  /**
+   * Experimental Layer4 knobs for off-chain gameplay iteration.
+   * Engine-only: not included in rulesetId canonicalization (v2).
+   */
+  meta?: MetaConfigV1;
+  /**
+   * Engine-only flag:
+   * - When true, enforce transcript constraints that match the current on-chain settlement engine.
+   * - Not included in rulesetId canonicalization.
+   */
+  onchainSettlementCompat?: boolean;
+}
+
+export type RulesetConfig = RulesetConfigV1 | RulesetConfigV2;

@@ -3,7 +3,7 @@ import { useToast } from "@/components/Toast";
 import { Disclosure } from "@/components/Disclosure";
 import { Link, useLocation, useNavigate, useSearchParams } from "react-router-dom";
 
-import type { BoardCell, CardData, MatchResultWithHistory, RulesetConfigV1, TranscriptV1, TurnSummary } from "@nyano/triad-engine";
+import type { BoardCell, CardData, MatchResultWithHistory, RulesetConfig, TranscriptV1, TurnSummary } from "@nyano/triad-engine";
 import {
   simulateMatchV1WithHistory,
   verifyReplayV1,
@@ -208,7 +208,7 @@ function buildNyanoReactionInput(res: MatchResultWithHistory, step: number): Nya
   };
 }
 
-function rulesetLabelFromConfig(cfg: RulesetConfigV1): string {
+function rulesetLabelFromConfig(cfg: RulesetConfig): string {
   if (cfg === ONCHAIN_CORE_TACTICS_SHADOW_RULESET_CONFIG_V2) return "engine v2 (shadow ignores warning)";
   return "engine v1 (core+tactics)";
 }
@@ -628,6 +628,7 @@ const lastTurnSummary =
               aVal: f.aVal,
               dVal: f.dVal,
               tieBreak: f.tieBreak,
+              winBy: f.winBy,
             }))
           : undefined,
       }

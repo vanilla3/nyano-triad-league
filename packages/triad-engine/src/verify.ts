@@ -16,7 +16,7 @@ import type {
   TranscriptV1,
   CardData,
   PlayerIndex,
-  RulesetConfigV1,
+  RulesetConfig,
 } from "./types.js";
 import { simulateMatchV1, DEFAULT_RULESET_CONFIG_V1 } from "./engine.js";
 
@@ -46,7 +46,7 @@ export function verifyReplayV1(
   transcript: TranscriptV1,
   cardsByTokenId: Map<bigint, CardData>,
   expectedMatchId: string,
-  ruleset: RulesetConfigV1 = DEFAULT_RULESET_CONFIG_V1,
+  ruleset: RulesetConfig = DEFAULT_RULESET_CONFIG_V1,
 ): VerifyResult {
   const result = simulateMatchV1(transcript, cardsByTokenId, ruleset);
 

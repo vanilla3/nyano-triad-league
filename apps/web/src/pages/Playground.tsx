@@ -3,7 +3,7 @@ import { useSearchParams } from "react-router-dom";
 import { useToast } from "@/components/Toast";
 import { Disclosure } from "@/components/Disclosure";
 
-import type { BoardCell, CardData, MatchResultWithHistory, RulesetConfigV1, TranscriptV1 } from "@nyano/triad-engine";
+import type { BoardCell, CardData, MatchResultWithHistory, RulesetConfig, TranscriptV1 } from "@nyano/triad-engine";
 import {
   simulateMatchV1WithHistory,
   ONCHAIN_CORE_TACTICS_RULESET_CONFIG_V1,
@@ -44,7 +44,7 @@ function rulesetLabel(key: VectorKey): string {
   }
 }
 
-function rulesetConfigForVector(key: VectorKey): RulesetConfigV1 {
+function rulesetConfigForVector(key: VectorKey): RulesetConfig {
   return resolveRulesetOrThrow(key === "core_tactics_shadow_v2" ? "v2" : "v1");
 }
 

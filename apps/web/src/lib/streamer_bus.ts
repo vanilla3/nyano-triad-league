@@ -110,6 +110,7 @@ lastTurnSummary?: {
     aVal: number;
     dVal: number;
     tieBreak: boolean;
+    winBy?: "gt" | "lt" | "tieBreak" | "same" | "plus" | "aceKiller";
   }>;
 };
 

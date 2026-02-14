@@ -2,9 +2,10 @@ import React from "react";
 import { useToast } from "@/components/Toast";
 import { Link, useLocation, useNavigate, useSearchParams } from "react-router-dom";
 
-import type { BoardState, CardData, FlipTraceV1, MatchResultWithHistory, PlayerIndex, RulesetConfigV1, TranscriptV1, Turn, TurnSummary } from "@nyano/triad-engine";
+import type { BoardState, CardData, FlipTraceV1, MatchResultWithHistory, PlayerIndex, RulesetConfig, TranscriptV1, Turn, TurnSummary } from "@nyano/triad-engine";
 import {
-  computeRulesetIdV1,
+  computeRulesetId,
+  resolveClassicForcedCardIndex,
   simulateMatchV1WithHistory,
 } from "@nyano/triad-engine";
 import { parseRulesetKeyOrDefault, resolveRulesetOrThrow, type RulesetKey } from "@/lib/ruleset_registry";
@@ -101,7 +102,7 @@ function formatStageVfxLabel(pref: VfxPreference, resolved: VfxQuality): string 
 type SimOk = {
   ok: true;
   transcript: TranscriptV1;
-  ruleset: RulesetConfigV1;
+  ruleset: RulesetConfig;
   rulesetId: `0x${string}`;
   full: MatchResultWithHistory;
   // preview = slice to committed turns only
@@ -164,7 +165,12 @@ function countWarningMarks(turns: Turn[], firstPlayer: PlayerIndex): { A: number
   return { A, B };
 }
 
-function fillTurns(partial: Turn[], firstPlayer: PlayerIndex): Turn[] {
+function fillTurns(
+  partial: Turn[],
+  firstPlayer: PlayerIndex,
+  ruleset: RulesetConfig,
+  headerForClassic: Pick<TranscriptV1["header"], "salt" | "playerA" | "playerB" | "rulesetId">
+): Turn[] {
   const { cells, usedA, usedB } = computeUsed(partial, firstPlayer);
 
   const remainingCells: number[] = [];
@@ -183,9 +189,32 @@ function fillTurns(partial: Turn[], firstPlayer: PlayerIndex): Turn[] {
     const p = turnPlayer(firstPlayer, i);
     const cell = remainingCells.shift();
     if (cell === undefined) throw new Error("no remaining cells (internal)");
-    const cardIndex = p === 0 ? remainingA.shift() : remainingB.shift();
+    const used = p === 0 ? usedA : usedB;
+    const forced = resolveClassicForcedCardIndex({
+      ruleset,
+      header: headerForClassic,
+      turnIndex: i,
+      player: p,
+      usedCardIndices: used,
+    });
+
+    let cardIndex: number | undefined;
+    if (forced !== null) {
+      cardIndex = forced;
+      if (used.has(cardIndex)) throw new Error(`no remaining forced cardIndex for player ${p}`);
+      if (p === 0) {
+        const idx = remainingA.indexOf(cardIndex);
+        if (idx >= 0) remainingA.splice(idx, 1);
+      } else {
+        const idx = remainingB.indexOf(cardIndex);
+        if (idx >= 0) remainingB.splice(idx, 1);
+      }
+    } else {
+      cardIndex = p === 0 ? remainingA.shift() : remainingB.shift();
+    }
     if (cardIndex === undefined) throw new Error(`no remaining cardIndex for player ${p}`);
     out.push({ cell, cardIndex });
+    used.add(cardIndex);
   }
 
   return out;
@@ -818,14 +847,14 @@ export function MatchPage() {
   const effectiveDeckBTokens = isGuestMode && guestDeckBTokens.length === 5 ? guestDeckBTokens : deckBTokens;
 
   const baseRuleset = React.useMemo(() => resolveRulesetOrThrow(rulesetKey), [rulesetKey]);
-  const ruleset: RulesetConfigV1 = React.useMemo(() => {
-    const next = structuredClone(baseRuleset) as RulesetConfigV1;
+  const ruleset: RulesetConfig = React.useMemo(() => {
+    const next = structuredClone(baseRuleset) as RulesetConfig;
     if (chainCapPerTurnParam !== null) {
       next.meta = { ...(next.meta ?? {}), chainCapPerTurn: chainCapPerTurnParam };
     }
     return next;
   }, [baseRuleset, chainCapPerTurnParam]);
-  const rulesetId = React.useMemo(() => computeRulesetIdV1(ruleset), [ruleset]);
+  const rulesetId = React.useMemo(() => computeRulesetId(ruleset), [ruleset]);
 
   const used = React.useMemo(() => computeUsed(turns, firstPlayer), [turns, firstPlayer]);
   const warnUsed = React.useMemo(() => countWarningMarks(turns, firstPlayer), [turns, firstPlayer]);
@@ -839,6 +868,24 @@ export function MatchPage() {
 
   const currentDeckTokens = currentPlayer === 0 ? effectiveDeckATokens : effectiveDeckBTokens;
   const currentUsed = currentPlayer === 0 ? used.usedA : used.usedB;
+  const classicForcedCardIndex = React.useMemo(() => {
+    return resolveClassicForcedCardIndex({
+      ruleset,
+      header: { salt, playerA, playerB, rulesetId },
+      turnIndex: currentTurnIndex,
+      player: currentPlayer,
+      usedCardIndices: currentUsed,
+    });
+  }, [ruleset, salt, playerA, playerB, rulesetId, currentTurnIndex, currentPlayer, currentUsed]);
+  const effectiveUsedCardIndices = React.useMemo(() => {
+    const out = new Set<number>(currentUsed);
+    if (classicForcedCardIndex !== null) {
+      for (let i = 0; i < 5; i++) {
+        if (i !== classicForcedCardIndex) out.add(i);
+      }
+    }
+    return out;
+  }, [currentUsed, classicForcedCardIndex]);
   const currentWarnRemaining = currentPlayer === 0 ? Math.max(0, 3 - warnUsed.A) : Math.max(0, 3 - warnUsed.B);
   const currentHandCards: CardData[] = React.useMemo(() => {
     if (!cards) return [];
@@ -859,9 +906,14 @@ export function MatchPage() {
 
   const _availableCardIndexes = React.useMemo(() => {
     const out: number[] = [];
-    for (let i = 0; i < 5; i++) if (!currentUsed.has(i)) out.push(i);
+    for (let i = 0; i < 5; i++) if (!effectiveUsedCardIndices.has(i)) out.push(i);
     return out;
-  }, [currentUsed]);
+  }, [effectiveUsedCardIndices]);
+
+  React.useEffect(() => {
+    if (classicForcedCardIndex === null) return;
+    setDraftCardIndex(classicForcedCardIndex);
+  }, [classicForcedCardIndex]);
 
   const canLoad = isGuestMode || Boolean(deckA && deckATokens.length === 5 && deckBTokens.length === 5);
 
@@ -1036,21 +1088,22 @@ export function MatchPage() {
     if (effectiveDeckATokens.length !== 5 || effectiveDeckBTokens.length !== 5) return { ok: false, error: "Deck A/B は 5 枚必要です" };
 
     try {
-      const fullTurns = fillTurns(turns, firstPlayer);
+      const header = {
+        version: 1 as const,
+        rulesetId,
+        seasonId,
+        playerA,
+        playerB,
+        deckA: effectiveDeckATokens,
+        deckB: effectiveDeckBTokens,
+        firstPlayer,
+        deadline,
+        salt,
+      };
+      const fullTurns = fillTurns(turns, firstPlayer, ruleset, header);
 
       const transcript: TranscriptV1 = {
-        header: {
-          version: 1,
-          rulesetId,
-          seasonId,
-          playerA,
-          playerB,
-          deckA: effectiveDeckATokens,
-          deckB: effectiveDeckBTokens,
-          firstPlayer,
-          deadline,
-          salt,
-        },
+        header,
         turns: fullTurns,
       };
 
@@ -1088,7 +1141,7 @@ export function MatchPage() {
         kind: f.kind, dir: f.dir as "up" | "right" | "down" | "left" | undefined,
         vert: f.vert as "up" | "down" | undefined,
         horiz: f.horiz as "left" | "right" | undefined,
-        aVal: f.aVal, dVal: f.dVal, tieBreak: f.tieBreak,
+        aVal: f.aVal, dVal: f.dVal, tieBreak: f.tieBreak, winBy: f.winBy,
       })),
     };
     const moveLite = {
@@ -1190,6 +1243,7 @@ export function MatchPage() {
                     aVal: f.aVal,
                     dVal: f.dVal,
                     tieBreak: f.tieBreak,
+                    winBy: f.winBy,
                   }))
                 : undefined,
             }
@@ -1309,6 +1363,11 @@ export function MatchPage() {
         telemetry.recordInvalidAction();
         return;
       }
+      if (classicForcedCardIndex !== null && next.cardIndex !== classicForcedCardIndex) {
+        setError(`このターンは cardIndex ${classicForcedCardIndex} を選んでください`);
+        telemetry.recordInvalidAction();
+        return;
+      }
       if (currentUsed.has(next.cardIndex)) {
         setError(`cardIndex ${next.cardIndex} はすでに使用済みです`);
         telemetry.recordInvalidAction();
@@ -1345,13 +1404,14 @@ export function MatchPage() {
       setDraftWarningMarkCell(null);
       setSelectedTurnIndex(Math.max(0, turns.length));
     },
-    [turns.length, used.cells, currentUsed, currentWarnRemaining, telemetry]
+    [turns.length, used.cells, currentUsed, currentWarnRemaining, telemetry, classicForcedCardIndex]
   );
 
   const commitMoveWithSelection = React.useCallback((cell: number, cardIndex: number) => {
+    const resolvedCardIndex = classicForcedCardIndex ?? cardIndex;
     const move = {
       cell,
-      cardIndex,
+      cardIndex: resolvedCardIndex,
       warningMarkCell: draftWarningMarkCell === null ? undefined : draftWarningMarkCell,
     };
 
@@ -1361,9 +1421,9 @@ export function MatchPage() {
 
     // Card flight animation (mint / engine mode)
     if (useMintUi && !cardFlight.isFlying) {
-      const sourceEl = document.querySelector(`[data-hand-card="${cardIndex}"]`) as HTMLElement | null;
+      const sourceEl = document.querySelector(`[data-hand-card="${resolvedCardIndex}"]`) as HTMLElement | null;
       const targetEl = document.querySelector(`[data-board-cell="${cell}"]`) as HTMLElement | null;
-      const card = currentHandCards[cardIndex];
+      const card = currentHandCards[resolvedCardIndex];
       if (sourceEl && targetEl && card) {
         cardFlight.launch(card, currentPlayer, sourceEl, targetEl, () => {
           commitTurn(move);
@@ -1380,6 +1440,7 @@ export function MatchPage() {
     currentHandCards,
     currentPlayer,
     draftWarningMarkCell,
+    classicForcedCardIndex,
     isStageFocusRoute,
     pushStageActionFeedback,
     useMintUi,
@@ -1404,11 +1465,12 @@ export function MatchPage() {
 
   const handleHandCardDragStart = React.useCallback((idx: number) => {
     if (!enableHandDragDrop) return;
+    if (classicForcedCardIndex !== null && idx !== classicForcedCardIndex) return;
     telemetry.recordInteraction();
     setDraftCardIndex(idx);
     setDragCardIndex(idx);
     setIsHandDragging(true);
-  }, [enableHandDragDrop, telemetry]);
+  }, [enableHandDragDrop, telemetry, classicForcedCardIndex]);
 
   const handleHandCardDragEnd = React.useCallback(() => {
     setIsHandDragging(false);
@@ -1422,7 +1484,7 @@ export function MatchPage() {
 
   const handleBoardDrop = React.useCallback((cell: number) => {
     if (!enableHandDragDrop || isAiTurn || turns.length >= 9) return;
-    const resolvedCardIndex = dragCardIndex ?? draftCardIndex;
+    const resolvedCardIndex = classicForcedCardIndex ?? dragCardIndex ?? draftCardIndex;
     if (resolvedCardIndex === null) {
       setError("card を選択してください");
       telemetry.recordInvalidAction();
@@ -1435,6 +1497,7 @@ export function MatchPage() {
     setDragCardIndex(null);
   }, [
     commitMoveWithSelection,
+    classicForcedCardIndex,
     dragCardIndex,
     draftCardIndex,
     enableHandDragDrop,
@@ -1489,17 +1552,18 @@ export function MatchPage() {
       warningMarksRemaining: Math.max(0, 3 - warnUsed.B),
     });
 
-    const tid = effectiveDeckBTokens[move.cardIndex];
-    const note = `Nyano chose cell ${move.cell}, cardIndex ${move.cardIndex}${tid !== undefined ? ` (#${tid.toString()})` : ""} — ${move.reason}`;
+    const resolvedCardIndex = classicForcedCardIndex ?? move.cardIndex;
+    const tid = effectiveDeckBTokens[resolvedCardIndex];
+    const note = `Nyano chose cell ${move.cell}, cardIndex ${resolvedCardIndex}${tid !== undefined ? ` (#${tid.toString()})` : ""} — ${move.reason}`;
     setAiNotes((prev) => ({ ...prev, [turns.length]: { reason: note, reasonCode: move.reasonCode } }));
     setStatus(note);
 
     commitTurn({
       cell: move.cell,
-      cardIndex: move.cardIndex,
+      cardIndex: resolvedCardIndex,
       warningMarkCell: move.warningMarkCell,
     });
-  }, [isVsNyanoAi, cards, turns.length, currentPlayer, aiPlayer, aiDifficulty, boardNow, effectiveDeckBTokens, used.usedB, used.cells, commitTurn, warnUsed.B]);
+  }, [isVsNyanoAi, cards, turns.length, currentPlayer, aiPlayer, aiDifficulty, boardNow, effectiveDeckBTokens, used.usedB, used.cells, commitTurn, warnUsed.B, classicForcedCardIndex]);
 
   React.useEffect(() => {
     if (!isVsNyanoAi || !aiAutoPlay || !cards || turns.length >= 9 || currentPlayer !== aiPlayer) {
@@ -1554,18 +1618,19 @@ export function MatchPage() {
         if (cmd.by !== currentPlayer) return;
 
         const wm = cmd.move.warningMarkCell;
+        const resolvedCardIndex = classicForcedCardIndex ?? cmd.move.cardIndex;
         commitTurn({
           cell: cmd.move.cell,
-          cardIndex: cmd.move.cardIndex,
+          cardIndex: resolvedCardIndex,
           warningMarkCell: typeof wm === "number" ? wm : undefined,
         });
 
-        toast.success("Stream move", `cell ${cmd.move.cell} · cardIndex ${cmd.move.cardIndex}`);
+        toast.success("Stream move", `cell ${cmd.move.cell} · cardIndex ${resolvedCardIndex}`);
       } catch {
         // ignore
       }
     });
-  }, [streamMode, streamControlledSide, turns.length, currentPlayer, isVsNyanoAi, aiPlayer, commitTurn, toast]);
+  }, [streamMode, streamControlledSide, turns.length, currentPlayer, isVsNyanoAi, aiPlayer, commitTurn, toast, classicForcedCardIndex]);
 
   const canFinalize = turns.length === 9 && sim.ok;
 
@@ -2249,6 +2314,7 @@ export function MatchPage() {
               <option value="v1">v1 (core+tactics)</option>
               <option value="v2">v2 (shadow ignores warning mark)</option>
               <option value="full">full (tactics+traits+formations)</option>
+              <option value="classic_plus_same">classic (plus+same)</option>
             </select>
             <select
               className="input"
@@ -3047,7 +3113,7 @@ export function MatchPage() {
                     <div className="mint-focus-hand-row">
                       {currentDeckTokens.map((tid, idx) => {
                         const card = cards?.get(tid);
-                        const usedHere = currentUsed.has(idx);
+                        const usedHere = effectiveUsedCardIndices.has(idx);
                         const selected = draftCardIndex === idx;
                         const dockDisabled = usedHere || isAiTurn || turns.length >= 9;
                         const center = (currentDeckTokens.length - 1) / 2;
@@ -3176,7 +3242,7 @@ export function MatchPage() {
                       <HandDisplayMint
                         cards={currentHandCards}
                         owner={currentPlayer}
-                        usedIndices={currentUsed}
+                        usedIndices={effectiveUsedCardIndices}
                         selectedIndex={draftCardIndex}
                         onSelect={(idx) => { telemetry.recordInteraction(); setDraftCardIndex(idx); }}
                         disabled={turns.length >= 9 || isAiTurn}
@@ -3189,7 +3255,7 @@ export function MatchPage() {
                       <HandDisplayRPG
                         cards={currentHandCards}
                         owner={currentPlayer}
-                        usedIndices={currentUsed}
+                        usedIndices={effectiveUsedCardIndices}
                         selectedIndex={draftCardIndex}
                         onSelect={(idx) => setDraftCardIndex(idx)}
                         disabled={turns.length >= 9 || isAiTurn}
@@ -3199,7 +3265,7 @@ export function MatchPage() {
                       <div className="flex flex-wrap gap-2">
                         {currentDeckTokens.map((tid, idx) => {
                           const c = cards.get(tid);
-                          const usedHere = currentUsed.has(idx);
+                          const usedHere = effectiveUsedCardIndices.has(idx);
                           const selected = draftCardIndex === idx;
                           return (
                             <button

@@ -7,6 +7,7 @@ import {
   resolveRulesetOrThrow,
 } from "../ruleset_registry";
 import {
+  CLASSIC_PLUS_SAME_RULESET_CONFIG_V2,
   DEFAULT_RULESET_CONFIG_V1,
   ONCHAIN_CORE_TACTICS_RULESET_CONFIG_V1,
   ONCHAIN_CORE_TACTICS_SHADOW_RULESET_CONFIG_V2,
@@ -35,6 +36,10 @@ describe("Ruleset registry (P2-370)", () => {
       expect(resolveRuleset("full")).toBe(DEFAULT_RULESET_CONFIG_V1);
     });
 
+    it('"classic_plus_same" → CLASSIC_PLUS_SAME_RULESET_CONFIG_V2', () => {
+      expect(resolveRuleset("classic_plus_same")).toBe(CLASSIC_PLUS_SAME_RULESET_CONFIG_V2);
+    });
+
     it('"unknown" → null', () => {
       expect(resolveRuleset("unknown")).toBeNull();
     });
@@ -60,7 +65,7 @@ describe("Ruleset registry (P2-370)", () => {
   /* ─── isValidRulesetKey ─── */
 
   describe("isValidRulesetKey", () => {
-    it.each(["v1", "v2", "full"] as const)('"%s" → true', (key) => {
+    it.each(["v1", "v2", "full", "classic_plus_same"] as const)('"%s" → true', (key) => {
       expect(isValidRulesetKey(key)).toBe(true);
     });
 
@@ -101,10 +106,11 @@ describe("Ruleset registry (P2-370)", () => {
       expect(RULESET_KEYS).toContain("v1");
       expect(RULESET_KEYS).toContain("v2");
       expect(RULESET_KEYS).toContain("full");
+      expect(RULESET_KEYS).toContain("classic_plus_same");
     });
 
-    it("has length 3", () => {
-      expect(RULESET_KEYS.length).toBe(3);
+    it("has length 4", () => {
+      expect(RULESET_KEYS.length).toBe(4);
     });
 
     it("every key resolves to a non-null config", () => {
