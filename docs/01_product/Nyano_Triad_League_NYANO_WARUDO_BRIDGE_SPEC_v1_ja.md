@@ -21,6 +21,8 @@ Nyano の配信（nyano-warudo）側で **Puzzle Show** を起動するため、
   - `"state_json"`: 盤面/手札/ターン/合法手/プロトコル(Transcript)を含むJSON（stringified）
 - `content`: 文字列（prompt or JSON文字列）
 
+`ai_prompt` は必要に応じて Classic 文脈行（`classic_open` / `classic_swap`）を含む。
+
 ## When to send
 最短で動かすため、Stream Studio から手動送信 + オプションで自動送信を提供する。
 

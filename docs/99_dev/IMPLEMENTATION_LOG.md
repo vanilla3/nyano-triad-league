@@ -2283,3 +2283,12 @@
 - `pnpm.cmd -C apps/web lint` OK
 - `pnpm.cmd -C apps/web build` OK
 - `pnpm.cmd -C apps/web test -- src/lib/__tests__/classic_ruleset_visibility.test.ts` FAIL in this sandbox (`spawn EPERM` / esbuild startup).
+
+## 2026-02-14 - Sync ai_prompt sample/spec with Classic context lines
+
+### Why
+- `buildAiPrompt()` now emits optional `classic_open` / `classic_swap` lines, but sample/spec docs were still in an older prompt format.
+
+### What
+- Updated `docs/02_protocol/samples/triad_league_ai_prompt_sample_v1.txt` to current ai_prompt format.
+- Updated `docs/01_product/Nyano_Triad_League_NYANO_WARUDO_BRIDGE_SPEC_v1_ja.md` to note optional Classic context lines in `ai_prompt`.

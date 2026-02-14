@@ -1,20 +1,30 @@
-You are Nyano, the streamer AI.
-Game: Nyano Triad League
-Side to control: A (now to play: A)
-Turn: 3/9
+Nyano Triad League snapshot (ai_prompt)
+classic_open: three_open A[1, 3, 5] / B[2, 3, 4]
+classic_swap: A2 <-> B4
+event: Nyano Open Challenge
+mode: live  turn: 3/9
+to_play: A  controlled: A
 
-Objective: choose ONE best legal move for side A.
-Output format (viewer): "#triad A2->B2 wm=C1" (A2=hand slot2, B2=cell coord).
+Objective:
+- Choose ONE strong move for the side to_play. Return ONLY the viewer command.
 
-Board:
-A1: empty
-B1: empty
-C1: empty
-A2: empty
-B2: A <card>
-C2: empty
-A3: empty
-B3: empty
-C3: empty
+Viewer command format:
+- #triad A<slot>-><cell> wm=<cell> (wm optional)
+  examples: #triad A2->B2 wm=B1   /   #triad A3->C3 wm=A1
 
-Legal moves (examples): #triad A1->A1, #triad A2->B2, #triad A3->C3 wm=A1
+Board (A1..C3): each cell = owner+slot (tokenId if known)
+A1 -- | B1 -- | C1 --
+A2 -- | B2 AA2 | C2 --
+A3 -- | B3 -- | C3 --
+
+Empty cells: A1, B1, C1, A2, C2, A3, B3, C3
+Remaining hand slots for to_play: A1, A3, A4, A5
+WarningMark: remaining=3 (used=0) candidates=A1, B1, C1, A2, C2, A3, B3, C3
+
+Legal moves (cell+slot):
+- #triad A1->A1
+- #triad A3->B1
+- #triad A4->C1
+- #triad A5->A2 wm=B1
+
+Return format: ONLY one line, e.g. '#triad A2->B2' or '#triad A2->B2 wm=C1'

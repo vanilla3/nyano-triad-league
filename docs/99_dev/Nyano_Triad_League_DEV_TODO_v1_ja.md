@@ -172,3 +172,4 @@
 - [x] Follow-up: sync `triad_league_snapshot_request_sample_v1.json` embedded `content` with latest `state_json` sample.
 - [x] Follow-up: refactor duplicated Classic Open/Swap resolution into shared `apps/web/src/lib/classic_ruleset_visibility.ts` with unit tests.
 - [x] Follow-up: harden Classic metadata resolver to return null (not throw) on malformed `protocolV1.header`.
+- [x] Follow-up: sync `triad_league_ai_prompt_sample_v1.txt` and Bridge spec with optional `classic_open` / `classic_swap` ai_prompt lines.
