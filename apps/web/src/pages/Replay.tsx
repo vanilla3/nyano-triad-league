@@ -45,6 +45,7 @@ import { parseReplayPayload } from "@/lib/replay_bundle";
 import { annotateReplayMoves } from "@/lib/ai/replay_annotations";
 import { assessBoardAdvantage, type BoardAdvantage } from "@/lib/ai/board_advantage";
 import { AdvantageBadge } from "@/components/AdvantageBadge";
+import { resolveRulesetById } from "@/lib/ruleset_registry";
 import { writeClipboardText } from "@/lib/clipboard";
 import { appAbsoluteUrl, appPath, buildReplayShareUrl } from "@/lib/appUrl";
 import { computeStageBoardSizing, shouldShowStageSecondaryControls } from "@/lib/stage_layout";
@@ -213,6 +214,28 @@ function rulesetLabelFromConfig(cfg: RulesetConfig): string {
   return "engine v1 (core+tactics)";
 }
 
+function rulesetLabelFromRegistryConfig(cfg: RulesetConfig): string {
+  if (cfg.version === 2) {
+    const c = cfg.classic;
+    const tags = [
+      c.order && "order",
+      c.chaos && "chaos",
+      c.swap && "swap",
+      c.reverse && "reverse",
+      c.aceKiller && "aceKiller",
+      c.plus && "plus",
+      c.same && "same",
+      c.typeAscend && "typeAscend",
+      c.typeDescend && "typeDescend",
+      c.allOpen && "allOpen",
+      c.threeOpen && "threeOpen",
+    ].filter(Boolean) as string[];
+    if (tags.length > 0) return `rulesetId registry (classic: ${tags.join(", ")})`;
+    return "rulesetId registry (v2)";
+  }
+  return "rulesetId registry (v1)";
+}
+
 function pickDefaultMode(rulesetId: string): Mode {
   try {
     const rulesets = (OFFICIAL as { rulesets: Array<{ rulesetId: string; engineId: number }> }).rulesets;
@@ -222,6 +245,11 @@ function pickDefaultMode(rulesetId: string): Mode {
   } catch {
     return "compare";
   }
+}
+
+function shouldAutoCompareByRulesetId(rulesetId: string): boolean {
+  if (resolveRulesetById(rulesetId)) return false;
+  return pickDefaultMode(rulesetId) === "compare";
 }
 
 const HIGHLIGHT_KIND_ORDER: ReplayHighlightKind[] = ["big_flip", "chain", "combo", "warning"];
@@ -724,6 +752,8 @@ protocolV1: {
 
       // Determine preferred mode from rulesetId if mode=auto.
       const mode0 = override?.mode ?? mode;
+      const rulesetById = resolveRulesetById(transcript.header.rulesetId);
+      const useRegistryRuleset = mode0 === "auto" && rulesetById !== null;
       const effectiveMode: Mode = mode0 === "auto" ? pickDefaultMode(transcript.header.rulesetId) : mode0;
 
       // v2: use embedded card data (no network calls needed)
@@ -754,11 +784,15 @@ protocolV1: {
       // Always compute both (cheap compared to RPC reads)
       const v1 = simulateMatchV1WithHistory(transcript, cards, ONCHAIN_CORE_TACTICS_RULESET_CONFIG_V1);
       const v2 = simulateMatchV1WithHistory(transcript, cards, ONCHAIN_CORE_TACTICS_SHADOW_RULESET_CONFIG_V2);
+      const byId = rulesetById ? simulateMatchV1WithHistory(transcript, cards, rulesetById) : null;
 
       let current: MatchResultWithHistory = v1;
       let label = rulesetLabelFromConfig(ONCHAIN_CORE_TACTICS_RULESET_CONFIG_V1);
 
-      if (effectiveMode === "v2") {
+      if (useRegistryRuleset && byId) {
+        current = byId;
+        label = rulesetLabelFromRegistryConfig(rulesetById!);
+      } else if (effectiveMode === "v2") {
         current = v2;
         label = rulesetLabelFromConfig(ONCHAIN_CORE_TACTICS_SHADOW_RULESET_CONFIG_V2);
       } else if (effectiveMode === "compare") {
@@ -1047,7 +1081,7 @@ protocolV1: {
     return () => window.clearInterval(timer);
   }, [isPlaying, playbackSpeed, stepMax, sim.ok, canPlay]);
 
-  const compare = sim.ok && (mode === "compare" || (mode === "auto" && pickDefaultMode(sim.transcript.header.rulesetId) === "compare"));
+  const compare = sim.ok && (mode === "compare" || (mode === "auto" && shouldAutoCompareByRulesetId(sim.transcript.header.rulesetId)));
   const diverged = sim.ok ? !boardEquals(sim.v1.boardHistory[step], sim.v2.boardHistory[step]) : false;
   const replayNyanoReactionInput = React.useMemo(
     () => (sim.ok ? buildNyanoReactionInput(sim.current, step) : null),
@@ -1551,7 +1585,7 @@ protocolV1: {
               <div className="flex flex-wrap items-center gap-2 text-xs text-slate-600">
                 <span>mode</span>
                 <select className="select w-48" value={mode} onChange={(e) => setMode(parseMode(e.target.value))}>
-                  <option value="auto">auto (by rulesetId)</option>
+                  <option value="auto">auto (rulesetId registry/official)</option>
                   <option value="v1">engine v1</option>
                   <option value="v2">engine v2</option>
                   <option value="compare">compare</option>

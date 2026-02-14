@@ -2009,3 +2009,25 @@
 - `pnpm.cmd -C apps/web build` OK
 - `pnpm.cmd -C apps/web typecheck` FAIL in this sandbox due module resolution (`pixi.js`, `fflate`) access issue.
 - `pnpm.cmd -C apps/web test -- ...` FAIL in this sandbox (`spawn EPERM` during Vite/esbuild startup).
+
+## 2026-02-14 - WO007 follow-up: Replay auto mode resolves Classic rulesetId via local registry
+
+### Why
+- Replay `mode=auto` previously selected only official v1/v2 engines, so Classic transcripts could fall back to compare mode even when the app already knew that ruleset.
+- This produced a mismatch risk between transcript ruleset intent and replay simulation path.
+
+### What
+- `apps/web/src/pages/Replay.tsx`
+  - Added `resolveRulesetById` lookup in replay load flow.
+  - In `mode=auto`:
+    - if transcript `rulesetId` exists in local ruleset registry, replay now simulates with that exact config.
+    - otherwise keeps previous official fallback behavior (`v1`/`v2`/`compare`).
+  - Added Classic-aware registry label generation for replay header text.
+  - Updated auto-compare gating to avoid forcing compare mode when registry-resolved ruleset exists.
+  - Updated mode selector label text to clarify `auto` uses both registry and official ruleset mappings.
+
+### Verify
+- `pnpm.cmd -C apps/web lint` OK
+- `pnpm.cmd -C apps/web build` OK
+- `pnpm.cmd -C apps/web typecheck` FAIL in this sandbox due module resolution (`pixi.js`, `fflate`) access issue.
+- `pnpm.cmd -C apps/web test -- ...` FAIL in this sandbox (`spawn EPERM` during Vite/esbuild startup).
