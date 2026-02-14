@@ -157,3 +157,4 @@
 - [x] 2026-02-14 WO006/WO007 Classic Rules implemented (engine + web): RulesetConfigV2, classic RNG, Order/Chaos/Swap/Reverse/AceKiller/Plus/Same/Type Ascend/Descend, Match UI integration, and classic test coverage.
 - [x] Follow-up: update stream strict allowlist for Order/Chaos in `apps/web/src/lib/triad_vote_utils.ts` if Classic is enabled in stream voting mode.
 - [x] Follow-up: replay `mode=auto` now resolves known Classic `rulesetId` via local ruleset registry instead of falling back to v1/v2 compare.
+- [x] Follow-up: show deterministic Classic Swap slot mapping (`A{n} ↔ B{m}`) in Match setup and Replay details when swap is active.

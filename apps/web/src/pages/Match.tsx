@@ -6,6 +6,7 @@ import type { BoardState, CardData, FlipTraceV1, MatchResultWithHistory, PlayerI
 import {
   computeRulesetId,
   resolveClassicForcedCardIndex,
+  resolveClassicSwapIndices,
   simulateMatchV1WithHistory,
 } from "@nyano/triad-engine";
 import { parseRulesetKeyOrDefault, resolveRulesetOrThrow, type RulesetKey } from "@/lib/ruleset_registry";
@@ -877,6 +878,12 @@ export function MatchPage() {
       usedCardIndices: currentUsed,
     });
   }, [ruleset, salt, playerA, playerB, rulesetId, currentTurnIndex, currentPlayer, currentUsed]);
+  const classicSwapIndices = React.useMemo(() => {
+    return resolveClassicSwapIndices({
+      ruleset,
+      header: { salt, playerA, playerB, rulesetId },
+    });
+  }, [ruleset, salt, playerA, playerB, rulesetId]);
   const effectiveUsedCardIndices = React.useMemo(() => {
     const out = new Set<number>(currentUsed);
     if (classicForcedCardIndex !== null) {
@@ -2337,6 +2344,11 @@ export function MatchPage() {
             ) : (
               <div className="text-xs text-slate-500">Layer4 experimental knob (engine-only, rulesetId unchanged)</div>
             )}
+            {classicSwapIndices ? (
+              <div className="text-xs text-amber-700">
+                Classic Swap: A{classicSwapIndices.aIndex + 1} ↔ B{classicSwapIndices.bIndex + 1}
+              </div>
+            ) : null}
             <div className="text-xs text-slate-500 font-mono truncate">rulesetId: {rulesetId}</div>
           </div>
 

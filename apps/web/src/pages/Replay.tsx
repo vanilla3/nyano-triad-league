@@ -5,6 +5,7 @@ import { Link, useLocation, useNavigate, useSearchParams } from "react-router-do
 
 import type { BoardCell, CardData, MatchResultWithHistory, RulesetConfig, TranscriptV1, TurnSummary } from "@nyano/triad-engine";
 import {
+  resolveClassicSwapIndices,
   simulateMatchV1WithHistory,
   verifyReplayV1,
   ONCHAIN_CORE_TACTICS_RULESET_CONFIG_V1,
@@ -882,6 +883,15 @@ protocolV1: {
     && (typeof window === "undefined" || shouldShowStageSecondaryControls(window.innerWidth));
   const phaseInfo: ReplayPhaseInfo = React.useMemo(() => replayPhaseInfo(step, stepMax), [step, stepMax]);
   const stepStatusText = replayStepStatusText(step);
+  const replayClassicSwap = React.useMemo(() => {
+    if (!sim.ok) return null;
+    const ruleset = resolveRulesetById(sim.transcript.header.rulesetId);
+    if (!ruleset) return null;
+    return resolveClassicSwapIndices({
+      ruleset,
+      header: sim.transcript.header,
+    });
+  }, [sim]);
   const replayTransportButtonClass = isStageFocus ? "btn h-10 px-4" : "btn btn-sm";
   const replayTransportPrimaryButtonClass = isStageFocus ? "btn btn-primary h-10 px-4" : "btn btn-sm btn-primary";
   const replaySpeedSelectClass = isStageFocus
@@ -2132,6 +2142,11 @@ protocolV1: {
                         <div>
                           <span className="font-medium">rulesetId</span>: <code>{sim.transcript.header.rulesetId}</code>
                         </div>
+                        {replayClassicSwap ? (
+                          <div>
+                            <span className="font-medium">classic swap</span>: A{replayClassicSwap.aIndex + 1} ↔ B{replayClassicSwap.bIndex + 1}
+                          </div>
+                        ) : null}
                         <div className="flex items-center gap-2">
                           <span className="font-medium">matchId</span>: <code>{sim.current.matchId}</code>
                           {verifyStatus === "ok" && <span className="text-emerald-600 font-semibold" title="Replay verified">Verified</span>}

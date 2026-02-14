@@ -2031,3 +2031,25 @@
 - `pnpm.cmd -C apps/web build` OK
 - `pnpm.cmd -C apps/web typecheck` FAIL in this sandbox due module resolution (`pixi.js`, `fflate`) access issue.
 - `pnpm.cmd -C apps/web test -- ...` FAIL in this sandbox (`spawn EPERM` during Vite/esbuild startup).
+
+## 2026-02-14 - WO007 follow-up: Classic Swap visibility in Match/Replay
+
+### Why
+- Classic `Swap` was already enforced in the engine, but web UI did not explicitly show which slots were swapped.
+- Operators/reviewers needed deterministic visibility of swap mapping for manual verification and replay reading.
+
+### What
+- `apps/web/src/pages/Match.tsx`
+  - Added `resolveClassicSwapIndices(...)` usage for current ruleset/header.
+  - Added setup panel hint when swap is active:
+    - `Classic Swap: A{n} ? B{m}`
+- `apps/web/src/pages/Replay.tsx`
+  - Added `resolveClassicSwapIndices(...)` usage based on transcript `rulesetId` (via local registry lookup).
+  - Added replay detail line when swap is active:
+    - `classic swap: A{n} ? B{m}`
+
+### Verify
+- `pnpm.cmd -C apps/web lint` OK
+- `pnpm.cmd -C apps/web build` OK
+- `pnpm.cmd -C apps/web typecheck` FAIL in this sandbox due module resolution (`pixi.js`, `fflate`) access issue.
+- `pnpm.cmd -C apps/web test -- ...` FAIL in this sandbox (`spawn EPERM` during Vite/esbuild startup).
