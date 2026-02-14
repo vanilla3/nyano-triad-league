@@ -2320,13 +2320,19 @@ protocolV1: {
               <div className="md:col-span-2 grid gap-2 text-xs text-slate-600">
                 <div className="rounded-lg border border-slate-200 bg-white p-3">
                   <div className="font-medium text-slate-700">owners (read-only)</div>
-                  <div className="mt-2 grid max-h-56 gap-1 overflow-auto font-mono">
-                    {Array.from(sim.owners.entries()).map(([tid, o]) => (
-                      <div key={tid.toString()}>
-                        #{tid.toString()} {"->"} {o}
-                      </div>
-                    ))}
-                  </div>
+                  {shouldMaskReplayDeckSlots ? (
+                    <div className="mt-2 text-[11px] text-slate-500">
+                      Hidden by Three Open. Enable "Show hidden slots" to inspect full owner mapping.
+                    </div>
+                  ) : (
+                    <div className="mt-2 grid max-h-56 gap-1 overflow-auto font-mono">
+                      {Array.from(sim.owners.entries()).map(([tid, o]) => (
+                        <div key={tid.toString()}>
+                          #{tid.toString()} {"->"} {o}
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
             </div>

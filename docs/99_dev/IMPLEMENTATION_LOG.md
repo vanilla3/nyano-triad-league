@@ -2095,6 +2095,7 @@
 - `apps/web/src/pages/Replay.tsx`
   - Added `Show hidden slots (post-match analysis)` toggle in Deck inspector when Classic `threeOpen` is active.
   - Kept default behavior as masked; enabling toggle reveals full cards for both players.
+  - Owners mapping panel is also hidden by default under `threeOpen`, and is revealed with the same toggle.
   - `allOpen` behavior remains unchanged (all visible without toggle).
 
 ### Verify

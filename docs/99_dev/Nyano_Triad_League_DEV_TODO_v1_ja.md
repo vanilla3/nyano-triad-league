@@ -162,3 +162,4 @@
 - [x] Follow-up: in Guest Match deck preview, hide Nyano cards unless revealed by Classic Open rules (`allOpen` / `threeOpen`).
 - [x] Follow-up: in Replay Deck inspector, mask unrevealed slots for both players under Classic Three Open (and keep all visible under All Open).
 - [x] Follow-up: add Replay Deck inspector toggle to reveal hidden Three Open slots for post-match analysis.
+- [x] Follow-up: hide Replay owners mapping under Three Open by default, and reveal it together with the hidden-slot toggle.
