@@ -29,34 +29,39 @@ export function resolveClassicMetadataFromHeader(
 
   const ruleset = resolveRulesetById(header.rulesetId);
   if (!ruleset) return null;
+  try {
+    const classicHeader = {
+      rulesetId: header.rulesetId,
+      playerA: header.playerA,
+      playerB: header.playerB,
+      salt: header.salt,
+    };
 
-  const classicHeader = {
-    rulesetId: header.rulesetId,
-    playerA: header.playerA,
-    playerB: header.playerB,
-    salt: header.salt,
-  };
+    const open = resolveClassicOpenCardIndices({ ruleset, header: classicHeader });
+    const swap = resolveClassicSwapIndices({ ruleset, header: classicHeader });
+    if (!open && !swap) return null;
 
-  const open = resolveClassicOpenCardIndices({ ruleset, header: classicHeader });
-  const swap = resolveClassicSwapIndices({ ruleset, header: classicHeader });
-  if (!open && !swap) return null;
-
-  return {
-    rulesetId: header.rulesetId,
-    open: open
-      ? {
-          mode: open.mode,
-          playerA: [...open.playerA],
-          playerB: [...open.playerB],
-        }
-      : null,
-    swap: swap
-      ? {
-          aIndex: swap.aIndex,
-          bIndex: swap.bIndex,
-        }
-      : null,
-  };
+    return {
+      rulesetId: header.rulesetId,
+      open: open
+        ? {
+            mode: open.mode,
+            playerA: [...open.playerA],
+            playerB: [...open.playerB],
+          }
+        : null,
+      swap: swap
+        ? {
+            aIndex: swap.aIndex,
+            bIndex: swap.bIndex,
+          }
+        : null,
+    };
+  } catch {
+    // Overlay/stream bus payloads are best-effort and may be malformed.
+    // Ignore invalid Classic headers instead of surfacing runtime crashes.
+    return null;
+  }
 }
 
 export function resolveClassicMetadataFromOverlayState(
@@ -64,4 +69,3 @@ export function resolveClassicMetadataFromOverlayState(
 ): ClassicResolvedMetadata | null {
   return resolveClassicMetadataFromHeader(state?.protocolV1?.header);
 }
-

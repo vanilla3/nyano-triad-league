@@ -171,3 +171,4 @@
 - [x] Follow-up: update `state_json v1` sample/spec docs to include additive optional `classic` metadata.
 - [x] Follow-up: sync `triad_league_snapshot_request_sample_v1.json` embedded `content` with latest `state_json` sample.
 - [x] Follow-up: refactor duplicated Classic Open/Swap resolution into shared `apps/web/src/lib/classic_ruleset_visibility.ts` with unit tests.
+- [x] Follow-up: harden Classic metadata resolver to return null (not throw) on malformed `protocolV1.header`.

@@ -2270,6 +2270,7 @@
   - `resolveClassicMetadataFromHeader(...)`
   - `resolveClassicMetadataFromOverlayState(...)`
   - shared types for resolved Classic open/swap metadata
+  - malformed header guard (`try/catch`) so invalid `protocolV1.header` never crashes Stream/Overlay.
 - Updated:
   - `apps/web/src/pages/Stream.tsx`
   - `apps/web/src/pages/Overlay.tsx`

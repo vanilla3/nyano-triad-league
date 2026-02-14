@@ -25,6 +25,16 @@ describe("resolveClassicMetadataFromHeader", () => {
     expect(resolveClassicMetadataFromHeader(makeHeader(`0x${"00".repeat(32)}`))).toBeNull();
   });
 
+  it("returns null (no throw) for malformed classic header fields", () => {
+    const ruleset = resolveRulesetOrThrow("classic_swap");
+    const rulesetId = computeRulesetId(ruleset);
+    const malformed = {
+      ...makeHeader(rulesetId),
+      salt: "bad-salt",
+    };
+    expect(resolveClassicMetadataFromHeader(malformed as never)).toBeNull();
+  });
+
   it("returns null for non-classic rulesets", () => {
     const ruleset = resolveRulesetOrThrow("v2");
     const rulesetId = computeRulesetId(ruleset);
@@ -70,4 +80,3 @@ describe("resolveClassicMetadataFromHeader", () => {
     expect(first?.open?.playerB).toHaveLength(3);
   });
 });
-
