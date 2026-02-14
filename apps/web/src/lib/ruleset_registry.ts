@@ -22,7 +22,10 @@ export type RulesetKey =
   | "full"
   | "classic_plus_same"
   | "classic_order"
-  | "classic_chaos";
+  | "classic_chaos"
+  | "classic_swap"
+  | "classic_all_open"
+  | "classic_three_open";
 
 /** All valid ruleset keys as a readonly array. */
 export const RULESET_KEYS: readonly RulesetKey[] = [
@@ -32,6 +35,9 @@ export const RULESET_KEYS: readonly RulesetKey[] = [
   "classic_plus_same",
   "classic_order",
   "classic_chaos",
+  "classic_swap",
+  "classic_all_open",
+  "classic_three_open",
 ] as const;
 
 const CLASSIC_ORDER_RULESET_CONFIG_V2: RulesetConfig = {
@@ -50,6 +56,30 @@ const CLASSIC_CHAOS_RULESET_CONFIG_V2: RulesetConfig = {
   },
 };
 
+const CLASSIC_SWAP_RULESET_CONFIG_V2: RulesetConfig = {
+  ...DEFAULT_RULESET_CONFIG_V2,
+  classic: {
+    ...DEFAULT_RULESET_CONFIG_V2.classic,
+    swap: true,
+  },
+};
+
+const CLASSIC_ALL_OPEN_RULESET_CONFIG_V2: RulesetConfig = {
+  ...DEFAULT_RULESET_CONFIG_V2,
+  classic: {
+    ...DEFAULT_RULESET_CONFIG_V2.classic,
+    allOpen: true,
+  },
+};
+
+const CLASSIC_THREE_OPEN_RULESET_CONFIG_V2: RulesetConfig = {
+  ...DEFAULT_RULESET_CONFIG_V2,
+  classic: {
+    ...DEFAULT_RULESET_CONFIG_V2.classic,
+    threeOpen: true,
+  },
+};
+
 const REGISTRY: Record<RulesetKey, RulesetConfig> = {
   v1: ONCHAIN_CORE_TACTICS_RULESET_CONFIG_V1,
   v2: ONCHAIN_CORE_TACTICS_SHADOW_RULESET_CONFIG_V2,
@@ -57,6 +87,9 @@ const REGISTRY: Record<RulesetKey, RulesetConfig> = {
   classic_plus_same: CLASSIC_PLUS_SAME_RULESET_CONFIG_V2,
   classic_order: CLASSIC_ORDER_RULESET_CONFIG_V2,
   classic_chaos: CLASSIC_CHAOS_RULESET_CONFIG_V2,
+  classic_swap: CLASSIC_SWAP_RULESET_CONFIG_V2,
+  classic_all_open: CLASSIC_ALL_OPEN_RULESET_CONFIG_V2,
+  classic_three_open: CLASSIC_THREE_OPEN_RULESET_CONFIG_V2,
 };
 
 const REGISTRY_BY_RULESET_ID = new Map<string, RulesetConfig>(

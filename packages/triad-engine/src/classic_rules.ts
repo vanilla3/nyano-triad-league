@@ -30,12 +30,32 @@ export function resolveClassicConfig(ruleset: RulesetConfig): ClassicRulesConfig
   return { ...DEFAULT_CLASSIC_RULES_CONFIG_V1, ...ruleset.classic };
 }
 
+export type ClassicOpenCardIndices = {
+  mode: "all_open" | "three_open";
+  playerA: readonly number[];
+  playerB: readonly number[];
+};
+
+const FULL_HAND_CARD_INDICES = [0, 1, 2, 3, 4] as const;
+
 function remainingCardIndexes(usedCardIndices: ReadonlySet<number>): number[] {
   const out: number[] = [];
   for (let i = 0; i < 5; i++) {
     if (!usedCardIndices.has(i)) out.push(i);
   }
   return out;
+}
+
+function pickClassicThreeOpenIndices(seed0: `0x${string}`, player: PlayerIndex): number[] {
+  const pool = [...FULL_HAND_CARD_INDICES];
+  const picks: number[] = [];
+  while (picks.length < 3 && pool.length > 0) {
+    const pickAt = classicRandUint(seed0, "three_open", [player, picks.length], pool.length);
+    const [picked] = pool.splice(pickAt, 1);
+    if (picked !== undefined) picks.push(picked);
+  }
+  picks.sort((a, b) => a - b);
+  return picks;
 }
 
 export function resolveClassicForcedCardIndex(params: {
@@ -56,6 +76,27 @@ export function resolveClassicForcedCardIndex(params: {
   const seed0 = buildClassicSeed0(params.header);
   const pick = classicRandUint(seed0, "chaos", [params.turnIndex, params.player], remaining.length);
   return remaining[pick] ?? null;
+}
+
+export function resolveClassicOpenCardIndices(params: {
+  ruleset: RulesetConfig;
+  header: Pick<MatchHeader, "salt" | "playerA" | "playerB" | "rulesetId">;
+}): ClassicOpenCardIndices | null {
+  const classic = resolveClassicConfig(params.ruleset);
+  if (classic.allOpen) {
+    return {
+      mode: "all_open",
+      playerA: [...FULL_HAND_CARD_INDICES],
+      playerB: [...FULL_HAND_CARD_INDICES],
+    };
+  }
+  if (!classic.threeOpen) return null;
+  const seed0 = buildClassicSeed0(params.header);
+  return {
+    mode: "three_open",
+    playerA: pickClassicThreeOpenIndices(seed0, 0),
+    playerB: pickClassicThreeOpenIndices(seed0, 1),
+  };
 }
 
 export function resolveClassicSwapIndices(params: {
@@ -87,4 +128,3 @@ export function applyClassicSwapToDecks(deckA: readonly bigint[], deckB: readonl
   nextB[swap.bIndex] = aToken;
   return { deckA: nextA, deckB: nextB };
 }
-

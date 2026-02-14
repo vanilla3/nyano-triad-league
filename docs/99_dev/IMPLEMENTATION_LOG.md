@@ -2010,6 +2010,46 @@
 - `pnpm.cmd -C apps/web typecheck` FAIL in this sandbox due module resolution (`pixi.js`, `fflate`) access issue.
 - `pnpm.cmd -C apps/web test -- ...` FAIL in this sandbox (`spawn EPERM` during Vite/esbuild startup).
 
+## 2026-02-14 - WO007 follow-up: Classic Open visibility + additional preset keys
+
+### Why
+- Classic `allOpen` / `threeOpen` flags were encoded in `RulesetConfigV2`, but Match/Replay did not expose deterministic reveal metadata.
+- Local ruleset selection also lacked direct presets for `swap`, `allOpen`, and `threeOpen`, making verification cumbersome.
+
+### What
+- `packages/triad-engine/src/classic_rules.ts`
+  - Added `resolveClassicOpenCardIndices(...)`.
+  - Behavior:
+    - `allOpen` -> mode `all_open`, both players reveal all indices `[0..4]`.
+    - `threeOpen` -> mode `three_open`, each player gets deterministic unique 3 indices from seed/tag `three_open`.
+    - `allOpen` takes precedence when both flags are enabled.
+- `packages/triad-engine/test/classic_open.test.js` (new)
+  - Added deterministic + uniqueness coverage for `threeOpen`.
+  - Added precedence coverage for `allOpen + threeOpen`.
+- `apps/web/src/lib/ruleset_registry.ts`
+  - Added ruleset keys and presets:
+    - `classic_swap`
+    - `classic_all_open`
+    - `classic_three_open`
+- `apps/web/src/lib/__tests__/ruleset_registry.test.ts`
+  - Extended registry key/resolution coverage for new Classic preset keys.
+- `apps/web/src/pages/Match.tsx`
+  - Added `resolveClassicOpenCardIndices(...)`-based setup hint:
+    - `Classic Open: all cards revealed`
+    - `Classic Three Open: A[...] / B[...]`
+  - Added selector options for new Classic preset keys above.
+- `apps/web/src/pages/Replay.tsx`
+  - Added replay detail line for deterministic Classic Open metadata (resolved by transcript `rulesetId` via local registry).
+
+### Verify
+- `pnpm.cmd -C packages/triad-engine build` OK
+- `node packages/triad-engine/test/classic_open.test.js` OK
+- `pnpm.cmd -C packages/triad-engine test` FAIL in this sandbox (`node --test` child spawn EPERM)
+- `pnpm.cmd -C apps/web lint` OK
+- `pnpm.cmd -C apps/web build` OK
+- `pnpm.cmd -C apps/web typecheck` FAIL in this sandbox due module resolution (`pixi.js`, `fflate`) access issue.
+- `pnpm.cmd -C apps/web test -- src/lib/__tests__/ruleset_registry.test.ts` FAIL in this sandbox (`spawn EPERM` during Vite/esbuild startup).
+
 ## 2026-02-14 - WO007 follow-up: Replay auto mode resolves Classic rulesetId via local registry
 
 ### Why

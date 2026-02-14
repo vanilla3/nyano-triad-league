@@ -5,6 +5,7 @@ import { Link, useLocation, useNavigate, useSearchParams } from "react-router-do
 
 import type { BoardCell, CardData, MatchResultWithHistory, RulesetConfig, TranscriptV1, TurnSummary } from "@nyano/triad-engine";
 import {
+  resolveClassicOpenCardIndices,
   resolveClassicSwapIndices,
   simulateMatchV1WithHistory,
   verifyReplayV1,
@@ -251,6 +252,10 @@ function pickDefaultMode(rulesetId: string): Mode {
 function shouldAutoCompareByRulesetId(rulesetId: string): boolean {
   if (resolveRulesetById(rulesetId)) return false;
   return pickDefaultMode(rulesetId) === "compare";
+}
+
+function formatClassicOpenSlots(indices: readonly number[]): string {
+  return indices.map((idx) => String(idx + 1)).join(", ");
 }
 
 const HIGHLIGHT_KIND_ORDER: ReplayHighlightKind[] = ["big_flip", "chain", "combo", "warning"];
@@ -888,6 +893,15 @@ protocolV1: {
     const ruleset = resolveRulesetById(sim.transcript.header.rulesetId);
     if (!ruleset) return null;
     return resolveClassicSwapIndices({
+      ruleset,
+      header: sim.transcript.header,
+    });
+  }, [sim]);
+  const replayClassicOpen = React.useMemo(() => {
+    if (!sim.ok) return null;
+    const ruleset = resolveRulesetById(sim.transcript.header.rulesetId);
+    if (!ruleset) return null;
+    return resolveClassicOpenCardIndices({
       ruleset,
       header: sim.transcript.header,
     });
@@ -2145,6 +2159,13 @@ protocolV1: {
                         {replayClassicSwap ? (
                           <div>
                             <span className="font-medium">classic swap</span>: A{replayClassicSwap.aIndex + 1} ↔ B{replayClassicSwap.bIndex + 1}
+                          </div>
+                        ) : null}
+                        {replayClassicOpen ? (
+                          <div>
+                            <span className="font-medium">classic open</span>: {replayClassicOpen.mode === "all_open"
+                              ? "all cards revealed"
+                              : `A[${formatClassicOpenSlots(replayClassicOpen.playerA)}] / B[${formatClassicOpenSlots(replayClassicOpen.playerB)}]`}
                           </div>
                         ) : null}
                         <div className="flex items-center gap-2">

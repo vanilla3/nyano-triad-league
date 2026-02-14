@@ -6,6 +6,7 @@ import type { BoardState, CardData, FlipTraceV1, MatchResultWithHistory, PlayerI
 import {
   computeRulesetId,
   resolveClassicForcedCardIndex,
+  resolveClassicOpenCardIndices,
   resolveClassicSwapIndices,
   simulateMatchV1WithHistory,
 } from "@nyano/triad-engine";
@@ -231,6 +232,10 @@ function parseOpponentMode(v: string | null): OpponentMode {
   if (!v) return "pvp";
   if (v === "vs_nyano_ai" || v === "ai" || v === "nyano") return "vs_nyano_ai";
   return "pvp";
+}
+
+function formatClassicOpenSlots(indices: readonly number[]): string {
+  return indices.map((idx) => String(idx + 1)).join(", ");
 }
 
 function parseAiDifficulty(v: string | null): AiDifficulty {
@@ -880,6 +885,12 @@ export function MatchPage() {
   }, [ruleset, salt, playerA, playerB, rulesetId, currentTurnIndex, currentPlayer, currentUsed]);
   const classicSwapIndices = React.useMemo(() => {
     return resolveClassicSwapIndices({
+      ruleset,
+      header: { salt, playerA, playerB, rulesetId },
+    });
+  }, [ruleset, salt, playerA, playerB, rulesetId]);
+  const classicOpenCardIndices = React.useMemo(() => {
+    return resolveClassicOpenCardIndices({
       ruleset,
       header: { salt, playerA, playerB, rulesetId },
     });
@@ -2324,6 +2335,9 @@ export function MatchPage() {
               <option value="classic_plus_same">classic (plus+same)</option>
               <option value="classic_order">classic (order)</option>
               <option value="classic_chaos">classic (chaos)</option>
+              <option value="classic_swap">classic (swap)</option>
+              <option value="classic_all_open">classic (all open)</option>
+              <option value="classic_three_open">classic (three open)</option>
             </select>
             <select
               className="input"
@@ -2347,6 +2361,13 @@ export function MatchPage() {
             {classicSwapIndices ? (
               <div className="text-xs text-amber-700">
                 Classic Swap: A{classicSwapIndices.aIndex + 1} ↔ B{classicSwapIndices.bIndex + 1}
+              </div>
+            ) : null}
+            {classicOpenCardIndices ? (
+              <div className="text-xs text-emerald-700">
+                {classicOpenCardIndices.mode === "all_open"
+                  ? "Classic Open: all cards revealed"
+                  : `Classic Three Open: A[${formatClassicOpenSlots(classicOpenCardIndices.playerA)}] / B[${formatClassicOpenSlots(classicOpenCardIndices.playerB)}]`}
               </div>
             ) : null}
             <div className="text-xs text-slate-500 font-mono truncate">rulesetId: {rulesetId}</div>

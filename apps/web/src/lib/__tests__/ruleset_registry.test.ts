@@ -62,6 +62,33 @@ describe("Ruleset registry (P2-370)", () => {
       }
     });
 
+    it('"classic_swap" has swap=true', () => {
+      const cfg = resolveRuleset("classic_swap");
+      expect(cfg).not.toBeNull();
+      expect(cfg!.version).toBe(2);
+      if (cfg!.version === 2) {
+        expect(cfg!.classic.swap).toBe(true);
+      }
+    });
+
+    it('"classic_all_open" has allOpen=true', () => {
+      const cfg = resolveRuleset("classic_all_open");
+      expect(cfg).not.toBeNull();
+      expect(cfg!.version).toBe(2);
+      if (cfg!.version === 2) {
+        expect(cfg!.classic.allOpen).toBe(true);
+      }
+    });
+
+    it('"classic_three_open" has threeOpen=true', () => {
+      const cfg = resolveRuleset("classic_three_open");
+      expect(cfg).not.toBeNull();
+      expect(cfg!.version).toBe(2);
+      if (cfg!.version === 2) {
+        expect(cfg!.classic.threeOpen).toBe(true);
+      }
+    });
+
     it('"unknown" → null', () => {
       expect(resolveRuleset("unknown")).toBeNull();
     });
@@ -87,7 +114,17 @@ describe("Ruleset registry (P2-370)", () => {
   /* ─── isValidRulesetKey ─── */
 
   describe("isValidRulesetKey", () => {
-    it.each(["v1", "v2", "full", "classic_plus_same", "classic_order", "classic_chaos"] as const)('"%s" → true', (key) => {
+    it.each([
+      "v1",
+      "v2",
+      "full",
+      "classic_plus_same",
+      "classic_order",
+      "classic_chaos",
+      "classic_swap",
+      "classic_all_open",
+      "classic_three_open",
+    ] as const)('"%s" → true', (key) => {
       expect(isValidRulesetKey(key)).toBe(true);
     });
 
@@ -131,10 +168,13 @@ describe("Ruleset registry (P2-370)", () => {
       expect(RULESET_KEYS).toContain("classic_plus_same");
       expect(RULESET_KEYS).toContain("classic_order");
       expect(RULESET_KEYS).toContain("classic_chaos");
+      expect(RULESET_KEYS).toContain("classic_swap");
+      expect(RULESET_KEYS).toContain("classic_all_open");
+      expect(RULESET_KEYS).toContain("classic_three_open");
     });
 
-    it("has length 6", () => {
-      expect(RULESET_KEYS.length).toBe(6);
+    it("has length 9", () => {
+      expect(RULESET_KEYS.length).toBe(9);
     });
 
     it("every key resolves to a non-null config", () => {
