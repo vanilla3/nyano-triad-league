@@ -331,6 +331,19 @@ function CollapsibleSection({
    MATCH PAGE
    ═══════════════════════════════════════════════════════════════════════════ */
 
+function HiddenDeckPreviewCard({ slotIndex }: { slotIndex: number }) {
+  return (
+    <div className="aspect-[3/4] rounded-2xl border border-slate-300 bg-slate-100/80 p-2">
+      <div className="h-full rounded-xl border border-dashed border-slate-300 bg-gradient-to-br from-slate-200 to-slate-100 text-slate-500">
+        <div className="flex h-full flex-col items-center justify-center gap-1">
+          <div className="text-lg font-semibold">?</div>
+          <div className="text-[10px] font-mono">slot {slotIndex + 1}</div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function MatchPage() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -895,6 +908,10 @@ export function MatchPage() {
       header: { salt, playerA, playerB, rulesetId },
     });
   }, [ruleset, salt, playerA, playerB, rulesetId]);
+  const guestOpponentVisibleCardIndices = React.useMemo(() => {
+    if (!classicOpenCardIndices) return null;
+    return new Set<number>(classicOpenCardIndices.playerB);
+  }, [classicOpenCardIndices]);
   const effectiveUsedCardIndices = React.useMemo(() => {
     const out = new Set<number>(currentUsed);
     if (classicForcedCardIndex !== null) {
@@ -2837,10 +2854,21 @@ export function MatchPage() {
                       </div>
                       <div>
                         <div className="text-xs font-medium text-player-b-600 mb-1">Nyano Deck (B)</div>
+                        {classicOpenCardIndices ? (
+                          <div className="mb-1 text-[11px] text-slate-500">
+                            {classicOpenCardIndices.mode === "all_open"
+                              ? "Open rule: all cards revealed"
+                              : `Open rule: slots ${formatClassicOpenSlots(classicOpenCardIndices.playerB)} revealed`}
+                          </div>
+                        ) : null}
                         <div className="deck-preview-grid grid grid-cols-5 gap-2">
                           {guestDeckBTokens.map((tid, i) => {
                             const c = cards.get(tid);
-                            return c ? <CardMini key={i} card={c} owner={1} /> : null;
+                            if (!c) return null;
+                            if (!guestOpponentVisibleCardIndices || guestOpponentVisibleCardIndices.has(i)) {
+                              return <CardMini key={i} card={c} owner={1} />;
+                            }
+                            return <HiddenDeckPreviewCard key={i} slotIndex={i} />;
                           })}
                         </div>
                       </div>

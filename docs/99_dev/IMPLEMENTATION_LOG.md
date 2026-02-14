@@ -2050,6 +2050,24 @@
 - `pnpm.cmd -C apps/web typecheck` FAIL in this sandbox due module resolution (`pixi.js`, `fflate`) access issue.
 - `pnpm.cmd -C apps/web test -- src/lib/__tests__/ruleset_registry.test.ts` FAIL in this sandbox (`spawn EPERM` during Vite/esbuild startup).
 
+## 2026-02-14 - WO007 follow-up: Guest deck preview respects Classic Open visibility
+
+### Why
+- Guest mode deck preview always showed Nyano deck cards, so Classic hidden-information rules were not visually respected.
+- We already had deterministic Open-rule indices, but they were only shown as text metadata.
+
+### What
+- `apps/web/src/pages/Match.tsx`
+  - Added `HiddenDeckPreviewCard` placeholder for unrevealed card slots.
+  - In Guest deck preview (`Nyano Deck (B)`):
+    - when no Classic Open rule is active: behavior unchanged (all cards shown).
+    - when `allOpen` is active: all Nyano cards shown with open-rule hint.
+    - when `threeOpen` is active: only deterministic revealed slots are shown; other slots are masked.
+
+### Verify
+- `pnpm.cmd -C apps/web lint` OK
+- `pnpm.cmd -C apps/web build` OK
+
 ## 2026-02-14 - WO007 follow-up: Replay auto mode resolves Classic rulesetId via local registry
 
 ### Why

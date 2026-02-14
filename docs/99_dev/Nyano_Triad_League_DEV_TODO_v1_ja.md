@@ -159,3 +159,4 @@
 - [x] Follow-up: replay `mode=auto` now resolves known Classic `rulesetId` via local ruleset registry instead of falling back to v1/v2 compare.
 - [x] Follow-up: show deterministic Classic Swap slot mapping (`A{n} ↔ B{m}`) in Match setup and Replay details when swap is active.
 - [x] Follow-up: add deterministic Classic Open visibility (`allOpen` / `threeOpen`) metadata in Match/Replay, and expose `classic_swap`, `classic_all_open`, `classic_three_open` presets in ruleset selector.
+- [x] Follow-up: in Guest Match deck preview, hide Nyano cards unless revealed by Classic Open rules (`allOpen` / `threeOpen`).
