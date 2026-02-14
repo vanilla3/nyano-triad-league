@@ -2198,3 +2198,21 @@
 - `pnpm.cmd -C apps/web build` OK
 - `pnpm.cmd -C apps/web typecheck` FAIL in this sandbox due module resolution (`pixi.js`, `fflate`) access issue.
 - `pnpm.cmd -C apps/web test -- ...` FAIL in this sandbox (`spawn EPERM` during Vite/esbuild startup).
+
+## 2026-02-14 - WO007 follow-up: add Classic Open/Swap metadata to Stream state_json
+
+### Why
+- Stream/Overlay now display Classic Open/Swap, but `state_json` payload did not expose the same resolved metadata explicitly.
+- nyano-warudo and stream operators benefit from reading deterministic Classic metadata directly from one payload.
+
+### What
+- `apps/web/src/pages/Stream.tsx`
+  - Added `resolveClassicStateJson(...)` helper that resolves deterministic Classic metadata from `protocolV1.header` + local ruleset registry.
+  - Extended `buildStateJsonContent()` with additive field:
+    - `classic: { rulesetId, open, swap } | null`
+  - Extended `buildAiPrompt()` with explicit `classic_open` / `classic_swap` lines when active.
+  - Reused the same helper for Stream live status Classic Open display.
+
+### Verify
+- `pnpm.cmd -C apps/web lint` OK
+- `pnpm.cmd -C apps/web build` OK

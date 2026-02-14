@@ -1,6 +1,6 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import { resolveClassicOpenCardIndices } from "@nyano/triad-engine";
+import { resolveClassicOpenCardIndices, resolveClassicSwapIndices } from "@nyano/triad-engine";
 
 import { StreamOperationsHUD, computeConnectionHealth, type ExternalResult, type OpsLogEntry } from "@/components/StreamOperationsHUD";
 
@@ -99,6 +99,59 @@ function moveDisplay(m: ViewerMove, side: 0 | 1): string {
 
 function formatClassicOpenSlots(indices: readonly number[]): string {
   return indices.map((idx) => String(idx + 1)).join(", ");
+}
+
+type ClassicStateJsonOpen = {
+  mode: "all_open" | "three_open";
+  playerA: number[];
+  playerB: number[];
+};
+
+type ClassicStateJsonSwap = {
+  playerA: number;
+  playerB: number;
+};
+
+type ClassicStateJson = {
+  rulesetId: string;
+  open: ClassicStateJsonOpen | null;
+  swap: ClassicStateJsonSwap | null;
+};
+
+function resolveClassicStateJson(state: OverlayStateV1 | null): ClassicStateJson | null {
+  const header = state?.protocolV1?.header;
+  if (!header) return null;
+
+  const ruleset = resolveRulesetById(header.rulesetId);
+  if (!ruleset) return null;
+
+  const classicHeader = {
+    rulesetId: header.rulesetId,
+    playerA: header.playerA,
+    playerB: header.playerB,
+    salt: header.salt,
+  };
+
+  const open = resolveClassicOpenCardIndices({ ruleset, header: classicHeader });
+  const swap = resolveClassicSwapIndices({ ruleset, header: classicHeader });
+  if (!open && !swap) return null;
+
+  return {
+    rulesetId: header.rulesetId,
+    open: open
+      ? {
+          mode: open.mode,
+          playerA: [...open.playerA],
+          playerB: [...open.playerB],
+        }
+      : null,
+    swap: swap
+      ? {
+          playerA: swap.aIndex,
+          playerB: swap.bIndex,
+        }
+      : null,
+  };
 }
 
 
@@ -337,6 +390,7 @@ interface StateJsonContent {
   legalMoves: LegalMoveEntry[];
   strictAllowed: { allowlist: string[]; hash: string } | null;
   warningMark: { used: number; remaining: number; candidates: string[] } | null;
+  classic: ClassicStateJson | null;
 }
 
 function buildStateJsonContent(state: OverlayStateV1 | null, controlled: 0 | 1): StateJsonContent {
@@ -361,6 +415,7 @@ function buildStateJsonContent(state: OverlayStateV1 | null, controlled: 0 | 1):
   const usedB = computeRemainingCardIndices(state, 1);
   const remainA = new Set(usedA);
   const remainB = new Set(usedB);
+  const classic = resolveClassicStateJson(state);
 
   return {
     protocol: "triad_league_state_json_v1",
@@ -398,6 +453,7 @@ function buildStateJsonContent(state: OverlayStateV1 | null, controlled: 0 | 1):
     warningMark: strict
       ? { used: strict.warningMark.used, remaining: strict.warningMark.remaining, candidates: strict.warningMark.candidates }
       : null,
+    classic,
   };
 }
 
@@ -412,9 +468,20 @@ function buildAiPrompt(state: OverlayStateV1 | null, controlled: 0 | 1): string 
   const wRemain = toPlay !== null ? computeWarningMarksRemaining(state, toPlay) : 0;
 
   const boardMini = bestEffortBoardToProtocolBoard(state);
+  const classic = resolveClassicStateJson(state);
 
   const lines: string[] = [];
   lines.push("Nyano Triad League snapshot (ai_prompt)");
+  if (classic?.open) {
+    if (classic.open.mode === "all_open") {
+      lines.push("classic_open: all_open");
+    } else {
+      lines.push(`classic_open: three_open A[${formatClassicOpenSlots(classic.open.playerA)}] / B[${formatClassicOpenSlots(classic.open.playerB)}]`);
+    }
+  }
+  if (classic?.swap) {
+    lines.push(`classic_swap: A${classic.swap.playerA + 1} <-> B${classic.swap.playerB + 1}`);
+  }
   lines.push(`event: ${state?.eventTitle ?? state?.eventId ?? "—"}`);
   lines.push(`mode: ${state?.mode ?? "—"}  turn: ${turn ?? "—"}/9`);
   lines.push(`to_play: ${toPlay === 0 ? "A" : toPlay === 1 ? "B" : "—"}  controlled: ${controlled === 0 ? "A" : "B"}`);
@@ -582,21 +649,8 @@ const downloadAiPrompt = React.useCallback(() => {
 
   const liveTurn = typeof live?.turn === "number" ? live.turn : null;
   const liveCurrent = computeToPlay(live);
-  const liveClassicOpen = React.useMemo(() => {
-    const header = live?.protocolV1?.header;
-    if (!header) return null;
-    const ruleset = resolveRulesetById(header.rulesetId);
-    if (!ruleset) return null;
-    return resolveClassicOpenCardIndices({
-      ruleset,
-      header: {
-        rulesetId: header.rulesetId,
-        playerA: header.playerA,
-        playerB: header.playerB,
-        salt: header.salt,
-      },
-    });
-  }, [live]);
+  const liveClassic = React.useMemo(() => resolveClassicStateJson(live), [live]);
+  const liveClassicOpen = liveClassic?.open ?? null;
 
 const canVoteNow =
   live?.mode === "live" &&
