@@ -2139,6 +2139,22 @@
 - `pnpm.cmd -C apps/web lint` OK
 - `pnpm.cmd -C apps/web build` OK
 
+## 2026-02-14 - WO007 follow-up: Overlay now-playing shows Classic Open metadata
+
+### Why
+- Stream page gained Classic Open mapping visibility, but OBS operators looking only at `/overlay` still lacked that context.
+
+### What
+- `apps/web/src/pages/Overlay.tsx`
+  - Added deterministic Classic Open resolution from `state.protocolV1.header` + local ruleset registry.
+  - Added Classic Open line in the "Now Playing" panel:
+    - `all_open` -> `all cards revealed`
+    - `three_open` -> `A[...] / B[...]`
+
+### Verify
+- `pnpm.cmd -C apps/web lint` OK
+- `pnpm.cmd -C apps/web build` OK
+
 ## 2026-02-14 - WO007 follow-up: Replay auto mode resolves Classic rulesetId via local registry
 
 ### Why

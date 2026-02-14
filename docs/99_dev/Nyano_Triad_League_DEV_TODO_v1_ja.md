@@ -165,3 +165,4 @@
 - [x] Follow-up: hide Replay owners mapping under Three Open by default, and reveal it together with the hidden-slot toggle.
 - [x] Follow-up: extract hidden deck-slot UI into shared `HiddenDeckPreviewCard` component and reuse in Match/Replay.
 - [x] Follow-up: show resolved Classic Open metadata in Stream live status (from `protocolV1.header` + ruleset registry).
+- [x] Follow-up: show resolved Classic Open metadata in Overlay “Now Playing” panel for operator/OBS visibility.
