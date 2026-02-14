@@ -27,6 +27,7 @@ import { CardFlight } from "@/components/CardFlight";
 import { useCardFlight } from "@/hooks/useCardFlight";
 import { NyanoImage } from "@/components/NyanoImage";
 import { CardMini } from "@/components/CardMini";
+import { HiddenDeckPreviewCard } from "@/components/HiddenDeckPreviewCard";
 import { TurnLog } from "@/components/TurnLog";
 import { GameResultOverlay, type GameResult } from "@/components/GameResultOverlay";
 import {
@@ -330,19 +331,6 @@ function CollapsibleSection({
 /* ═══════════════════════════════════════════════════════════════════════════
    MATCH PAGE
    ═══════════════════════════════════════════════════════════════════════════ */
-
-function HiddenDeckPreviewCard({ slotIndex }: { slotIndex: number }) {
-  return (
-    <div className="aspect-[3/4] rounded-2xl border border-slate-300 bg-slate-100/80 p-2">
-      <div className="h-full rounded-xl border border-dashed border-slate-300 bg-gradient-to-br from-slate-200 to-slate-100 text-slate-500">
-        <div className="flex h-full flex-col items-center justify-center gap-1">
-          <div className="text-lg font-semibold">?</div>
-          <div className="text-[10px] font-mono">slot {slotIndex + 1}</div>
-        </div>
-      </div>
-    </div>
-  );
-}
 
 export function MatchPage() {
   const navigate = useNavigate();

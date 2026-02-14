@@ -2102,6 +2102,24 @@
 - `pnpm.cmd -C apps/web lint` OK
 - `pnpm.cmd -C apps/web build` OK
 
+## 2026-02-14 - WO007 follow-up: shared HiddenDeckPreviewCard component
+
+### Why
+- Match and Replay had duplicated JSX/CSS structure for hidden deck-slot placeholders.
+- Keeping this in one component reduces drift risk when tuning hidden-slot UI.
+
+### What
+- `apps/web/src/components/HiddenDeckPreviewCard.tsx` (new)
+  - Added shared hidden-slot visual component.
+- `apps/web/src/pages/Match.tsx`
+  - Replaced inline hidden-slot JSX with shared component import.
+- `apps/web/src/pages/Replay.tsx`
+  - Replaced inline hidden-slot JSX with shared component import.
+
+### Verify
+- `pnpm.cmd -C apps/web lint` OK
+- `pnpm.cmd -C apps/web build` OK
+
 ## 2026-02-14 - WO007 follow-up: Replay auto mode resolves Classic rulesetId via local registry
 
 ### Why

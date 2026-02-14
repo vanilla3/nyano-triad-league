@@ -22,6 +22,7 @@ import { DuelStageMint } from "@/components/DuelStageMint";
 import { ScoreBar } from "@/components/ScoreBar";
 import { BattleHudMint } from "@/components/BattleHudMint";
 import { CardMini } from "@/components/CardMini";
+import { HiddenDeckPreviewCard } from "@/components/HiddenDeckPreviewCard";
 import { TurnLog } from "@/components/TurnLog";
 import { GameResultBanner } from "@/components/GameResultOverlay";
 import {
@@ -256,19 +257,6 @@ function shouldAutoCompareByRulesetId(rulesetId: string): boolean {
 
 function formatClassicOpenSlots(indices: readonly number[]): string {
   return indices.map((idx) => String(idx + 1)).join(", ");
-}
-
-function HiddenDeckPreviewCard({ slotIndex }: { slotIndex: number }) {
-  return (
-    <div className="aspect-[3/4] rounded-2xl border border-slate-300 bg-slate-100/80 p-2">
-      <div className="h-full rounded-xl border border-dashed border-slate-300 bg-gradient-to-br from-slate-200 to-slate-100 text-slate-500">
-        <div className="flex h-full flex-col items-center justify-center gap-1">
-          <div className="text-lg font-semibold">?</div>
-          <div className="text-[10px] font-mono">slot {slotIndex + 1}</div>
-        </div>
-      </div>
-    </div>
-  );
 }
 
 const HIGHLIGHT_KIND_ORDER: ReplayHighlightKind[] = ["big_flip", "chain", "combo", "warning"];
