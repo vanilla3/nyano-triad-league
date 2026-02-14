@@ -1,6 +1,5 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import { resolveClassicOpenCardIndices, resolveClassicSwapIndices } from "@nyano/triad-engine";
 
 import { StreamOperationsHUD, computeConnectionHealth, type ExternalResult, type OpsLogEntry } from "@/components/StreamOperationsHUD";
 
@@ -48,7 +47,7 @@ import { postNyanoWarudoSnapshot } from "@/lib/nyano_warudo_bridge";
 import { errorMessage } from "@/lib/errorMessage";
 import { writeClipboardText } from "@/lib/clipboard";
 import { formatViewerMoveText, parseChatMoveLoose, parseViewerMoveText } from "@/lib/triad_viewer_command";
-import { resolveRulesetById } from "@/lib/ruleset_registry";
+import { resolveClassicMetadataFromOverlayState, type ClassicResolvedMetadata } from "@/lib/classic_ruleset_visibility";
 import {
   cellIndexToCoord,
   computeEmptyCells,
@@ -101,8 +100,8 @@ function formatClassicOpenSlots(indices: readonly number[]): string {
   return indices.map((idx) => String(idx + 1)).join(", ");
 }
 
-function formatClassicSwapSlots(swap: ClassicStateJsonSwap): string {
-  return `A${swap.playerA + 1} <-> B${swap.playerB + 1}`;
+function formatClassicSwapSlots(aIndex: number, bIndex: number): string {
+  return `A${aIndex + 1} <-> B${bIndex + 1}`;
 }
 
 type ClassicStateJsonOpen = {
@@ -122,37 +121,21 @@ type ClassicStateJson = {
   swap: ClassicStateJsonSwap | null;
 };
 
-function resolveClassicStateJson(state: OverlayStateV1 | null): ClassicStateJson | null {
-  const header = state?.protocolV1?.header;
-  if (!header) return null;
-
-  const ruleset = resolveRulesetById(header.rulesetId);
-  if (!ruleset) return null;
-
-  const classicHeader = {
-    rulesetId: header.rulesetId,
-    playerA: header.playerA,
-    playerB: header.playerB,
-    salt: header.salt,
-  };
-
-  const open = resolveClassicOpenCardIndices({ ruleset, header: classicHeader });
-  const swap = resolveClassicSwapIndices({ ruleset, header: classicHeader });
-  if (!open && !swap) return null;
-
+function toClassicStateJson(classic: ClassicResolvedMetadata | null): ClassicStateJson | null {
+  if (!classic) return null;
   return {
-    rulesetId: header.rulesetId,
-    open: open
+    rulesetId: classic.rulesetId,
+    open: classic.open
       ? {
-          mode: open.mode,
-          playerA: [...open.playerA],
-          playerB: [...open.playerB],
+          mode: classic.open.mode,
+          playerA: [...classic.open.playerA],
+          playerB: [...classic.open.playerB],
         }
       : null,
-    swap: swap
+    swap: classic.swap
       ? {
-          playerA: swap.aIndex,
-          playerB: swap.bIndex,
+          playerA: classic.swap.aIndex,
+          playerB: classic.swap.bIndex,
         }
       : null,
   };
@@ -419,7 +402,7 @@ function buildStateJsonContent(state: OverlayStateV1 | null, controlled: 0 | 1):
   const usedB = computeRemainingCardIndices(state, 1);
   const remainA = new Set(usedA);
   const remainB = new Set(usedB);
-  const classic = resolveClassicStateJson(state);
+  const classic = toClassicStateJson(resolveClassicMetadataFromOverlayState(state));
 
   return {
     protocol: "triad_league_state_json_v1",
@@ -472,7 +455,7 @@ function buildAiPrompt(state: OverlayStateV1 | null, controlled: 0 | 1): string 
   const wRemain = toPlay !== null ? computeWarningMarksRemaining(state, toPlay) : 0;
 
   const boardMini = bestEffortBoardToProtocolBoard(state);
-  const classic = resolveClassicStateJson(state);
+  const classic = resolveClassicMetadataFromOverlayState(state);
 
   const lines: string[] = [];
   lines.push("Nyano Triad League snapshot (ai_prompt)");
@@ -484,7 +467,7 @@ function buildAiPrompt(state: OverlayStateV1 | null, controlled: 0 | 1): string 
     }
   }
   if (classic?.swap) {
-    lines.push(`classic_swap: A${classic.swap.playerA + 1} <-> B${classic.swap.playerB + 1}`);
+    lines.push(`classic_swap: A${classic.swap.aIndex + 1} <-> B${classic.swap.bIndex + 1}`);
   }
   lines.push(`event: ${state?.eventTitle ?? state?.eventId ?? "—"}`);
   lines.push(`mode: ${state?.mode ?? "—"}  turn: ${turn ?? "—"}/9`);
@@ -653,7 +636,7 @@ const downloadAiPrompt = React.useCallback(() => {
 
   const liveTurn = typeof live?.turn === "number" ? live.turn : null;
   const liveCurrent = computeToPlay(live);
-  const liveClassic = React.useMemo(() => resolveClassicStateJson(live), [live]);
+  const liveClassic = React.useMemo(() => resolveClassicMetadataFromOverlayState(live), [live]);
   const liveClassicOpen = liveClassic?.open ?? null;
 
 const canVoteNow =
@@ -1313,7 +1296,7 @@ return (
                 ) : null}
                 {liveClassic?.swap ? (
                   <div className="mt-1 text-xs text-slate-700">
-                    Classic Swap: <span className="font-mono">{formatClassicSwapSlots(liveClassic.swap)}</span>
+                    Classic Swap: <span className="font-mono">{formatClassicSwapSlots(liveClassic.swap.aIndex, liveClassic.swap.bIndex)}</span>
                   </div>
                 ) : null}
                 {live?.lastMove ? (

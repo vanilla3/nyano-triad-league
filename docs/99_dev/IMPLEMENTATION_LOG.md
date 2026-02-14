@@ -2258,3 +2258,27 @@
 
 ### Verify
 - Snapshot request sample parses as valid JSON.
+
+## 2026-02-14 - Refactor: share Classic metadata resolver across Stream/Overlay
+
+### Why
+- `Stream.tsx` and `Overlay.tsx` had duplicated logic to resolve Classic Open/Swap from `protocolV1.header`.
+- Duplicated resolver code increases drift risk when Classic behavior evolves.
+
+### What
+- Added `apps/web/src/lib/classic_ruleset_visibility.ts`
+  - `resolveClassicMetadataFromHeader(...)`
+  - `resolveClassicMetadataFromOverlayState(...)`
+  - shared types for resolved Classic open/swap metadata
+- Updated:
+  - `apps/web/src/pages/Stream.tsx`
+  - `apps/web/src/pages/Overlay.tsx`
+  to use the shared resolver.
+- Added tests:
+  - `apps/web/src/lib/__tests__/classic_ruleset_visibility.test.ts`
+  - covers unknown/non-classic/all-open/swap/three-open deterministic paths.
+
+### Verify
+- `pnpm.cmd -C apps/web lint` OK
+- `pnpm.cmd -C apps/web build` OK
+- `pnpm.cmd -C apps/web test -- src/lib/__tests__/classic_ruleset_visibility.test.ts` FAIL in this sandbox (`spawn EPERM` / esbuild startup).

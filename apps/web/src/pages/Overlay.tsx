@@ -34,9 +34,8 @@ import {
 } from "@/lib/streamer_bus";
 import { readStringSetting, writeStringSetting } from "@/lib/local_settings";
 import { appAbsoluteUrl, appPath } from "@/lib/appUrl";
-import { resolveClassicOpenCardIndices, resolveClassicSwapIndices } from "@nyano/triad-engine";
+import { resolveClassicMetadataFromOverlayState } from "@/lib/classic_ruleset_visibility";
 import type { CardData, FlipTraceV1, PlayerIndex } from "@nyano/triad-engine";
-import { resolveRulesetById } from "@/lib/ruleset_registry";
 
 // ── Overlay Theme System ──────────────────────────────────────────────
 
@@ -315,28 +314,7 @@ export function OverlayPage() {
   const toPlayLabel = sideLabel(toPlay);
 
   const strictAllowed = React.useMemo(() => computeStrictAllowed(state), [state]);
-  const overlayClassic = React.useMemo(() => {
-    const header = state?.protocolV1?.header;
-    if (!header) return null;
-    const ruleset = resolveRulesetById(header.rulesetId);
-    if (!ruleset) return null;
-    const classicHeader = {
-      rulesetId: header.rulesetId,
-      playerA: header.playerA,
-      playerB: header.playerB,
-      salt: header.salt,
-    };
-    const open = resolveClassicOpenCardIndices({
-      ruleset,
-      header: classicHeader,
-    });
-    const swap = resolveClassicSwapIndices({
-      ruleset,
-      header: classicHeader,
-    });
-    if (!open && !swap) return null;
-    return { open, swap };
-  }, [state]);
+  const overlayClassic = React.useMemo(() => resolveClassicMetadataFromOverlayState(state), [state]);
   const overlayClassicOpen = overlayClassic?.open ?? null;
 
   const lastCell = typeof state?.lastMove?.cell === "number" ? state.lastMove.cell : null;
