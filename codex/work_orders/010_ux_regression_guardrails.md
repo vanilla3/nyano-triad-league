@@ -119,3 +119,11 @@
 - [x] Added CI guardrail step:
   - `.github/workflows/ci.yml` -> `E2E UX guardrails`
   - runs before full `E2E tests` to fail fast on key UX regressions
+
+## 14) 2026-02-15 Follow-up Update (WO016 linkage)
+
+- [x] Extended `apps/web/e2e/ux-guardrails.spec.ts` to guard WO016 behavior:
+  - keyboard accessibility: board cell can be selected via `Enter` when focused (`tabindex=0`)
+  - reduced-motion compliance: mint pressable controls resolve to `transitionDuration` including `0s`
+- [x] Re-ran focused guardrail:
+  - `pnpm.cmd -C apps/web e2e -- e2e/ux-guardrails.spec.ts` passed (`4/4`)

@@ -188,3 +188,4 @@
 - [x] 2026-02-15 WO014: Mint手札をガラス調トレイ + 軽い重なりへ更新し、ActionPromptを二段ピル化。`mint-prompt-slot` で表示揺れを抑制。
 - [x] 2026-02-15 WO015: NyanoReaction slotを fixed-height + absolute overlay 化し、`kind=idle` 時も placeholder を維持。LayoutShift API を `ux-guardrails` に追加してCLS回帰を軽量監視。
 - [x] 2026-02-15 WO016: `mint-pressable` を導入し、board cell / hand card / result button の押下文法（hover/active/focus-visible）を統一。reduced-motion / data-vfx 抑制分岐を追加。
+- [x] 2026-02-15 WO016/WO010追補: `ux-guardrails` にキーボードEnter選択と reduced-motion 時の pressable transition 抑制テストを追加（4 passed）。

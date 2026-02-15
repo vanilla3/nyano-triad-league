@@ -2674,3 +2674,19 @@
 - `pnpm.cmd -C apps/web e2e -- e2e/ux-guardrails.spec.ts` OK
 - `pnpm.cmd -C apps/web build` OK
 - `pnpm.cmd -C apps/web typecheck` NG（既存依存不足: `pixi.js` / `fflate` 型解決エラー）
+
+## 2026-02-15 - WO016/WO010 follow-up: keyboard + reduced-motion UX guardrails
+
+### Why
+- WO016 で追加した `mint-pressable` と Enter/Space 導線は、見た目より先に操作感が壊れやすい。
+- 既存 `ux-guardrails` は URL同期とレイアウト安定が中心で、キーボード導線と reduced-motion 抑制の回帰を捕まえられていなかった。
+
+### What
+- Updated `apps/web/e2e/ux-guardrails.spec.ts`:
+  - Added test: `Mint board cells remain keyboard-selectable via Enter`
+    - Mint match で hand card 選択後、`data-board-cell` へフォーカスして Enter で `mint-cell--selected` になることを検証。
+  - Added test: `Reduced motion disables pressable transition feedback in Mint battle UI`
+    - `page.emulateMedia({ reducedMotion: "reduce" })` 下で hand card / board cell の `transitionDuration` が `0s` を含むことを検証。
+
+### Verify
+- `pnpm.cmd -C apps/web e2e -- e2e/ux-guardrails.spec.ts` OK（4 passed）

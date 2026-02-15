@@ -157,4 +157,42 @@ test.describe("UX regression guardrails", () => {
       expect(shift.total).toBeLessThanOrEqual(0.2);
     }
   });
+
+  test("Mint board cells remain keyboard-selectable via Enter", async ({ page }) => {
+    await disableGuestTutorial(page);
+    await page.goto("/match?mode=guest&opp=pvp&auto=0&rk=v2&ui=mint");
+    await dismissGuestTutorialIfPresent(page);
+
+    await expect(page.getByText("Guest Quick Play")).toBeVisible({ timeout: 15_000 });
+    const firstHandCard = page.locator('[data-hand-card="0"]').first();
+    const firstCell = page.locator('[data-board-cell="0"]').first();
+
+    await expect(firstHandCard).toBeVisible();
+    await expect(firstCell).toHaveAttribute("tabindex", "0");
+
+    await firstHandCard.click({ force: true });
+    await firstCell.focus();
+    await page.keyboard.press("Enter");
+
+    await expect(firstCell).toHaveClass(/mint-cell--selected/);
+  });
+
+  test("Reduced motion disables pressable transition feedback in Mint battle UI", async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: "reduce" });
+    await disableGuestTutorial(page);
+    await page.goto("/match?mode=guest&opp=pvp&auto=0&rk=v2&ui=mint");
+    await dismissGuestTutorialIfPresent(page);
+
+    await expect(page.getByText("Guest Quick Play")).toBeVisible({ timeout: 15_000 });
+    const firstHandCard = page.locator('[data-hand-card="0"]').first();
+    const firstCell = page.locator('[data-board-cell="0"]').first();
+
+    const durations = await Promise.all([
+      firstHandCard.evaluate((el) => getComputedStyle(el).transitionDuration),
+      firstCell.evaluate((el) => getComputedStyle(el).transitionDuration),
+    ]);
+
+    expect(durations[0]).toMatch(/0s/);
+    expect(durations[1]).toMatch(/0s/);
+  });
 });
