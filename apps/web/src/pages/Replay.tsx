@@ -26,11 +26,11 @@ import { HiddenDeckPreviewCard } from "@/components/HiddenDeckPreviewCard";
 import { TurnLog } from "@/components/TurnLog";
 import { GameResultBanner } from "@/components/GameResultOverlay";
 import {
-  NyanoReaction,
   pickReactionKind,
   resolveReactionCutInImpact,
   type NyanoReactionInput,
 } from "@/components/NyanoReaction";
+import { NyanoReactionSlot } from "@/components/NyanoReactionSlot";
 import { NyanoAvatar } from "@/components/NyanoAvatar";
 import { BattleStageEngine } from "@/engine/components/BattleStageEngine";
 import { reactionToExpression } from "@/lib/expression_map";
@@ -1222,16 +1222,14 @@ protocolV1: {
               </div>
             </div>
           )}
-          {nyanoReactionInput ? (
-            <NyanoReaction
-              input={nyanoReactionInput}
-              turnIndex={step}
-              rpg={isRpg}
-              mint={isEngine}
-              tone={isEngine ? "pixi" : "mint"}
-              className={isStageFocus ? "stage-focus-cutin" : ""}
-            />
-          ) : null}
+          <NyanoReactionSlot
+            input={nyanoReactionInput}
+            turnIndex={step}
+            rpg={isRpg}
+            mint={isEngine}
+            tone={isEngine ? "pixi" : "mint"}
+            stageFocus={isStageFocus}
+          />
         </div>
 
         {isEngine && !compare && engineRendererFailed ? (
