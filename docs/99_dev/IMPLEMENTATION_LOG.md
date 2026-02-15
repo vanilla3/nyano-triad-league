@@ -2933,3 +2933,24 @@
 - `pnpm -C apps/web test` OK
 - `pnpm -C apps/web typecheck` OK
 - `pnpm -C apps/web build` OK
+
+## 2026-02-15 - Mint follow-up: app chrome focusRoute compatibility guardrails
+
+### Why
+- `focusRoute` (`focus=1`, `/battle-stage`, `/replay-stage`) では App chrome を出さない前提があり、Mint画面拡張後もこの互換を固定しておく必要がある。
+- Mint tab navigation 時の `theme=mint` 引き回し（URL互換）も e2e で直接担保したい。
+
+### What
+- Updated `apps/web/e2e/mint-app-screens-guardrails.spec.ts`:
+  - Added `Mint app chrome preserves theme query across tab navigation`
+    - `/?theme=mint` から Arena/Decks タブ遷移時に `theme=mint` を保持することを確認。
+  - Added `focus routes keep app chrome hidden for layout compatibility`
+    - `/match?...&focus=1` と `/battle-stage?...&focus=1` で
+      `.mint-app-chrome` / `.mint-app-footer` / `.app-header` / `.app-footer` が非表示であることを確認。
+    - `/battle-stage` では `Commit move from focus hand dock` 可視も確認して、focus動線が維持されることを検証。
+
+### Verify
+- `pnpm -C apps/web test` OK
+- `pnpm -C apps/web typecheck` OK
+- `pnpm -C apps/web build` OK
+- `pnpm.cmd -C apps/web e2e -- e2e/mint-app-screens-guardrails.spec.ts` OK (5 passed)

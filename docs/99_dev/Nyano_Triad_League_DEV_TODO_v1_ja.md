@@ -208,3 +208,4 @@
 - [x] 2026-02-15 WO024: e2e/visual guardrails を追加（`e2e/mint-app-screens-guardrails.spec.ts`）し、Home/Decks系既存e2e期待値をMint UIに追従更新。
 - [x] 2026-02-15 Follow-up: `MintPressable` の未使用変数lint警告を解消し、`MatchSetupPanelMint` の helper を `MatchSetupPanelMint.helpers.ts` へ分離して Fast Refresh 警告を解消。
 - [x] 2026-02-15 Follow-up: `src/lib/theme.ts` の回帰防止として `src/lib/__tests__/theme.test.ts` を追加（theme解決優先順位 / URL query+hash 互換を固定）。
+- [x] 2026-02-15 Follow-up: `e2e/mint-app-screens-guardrails.spec.ts` を拡張し、Mint App Chrome の `theme` クエリ保持（Tab遷移時）と `focusRoute`（`/match?focus=1` `/battle-stage`）での chrome 非表示互換を回帰テスト化。
