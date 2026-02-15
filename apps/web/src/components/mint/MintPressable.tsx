@@ -75,7 +75,7 @@ export function MintPressable(props: MintPressableProps) {
     );
   }
 
-  const { type, children, tone, size, fullWidth, className, ...buttonProps } = props;
+  const { type, children, tone: _tone, size: _size, fullWidth: _fullWidth, className: _className, ...buttonProps } = props;
   return (
     <button type={type ?? "button"} {...buttonProps} className={classes}>
       {children}

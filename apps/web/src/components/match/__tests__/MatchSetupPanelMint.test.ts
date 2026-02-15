@@ -5,7 +5,7 @@ import {
   describeFirstPlayerMode,
   describeRulesetKey,
   shouldOpenAdvancedSetup,
-} from "../MatchSetupPanelMint";
+} from "../MatchSetupPanelMint.helpers";
 
 describe("MatchSetupPanelMint helpers", () => {
   it("builds setup summary line with event deck wording", () => {

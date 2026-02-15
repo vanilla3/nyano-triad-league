@@ -2906,3 +2906,30 @@
 - `pnpm -C apps/web typecheck` OK
 - `pnpm -C apps/web build` OK
 - `pnpm.cmd -C apps/web e2e -- e2e/mint-app-screens-guardrails.spec.ts e2e/home.spec.ts e2e/smoke.spec.ts e2e/decks-match.spec.ts` OK (16 passed)
+
+## 2026-02-15 - Mint follow-up: lint cleanup + theme regression tests
+
+### Why
+- Keep Mint UI primitives warning-free and enforce URL/theme compatibility by tests.
+- Remove lingering Fast Refresh warnings from `MatchSetupPanelMint.tsx` without changing behavior.
+
+### What
+- Updated `apps/web/src/components/mint/MintPressable.tsx`:
+  - Removed unused destructured props warning by using underscore-prefixed bindings.
+- Added `apps/web/src/lib/__tests__/theme.test.ts`:
+  - Verifies `resolveAppTheme` precedence (query > storage > default).
+  - Verifies `appendThemeToPath` compatibility with existing query/hash and non-overwrite semantics.
+- Added `apps/web/src/components/match/MatchSetupPanelMint.helpers.ts` and moved helper functions:
+  - `describeRulesetKey`
+  - `describeFirstPlayerMode`
+  - `buildMatchSetupSummaryLine`
+  - `shouldOpenAdvancedSetup`
+- Updated imports:
+  - `apps/web/src/components/match/MatchSetupPanelMint.tsx`
+  - `apps/web/src/components/match/__tests__/MatchSetupPanelMint.test.ts`
+
+### Verify
+- `pnpm -C apps/web lint` OK (0 warnings)
+- `pnpm -C apps/web test` OK
+- `pnpm -C apps/web typecheck` OK
+- `pnpm -C apps/web build` OK
