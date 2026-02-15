@@ -14,7 +14,17 @@ prefix_rule(
     match = [
         "pnpm dev:web",
         "pnpm lint",
+        "pnpm test",
+        "pnpm typecheck",
+        "pnpm build:web",
+        "pnpm release:check",
+        "pnpm -C apps/web dev",
+        "pnpm -C apps/web test",
         "pnpm -C apps/web typecheck",
+        "pnpm -C apps/web build",
+        "pnpm -C apps/web e2e",
+        "pnpm -C packages/triad-engine test",
+        "pnpm -C packages/triad-engine build",
     ],
 )
 
@@ -42,7 +52,7 @@ prefix_rule(
     pattern = ["git", "commit"],
     decision = "prompt",
     justification = "Commit should be reviewed before finalizing.",
-    match = ["git commit -m "chore: test""],
+    match = ["git commit -m \\\"chore: test\\\""],
     not_match = ["git status"],
 )
 
@@ -68,21 +78,21 @@ prefix_rule(
     pattern = ["bash", ["-lc", "-c"]],
     decision = "prompt",
     justification = "Shell wrappers can hide multiple actions; confirm before running.",
-    match = ["bash -lc "pnpm -C apps/web test""],
+    match = ["bash -lc \\\"pnpm -C apps/web test\\\""],
 )
 
 prefix_rule(
     pattern = ["sh", ["-lc", "-c"]],
     decision = "prompt",
     justification = "Shell wrappers can hide multiple actions; confirm before running.",
-    match = ["sh -lc "pnpm -C apps/web test""],
+    match = ["sh -lc \\\"pnpm -C apps/web test\\\""],
 )
 
 prefix_rule(
     pattern = ["zsh", ["-lc", "-c"]],
     decision = "prompt",
     justification = "Shell wrappers can hide multiple actions; confirm before running.",
-    match = ["zsh -lc "pnpm -C apps/web test""],
+    match = ["zsh -lc \\\"pnpm -C apps/web test\\\""],
 )
 
 # --- Forbidden: high-risk commands --------------------------------------------
