@@ -2,6 +2,9 @@ import React from "react";
 import { useToast } from "@/components/Toast";
 import { Disclosure } from "@/components/Disclosure";
 import { Link, useLocation, useNavigate, useSearchParams } from "react-router-dom";
+import { GlassPanel } from "@/components/mint/GlassPanel";
+import { MintPressable } from "@/components/mint/MintPressable";
+import { MintIcon, type MintIconName } from "@/components/mint/icons/MintIcon";
 
 import type { BoardCell, CardData, MatchResultWithHistory, RulesetConfig, TranscriptV1, TurnSummary } from "@nyano/triad-engine";
 import {
@@ -72,7 +75,7 @@ import {
   replayStepStatusText,
   type ReplayPhaseInfo,
 } from "@/lib/replay_timeline";
-import { resolveAppTheme } from "@/lib/theme";
+import { appendThemeToPath, resolveAppTheme } from "@/lib/theme";
 
 type Mode = "auto" | "v1" | "v2" | "compare";
 
@@ -268,6 +271,7 @@ export function ReplayPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const appTheme = resolveAppTheme(searchParams);
   const isMintTheme = appTheme === "mint";
+  const themed = React.useCallback((path: string) => appendThemeToPath(path, appTheme), [appTheme]);
   const uiMode = parseReplayBoardUi((searchParams.get("ui") || "").toLowerCase());
   const uiParam = uiMode === "classic" ? undefined : uiMode;
   const matchUi = toMatchBoardUi(uiMode);
@@ -284,6 +288,15 @@ export function ReplayPage() {
     const query = next.toString();
     return query ? `/replay-stage?${query}` : "/replay-stage";
   }, [searchParams]);
+  const replayQuickActions = React.useMemo<Array<{ to: string; label: string; subtitle: string; icon: MintIconName }>>(
+    () => [
+      { to: themed("/match?ui=mint"), label: "Match", subtitle: "Start new game", icon: "match" },
+      { to: themed("/events"), label: "Events", subtitle: "Season ladder", icon: "events" },
+      { to: themed("/stream"), label: "Stream", subtitle: "Broadcast tools", icon: "stream" },
+      { to: themed(stageReplayUrl), label: "Pixi Stage", subtitle: "Focus replay", icon: "replay" },
+    ],
+    [stageReplayUrl, themed],
+  );
   const isReplayStageRoute = /\/replay-stage$/.test(location.pathname);
   const isStageFocus = isEngineFocus && isReplayStageRoute;
   const stageViewportRef = React.useRef<HTMLDivElement>(null);
@@ -1405,6 +1418,20 @@ protocolV1: {
       ref={stageViewportRef}
       className={replayPageClassName}
     >
+      {isMintTheme && !isStageFocus ? (
+        <section className="mint-replay-quicknav" aria-label="Replay quick navigation">
+          {replayQuickActions.map((action) => (
+            <GlassPanel key={action.label} variant="card" className="mint-replay-quicknav__card">
+              <MintPressable to={action.to} className="mint-replay-quicknav__action" fullWidth>
+                <MintIcon name={action.icon} size={18} />
+                <span className="mint-replay-quicknav__label">{action.label}</span>
+                <span className="mint-replay-quicknav__sub">{action.subtitle}</span>
+              </MintPressable>
+            </GlassPanel>
+          ))}
+        </section>
+      ) : null}
+
       {isEngineFocus ? (
         <section
           className={[

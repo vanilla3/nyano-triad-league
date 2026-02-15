@@ -2979,3 +2979,34 @@
 - `pnpm -C apps/web typecheck` OK
 - `pnpm -C apps/web build` OK
 - `pnpm.cmd -C apps/web e2e -- e2e/mint-app-screens-guardrails.spec.ts --grep "Events/Replay/Stream"` OK (6 passed)
+
+## 2026-02-15 - Mint follow-up: secondary quick-nav expansion + board shell polish
+
+### Why
+- After WO024 polish, Home/Arena/Decks/Start had stronger Mint game-menu feel than Events/Replay/Stream.
+- Theme continuity still depended on manual query retention in some secondary routes.
+- Match board shell and quick-commit block needed closer visual alignment with the same Mint glass language.
+
+### What
+- Updated `apps/web/src/pages/Events.tsx`:
+  - Added Mint quick navigation rail (`mint-events-quicknav`) with `GlassPanel` + `MintPressable` + `MintIcon`.
+  - Added `resolveAppTheme` + `appendThemeToPath` usage and switched event action links to themed paths.
+- Updated `apps/web/src/pages/Replay.tsx`:
+  - Added Mint quick navigation rail (`mint-replay-quicknav`) with Match/Events/Stream/Pixi Stage shortcuts.
+  - Added theme propagation helper while preserving existing `ui`/`focus` compatibility.
+- Updated `apps/web/src/pages/Stream.tsx`:
+  - Added Mint quick navigation rail (`mint-stream-quicknav`) for operator routes.
+  - Added themed absolute URL helper and applied it to shared links (`match/host/overlay/replay broadcast`) without touching protocol payloads.
+  - Updated internal footer/callout links to themed paths.
+- Updated `apps/web/src/pages/Match.tsx`:
+  - Added `mint-match-board-shell` and `mint-match-board-center` classes around Mint board container.
+  - Replaced inline quick-commit styles with `mint-match-quick-commit` class hooks.
+- Updated `apps/web/src/mint-theme/mint-theme.css`:
+  - Added shared quick-nav rail styles for Events/Replay/Stream.
+  - Added Mint board shell/quick-commit polish styles and responsive behavior.
+  - Added `prefers-reduced-motion` and `data-vfx="off"` branches for new visual hooks.
+
+### Verify
+- `pnpm -C apps/web test` OK
+- `pnpm -C apps/web typecheck` OK
+- `pnpm -C apps/web build` OK

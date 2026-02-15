@@ -2679,6 +2679,7 @@ export function MatchPage() {
                 <div
                   className={[
                     isStageFocusRoute ? "stage-focus-board-shell" : "",
+                    useMintUi ? "mint-match-board-shell" : "",
                     showMintPlayerPanels ? "mint-battle-layout" : "",
                   ].filter(Boolean).join(" ")}
                 >
@@ -2691,7 +2692,12 @@ export function MatchPage() {
                     />
                   )}
 
-                  <div className={showMintPlayerPanels ? "mint-battle-layout__board" : ""}>
+                  <div
+                    className={[
+                      showMintPlayerPanels ? "mint-battle-layout__board" : "",
+                      useMintUi ? "mint-match-board-center" : "",
+                    ].filter(Boolean).join(" ")}
+                  >
                     {sim.ok ? (
                       isMint || (isEngine && engineRendererFailed) ? (
                         <DuelStageMint impact={nyanoReactionImpact} impactBurst={stageImpactBurst}>
@@ -2796,14 +2802,13 @@ export function MatchPage() {
 
                 {showDesktopQuickCommit ? (
                   <div
-                    className="hidden lg:flex flex-wrap items-center justify-between gap-3 rounded-xl border px-3 py-2"
-                    style={{ background: "var(--mint-surface, #ffffff)", borderColor: "var(--mint-accent-muted, #A7F3D0)" }}
+                    className="mint-match-quick-commit hidden lg:flex flex-wrap items-center justify-between gap-3 rounded-xl border px-3 py-2"
                   >
                     <div className="grid gap-0.5 text-xs">
-                      <div className="font-semibold" style={{ color: "var(--mint-text, #111827)" }}>
+                      <div className="mint-match-quick-commit__title font-semibold">
                         Quick Commit
                       </div>
-                      <div style={{ color: "var(--mint-text-secondary, #4B5563)" }}>
+                      <div className="mint-match-quick-commit__hint">
                         card {draftCardIndex !== null ? draftCardIndex + 1 : "-"} to cell {draftCell ?? "-"}
                       </div>
                     </div>

@@ -1,9 +1,12 @@
 import React from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 
 import { StreamOperationsHUD, computeConnectionHealth, type ExternalResult, type OpsLogEntry } from "@/components/StreamOperationsHUD";
 
 import { NyanoImage } from "@/components/NyanoImage";
+import { GlassPanel } from "@/components/mint/GlassPanel";
+import { MintPressable } from "@/components/mint/MintPressable";
+import { MintIcon, type MintIconName } from "@/components/mint/icons/MintIcon";
 import { useToast } from "@/components/Toast";
 import { EVENTS, fetchEventConfig, getEventStatus, type EventV1 } from "@/lib/events";
 import { executeRecovery, recoveryActionLabel } from "@/lib/stream_recovery";
@@ -60,6 +63,7 @@ import {
   type ViewerMove,
 } from "@/lib/triad_vote_utils";
 import { publishOverlayState, publishStreamCommand, makeStreamCommandId, publishStreamVoteState, readStoredOverlayState, subscribeOverlayState, type OverlayStateV1 } from "@/lib/streamer_bus";
+import { appendThemeToPath, resolveAppTheme } from "@/lib/theme";
 
 function pickDefaultEvent(events: EventV1[]): string {
   const now = Date.now();
@@ -144,6 +148,10 @@ function toClassicStateJson(classic: ClassicResolvedMetadata | null): ClassicSta
 
 export function StreamPage() {
   const toast = useToast();
+  const [searchParams] = useSearchParams();
+  const theme = resolveAppTheme(searchParams);
+  const isMintTheme = theme === "mint";
+  const themed = React.useCallback((path: string) => appendThemeToPath(path, theme), [theme]);
 
   const [events, setEvents] = React.useState<EventV1[]>(EVENTS);
   const [eventId, setEventId] = React.useState<string>(() => {
@@ -177,6 +185,35 @@ export function StreamPage() {
     overlayTransparentUrl,
     replayBroadcastUrl,
   } = React.useMemo(() => buildStreamUrls(e?.id), [e?.id]);
+  const appendThemeToAbsoluteUrl = React.useCallback((rawUrl: string): string => {
+    try {
+      const parsed = new URL(rawUrl);
+      if (!parsed.searchParams.has("theme")) parsed.searchParams.set("theme", theme);
+      return parsed.toString();
+    } catch {
+      return rawUrl;
+    }
+  }, [theme]);
+  const themedMatchUrl = React.useMemo(() => appendThemeToAbsoluteUrl(matchUrl), [appendThemeToAbsoluteUrl, matchUrl]);
+  const themedHostMatchUrl = React.useMemo(() => appendThemeToAbsoluteUrl(hostMatchUrl), [appendThemeToAbsoluteUrl, hostMatchUrl]);
+  const themedOverlayUrl = React.useMemo(() => appendThemeToAbsoluteUrl(overlayUrl), [appendThemeToAbsoluteUrl, overlayUrl]);
+  const themedOverlayTransparentUrl = React.useMemo(
+    () => appendThemeToAbsoluteUrl(overlayTransparentUrl),
+    [appendThemeToAbsoluteUrl, overlayTransparentUrl],
+  );
+  const themedReplayBroadcastUrl = React.useMemo(
+    () => appendThemeToAbsoluteUrl(replayBroadcastUrl),
+    [appendThemeToAbsoluteUrl, replayBroadcastUrl],
+  );
+  const streamQuickActions = React.useMemo<Array<{ to: string; label: string; subtitle: string; icon: MintIconName }>>(
+    () => [
+      { to: themed(`/match?event=${encodeURIComponent(eventId)}&ui=mint`), label: "Match", subtitle: "Host battle", icon: "match" },
+      { to: themed("/overlay?controls=0"), label: "Overlay", subtitle: "OBS scene", icon: "stream" },
+      { to: themed("/replay?broadcast=1"), label: "Replay", subtitle: "Broadcast mode", icon: "replay" },
+      { to: themed("/events"), label: "Events", subtitle: "Season hub", icon: "events" },
+    ],
+    [eventId, themed],
+  );
   const matchPath = React.useMemo(() => appPath("match"), []);
   const replayPath = React.useMemo(() => appPath("replay"), []);
   const overlayPath = React.useMemo(() => appPath("overlay"), []);
@@ -1149,6 +1186,20 @@ const copyViewerInstructions = React.useCallback(() => {
 
 return (
     <div className="stream-page space-y-6">
+      {isMintTheme ? (
+        <section className="mint-stream-quicknav" aria-label="Stream quick navigation">
+          {streamQuickActions.map((action) => (
+            <GlassPanel key={action.label} variant="card" className="mint-stream-quicknav__card">
+              <MintPressable to={action.to} className="mint-stream-quicknav__action" fullWidth>
+                <MintIcon name={action.icon} size={18} />
+                <span className="mint-stream-quicknav__label">{action.label}</span>
+                <span className="mint-stream-quicknav__sub">{action.subtitle}</span>
+              </MintPressable>
+            </GlassPanel>
+          ))}
+        </section>
+      ) : null}
+
       <StreamOperationsHUD
         live={live}
         controlledSide={controlledSide}
@@ -1220,11 +1271,11 @@ return (
 
           {/* Step 2 · Share & QR Codes (P2-310) */}
           <StreamSharePanel
-            matchUrl={matchUrl}
-            hostMatchUrl={hostMatchUrl}
-            overlayUrl={overlayUrl}
-            overlayTransparentUrl={overlayTransparentUrl}
-            replayBroadcastUrl={replayBroadcastUrl}
+            matchUrl={themedMatchUrl}
+            hostMatchUrl={themedHostMatchUrl}
+            overlayUrl={themedOverlayUrl}
+            overlayTransparentUrl={themedOverlayTransparentUrl}
+            replayBroadcastUrl={themedReplayBroadcastUrl}
             controlledSide={controlledSide}
             eventTitle={e?.title}
             emptyCells={_remainingCellsLive}
@@ -1237,7 +1288,7 @@ return (
             <div className="mt-1 text-sm text-slate-800">
               視聴者には <span className="font-mono">challenge link</span> を配り、勝ったリプレイURLをチャットに貼ってもらいます。
               <br />
-              配信側は <Link to="/replay">Replay</Link> で拾って、解説・採点・ランキング化へ。
+              配信側は <Link to={themed("/replay")}>Replay</Link> で拾って、解説・採点・ランキング化へ。
             </div>
           </div>
 
@@ -1248,10 +1299,10 @@ return (
               overlayが step と一緒に追随します（解説がしやすい）。
             </div>
             <div className="mt-3 flex flex-wrap items-center gap-2">
-              <button className="btn btn-sm btn-primary" onClick={() => copy("Replay (broadcast)", replayBroadcastUrl)}>
+              <button className="btn btn-sm btn-primary" onClick={() => copy("Replay (broadcast)", themedReplayBroadcastUrl)}>
                 Copy replay (broadcast)
               </button>
-              <a className="btn btn-sm no-underline" href={replayBroadcastUrl} target="_blank" rel="noreferrer noopener">
+              <a className="btn btn-sm no-underline" href={themedReplayBroadcastUrl} target="_blank" rel="noreferrer noopener">
                 Open
               </a>
             </div>
@@ -1435,16 +1486,16 @@ return (
           </div>
         </div>
         <div className="card-bd flex flex-wrap items-center gap-2">
-          <Link className="btn no-underline" to="/events">
+          <Link className="btn no-underline" to={themed("/events")}>
             Events
           </Link>
-          <Link className="btn no-underline" to="/match?ui=mint">
+          <Link className="btn no-underline" to={themed("/match?ui=mint")}>
             Match
           </Link>
-          <Link className="btn no-underline" to="/replay">
+          <Link className="btn no-underline" to={themed("/replay")}>
             Replay
           </Link>
-          <a className="btn no-underline" href={overlayUrl} target="_blank" rel="noreferrer noopener">
+          <a className="btn no-underline" href={themedOverlayUrl} target="_blank" rel="noreferrer noopener">
             Overlay
           </a>
         </div>

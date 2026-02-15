@@ -1,6 +1,9 @@
 import React from "react";
 import { useToast } from "@/components/Toast";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
+import { GlassPanel } from "@/components/mint/GlassPanel";
+import { MintPressable } from "@/components/mint/MintPressable";
+import { MintIcon, type MintIconName } from "@/components/mint/icons/MintIcon";
 
 import { EVENTS, formatEventPeriod, getEventStatus } from "@/lib/events";
 import { parseDeckRestriction } from "@/lib/deck_restriction";
@@ -21,6 +24,7 @@ import {
   parseSettledPointsImportJson,
   type SettledPointsImportIssue,
 } from "@/lib/settled_points_import";
+import { appendThemeToPath, resolveAppTheme } from "@/lib/theme";
 
 function StatusBadge(props: { status: string }) {
   const variant =
@@ -94,12 +98,25 @@ function findBestAttemptId(
 }
 
 export function EventsPage() {
+  const [searchParams] = useSearchParams();
+  const theme = resolveAppTheme(searchParams);
+  const isMintTheme = theme === "mint";
   const [refresh, setRefresh] = React.useState(0);
   const [selectedSeasonId, setSelectedSeasonId] = React.useState<number | null>(null);
   const [settledImportMode, setSettledImportMode] = React.useState<SettledImportMode>("settled_events");
   const [settledImportText, setSettledImportText] = React.useState("");
   const [settledImportReport, setSettledImportReport] = React.useState<SettledImportUiReport | null>(null);
   const toast = useToast();
+  const themed = React.useCallback((to: string) => appendThemeToPath(to, theme), [theme]);
+  const quickActions = React.useMemo<Array<{ to: string; label: string; subtitle: string; icon: MintIconName }>>(
+    () => [
+      { to: themed("/arena"), label: "Arena", subtitle: "Battle modes", icon: "arena" },
+      { to: themed("/decks"), label: "Decks", subtitle: "Build loadouts", icon: "decks" },
+      { to: themed("/replay"), label: "Replay", subtitle: "Watch matches", icon: "replay" },
+      { to: themed("/stream"), label: "Stream", subtitle: "Host tools", icon: "stream" },
+    ],
+    [themed],
+  );
 
   const seasonArchive = React.useMemo(() => {
     void refresh;
@@ -210,6 +227,20 @@ export function EventsPage() {
 
   return (
     <div className="events-page grid gap-6">
+      {isMintTheme ? (
+        <section className="mint-events-quicknav" aria-label="Events quick navigation">
+          {quickActions.map((action) => (
+            <GlassPanel key={action.label} variant="card" className="mint-events-quicknav__card">
+              <MintPressable to={action.to} className="mint-events-quicknav__action" fullWidth>
+                <MintIcon name={action.icon} size={18} />
+                <span className="mint-events-quicknav__label">{action.label}</span>
+                <span className="mint-events-quicknav__sub">{action.subtitle}</span>
+              </MintPressable>
+            </GlassPanel>
+          ))}
+        </section>
+      ) : null}
+
       <section className="card events-page__hero">
         <div className="card-hd">
           <div className="text-base font-semibold">Events</div>
@@ -646,13 +677,13 @@ export function EventsPage() {
                 })()}
 
                 <div className="flex flex-wrap items-center gap-2">
-                  <Link className="btn btn-primary no-underline" to={`/match?event=${encodeURIComponent(e.id)}&ui=mint`}>
+                  <Link className="btn btn-primary no-underline" to={themed(`/match?event=${encodeURIComponent(e.id)}&ui=mint`)}>
                     Start (Match)
                   </Link>
-                  <Link className="btn no-underline" to="/decks">
+                  <Link className="btn no-underline" to={themed("/decks")}>
                     Prepare your deck
                   </Link>
-                  <Link className="btn no-underline" to="/replay">
+                  <Link className="btn no-underline" to={themed("/replay")}>
                     Watch replays
                   </Link>
                 </div>

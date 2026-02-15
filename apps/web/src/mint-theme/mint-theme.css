@@ -6016,6 +6016,101 @@
   border-color: rgba(165, 243, 252, 0.5);
 }
 
+/* Shared quick navigation rails for secondary Mint screens */
+.mint-events-quicknav,
+.mint-replay-quicknav,
+.mint-stream-quicknav {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.mint-events-quicknav__card,
+.mint-replay-quicknav__card,
+.mint-stream-quicknav__card {
+  min-height: 88px;
+}
+
+.mint-events-quicknav__action,
+.mint-replay-quicknav__action,
+.mint-stream-quicknav__action {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  grid-template-rows: auto auto;
+  column-gap: 8px;
+  row-gap: 2px;
+  align-items: center;
+  justify-items: start;
+  min-height: 78px;
+}
+
+.mint-events-quicknav__action .mint-icon,
+.mint-replay-quicknav__action .mint-icon,
+.mint-stream-quicknav__action .mint-icon {
+  grid-row: span 2;
+}
+
+.mint-events-quicknav__label,
+.mint-replay-quicknav__label,
+.mint-stream-quicknav__label {
+  font-family: var(--font-display, "Baloo 2", sans-serif);
+  font-size: 17px;
+  line-height: 1.1;
+  font-weight: 700;
+}
+
+.mint-events-quicknav__sub,
+.mint-replay-quicknav__sub,
+.mint-stream-quicknav__sub {
+  color: var(--mint-text-secondary, #4B5563);
+  font-size: 11px;
+  font-weight: 600;
+}
+
+[data-theme="mint"] .mint-events-quicknav__card,
+[data-theme="mint"] .mint-replay-quicknav__card,
+[data-theme="mint"] .mint-stream-quicknav__card {
+  border-color: rgba(191, 219, 254, 0.62);
+  background:
+    radial-gradient(circle at 15% -30%, rgba(167, 243, 208, 0.32), transparent 52%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.9), rgba(236, 254, 255, 0.72));
+}
+
+/* Match board-side visual polish for Mint mode */
+[data-theme="mint"] .mint-match-board-shell {
+  border-radius: 20px;
+  padding: 8px;
+  border: 1px solid rgba(186, 230, 253, 0.62);
+  background:
+    radial-gradient(circle at 0% -30%, rgba(167, 243, 208, 0.28), transparent 48%),
+    linear-gradient(165deg, rgba(255, 255, 255, 0.62), rgba(224, 242, 254, 0.5));
+  box-shadow:
+    0 16px 28px -24px rgba(2, 132, 199, 0.66),
+    inset 0 1px 0 rgba(255, 255, 255, 0.84);
+}
+
+[data-theme="mint"] .mint-match-board-center {
+  min-width: 0;
+}
+
+[data-theme="mint"] .mint-match-quick-commit {
+  border-color: rgba(167, 243, 208, 0.64);
+  background:
+    radial-gradient(circle at 12% -24%, rgba(167, 243, 208, 0.24), transparent 48%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(219, 234, 254, 0.72));
+  box-shadow:
+    0 14px 24px -22px rgba(15, 23, 42, 0.54),
+    inset 0 1px 0 rgba(255, 255, 255, 0.88);
+}
+
+[data-theme="mint"] .mint-match-quick-commit__title {
+  color: var(--mint-text-primary, #1F2937);
+}
+
+[data-theme="mint"] .mint-match-quick-commit__hint {
+  color: var(--mint-text-secondary, #4B5563);
+}
+
 /* Board polish for Match/Replay mint board skins (no layout changes) */
 [data-theme="mint"] .mint-board-view--match .mint-board-frame,
 [data-theme="mint"] .mint-board-view--replay .mint-board-frame {
@@ -6061,14 +6156,17 @@
   [data-theme="mint"] .stream-page .btn,
   [data-theme="mint"] .stream-page__step,
   [data-theme="mint"] .events-page__event-card,
-  [data-theme="mint"] .replay-page__focus-toolbar {
+  [data-theme="mint"] .replay-page__focus-toolbar,
+  [data-theme="mint"] .mint-match-quick-commit {
     transition: none !important;
   }
 }
 
 [data-vfx="off"] .stream-page__step,
 [data-vfx="off"] .events-page__hero,
-[data-vfx="off"] .replay-page__focus-toolbar {
+[data-vfx="off"] .replay-page__focus-toolbar,
+[data-vfx="off"] .mint-match-quick-commit,
+[data-vfx="off"] .mint-match-board-shell {
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(241, 245, 249, 0.84));
 }
 
@@ -6079,6 +6177,12 @@
 
   .stream-page__lock-row {
     justify-content: flex-start;
+  }
+
+  .mint-events-quicknav,
+  .mint-replay-quicknav,
+  .mint-stream-quicknav {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .mint-home-menu-grid {
@@ -6113,6 +6217,12 @@
 @media (max-width: 760px) {
   .events-page__content {
     gap: 10px;
+  }
+
+  .mint-events-quicknav,
+  .mint-replay-quicknav,
+  .mint-stream-quicknav {
+    grid-template-columns: 1fr;
   }
 
   .replay-page .card-hd,
