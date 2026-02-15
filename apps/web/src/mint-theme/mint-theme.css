@@ -1117,8 +1117,8 @@
 }
 
 .mint-prompt__ja {
-  font-size: clamp(23px, 3.6vw, 34px);
-  line-height: 1.02;
+  font-size: clamp(17px, 2.2vw, 24px);
+  line-height: 1.08;
   font-weight: 800;
   letter-spacing: 0.02em;
   font-family: var(--font-display, "Baloo 2", sans-serif);
@@ -1130,8 +1130,8 @@
 
 .mint-prompt__en {
   margin-top: 1px;
-  font-size: 15px;
-  line-height: 1.12;
+  font-size: 12px;
+  line-height: 1.15;
   font-weight: 700;
   letter-spacing: 0.03em;
   font-family: var(--font-display, "Baloo 2", sans-serif);
@@ -1827,6 +1827,7 @@
   position: relative;
   height: clamp(82px, 8.8vw, 124px);
   overflow: hidden;
+  contain: layout paint;
 }
 
 .mint-nyano-reaction-slot--stage-focus {
@@ -2113,11 +2114,11 @@
   }
 
   .mint-prompt__ja {
-    font-size: clamp(19px, 6vw, 26px);
+    font-size: clamp(15px, 4.6vw, 20px);
   }
 
   .mint-prompt__en {
-    font-size: 13px;
+    font-size: 11px;
   }
 
   .mint-hand-tray {
@@ -3241,7 +3242,7 @@
 }
 
 .mint-stage--impact-burst .mint-stage__board > * {
-  animation: mint-stage-impact-board 760ms cubic-bezier(0.16, 1, 0.3, 1);
+  animation: mint-stage-impact-board-glow 760ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .mint-stage--impact-burst .mint-stage__glow {
@@ -3282,15 +3283,18 @@
   }
 }
 
-@keyframes mint-stage-impact-board {
+@keyframes mint-stage-impact-board-glow {
   0% {
-    transform: rotateX(2deg) scale(0.996);
+    filter: brightness(1) saturate(1);
+    box-shadow: none;
   }
   24% {
-    transform: rotateX(2deg) scale(1.014);
+    filter: brightness(1.035) saturate(1.05);
+    box-shadow: 0 0 0 1px color-mix(in srgb, var(--mint-stage-impact-glow, rgba(56, 189, 248, 0.28)) 26%, transparent);
   }
   100% {
-    transform: rotateX(2deg) scale(1);
+    filter: brightness(1) saturate(1);
+    box-shadow: none;
   }
 }
 

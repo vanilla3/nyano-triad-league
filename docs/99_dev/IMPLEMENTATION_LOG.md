@@ -2690,3 +2690,21 @@
 
 ### Verify
 - `pnpm.cmd -C apps/web e2e -- e2e/ux-guardrails.spec.ts` OK（4 passed）
+
+## 2026-02-15 - Match UX fix: Nyanoコメント時の盤面ズレ抑止 + Prompt文字サイズ調整
+
+### Why
+- バトル中、Nyanoコメントに同期して盤面が「ずれる」体感があり、操作の安定感を損なっていた。
+- あわせて ActionPrompt（「カードを選んでください」）が大きすぎ、盤面視認性を阻害していた。
+
+### What
+- Updated `apps/web/src/mint-theme/mint-theme.css`:
+  - `mint-stage-impact-board` の transform系アニメーションを廃止し、位置を動かさない `mint-stage-impact-board-glow` へ置換。
+  - `mint-nyano-reaction-slot` に `contain: layout paint` を追加し、コメント描画のレイアウト影響を局所化。
+  - `mint-prompt__ja` / `mint-prompt__en` のフォントサイズを縮小（desktop/mobile両方）。
+- Updated `apps/web/e2e/ux-guardrails.spec.ts`:
+  - Nyano slotシナリオで board frame の document座標差分チェックを追加（Deck Preview状態を固定して計測）。
+
+### Verify
+- `pnpm.cmd -C apps/web e2e -- e2e/ux-guardrails.spec.ts` OK（4 passed）
+- `pnpm.cmd -C apps/web build` OK

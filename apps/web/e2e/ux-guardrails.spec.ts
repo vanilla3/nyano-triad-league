@@ -1,9 +1,23 @@
 import { expect, test, type Locator, type Page } from "@playwright/test";
 
-async function readRect(locator: Locator): Promise<{ width: number; height: number }> {
+async function readRect(locator: Locator): Promise<{
+  x: number;
+  y: number;
+  docX: number;
+  docY: number;
+  width: number;
+  height: number;
+}> {
   return locator.evaluate((el) => {
     const rect = el.getBoundingClientRect();
-    return { width: rect.width, height: rect.height };
+    return {
+      x: rect.x,
+      y: rect.y,
+      docX: rect.x + window.scrollX,
+      docY: rect.y + window.scrollY,
+      width: rect.width,
+      height: rect.height,
+    };
   });
 }
 
@@ -52,6 +66,18 @@ async function disableGuestTutorial(page: Page): Promise<void> {
   await page.addInitScript(() => {
     try {
       localStorage.setItem("nytl.tutorial.seen", "true");
+      localStorage.setItem(
+        "nytl.onboarding.progress_v1",
+        JSON.stringify({
+          version: 1,
+          updatedAtIso: "2026-01-01T00:00:00.000Z",
+          steps: {
+            read_quick_guide: true,
+            start_first_match: true,
+            commit_first_move: true,
+          },
+        }),
+      );
     } catch {
       // ignore storage failures in hardened browser contexts
     }
@@ -121,6 +147,21 @@ test.describe("UX regression guardrails", () => {
     await expect(firstCell).toHaveClass(/mint-pressable/);
     await expect(firstCell).toHaveAttribute("tabindex", "0");
 
+    const deckPreview = page.locator("details").filter({ hasText: "Deck Preview" }).first();
+    if (await deckPreview.isVisible().catch(() => false)) {
+      const open = await deckPreview.evaluate((el) => el.hasAttribute("open"));
+      if (open) {
+        await deckPreview.locator("summary").click();
+        await expect.poll(
+          () => deckPreview.evaluate((el) => el.hasAttribute("open")),
+        ).toBe(false);
+      }
+    }
+
+    const boardFrame = page.locator(".mint-board-frame").first();
+    await expect(boardFrame).toBeVisible();
+    const boardBefore = await readRect(boardFrame);
+
     const slot = page.getByTestId("nyano-reaction-slot").first();
     await expect(slot).toBeVisible();
     const before = await readRect(slot);
@@ -139,6 +180,10 @@ test.describe("UX regression guardrails", () => {
     const after = await readRect(slot);
     expect(after.height).toBeGreaterThanOrEqual(60);
     expect(Math.abs(after.height - before.height)).toBeLessThanOrEqual(12);
+
+    const boardAfter = await readRect(boardFrame);
+    expect(Math.abs(boardAfter.docY - boardBefore.docY)).toBeLessThanOrEqual(2);
+    expect(Math.abs(boardAfter.height - boardBefore.height)).toBeLessThanOrEqual(2);
 
     const clamp = await line.evaluate((el) => {
       const style = getComputedStyle(el);
