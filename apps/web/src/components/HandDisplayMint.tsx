@@ -51,6 +51,8 @@ export function HandDisplayMint({
 
           const classes = [
             "mint-hand-card",
+            "mint-pressable",
+            "mint-pressable--card",
             idx > 0 && "mint-hand-card--stacked",
             owner === 0 ? "mint-hand-card--a" : "mint-hand-card--b",
             isSelected && "mint-hand-card--selected",

@@ -180,22 +180,22 @@ export function GameResultOverlayMint({
         {/* Actions */}
         <div className="mint-result__actions">
           {onRematch && (
-            <button className="mint-result__btn" onClick={onRematch}>
+            <button className="mint-result__btn mint-pressable mint-pressable--pill" onClick={onRematch}>
               🔄 もう一回
             </button>
           )}
           {onReplay && (
-            <button className="mint-result__btn" onClick={onReplay}>
+            <button className="mint-result__btn mint-pressable mint-pressable--pill" onClick={onReplay}>
               📼 リプレイ
             </button>
           )}
           {onShare && (
-            <button className="mint-result__btn mint-result__btn--primary" onClick={onShare}>
+            <button className="mint-result__btn mint-result__btn--primary mint-pressable mint-pressable--pill" onClick={onShare}>
               📤 シェア
             </button>
           )}
           {!onRematch && !onReplay && !onShare && onDismiss && (
-            <button className="mint-result__btn mint-result__btn--primary" onClick={onDismiss}>
+            <button className="mint-result__btn mint-result__btn--primary mint-pressable mint-pressable--pill" onClick={onDismiss}>
               閉じる
             </button>
           )}

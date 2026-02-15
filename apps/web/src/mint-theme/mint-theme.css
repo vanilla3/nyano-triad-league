@@ -64,6 +64,13 @@
   --mint-prompt-bg: rgba(239, 249, 255, 0.95);
   --mint-prompt-border: rgba(125, 211, 252, 0.6);
 
+  /* Pressable microinteraction */
+  --mint-press-transition: 180ms cubic-bezier(0.22, 1, 0.36, 1);
+  --mint-press-hover-transform: translateY(-2px) scale(1.01);
+  --mint-press-active-transform: translateY(0) scale(0.985);
+  --mint-press-focus-color: var(--mint-accent);
+  --mint-press-focus-shadow: 0 10px 18px -12px rgba(15, 23, 42, 0.42);
+
   /* Gamefeel background tokens (reference image approximation) */
   --mint-gamefeel-bg-mint: #C1E4E6;
   --mint-gamefeel-bg-lavender: #D0C3EF;
@@ -154,6 +161,57 @@
   0%   { box-shadow: 0 0 0 0 var(--mint-chain-glow); }
   50%  { box-shadow: 0 0 24px 8px var(--mint-chain-glow); }
   100% { box-shadow: 0 0 12px 2px var(--mint-chain-glow); }
+}
+
+/* Shared press feedback for tappable controls */
+.mint-pressable {
+  transition:
+    transform var(--mint-press-transition),
+    box-shadow var(--mint-press-transition),
+    border-color var(--mint-press-transition),
+    background var(--mint-press-transition),
+    filter var(--mint-press-transition);
+  touch-action: manipulation;
+}
+
+.mint-pressable:hover:not(:disabled):not([aria-disabled="true"]) {
+  transform: var(--mint-press-hover-transform);
+}
+
+.mint-pressable:active:not(:disabled):not([aria-disabled="true"]) {
+  transform: var(--mint-press-active-transform);
+}
+
+.mint-pressable:focus-visible {
+  outline: none;
+  box-shadow:
+    0 0 0 2px rgba(255, 255, 255, 0.88),
+    0 0 0 4px color-mix(in srgb, var(--mint-press-focus-color, var(--mint-accent)) 42%, transparent),
+    var(--mint-press-focus-shadow);
+}
+
+.mint-pressable--cell {
+  --mint-press-focus-color: var(--mint-accent);
+  --mint-press-focus-shadow: 0 0 0 2px rgba(56, 189, 248, 0.24), 0 0 14px rgba(56, 189, 248, 0.2);
+}
+
+.mint-pressable--card {
+  --mint-press-hover-transform: translateY(-5px) scale(1.03);
+  --mint-press-active-transform: translateY(-1px) scale(0.99);
+  --mint-press-focus-shadow: 0 12px 20px -14px rgba(15, 23, 42, 0.45);
+}
+
+.mint-hand-card--a.mint-pressable--card {
+  --mint-press-focus-color: var(--mint-pa);
+}
+
+.mint-hand-card--b.mint-pressable--card {
+  --mint-press-focus-color: var(--mint-pb);
+}
+
+.mint-pressable--pill {
+  --mint-press-hover-transform: translateY(-1px) scale(1.01);
+  --mint-press-active-transform: translateY(0) scale(0.985);
 }
 
 /* ── Board Frame ─────────────────────────────────────────────────────── */
@@ -411,10 +469,12 @@
 
 /* Selected */
 .mint-cell--selected {
+  --mint-selected-ring: var(--mint-accent);
+  --mint-selected-glow: var(--mint-cell-active-glow);
   border-color: var(--mint-accent) !important;
   box-shadow:
-    0 0 0 3px var(--mint-cell-selected),
-    0 0 18px var(--mint-cell-active-glow),
+    0 0 0 3px color-mix(in srgb, var(--mint-selected-ring) 34%, transparent),
+    0 0 18px var(--mint-selected-glow),
     0 12px 20px -14px rgba(14, 116, 144, 0.46) !important;
   transform: translateY(-1px);
   animation: mint-glow-pulse 2s ease-in-out infinite !important;
@@ -1178,7 +1238,11 @@
   background: var(--mint-surface);
   padding: 4px;
   cursor: pointer;
-  transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+  transition:
+    transform var(--mint-press-transition),
+    box-shadow var(--mint-press-transition),
+    border-color var(--mint-press-transition),
+    filter var(--mint-press-transition);
   flex-shrink: 0;
   /* Subtle depth even at rest */
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
@@ -1206,22 +1270,24 @@
 
 .mint-hand-card--selected {
   transform: translateY(-12px) scale(1.05) !important;
-  border-color: var(--mint-accent) !important;
+  --mint-selected-ring: var(--mint-accent);
+  --mint-selected-glow: var(--mint-cell-active-glow);
+  border-color: var(--mint-selected-ring) !important;
   animation: mint-card-select-glow 1.5s ease-in-out infinite;
   box-shadow:
-    0 0 0 2px var(--mint-select-ring, var(--mint-accent)),
-    0 0 20px var(--mint-select-glow, var(--mint-cell-active-glow)),
+    0 0 0 2px var(--mint-selected-ring),
+    0 0 20px var(--mint-selected-glow),
     0 12px 24px rgba(0, 0, 0, 0.14) !important;
 }
 
 .mint-hand-card--a.mint-hand-card--selected {
-  --mint-select-ring: var(--mint-pa, #0EA5E9);
-  --mint-select-glow: var(--mint-pa-glow, rgba(14, 165, 233, 0.4));
+  --mint-selected-ring: var(--mint-pa, #0EA5E9);
+  --mint-selected-glow: var(--mint-pa-glow, rgba(14, 165, 233, 0.4));
 }
 
 .mint-hand-card--b.mint-hand-card--selected {
-  --mint-select-ring: var(--mint-pb, #F43F5E);
-  --mint-select-glow: var(--mint-pb-glow, rgba(244, 63, 94, 0.4));
+  --mint-selected-ring: var(--mint-pb, #F43F5E);
+  --mint-selected-glow: var(--mint-pb-glow, rgba(244, 63, 94, 0.4));
 }
 
 .mint-hand-card--used {
@@ -1759,24 +1825,41 @@
 
 .mint-nyano-reaction-slot {
   position: relative;
-  min-height: clamp(72px, 8.6vw, 118px);
+  height: clamp(82px, 8.8vw, 124px);
+  overflow: hidden;
 }
 
 .mint-nyano-reaction-slot--stage-focus {
-  min-height: clamp(84px, 10vw, 132px);
+  height: clamp(92px, 10vw, 136px);
+}
+
+.mint-nyano-reaction-slot__content {
+  position: absolute;
+  inset: 0;
+  min-width: 0;
+  z-index: 1;
 }
 
 .mint-nyano-reaction-slot__placeholder {
   display: block;
-  width: 1px;
-  height: 1px;
-  opacity: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: 22px;
+  border: 1px solid rgba(148, 211, 252, 0.16);
+  background: linear-gradient(165deg, rgba(255, 255, 255, 0.24), rgba(224, 242, 254, 0.12));
+  opacity: 0.4;
   pointer-events: none;
 }
 
+.mint-nyano-reaction-slot__content > .mint-nyano-reaction {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+}
+
 .stage-focus-cutin {
-  margin-top: -2px;
-  margin-bottom: 2px;
+  margin: 0;
+  height: 100%;
   transform-origin: center top;
 }
 
@@ -2244,7 +2327,11 @@
   font-size: 14px;
   font-weight: 700;
   cursor: pointer;
-  transition: all 0.15s;
+  transition:
+    transform var(--mint-press-transition),
+    box-shadow var(--mint-press-transition),
+    border-color var(--mint-press-transition),
+    background var(--mint-press-transition);
 }
 
 .mint-result__btn:hover {
@@ -3553,14 +3640,14 @@
 @keyframes mint-card-select-glow {
   0%, 100% {
     box-shadow:
-      0 0 0 2px var(--mint-select-ring, var(--mint-accent)),
-      0 0 12px var(--mint-select-glow, var(--mint-cell-active-glow)),
+      0 0 0 2px var(--mint-selected-ring, var(--mint-accent)),
+      0 0 12px var(--mint-selected-glow, var(--mint-cell-active-glow)),
       0 8px 20px rgba(0, 0, 0, 0.12);
   }
   50% {
     box-shadow:
-      0 0 0 3px var(--mint-select-ring, var(--mint-accent)),
-      0 0 24px var(--mint-select-glow, var(--mint-cell-active-glow)),
+      0 0 0 3px var(--mint-selected-ring, var(--mint-accent)),
+      0 0 24px var(--mint-selected-glow, var(--mint-cell-active-glow)),
       0 8px 20px rgba(0, 0, 0, 0.12);
   }
 }
@@ -3682,6 +3769,13 @@
 /* ── Reduced Motion ──────────────────────────────────────────────────── */
 
 @media (prefers-reduced-motion: reduce) {
+  .mint-pressable,
+  .mint-pressable:hover,
+  .mint-pressable:active {
+    transform: none !important;
+    transition-duration: 0s !important;
+  }
+
   .mint-cell--selectable,
   .mint-cell--selected,
   .mint-cell--placed,
@@ -3736,8 +3830,8 @@
   /* P1-130: Static glow fallback for card selection */
   .mint-hand-card--selected {
     animation: none !important;
-    box-shadow: 0 0 0 2px var(--mint-select-ring, var(--mint-accent)),
-                0 0 16px var(--mint-select-glow, var(--mint-cell-active-glow)),
+    box-shadow: 0 0 0 2px var(--mint-selected-ring, var(--mint-accent)),
+                0 0 16px var(--mint-selected-glow, var(--mint-cell-active-glow)),
                 0 8px 20px rgba(0, 0, 0, 0.12) !important;
   }
 
@@ -4216,6 +4310,9 @@
 [data-vfx="off"] .mint-top-hud::before               { display: none !important; }
 [data-vfx="off"] .mint-top-hud__turn-value           { animation: none !important; }
 [data-vfx="off"] .mint-nyano-reaction__burst-banner  { animation: none !important; }
+[data-vfx="off"] .mint-pressable                     { transition-duration: 0s !important; }
+[data-vfx="off"] .mint-pressable:hover,
+[data-vfx="off"] .mint-pressable:active              { transform: none !important; }
 [data-vfx="off"] .mint-stage--impact-burst           { animation: none !important; filter: none !important; }
 [data-vfx="off"] .mint-stage--impact-burst .mint-stage__holo,
 [data-vfx="off"] .mint-stage--impact-burst .mint-stage__glow,
@@ -4243,6 +4340,7 @@
 [data-vfx="low"] .mint-top-hud::before                { animation-duration: 16s !important; opacity: 0.2; }
 [data-vfx="low"] .mint-top-hud__turn-value            { animation: none !important; }
 [data-vfx="low"] .mint-nyano-reaction__burst-banner   { animation-duration: 420ms !important; }
+[data-vfx="low"] .mint-pressable                      { transition-duration: 120ms !important; }
 [data-vfx="low"] .mint-stage--impact-burst            { animation-duration: 280ms !important; }
 [data-vfx="low"] .mint-stage--impact-burst .mint-stage__holo,
 [data-vfx="low"] .mint-stage--impact-burst .mint-stage__glow,

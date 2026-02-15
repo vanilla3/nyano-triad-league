@@ -186,3 +186,5 @@
 - [x] 2026-02-15 WO012: Mint Top HUD（左ロゴ/中央A-Bスコア/右TURN）を `ui=mint` 向けに追加。`density=minimal` は Top HUD優先、`standard/full` は既存 `BattleHudMint` 併用に整理。
 - [x] 2026-02-15 WO013: Mint盤面の左右にプレイヤーパネル（Avatar/Label/Remaining）を追加。Desktopは `panel|board|panel`、mobileはパネル非表示で盤面優先。
 - [x] 2026-02-15 WO014: Mint手札をガラス調トレイ + 軽い重なりへ更新し、ActionPromptを二段ピル化。`mint-prompt-slot` で表示揺れを抑制。
+- [x] 2026-02-15 WO015: NyanoReaction slotを fixed-height + absolute overlay 化し、`kind=idle` 時も placeholder を維持。LayoutShift API を `ux-guardrails` に追加してCLS回帰を軽量監視。
+- [x] 2026-02-15 WO016: `mint-pressable` を導入し、board cell / hand card / result button の押下文法（hover/active/focus-visible）を統一。reduced-motion / data-vfx 抑制分岐を追加。

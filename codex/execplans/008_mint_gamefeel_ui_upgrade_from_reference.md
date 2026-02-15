@@ -130,8 +130,8 @@
 - [x] WO-012: Top HUD
 - [x] WO-013: Player panel
 - [x] WO-014: Hand tray + Prompt
-- [ ] WO-015: Reaction stability
-- [ ] WO-016: Microinteraction + guardrails
+- [x] WO-015: Reaction stability
+- [x] WO-016: Microinteraction + guardrails
 
 ---
 
@@ -142,6 +142,8 @@
 - 2026-02-15: WO012は `BattleHudMint` を直接改変せず、新規 `BattleTopHudMint` を `ui=mint` 限定で差し込む方針を採用（影響範囲を局所化）
 - 2026-02-15: WO013は盤面入力を壊さないため、既存Boardレンダリングを保持したまま外側レイアウトのみ `mint-battle-layout` へ拡張
 - 2026-02-15: WO014は操作性維持のため `HandDisplayMint` のイベント系は据え置き、DOM構造とCSSのみで tray/prompt を更新
+- 2026-02-15: WO015は `input non-null` でも `kind=idle` になり得る点を考慮し、slot側で `hasVisibleReaction` 判定 + 常時placeholder保持へ変更
+- 2026-02-15: WO016は hover/active/focus-visible をコンポーネント個別実装で増やさず、`mint-pressable` 共通クラスで統一する方針に固定
 
 ---
 
@@ -151,6 +153,7 @@
 - HUD切替軸を `density` に一本化することで、`minimal` と `standard/full` の意図差を小さい差分で表現できた
 - プレイヤーパネルは `ui=mint` 限定・Desktop表示に絞ることで、mobile過密とstage-focus操作性への影響を避けられた
 - prompt の高さは phase ごとの文言差で揺れやすく、slot を固定して文言だけ更新する構成が安定した
+- `layout-shift` はページ全体指標のため、Nyano slot 専用検証では高さ固定チェックと併用し、E2Eしきい値を実測に合わせて運用するのが安定した
 
 ---
 
@@ -160,3 +163,5 @@
 - WO012完了。`ui=mint` に Top HUD（ロゴ/スコア/ターン）を追加し、`density=minimal` は Top HUD優先、`standard/full` は既存 `BattleHudMint` 併用の導線に整理した。
 - WO013完了。Mint matchの盤面横に左右プレイヤーパネル（Avatar/Label/Remaining）を追加し、Desktopは `panel | board | panel`、mobileは盤面優先でパネル非表示とした。
 - WO014完了。手札をガラス調トレイ + 軽いカード重なりへ更新し、ActionPrompt を二段ピル化して定位置ガイドを強化した。
+- WO015完了。NyanoReaction slot を fixed-height + absolute overlay 構造へ刷新し、`kind=idle` 時も placeholder を維持して表示揺れを抑止。E2E に LayoutShift プローブを追加して回帰検知を補強した。
+- WO016完了。`mint-pressable` を導入して cell/card/pill の押下文法（hover/active/focus-visible）を統一し、selected ring/glow を共通トークン化。reduced-motion / data-vfx 分岐で過剰演出を抑制した。

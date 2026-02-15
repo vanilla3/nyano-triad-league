@@ -2619,3 +2619,58 @@
 - `pnpm -C apps/web test` OK
 - `pnpm -C apps/web typecheck` OK
 - `pnpm -C apps/web build` OK
+
+## 2026-02-15 - WO015: NyanoReaction layout stability v2 (CLS hardening)
+
+### Why
+- Nyano コメント表示時に slot 高さや文言差分で縦方向の揺れが残る可能性があり、Mint match の安定感を損なっていた。
+- 既存のレイアウト安定化を補強し、`input` はあるが `kind=idle` で実表示がないケースも安全に扱う必要があった。
+
+### What
+- Updated `apps/web/src/components/NyanoReactionSlot.tsx`:
+  - `pickReactionKind` を使って `hasVisibleReaction` を判定。
+  - slot 内は常時 placeholder をマウントし、`mint-nyano-reaction-slot__content` に reaction を重ねる構造へ変更。
+  - `input !== null` でも `kind=idle` の場合は idle slot class を維持。
+- Updated `apps/web/src/mint-theme/mint-theme.css`:
+  - slot を `min-height` 依存から `height: clamp(...)` + `overflow: hidden` に変更。
+  - `mint-nyano-reaction-slot__content` を absolute overlay 化し、reaction 本体を `inset: 0` で固定。
+  - `stage-focus-cutin` の余白を除去して slot 内収まりを安定化。
+- Updated `apps/web/src/components/__tests__/NyanoReactionSlot.test.tsx`:
+  - placeholder + content wrapper 構造に合わせてテスト更新。
+  - `kind=idle` ケースで slot が idle 扱いになることを追加検証。
+- Updated `apps/web/e2e/ux-guardrails.spec.ts`:
+  - LayoutShift API の軽量プローブを追加。
+  - Nyano slot シナリオで line-clamp/overflow と合わせて layout-shift しきい値チェックを追加。
+
+### Verify
+- `pnpm.cmd -C apps/web test -- NyanoReactionSlot` OK
+- `pnpm.cmd -C apps/web e2e -- e2e/ux-guardrails.spec.ts` OK
+- `pnpm.cmd -C apps/web build` OK
+- `pnpm.cmd -C apps/web typecheck` NG（既存依存不足: `pixi.js` / `fflate` 型解決エラー）
+
+## 2026-02-15 - WO016: Mint microinteraction polish (press/hover/focus unification)
+
+### Why
+- Mint UI 内でセル・手札・ボタンの押下文法が場所ごとに微妙に異なり、“触り心地” の統一感が不足していた。
+- キーボード操作時の視認性（focus-visible）も揃える必要があった。
+
+### What
+- Updated `apps/web/src/mint-theme/mint-theme.css`:
+  - 共通ユーティリティ `mint-pressable` / `mint-pressable--cell|--card|--pill` を追加。
+  - hover/active/focus-visible を CSS 変数 `--mint-press-*` で統一。
+  - selected ring/glow を `--mint-selected-ring` / `--mint-selected-glow` に統一し、A/B 色と両立。
+  - `prefers-reduced-motion` と `data-vfx=off|low` に press演出抑制を追加。
+- Updated `apps/web/src/components/BoardViewMint.tsx`:
+  - selectable cell に `mint-pressable mint-pressable--cell` を付与。
+  - `tabIndex=0` と Enter/Space でのセル選択を追加（focus-visible 導線）。
+- Updated `apps/web/src/components/HandDisplayMint.tsx`:
+  - hand card に `mint-pressable mint-pressable--card` を付与。
+- Updated `apps/web/src/components/GameResultOverlayMint.tsx`:
+  - result action buttons に `mint-pressable mint-pressable--pill` を付与。
+- Updated `apps/web/e2e/ux-guardrails.spec.ts`:
+  - Nyano slot シナリオで hand card / board cell の `mint-pressable` 適用を検証。
+
+### Verify
+- `pnpm.cmd -C apps/web e2e -- e2e/ux-guardrails.spec.ts` OK
+- `pnpm.cmd -C apps/web build` OK
+- `pnpm.cmd -C apps/web typecheck` NG（既存依存不足: `pixi.js` / `fflate` 型解決エラー）

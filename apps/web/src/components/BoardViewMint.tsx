@@ -139,6 +139,7 @@ function MintCell({
 }: MintCellProps) {
   const hasCard = !!cell?.card;
   const owner = hasCard ? (cell.owner as PlayerIndex) : null;
+  const isInteractive = isSelectable && !hasCard;
 
   const classes = ["mint-cell"];
 
@@ -146,6 +147,7 @@ function MintCell({
     classes.push(owner === 0 ? "mint-cell--owner-a" : "mint-cell--owner-b");
   } else if (isSelectable) {
     classes.push("mint-cell--selectable");
+    classes.push("mint-pressable", "mint-pressable--cell");
     if (isWarningMode) classes.push("mint-cell--warning-mode");
   } else {
     classes.push("mint-cell--flat");
@@ -169,9 +171,16 @@ function MintCell({
       role="gridcell"
       aria-label={cellLabel}
       aria-selected={isSelected || undefined}
+      tabIndex={isInteractive ? 0 : undefined}
       className={classes.join(" ")}
       data-board-cell={index}
       onClick={isSelectable && !hasCard ? onSelect : undefined}
+      onKeyDown={(e) => {
+        if (!isInteractive || !onSelect) return;
+        if (e.key !== "Enter" && e.key !== " ") return;
+        e.preventDefault();
+        onSelect();
+      }}
       onDragEnter={(e) => {
         if (!dragDropEnabled || hasCard || !isSelectable) return;
         e.preventDefault();
