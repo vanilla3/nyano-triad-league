@@ -2954,3 +2954,28 @@
 - `pnpm -C apps/web typecheck` OK
 - `pnpm -C apps/web build` OK
 - `pnpm.cmd -C apps/web e2e -- e2e/mint-app-screens-guardrails.spec.ts` OK (5 passed)
+
+## 2026-02-15 - Mint follow-up: Events/Replay/Stream polish + replay mobile overflow fix
+
+### Why
+- Events/Replay/Stream needed Mint-theme consistency with Home/Arena/Decks/Onboarding.
+- `/replay?theme=mint` had a 390px horizontal overflow regression caught by guardrails.
+
+### What
+- Updated `apps/web/src/pages/Events.tsx` with Mint structure classes for hero/content/season/event/memo cards.
+- Updated `apps/web/src/pages/Stream.tsx` with Mint structure classes for studio/steps/callout/live/recovery/links blocks.
+- Updated `apps/web/src/pages/Replay.tsx`:
+  - Applied replay page mode classes (`replay-page--standard|focus|stage-focus`) and section classes.
+  - Switched classic replay board to `BoardViewMint` when `theme=mint`.
+  - Fixed mobile overflow by wrapping long `rulesetId`/`matchId` (`break-all`, `flex-wrap`, `min-w-0`).
+  - Constrained debug JSON disclosure layout (`grid-cols-1`, `min-w-0`, `pre max-w-full`).
+- Updated `apps/web/src/pages/Match.tsx` to add `mint-board-view--match` class for board skin targeting.
+- Updated `apps/web/src/mint-theme/mint-theme.css` with secondary-screen Mint styling and board polish, including reduced-motion / `data-vfx=off` handling.
+- Updated `apps/web/src/styles.css` with replay min-width and pre width guards.
+- Updated `apps/web/e2e/mint-app-screens-guardrails.spec.ts` to include 390px Events/Replay/Stream reachability checks and improved overflow diagnostics.
+
+### Verify
+- `pnpm -C apps/web test` OK
+- `pnpm -C apps/web typecheck` OK
+- `pnpm -C apps/web build` OK
+- `pnpm.cmd -C apps/web e2e -- e2e/mint-app-screens-guardrails.spec.ts --grep "Events/Replay/Stream"` OK (6 passed)

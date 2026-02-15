@@ -209,3 +209,4 @@
 - [x] 2026-02-15 Follow-up: `MintPressable` の未使用変数lint警告を解消し、`MatchSetupPanelMint` の helper を `MatchSetupPanelMint.helpers.ts` へ分離して Fast Refresh 警告を解消。
 - [x] 2026-02-15 Follow-up: `src/lib/theme.ts` の回帰防止として `src/lib/__tests__/theme.test.ts` を追加（theme解決優先順位 / URL query+hash 互換を固定）。
 - [x] 2026-02-15 Follow-up: `e2e/mint-app-screens-guardrails.spec.ts` を拡張し、Mint App Chrome の `theme` クエリ保持（Tab遷移時）と `focusRoute`（`/match?focus=1` `/battle-stage`）での chrome 非表示互換を回帰テスト化。
+- [x] 2026-02-15 Follow-up: Events/Replay/Stream を Mint二次画面トーンへ揃え、Replay の 390px 横スクロール回帰を修正（長い `rulesetId`/`matchId` 折返し + debug pre の幅拘束）。`mint-app-screens-guardrails` で 390px 到達性を固定化。

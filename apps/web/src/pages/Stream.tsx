@@ -1148,7 +1148,7 @@ const copyViewerInstructions = React.useCallback(() => {
 }, [controlledSide, toast]);
 
 return (
-    <div className="space-y-6">
+    <div className="stream-page space-y-6">
       <StreamOperationsHUD
         live={live}
         controlledSide={controlledSide}
@@ -1163,7 +1163,7 @@ return (
         lastError={lastError}
         onDismissError={() => setLastError(null)}
       />
-      <div className="flex items-center justify-end gap-3">
+      <div className="stream-page__lock-row flex items-center justify-end gap-3">
         {settingsLocked && lockTimestamp > 0 && (
           <span className="text-xs text-slate-500">
             Locked {ageLabel(lockTimestamp)}
@@ -1182,7 +1182,7 @@ return (
           {settingsLocked ? "🔒 設定ロック中 (解除)" : "🔓 設定をロック"}
         </button>
       </div>
-      <div className="card">
+      <div className="card stream-page__studio-card">
         <div className="card-hd">
           <div>
             <div className="flex items-center gap-3">
@@ -1197,7 +1197,7 @@ return (
 
         <div className="card-bd space-y-4">
           {/* Step 1 · Event Selection */}
-          <div className="rounded-2xl border border-slate-200 bg-white/70 px-4 py-3 shadow-sm">
+          <div className="stream-page__step rounded-2xl border border-slate-200 bg-white/70 px-4 py-3 shadow-sm">
             <div className="text-xs font-semibold text-slate-800">Step 1 · Feature an Event</div>
             <div className="mt-2 flex flex-col gap-2">
               <label className="text-xs text-slate-600">Event</label>
@@ -1232,7 +1232,7 @@ return (
             turn={liveTurn ?? undefined}
           />
 
-          <div className="callout callout-info">
+          <div className="callout callout-info stream-page__callout">
             <div className="text-xs font-semibold">配信の“最短”の回し方（暫定）</div>
             <div className="mt-1 text-sm text-slate-800">
               視聴者には <span className="font-mono">challenge link</span> を配り、勝ったリプレイURLをチャットに貼ってもらいます。
@@ -1241,7 +1241,7 @@ return (
             </div>
           </div>
 
-          <div className="rounded-2xl border border-slate-200 bg-white/70 px-4 py-3 shadow-sm">
+          <div className="stream-page__step rounded-2xl border border-slate-200 bg-white/70 px-4 py-3 shadow-sm">
             <div className="text-xs font-semibold text-slate-800">Step 3 · Review replays on stream</div>
             <div className="mt-1 text-sm text-slate-700">
               <span className="font-mono">{replayPath}</span> で共有URLを開き、<span className="font-semibold">Broadcast to overlay</span> をONにすると、
@@ -1260,7 +1260,7 @@ return (
             </div>
           </div>
 
-          <div className="rounded-2xl border border-slate-200 bg-white/70 px-4 py-3 shadow-sm">
+          <div className="stream-page__step rounded-2xl border border-slate-200 bg-white/70 px-4 py-3 shadow-sm">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <div>
                 <div className="text-xs font-semibold text-slate-800">Step 4 · Nyano vs Chat (prototype)</div>
@@ -1275,7 +1275,7 @@ return (
             </div>
 
             <div className="mt-3 grid gap-3 md:grid-cols-2">
-              <div className="rounded-xl border border-slate-200 bg-white px-3 py-2">
+              <div className="stream-page__live-status rounded-xl border border-slate-200 bg-white px-3 py-2">
                 <div className="text-[11px] font-semibold text-slate-700">Live status (from overlay bus)</div>
                 <div className="mt-1 text-xs text-slate-700">
                   Event: <span className="font-mono">{live?.eventId ?? "—"}</span>
@@ -1374,7 +1374,7 @@ return (
       </div>
 
       {/* ── Recovery / Troubleshooting (Phase 2 — one-click + guide) ── */}
-      <div className="card rounded-2xl border border-amber-200 bg-amber-50/50 px-4 py-3">
+      <div className="card stream-page__recovery rounded-2xl border border-amber-200 bg-amber-50/50 px-4 py-3">
         <div className="text-xs font-semibold text-amber-800 mb-2">Recovery (リカバリー)</div>
         <div className="flex flex-wrap gap-2 mb-3">
           {(["clear_overlay", "clear_votes", "full_reset"] as const).map((action) => (
@@ -1427,7 +1427,7 @@ return (
         </details>
       </div>
 
-      <div className="card">
+      <div className="card stream-page__links">
         <div className="card-hd">
           <div>
             <div className="text-base font-semibold">Links</div>

@@ -209,8 +209,8 @@ export function EventsPage() {
   };
 
   return (
-    <div className="grid gap-6">
-      <section className="card">
+    <div className="events-page grid gap-6">
+      <section className="card events-page__hero">
         <div className="card-hd">
           <div className="text-base font-semibold">Events</div>
           <div className="text-xs text-slate-500">挑戦 → Replay共有 → 議論、が勝手に回る仕組みを作る</div>
@@ -229,8 +229,8 @@ export function EventsPage() {
         </div>
       </section>
 
-      <section className="grid gap-3">
-        <div className="card">
+      <section className="events-page__content grid gap-3">
+        <div className="card events-page__season-card">
           <div className="card-hd flex flex-wrap items-center justify-between gap-2">
             <div>
               <div className="text-base font-semibold">Season Archive (local)</div>
@@ -508,7 +508,7 @@ export function EventsPage() {
         {EVENTS.map((e) => {
           const status = getEventStatus(e);
           return (
-            <div key={e.id} className="card">
+            <div key={e.id} className="card events-page__event-card">
               <div className="card-hd flex flex-wrap items-center justify-between gap-2">
                 <div className="grid gap-1">
                   <div className="text-base font-semibold">{e.title}</div>
@@ -662,7 +662,7 @@ export function EventsPage() {
         })}
       </section>
 
-      <section className="card">
+      <section className="card events-page__memo">
         <div className="card-hd">
           <div className="text-base font-semibold">運用メモ</div>
         </div>

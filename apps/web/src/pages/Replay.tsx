@@ -72,6 +72,7 @@ import {
   replayStepStatusText,
   type ReplayPhaseInfo,
 } from "@/lib/replay_timeline";
+import { resolveAppTheme } from "@/lib/theme";
 
 type Mode = "auto" | "v1" | "v2" | "compare";
 
@@ -265,6 +266,8 @@ export function ReplayPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
+  const appTheme = resolveAppTheme(searchParams);
+  const isMintTheme = appTheme === "mint";
   const uiMode = parseReplayBoardUi((searchParams.get("ui") || "").toLowerCase());
   const uiParam = uiMode === "classic" ? undefined : uiMode;
   const matchUi = toMatchBoardUi(uiMode);
@@ -1274,6 +1277,7 @@ protocolV1: {
                 currentPlayer={replayCurrentPlayer}
                 showCoordinates
                 showActionPrompt
+                className="mint-board-view mint-board-view--replay"
                 gamePhase={step >= 9 ? "game_over" : "select_cell"}
               />
             </DuelStageMint>
@@ -1286,6 +1290,18 @@ protocolV1: {
               showCoordinates
               showCandles
               showParticles
+            />
+          ) : isMintTheme ? (
+            <BoardViewMint
+              board={boardNow}
+              selectedCell={focusCell}
+              placedCell={placedCell}
+              flippedCells={flippedCells}
+              currentPlayer={replayCurrentPlayer}
+              showCoordinates
+              showActionPrompt
+              className="mint-board-view mint-board-view--replay"
+              gamePhase={step >= 9 ? "game_over" : "select_cell"}
             />
           ) : (
             <BoardView
@@ -1375,29 +1391,31 @@ protocolV1: {
     });
   };
   const showReplaySetupPanel = !isStageFocus || !sim.ok || showStageSetup;
+  const replayPageClassName = [
+    "replay-page",
+    isStageFocus
+      ? "stage-focus-root replay-page--stage-focus"
+      : isEngineFocus
+        ? "grid gap-4 replay-page--focus"
+        : "grid gap-6 replay-page--standard",
+  ].join(" ");
 
   return (
     <div
       ref={stageViewportRef}
-      className={
-        isStageFocus
-          ? "stage-focus-root"
-          : isEngineFocus
-            ? "grid gap-4"
-            : "grid gap-6"
-      }
+      className={replayPageClassName}
     >
       {isEngineFocus ? (
         <section
           className={[
+            "replay-page__focus-toolbar",
             "rounded-2xl border px-3 py-2",
             isStageFocus ? "stage-focus-toolbar" : "",
           ].filter(Boolean).join(" ")}
           aria-label={isStageFocus ? "Replay focus toolbar" : "Engine replay toolbar"}
-          style={{ background: "var(--mint-surface, #fff)", borderColor: "var(--mint-accent-muted, #A7F3D0)" }}
         >
           <div className="flex flex-wrap items-center justify-between gap-2">
-            <div className="text-xs font-semibold" style={{ color: "var(--mint-text-secondary, #4B5563)" }}>
+            <div className="replay-page__focus-label text-xs font-semibold">
               Pixi Focus Mode · step {step}/{stepMax}
             </div>
             <div className="flex flex-wrap items-center gap-2">
@@ -1552,7 +1570,7 @@ protocolV1: {
       ) : null}
 
       {!isEngineFocus && eventId ? (
-        <section className="card">
+        <section className="card replay-page__event-card">
           <div className="card-hd flex flex-wrap items-center justify-between gap-2">
             <div className="grid gap-1">
               <div className="text-base font-semibold">Replay Event</div>
@@ -1602,7 +1620,7 @@ protocolV1: {
       ) : null}
 
       {showReplaySetupPanel && (
-      <section className="card">
+      <section className="card replay-page__setup-card">
         <div className="card-hd">
           <div className="text-base font-semibold">Replay from transcript</div>
           <div className="text-xs text-slate-500">
@@ -1705,7 +1723,7 @@ protocolV1: {
 
             <div className="mt-3">
               <Disclosure title={<span>Streamer tools (Overlay)</span>}>
-                <div className="grid gap-3">
+                <div className="grid grid-cols-1 gap-3">
                   <div className="text-xs text-slate-600">
                     Open <span className="font-mono">{overlayPath}</span>, then moving replay <span className="font-mono">step</span> will sync the overlay snapshot.
                   </div>
@@ -1812,7 +1830,7 @@ protocolV1: {
       )}
 
       {isEngineFocus && !sim.ok ? (
-        <section className="rounded-2xl border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">
+        <section className="replay-page__focus-empty rounded-2xl border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <div>Pixi focus needs a loaded replay. Load transcript first, or exit focus mode.</div>
             <div className="flex flex-wrap items-center gap-2">
@@ -1828,7 +1846,7 @@ protocolV1: {
       {sim.ok ? (
         <>
           {step >= 9 ? (
-            <section className="animate-banner-enter">
+            <section className="animate-banner-enter replay-page__result-banner">
               <div className="relative overflow-hidden rounded-2xl border-2 border-surface-200 bg-white shadow-soft">
                 {sim.current.winner !== null ? (
                   <div
@@ -1911,13 +1929,12 @@ protocolV1: {
           ) : null}
 
           <section
-            className={
-              isEngineFocus
-                ? "grid gap-4"
-                : "grid gap-6 lg:grid-cols-2"
-            }
+            className={[
+              "replay-page__main",
+              isEngineFocus ? "grid gap-4" : "grid gap-6 lg:grid-cols-2",
+            ].join(" ")}
           >
-            <div className="card">
+            <div className="card replay-page__board-card">
               <div className="card-hd replay-header-grid">
                 <div className="flex items-center gap-3">
                   <div className="text-base font-semibold">Replay</div>
@@ -2161,9 +2178,9 @@ protocolV1: {
                         <div className="text-xs text-slate-500">tieBreak: {sim.current.tieBreak}</div>
                       </div>
 
-                      <div className="mt-2 grid gap-2 text-xs text-slate-600">
-                        <div>
-                          <span className="font-medium">rulesetId</span>: <code>{sim.transcript.header.rulesetId}</code>
+                      <div className="mt-2 grid min-w-0 gap-2 text-xs text-slate-600">
+                        <div className="min-w-0">
+                          <span className="font-medium">rulesetId</span>: <code className="font-mono break-all">{sim.transcript.header.rulesetId}</code>
                         </div>
                         {replayClassicSwap ? (
                           <div>
@@ -2177,8 +2194,8 @@ protocolV1: {
                               : `A[${formatClassicOpenSlots(replayClassicOpen.playerA)}] / B[${formatClassicOpenSlots(replayClassicOpen.playerB)}]`}
                           </div>
                         ) : null}
-                        <div className="flex items-center gap-2">
-                          <span className="font-medium">matchId</span>: <code>{sim.current.matchId}</code>
+                        <div className="flex min-w-0 flex-wrap items-center gap-2">
+                          <span className="font-medium">matchId</span>: <code className="font-mono break-all">{sim.current.matchId}</code>
                           {verifyStatus === "ok" && <span className="text-emerald-600 font-semibold" title="Replay verified">Verified</span>}
                           {verifyStatus === "mismatch" && <span className="text-red-600 font-semibold" title="Replay mismatch">Mismatch</span>}
                         </div>
@@ -2201,16 +2218,16 @@ protocolV1: {
 
                       <div className="mt-3">
                         <Disclosure title={<span>Show raw JSON (debug)</span>}>
-                          <div className="grid gap-3">
-                            <div>
+                          <div className="grid grid-cols-1 gap-3">
+                            <div className="min-w-0">
                               <div className="text-xs font-medium text-slate-600">transcript</div>
-                              <pre className="mt-1 overflow-x-auto rounded-xl border border-slate-200 bg-white/70 p-3 text-xs">
+                              <pre className="mt-1 w-full max-w-full overflow-x-auto rounded-xl border border-slate-200 bg-white/70 p-3 text-xs">
                                 {stringifyWithBigInt(sim.transcript)}
                               </pre>
                             </div>
-                            <div>
+                            <div className="min-w-0">
                               <div className="text-xs font-medium text-slate-600">result</div>
-                              <pre className="mt-1 overflow-x-auto rounded-xl border border-slate-200 bg-white/70 p-3 text-xs">
+                              <pre className="mt-1 w-full max-w-full overflow-x-auto rounded-xl border border-slate-200 bg-white/70 p-3 text-xs">
                                 {stringifyWithBigInt(sim.current)}
                               </pre>
                             </div>
@@ -2224,7 +2241,7 @@ protocolV1: {
             </div>
 
             {!isEngineFocus && (
-            <div className="card">
+            <div className="card replay-page__turnlog-card">
               <div className="card-hd">
                 <div className="text-base font-semibold">Turn log</div>
                 <div className="text-xs text-slate-500">Click a turn to jump the replay step.</div>
@@ -2244,7 +2261,7 @@ protocolV1: {
           </section>
 
           {!isEngineFocus && (
-          <section className="card">
+          <section className="card replay-page__deck-card">
             <div className="card-hd">
               <div className="text-base font-semibold">Deck inspector</div>
               <div className="text-xs text-slate-500">Read-only deck cards loaded from on-chain data.</div>

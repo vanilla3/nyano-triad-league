@@ -2705,6 +2705,7 @@ export function MatchPage() {
                             currentPlayer={currentPlayer}
                             showCoordinates
                             showActionPrompt
+                            className="mint-board-view mint-board-view--match"
                             gamePhase={
                               turns.length >= 9 ? "game_over"
                                 : isAiTurn ? "ai_turn"
