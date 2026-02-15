@@ -2594,3 +2594,28 @@
 - `pnpm -C apps/web test` OK
 - `pnpm -C apps/web typecheck` OK
 - `pnpm -C apps/web build` OK
+
+## 2026-02-15 - WO014: Mint hand tray + action prompt polish
+
+### Why
+- 操作の起点（手札選択）と次アクション誘導（prompt）は、参照画像ベースUIの体験品質に直結する。
+- 既存UIでは手札が単純な行表示で、prompt も1段表示だったため、ゲーム画面としての“定位置感”を強化する必要があった。
+
+### What
+- Updated `apps/web/src/components/HandDisplayMint.tsx`:
+  - Added tray wrapper (`mint-hand-tray`, `mint-hand-tray__rail`) around the hand.
+  - Added light card stacking via `mint-hand-card--stacked`.
+  - Kept existing click/drag behavior and raised selected card z-index for clarity.
+- Updated `apps/web/src/components/BoardViewMint.tsx`:
+  - Reworked ActionPrompt markup to two lines (JA/EN hierarchy).
+  - Added `mint-prompt-slot` wrapper to stabilize prompt area height and reduce layout jitter.
+- Updated `apps/web/src/mint-theme/mint-theme.css`:
+  - Added glass tray styles, inner sheen, horizontal scroll behavior for hand rail.
+  - Tuned selected-card lift/ring/shadow feedback.
+  - Upgraded prompt to large pill style with two-line typography.
+  - Added mobile adjustments for tray/prompt at `<=480px`.
+
+### Verify
+- `pnpm -C apps/web test` OK
+- `pnpm -C apps/web typecheck` OK
+- `pnpm -C apps/web build` OK

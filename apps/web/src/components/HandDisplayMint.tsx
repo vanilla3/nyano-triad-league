@@ -42,80 +42,84 @@ export function HandDisplayMint({
   const preview = useCardPreview();
 
   return (
-    <div className="mint-hand" role="listbox" aria-label={`Player ${owner === 0 ? "A" : "B"} hand`}>
-      {cards.map((card, idx) => {
-        const isUsed = usedIndices.has(idx);
-        const isSelected = selectedIndex === idx;
-        const isDisabled = isUsed || disabled;
+    <div className="mint-hand-tray" aria-label={`Player ${owner === 0 ? "A" : "B"} hand tray`}>
+      <div className="mint-hand mint-hand-tray__rail" role="listbox" aria-label={`Player ${owner === 0 ? "A" : "B"} hand`}>
+        {cards.map((card, idx) => {
+          const isUsed = usedIndices.has(idx);
+          const isSelected = selectedIndex === idx;
+          const isDisabled = isUsed || disabled;
 
-        const classes = [
-          "mint-hand-card",
-          owner === 0 ? "mint-hand-card--a" : "mint-hand-card--b",
-          isSelected && "mint-hand-card--selected",
-          isUsed && "mint-hand-card--used",
-          enableDragDrop && !isDisabled && "mint-hand-card--draggable",
-        ].filter(Boolean).join(" ");
+          const classes = [
+            "mint-hand-card",
+            idx > 0 && "mint-hand-card--stacked",
+            owner === 0 ? "mint-hand-card--a" : "mint-hand-card--b",
+            isSelected && "mint-hand-card--selected",
+            isUsed && "mint-hand-card--used",
+            enableDragDrop && !isDisabled && "mint-hand-card--draggable",
+          ].filter(Boolean).join(" ");
 
-        const lp = !isUsed ? preview.longPressHandlers(card, owner) : undefined;
+          const lp = !isUsed ? preview.longPressHandlers(card, owner) : undefined;
 
-        return (
-          <button
-            key={idx}
-            role="option"
-            aria-selected={isSelected}
-            aria-disabled={isDisabled}
-            aria-label={`Card ${idx + 1}: edges ${card.edges.up}/${card.edges.right}/${card.edges.down}/${card.edges.left}${isUsed ? " (used)" : ""}`}
-            className={classes}
-            disabled={isDisabled}
-            draggable={enableDragDrop && !isDisabled}
-            data-hand-card={idx}
-            onClick={() => { if (!isDisabled) onSelect?.(idx); }}
-            onDragStart={(e) => {
-              if (!enableDragDrop || isDisabled) {
-                e.preventDefault();
-                return;
-              }
-              e.dataTransfer.effectAllowed = "move";
-              e.dataTransfer.setData("application/x-nytl-card-index", String(idx));
-              e.dataTransfer.setData("text/plain", String(idx));
-              onCardDragStart?.(idx);
-            }}
-            onDragEnd={() => {
-              if (!enableDragDrop) return;
-              onCardDragEnd?.();
-            }}
-            onPointerEnter={(e) => { if (!isUsed) preview.show(card, owner, e.currentTarget); }}
-            onPointerLeave={() => preview.hide()}
-            onTouchStart={lp?.onTouchStart}
-            onTouchEnd={lp?.onTouchEnd}
-            onTouchMove={lp?.onTouchMove}
-            onContextMenu={lp?.onContextMenu}
-          >
-            {/* Slot number badge */}
-            <div
-              className={[
-                "mint-hand-card__slot",
-                owner === 0 ? "mint-hand-card__slot--a" : "mint-hand-card__slot--b",
-              ].join(" ")}
+          return (
+            <button
+              key={idx}
+              role="option"
+              aria-selected={isSelected}
+              aria-disabled={isDisabled}
+              aria-label={`Card ${idx + 1}: edges ${card.edges.up}/${card.edges.right}/${card.edges.down}/${card.edges.left}${isUsed ? " (used)" : ""}`}
+              className={classes}
+              style={{ zIndex: isSelected ? 20 : cards.length - idx }}
+              disabled={isDisabled}
+              draggable={enableDragDrop && !isDisabled}
+              data-hand-card={idx}
+              onClick={() => { if (!isDisabled) onSelect?.(idx); }}
+              onDragStart={(e) => {
+                if (!enableDragDrop || isDisabled) {
+                  e.preventDefault();
+                  return;
+                }
+                e.dataTransfer.effectAllowed = "move";
+                e.dataTransfer.setData("application/x-nytl-card-index", String(idx));
+                e.dataTransfer.setData("text/plain", String(idx));
+                onCardDragStart?.(idx);
+              }}
+              onDragEnd={() => {
+                if (!enableDragDrop) return;
+                onCardDragEnd?.();
+              }}
+              onPointerEnter={(e) => { if (!isUsed) preview.show(card, owner, e.currentTarget); }}
+              onPointerLeave={() => preview.hide()}
+              onTouchStart={lp?.onTouchStart}
+              onTouchEnd={lp?.onTouchEnd}
+              onTouchMove={lp?.onTouchMove}
+              onContextMenu={lp?.onContextMenu}
             >
-              {idx + 1}
-            </div>
-
-            {/* Card content */}
-            <CardNyanoDuel card={card} owner={owner} className={!isSelected ? "opacity-80" : ""} />
-
-            {/* Used overlay */}
-            {isUsed && (
+              {/* Slot number badge */}
               <div
-                className="absolute inset-0 flex items-center justify-center rounded-xl"
-                style={{ background: "rgba(255,255,255,0.5)" }}
+                className={[
+                  "mint-hand-card__slot",
+                  owner === 0 ? "mint-hand-card__slot--a" : "mint-hand-card__slot--b",
+                ].join(" ")}
               >
-                <span className="text-lg text-surface-400">✓</span>
+                {idx + 1}
               </div>
-            )}
-          </button>
-        );
-      })}
+
+              {/* Card content */}
+              <CardNyanoDuel card={card} owner={owner} className={!isSelected ? "opacity-80" : ""} />
+
+              {/* Used overlay */}
+              {isUsed && (
+                <div
+                  className="absolute inset-0 flex items-center justify-center rounded-xl"
+                  style={{ background: "rgba(255,255,255,0.5)" }}
+                >
+                  <span className="text-lg text-surface-400">✓</span>
+                </div>
+              )}
+            </button>
+          );
+        })}
+      </div>
 
       {/* Card preview popover (PREV-0501) */}
       {preview.state.visible && preview.state.card && preview.state.anchorRect && (

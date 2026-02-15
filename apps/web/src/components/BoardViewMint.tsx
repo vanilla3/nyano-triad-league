@@ -243,10 +243,12 @@ function ActionPrompt({
   const isAi = gamePhase === "ai_turn";
 
   return (
-    <div className={["mint-prompt", isWarningMode && "mint-prompt--warning"].filter(Boolean).join(" ")}>
-      <div className={["mint-prompt__text", isAi && "mint-prompt__text--ai"].filter(Boolean).join(" ")}>
+    <div className={["mint-prompt", isWarningMode && "mint-prompt--warning"].filter(Boolean).join(" ")} role="status" aria-live="polite">
+      <div className={["mint-prompt__ja", isAi && "mint-prompt__ja--ai"].filter(Boolean).join(" ")}>
         {prompt.ja}
-        <span style={{ marginLeft: 8, fontSize: 12, opacity: 0.6 }}>{prompt.en}</span>
+      </div>
+      <div className={["mint-prompt__en", isAi && "mint-prompt__en--ai"].filter(Boolean).join(" ")}>
+        {prompt.en}
       </div>
     </div>
   );
@@ -404,9 +406,11 @@ export function BoardViewMint({
       </div>
 
       {/* ── Action Prompt (NIN-UX-011) ── */}
-      {showActionPrompt && (
-        <ActionPrompt gamePhase={gamePhase} isWarningMode={isWarningMode} />
-      )}
+      <div className={["mint-prompt-slot", !showActionPrompt && "mint-prompt-slot--hidden"].filter(Boolean).join(" ")}>
+        {showActionPrompt && (
+          <ActionPrompt gamePhase={gamePhase} isWarningMode={isWarningMode} />
+        )}
+      </div>
 
       {/* ── Inline Error (NIN-UX-012) ── */}
       {inlineError && (

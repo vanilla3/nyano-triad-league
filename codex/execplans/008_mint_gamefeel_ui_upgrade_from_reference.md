@@ -129,7 +129,7 @@
 - [x] WO-011: BG/Stage
 - [x] WO-012: Top HUD
 - [x] WO-013: Player panel
-- [ ] WO-014: Hand tray + Prompt
+- [x] WO-014: Hand tray + Prompt
 - [ ] WO-015: Reaction stability
 - [ ] WO-016: Microinteraction + guardrails
 
@@ -141,6 +141,7 @@
 - 2026-02-15: WO011は外部画像を増やさず、`mint-theme.css` の gradient + inline svg(data-uri) + 疑似要素で背景を構成
 - 2026-02-15: WO012は `BattleHudMint` を直接改変せず、新規 `BattleTopHudMint` を `ui=mint` 限定で差し込む方針を採用（影響範囲を局所化）
 - 2026-02-15: WO013は盤面入力を壊さないため、既存Boardレンダリングを保持したまま外側レイアウトのみ `mint-battle-layout` へ拡張
+- 2026-02-15: WO014は操作性維持のため `HandDisplayMint` のイベント系は据え置き、DOM構造とCSSのみで tray/prompt を更新
 
 ---
 
@@ -149,6 +150,7 @@
 - `data-vfx` / `prefers-reduced-motion` の既存分岐がすでに整備されていたため、WO011は追加レイヤーへの分岐追記だけで実装可能だった
 - HUD切替軸を `density` に一本化することで、`minimal` と `standard/full` の意図差を小さい差分で表現できた
 - プレイヤーパネルは `ui=mint` 限定・Desktop表示に絞ることで、mobile過密とstage-focus操作性への影響を避けられた
+- prompt の高さは phase ごとの文言差で揺れやすく、slot を固定して文言だけ更新する構成が安定した
 
 ---
 
@@ -157,3 +159,4 @@
 - WO011完了。Mint stageに pastel gamefeel の背景土台（gradient/paw pattern/sparkle+bokeh）を追加し、`vfx` と `reduced-motion` で安全に制御できる状態にした。
 - WO012完了。`ui=mint` に Top HUD（ロゴ/スコア/ターン）を追加し、`density=minimal` は Top HUD優先、`standard/full` は既存 `BattleHudMint` 併用の導線に整理した。
 - WO013完了。Mint matchの盤面横に左右プレイヤーパネル（Avatar/Label/Remaining）を追加し、Desktopは `panel | board | panel`、mobileは盤面優先でパネル非表示とした。
+- WO014完了。手札をガラス調トレイ + 軽いカード重なりへ更新し、ActionPrompt を二段ピル化して定位置ガイドを強化した。
