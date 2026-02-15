@@ -2513,3 +2513,27 @@
 
 ### Verify
 - `pnpm.cmd -C apps/web e2e:ux` OK (`9 passed`)
+
+## 2026-02-15 - WO011: Mint gamefeel background and stage shell
+
+### Why
+- Mint UI already had polished board/cell treatment, but scene-level gamefeel (pastel atmosphere, subtle pattern, floating particles) was still weak.
+- WO011 required a background/stage uplift based on `docs/01_design/NYTL_MINT_UI_REFERENCE_PASTEL_GAMEFEEL_v0_ja.md` without touching game logic.
+
+### What
+- Updated `apps/web/src/components/DuelStageMint.tsx`:
+  - Added `mint-stage--gamefeel` variant class on stage root.
+  - Removed inline paw-print SVG overlay (moved pattern rendering to CSS).
+- Updated `apps/web/src/mint-theme/mint-theme.css`:
+  - Added gamefeel tokens (pastel BG colors, glass/shadow, inline paw pattern data-uri).
+  - Upgraded `.mint-stage` background to layered pastel gradients with slow pan.
+  - Added low-contrast paw pattern in `.mint-stage::before`.
+  - Upgraded `.mint-stage::after` to lightweight sparkle + bokeh blend animation.
+  - Strengthened stage rim/board grounding with subtle depth tweaks.
+  - Extended `prefers-reduced-motion` and `[data-vfx]` branches for new layers:
+    - `off`: no particles/glow, static background.
+    - `low/medium/high`: controlled opacity and animation duration.
+
+### Verify
+- `pnpm -C apps/web typecheck` OK
+- `pnpm -C apps/web build` OK
