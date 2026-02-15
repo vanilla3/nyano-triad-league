@@ -1431,6 +1431,36 @@ protocolV1: {
           ))}
         </section>
       ) : null}
+      {isMintTheme && !isStageFocus ? (
+        <section className="mint-replay-summary" aria-label="Replay overview">
+          <GlassPanel variant="pill" className="mint-replay-summary__item">
+            <span className="mint-replay-summary__label">Status</span>
+            <span className="mint-replay-summary__value">{sim.ok ? "Loaded" : "Waiting transcript"}</span>
+          </GlassPanel>
+          <GlassPanel variant="pill" className="mint-replay-summary__item">
+            <span className="mint-replay-summary__label">Progress</span>
+            <span className="mint-replay-summary__value">{step}/{stepMax}</span>
+          </GlassPanel>
+          <GlassPanel variant="pill" className="mint-replay-summary__item">
+            <span className="mint-replay-summary__label">Highlights</span>
+            <span className="mint-replay-summary__value">{highlights.length}</span>
+          </GlassPanel>
+          <GlassPanel variant="pill" className="mint-replay-summary__item">
+            <span className="mint-replay-summary__label">Verify</span>
+            <span className="mint-replay-summary__value">
+              {verifyStatus === "ok" ? "Verified" : verifyStatus === "mismatch" ? "Mismatch" : "Unchecked"}
+            </span>
+          </GlassPanel>
+          <GlassPanel variant="pill" className="mint-replay-summary__item mint-replay-summary__item--wide">
+            <span className="mint-replay-summary__label">Mode</span>
+            <span className="mint-replay-summary__value">{mode} | {phaseInfo.label} | {isPlaying ? "Playing" : "Paused"}</span>
+          </GlassPanel>
+          <GlassPanel variant="pill" className="mint-replay-summary__item mint-replay-summary__item--wide">
+            <span className="mint-replay-summary__label">Step status</span>
+            <span className="mint-replay-summary__value">{stepStatusText}</span>
+          </GlassPanel>
+        </section>
+      ) : null}
 
       {isEngineFocus ? (
         <section

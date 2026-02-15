@@ -3010,3 +3010,29 @@
 - `pnpm -C apps/web test` OK
 - `pnpm -C apps/web typecheck` OK
 - `pnpm -C apps/web build` OK
+
+## 2026-02-15 - Mint follow-up: readability-first overview strips on Events/Replay/Stream
+
+### Why
+- Visual direction was aligned, but users still needed to scan too deeply to understand current status.
+- Secondary screens needed clearer Ågat-a-glanceÅh hierarchy for mobile game-like readability.
+
+### What
+- Updated `apps/web/src/pages/Events.tsx`:
+  - Added `mint-events-summary` overview pills (active/upcoming/local attempts/selected season points).
+  - Reused existing local summary data so no protocol or logic contract changed.
+- Updated `apps/web/src/pages/Replay.tsx`:
+  - Added `mint-replay-summary` overview pills (load status/progress/highlights/verify/mode/step status).
+  - Kept `focusRoute` behavior unchanged (`isStageFocus` still prioritizes board-first flow).
+- Updated `apps/web/src/pages/Stream.tsx`:
+  - Added `mint-stream-summary` overview pills (event/live turn/vote/connectivity/warudo state).
+  - Reused existing derived states (`connectionHealth`, `timeLeft`, `liveTurn`) without changing stream protocol behavior.
+- Updated `apps/web/src/mint-theme/mint-theme.css`:
+  - Added summary strip styles (`mint-events-summary`, `mint-replay-summary`, `mint-stream-summary`) with responsive behavior.
+  - Improved quick-nav readability (icon chip treatment, contrast, wrapping, spacing).
+  - Added new classes to existing reduced-motion / `data-vfx="off"` branches.
+
+### Verify
+- `pnpm -C apps/web test` OK
+- `pnpm -C apps/web typecheck` OK
+- `pnpm -C apps/web build` OK

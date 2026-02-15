@@ -6016,6 +6016,13 @@
   border-color: rgba(165, 243, 252, 0.5);
 }
 
+[data-theme="mint"] .events-page__hero .card-bd p,
+[data-theme="mint"] .events-page__hero .card-bd > div,
+[data-theme="mint"] .replay-page__setup-card .card-bd,
+[data-theme="mint"] .stream-page__studio-card .card-bd {
+  line-height: 1.6;
+}
+
 /* Shared quick navigation rails for secondary Mint screens */
 .mint-events-quicknav,
 .mint-replay-quicknav,
@@ -6042,12 +6049,24 @@
   align-items: center;
   justify-items: start;
   min-height: 78px;
+  border-radius: 16px;
+  border: 1px solid rgba(191, 219, 254, 0.56);
+  background:
+    radial-gradient(circle at 8% 0%, rgba(167, 243, 208, 0.18), transparent 46%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.82), rgba(241, 245, 249, 0.56));
 }
 
 .mint-events-quicknav__action .mint-icon,
 .mint-replay-quicknav__action .mint-icon,
 .mint-stream-quicknav__action .mint-icon {
   grid-row: span 2;
+  width: 32px;
+  height: 32px;
+  padding: 6px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.84);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(219, 234, 254, 0.74));
+  color: var(--mint-text-primary, #1F2937);
 }
 
 .mint-events-quicknav__label,
@@ -6065,6 +6084,7 @@
   color: var(--mint-text-secondary, #4B5563);
   font-size: 11px;
   font-weight: 600;
+  overflow-wrap: anywhere;
 }
 
 [data-theme="mint"] .mint-events-quicknav__card,
@@ -6074,6 +6094,72 @@
   background:
     radial-gradient(circle at 15% -30%, rgba(167, 243, 208, 0.32), transparent 52%),
     linear-gradient(180deg, rgba(255, 255, 255, 0.9), rgba(236, 254, 255, 0.72));
+}
+
+[data-theme="mint"] .mint-events-quicknav__action:hover,
+[data-theme="mint"] .mint-replay-quicknav__action:hover,
+[data-theme="mint"] .mint-stream-quicknav__action:hover {
+  border-color: rgba(125, 211, 252, 0.68);
+  background:
+    radial-gradient(circle at 8% 0%, rgba(167, 243, 208, 0.24), transparent 46%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.9), rgba(224, 242, 254, 0.64));
+}
+
+/* Status summary strips for secondary Mint screens */
+.mint-events-summary,
+.mint-replay-summary,
+.mint-stream-summary {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.mint-replay-summary,
+.mint-stream-summary {
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+}
+
+.mint-events-summary__item,
+.mint-replay-summary__item,
+.mint-stream-summary__item {
+  min-height: 60px;
+  display: grid;
+  align-content: center;
+  gap: 2px;
+  padding: 8px 12px;
+}
+
+.mint-replay-summary__item--wide,
+.mint-stream-summary__item--wide {
+  grid-column: span 2;
+}
+
+.mint-events-summary__label,
+.mint-replay-summary__label,
+.mint-stream-summary__label {
+  font-size: 11px;
+  color: var(--mint-text-secondary, #4B5563);
+  font-weight: 700;
+}
+
+.mint-events-summary__value,
+.mint-replay-summary__value,
+.mint-stream-summary__value {
+  font-family: var(--font-display, "Baloo 2", sans-serif);
+  font-size: 18px;
+  line-height: 1.15;
+  color: var(--mint-text-primary, #1F2937);
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+[data-theme="mint"] .mint-events-summary__item,
+[data-theme="mint"] .mint-replay-summary__item,
+[data-theme="mint"] .mint-stream-summary__item {
+  border-color: rgba(191, 219, 254, 0.62);
+  background:
+    radial-gradient(circle at 4% -30%, rgba(167, 243, 208, 0.24), transparent 52%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.88), rgba(239, 246, 255, 0.72));
 }
 
 /* Match board-side visual polish for Mint mode */
@@ -6143,10 +6229,13 @@
 
 [data-theme="mint"] .events-page .btn,
 [data-theme="mint"] .replay-page .btn,
-[data-theme="mint"] .stream-page .btn,
-[data-theme="mint"] .stream-page__step,
-[data-theme="mint"] .events-page__event-card,
-[data-theme="mint"] .replay-page__focus-toolbar {
+  [data-theme="mint"] .stream-page .btn,
+  [data-theme="mint"] .stream-page__step,
+  [data-theme="mint"] .events-page__event-card,
+  [data-theme="mint"] .replay-page__focus-toolbar,
+  [data-theme="mint"] .mint-events-summary__item,
+  [data-theme="mint"] .mint-replay-summary__item,
+  [data-theme="mint"] .mint-stream-summary__item {
   transition: background-color 160ms ease, border-color 160ms ease, transform 140ms ease, box-shadow 180ms ease;
 }
 
@@ -6157,7 +6246,10 @@
   [data-theme="mint"] .stream-page__step,
   [data-theme="mint"] .events-page__event-card,
   [data-theme="mint"] .replay-page__focus-toolbar,
-  [data-theme="mint"] .mint-match-quick-commit {
+  [data-theme="mint"] .mint-match-quick-commit,
+  [data-theme="mint"] .mint-events-summary__item,
+  [data-theme="mint"] .mint-replay-summary__item,
+  [data-theme="mint"] .mint-stream-summary__item {
     transition: none !important;
   }
 }
@@ -6166,7 +6258,10 @@
 [data-vfx="off"] .events-page__hero,
 [data-vfx="off"] .replay-page__focus-toolbar,
 [data-vfx="off"] .mint-match-quick-commit,
-[data-vfx="off"] .mint-match-board-shell {
+[data-vfx="off"] .mint-match-board-shell,
+[data-vfx="off"] .mint-events-summary__item,
+[data-vfx="off"] .mint-replay-summary__item,
+[data-vfx="off"] .mint-stream-summary__item {
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(241, 245, 249, 0.84));
 }
 
@@ -6183,6 +6278,20 @@
   .mint-replay-quicknav,
   .mint-stream-quicknav {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .mint-events-summary {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .mint-replay-summary,
+  .mint-stream-summary {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .mint-replay-summary__item--wide,
+  .mint-stream-summary__item--wide {
+    grid-column: span 3;
   }
 
   .mint-home-menu-grid {
@@ -6223,6 +6332,17 @@
   .mint-replay-quicknav,
   .mint-stream-quicknav {
     grid-template-columns: 1fr;
+  }
+
+  .mint-events-summary,
+  .mint-replay-summary,
+  .mint-stream-summary {
+    grid-template-columns: 1fr;
+  }
+
+  .mint-replay-summary__item--wide,
+  .mint-stream-summary__item--wide {
+    grid-column: span 1;
   }
 
   .replay-page .card-hd,

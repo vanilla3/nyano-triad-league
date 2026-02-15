@@ -1199,6 +1199,44 @@ return (
           ))}
         </section>
       ) : null}
+      {isMintTheme ? (
+        <section className="mint-stream-summary" aria-label="Stream overview">
+          <GlassPanel variant="pill" className="mint-stream-summary__item mint-stream-summary__item--wide">
+            <span className="mint-stream-summary__label">Event</span>
+            <span className="mint-stream-summary__value">{e?.title ?? "No event selected"}</span>
+          </GlassPanel>
+          <GlassPanel variant="pill" className="mint-stream-summary__item">
+            <span className="mint-stream-summary__label">Live turn</span>
+            <span className="mint-stream-summary__value">{liveTurn ?? "—"}</span>
+          </GlassPanel>
+          <GlassPanel variant="pill" className="mint-stream-summary__item">
+            <span className="mint-stream-summary__label">Vote</span>
+            <span className="mint-stream-summary__value">
+              {voteOpen ? (timeLeft !== null ? `${timeLeft}s left` : "Open") : "Closed"}
+            </span>
+          </GlassPanel>
+          <GlassPanel variant="pill" className="mint-stream-summary__item">
+            <span className="mint-stream-summary__label">Overlay</span>
+            <span className="mint-stream-summary__value">{connectionHealth.overlayConnected ? "Connected" : "Waiting"}</span>
+          </GlassPanel>
+          <GlassPanel variant="pill" className="mint-stream-summary__item">
+            <span className="mint-stream-summary__label">Match bus</span>
+            <span className="mint-stream-summary__value">{connectionHealth.matchConnected ? "Connected" : "Waiting"}</span>
+          </GlassPanel>
+          <GlassPanel variant="pill" className="mint-stream-summary__item">
+            <span className="mint-stream-summary__label">Warudo</span>
+            <span className="mint-stream-summary__value">
+              {!connectionHealth.warudoConfigured
+                ? "Not set"
+                : connectionHealth.warudoLastOk === true
+                  ? "Healthy"
+                  : connectionHealth.warudoLastOk === false
+                    ? "Error"
+                    : "Unknown"}
+            </span>
+          </GlassPanel>
+        </section>
+      ) : null}
 
       <StreamOperationsHUD
         live={live}

@@ -141,6 +141,26 @@ export function EventsPage() {
     () => (selectedSeason ? buildSeasonProgressSummary(selectedSeason) : null),
     [selectedSeason],
   );
+  const eventStatusSummary = React.useMemo(() => {
+    let active = 0;
+    let upcoming = 0;
+    let archived = 0;
+    for (const event of EVENTS) {
+      const status = getEventStatus(event);
+      if (status === "active" || status === "always") {
+        active += 1;
+      } else if (status === "upcoming") {
+        upcoming += 1;
+      } else {
+        archived += 1;
+      }
+    }
+    return { active, upcoming, archived };
+  }, []);
+  const localAttemptCount = React.useMemo(
+    () => seasonArchive.reduce((total, season) => total + season.totalAttempts, 0),
+    [seasonArchive],
+  );
 
   const copyWithToast = async (label: string, v: string) => {
     await writeClipboardText(v);
@@ -238,6 +258,28 @@ export function EventsPage() {
               </MintPressable>
             </GlassPanel>
           ))}
+        </section>
+      ) : null}
+      {isMintTheme ? (
+        <section className="mint-events-summary" aria-label="Events overview">
+          <GlassPanel variant="pill" className="mint-events-summary__item">
+            <span className="mint-events-summary__label">Active</span>
+            <span className="mint-events-summary__value">{eventStatusSummary.active}</span>
+          </GlassPanel>
+          <GlassPanel variant="pill" className="mint-events-summary__item">
+            <span className="mint-events-summary__label">Upcoming</span>
+            <span className="mint-events-summary__value">{eventStatusSummary.upcoming}</span>
+          </GlassPanel>
+          <GlassPanel variant="pill" className="mint-events-summary__item">
+            <span className="mint-events-summary__label">Local attempts</span>
+            <span className="mint-events-summary__value">{localAttemptCount}</span>
+          </GlassPanel>
+          <GlassPanel variant="pill" className="mint-events-summary__item">
+            <span className="mint-events-summary__label">Selected season</span>
+            <span className="mint-events-summary__value">
+              {selectedSeasonProgress ? `${selectedSeasonProgress.totalPoints} pts` : "No data"}
+            </span>
+          </GlassPanel>
         </section>
       ) : null}
 

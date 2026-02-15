@@ -211,3 +211,4 @@
 - [x] 2026-02-15 Follow-up: `e2e/mint-app-screens-guardrails.spec.ts` を拡張し、Mint App Chrome の `theme` クエリ保持（Tab遷移時）と `focusRoute`（`/match?focus=1` `/battle-stage`）での chrome 非表示互換を回帰テスト化。
 - [x] 2026-02-15 Follow-up: Events/Replay/Stream を Mint二次画面トーンへ揃え、Replay の 390px 横スクロール回帰を修正（長い `rulesetId`/`matchId` 折返し + debug pre の幅拘束）。`mint-app-screens-guardrails` で 390px 到達性を固定化。
 - [x] 2026-02-15 Follow-up: Events/Replay/Stream に共通 Mint クイックナビ導線を追加し、`theme` 伝播を強化。あわせて Match 盤面に `mint-match-board-shell` / `mint-match-quick-commit` の見た目強化クラスを追加し、secondary screen と board のゲームUIトーンを統一。
+- [x] 2026-02-15 Follow-up: Events/Replay/Stream の先頭に要約ステータス帯（overview pills）を追加し、重要情報の優先順位を可視化。あわせて quicknav のアイコン視認性・テキスト可読性・余白を改善して「見やすくわかりやすい」導線へ調整。
