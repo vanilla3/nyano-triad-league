@@ -2292,3 +2292,224 @@
 ### What
 - Updated `docs/02_protocol/samples/triad_league_ai_prompt_sample_v1.txt` to current ai_prompt format.
 - Updated `docs/01_product/Nyano_Triad_League_NYANO_WARUDO_BRIDGE_SPEC_v1_ja.md` to note optional Classic context lines in `ai_prompt`.
+
+## 2026-02-14 - WO006 Nyano reaction layout stability (slot + clamp)
+
+### Why
+- `NyanoReaction` was conditionally mounted/unmounted in Match/Replay, which could change vertical layout flow when comments appeared/disappeared.
+- UX scorecard `G-4` requires no visible layout jump for Nyano comment/cut-in rendering.
+
+### What
+- Added `apps/web/src/components/NyanoReactionSlot.tsx`.
+  - Always renders a stable slot container.
+  - Renders `NyanoReaction` only when input exists, while preserving slot height.
+  - Adds a code comment explaining why slot is always mounted.
+- Updated `apps/web/src/pages/Match.tsx` and `apps/web/src/pages/Replay.tsx` to use `NyanoReactionSlot`.
+- Updated `apps/web/src/mint-theme/mint-theme.css`.
+  - Added `.mint-nyano-reaction-slot*` classes with fixed `min-height` (including stage-focus variant).
+  - Changed `.mint-nyano-reaction__line` to 2-line clamp (`-webkit-line-clamp: 2`) to avoid height spikes from long text.
+- Added `apps/web/src/components/__tests__/NyanoReactionSlot.test.tsx` to guard slot stability behavior.
+
+### Verify
+- `pnpm -C apps/web test` (includes `NyanoReactionSlot.test.tsx`)
+- `pnpm -C apps/web typecheck`
+- `pnpm -C apps/web build`
+
+## 2026-02-14 - WO007 board/stage visual polish (Mint board as stage)
+
+### Why
+- Card visuals were already strong, but board/stage surfaces still felt flatter than intended.
+- WO007 targets "material depth + visual hierarchy" without changing gameplay logic.
+
+### What
+- Updated `apps/web/src/components/DuelStageMint.tsx`
+  - Added lightweight stage layers: `mint-stage__rim` and `mint-stage__atmo`.
+- Updated `apps/web/src/mint-theme/mint-theme.css`
+  - Board/frame polish:
+    - added subtle frame pattern + rim depth
+    - added `mint-board-sheen` motion layer on `.mint-board-inner::after`
+  - Cell polish:
+    - added `.mint-cell::after` specular/depth layer
+    - added warning-mode visual treatment (`.mint-cell--warning-mode`) for non-color-only affordance
+  - Stage polish:
+    - added rim/atmosphere styles and animation (`mint-stage-atmo-float`)
+  - Performance/accessibility gates:
+    - added reduced-motion fallback for board sheen/atmo
+    - extended `[data-vfx=off|low|medium|high]` branching for new layers
+  - Mobile tuning:
+    - added ≤560px sizing adjustments for stage/board/frame/grid density.
+- Added `apps/web/src/components/__tests__/DuelStageMint.test.tsx`
+  - verifies stage layer presence and impact class composition.
+
+### Verify
+- `pnpm -C apps/web test` OK
+- `pnpm -C apps/web typecheck` OK
+- `pnpm -C apps/web build` OK
+
+## 2026-02-14 - WO010 UX regression guardrails (E2E)
+
+### Why
+- WO010 requires minimum UX guardrails that fail fast when setup flow or layout stability regresses.
+- The highest-risk points are Match Setup URL sync and Nyano comment-slot layout stability.
+
+### What
+- Added `apps/web/e2e/ux-guardrails.spec.ts`.
+- Added guardrail test 1:
+  - Match Setup primary controls update URL params consistently (`rk`, `opp`, `ai`, `ui`).
+- Added guardrail test 2:
+  - Nyano reaction slot keeps non-zero stable height while reactions appear during live play.
+  - Includes bounded height-delta assertion and CSS clamp/overflow assertion for reaction line.
+
+### Verify
+- `pnpm -C apps/web test` OK
+- `pnpm -C apps/web build` OK
+- `pnpm -C apps/web e2e -- e2e/ux-guardrails.spec.ts` blocked in this environment:
+  - Playwright worker spawn fails with `Error: spawn EPERM`.
+- `pnpm -C apps/web typecheck` currently fails in this environment with missing module resolution:
+  - `Cannot find module 'pixi.js'`
+  - `Cannot find module 'fflate'`
+
+## 2026-02-14 - WO008 Match Setup progressive disclosure + setup summary
+
+### Why
+- Match setup controls in `Match.tsx` had grown into a long monolithic block that was hard to scan and harder to change safely.
+- WO008 requires a setup UI that is understandable by interaction, while preserving URL-param compatibility and existing match semantics.
+
+### What
+- Added `apps/web/src/components/match/MatchSetupPanelMint.tsx` and moved setup rendering there.
+- Replaced legacy in-page setup block in `apps/web/src/pages/Match.tsx` with `MatchSetupPanelMint`.
+- Introduced Primary / Secondary / Advanced structure:
+  - Primary: deck, ruleset, opponent selection
+  - Secondary: board, first-player mode, data mode, stream toggle
+  - Advanced (drawer): chain cap and first-player advanced inputs
+- Added one-line setup summary and `Copy Setup Link` action.
+- Kept URL update logic in `Match.tsx` (`setParam`, `setParams`, canonical first-player patch) and passed callbacks down.
+- Added helper tests:
+  - `apps/web/src/components/match/__tests__/MatchSetupPanelMint.test.ts`
+- During integration, fixed multiple malformed string literals in `apps/web/src/pages/Match.tsx` to restore compile-safe source.
+
+### Verify
+- `pnpm -C apps/web test` OK
+- `pnpm -C apps/web typecheck` OK
+- `pnpm -C apps/web build` OK
+
+## 2026-02-14 - WO009 Rulesets page: recommended + summary + play CTA
+
+### Why
+- `/rulesets` listed registry entries but did not clearly guide users to a good default or direct match flow.
+- WO009 requires explicit discovery rails: recommendation, summary, and one-click move to `/match`.
+
+### What
+- Rebuilt `apps/web/src/pages/Rulesets.tsx` with:
+  - Recommended section (`おすすめ`) using top curated presets.
+  - One-line summary surfaced for each ruleset row.
+  - Direct CTA `このルールで対戦` linking to `/match?ui=mint&rk=<rulesetKey>`.
+  - URL-backed filter/selection via `q` and `rk` query params.
+- Added `apps/web/src/lib/ruleset_discovery.ts`:
+  - `rulesetId -> rulesetKey` resolver
+  - UX metadata (summary/tags/recommended)
+  - match-link builder helper
+- Added test `apps/web/src/lib/__tests__/ruleset_discovery.test.ts`.
+
+### Verify
+- `pnpm -C apps/web test` OK
+- `pnpm -C apps/web typecheck` OK
+- `pnpm -C apps/web build` OK
+
+## 2026-02-15 - WO010 follow-up: guardrail E2E hardening and green run
+
+### Why
+- Initial WO010 spec existed, but execution was unstable due runtime overlays and actionability flakiness.
+- We needed the guardrail to be runnable and reliable, not just present.
+
+### What
+- Updated `apps/web/e2e/ux-guardrails.spec.ts`:
+  - Added tutorial suppression via `localStorage` init script (`nytl.tutorial.seen=true`).
+  - Added fallback dismiss helper for guest tutorial modal (`Got it!` / `Skip tutorial`).
+  - Switched Match Setup URL-sync case to non-guest route so setup panel is guaranteed visible.
+  - Hardened move commit helper:
+    - force-click board cells / quick-commit button for animation-heavy state
+    - fallback to explicit hand selection + exact commit selector when needed
+  - Kept assertions focused on guardrail intent:
+    - URL param sync (`rk`, `opp`, `ai`, `ui`)
+    - Nyano reaction slot layout stability (`min-height` behavior, bounded delta, 2-line clamp)
+
+### Verify
+- `pnpm.cmd -C apps/web e2e -- e2e/ux-guardrails.spec.ts` OK (2 passed).
+
+## 2026-02-15 - WO010 follow-up: CI operational guardrail step
+
+### Why
+- WO010 guardrail spec is stable, but needed explicit CI wiring so key UX regressions fail early.
+
+### What
+- Updated `apps/web/package.json`:
+  - Added `e2e:ux` script: `playwright test e2e/ux-guardrails.spec.ts`.
+- Updated `.github/workflows/ci.yml`:
+  - Added `E2E UX guardrails` step before full `E2E tests`.
+- Updated planning/docs alignment:
+  - `codex/work_orders/010_ux_regression_guardrails.md` checklist completed.
+  - `codex/execplans/007_visual_polish_and_setup_ux.md` Milestone D marked complete.
+  - `docs/ux/UX_SCORECARD.md` status updated with WO010 guardrail and CI step.
+
+### Verify
+- `pnpm.cmd -C apps/web e2e:ux` (local run for script validation).
+
+## 2026-02-15 - WO007 follow-up: visual manual checks converted to E2E guardrails
+
+### Why
+- WO007 still had manual verification points (`mobile / reduced-motion / vfx=off`) that could regress silently.
+- We converted these into deterministic browser checks and attached them to the existing UX guardrail run.
+
+### What
+- Added `apps/web/e2e/mint-stage-visual-guardrails.spec.ts`:
+  - `vfx=off` keeps board usable while heavy stage-atmosphere layer is hidden
+  - `prefers-reduced-motion` resolves document visual tier to `data-vfx=off`
+  - `390px` viewport keeps mint stage/commit flow reachable and avoids horizontal overflow
+- Updated `apps/web/package.json`:
+  - `e2e:ux` now runs:
+    - `e2e/ux-guardrails.spec.ts`
+    - `e2e/mint-stage-visual-guardrails.spec.ts`
+
+### Verify
+- `pnpm.cmd -C apps/web e2e:ux` OK (`5 passed`)
+
+## 2026-02-15 - WO009 follow-up: Rulesets discovery flow E2E guardrails
+
+### Why
+- WO009 UI was implemented, but discovery flow regressions (`おすすめ` visibility and `/match` CTA routing) were not guarded by browser E2E.
+
+### What
+- Updated `apps/web/src/pages/Rulesets.tsx` with stable `data-testid` hooks for E2E:
+  - recommended section/cards/play CTA/select
+  - selected summary / list table / list play CTA
+- Added `apps/web/e2e/rulesets-ux-guardrails.spec.ts`:
+  - verifies recommended cards/summary/CTA are visible
+  - verifies clicking CTA navigates to `/match` with `ui=mint` and preserved `rk`
+- Updated `apps/web/package.json`:
+  - `e2e:ux` now includes `e2e/rulesets-ux-guardrails.spec.ts`
+
+### Verify
+- `pnpm.cmd -C apps/web e2e:ux` OK (`7 passed`)
+
+## 2026-02-15 - WO008 follow-up: Match Setup progressive-disclosure E2E guardrails
+
+### Why
+- WO008 setup redesign was implemented, but progressive-disclosure behavior and summary/URL sync still needed browser-level regression coverage.
+
+### What
+- Updated `apps/web/src/components/match/MatchSetupPanelMint.tsx` with stable test hooks:
+  - `match-setup-summary-line`
+  - `match-setup-first-player-mode`
+  - `match-setup-advanced-toggle`
+  - `match-setup-advanced-content`
+  - `match-setup-chain-cap`
+- Added `apps/web/e2e/match-setup-ux-guardrails.spec.ts`:
+  - summary reflects URL-backed key setup choices
+  - advanced section auto-opens when first-player mode becomes non-manual
+  - chain-cap control keeps `ccap` in URL
+- Updated `apps/web/package.json`:
+  - `e2e:ux` now includes `e2e/match-setup-ux-guardrails.spec.ts`
+
+### Verify
+- `pnpm.cmd -C apps/web e2e:ux` OK (`9 passed`)

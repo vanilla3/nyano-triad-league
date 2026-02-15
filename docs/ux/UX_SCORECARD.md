@@ -55,6 +55,7 @@
 | F-1 | 高度情報（AI解析/ログ/配信HUD）がDrawer/折りたたみに隠れている | 目視 | Yes | ✅ Yes (Mint: MatchDrawerMint) |
 | F-2 | 初心者が迷わないUI密度になっている | 無説明テスト | Yes | ✅ Yes (Mint: density toggle シンプル/ふつう/すべて) |
 | F-3 | 上級者は必要な情報にアクセスできる | レビュー | Yes | Yes |
+| F-4 | Match Setup（ルール設定）が “触るだけで分かる” 導線になっている | 無説明テスト | Yes | ✅ Completed (WO008) |
 
 ## G: アクセシビリティ・パフォーマンス
 
@@ -63,6 +64,7 @@
 | G-1 | `prefers-reduced-motion` で演出が控えめになる | ブラウザ設定 | Yes | ✅ Yes (Mint: all animations + SFX) |
 | G-2 | ミュート設定で音が完全に消える | UI設定 | Yes | ✅ Yes (Mint: 🔊/🔇 toggle + localStorage) |
 | G-3 | LCP < 2.5s | `home_lcp_ms` テレメトリ + Lighthouse | Yes | 計測可能（Home > Settings） |
+| G-4 | Nyanoコメント/カットイン表示でレイアウトが崩れない（Layout Shift がない） | 目視 / E2E | Yes | ✅ Completed (WO006 + WO010) |
 
 ---
 
@@ -98,3 +100,18 @@
 - **クイック判定**: Home > Settings の `UX Target Snapshot` で A-1/B-1/B-4/G-3 の達成状況を確認
 - **頻度**: 隔週（大きな変更の後は都度）
 - **記録先**: `docs/ux/PLAYTEST_LOG.md`
+
+### 2026-02-14 Status Update
+- F-4 (Match Setup progressive disclosure): ✅ Completed in WO008.
+- G-4 (Nyano comment layout stability): ✅ Completed in WO006.
+
+### 2026-02-15 Status Update
+- WO010 (UX regression guardrails): ✅ `apps/web/e2e/ux-guardrails.spec.ts` is now stable and passing (`2 passed`).
+- Guarded regressions:
+  - Match Setup URL sync (`rk`, `opp`, `ai`, `ui`)
+  - Nyano reaction-slot layout stability (slot height + 2-line clamp)
+- CI wiring:
+  - Added `pnpm -C apps/web e2e:ux` and a dedicated CI step `E2E UX guardrails` before full E2E.
+- WO007 follow-up: ✅ Mint stage visual checks (`vfx=off`, `reduced-motion`, `390px`) are now covered by `apps/web/e2e/mint-stage-visual-guardrails.spec.ts` and included in `e2e:ux` (`5 passed` total).
+- WO009 follow-up: ✅ Rulesets discovery flow (`おすすめ` visibility + `このルールで対戦` routing with `rk` preservation) is now covered by `apps/web/e2e/rulesets-ux-guardrails.spec.ts` (`e2e:ux` total `7 passed`).
+- WO008 follow-up: ✅ Match Setup flow (`summary` sync + `Advanced` auto-open + `ccap` URL sync) is now covered by `apps/web/e2e/match-setup-ux-guardrails.spec.ts` (`e2e:ux` total `9 passed`).

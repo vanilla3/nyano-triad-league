@@ -173,3 +173,12 @@
 - [x] Follow-up: refactor duplicated Classic Open/Swap resolution into shared `apps/web/src/lib/classic_ruleset_visibility.ts` with unit tests.
 - [x] Follow-up: harden Classic metadata resolver to return null (not throw) on malformed `protocolV1.header`.
 - [x] Follow-up: sync `triad_league_ai_prompt_sample_v1.txt` and Bridge spec with optional `classic_open` / `classic_swap` ai_prompt lines.
+- [x] 2026-02-14 WO006: NyanoReaction slotを `Match/Replay` に導入し、コメント表示時のレイアウトシフトを抑止（2行クランプ + unit test付き）。
+- [x] 2026-02-14 WO007: Mint盤面/ステージの質感を磨き込み（board sheen, stage rim/atmo, warning-mode視覚強調, vfx/reduced-motion分岐, mobile最適化）。
+- [x] 2026-02-14 WO008: Match Setup を MatchSetupPanelMint へ分離し、Primary/Secondary/Advanced 構成・1行サマリ・Setup URLコピー導線を追加。URLパラメータ互換を維持。
+- [x] 2026-02-14 WO009: Rulesets画面に『おすすめ』『要約』『このルールで対戦』導線を追加し、/match への遷移を明確化。
+- [x] 2026-02-15 WO010: `apps/web/e2e/ux-guardrails.spec.ts` を安定化（tutorial回避・selector強化・quick commit fallback）。`pnpm.cmd -C apps/web e2e -- e2e/ux-guardrails.spec.ts` で 2 passed を確認。
+- [x] 2026-02-15 WO010運用: `apps/web/package.json` に `e2e:ux` を追加し、`.github/workflows/ci.yml` に `E2E UX guardrails` ステップを追加（full E2E 前に最小UXガードを先行検証）。
+- [x] 2026-02-15 WO007追補: `apps/web/e2e/mint-stage-visual-guardrails.spec.ts` を追加し、manual確認項目（vfx=off / reduced-motion / 390px）をE2E化。`pnpm.cmd -C apps/web e2e:ux` で 5 passed を確認。
+- [x] 2026-02-15 WO009追補: `apps/web/e2e/rulesets-ux-guardrails.spec.ts` を追加し、Rulesets導線（おすすめ表示 + このルールで対戦遷移 + rk保持）をE2E化。`pnpm.cmd -C apps/web e2e:ux` で 7 passed を確認。
+- [x] 2026-02-15 WO008追補: `apps/web/e2e/match-setup-ux-guardrails.spec.ts` を追加し、Match Setup導線（1行サマリ同期 + Advanced自動展開 + ccap URL同期）をE2E化。`pnpm.cmd -C apps/web e2e:ux` で 9 passed を確認。
