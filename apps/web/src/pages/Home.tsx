@@ -1,8 +1,7 @@
 import React from "react";
-import { Link } from "react-router-dom";
-import { useToast } from "@/components/Toast";
-import { NyanoAvatar } from "@/components/NyanoAvatar";
+import { Link, useSearchParams } from "react-router-dom";
 import { resetTutorialSeen } from "@/components/MiniTutorial";
+import { useToast } from "@/components/Toast";
 import { clearGameIndexCache } from "@/lib/nyano/gameIndex";
 import {
   buildUxTelemetrySnapshot,
@@ -27,219 +26,28 @@ import {
 } from "@/lib/onboarding";
 import { writeClipboardText } from "@/lib/clipboard";
 import { errorMessage } from "@/lib/errorMessage";
-import type { ExpressionName } from "@/lib/expression_map";
-
-/* ═══════════════════════════════════════════════════════════════════════════
-   HOME PAGE — Polished Landing Page (M08)
-
-   Main landing page for Nyano Triad League.
-   Features:
-   - Hero section with animated NyanoAvatar mascot
-   - Gradient animated title
-   - Quick action CTA buttons
-   - Feature overview cards (Arena, Decks, Replay, Stream)
-   - Tools section (Playground, Nyano, Events, Rulesets)
-   - Info cards (current phase, next milestone)
-   ═══════════════════════════════════════════════════════════════════════════ */
-
-// ── Hero mascot expression cycling ──────────────────────────────────────
-
-const HERO_EXPRESSIONS: ExpressionName[] = ["playful", "calm", "laugh", "happy"];
-const EXPRESSION_INTERVAL_MS = 5_000;
-
-function useHeroExpression(): ExpressionName {
-  const [index, setIndex] = React.useState(0);
-
-  React.useEffect(() => {
-    const id = setInterval(() => {
-      setIndex((prev) => (prev + 1) % HERO_EXPRESSIONS.length);
-    }, EXPRESSION_INTERVAL_MS);
-    return () => clearInterval(id);
-  }, []);
-
-  return HERO_EXPRESSIONS[index];
-}
-
-// ── Feature card data ───────────────────────────────────────────────────
-
-const FEATURES = [
-  {
-    title: "Arena",
-    titleJa: "アリーナ",
-    description: "対戦モードでNyanoカードの力を試そう",
-    icon: "⚔️",
-    path: "/arena",
-    color: "nyano" as const,
-  },
-  {
-    title: "Decks",
-    titleJa: "デッキ",
-    description: "5枚のカードを選んでデッキを組む",
-    icon: "🃏",
-    path: "/decks",
-    color: "sky" as const,
-  },
-  {
-    title: "Replay",
-    titleJa: "リプレイ",
-    description: "過去の対戦を振り返り、共有する",
-    icon: "📼",
-    path: "/replay",
-    color: "violet" as const,
-  },
-  {
-    title: "Stream",
-    titleJa: "配信",
-    description: "視聴者参加型配信をセットアップ",
-    icon: "📺",
-    path: "/stream",
-    color: "emerald" as const,
-  },
-];
-
-// ── Tool card data ──────────────────────────────────────────────────────
-
-const TOOLS = [
-  { title: "Playground", description: "ルールのテストと検証", icon: "🧪", path: "/playground" },
-  { title: "Nyano", description: "カードデータを確認", icon: "🐱", path: "/nyano" },
-  { title: "Events", description: "リーグイベントを管理", icon: "🏆", path: "/events" },
-  { title: "Rulesets", description: "ルールセット設定", icon: "📜", path: "/rulesets" },
-];
-
-// ── Color styles for feature cards ──────────────────────────────────────
-
-type FeatureColor = "nyano" | "sky" | "violet" | "emerald";
-
-const COLOR_STYLES: Record<
-  FeatureColor,
-  { bg: string; border: string; hover: string; accent: string }
-> = {
-  nyano: {
-    bg: "bg-gradient-to-br from-nyano-50 to-nyano-100/50",
-    border: "border-nyano-200",
-    hover: "hover:border-nyano-400 hover:shadow-glow-nyano",
-    accent: "text-nyano-600",
-  },
-  sky: {
-    bg: "bg-gradient-to-br from-sky-50 to-sky-100/50",
-    border: "border-sky-200",
-    hover: "hover:border-sky-400 hover:shadow-glow-a",
-    accent: "text-sky-600",
-  },
-  violet: {
-    bg: "bg-gradient-to-br from-violet-50 to-violet-100/50",
-    border: "border-violet-200",
-    hover: "hover:border-violet-400",
-    accent: "text-violet-600",
-  },
-  emerald: {
-    bg: "bg-gradient-to-br from-emerald-50 to-emerald-100/50",
-    border: "border-emerald-200",
-    hover: "hover:border-emerald-400",
-    accent: "text-emerald-600",
-  },
-};
-
-/* ═══════════════════════════════════════════════════════════════════════════
-   FEATURE CARD COMPONENT
-   ═══════════════════════════════════════════════════════════════════════════ */
-
-interface FeatureCardProps {
-  title: string;
-  titleJa: string;
-  description: string;
-  icon: string;
-  path: string;
-  color: FeatureColor;
-}
-
-function FeatureCard({ title, titleJa, description, icon, path, color }: FeatureCardProps) {
-  const style = COLOR_STYLES[color];
-
-  return (
-    <Link
-      to={path}
-      className={[
-        "group relative block rounded-3xl border-2 p-6",
-        "transition-all duration-300",
-        "hover:-translate-y-1",
-        style.bg,
-        style.border,
-        style.hover,
-      ].join(" ")}
-    >
-      {/* Icon */}
-      <div className="text-4xl mb-3">{icon}</div>
-
-      {/* Title */}
-      <div className="flex items-baseline gap-2 mb-2">
-        <h3 className={["text-xl font-bold font-display", style.accent].join(" ")}>{title}</h3>
-        <span className="text-sm text-surface-400">{titleJa}</span>
-      </div>
-
-      {/* Description */}
-      <p className="text-sm text-surface-600">{description}</p>
-
-      {/* Arrow indicator */}
-      <div
-        className={[
-          "absolute top-6 right-6",
-          "w-8 h-8 rounded-full",
-          "flex items-center justify-center",
-          "bg-white/80 text-surface-400",
-          "transition-all duration-300",
-          "group-hover:bg-white group-hover:text-surface-700",
-          "group-hover:translate-x-1",
-        ].join(" ")}
-      >
-        →
-      </div>
-    </Link>
-  );
-}
-
-/* ═══════════════════════════════════════════════════════════════════════════
-   TOOL CARD COMPONENT (compact)
-   ═══════════════════════════════════════════════════════════════════════════ */
-
-interface ToolCardProps {
-  title: string;
-  description: string;
-  icon: string;
-  path: string;
-}
-
-function ToolCard({ title, description, icon, path }: ToolCardProps) {
-  return (
-    <Link
-      to={path}
-      className={[
-        "group flex items-center gap-3 p-4 rounded-2xl",
-        "bg-white border border-surface-200",
-        "transition-all duration-200",
-        "hover:border-surface-300 hover:shadow-soft-sm",
-      ].join(" ")}
-    >
-      <div className="text-2xl">{icon}</div>
-      <div className="flex-1 min-w-0">
-        <div className="font-semibold text-sm text-surface-800">{title}</div>
-        <div className="text-xs text-surface-500 truncate">{description}</div>
-      </div>
-      <div className="text-surface-300 group-hover:text-surface-500 transition-colors">→</div>
-    </Link>
-  );
-}
-
-/* ═══════════════════════════════════════════════════════════════════════════
-   MAIN HOME PAGE COMPONENT
-   ═══════════════════════════════════════════════════════════════════════════ */
+import { GlassPanel } from "@/components/mint/GlassPanel";
+import { MintBigButton } from "@/components/mint/MintBigButton";
+import { MintPressable } from "@/components/mint/MintPressable";
+import { MintTitleText, MintLabel } from "@/components/mint/MintTypography";
+import { MintIcon } from "@/components/mint/icons/MintIcon";
+import { appendThemeToPath, resolveAppTheme } from "@/lib/theme";
 
 const DIFFICULTIES = [
-  { key: "easy", ja: "はじめて", en: "Easy" },
-  { key: "normal", ja: "ふつう", en: "Normal" },
-  { key: "hard", ja: "つよい", en: "Hard" },
-  { key: "expert", ja: "めっちゃつよい", en: "Expert" },
+  { key: "easy", label: "Easy", labelJa: "はじめて" },
+  { key: "normal", label: "Normal", labelJa: "ふつう" },
+  { key: "hard", label: "Hard", labelJa: "つよい" },
+  { key: "expert", label: "Expert", labelJa: "めっちゃつよい" },
 ] as const;
+
+type DifficultyKey = (typeof DIFFICULTIES)[number]["key"];
+
+type MenuItem = {
+  to: string;
+  title: string;
+  subtitle: string;
+  icon: "arena" | "decks" | "replay" | "stream";
+};
 
 function formatSecondsFromMs(ms: number | null): string {
   if (ms === null) return "--";
@@ -253,36 +61,21 @@ function targetStatusLabel(status: UxTargetStatus): string {
 }
 
 function targetStatusClass(status: UxTargetStatus): string {
-  if (status === "pass") return "bg-emerald-100 text-emerald-700 border-emerald-200";
-  if (status === "fail") return "bg-rose-100 text-rose-700 border-rose-200";
-  return "bg-surface-100 text-surface-500 border-surface-200";
-}
-
-function summarizeTargetStatuses(
-  statuses: readonly UxTargetStatus[],
-): string {
-  let pass = 0;
-  let fail = 0;
-  let insufficient = 0;
-  for (const status of statuses) {
-    if (status === "pass") pass += 1;
-    else if (status === "fail") fail += 1;
-    else insufficient += 1;
-  }
-  return `PASS ${pass} / FAIL ${fail} / N/A ${insufficient}`;
+  if (status === "pass") return "mint-home-status mint-home-status--pass";
+  if (status === "fail") return "mint-home-status mint-home-status--fail";
+  return "mint-home-status";
 }
 
 export function HomePage() {
-  const heroExpression = useHeroExpression();
   const toast = useToast();
-  const [difficulty, setDifficulty] = React.useState<string>("normal");
+  const [searchParams] = useSearchParams();
+  const theme = resolveAppTheme(searchParams);
+  const [difficulty, setDifficulty] = React.useState<DifficultyKey>("normal");
   const [showQuickGuide, setShowQuickGuide] = React.useState(false);
+  const [onboardingProgress, setOnboardingProgress] = React.useState(() => readOnboardingProgress());
   const [uxStats, setUxStats] = React.useState(() => readCumulativeStats());
   const [uxSnapshotHistory, setUxSnapshotHistory] = React.useState(() =>
     readUxTelemetrySnapshotHistory(5),
-  );
-  const [onboardingProgress, setOnboardingProgress] = React.useState(() =>
-    readOnboardingProgress(),
   );
   const onboardingCompleted = React.useMemo(
     () => completedOnboardingStepCount(onboardingProgress),
@@ -292,11 +85,21 @@ export function HomePage() {
     () => isOnboardingCompleted(onboardingProgress),
     [onboardingProgress],
   );
-  const quickPlayUrl = `/match?mode=guest&opp=vs_nyano_ai&ai=${difficulty}&rk=v2&ui=mint`;
-  const avgInvalidPerSession = uxStats.sessions > 0
-    ? uxStats.total_invalid_actions / uxStats.sessions
-    : null;
   const uxTargetChecks = React.useMemo(() => evaluateUxTargets(uxStats), [uxStats]);
+
+  const themed = React.useCallback((to: string) => appendThemeToPath(to, theme), [theme]);
+  const quickPlayUrl = themed(`/match?mode=guest&opp=vs_nyano_ai&ai=${difficulty}&rk=v2&ui=mint`);
+  const quickCommitUrl = themed("/match?mode=guest&opp=vs_nyano_ai&ai=normal&rk=v2&ui=mint");
+
+  const menuItems = React.useMemo<MenuItem[]>(
+    () => [
+      { to: themed("/arena"), title: "Arena", subtitle: "対戦モードへ", icon: "arena" },
+      { to: themed("/decks"), title: "Decks", subtitle: "デッキ編集", icon: "decks" },
+      { to: themed("/replay"), title: "Replay", subtitle: "対戦を振り返る", icon: "replay" },
+      { to: themed("/stream"), title: "Stream", subtitle: "配信導線へ", icon: "stream" },
+    ],
+    [themed],
+  );
 
   const refreshOnboarding = React.useCallback(() => {
     setOnboardingProgress(readOnboardingProgress());
@@ -330,8 +133,7 @@ export function HomePage() {
     setUxSnapshotHistory(readUxTelemetrySnapshotHistory(5));
 
     try {
-      const markdown = formatUxTelemetrySnapshotMarkdown(snapshot);
-      await writeClipboardText(markdown);
+      await writeClipboardText(formatUxTelemetrySnapshotMarkdown(snapshot));
       toast.success("Snapshot copied", "Paste into docs/ux/PLAYTEST_LOG.md");
     } catch (e) {
       toast.error("Copy failed", `${errorMessage(e)} (snapshot saved locally)`);
@@ -375,9 +177,7 @@ export function HomePage() {
     }
 
     const onVisibilityChange = () => {
-      if (document.visibilityState === "hidden") {
-        report();
-      }
+      if (document.visibilityState === "hidden") report();
     };
     const onPageHide = () => {
       report();
@@ -385,9 +185,7 @@ export function HomePage() {
 
     document.addEventListener("visibilitychange", onVisibilityChange, true);
     window.addEventListener("pagehide", onPageHide, true);
-
-    // Fallback: if user keeps Home open, still persist a value after initial render settles.
-    const fallbackTimer = window.setTimeout(report, 6_000);
+    const fallbackTimer = window.setTimeout(report, 6000);
 
     return () => {
       window.clearTimeout(fallbackTimer);
@@ -399,485 +197,243 @@ export function HomePage() {
   }, [refreshUxStats]);
 
   return (
-    <div className="min-h-screen bg-surface-50">
-      {/* ─── Hero Section — Cinematic with background image ─────── */}
-      <section className="home-hero relative overflow-hidden">
-        {/* Background image layer */}
-        <div
-          className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-          style={{ backgroundImage: "url('/hero-bg.webp')" }}
-        />
-        {/* Gradient overlays for readability */}
-        <div className="absolute inset-0 bg-gradient-to-b from-[#1a1b3a]/60 via-[#1a1b3a]/40 to-surface-50" />
-        <div className="absolute inset-0 bg-gradient-to-r from-[#1a1b3a]/30 via-transparent to-[#1a1b3a]/30" />
+    <div className="mint-home-screen">
+      <section className="mint-home-hero">
+        <MintTitleText as="h2" className="mint-home-title">
+          Nyano Triad League
+        </MintTitleText>
+        <p className="mint-home-subtitle">スマホゲームUIの導線で、すぐに対戦を始めよう</p>
+      </section>
 
-        <div className="relative max-w-5xl mx-auto px-4 py-16 md:py-24">
-          <div className="text-center">
-            {/* Nyano mascot — floating animation */}
-            <div className="flex justify-center mb-6">
-              <div className="animate-float">
-                <NyanoAvatar
-                  expression={heroExpression}
-                  size={120}
-                  className="shadow-glow-nyano"
-                />
-              </div>
-            </div>
+      <section className="mint-home-menu-grid" aria-label="Main menu">
+        {menuItems.map((item) => (
+          <MintBigButton
+            key={item.title}
+            to={item.to}
+            title={item.title}
+            subtitle={item.subtitle}
+            icon={item.icon}
+          />
+        ))}
+      </section>
 
-            {/* Animated gradient title */}
-            <h1 className="text-4xl md:text-6xl font-bold font-display mb-4 drop-shadow-lg">
-              <span className="text-white" style={{ textShadow: "0 2px 16px rgba(255,138,80,0.4)" }}>
-                Nyano Triad League
-              </span>
-            </h1>
-            <p className="text-base md:text-lg text-white/80 mb-8 max-w-xl mx-auto drop-shadow">
-              NyanoNFTを使ったカードバトルゲーム。
-              <br className="hidden sm:block" />
-              デッキを組んで、対戦し、勝利を共有しよう。
-            </p>
-
-            {/* Difficulty selector (NIN-UX-020: friendly labels) */}
-            <div className="flex flex-wrap items-center justify-center gap-2 mb-6">
-              {DIFFICULTIES.map((d) => (
+      <section className="mint-home-quickplay">
+        <GlassPanel variant="panel" className="mint-home-quickplay__panel">
+          <div className="mint-home-quickplay__head">
+            <MintLabel>Quick Play</MintLabel>
+            <div className="mint-home-quickplay__difficulty">
+              {DIFFICULTIES.map((item) => (
                 <button
-                  key={d.key}
-                  onClick={() => setDifficulty(d.key)}
+                  key={item.key}
                   className={[
-                    "px-4 py-2.5 rounded-2xl text-sm font-bold font-display transition-all",
-                    difficulty === d.key
-                      ? "bg-nyano-500 text-white shadow-glow-nyano scale-105"
-                      : "bg-white/15 text-white/90 backdrop-blur-sm border border-white/20 hover:bg-white/25",
+                    "mint-pressable mint-home-difficulty",
+                    difficulty === item.key ? "mint-home-difficulty--active" : "",
                   ].join(" ")}
+                  onClick={() => setDifficulty(item.key)}
                 >
-                  {d.ja}
-                  <span className="ml-1 text-xs opacity-70">({d.en})</span>
+                  <span>{item.labelJa}</span>
+                  <span className="mint-home-difficulty__sub">{item.label}</span>
                 </button>
               ))}
             </div>
-
-            {/* CTA — big play button (NIN-UX-020: "10 seconds to start") */}
-            <div className="flex flex-col items-center gap-3">
-              <Link
-                to={quickPlayUrl}
-                onClick={handleQuickPlayStart}
-                className={[
-                  "home-hero__cta",
-                  "inline-flex items-center gap-3",
-                  "px-10 py-4 rounded-3xl",
-                  "text-white text-xl font-bold font-display",
-                  "shadow-xl hover:shadow-2xl hover:scale-105",
-                  "transition-all duration-200",
-                ].join(" ")}
-              >
-                🎮 すぐ遊ぶ
-              </Link>
-              <span className="text-xs text-white/50">ゲストモードですぐに対戦できます</span>
-            </div>
-
-            {/* Secondary actions */}
-            <div className="flex flex-wrap items-center justify-center gap-3 mt-5">
-              <Link to="/arena" className="inline-flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-white/10 backdrop-blur-sm border border-white/20 text-white text-sm font-semibold hover:bg-white/20 transition-all no-underline">
-                ⚔️ Arena
-              </Link>
-              <Link to="/decks" className="inline-flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-white/10 backdrop-blur-sm border border-white/20 text-white text-sm font-semibold hover:bg-white/20 transition-all no-underline">
-                🃏 Build Deck
-              </Link>
-            </div>
           </div>
+          <div className="mint-home-quickplay__actions">
+            <MintPressable to={quickPlayUrl} tone="primary" onClick={handleQuickPlayStart}>
+              <MintIcon name="match" size={18} />
+              <span>すぐ遊ぶ</span>
+            </MintPressable>
+            <MintPressable to={themed("/arena")} tone="soft">
+              <MintIcon name="arena" size={18} />
+              <span>Arenaへ</span>
+            </MintPressable>
+          </div>
+        </GlassPanel>
+      </section>
+
+      <section className="mint-home-onboarding">
+        <div className="mint-home-onboarding__heading">
+          <MintTitleText as="h3" className="mint-home-onboarding__title">
+            3ステップで始めよう
+          </MintTitleText>
+          <GlassPanel variant="pill" className="mint-home-onboarding__progress">
+            {onboardingCompleted}/{ONBOARDING_STEPS.length} steps
+          </GlassPanel>
+        </div>
+
+        <div className="mint-home-onboarding__grid">
+          <GlassPanel variant="card" className="mint-home-step">
+            <div className="mint-home-step__index">1</div>
+            <MintTitleText as="h3" className="mint-home-step__title">ルールを知る</MintTitleText>
+            <div className="mint-home-step__status">
+              {onboardingProgress.steps.read_quick_guide ? "DONE" : "TODO"}
+            </div>
+            <MintPressable tone="soft" onClick={openQuickGuide}>
+              ルールを開く
+            </MintPressable>
+          </GlassPanel>
+
+          <GlassPanel variant="card" className="mint-home-step">
+            <div className="mint-home-step__index">2</div>
+            <MintTitleText as="h3" className="mint-home-step__title">ゲストで対戦</MintTitleText>
+            <div className="mint-home-step__status">
+              {onboardingProgress.steps.start_first_match ? "DONE" : "TODO"}
+            </div>
+            <MintPressable to={quickPlayUrl} tone="primary" onClick={handleQuickPlayStart}>
+              今すぐ対戦
+            </MintPressable>
+          </GlassPanel>
+
+          <GlassPanel variant="card" className="mint-home-step">
+            <div className="mint-home-step__index">3</div>
+            <MintTitleText as="h3" className="mint-home-step__title">最初の手を確定</MintTitleText>
+            <div className="mint-home-step__status">
+              {onboardingProgress.steps.commit_first_move ? "DONE" : "AUTO"}
+            </div>
+            <MintPressable to={quickCommitUrl} tone="soft">
+              Matchを開く
+            </MintPressable>
+          </GlassPanel>
+        </div>
+
+        <div className="mint-home-onboarding__footer">
+          <MintPressable to={themed("/start")} tone="soft">
+            1分スタート画面へ
+          </MintPressable>
+          <MintPressable
+            tone="ghost"
+            onClick={() => {
+              resetOnboardingProgress();
+              refreshOnboarding();
+              toast.success("Quickstart reset", "オンボーディング進捗を初期化しました。");
+            }}
+          >
+            Reset quickstart
+          </MintPressable>
+          {onboardingAllDone ? (
+            <span className="mint-home-onboarding__done">すべて完了。Decks / Arena へ進めます。</span>
+          ) : null}
         </div>
       </section>
 
-      {/* ─── Newcomer quickstart checklist ───────────────────────── */}
-      <section className="max-w-5xl mx-auto px-4 py-4">
-        <div className="rounded-3xl border border-nyano-200 bg-white p-5 shadow-soft-sm">
-          <div className="flex flex-wrap items-start justify-between gap-3">
-            <div>
-              <h2 className="text-lg font-bold font-display text-surface-800">
-                はじめての1分スタート
-              </h2>
-              <p className="text-xs text-surface-500 mt-1">
-                3ステップ完了で「ルール理解 → 参加開始 → 初手確定」まで到達できます。
-              </p>
-            </div>
-            <div className="rounded-full border border-surface-200 bg-surface-50 px-3 py-1 text-xs font-semibold text-surface-700">
-              {onboardingCompleted} / {ONBOARDING_STEPS.length} steps
-            </div>
-          </div>
-
-          <div className="mt-4 grid gap-2">
-            <div className="flex items-center justify-between rounded-2xl border border-surface-200 bg-surface-50 px-3 py-2">
-              <div className="flex items-center gap-2">
-                <span className="text-xs font-bold text-surface-500">1</span>
-                <span className="text-sm text-surface-700">1分ルールを見る</span>
-              </div>
-              <div className="flex items-center gap-2">
-                {onboardingProgress.steps.read_quick_guide ? (
-                  <span className="text-[11px] font-semibold text-emerald-600">DONE</span>
-                ) : (
-                  <span className="text-[11px] font-semibold text-surface-400">TODO</span>
-                )}
-                <button className="btn text-xs" onClick={openQuickGuide}>
-                  ルールを開く
-                </button>
-              </div>
-            </div>
-
-            <div className="flex items-center justify-between rounded-2xl border border-surface-200 bg-surface-50 px-3 py-2">
-              <div className="flex items-center gap-2">
-                <span className="text-xs font-bold text-surface-500">2</span>
-                <span className="text-sm text-surface-700">ゲスト対戦を開始する</span>
-              </div>
-              <div className="flex items-center gap-2">
-                {onboardingProgress.steps.start_first_match ? (
-                  <span className="text-[11px] font-semibold text-emerald-600">DONE</span>
-                ) : (
-                  <span className="text-[11px] font-semibold text-surface-400">TODO</span>
-                )}
-                <Link
-                  to={quickPlayUrl}
-                  onClick={handleQuickPlayStart}
-                  className="btn btn-primary text-xs no-underline"
-                >
-                  今すぐ対戦
-                </Link>
-              </div>
-            </div>
-
-            <div className="flex items-center justify-between rounded-2xl border border-surface-200 bg-surface-50 px-3 py-2">
-              <div className="flex items-center gap-2">
-                <span className="text-xs font-bold text-surface-500">3</span>
-                <span className="text-sm text-surface-700">Match で最初の手を確定する</span>
-              </div>
-              {onboardingProgress.steps.commit_first_move ? (
-                <span className="text-[11px] font-semibold text-emerald-600">DONE</span>
-              ) : (
-                <span className="text-[11px] font-semibold text-surface-400">AUTO (Matchで更新)</span>
-              )}
-            </div>
-          </div>
-
-          <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
-            {onboardingAllDone ? (
-              <div className="text-xs font-semibold text-emerald-700">
-                チュートリアル完了。次は Decks / Arena で本番デッキを試せます。
-              </div>
-            ) : (
-              <div className="text-xs text-surface-500">
-                進捗はこのブラウザに保存されます。
-              </div>
-            )}
-            <button
-              className="btn text-xs"
-              onClick={() => {
-                resetOnboardingProgress();
-                refreshOnboarding();
-                toast.success("Quickstart reset", "オンボーディング進捗を初期化しました。");
-              }}
-            >
-              Reset quickstart
-            </button>
-          </div>
-        </div>
+      <section className="mint-home-infobar">
+        <GlassPanel variant="pill" className="mint-home-pill">
+          <MintIcon name="events" size={14} />
+          <span>現在のフェーズ: 検証・共有フェーズ</span>
+        </GlassPanel>
+        <GlassPanel variant="pill" className="mint-home-pill">
+          <MintIcon name="sparkle" size={14} />
+          <span>次のマイルストーン: 運営品質のゲーム体験</span>
+        </GlassPanel>
       </section>
 
-      {showQuickGuide && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 p-4">
-          <div className="w-full max-w-lg rounded-3xl border border-surface-200 bg-white p-6 shadow-xl">
-            <div className="text-lg font-bold font-display text-surface-900">1分ルールガイド</div>
-            <div className="mt-3 grid gap-2 text-sm text-surface-700">
-              <div>1. 空いているマスを選ぶ</div>
-              <div>2. 手札からカードを選んで置く</div>
-              <div>3. 隣接する辺の数値が高いと相手カードを反転できる</div>
-              <div>4. 9手終了時にタイル枚数が多い側が勝ち</div>
-              <div>5. 同値はじゃんけん属性で判定（Rock/Paper/Scissors）</div>
-            </div>
-            <div className="mt-4 flex justify-end gap-2">
-              <button className="btn text-xs" onClick={() => setShowQuickGuide(false)}>
-                閉じる
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ─── How to Play (3-step guide) ────────────────────────────── */}
-      <section className="max-w-5xl mx-auto px-4 py-12">
-        <h2 className="text-2xl font-bold font-display text-surface-800 text-center mb-2">
-          3ステップで始めよう
-        </h2>
-        <p className="text-sm text-surface-400 text-center mb-8">
-          10秒でゲームスタート。ウォレット不要のゲストモードも対応。
-        </p>
-        <div className="grid gap-5 md:grid-cols-3">
-          {[
-            { step: "1", icon: "🃏", title: "デッキを組む", desc: "5枚のNyanoカードを選んでデッキを作成", link: "/decks", accent: "nyano" },
-            { step: "2", icon: "⚔️", title: "対戦する", desc: "AIやフレンドと3x3ボードで対戦", link: "/arena", accent: "sky" },
-            { step: "3", icon: "📼", title: "共有する", desc: "リプレイを共有して配信で盛り上がる", link: "/replay", accent: "violet" },
-          ].map((s) => (
-            <Link
-              key={s.step}
-              to={s.link}
-              className={[
-                "group relative flex flex-col items-center text-center p-7 rounded-3xl",
-                "bg-white border-2 border-surface-200",
-                "shadow-sm",
-                "transition-all duration-300",
-                "hover:border-nyano-300 hover:shadow-md hover:-translate-y-1",
-              ].join(" ")}
-            >
-              <div
-                className="absolute -top-3 left-5 text-white text-xs font-bold w-7 h-7 rounded-xl flex items-center justify-center shadow-md"
-                style={{ background: "linear-gradient(135deg, #FF8A50, #E67340)" }}
-              >
-                {s.step}
-              </div>
-              <div className="text-4xl mb-3 group-hover:scale-110 transition-transform duration-300">{s.icon}</div>
-              <div className="font-bold font-display text-surface-800 mb-1 text-base">{s.title}</div>
-              <p className="text-xs text-surface-500 leading-relaxed">{s.desc}</p>
-              <div className="mt-3 text-[11px] font-semibold text-nyano-500 opacity-0 group-hover:opacity-100 transition-opacity">
-                始める →
-              </div>
-            </Link>
-          ))}
-        </div>
-      </section>
-
-      {/* ─── Features (always visible) ─────────────────────────────── */}
-      <section className="max-w-5xl mx-auto px-4 py-6">
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          {FEATURES.map((feature) => (
-            <FeatureCard key={feature.path} {...feature} />
-          ))}
-        </div>
-      </section>
-
-      {/* ─── Tools (Progressive Disclosure — collapsed) ─────────── */}
-      <section className="max-w-5xl mx-auto px-4 py-4">
-        <details className="group">
-          <summary className="flex items-center gap-2 cursor-pointer text-surface-500 hover:text-surface-700 transition-colors">
-            <span className="text-sm font-medium">ツール・設定</span>
-            <span className="text-xs group-open:rotate-90 transition-transform">▶</span>
-          </summary>
-          <div className="mt-4">
-            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-              {TOOLS.map((tool) => (
-                <ToolCard key={tool.path} {...tool} />
-              ))}
-            </div>
-          </div>
-        </details>
-      </section>
-
-      {/* ─── Info Section — Premium glassmorphic cards ────────────── */}
-      <section className="max-w-5xl mx-auto px-4 py-12">
-        <div className="grid gap-6 md:grid-cols-2">
-          {/* Current Phase */}
-          <div className="relative rounded-3xl border border-surface-200 bg-white overflow-hidden">
-            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-emerald-400 via-emerald-500 to-teal-400" />
-            <div className="p-6">
-              <div className="flex items-center gap-3 mb-3">
-                <div className="w-8 h-8 rounded-xl bg-emerald-100 flex items-center justify-center text-lg">📍</div>
-                <h3 className="text-base font-bold font-display text-surface-800">現在のフェーズ</h3>
-              </div>
-              <div className="flex items-start gap-3">
-                <div className="w-2 h-2 rounded-full bg-emerald-500 mt-2 animate-pulse flex-shrink-0" />
-                <div>
-                  <div className="font-semibold text-surface-800">検証・共有フェーズ</div>
-                  <p className="text-sm text-surface-500 mt-1 leading-relaxed">
-                    リプレイ共有、ルール検証、コミュニティフィードバックの収集を行っています。
-                    配信連携機能も実験中です。
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Next Milestone */}
-          <div className="relative rounded-3xl border border-surface-200 bg-white overflow-hidden">
-            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-nyano-400 via-nyano-500 to-amber-400" />
-            <div className="p-6">
-              <div className="flex items-center gap-3 mb-3">
-                <div className="w-8 h-8 rounded-xl bg-nyano-100 flex items-center justify-center text-lg">🎯</div>
-                <h3 className="text-base font-bold font-display text-surface-800">次のマイルストーン</h3>
-              </div>
-              <div className="flex items-start gap-3">
-                <div className="w-2 h-2 rounded-full bg-nyano-500 mt-2 flex-shrink-0" />
-                <div>
-                  <div className="font-semibold text-surface-800">運営品質のゲーム体験</div>
-                  <p className="text-sm text-surface-500 mt-1 leading-relaxed">
-                    デッキ構築→対戦→結果共有→ランキング化の一連フローを、
-                    ハイクオリティなUIで提供します。
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ─── Settings ────────────────────────────────────────────── */}
-      <section className="max-w-5xl mx-auto px-4 py-4">
-        <details className="text-sm text-surface-600">
-          <summary className="cursor-pointer text-xs font-medium text-surface-500">Settings</summary>
-          <div className="mt-2 flex flex-wrap gap-3">
-            <button
-              className="btn text-xs"
-              onClick={() => {
+      <section className="mint-home-tools">
+        <details className="mint-home-disclosure">
+          <summary>Tools / Settings</summary>
+          <div className="mint-home-tools__body">
+            <div className="mint-home-tools__actions">
+              <MintPressable tone="soft" size="sm" onClick={() => {
                 resetTutorialSeen();
                 toast.success("Tutorial reset", "The tutorial will appear on your next guest match.");
-              }}
-            >
-              Reset Tutorial
-            </button>
-            <button
-              className="btn text-xs"
-              onClick={() => {
+              }}>
+                Reset Tutorial
+              </MintPressable>
+              <MintPressable tone="soft" size="sm" onClick={() => {
                 clearGameIndexCache();
-                toast.success("Cache cleared", "Game index cache has been cleared. Card data will be re-fetched on next load.");
-              }}
-            >
-              Reset Game Cache
-            </button>
-          </div>
-          <div className="mt-4 rounded-2xl border border-surface-200 bg-white p-4">
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <div>
-                <div className="text-xs font-semibold text-surface-700">UX Telemetry (Local)</div>
-                <div className="text-[11px] text-surface-500">
-                  このブラウザ内のみ保存。配信前のプレイテスト計測に使えます。
-                </div>
-              </div>
-              <div className="flex flex-wrap gap-2">
-                <button className="btn text-xs" onClick={refreshUxStats}>
-                  Refresh Metrics
-                </button>
-                <button className="btn text-xs" onClick={copyUxSnapshot}>
-                  Copy Snapshot
-                </button>
-                <button
-                  className="btn text-xs"
-                  onClick={() => {
-                    clearCumulativeStats();
-                    refreshUxStats();
-                    toast.success("Telemetry reset", "Local UX metrics have been cleared.");
-                  }}
-                >
-                  Reset Metrics
-                </button>
-              </div>
+                toast.success("Cache cleared", "Game index cache has been cleared.");
+              }}>
+                Reset Game Cache
+              </MintPressable>
+              <MintPressable tone="soft" size="sm" onClick={refreshUxStats}>
+                Refresh Metrics
+              </MintPressable>
+              <MintPressable tone="primary" size="sm" onClick={copyUxSnapshot}>
+                Copy Snapshot
+              </MintPressable>
+              <MintPressable tone="ghost" size="sm" onClick={() => {
+                clearCumulativeStats();
+                refreshUxStats();
+                toast.success("Telemetry reset", "Local UX metrics have been cleared.");
+              }}>
+                Reset Metrics
+              </MintPressable>
+              <MintPressable tone="ghost" size="sm" onClick={() => {
+                clearUxTelemetrySnapshotHistory();
+                setUxSnapshotHistory([]);
+                toast.success("Snapshot history reset", "Local snapshot history has been cleared.");
+              }}>
+                Clear History
+              </MintPressable>
             </div>
-            <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-6">
-              <div className="rounded-xl border border-surface-200 bg-surface-50 px-3 py-2">
-                <div className="text-[11px] text-surface-500">Sessions</div>
-                <div className="text-sm font-semibold text-surface-800">{uxStats.sessions}</div>
-              </div>
-              <div className="rounded-xl border border-surface-200 bg-surface-50 px-3 py-2">
-                <div className="text-[11px] text-surface-500">Avg first interaction</div>
-                <div className="text-sm font-semibold text-surface-800">
-                  {formatSecondsFromMs(uxStats.avg_first_interaction_ms)}
-                </div>
-              </div>
-              <div className="rounded-xl border border-surface-200 bg-surface-50 px-3 py-2">
-                <div className="text-[11px] text-surface-500">Avg first place</div>
-                <div className="text-sm font-semibold text-surface-800">
-                  {formatSecondsFromMs(uxStats.avg_first_place_ms)}
-                </div>
-              </div>
-              <div className="rounded-xl border border-surface-200 bg-surface-50 px-3 py-2">
-                <div className="text-[11px] text-surface-500">Avg quick-play to first place</div>
-                <div className="text-sm font-semibold text-surface-800">
-                  {formatSecondsFromMs(uxStats.avg_quickplay_to_first_place_ms)}
-                </div>
-              </div>
-              <div className="rounded-xl border border-surface-200 bg-surface-50 px-3 py-2">
-                <div className="text-[11px] text-surface-500">Avg Home LCP</div>
-                <div className="text-sm font-semibold text-surface-800">
-                  {formatSecondsFromMs(uxStats.avg_home_lcp_ms)}
-                </div>
-              </div>
-              <div className="rounded-xl border border-surface-200 bg-surface-50 px-3 py-2">
-                <div className="text-[11px] text-surface-500">Invalid / session</div>
-                <div className="text-sm font-semibold text-surface-800">
-                  {avgInvalidPerSession === null ? "--" : avgInvalidPerSession.toFixed(2)}
-                </div>
-              </div>
+
+            <div className="mint-home-metrics-grid">
+              <GlassPanel variant="card" className="mint-home-metric">
+                <MintLabel>Sessions</MintLabel>
+                <div>{uxStats.sessions}</div>
+              </GlassPanel>
+              <GlassPanel variant="card" className="mint-home-metric">
+                <MintLabel>Avg first interaction</MintLabel>
+                <div>{formatSecondsFromMs(uxStats.avg_first_interaction_ms)}</div>
+              </GlassPanel>
+              <GlassPanel variant="card" className="mint-home-metric">
+                <MintLabel>Avg first place</MintLabel>
+                <div>{formatSecondsFromMs(uxStats.avg_first_place_ms)}</div>
+              </GlassPanel>
+              <GlassPanel variant="card" className="mint-home-metric">
+                <MintLabel>Avg Home LCP</MintLabel>
+                <div>{formatSecondsFromMs(uxStats.avg_home_lcp_ms)}</div>
+              </GlassPanel>
             </div>
-            <div className="mt-3 rounded-2xl border border-surface-200 bg-surface-50 p-3">
-              <div className="text-xs font-semibold text-surface-700">UX Target Snapshot</div>
-              <div className="mt-2 grid gap-2 sm:grid-cols-2">
-                {uxTargetChecks.map((check) => (
-                  <div key={check.id} className="rounded-xl border border-surface-200 bg-white px-3 py-2">
-                    <div className="flex items-center justify-between gap-2">
-                      <div className="text-xs font-semibold text-surface-700">
-                        {check.id} · {check.label}
-                      </div>
-                      <span
-                        className={[
-                          "inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-bold",
-                          targetStatusClass(check.status),
-                        ].join(" ")}
-                      >
-                        {targetStatusLabel(check.status)}
-                      </span>
-                    </div>
-                    <div className="mt-1 text-[11px] text-surface-500">target {check.target}</div>
-                    <div className="text-xs font-semibold text-surface-800">current {check.valueText}</div>
+
+            <div className="mint-home-targets">
+              {uxTargetChecks.map((check) => (
+                <GlassPanel key={check.id} variant="card" className="mint-home-target">
+                  <div className="mint-home-target__top">
+                    <span>{check.id}</span>
+                    <span className={targetStatusClass(check.status)}>{targetStatusLabel(check.status)}</span>
                   </div>
+                  <div className="mint-home-target__value">target {check.target}</div>
+                  <div className="mint-home-target__value">current {check.valueText}</div>
+                </GlassPanel>
+              ))}
+            </div>
+
+            {uxSnapshotHistory.length > 0 ? (
+              <div className="mint-home-snapshots">
+                {uxSnapshotHistory.map((snapshot, index) => (
+                  <GlassPanel key={`${snapshot.generatedAtIso}-${index}`} variant="card" className="mint-home-snapshot">
+                    <div>{snapshot.generatedAtIso}</div>
+                    <div>{snapshot.context ? `${snapshot.context.route} / ${snapshot.context.viewport}` : "Context unavailable"}</div>
+                  </GlassPanel>
                 ))}
               </div>
-            </div>
-            <div className="mt-3 rounded-2xl border border-surface-200 bg-surface-50 p-3">
-              <div className="flex items-center justify-between gap-2">
-                <div className="text-xs font-semibold text-surface-700">Recent Snapshots (Local)</div>
-                <button
-                  className="btn text-[11px]"
-                  disabled={uxSnapshotHistory.length === 0}
-                  onClick={() => {
-                    clearUxTelemetrySnapshotHistory();
-                    setUxSnapshotHistory([]);
-                    toast.success("Snapshot history reset", "Local snapshot history has been cleared.");
-                  }}
-                >
-                  Clear History
-                </button>
-              </div>
-              {uxSnapshotHistory.length === 0 ? (
-                <div className="mt-2 text-[11px] text-surface-500">No snapshot history yet.</div>
-              ) : (
-                <div className="mt-2 grid gap-2">
-                  {uxSnapshotHistory.map((snapshot, index) => (
-                    <div
-                      key={`${snapshot.generatedAtIso}-${index}`}
-                      className="rounded-xl border border-surface-200 bg-white px-3 py-2"
-                    >
-                      <div className="flex flex-wrap items-center justify-between gap-2">
-                        <div className="text-[11px] font-semibold text-surface-700">
-                          {snapshot.generatedAtIso}
-                        </div>
-                        <div className="text-[10px] text-surface-500">
-                          {summarizeTargetStatuses(snapshot.checks.map((check) => check.status))}
-                        </div>
-                      </div>
-                      <div className="mt-1 text-[11px] text-surface-500">
-                        {snapshot.context
-                          ? `${snapshot.context.route} / ${snapshot.context.viewport}`
-                          : "Context unavailable"}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
+            ) : (
+              <div className="mint-home-snapshots__empty">No snapshot history yet.</div>
+            )}
           </div>
         </details>
       </section>
 
-      {/* ─── Footer hint ──────────────────────────────────────────── */}
-      <footer className="max-w-5xl mx-auto px-4 py-8 text-center">
-        <p className="text-xs text-surface-400">
-          Nyano Triad League is part of the Nyano ecosystem.
-        </p>
-      </footer>
+      {showQuickGuide ? (
+        <div className="mint-home-modal">
+          <GlassPanel variant="card" className="mint-home-modal__panel">
+            <MintTitleText as="h3" className="mint-home-modal__title">1分ルールガイド</MintTitleText>
+            <div className="mint-home-modal__body">
+              <p>1. 空いているマスを選ぶ</p>
+              <p>2. 手札からカードを選んで置く</p>
+              <p>3. 隣接する辺の数値が高いと相手カードを反転できる</p>
+              <p>4. 9手終了時にタイル枚数が多い側が勝ち</p>
+            </div>
+            <div className="mint-home-modal__actions">
+              <MintPressable tone="soft" onClick={() => setShowQuickGuide(false)}>
+                閉じる
+              </MintPressable>
+              <Link className="mint-home-modal__link" to={themed("/rulesets")}>
+                Rulesetsを見る
+              </Link>
+            </div>
+          </GlassPanel>
+        </div>
+      ) : null}
     </div>
   );
 }

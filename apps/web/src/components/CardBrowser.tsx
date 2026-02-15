@@ -19,13 +19,31 @@ type Props = {
   index: GameIndexV1;
   onSelect?: (tokenId: string) => void;
   className?: string;
+  presetHand?: JankenHand | -1;
+  presetMinEdgeSum?: number;
 };
 
-export function CardBrowser({ index, onSelect, className = "" }: Props) {
-  const [handFilter, setHandFilter] = React.useState<JankenHand | -1>(-1);
-  const [minEdgeSum, setMinEdgeSum] = React.useState(0);
+export function CardBrowser({
+  index,
+  onSelect,
+  className = "",
+  presetHand = -1,
+  presetMinEdgeSum = 0,
+}: Props) {
+  const [handFilter, setHandFilter] = React.useState<JankenHand | -1>(presetHand);
+  const [minEdgeSum, setMinEdgeSum] = React.useState(presetMinEdgeSum);
   const [visibleCount, setVisibleCount] = React.useState(PAGE_SIZE);
   const inspect = useCardPreview();
+
+  React.useEffect(() => {
+    setHandFilter(presetHand);
+    setVisibleCount(PAGE_SIZE);
+  }, [presetHand]);
+
+  React.useEffect(() => {
+    setMinEdgeSum(presetMinEdgeSum);
+    setVisibleCount(PAGE_SIZE);
+  }, [presetMinEdgeSum]);
 
   const results = React.useMemo<CardSearchResult[]>(() => {
     return searchCards(index, {

@@ -2857,3 +2857,52 @@
 - `pnpm.cmd -C apps/web e2e -- e2e/stage-focus.spec.ts` OK (15 passed)
 - `pnpm.cmd -C apps/web e2e -- e2e/ux-guardrails.spec.ts` OK (7 passed)
 - `pnpm.cmd -C apps/web typecheck` 未実行（既知の依存解決問題が継続のため）
+
+## 2026-02-15 - WO017?WO024: Mint app screens + primitives + e2e/app-asset pipeline
+
+### Why
+- `/match` 以外（Home/Arena/Decks/Onboarding）が管理画面寄りで、参照Mockの「スマホゲームUI」から乖離していた。
+- 画面横展開のために、Mint UI プリミティブ（Glass/Pressable/Icon/TabNav/BigButton）を共通化する必要があった。
+- 将来の画像差し替えに備えて、Gemini 生成パイプラインと主要画面の e2e ガードを再確認・整備したかった。
+
+### What
+- Added Mint shell/chrome and primitives:
+  - `apps/web/src/components/mint/MintGameShell.tsx`
+  - `apps/web/src/components/mint/MintAppChrome.tsx`
+  - `apps/web/src/components/mint/GlassPanel.tsx`
+  - `apps/web/src/components/mint/MintPressable.tsx`
+  - `apps/web/src/components/mint/MintBigButton.tsx`
+  - `apps/web/src/components/mint/MintTabNav.tsx`
+  - `apps/web/src/components/mint/MintTypography.tsx`
+  - `apps/web/src/components/mint/icons/MintIcon.tsx`
+  - `apps/web/src/lib/theme.ts`
+- Updated app layout:
+  - `apps/web/src/App.tsx`
+    - Mint theme 時のみ App chrome を `MintGameShell + MintAppChrome` へ切替。
+    - `focusRoute`（stage/focus）では従来どおり header/footer 非表示を維持。
+    - `prefers-reduced-motion` / `data-vfx` への既存制御は維持。
+- Rebuilt main screens with Mint structure:
+  - `apps/web/src/pages/Home.tsx`（4大ボタン、3ステップ、infobar、Tools/Settings）
+  - `apps/web/src/pages/Arena.tsx`（side nav + banner + quick play + difficulty cards）
+  - `apps/web/src/pages/Decks.tsx`（3カラム Deck Builder）
+  - `apps/web/src/pages/Start.tsx`（onboarding 3 cards + progress pill）
+  - `apps/web/src/main.tsx`（`/start` route追加）
+  - `apps/web/src/components/CardBrowser.tsx`（preset filter props追加）
+- Expanded Mint CSS for app screens/primitives:
+  - `apps/web/src/mint-theme/mint-theme.css`
+    - Shell背景、glassパネル、tab/button/typography、Home/Arena/Decks/Start レイアウト群を追加。
+    - reduced-motion と `data-vfx=off` で背景演出を抑制。
+- Gemini pipeline availability + asset directory:
+  - `apps/web/public/assets/gen/.gitkeep` 追加（生成物置き場を固定）
+  - Existing `scripts/gemini_image_gen.mjs` / batch prompt / docs の運用を確認。
+- e2e guardrails:
+  - Added `apps/web/e2e/mint-app-screens-guardrails.spec.ts`
+  - Updated `apps/web/e2e/home.spec.ts`
+  - Updated `apps/web/e2e/smoke.spec.ts`
+  - Updated `apps/web/e2e/decks-match.spec.ts`
+
+### Verify
+- `pnpm -C apps/web test` OK
+- `pnpm -C apps/web typecheck` OK
+- `pnpm -C apps/web build` OK
+- `pnpm.cmd -C apps/web e2e -- e2e/mint-app-screens-guardrails.spec.ts e2e/home.spec.ts e2e/smoke.spec.ts e2e/decks-match.spec.ts` OK (16 passed)

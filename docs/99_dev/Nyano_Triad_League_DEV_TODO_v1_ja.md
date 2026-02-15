@@ -198,3 +198,11 @@
 - [x] 2026-02-15 Battle Stage UX追補: stage-focus E2Eに「コメント/状況表示が盤面・手札ドックより上にある」ガードレールを追加。
 - [x] 2026-02-15 Battle Stage UX追補: 手札ドックが盤面に被る問題を修正（fixed基準の是正 + stageドック縦圧縮 + board占有補正）。`stage-focus` / `ux-guardrails` E2Eで回帰確認済み。
 - [x] 2026-02-15 Match/Stage UX追補: `/match?ui=mint` の Nyanoコメント+状況表示を盤面上部固定スタックへ統一し、表示ON/OFFでの位置ずれを抑制。Prompt文字を縮小。Details `×` の閉じる導線を安定化（再オープン抑止含む）。stage focus の Pixi盤面/手札ドックを再バランスし、手札可視性を回復しつつ board-dock 非重なりを維持（stage-focus 15 passed / ux-guardrails 7 passed）。
+- [x] 2026-02-15 WO017: `MintGameShell` / `MintAppChrome` を追加し、Mintテーマ時の App chrome をゲームUI化。`focusRoute`（`/battle-stage` `/replay-stage` / `focus=1`）は既存挙動を維持。
+- [x] 2026-02-15 WO018: Home を Mintメインメニュー構成へ更新（Arena/Decks/Replay/Stream の4大ボタン、3ステップ導線、下部インフォバー、Tools/Settings 折りたたみ）。
+- [x] 2026-02-15 WO019: Arena をモード選択UIへ更新（左サイドナビ、中央バナー、右Quick Play、下部難易度カード + `difficulty` クエリ保持）。
+- [x] 2026-02-15 WO020: Decks を Deck Builder 3カラムへ更新（Deck Stats/Filter、Card Browser、中央フォーム、右Deck Summary + Save Deck）。
+- [x] 2026-02-15 WO021: `/start` ページを追加し、Onboarding 3カード + DONE進捗 pill を実装。Home から遷移導線を追加。
+- [x] 2026-02-15 WO022: Mint UIプリミティブを追加（`GlassPanel` `MintPressable` `MintIcon` `MintBigButton` `MintTabNav` `MintTypography`）し、主要画面に適用。
+- [x] 2026-02-15 WO023: Gemini画像生成パイプラインを確認・整備（`scripts/gemini_image_gen.mjs` / `scripts/asset_prompts/nytl_ui_assets.v1.json` / `docs/01_design/NYTL_ASSET_GEN_GEMINI_NANO_BANANA_PRO_v1_ja.md` / `apps/web/public/assets/gen/.gitkeep`）。
+- [x] 2026-02-15 WO024: e2e/visual guardrails を追加（`e2e/mint-app-screens-guardrails.spec.ts`）し、Home/Decks系既存e2e期待値をMint UIに追従更新。

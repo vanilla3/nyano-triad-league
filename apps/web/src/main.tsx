@@ -21,6 +21,7 @@ import { BattleStagePage } from "./pages/BattleStage";
 const ArenaPage = React.lazy(() => import("./pages/Arena").then((m) => ({ default: m.ArenaPage })));
 const EventsPage = React.lazy(() => import("./pages/Events").then((m) => ({ default: m.EventsPage })));
 const DecksPage = React.lazy(() => import("./pages/Decks").then((m) => ({ default: m.DecksPage })));
+const StartPage = React.lazy(() => import("./pages/Start").then((m) => ({ default: m.StartPage })));
 const PlaygroundPage = React.lazy(() => import("./pages/Playground").then((m) => ({ default: m.PlaygroundPage })));
 const ReplayPage = React.lazy(() => import("./pages/Replay").then((m) => ({ default: m.ReplayPage })));
 const ReplayStagePage = React.lazy(() => import("./pages/ReplayStage").then((m) => ({ default: m.ReplayStagePage })));
@@ -59,6 +60,7 @@ const router = createBrowserRouter([
       { path: "arena", element: <Lazy><ArenaPage /></Lazy> },
       { path: "events", element: <Lazy><EventsPage /></Lazy> },
       { path: "decks", element: <Lazy><DecksPage /></Lazy> },
+      { path: "start", element: <Lazy><StartPage /></Lazy> },
       { path: "match", element: <MatchPage /> },
       { path: "battle-stage", element: <BattleStagePage /> },
       { path: "playground", element: <Lazy><PlaygroundPage /></Lazy> },

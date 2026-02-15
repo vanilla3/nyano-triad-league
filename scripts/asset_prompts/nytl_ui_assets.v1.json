@@ -1,0 +1,51 @@
+{
+  "version": 1,
+  "defaults": {
+    "model": "gemini-3-pro-image-preview",
+    "aspect": "1:1",
+    "size": "1K",
+    "responseModalities": ["Image"],
+    "alsoWebp": false
+  },
+  "jobs": [
+    {
+      "id": "icon_arena_swords",
+      "out": "apps/web/public/assets/gen/icon_arena_swords_v1.png",
+      "prompt": "soft pastel line icon of crossed swords, cute mobile game UI icon, thick outline, subtle gradient fill, no text, centered, transparent background"
+    },
+    {
+      "id": "icon_decks_cards",
+      "out": "apps/web/public/assets/gen/icon_decks_cards_v1.png",
+      "prompt": "soft pastel line icon of a small stack of playing cards, cute mobile game UI icon, thick outline, subtle gradient fill, no text, centered, transparent background"
+    },
+    {
+      "id": "icon_replay_video",
+      "out": "apps/web/public/assets/gen/icon_replay_video_v1.png",
+      "prompt": "soft pastel line icon of a film strip / replay symbol, cute mobile game UI icon, thick outline, subtle gradient fill, no text, centered, transparent background"
+    },
+    {
+      "id": "icon_stream_tv",
+      "out": "apps/web/public/assets/gen/icon_stream_tv_v1.png",
+      "prompt": "soft pastel line icon of a small TV with antenna, cute mobile game UI icon, thick outline, subtle gradient fill, no text, centered, transparent background"
+    },
+    {
+      "id": "badge_done",
+      "out": "apps/web/public/assets/gen/badge_done_v1.png",
+      "prompt": "small capsule badge with the word DONE removed (no text), pastel green glass badge, thick outline, subtle shine, cute mobile game UI, centered, transparent background"
+    },
+    {
+      "id": "banner_arena_16x9",
+      "out": "apps/web/public/assets/gen/banner_arena_16x9_v1.png",
+      "aspect": "16:9",
+      "size": "2K",
+      "prompt": "soft pastel glass banner background with sparkles and paw prints, cute mobile game UI style, empty center area for logo text, no readable text, 16:9"
+    },
+    {
+      "id": "bg_cloud_corners_16x9",
+      "out": "apps/web/public/assets/gen/bg_cloud_corners_16x9_v1.png",
+      "aspect": "16:9",
+      "size": "2K",
+      "prompt": "soft pastel sky gradient background with fluffy white clouds in the corners, subtle sparkles, very light paw print pattern, cute mobile game UI background, no text, 16:9"
+    }
+  ]
+}

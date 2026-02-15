@@ -1,25 +1,28 @@
 import React from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import type { CardData } from "@nyano/triad-engine";
 import { fetchNyanoCards } from "@/lib/nyano_rpc";
 import { deleteDeck, exportDecksJson, importDecksJson, listDecks, upsertDeck, type DeckV1 } from "@/lib/deck_store";
 import { CardMini } from "@/components/CardMini";
 import { CardBrowser } from "@/components/CardBrowser";
-import { EmptyState } from "@/components/EmptyState";
 import { useToast } from "@/components/Toast";
 import { errorMessage } from "@/lib/errorMessage";
 import { writeClipboardText } from "@/lib/clipboard";
-import { fetchGameIndex, type GameIndexV1 } from "@/lib/nyano/gameIndex";
-import { generateRecommendedDeck, strategyLabel, type DeckStrategy } from "@/lib/demo_decks";
+import { fetchGameIndex, type GameIndexV1, type JankenHand } from "@/lib/nyano/gameIndex";
+import { buildCardDataFromIndex, generateRecommendedDeck, strategyLabel, type DeckStrategy } from "@/lib/demo_decks";
+import { GlassPanel } from "@/components/mint/GlassPanel";
+import { MintPressable } from "@/components/mint/MintPressable";
+import { MintTabNav } from "@/components/mint/MintTabNav";
+import { MintTitleText } from "@/components/mint/MintTypography";
+import { MintIcon } from "@/components/mint/icons/MintIcon";
+import { appendThemeToPath, resolveAppTheme } from "@/lib/theme";
 
 function parseTokenIds(text: string): bigint[] {
   const parts = text
     .split(/[^0-9]+/g)
     .map((s) => s.trim())
     .filter((s) => s.length > 0);
-
-  const out = parts.map((s) => BigInt(s));
-  return out;
+  return parts.map((s) => BigInt(s));
 }
 
 function validateTokenIds(tokenIds: bigint[]): string | null {
@@ -32,39 +35,60 @@ function validateTokenIds(tokenIds: bigint[]): string | null {
   return null;
 }
 
-function toCardsMap(bundles: Map<bigint, any>): Map<bigint, CardData> {
-  const m = new Map<bigint, CardData>();
-  for (const [tid, b] of bundles.entries()) {
-    m.set(tid, b.card as CardData);
+function toCardsMap(bundles: Map<bigint, { card: CardData }>): Map<bigint, CardData> {
+  const map = new Map<bigint, CardData>();
+  for (const [tokenId, bundle] of bundles.entries()) {
+    map.set(tokenId, bundle.card);
   }
-  return m;
+  return map;
 }
 
 const STRATEGIES: DeckStrategy[] = ["balanced", "aggressive", "defensive", "janken_mix"];
 
+const FILTER_PRESETS = [
+  { id: "all", label: "All", hand: -1 as const, minEdgeSum: 0 },
+  { id: "attacker", label: "Attacker", hand: 0 as const, minEdgeSum: 0 },
+  { id: "defender", label: "Defender", hand: 2 as const, minEdgeSum: 0 },
+  { id: "power", label: "Power", hand: -1 as const, minEdgeSum: 27 },
+  { id: "other", label: "Other", hand: 1 as const, minEdgeSum: 0 },
+] as const;
+
+type FilterPresetId = (typeof FILTER_PRESETS)[number]["id"];
+
+function formatDateShort(iso: string): string {
+  const dt = new Date(iso);
+  if (Number.isNaN(dt.getTime())) return iso;
+  return `${dt.getMonth() + 1}/${dt.getDate()} ${dt.getHours()}:${dt.getMinutes().toString().padStart(2, "0")}`;
+}
+
 export function DecksPage() {
+  const [searchParams] = useSearchParams();
+  const theme = resolveAppTheme(searchParams);
+  const themed = React.useCallback((path: string) => appendThemeToPath(path, theme), [theme]);
+
   const [decks, setDecks] = React.useState<DeckV1[]>(() => listDecks());
-
   const [editingId, setEditingId] = React.useState<string | null>(null);
-  const [name, setName] = React.useState<string>("");
-  const [tokenText, setTokenText] = React.useState<string>("");
+  const [name, setName] = React.useState("");
+  const [tokenText, setTokenText] = React.useState("");
   const [error, setError] = React.useState<string | null>(null);
-
-  const toast = useToast();
-
   const [previewLoading, setPreviewLoading] = React.useState(false);
   const [previewCards, setPreviewCards] = React.useState<Map<bigint, CardData> | null>(null);
+  const [importText, setImportText] = React.useState("");
+  const [selectedFilter, setSelectedFilter] = React.useState<FilterPresetId>("all");
 
-  // Game index for CardBrowser and recommended decks
   const [gameIndex, setGameIndex] = React.useState<GameIndexV1 | null>(null);
   const [indexLoading, setIndexLoading] = React.useState(false);
 
+  const toast = useToast();
+
   React.useEffect(() => {
     setIndexLoading(true);
-    fetchGameIndex().then((idx) => {
-      setGameIndex(idx);
-      setIndexLoading(false);
-    }).catch(() => setIndexLoading(false));
+    fetchGameIndex()
+      .then((idx) => {
+        setGameIndex(idx);
+        setIndexLoading(false);
+      })
+      .catch(() => setIndexLoading(false));
   }, []);
 
   const refresh = () => setDecks(listDecks());
@@ -77,10 +101,10 @@ export function DecksPage() {
     setError(null);
   };
 
-  const loadDeckToForm = (d: DeckV1) => {
-    setEditingId(d.id);
-    setName(d.name);
-    setTokenText(d.tokenIds.join(", "));
+  const loadDeckToForm = (deck: DeckV1) => {
+    setEditingId(deck.id);
+    setName(deck.name);
+    setTokenText(deck.tokenIds.join(", "));
     setPreviewCards(null);
     setError(null);
   };
@@ -92,22 +116,23 @@ export function DecksPage() {
     let tokenIds: bigint[];
     try {
       tokenIds = parseTokenIds(tokenText);
-    } catch (e: unknown) {
+    } catch (e) {
       setError(errorMessage(e));
       return;
     }
-    const vErr = validateTokenIds(tokenIds);
-    if (vErr) {
-      setError(vErr);
+
+    const validationError = validateTokenIds(tokenIds);
+    if (validationError) {
+      setError(validationError);
       return;
     }
 
     setPreviewLoading(true);
     try {
       const bundles = await fetchNyanoCards(tokenIds);
-      setPreviewCards(toCardsMap(bundles));
+      setPreviewCards(toCardsMap(bundles as Map<bigint, { card: CardData }>));
       toast.info("Preview loaded");
-    } catch (e: unknown) {
+    } catch (e) {
       setError(errorMessage(e));
     } finally {
       setPreviewLoading(false);
@@ -116,32 +141,30 @@ export function DecksPage() {
 
   const doSave = () => {
     setError(null);
-
     let tokenIds: bigint[];
     try {
       tokenIds = parseTokenIds(tokenText);
-    } catch (e: unknown) {
+    } catch (e) {
       setError(errorMessage(e));
       return;
     }
-    const vErr = validateTokenIds(tokenIds);
-    if (vErr) {
-      setError(vErr);
+
+    const validationError = validateTokenIds(tokenIds);
+    if (validationError) {
+      setError(validationError);
       return;
     }
 
-    const d = upsertDeck({ id: editingId ?? undefined, name, tokenIds });
-    toast.success("Saved deck", d.name);
+    const deck = upsertDeck({ id: editingId ?? undefined, name, tokenIds });
+    toast.success("Saved deck", deck.name);
     refresh();
-    setEditingId(d.id);
+    setEditingId(deck.id);
   };
 
   const copy = async (label: string, text: string) => {
     await writeClipboardText(text);
     toast.success("Copied", label);
   };
-
-  const [importText, setImportText] = React.useState<string>("");
 
   const doExportAll = async () => {
     await copy("Decks JSON", exportDecksJson());
@@ -153,242 +176,272 @@ export function DecksPage() {
       const { imported, skipped } = importDecksJson(importText);
       refresh();
       toast.success("Imported decks", `imported=${imported}, skipped=${skipped}`);
-    } catch (e: unknown) {
+    } catch (e) {
       setError(errorMessage(e));
     }
   };
 
+  const deckCardTotal = React.useMemo(() => decks.reduce((sum, deck) => sum + deck.tokenIds.length, 0), [decks]);
+  const uniqueTokenCount = React.useMemo(() => {
+    const ids = new Set<string>();
+    for (const deck of decks) {
+      for (const tokenId of deck.tokenIds) ids.add(tokenId);
+    }
+    return ids.size;
+  }, [decks]);
+
+  const filterPreset = FILTER_PRESETS.find((x) => x.id === selectedFilter) ?? FILTER_PRESETS[0];
+
+  const selectedTokenIds = React.useMemo(() => {
+    try {
+      return parseTokenIds(tokenText).map((value) => value.toString());
+    } catch {
+      return [];
+    }
+  }, [tokenText]);
+
+  const selectedCardMap = React.useMemo(() => {
+    if (!gameIndex || selectedTokenIds.length === 0) return null;
+    return buildCardDataFromIndex(gameIndex, selectedTokenIds);
+  }, [gameIndex, selectedTokenIds]);
+
+  const tabs = React.useMemo(
+    () => [
+      { to: themed("/decks"), label: "Decks", icon: "decks" as const, exact: true },
+      { to: themed("/arena"), label: "Arena", icon: "arena" as const },
+      { to: themed("/events"), label: "Events", icon: "events" as const },
+      { to: themed("/replay"), label: "Replay", icon: "replay" as const },
+      { to: themed("/stream"), label: "Stream", icon: "stream" as const },
+      { to: themed("/"), label: "Settings", icon: "settings" as const },
+    ],
+    [themed],
+  );
+
   return (
-    <div className="grid gap-6">
-      <section className="card">
-        <div className="card-hd">
-          <div className="text-base font-semibold">Deck Studio 🧩</div>
-          <div className="text-xs text-slate-500">Nyano tokenId（5枚）を保存して、Match / Events へすばやく持ち込むための管理画面です（ローカル保存）。</div>
-        </div>
-
-        <div className="card-bd grid gap-4">
-          <div className="callout callout-info">
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="badge badge-sky">TIP</span>
-              <div className="text-sm font-medium">「5枚・重複なし」が基本ルールです</div>
-            </div>
-            <ul className="mt-2 list-disc pl-6 text-sm">
-              <li>Preview は RPC 経由で Nyano を読み込み、カード性能に変換します</li>
-              <li>デッキを保存したら <span className="font-medium">Set as A/B</span> で Match へ即投入できます</li>
-            </ul>
-          </div>
-          <div className="grid gap-3 md:grid-cols-3">
-            <div className="grid gap-2 md:col-span-1">
-              <div className="text-xs font-medium text-slate-600">Deck name</div>
-              <input className="input" value={name} onChange={(e) => setName(e.target.value)} placeholder="My Deck" />
-            </div>
-
-            <div className="grid gap-2 md:col-span-2">
-              <div className="text-xs font-medium text-slate-600">tokenIds（5つ）</div>
-              <input
-                className="input"
-                value={tokenText}
-                onChange={(e) => setTokenText(e.target.value)}
-                placeholder="例: 123, 456, 789, 1011, 1213"
-              />
-              <div className="text-xs text-slate-500">区切りはカンマ/スペース/改行など何でもOKです。</div>
-            </div>
-          </div>
-
-          <div className="flex flex-wrap items-center gap-2">
-            <button className="btn btn-primary" onClick={doSave}>
-              Save deck
-            </button>
-            <button className="btn" onClick={doPreview} disabled={previewLoading}>
-              {previewLoading ? "Loading…" : "Preview cards"}
-            </button>
-            <button className="btn" onClick={resetForm}>
-              Reset
-            </button>
-          </div>
-
-          {error ? (
-            <div className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-900">{error}</div>
-          ) : null}
-
-          {previewCards ? (
-            <div className="grid gap-2">
-              <div className="text-xs font-medium text-slate-600">Preview</div>
-              <div className="deck-preview-grid grid grid-cols-5 gap-3">
-                {Array.from(previewCards.values()).map((c) => (
-                  <CardMini key={c.tokenId.toString()} card={c} owner={0} />
-                ))}
-              </div>
-            </div>
-          ) : null}
-        </div>
+    <div className="mint-decks-screen">
+      <section className="mint-decks-header">
+        <MintTitleText as="h2" className="mint-decks-header__title">
+          Nyano Triad League - Deck Builder
+        </MintTitleText>
+        <MintTabNav items={tabs} className="mint-decks-header__tabs" />
       </section>
 
-      {/* RM02-101: Quick Deck (Recommended Presets) */}
-      {gameIndex && (
-        <section className="card">
-          <div className="card-hd">
-            <div className="text-base font-semibold">Quick Deck</div>
-            <div className="text-xs text-slate-500">戦略別のおすすめデッキをワンタップで生成・保存できます</div>
-          </div>
-          <div className="card-bd">
-            <div className="flex flex-wrap gap-2">
-              {STRATEGIES.map((s) => (
+      <section className="mint-decks-layout">
+        <aside className="mint-decks-left">
+          <GlassPanel variant="panel" className="mint-decks-panel">
+            <MintTitleText as="h3" className="mint-decks-panel__title">Deck Stats</MintTitleText>
+            <div className="mint-decks-stats">
+              <div><span>Total Decks</span><strong>{decks.length}</strong></div>
+              <div><span>Total Cards</span><strong>{deckCardTotal}</strong></div>
+              <div><span>Unique Cards</span><strong>{uniqueTokenCount}</strong></div>
+            </div>
+          </GlassPanel>
+
+          <GlassPanel variant="panel" className="mint-decks-panel">
+            <MintTitleText as="h3" className="mint-decks-panel__title">Glass Filter</MintTitleText>
+            <div className="mint-decks-filters">
+              {FILTER_PRESETS.map((filter) => (
                 <button
-                  key={s}
-                  className="btn btn-sm"
-                  onClick={() => {
-                    const deck = generateRecommendedDeck(gameIndex, s);
-                    upsertDeck({
-                      name: deck.name,
-                      tokenIds: deck.tokenIds.map((t) => BigInt(t)),
-                      origin: deck.origin,
-                      memo: deck.memo,
-                    });
-                    refresh();
-                    toast.success("Deck created", `${strategyLabel(s)} Deck`);
-                  }}
+                  key={filter.id}
+                  className={[
+                    "mint-pressable mint-decks-filter",
+                    selectedFilter === filter.id ? "mint-decks-filter--active" : "",
+                  ].join(" ")}
+                  onClick={() => setSelectedFilter(filter.id)}
                 >
-                  {strategyLabel(s)}
+                  {filter.label}
                 </button>
               ))}
             </div>
-          </div>
-        </section>
-      )}
+          </GlassPanel>
 
-      {/* RM02-100: Card Browser */}
-      <section className="card">
-        <div className="card-hd">
-          <div className="text-base font-semibold">Card Browser</div>
-          <div className="text-xs text-slate-500">カードを検索・フィルタリングして、クリックでtokenIdをデッキフォームに追加できます</div>
-        </div>
-        <div className="card-bd">
-          {indexLoading ? (
-            <div className="py-8 text-center text-sm text-slate-400">Loading game index...</div>
-          ) : gameIndex ? (
-            <CardBrowser
-              index={gameIndex}
-              onSelect={(tokenId) => {
-                setTokenText((prev) => {
-                  const existing = prev.trim();
-                  if (!existing) return tokenId;
-                  return `${existing}, ${tokenId}`;
-                });
-                toast.info("Added", `Token #${tokenId} added to form`);
-              }}
-            />
-          ) : (
-            <div className="py-8 text-center text-sm text-slate-400">
-              Game index not available. Place <span className="font-mono">index.v1.json</span> in <span className="font-mono">/game/</span> directory.
-            </div>
-          )}
-        </div>
-      </section>
-
-      <section className="card">
-        <div className="card-hd flex flex-wrap items-center justify-between gap-2">
-          <div>
-            <div className="text-base font-semibold">Saved decks</div>
-            <div className="text-xs text-slate-500">ブラウザの localStorage に保存されています</div>
-          </div>
-
-          <div className="flex flex-wrap items-center gap-2">
-            <button className="btn" onClick={doExportAll}>
-              Copy export JSON
-            </button>
-          </div>
-        </div>
-
-        <div className="card-bd grid gap-3">
-          {decks.length === 0 ? (
-            <EmptyState
-              expression="calm"
-              title="デッキがまだありません"
-              description="上のフォームでtokenIdを5つ入力してデッキを作成してください。"
-              action={{ label: "Quick Play (デッキ不要)", to: "/match?mode=guest&opp=vs_nyano_ai&ai=normal&rk=v2&ui=mint" }}
-            />
-          ) : (
-            decks.map((d) => (
-              <div key={d.id} className="rounded-lg border border-slate-200 bg-white p-3">
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <div className="flex items-center gap-2">
-                    <span className="font-medium">{d.name}</span>
-                    {d.origin && (
-                      <span className={[
-                        "rounded-full px-1.5 py-0.5 text-[10px] font-semibold",
-                        d.origin === "guest" ? "bg-nyano-100 text-nyano-700" :
-                        d.origin === "recommended" ? "bg-sky-100 text-sky-700" :
-                        d.origin === "imported" ? "bg-emerald-100 text-emerald-700" :
-                        "bg-slate-100 text-slate-600",
-                      ].join(" ")}>
-                        {d.origin}
-                      </span>
-                    )}
-                    {d.difficulty && (
-                      <span className="rounded-full bg-purple-100 px-1.5 py-0.5 text-[10px] font-semibold text-purple-700">
-                        {d.difficulty}
-                      </span>
-                    )}
-                  </div>
-                  <div className="text-xs text-slate-500">updated: {d.updatedAt}</div>
-                </div>
-
-                {d.memo && <div className="mt-0.5 text-xs text-slate-400">{d.memo}</div>}
-                <div className="mt-1 text-xs text-slate-600 font-mono">{d.tokenIds.join(", ")}</div>
-
-                <div className="mt-3 flex flex-wrap items-center gap-2">
-                  <button className="btn" onClick={() => loadDeckToForm(d)}>
-                    Edit
-                  </button>
-
-                  <Link className="btn no-underline" to={`/match?a=${d.id}&ui=mint`}>
-                    Set as A
-                  </Link>
-                  <Link className="btn no-underline" to={`/match?b=${d.id}&ui=mint`}>
-                    Set as B
-                  </Link>
-
-                  <button className="btn" onClick={() => copy("Deck JSON", JSON.stringify(d, null, 2))}>
-                    Copy deck JSON
-                  </button>
-                  <button
-                    className="btn btn-danger"
+          {gameIndex ? (
+            <GlassPanel variant="panel" className="mint-decks-panel">
+              <MintTitleText as="h3" className="mint-decks-panel__title">Quick Deck</MintTitleText>
+              <div className="mint-decks-quickdeck">
+                {STRATEGIES.map((strategy) => (
+                  <MintPressable
+                    key={strategy}
+                    size="sm"
+                    tone="soft"
                     onClick={() => {
-                      if (!window.confirm(`Delete deck: ${d.name}?`)) return;
-                      deleteDeck(d.id);
+                      const deck = generateRecommendedDeck(gameIndex, strategy);
+                      upsertDeck({
+                        name: deck.name,
+                        tokenIds: deck.tokenIds.map((tokenId) => BigInt(tokenId)),
+                        origin: deck.origin,
+                        memo: deck.memo,
+                      });
                       refresh();
-                      toast.success("Deleted deck", d.name);
-                      if (editingId === d.id) resetForm();
+                      toast.success("Deck created", `${strategyLabel(strategy)} Deck`);
                     }}
                   >
-                    Delete
-                  </button>
-                </div>
+                    {strategyLabel(strategy)}
+                  </MintPressable>
+                ))}
               </div>
-            ))
-          )}
-        </div>
-      </section>
+            </GlassPanel>
+          ) : null}
 
-      <section className="card">
-        <div className="card-hd">
-          <div className="text-base font-semibold">Import decks</div>
-          <div className="text-xs text-slate-500">Export した JSON（配列）を貼り付けて取り込みます</div>
-        </div>
-        <div className="card-bd grid gap-3">
-          <textarea
-            className="input min-h-[140px] font-mono text-xs"
-            value={importText}
-            onChange={(e) => setImportText(e.target.value)}
-            placeholder='[{"id":"...","name":"...","tokenIds":["1","2","3","4","5"],...}]'
-          />
-          <div className="flex flex-wrap items-center gap-2">
-            <button className="btn btn-primary" onClick={doImport}>
-              Import
-            </button>
-          </div>
-        </div>
+          <GlassPanel variant="panel" className="mint-decks-panel">
+            <MintTitleText as="h3" className="mint-decks-panel__title">Import / Export</MintTitleText>
+            <div className="mint-decks-import-export">
+              <MintPressable size="sm" tone="soft" onClick={doExportAll}>
+                Export JSON
+              </MintPressable>
+              <textarea
+                className="mint-decks-textarea"
+                value={importText}
+                onChange={(event) => setImportText(event.target.value)}
+                placeholder='[{"id":"...","name":"...","tokenIds":["1","2","3","4","5"]}]'
+              />
+              <MintPressable size="sm" tone="primary" onClick={doImport}>
+                Import
+              </MintPressable>
+            </div>
+          </GlassPanel>
+        </aside>
+
+        <main className="mint-decks-main">
+          <GlassPanel variant="panel" className="mint-decks-panel mint-decks-form-panel">
+            <div className="mint-decks-form-grid">
+              <label className="mint-decks-label">
+                Deck name
+                <input
+                  className="mint-decks-input"
+                  value={name}
+                  onChange={(event) => setName(event.target.value)}
+                  placeholder="My Deck"
+                />
+              </label>
+
+              <label className="mint-decks-label">
+                tokenIds (5つ)
+                <input
+                  className="mint-decks-input"
+                  value={tokenText}
+                  onChange={(event) => setTokenText(event.target.value)}
+                  placeholder="例: 123, 456, 789, 1011, 1213"
+                />
+              </label>
+
+              <div className="mint-decks-form-actions">
+                <MintPressable tone="primary" onClick={doSave}>
+                  <MintIcon name="save" size={16} />
+                  <span>Save Deck</span>
+                </MintPressable>
+                <MintPressable tone="soft" onClick={doPreview} disabled={previewLoading}>
+                  {previewLoading ? "Loading..." : "Preview Cards"}
+                </MintPressable>
+                <MintPressable tone="ghost" onClick={resetForm}>
+                  Reset
+                </MintPressable>
+              </div>
+            </div>
+
+            {error ? <div className="mint-decks-error">{error}</div> : null}
+
+            {previewCards ? (
+              <div className="mint-decks-preview-grid">
+                {Array.from(previewCards.values()).map((card) => (
+                  <CardMini key={card.tokenId.toString()} card={card} owner={0} />
+                ))}
+              </div>
+            ) : null}
+          </GlassPanel>
+
+          <GlassPanel variant="panel" className="mint-decks-panel mint-decks-browser-panel">
+            <div className="mint-decks-browser-header">
+              <MintTitleText as="h3" className="mint-decks-panel__title">Card Browser</MintTitleText>
+              <span className="mint-decks-browser-filter">Filter: {filterPreset.label}</span>
+            </div>
+            {indexLoading ? (
+              <div className="mint-decks-loading">Loading game index...</div>
+            ) : gameIndex ? (
+              <CardBrowser
+                key={`browser-${selectedFilter}`}
+                index={gameIndex}
+                presetHand={filterPreset.hand as JankenHand | -1}
+                presetMinEdgeSum={filterPreset.minEdgeSum}
+                onSelect={(tokenId) => {
+                  setTokenText((previous) => {
+                    const trimmed = previous.trim();
+                    return trimmed.length > 0 ? `${trimmed}, ${tokenId}` : tokenId;
+                  });
+                  toast.info("Added", `Token #${tokenId} added to form`);
+                }}
+              />
+            ) : (
+              <div className="mint-decks-loading">
+                Game index not available. Place <code>index.v1.json</code> in <code>/game/</code>.
+              </div>
+            )}
+          </GlassPanel>
+        </main>
+
+        <aside className="mint-decks-right">
+          <GlassPanel variant="panel" className="mint-decks-panel mint-decks-summary">
+            <MintTitleText as="h3" className="mint-decks-panel__title">Deck Summary</MintTitleText>
+            <div className="mint-decks-summary__cards">
+              {selectedCardMap && selectedTokenIds.length > 0 ? (
+                selectedTokenIds.map((tokenId) => {
+                  const card = selectedCardMap.get(BigInt(tokenId));
+                  return (
+                    <div key={tokenId} className="mint-decks-summary__slot">
+                      {card ? <CardMini card={card} owner={0} /> : <span>#{tokenId}</span>}
+                    </div>
+                  );
+                })
+              ) : (
+                <div className="mint-decks-summary__empty">フォームに tokenId を入力するとここに表示されます。</div>
+              )}
+            </div>
+            <MintPressable tone="primary" onClick={doSave} fullWidth>
+              Save Deck
+            </MintPressable>
+          </GlassPanel>
+
+          <GlassPanel variant="panel" className="mint-decks-panel mint-decks-saved">
+            <MintTitleText as="h3" className="mint-decks-panel__title">Saved Decks</MintTitleText>
+            {decks.length === 0 ? (
+              <div className="mint-decks-saved__empty">デッキがまだありません。</div>
+            ) : (
+              <div className="mint-decks-saved__list">
+                {decks.map((deck) => (
+                  <GlassPanel key={deck.id} variant="card" className="mint-decks-saved__item">
+                    <div className="mint-decks-saved__name">{deck.name}</div>
+                    <div className="mint-decks-saved__meta">{deck.tokenIds.join(", ")}</div>
+                    <div className="mint-decks-saved__meta">updated: {formatDateShort(deck.updatedAt)}</div>
+                    <div className="mint-decks-saved__actions">
+                      <MintPressable size="sm" tone="soft" onClick={() => loadDeckToForm(deck)}>Edit</MintPressable>
+                      <MintPressable size="sm" tone="soft" to={themed(`/match?a=${deck.id}&ui=mint`)}>Set as A</MintPressable>
+                      <MintPressable size="sm" tone="soft" to={themed(`/match?b=${deck.id}&ui=mint`)}>Set as B</MintPressable>
+                      <MintPressable size="sm" tone="ghost" onClick={() => copy("Deck JSON", JSON.stringify(deck, null, 2))}>
+                        Copy
+                      </MintPressable>
+                      <MintPressable
+                        size="sm"
+                        tone="ghost"
+                        onClick={() => {
+                          if (!window.confirm(`Delete deck: ${deck.name}?`)) return;
+                          deleteDeck(deck.id);
+                          refresh();
+                          toast.success("Deleted deck", deck.name);
+                          if (editingId === deck.id) resetForm();
+                        }}
+                      >
+                        Delete
+                      </MintPressable>
+                    </div>
+                  </GlassPanel>
+                ))}
+              </div>
+            )}
+            <Link className="mint-decks-saved__quickplay" to={themed("/match?mode=guest&opp=vs_nyano_ai&ai=normal&rk=v2&ui=mint")}>
+              Quick Play（デッキ不要）
+            </Link>
+          </GlassPanel>
+        </aside>
       </section>
     </div>
   );

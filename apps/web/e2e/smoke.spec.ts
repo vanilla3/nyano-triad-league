@@ -28,8 +28,8 @@ test.describe("Page smoke tests", () => {
   });
 
   test("/decks loads", async ({ page }) => {
-    await page.goto("/decks");
-    await expect(page.getByText("Deck Studio")).toBeVisible({ timeout: 10_000 });
+    await page.goto("/decks?theme=mint");
+    await expect(page.getByText("Deck Builder")).toBeVisible({ timeout: 10_000 });
   });
 
   test("/replay loads", async ({ page }) => {
