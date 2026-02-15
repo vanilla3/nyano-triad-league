@@ -22,6 +22,7 @@ import { BattleHudMint } from "@/components/BattleHudMint";
 import { BattleTopHudMint } from "@/components/BattleTopHudMint";
 import { HandDisplayMint } from "@/components/HandDisplayMint";
 import { GameResultOverlayMint } from "@/components/GameResultOverlayMint";
+import { PlayerSidePanelMint } from "@/components/PlayerSidePanelMint";
 import { ScoreBar } from "@/components/ScoreBar";
 import { LastMoveFeedback, useBoardFlipAnimation } from "@/components/BoardFlipAnimator";
 import { CardFlight } from "@/components/CardFlight";
@@ -857,6 +858,8 @@ export function MatchPage() {
   const rulesetId = React.useMemo(() => computeRulesetId(ruleset), [ruleset]);
 
   const used = React.useMemo(() => computeUsed(turns, firstPlayer), [turns, firstPlayer]);
+  const remainingCardsA = Math.max(0, 5 - used.usedA.size);
+  const remainingCardsB = Math.max(0, 5 - used.usedB.size);
   const warnUsed = React.useMemo(() => countWarningMarks(turns, firstPlayer), [turns, firstPlayer]);
   const currentTurnIndex = turns.length;
   const currentPlayer = turnPlayer(firstPlayer, currentTurnIndex);
@@ -1952,6 +1955,7 @@ export function MatchPage() {
 
   const showMintTopHud = isMint && showStageAssistUi && sim.ok;
   const showMintDetailHud = useMintUi && showStageAssistUi && sim.ok && (!isMint || density !== "minimal");
+  const showMintPlayerPanels = isMint && !isStageFocusRoute;
   const showDesktopQuickCommit = useMintUi
     && !isRpg
     && !isAiTurn
@@ -2583,95 +2587,120 @@ export function MatchPage() {
                     - selectedCell = draftCell
                     - onCellSelect = handleCellSelect
                     ──────────────────────────────────────────── */}
-                <div className={isStageFocusRoute ? "stage-focus-board-shell" : ""}>
-                  {sim.ok ? (
-                    isMint || (isEngine && engineRendererFailed) ? (
-                      <DuelStageMint impact={nyanoReactionImpact} impactBurst={stageImpactBurst}>
-                        <BoardViewMint
+                <div
+                  className={[
+                    isStageFocusRoute ? "stage-focus-board-shell" : "",
+                    showMintPlayerPanels ? "mint-battle-layout" : "",
+                  ].filter(Boolean).join(" ")}
+                >
+                  {showMintPlayerPanels && (
+                    <PlayerSidePanelMint
+                      side="left"
+                      playerIndex={0}
+                      isActive={currentPlayer === 0}
+                      remainingCards={remainingCardsA}
+                    />
+                  )}
+
+                  <div className={showMintPlayerPanels ? "mint-battle-layout__board" : ""}>
+                    {sim.ok ? (
+                      isMint || (isEngine && engineRendererFailed) ? (
+                        <DuelStageMint impact={nyanoReactionImpact} impactBurst={stageImpactBurst}>
+                          <BoardViewMint
+                            board={boardNow}
+                            selectedCell={draftCell}
+                            placedCell={boardAnim.placedCell}
+                            flippedCells={boardAnim.flippedCells}
+                            selectableCells={selectableCells}
+                            onCellSelect={(cell) => { telemetry.recordInteraction(); handleCellSelect(cell); }}
+                            currentPlayer={currentPlayer}
+                            showCoordinates
+                            showActionPrompt
+                            gamePhase={
+                              turns.length >= 9 ? "game_over"
+                                : isAiTurn ? "ai_turn"
+                                : draftCardIndex !== null ? "select_cell"
+                                : "select_card"
+                            }
+                            inlineError={error}
+                            onDismissError={() => setError(null)}
+                            flipTraces={showStageAssistUi && density !== "minimal" ? lastFlipTraces : null}
+                            isFlipAnimating={boardAnim.isAnimating}
+                            dragDropEnabled={enableHandDragDrop && isHandDragging}
+                            onCellDrop={handleBoardDrop}
+                            onCellDragHover={handleBoardDragHover}
+                          />
+                        </DuelStageMint>
+                      ) : useEngineRenderer ? (
+                        <DuelStageMint impact={nyanoReactionImpact} impactBurst={stageImpactBurst}>
+                          <BattleStageEngine
+                            board={boardNow}
+                            selectedCell={draftCell}
+                            selectableCells={selectableCells}
+                            onCellSelect={(cell) => { telemetry.recordInteraction(); handleCellSelect(cell); }}
+                            currentPlayer={currentPlayer}
+                            boardMaxWidthPx={engineBoardMaxWidthPx}
+                            boardMinHeightPx={engineBoardMinHeightPx}
+                            preloadTokenIds={currentDeckTokens}
+                            placedCell={boardAnim.placedCell}
+                            flippedCells={boardAnim.flippedCells}
+                            vfxQuality={resolvedVfxQuality}
+                            showActionPrompt={showStageAssistUi}
+                            gamePhase={
+                              turns.length >= 9 ? "game_over"
+                                : isAiTurn ? "ai_turn"
+                                : draftCardIndex !== null ? "select_cell"
+                                : "select_card"
+                            }
+                            inlineError={error}
+                            onDismissError={() => setError(null)}
+                            flipTraces={showStageAssistUi && density !== "minimal" ? lastFlipTraces : null}
+                            isFlipAnimating={boardAnim.isAnimating}
+                            dragDropActive={enableHandDragDrop && isHandDragging}
+                            onCellDrop={handleBoardDrop}
+                            onCellDragHover={handleBoardDragHover}
+                            onInitError={handleEngineRendererInitError}
+                          />
+                        </DuelStageMint>
+                      ) : isRpg ? (
+                        <BoardViewRPG
                           board={boardNow}
                           selectedCell={draftCell}
                           placedCell={boardAnim.placedCell}
                           flippedCells={boardAnim.flippedCells}
                           selectableCells={selectableCells}
-                          onCellSelect={(cell) => { telemetry.recordInteraction(); handleCellSelect(cell); }}
+                          onCellSelect={handleCellSelect}
                           currentPlayer={currentPlayer}
                           showCoordinates
-                          showActionPrompt
-                          gamePhase={
-                            turns.length >= 9 ? "game_over"
-                              : isAiTurn ? "ai_turn"
-                              : draftCardIndex !== null ? "select_cell"
-                              : "select_card"
-                          }
-                          inlineError={error}
-                          onDismissError={() => setError(null)}
-                          flipTraces={showStageAssistUi && density !== "minimal" ? lastFlipTraces : null}
-                          isFlipAnimating={boardAnim.isAnimating}
-                          dragDropEnabled={enableHandDragDrop && isHandDragging}
-                          onCellDrop={handleBoardDrop}
-                          onCellDragHover={handleBoardDragHover}
+                          showCandles
+                          showParticles
                         />
-                      </DuelStageMint>
-                    ) : useEngineRenderer ? (
-                      <DuelStageMint impact={nyanoReactionImpact} impactBurst={stageImpactBurst}>
-                        <BattleStageEngine
+                      ) : (
+                        <BoardView
                           board={boardNow}
                           selectedCell={draftCell}
-                          selectableCells={selectableCells}
-                          onCellSelect={(cell) => { telemetry.recordInteraction(); handleCellSelect(cell); }}
-                          currentPlayer={currentPlayer}
-                          boardMaxWidthPx={engineBoardMaxWidthPx}
-                          boardMinHeightPx={engineBoardMinHeightPx}
-                          preloadTokenIds={currentDeckTokens}
                           placedCell={boardAnim.placedCell}
                           flippedCells={boardAnim.flippedCells}
-                          vfxQuality={resolvedVfxQuality}
-                          showActionPrompt={showStageAssistUi}
-                          gamePhase={
-                            turns.length >= 9 ? "game_over"
-                              : isAiTurn ? "ai_turn"
-                              : draftCardIndex !== null ? "select_cell"
-                              : "select_card"
-                          }
-                          inlineError={error}
-                          onDismissError={() => setError(null)}
-                          flipTraces={showStageAssistUi && density !== "minimal" ? lastFlipTraces : null}
-                          isFlipAnimating={boardAnim.isAnimating}
-                          dragDropActive={enableHandDragDrop && isHandDragging}
-                          onCellDrop={handleBoardDrop}
-                          onCellDragHover={handleBoardDragHover}
-                          onInitError={handleEngineRendererInitError}
+                          selectableCells={selectableCells}
+                          onCellSelect={handleCellSelect}
+                          currentPlayer={currentPlayer}
+                          showCoordinates
                         />
-                      </DuelStageMint>
-                    ) : isRpg ? (
-                      <BoardViewRPG
-                        board={boardNow}
-                        selectedCell={draftCell}
-                        placedCell={boardAnim.placedCell}
-                        flippedCells={boardAnim.flippedCells}
-                        selectableCells={selectableCells}
-                        onCellSelect={handleCellSelect}
-                        currentPlayer={currentPlayer}
-                        showCoordinates
-                        showCandles
-                        showParticles
-                      />
+                      )
                     ) : (
-                      <BoardView
-                        board={boardNow}
-                        selectedCell={draftCell}
-                        placedCell={boardAnim.placedCell}
-                        flippedCells={boardAnim.flippedCells}
-                        selectableCells={selectableCells}
-                        onCellSelect={handleCellSelect}
-                        currentPlayer={currentPlayer}
-                        showCoordinates
-                      />
-                    )
-                  ) : (
-                    <div className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-xs text-rose-900">
-                      engine error: {!sim.ok ? sim.error : "unknown"}
-                    </div>
+                      <div className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-xs text-rose-900">
+                        engine error: {!sim.ok ? sim.error : "unknown"}
+                      </div>
+                    )}
+                  </div>
+
+                  {showMintPlayerPanels && (
+                    <PlayerSidePanelMint
+                      side="right"
+                      playerIndex={1}
+                      isActive={currentPlayer === 1}
+                      remainingCards={remainingCardsB}
+                    />
                   )}
                 </div>
 

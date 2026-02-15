@@ -2565,3 +2565,32 @@
 - `pnpm -C apps/web test` OK
 - `pnpm -C apps/web typecheck` OK
 - `pnpm -C apps/web build` OK
+
+## 2026-02-15 - WO013: Mint stage layout + side player panels
+
+### Why
+- 参照画像にある「左右プレイヤーパネル + 盤面中心」の対戦レイアウトを導入し、対戦の存在感を高める必要があった。
+- 既存の盤面入力系を崩さず、見た目レイヤーとして追加する方針が必要だった。
+
+### What
+- Added `apps/web/src/components/PlayerSidePanelMint.tsx`:
+  - New side panel component with avatar, player label, and remaining cards.
+  - Supports active-player emphasis and aria status labels.
+- Updated `apps/web/src/pages/Match.tsx`:
+  - Added mint-only side-panel layout (`mint-battle-layout`) around board viewport.
+  - Left/right panels show `Player A/B` and remaining cards.
+  - Remaining values are derived from existing state:
+    - `Math.max(0, 5 - used.usedA.size)`
+    - `Math.max(0, 5 - used.usedB.size)`
+  - Kept stage-focus and non-mint behavior unchanged.
+- Updated `apps/web/src/mint-theme/mint-theme.css`:
+  - Added `mint-battle-layout` (desktop 3-column: panel | board | panel).
+  - Added `mint-player-panel*` styling (glass, ring, depth, remaining card stack motif).
+  - Added responsive collapse at `<=1024px` to hide panels and prioritize board.
+- Added `apps/web/src/components/__tests__/PlayerSidePanelMint.test.tsx`:
+  - Export smoke and label/remaining-card rendering assertion.
+
+### Verify
+- `pnpm -C apps/web test` OK
+- `pnpm -C apps/web typecheck` OK
+- `pnpm -C apps/web build` OK
