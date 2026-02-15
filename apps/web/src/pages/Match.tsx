@@ -19,6 +19,7 @@ import type { TurnLogEntry } from "@/components/BoardViewRPG";
 import { BoardViewMint } from "@/components/BoardViewMint";
 import { DuelStageMint } from "@/components/DuelStageMint";
 import { BattleHudMint } from "@/components/BattleHudMint";
+import { BattleTopHudMint } from "@/components/BattleTopHudMint";
 import { HandDisplayMint } from "@/components/HandDisplayMint";
 import { GameResultOverlayMint } from "@/components/GameResultOverlayMint";
 import { ScoreBar } from "@/components/ScoreBar";
@@ -1949,6 +1950,8 @@ export function MatchPage() {
     }));
   }, [sim, cards]);
 
+  const showMintTopHud = isMint && showStageAssistUi && sim.ok;
+  const showMintDetailHud = useMintUi && showStageAssistUi && sim.ok && (!isMint || density !== "minimal");
   const showDesktopQuickCommit = useMintUi
     && !isRpg
     && !isAiTurn
@@ -2464,37 +2467,67 @@ export function MatchPage() {
                 {/* ScoreBar / BattleHud */}
                 {showStageAssistUi && sim.ok && (
                   useMintUi ? (
-                    <div className="flex items-center gap-2">
-                      <div className="flex-1">
-                        <BattleHudMint
-                          board={boardNow}
-                          turnCount={turns.length}
-                          maxTurns={9}
-                          currentPlayer={currentPlayer}
-                          tone={isEngine ? "pixi" : "mint"}
-                          gamePhase={
-                            turns.length >= 9 ? "game_over"
-                              : isAiTurn ? "ai_turn"
-                              : draftCardIndex !== null ? "select_cell"
-                              : "select_card"
-                          }
-                          moveTip={moveTip}
-                          aiReasonCode={turns.length > 0 ? aiNotes[turns.length - 1]?.reasonCode : undefined}
-                        />
-                      </div>
-                      {/* D-3: SFX Mute Toggle */}
-                      {sfx && !isStageFocusRoute && (
-                        <button
-                          className={[
-                            "mint-sfx-toggle",
-                            sfxMuted && "mint-sfx-toggle--muted",
-                          ].filter(Boolean).join(" ")}
-                          onClick={handleSfxToggle}
-                          title={sfxMuted ? "Sound ON" : "Sound OFF"}
-                          aria-label={sfxMuted ? "Unmute sound effects" : "Mute sound effects"}
-                        >
-                          {sfxMuted ? "🔇" : "🔊"}
-                        </button>
+                    <div className="grid gap-2">
+                      {showMintTopHud && (
+                        <div className="mint-top-hud-row">
+                          <div className="mint-top-hud-row__main">
+                            <BattleTopHudMint
+                              board={boardNow}
+                              turnCount={turns.length}
+                              maxTurns={9}
+                              currentPlayer={currentPlayer}
+                            />
+                          </div>
+                          {sfx && !isStageFocusRoute && (
+                            <button
+                              className={[
+                                "mint-sfx-toggle",
+                                sfxMuted && "mint-sfx-toggle--muted",
+                              ].filter(Boolean).join(" ")}
+                              onClick={handleSfxToggle}
+                              title={sfxMuted ? "Sound ON" : "Sound OFF"}
+                              aria-label={sfxMuted ? "Unmute sound effects" : "Mute sound effects"}
+                            >
+                              {sfxMuted ? "🔇" : "🔊"}
+                            </button>
+                          )}
+                        </div>
+                      )}
+
+                      {showMintDetailHud && (
+                        <div className="flex items-center gap-2">
+                          <div className="flex-1">
+                            <BattleHudMint
+                              board={boardNow}
+                              turnCount={turns.length}
+                              maxTurns={9}
+                              currentPlayer={currentPlayer}
+                              tone={isEngine ? "pixi" : "mint"}
+                              gamePhase={
+                                turns.length >= 9 ? "game_over"
+                                  : isAiTurn ? "ai_turn"
+                                  : draftCardIndex !== null ? "select_cell"
+                                  : "select_card"
+                              }
+                              moveTip={moveTip}
+                              aiReasonCode={turns.length > 0 ? aiNotes[turns.length - 1]?.reasonCode : undefined}
+                            />
+                          </div>
+                          {/* D-3: SFX Mute Toggle (engine mode keeps legacy placement) */}
+                          {sfx && !isStageFocusRoute && !showMintTopHud && (
+                            <button
+                              className={[
+                                "mint-sfx-toggle",
+                                sfxMuted && "mint-sfx-toggle--muted",
+                              ].filter(Boolean).join(" ")}
+                              onClick={handleSfxToggle}
+                              title={sfxMuted ? "Sound ON" : "Sound OFF"}
+                              aria-label={sfxMuted ? "Unmute sound effects" : "Mute sound effects"}
+                            >
+                              {sfxMuted ? "🔇" : "🔊"}
+                            </button>
+                          )}
+                        </div>
                       )}
                     </div>
                   ) : (
@@ -3206,4 +3239,3 @@ export function MatchPage() {
     </div>
   );
 }
-

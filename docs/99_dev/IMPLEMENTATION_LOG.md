@@ -2537,3 +2537,31 @@
 ### Verify
 - `pnpm -C apps/web typecheck` OK
 - `pnpm -C apps/web build` OK
+
+## 2026-02-15 - WO012: Mint Top HUD (score/turn fixed placement)
+
+### Why
+- 参照画像ベースのUI強化で、上部の状況把握（スコア/ターン）を定位置化し、盤面への視線集中を改善する必要があった。
+- 既存 `BattleHudMint` は情報量が多く、`density=minimal` ではよりシンプルな固定HUDが必要だった。
+
+### What
+- Added `apps/web/src/components/BattleTopHudMint.tsx`:
+  - New top HUD with left logo, center A/B score, right turn pill.
+  - Scores are derived from `board` (no duplicated state).
+  - Added `role`/`aria-label`/`aria-live` for accessibility.
+- Updated `apps/web/src/pages/Match.tsx`:
+  - Added Top HUD path only for `ui=mint`.
+  - `density=minimal`: show Top HUD only.
+  - `density=standard/full`: show Top HUD + existing `BattleHudMint`.
+  - Kept `engine/rpg` behavior unchanged.
+- Updated `apps/web/src/mint-theme/mint-theme.css`:
+  - Added `mint-top-hud*` classes (glass panel, score capsule, turn pill).
+  - Added responsive behavior for 360px-class widths.
+  - Wired reduced-motion and `data-vfx` branches for new HUD effects.
+- Added `apps/web/src/components/__tests__/BattleTopHudMint.test.tsx`:
+  - Export smoke test and score/turn rendering assertion.
+
+### Verify
+- `pnpm -C apps/web test` OK
+- `pnpm -C apps/web typecheck` OK
+- `pnpm -C apps/web build` OK

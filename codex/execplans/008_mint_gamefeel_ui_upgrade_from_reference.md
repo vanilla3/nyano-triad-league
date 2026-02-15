@@ -127,7 +127,7 @@
 ## 9) Progress
 
 - [x] WO-011: BG/Stage
-- [ ] WO-012: Top HUD
+- [x] WO-012: Top HUD
 - [ ] WO-013: Player panel
 - [ ] WO-014: Hand tray + Prompt
 - [ ] WO-015: Reaction stability
@@ -139,15 +139,18 @@
 
 - 2026-02-15: 参照画像の再現は “完全一致” ではなく “印象（レイヤー/厚み/定位置）” を優先
 - 2026-02-15: WO011は外部画像を増やさず、`mint-theme.css` の gradient + inline svg(data-uri) + 疑似要素で背景を構成
+- 2026-02-15: WO012は `BattleHudMint` を直接改変せず、新規 `BattleTopHudMint` を `ui=mint` 限定で差し込む方針を採用（影響範囲を局所化）
 
 ---
 
 ## 11) Surprises & Discoveries
 
 - `data-vfx` / `prefers-reduced-motion` の既存分岐がすでに整備されていたため、WO011は追加レイヤーへの分岐追記だけで実装可能だった
+- HUD切替軸を `density` に一本化することで、`minimal` と `standard/full` の意図差を小さい差分で表現できた
 
 ---
 
 ## 12) Outcome / Retrospective
 
 - WO011完了。Mint stageに pastel gamefeel の背景土台（gradient/paw pattern/sparkle+bokeh）を追加し、`vfx` と `reduced-motion` で安全に制御できる状態にした。
+- WO012完了。`ui=mint` に Top HUD（ロゴ/スコア/ターン）を追加し、`density=minimal` は Top HUD優先、`standard/full` は既存 `BattleHudMint` 併用の導線に整理した。

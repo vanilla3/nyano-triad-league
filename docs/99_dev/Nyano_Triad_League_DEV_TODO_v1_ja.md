@@ -183,3 +183,4 @@
 - [x] 2026-02-15 WO009追補: `apps/web/e2e/rulesets-ux-guardrails.spec.ts` を追加し、Rulesets導線（おすすめ表示 + このルールで対戦遷移 + rk保持）をE2E化。`pnpm.cmd -C apps/web e2e:ux` で 7 passed を確認。
 - [x] 2026-02-15 WO008追補: `apps/web/e2e/match-setup-ux-guardrails.spec.ts` を追加し、Match Setup導線（1行サマリ同期 + Advanced自動展開 + ccap URL同期）をE2E化。`pnpm.cmd -C apps/web e2e:ux` で 9 passed を確認。
 - [x] 2026-02-15 WO011: Mint gamefeel背景を実装（pastel gradient + paw pattern + sparkle/bokeh）し、`prefers-reduced-motion` / `data-vfx` 分岐で演出強度を制御。`DuelStageMint` は `mint-stage--gamefeel` に統一。
+- [x] 2026-02-15 WO012: Mint Top HUD（左ロゴ/中央A-Bスコア/右TURN）を `ui=mint` 向けに追加。`density=minimal` は Top HUD優先、`standard/full` は既存 `BattleHudMint` 併用に整理。
