@@ -9,7 +9,6 @@
 - このリポジトリでは **決定論**（transcript 再現）と **URL / プロトコル互換**が最優先です。
 
 運用メモ（短いガイド）:
-
 - `codex/CODEX_OPERATOR_GUIDE.md`
 
 ## 2) 推奨ワークフロー（失敗しにくい）
@@ -17,11 +16,13 @@
 1. **現状把握**（該当ページ/コンポーネント/仕様 doc を読む）
 2. **ExecPlan を書く**（大きめ改修・不確実性が高い場合）
    - テンプレ: `codex/PLANS.md`
+   - 既存例: `codex/execplans/`
 3. **小さく実装**（1 PR = 1 まとまり）
+   - `codex/work_orders/*.md` を 1 本ずつ
 4. **必ず検証**
    - フロント: `pnpm -C apps/web test && pnpm -C apps/web build`
    - エンジン: `pnpm -C packages/triad-engine test`
-5. **ログ更新**
+5. **ログ更新（必要なら）**
    - `docs/99_dev/Nyano_Triad_League_DEV_TODO_v1_ja.md`
    - `docs/99_dev/IMPLEMENTATION_LOG.md`
 
@@ -38,3 +39,11 @@
 
 > テンプレファイル: `codex/WORK_ORDER_TEMPLATE.md`
 
+## 4) 公式リファレンス（Codex）
+
+- AGENTS.md: https://developers.openai.com/codex/guides/agents-md/
+- Config basics: https://developers.openai.com/codex/config-basic/
+- Config reference: https://developers.openai.com/codex/config-reference/
+- Security（approval/sandbox）: https://developers.openai.com/codex/security/
+- Prompting guide（Cookbook）: https://developers.openai.com/cookbook/examples/gpt-5/codex_prompting_guide/
+- Exec Plans（Cookbook）: https://developers.openai.com/cookbook/articles/codex_exec_plans/

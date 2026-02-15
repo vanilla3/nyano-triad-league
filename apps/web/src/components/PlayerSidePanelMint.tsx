@@ -35,7 +35,7 @@ export function PlayerSidePanelMint({
     >
       <div className="mint-player-panel__avatar">
         <NyanoAvatar
-          size={72}
+          size={56}
           expression={playerIndex === 0 ? "playful" : "calm"}
           alt={playerLabel}
         />

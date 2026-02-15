@@ -336,8 +336,8 @@ export function MatchPage() {
       kind: "battle",
     })
   );
-  const engineBoardMaxWidthPx = isBattleStageRoute ? stageBoardSizing.maxWidthPx : undefined;
-  const engineBoardMinHeightPx = isBattleStageRoute ? stageBoardSizing.minHeightPx : undefined;
+  const stageEngineBoardMaxWidthPxBase = isBattleStageRoute ? stageBoardSizing.maxWidthPx : undefined;
+  const stageEngineBoardMinHeightPxBase = isBattleStageRoute ? stageBoardSizing.minHeightPx : undefined;
   const decks = React.useMemo(() => listDecks(), []);
 
   React.useEffect(() => {
@@ -567,6 +567,15 @@ export function MatchPage() {
 
   // F-1: Mint drawer state
   const [drawerOpen, setDrawerOpen] = React.useState(false);
+  const drawerToggleBlockedUntilRef = React.useRef(0);
+  const closeDrawer = React.useCallback(() => {
+    drawerToggleBlockedUntilRef.current = Date.now() + 260;
+    setDrawerOpen(false);
+  }, []);
+  const openDrawer = React.useCallback(() => {
+    if (Date.now() < drawerToggleBlockedUntilRef.current) return;
+    setDrawerOpen(true);
+  }, []);
 
   // F-2: UI Density toggle (minimal/standard/full)
   const [density, setDensity] = React.useState<UiDensity>(() =>
@@ -1967,7 +1976,29 @@ export function MatchPage() {
     && !isRpg
     && turns.length < 9
     && currentDeckTokens.length > 0;
-  const showFocusToolbarActions = isStageFocusRoute && showFocusHandDock && showStageControls;
+  const showStageFocusHandDock = isStageFocusRoute && showFocusHandDock;
+  const stageFocusEngineBoardMaxWidthCapPx =
+    isStageFocusRoute && showStageFocusHandDock
+      ? Math.max(306, Math.round(stageBoardSizing.minHeightPx - 58))
+      : undefined;
+  const engineBoardMaxWidthPx =
+    stageEngineBoardMaxWidthPxBase === undefined
+      ? undefined
+      : stageFocusEngineBoardMaxWidthCapPx === undefined
+        ? stageEngineBoardMaxWidthPxBase
+        : Math.min(stageEngineBoardMaxWidthPxBase, stageFocusEngineBoardMaxWidthCapPx);
+  const engineBoardMinHeightPx =
+    stageEngineBoardMinHeightPxBase === undefined
+      ? undefined
+      : stageFocusEngineBoardMaxWidthCapPx === undefined
+        ? stageEngineBoardMinHeightPxBase
+        : Math.min(stageEngineBoardMinHeightPxBase, Math.round(stageFocusEngineBoardMaxWidthCapPx * 0.84));
+  const showFocusToolbarActions = isStageFocusRoute && !showStageFocusHandDock && showStageControls;
+  const showMintStatusSummarySlot = showStageAssistUi
+    && useMintUi;
+  const showLegacyStatusSummary = showStageAssistUi
+    && !useMintUi
+    && Boolean(lastFlipSummaryText);
   const canCommitFromFocusToolbar = !isAiTurn && draftCell !== null && draftCardIndex !== null;
   const canUndoFromFocusToolbar = !isAiTurn && turns.length > 0;
   const canManualAiMoveFromFocusToolbar = isVsNyanoAi && !aiAutoPlay && isAiTurn;
@@ -2042,7 +2073,10 @@ export function MatchPage() {
       ref={stageViewportRef}
       className={
         isStageFocusRoute
-          ? "stage-focus-root"
+          ? [
+            "stage-focus-root",
+            showStageFocusHandDock ? "stage-focus-root--with-hand-dock" : "",
+          ].filter(Boolean).join(" ")
           : isEngineFocus
             ? "grid gap-4"
             : "grid gap-6"
@@ -2427,7 +2461,13 @@ export function MatchPage() {
               }
             >
               {/* ── Left: Board + Hand ── */}
-              <div className={["grid gap-4", isStageFocusRoute ? "stage-focus-main-column" : ""].filter(Boolean).join(" ")}>
+              <div
+                className={[
+                  "grid gap-4",
+                  isStageFocusRoute ? "stage-focus-main-column" : "",
+                  showStageFocusHandDock ? "stage-focus-main-column--with-hand-dock" : "",
+                ].filter(Boolean).join(" ")}
+              >
                 {/* Guest deck preview */}
                 {!isEngineFocus && isGuestMode && cards && (
                   <details open={turns.length === 0} className="rounded-lg border border-surface-200 bg-surface-50 p-3">
@@ -2544,8 +2584,27 @@ export function MatchPage() {
                   )
                 )}
 
-                {/* AI turn notice */}
-                {showStageAssistUi && isAiTurn && (
+                {/* AI turn notice (mint: fixed slot to avoid board jump) */}
+                {showStageAssistUi && useMintUi ? (
+                  <div className={["mint-ai-notice-slot", !isAiTurn && "mint-ai-notice-slot--idle"].filter(Boolean).join(" ")}>
+                    {isAiTurn ? (
+                      <div className="mint-ai-notice" role="status" aria-live="polite">
+                        {aiAutoPlay ? (
+                          <span>
+                            <span className="font-semibold animate-pulse">Nyano is thinking...</span>
+                            {aiCountdownMs !== null ? ` ${Math.max(0.1, aiCountdownMs / 1000).toFixed(1)}s` : ""}
+                          </span>
+                        ) : (
+                          "Nyano turn. Press \"Nyano Move\"."
+                        )}
+                      </div>
+                    ) : (
+                      <div className="mint-ai-notice mint-ai-notice--placeholder" aria-hidden="true">
+                        Nyano is thinking...
+                      </div>
+                    )}
+                  </div>
+                ) : showStageAssistUi && isAiTurn ? (
                   <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900">
                     {aiAutoPlay ? (
                       <span>
@@ -2555,6 +2614,36 @@ export function MatchPage() {
                     ) : (
                       "Nyano turn. Press \"Nyano Move\"."
                     )}
+                  </div>
+                ) : null}
+
+                {useMintUi && (showStageAssistUi || isStageFocusRoute) && (
+                  <div className={["mint-announcer-stack", isStageFocusRoute ? "stage-focus-announcer-stack" : ""].filter(Boolean).join(" ")}>
+                    {/* Fixed status slot: always reserved to prevent layout shift */}
+                    {showMintStatusSummarySlot ? (
+                      <div className={["mint-status-summary-slot", !lastFlipSummaryText && "mint-status-summary-slot--idle"].filter(Boolean).join(" ")}>
+                        {lastFlipSummaryText ? (
+                          <div className="mint-status-summary" role="status" aria-live="polite">
+                            <span className="mint-status-summary__text">Battle: {lastFlipSummaryText}</span>
+                          </div>
+                        ) : (
+                          <div className="mint-status-summary mint-status-summary--placeholder" aria-hidden="true">
+                            <span className="mint-status-summary__text">Battle status</span>
+                          </div>
+                        )}
+                      </div>
+                    ) : null}
+
+                    {/* Fixed Nyano slot: always reserved via NyanoReactionSlot */}
+                    <NyanoReactionSlot
+                      input={nyanoReactionInput}
+                      turnIndex={turns.length}
+                      rpg={isRpg}
+                      mint={useMintUi}
+                      tone={isEngine ? "pixi" : "mint"}
+                      aiReasonCode={currentAiReasonCode}
+                      stageFocus={isStageFocusRoute}
+                    />
                   </div>
                 )}
 
@@ -2774,41 +2863,28 @@ export function MatchPage() {
                   />
                 )}
 
-                {/* P1-1: Flip summary in Japanese (density >= standard) */}
-                {showStageAssistUi && (!useMintUi || density !== "minimal") && lastFlipSummaryText && (
+                {/* Legacy (non-mint) status summary */}
+                {!isStageFocusRoute && showLegacyStatusSummary ? (
                   <div className={
-                    useMintUi
-                      ? "rounded-xl border px-3 py-2 text-xs font-semibold"
-                      : isRpg
-                        ? "rounded-lg px-3 py-2 text-xs font-semibold"
-                        : "rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900"
+                    isRpg
+                      ? "rounded-lg px-3 py-2 text-xs font-semibold"
+                      : "rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900"
                   }
                   style={
-                    useMintUi ? { background: "var(--mint-warning-bg)", color: "var(--mint-flip)", borderColor: "rgba(245,158,11,0.2)" }
-                    : isRpg ? { background: "rgba(245,166,35,0.15)", color: "#F5A623", border: "1px solid rgba(245,166,35,0.3)" }
+                    isRpg ? { background: "rgba(245,166,35,0.15)", color: "#F5A623", border: "1px solid rgba(245,166,35,0.3)" }
                     : undefined
                   }
                   >
                     Battle: {lastFlipSummaryText}
                   </div>
-                )}
-
-                {/* P1-2: Nyano Reaction (stable slot prevents layout jump) */}
-                <NyanoReactionSlot
-                  input={nyanoReactionInput}
-                  turnIndex={turns.length}
-                  rpg={isRpg}
-                  mint={useMintUi}
-                  tone={isEngine ? "pixi" : "mint"}
-                  aiReasonCode={currentAiReasonCode}
-                  stageFocus={isStageFocusRoute}
-                />
+                ) : null}
 
                 {showFocusHandDock && (
                   <div
                     className={[
-                      "mint-focus-hand-dock sticky bottom-2 z-20 grid gap-2 rounded-2xl border p-2 shadow-xl backdrop-blur",
+                      "mint-focus-hand-dock grid gap-2 rounded-2xl border p-2 shadow-xl backdrop-blur",
                       isStageFocusRoute ? "mint-focus-hand-dock--stage" : "",
+                      !isStageFocusRoute ? "mint-focus-hand-dock--inline sticky bottom-2 z-20" : "",
                     ].filter(Boolean).join(" ")}
                   >
                     <div className="flex items-center justify-between gap-2">
@@ -3068,8 +3144,8 @@ export function MatchPage() {
               {/* Mint mode: content lives in slide-out drawer */}
               {useMintUi ? (
                 <>
-                  <DrawerToggleButton onClick={() => setDrawerOpen(true)} />
-                  <MatchDrawerMint open={drawerOpen} onClose={() => setDrawerOpen(false)}>
+                  {!drawerOpen && <DrawerToggleButton onClick={openDrawer} />}
+                  <MatchDrawerMint open={drawerOpen} onClose={closeDrawer}>
                     {/* F-2: Density toggle */}
                     <div className="flex items-center gap-1 rounded-xl p-1" style={{ background: "var(--mint-surface-dim)" }}>
                       {(["minimal", "standard", "full"] as const).map((d) => (

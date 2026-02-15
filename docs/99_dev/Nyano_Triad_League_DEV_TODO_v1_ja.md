@@ -190,3 +190,11 @@
 - [x] 2026-02-15 WO016: `mint-pressable` を導入し、board cell / hand card / result button の押下文法（hover/active/focus-visible）を統一。reduced-motion / data-vfx 抑制分岐を追加。
 - [x] 2026-02-15 WO016/WO010追補: `ux-guardrails` にキーボードEnter選択と reduced-motion 時の pressable transition 抑制テストを追加（4 passed）。
 - [x] 2026-02-15 Match UX修正: Nyanoコメント連動の盤面ズレ要因だった stage impact の transformアニメを非位置変化型へ置換。あわせて「カードを選んでください」の文字サイズを縮小。
+- [x] 2026-02-15 Match UX追補: 状況実況テキスト起因の盤面ズレを抑制（HUD/AI noticeの固定スロット化）。合わせて盤面を拡大し、左右プレイヤーパネルを縮小。
+- [x] 2026-02-15 Match UX修正: バトル画面「詳細情報」ドロワーの × で閉じない問題を修正（close伝播制御 + 開いている間はトグル非表示）。
+- [x] 2026-02-15 Match UX修正: 状況表示テキスト（Battle summary）を固定スロット化し、表示/非表示で盤面位置がずれないよう改善。
+- [x] 2026-02-15 Battle Stage focus UX改善: 手札ドックを下部固定化し、重複ツールバー操作を整理。盤面サイズ算出を拡大寄りに調整して、`ui=engine&focus=1` でスクロール前提になりにくい導線へ改善。`stage-focus` / `ux-guardrails` E2Eで回帰確認済み。
+- [x] 2026-02-15 Battle Stage UX追補: stage focus の「状況表示 + Nyanoコメント」を盤面上部の固定スロットへ移設。下側（手札導線近傍）の表示を止め、視線導線とレイアウト安定性を改善。
+- [x] 2026-02-15 Battle Stage UX追補: stage-focus E2Eに「コメント/状況表示が盤面・手札ドックより上にある」ガードレールを追加。
+- [x] 2026-02-15 Battle Stage UX追補: 手札ドックが盤面に被る問題を修正（fixed基準の是正 + stageドック縦圧縮 + board占有補正）。`stage-focus` / `ux-guardrails` E2Eで回帰確認済み。
+- [x] 2026-02-15 Match/Stage UX追補: `/match?ui=mint` の Nyanoコメント+状況表示を盤面上部固定スタックへ統一し、表示ON/OFFでの位置ずれを抑制。Prompt文字を縮小。Details `×` の閉じる導線を安定化（再オープン抑止含む）。stage focus の Pixi盤面/手札ドックを再バランスし、手札可視性を回復しつつ board-dock 非重なりを維持（stage-focus 15 passed / ux-guardrails 7 passed）。

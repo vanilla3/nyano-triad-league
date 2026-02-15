@@ -66,6 +66,7 @@ async function disableGuestTutorial(page: Page): Promise<void> {
   await page.addInitScript(() => {
     try {
       localStorage.setItem("nytl.tutorial.seen", "true");
+      localStorage.setItem("nytl.ui.density", "standard");
       localStorage.setItem(
         "nytl.onboarding.progress_v1",
         JSON.stringify({
@@ -201,6 +202,106 @@ test.describe("UX regression guardrails", () => {
       expect(shift.max).toBeLessThanOrEqual(0.1);
       expect(shift.total).toBeLessThanOrEqual(0.2);
     }
+  });
+
+  test("Mint AI notice slot keeps board position stable when commentary appears", async ({ page }) => {
+    await disableGuestTutorial(page);
+    await page.goto("/match?mode=guest&opp=vs_nyano_ai&auto=0&rk=v2&ui=mint");
+    await dismissGuestTutorialIfPresent(page);
+
+    await expect(page.getByText("Guest Quick Play")).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByRole("option", { name: /^Card 1:/ }).first()).toBeVisible({ timeout: 15_000 });
+
+    const deckPreview = page.locator("details").filter({ hasText: "Deck Preview" }).first();
+    if (await deckPreview.isVisible().catch(() => false)) {
+      const open = await deckPreview.evaluate((el) => el.hasAttribute("open"));
+      if (open) {
+        await deckPreview.locator("summary").click();
+        await expect.poll(
+          () => deckPreview.evaluate((el) => el.hasAttribute("open")),
+        ).toBe(false);
+      }
+    }
+
+    const boardFrame = page.locator(".mint-board-frame").first();
+    const noticeSlot = page.locator(".mint-ai-notice-slot").first();
+    await expect(boardFrame).toBeVisible();
+    await expect(noticeSlot).toBeVisible();
+
+    const boardBefore = await readRect(boardFrame);
+    const slotBefore = await readRect(noticeSlot);
+    expect(slotBefore.height).toBeGreaterThanOrEqual(30);
+
+    await commitMove(page, 1, 0);
+    await expect(noticeSlot.getByText(/Nyano turn|Nyano is thinking/i)).toBeVisible({ timeout: 10_000 });
+
+    const boardAfter = await readRect(boardFrame);
+    const slotAfter = await readRect(noticeSlot);
+
+    expect(Math.abs(slotAfter.height - slotBefore.height)).toBeLessThanOrEqual(2);
+    expect(Math.abs(boardAfter.docY - boardBefore.docY)).toBeLessThanOrEqual(2);
+    expect(Math.abs(boardAfter.height - boardBefore.height)).toBeLessThanOrEqual(2);
+  });
+
+  test("Match details drawer closes via the close button and stays closed", async ({ page }) => {
+    await disableGuestTutorial(page);
+    await page.goto("/match?mode=guest&opp=pvp&auto=0&rk=v2&ui=mint");
+    await dismissGuestTutorialIfPresent(page);
+
+    await expect(page.getByText("Guest Quick Play")).toBeVisible({ timeout: 15_000 });
+    const openDetailsButton = page.getByRole("button", { name: "Open match details" });
+    await expect(openDetailsButton).toBeVisible();
+    await openDetailsButton.click();
+
+    const drawer = page.locator(".mint-drawer").first();
+    await expect(drawer).toHaveClass(/mint-drawer--open/);
+
+    const closeButton = page.getByRole("button", { name: "Close drawer" });
+    await expect(closeButton).toBeVisible();
+    await closeButton.click();
+
+    await expect(drawer).not.toHaveClass(/mint-drawer--open/);
+    await page.waitForTimeout(250);
+    await expect(drawer).not.toHaveClass(/mint-drawer--open/);
+    await expect(openDetailsButton).toBeVisible();
+  });
+
+  test("Mint status summary slot keeps stable height when battle text appears/disappears", async ({ page }) => {
+    await disableGuestTutorial(page);
+    await page.goto("/match?mode=guest&opp=pvp&auto=0&rk=v2&ui=mint");
+    await dismissGuestTutorialIfPresent(page);
+
+    await expect(page.getByText("Guest Quick Play")).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByRole("option", { name: /^Card 1:/ }).first()).toBeVisible({ timeout: 15_000 });
+
+    const deckPreview = page.locator("details").filter({ hasText: "Deck Preview" }).first();
+    if (await deckPreview.isVisible().catch(() => false)) {
+      const open = await deckPreview.evaluate((el) => el.hasAttribute("open"));
+      if (open) {
+        await deckPreview.locator("summary").click();
+        await expect.poll(
+          () => deckPreview.evaluate((el) => el.hasAttribute("open")),
+        ).toBe(false);
+      }
+    }
+
+    const boardFrame = page.locator(".mint-board-frame").first();
+    const summarySlot = page.locator(".mint-status-summary-slot").first();
+    await expect(boardFrame).toBeVisible();
+    await expect(summarySlot).toBeVisible();
+
+    const boardBefore = await readRect(boardFrame);
+    const slotBefore = await readRect(summarySlot);
+    expect(slotBefore.height).toBeGreaterThanOrEqual(30);
+
+    await commitMove(page, 1, 0);
+    await commitMove(page, 1, 4);
+
+    const boardAfter = await readRect(boardFrame);
+    const slotAfter = await readRect(summarySlot);
+
+    expect(Math.abs(slotAfter.height - slotBefore.height)).toBeLessThanOrEqual(2);
+    expect(Math.abs(boardAfter.docY - boardBefore.docY)).toBeLessThanOrEqual(2);
   });
 
   test("Mint board cells remain keyboard-selectable via Enter", async ({ page }) => {

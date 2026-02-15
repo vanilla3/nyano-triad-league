@@ -2708,3 +2708,152 @@
 ### Verify
 - `pnpm.cmd -C apps/web e2e -- e2e/ux-guardrails.spec.ts` OKï¼ˆ4 passedï¼‰
 - `pnpm.cmd -C apps/web build` OK
+
+## 2026-02-15 - Match UX follow-up: commentary text stability + board/panel rebalance
+
+### Why
+- ƒoƒgƒ‹’†‚Ìó‹µÀ‹µƒeƒLƒXƒgiHUD/AI noticej‚ÌoŒ»E”ñ•\¦‚ÅcƒŒƒCƒAƒEƒg‚ª•Ï“®‚µA”Õ–Ê‚ªã‰º‚É—h‚ê‚é‘ÌŠ´‚ªc‚Á‚Ä‚¢‚½B
+- ”Õ–Ê‚ğ‚æ‚è‘å‚«‚­Œ©‚¹‚½‚¢ˆê•ûA¶‰EƒvƒŒƒCƒ„[•\¦‚Íî•ñ–§“x‚ğ‰º‚°‚Ä‚æ‚¢—v–]‚ª‚ ‚Á‚½B
+
+### What
+- Updated `apps/web/src/components/BattleHudMint.tsx`:
+  - `moveTip` / `aiReason` ‚ğğŒ•`‰æ‚©‚çŒÅ’èƒXƒƒbƒg•`‰æ‚Ö•ÏXB
+  - ‹óó‘Ô‚Å‚à“¯‚¶˜g‚ğ•Û‚µAÀ‹µƒeƒLƒXƒg‚Ì—L–³‚ÅHUD‚‚³‚ª—h‚ê‚È‚¢‚æ‚¤‚É’²®B
+- Updated `apps/web/src/pages/Match.tsx`:
+  - Mint UI‚ÌAIÀ‹µƒoƒi[‚ğ `mint-ai-notice-slot` ‚ÅíƒXƒƒbƒgŠm•Û‚·‚é\¬‚Ö•ÏXB
+  - ”ñ•\¦‚ÍƒvƒŒ[ƒXƒzƒ‹ƒ_‚Å‚‚³‚¾‚¯ˆÛ‚µA”Õ–Ê‚Ì‰Ÿ‚µ‰º‚°/ˆø‚«ã‚°‚ğ–h~B
+- Updated `apps/web/src/components/PlayerSidePanelMint.tsx` + `apps/web/src/mint-theme/mint-theme.css`:
+  - ƒvƒŒƒCƒ„[ƒpƒlƒ‹‚ğk¬iavatar/•¶š/‘•üƒTƒCƒY‚ÆƒJƒ‰ƒ€•‚ğƒ_ƒEƒ“jB
+  - ƒXƒe[ƒW/ƒ{[ƒh‚Ì“à‘¤—]”’‚ğ‹l‚ßA”Õ–Ê‚ÌŒ©‚½–ÚƒTƒCƒY‚ğŠg‘åB
+  - HUD‚ÌÀ‹µƒXƒƒbƒgŒÅ’è•EellipsisEemptyó‘ÔƒXƒ^ƒCƒ‹‚ğ’Ç‰ÁB
+
+### Verify
+- `pnpm.cmd -C apps/web e2e -- e2e/ux-guardrails.spec.ts` OK (4 passed)
+- `pnpm.cmd -C apps/web build` OK
+- `pnpm.cmd -C apps/web typecheck` NG (Šù’m‚ÌˆË‘¶•s‘«: `pixi.js` / `fflate`)
+- Re-verify: `pnpm.cmd -C apps/web e2e -- e2e/ux-guardrails.spec.ts` OK (5 passed, with AI notice slot guardrail)
+
+## 2026-02-15 - Match UX hotfix: details drawer close reliability + status text no-shift slots
+
+### Why
+- ƒoƒgƒ‹‰æ–Ê‚ÅuÚ×î•ñvƒhƒƒ[‚Ì ~ ‚ğ‰Ÿ‚µ‚Ä‚à•Â‚¶‚È‚¢i‚Ü‚½‚Í‘¦ÄƒI[ƒvƒ“‚·‚éj‘ÌŒ±‚ª”­¶B
+- ó‹µ•\¦ƒeƒLƒXƒgiBattle summaryj‚ªo‚½‚èÁ‚¦‚½‚è‚·‚é“x‚ÉA”Õ–ÊˆÊ’u‚ªã‰º‚µ‚Ä‘ÌŒ±‚ª•sˆÀ’è‚¾‚Á‚½B
+
+### What
+- Updated `apps/web/src/components/MatchDrawerMint.tsx`:
+  - ƒRƒ“ƒ|[ƒlƒ“ƒg‚ğƒNƒŠ[ƒ“Ä’è‹`‚µAcloseƒNƒŠƒbƒN‚Ì“`”d—}~‚ğ’Ç‰ÁB
+  - ƒhƒƒ[–{‘Ì‚Å click/pointerdown ‚ğ stopPropagation ‚µA”wŒiE”w–Ê—v‘f‚Ö‚ÌƒCƒxƒ“ƒg˜R‚ê‚ğ–h~B
+  - close button ‚ğ `type="button"` + –¾¦“I‚È `~` •\¦‚É“ˆêB
+- Updated `apps/web/src/pages/Match.tsx`:
+  - `drawerOpen` ’†‚Í `DrawerToggleButton` ‚ğ”ñ•\¦‰»‚µA•Â‚¶‚é‘€ì‚Æ“¯‚ÌÄƒI[ƒvƒ“‚ğ–h~B
+  - `Battle: ...` ó‹µ•\¦‚ğğŒ•\¦‚©‚çŒÅ’èƒXƒƒbƒg•\¦‚Ö•ÏXi‹óó‘Ô‚Í placeholder ‚Å‚‚³ˆÛjB
+- Updated `apps/web/src/mint-theme/mint-theme.css`:
+  - `mint-ai-notice` ‚ğ nowrap + ellipsis ‰»is”•Ï‰»‚É‚æ‚é‚‚³—h‚ê—}~jB
+  - `mint-status-summary-slot` / `mint-status-summary` ‚ğ’Ç‰Á‚µABattle summary ‚Ì‚‚³‚ğŒÅ’èB
+- Updated `apps/web/e2e/ux-guardrails.spec.ts`:
+  - `Match details drawer closes via the close button and stays closed` ‚ğ’Ç‰ÁB
+  - `Mint status summary slot keeps stable height when battle text appears/disappears` ‚ğ’Ç‰ÁB
+  - helper ‚Å `nytl.ui.density=standard` ‚ğ‰Šú‰»‚µAó‹µ•\¦ƒK[ƒhƒŒ[ƒ‹‚ğˆÀ’èÀsB
+
+### Verify
+- `pnpm.cmd -C apps/web e2e -- e2e/ux-guardrails.spec.ts` OK (7 passed)
+- `pnpm.cmd -C apps/web build` OK
+## 2026-02-15 - Battle Stage focus UX: hand/board no-scroll flow refinement
+
+### Why
+- `battle-stage?ui=engine&focus=1` ‚ÅAèDƒhƒbƒN‘€ì‚Æ”Õ–Ê‘I‘ğ‚Ü‚Å‚ÉcƒXƒNƒ[ƒ‹‚ğ—v‹‚³‚ê‚éƒP[ƒX‚ª‚ ‚èA‘€ì“±ü‚ª“rØ‚ê‚Ä‚¢‚½B
+- ”Õ–Ê‚ÌŒ©‚¦•û‚ğ­‚µŠg‘å‚µAƒtƒH[ƒJƒX‚É‘I‘ğsˆ×‚ÖW’†‚Å‚«‚é‹ŠEİŒv‚ª•K—v‚¾‚Á‚½B
+
+### What
+- Updated `apps/web/src/pages/Match.tsx`:
+  - Stage focus ‚ÌèDƒhƒbƒN—L–³‚ğ `showStageFocusHandDock` ‚Å–¾¦B
+  - Stage focus + hand dock •\¦‚É root/main column ‚Ö modifier class ‚ğ•t—^‚µA‰º•”ŒÅ’èƒhƒbƒN‚ÆŠ±Â‚µ‚È‚¢—]”’‚ğŠm•ÛB
+  - ã•”ƒc[ƒ‹ƒo[‚Ì Commit/Undo/Warningid•¡‘€ìŒQj‚Í hand dock •\¦‚É‚Í”ñ•\¦‰»‚µAcè—L‚ğíŒ¸B
+  - hand dock ‚Ì Tailwind `sticky` w’è‚ğ stage ‚Æ inline ‚Å•ª—£‚µAstage ‘¤‚Í CSS ŠÇ—‚Éˆê–{‰»B
+- Updated `apps/web/src/mint-theme/mint-theme.css`:
+  - `.mint-focus-hand-dock--stage` ‚ğ `position: fixed` ‰»‚µA‰æ–Ê‰º‚ÉíŒÅ’è•\¦B
+  - `.stage-focus-root--with-hand-dock` / `.stage-focus-main-column--with-hand-dock` ‚ğ’Ç‰Á‚µAŒÅ’èƒhƒbƒN•ª‚Ì—\–ñ‚‚³‚ğ“±“üB
+  - Stage focus ‚Ì Nyano reaction slot ‚Æ cut-in •¶šƒTƒCƒY‚ğˆ³k‚µ‚Äc•ûŒü‚Ìè—L‚ğŒy—Ê‰»B
+  - Stage focus board “à‚Ì promptiuƒJ[ƒh‚ğ‘I‚ñ‚Å‚­‚¾‚³‚¢vjƒTƒCƒY‚ğ—}‚¦‚½ê—p override ‚ğ’Ç‰ÁB
+- Updated `apps/web/src/lib/stage_layout.ts`:
+  - battle —p reserveHeight ‚ğˆø‚«‰º‚°Aengine board ‚ÌZo maxWidth/minHeight ‚ğŠg‘åŠñ‚è‚É’²®B
+- Updated `apps/web/e2e/stage-focus.spec.ts`:
+  - desktopƒeƒXƒg‚ğutop commitŒÅ’èv‘O’ñ‚©‚çudock commit‰Â‹v‘O’ñ‚ÉXVB
+  - brittle‚¾‚Á‚½•¶Œ¾ˆê’vƒAƒT[ƒVƒ‡ƒ“‚ğAƒtƒH[ƒ‹ƒoƒbƒN“±ü‚Ì‰Â‹«ƒ`ƒFƒbƒN‚Ö’uŠ·B
+
+### Verify
+- `pnpm.cmd -C apps/web build` OK
+- `pnpm.cmd -C apps/web e2e -- e2e/stage-focus.spec.ts` OK (14 passed)
+- `pnpm.cmd -C apps/web e2e -- e2e/ux-guardrails.spec.ts` OK (7 passed)
+- `pnpm.cmd -C apps/web typecheck` NG (Šù’m: `pixi.js` / `fflate` ‚ÌŒ^‰ğŒˆ•s‘«)
+## 2026-02-15 - Battle Stage UX follow-up: commentary/status moved above board
+
+### Why
+- ó‹µ•\¦‚ªNyanoƒRƒƒ“ƒg‚Ìã‚ÉŒão‚µ‚ÅŒ»‚ê‚é‚ÆAƒRƒƒ“ƒg—“‚ÌŒ©‚½–ÚˆÊ’u‚ª‰Ÿ‚µ‰º‚°‚ç‚êA‰æ–Ê‚ª‚¸‚ê‚ÄŒ©‚¦‚é‘ÌŒ±‚ªc‚Á‚Ä‚¢‚½B
+- ‚Ü‚½Astage focus ‚ÅƒRƒƒ“ƒg/ó‹µ•\¦‚ª‰º‘¤ièD“±ü‚Ì‹ß–Tj‚É‚ ‚é‚ÆA‹ü“±ü‚ª•ª’f‚³‚ê‚â‚·‚©‚Á‚½B
+
+### What
+- Updated `apps/web/src/pages/Match.tsx`:
+  - `stage focus` ‚Å‚Íuó‹µ•\¦ + NyanoƒRƒƒ“ƒgv‚ğ `stage-focus-announcer-stack` ‚Æ‚µ‚Ä”Õ–Ê‚Ìã•”‚ÉˆÚİB
+  - Šù‘¶‚Ì‰º‘¤•\¦‚Í `!isStageFocusRoute` ğŒ‚É‚µAstage focus ‚Å‚Ì“ñd•\¦‚ğ‰ğÁB
+  - `showMintStatusSummarySlot` ‚ğ“±“ü‚µAstage focus ‚Å‚Í–§“xİ’è‚ÉŠÖ‚í‚ç‚¸ŒÅ’èƒXƒƒbƒg‚ğŠm•ÛiplaceholderˆÛjB
+- Updated `apps/web/src/mint-theme/mint-theme.css`:
+  - `stage-focus-announcer-stack` ‚ğ’Ç‰Á‚µAã•”’Ê’mƒGƒŠƒA‚ÌƒŒƒCƒAƒEƒg‚ğˆÀ’è‰»B
+
+### Verify
+- `pnpm.cmd -C apps/web build` OK
+- `pnpm.cmd -C apps/web e2e -- e2e/stage-focus.spec.ts` OK (14 passed)
+- `pnpm.cmd -C apps/web e2e -- e2e/ux-guardrails.spec.ts` OK (7 passed)
+- `pnpm.cmd -C apps/web typecheck` NG (Šù’m: `pixi.js` / `fflate`)
+### Follow-up
+- Updated `apps/web/e2e/stage-focus.spec.ts`:
+  - Added `/battle-stage keeps commentary/status stack above board and hand dock` guardrail to lock vertical placement in focus layout.
+## 2026-02-15 - Battle Stage UX follow-up: hand dock overlap fix
+
+### Why
+- stage focus ‚ÅèDƒhƒbƒN‚ª”Õ–Ê‚É”í‚Á‚ÄŒ©‚¦‚éƒP[ƒX‚ª‚ ‚èA‹”F«‚Æƒ^ƒbƒv“±ü‚ğ‘jŠQ‚µ‚Ä‚¢‚½B
+- Œ´ˆö‚ÍAŒÅ’èƒhƒbƒN‚ÌŠî€À•W‚ª filtered ancestor ‚Ì‰e‹¿‚ğó‚¯‚Ä‚¢‚½“_‚ÆAstageƒhƒbƒN‚‚³‚ª‘z’è‚æ‚è‘å‚«‚©‚Á‚½“_B
+
+### What
+- Updated `apps/web/src/mint-theme/mint-theme.css`:
+  - `stage-focus-root--with-hand-dock .stage-focus-arena-shell` ‚Å `backdrop-filter` ‚ğ–³Œø‰»‚µA`mint-focus-hand-dock--stage` ‚Ì fixed À•W‚ğ viewport Šî€‚Ö–ß‚µ‚½B
+  - stage focus hand dock ‚ğc•ûŒü‚Éˆ³kipadding/card thumbnail height/width ’²®jB
+  - stage focus hand dock ‚Æ board shell ‚Ì”÷’²®iboard shell margin/paddingAengine board max-width overridej‚ğ’Ç‰Á‚µAd‚È‚è‚ğ‰ñ”ğB
+- Updated `apps/web/src/pages/Match.tsx`:
+  - stage focus + hand dock ‚Ì engine board max/min ‚ğ•â³‚µA‰ß‘å‚È”Õ–Êè—L‚ğ—}§B
+- Updated `apps/web/e2e/stage-focus.spec.ts`:
+  - `/battle-stage keeps commentary/status stack above board and hand dock` ‚ÅA”Õ–Ê‚ÆèDƒhƒbƒN‚Ìd‚È‚è‚ª‚È‚¢‚±‚Æ‚ğŒp‘±ŒŸØB
+
+### Verify
+- `pnpm.cmd -C apps/web build` OK
+- `pnpm.cmd -C apps/web e2e -- e2e/stage-focus.spec.ts` OK (15 passed)
+- `pnpm.cmd -C apps/web e2e -- e2e/ux-guardrails.spec.ts` OK (7 passed)
+- `pnpm.cmd -C apps/web typecheck` NG (Šù’m: `pixi.js` / `fflate`)
+## 2026-02-15 - Match/Mint & Stage follow-up: shiftless announcer + prompt/downsize + drawer close + Pixi hand/board rebalance
+
+### Why
+- `/match?ui=mint` ‚Å‚à NyanoƒRƒƒ“ƒg/ó‹µ•\¦‚ÌoŒ»‚Å‰æ–ÊˆÊ’u‚ª—h‚ê‚éƒP[ƒX‚ªc‚Á‚Ä‚¢‚½B
+- uƒJ[ƒh‚ğ‘I‚ñ‚Å‚­‚¾‚³‚¢v‚ª‘å‚«‚­A”Õ–Ê‚Ìå–ğ«‚ğ‰º‚°‚Ä‚¢‚½B
+- Details ƒhƒƒ[‚Ì `~` ‚ª”½‰‚µ‚È‚¢i•Â‚¶‚Ä‚à‘¦ÄƒI[ƒvƒ“‚ÉŒ©‚¦‚éj‘ÌŒ±‚ª‚ ‚Á‚½B
+- stage focus ‚Å Pixi ”Õ–Ê‚ª‰ß¬‰»/èDƒJ[ƒh‹”F’á‰º‚ª‚ ‚èA“¯‚É hand dock ‚Æ‚Ì”ñd‚È‚è‚àˆÛ‚·‚é•K—v‚ª‚ ‚Á‚½B
+
+### What
+- Updated `apps/web/src/pages/Match.tsx`:
+  - Mint UI ‚Ì announceriBattle summary + Nyano reactionj‚ğ `mint-announcer-stack` ‚Æ‚µ‚Ä”Õ–Êã•”‚É“ˆê”z’ui`/match` ‚Å‚àŒÅ’èƒXƒƒbƒg‰^—pjB
+  - drawer ‚ÌŠJ•Â‚ğ `openDrawer` / `closeDrawer` ‚É•ª—£‚µAclose’¼Œã‚Ì’ZŠÔ‚ÍÄopen‚ğ—}~‚·‚éƒK[ƒh‚ğ’Ç‰ÁB
+  - stage focus + hand dock ‚Ì engine board cap ‚ğÄ’²®‚µAhand dock”ñd‚È‚èƒK[ƒh‚ğ–‚½‚µ‚Â‚Â‹É’[‚Èk¬‚ğ‰ñ”ğB
+- Updated `apps/web/src/components/MatchDrawerMint.tsx`:
+  - closeƒ{ƒ^ƒ“‚ğ `~` •\¦‚É•ÏXA`onPointerDown` ‚Æ `onClick` ‚Ì—¼•û‚Å close ‚ğŠmÀ‰»B
+- Updated `apps/web/src/mint-theme/mint-theme.css`:
+  - `mint-announcer-stack` ‚ğ’Ç‰ÁB
+  - Prompt ‚ÌƒTƒCƒY‚ğ‘S‘Ìk¬i’Êí/stage/mobileA`mint-prompt__ja`/`__en`/`__text`jB
+  - stage hand dock ‚ÌƒJ[ƒh•\¦‚ğc‰¡”äˆÛ‚É–ß‚µi‚‚³ŒÅ’è‚ğ“P‹jAƒJ[ƒh‰Â‹«‚ğ‰ñ•œB
+  - stage hand dock ‚Æ board ‚Ìƒoƒ‰ƒ“ƒXidock footprint / board shell / engine renderer maxj‚ğÄ’²®B
+  - drawer close ƒ{ƒ^ƒ“‚Ì hit area ‚ğŠg‘åB
+  - non-stage ‚Ì player panel ‚ğˆê’iƒRƒ“ƒpƒNƒg‰»B
+
+### Verify
+- `pnpm.cmd -C apps/web build` OK
+- `pnpm.cmd -C apps/web e2e -- e2e/stage-focus.spec.ts` OK (15 passed)
+- `pnpm.cmd -C apps/web e2e -- e2e/ux-guardrails.spec.ts` OK (7 passed)
+- `pnpm.cmd -C apps/web typecheck` –¢ÀsiŠù’m‚ÌˆË‘¶‰ğŒˆ–â‘è‚ªŒp‘±‚Ì‚½‚ßj

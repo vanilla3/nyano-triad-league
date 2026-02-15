@@ -95,18 +95,60 @@ test.describe("stage routes", () => {
     await expect(page.getByLabel("Commit move from focus hand dock")).toBeVisible({ timeout: 10_000 });
   });
 
-  test("/battle-stage keeps top commit action visible on desktop", async ({ page }) => {
+  test("/battle-stage keeps dock commit action visible on desktop", async ({ page }) => {
     await page.setViewportSize({ width: 1366, height: 768 });
     await page.goto("/battle-stage?mode=guest&opp=vs_nyano_ai&ai=normal&rk=v2&ui=engine&focus=1&fpm=manual&fp=0");
 
-    const toolbarCommit = page.getByLabel("Commit move from focus toolbar");
-    await expect(toolbarCommit).toBeVisible({ timeout: 10_000 });
-    await expect(toolbarCommit).toBeInViewport();
-    await expect(page.getByLabel("Warning mark from focus toolbar")).toBeVisible({ timeout: 10_000 });
-    await expect(page.getByLabel("Battle focus toolbar hint")).toBeVisible({ timeout: 10_000 });
+    const dockCommitVisible = page.locator('button[aria-label="Commit move from focus hand dock"]:visible').first();
+    await expect(dockCommitVisible).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByLabel("Focus dock warning mark cell")).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByLabel("Battle focus toolbar hint")).toHaveCount(0);
+
+    const retryPixiButton = page.getByLabel("Retry Pixi renderer");
+    if (!(await retryPixiButton.isVisible().catch(() => false))) {
+      const board = page.getByLabel("Game board (engine renderer)");
+      await expect(board).toBeVisible({ timeout: 10_000 });
+      await expect(board).toBeInViewport();
+    }
 
     const overflowPx = await readHorizontalOverflowPx(page);
     expect(overflowPx).toBeLessThanOrEqual(1);
+  });
+
+  test("/battle-stage keeps commentary/status stack above board and hand dock", async ({ page }) => {
+    await page.setViewportSize({ width: 1366, height: 768 });
+    await page.goto("/battle-stage?mode=guest&opp=vs_nyano_ai&ai=normal&rk=v2&ui=engine&focus=1&fpm=manual&fp=0");
+
+    const announcer = page.locator(".stage-focus-announcer-stack").first();
+    const boardShell = page.locator(".stage-focus-board-shell").first();
+    const handDock = page.locator(".mint-focus-hand-dock--stage").first();
+
+    await expect(announcer).toBeVisible({ timeout: 10_000 });
+    await expect(boardShell).toBeVisible({ timeout: 10_000 });
+    await expect(handDock).toBeVisible({ timeout: 10_000 });
+
+    const verticalOrder = await page.evaluate(() => {
+      const announcerEl = document.querySelector<HTMLElement>(".stage-focus-announcer-stack");
+      const boardShellEl = document.querySelector<HTMLElement>(".stage-focus-board-shell");
+      const handDockEl = document.querySelector<HTMLElement>(".mint-focus-hand-dock--stage");
+      if (!announcerEl || !boardShellEl || !handDockEl) return null;
+      const announcerRect = announcerEl.getBoundingClientRect();
+      const boardRect = boardShellEl.getBoundingClientRect();
+      const dockRect = handDockEl.getBoundingClientRect();
+      return {
+        announcerAboveBoard: announcerRect.bottom <= boardRect.top + 2,
+        announcerAboveDock: announcerRect.bottom <= dockRect.top + 2,
+        boardAboveDock: boardRect.bottom <= dockRect.top + 2,
+        boardBottom: boardRect.bottom,
+        dockTop: dockRect.top,
+        overlapPx: boardRect.bottom - dockRect.top,
+      };
+    });
+
+    expect(verticalOrder).not.toBeNull();
+    expect(verticalOrder?.announcerAboveBoard).toBe(true);
+    expect(verticalOrder?.announcerAboveDock).toBe(true);
+    expect(verticalOrder?.boardAboveDock, JSON.stringify(verticalOrder)).toBe(true);
   });
 
   test("/battle-stage keeps focus toolbar visible after scroll", async ({ page }) => {
@@ -321,6 +363,7 @@ test.describe("stage routes", () => {
     await page.goto("/battle-stage?mode=guest&opp=vs_nyano_ai&ai=normal&rk=v2&ui=engine&focus=1&fpm=manual&fp=0");
 
     await expect(page.getByLabel("Commit move from focus hand dock")).toBeVisible({ timeout: 10_000 });
-    await expect(page.getByText(/フォールバック用のゲストカードで続行します。/).first()).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByLabel("Focus hand card 1")).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByRole("region", { name: "Stage focus toolbar" })).toBeVisible({ timeout: 10_000 });
   });
 });
