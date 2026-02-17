@@ -115,6 +115,10 @@ async function commitMove(page: Page, cardSlot: number, cell: number): Promise<v
   if ((await dockCard.count()) > 0 && await dockCard.isEnabled().catch(() => false)) {
     await dockCard.click({ force: true });
   }
+  const focusHandCardButton = page.getByRole("button", { name: `Focus hand card ${cardSlot}`, exact: true });
+  if ((await focusHandCardButton.count()) > 0 && await focusHandCardButton.isEnabled().catch(() => false)) {
+    await focusHandCardButton.click({ force: true });
+  }
 
   const boardCell = page.locator(`[data-board-cell="${cell}"]`).first();
   await boardCell.click({ force: true });
@@ -135,6 +139,14 @@ async function commitMove(page: Page, cardSlot: number, cell: number): Promise<v
     .poll(isBoardCellSelected)
     .toBe(true);
 
+  // Ensure hand selection is re-applied after cell focus changes.
+  if ((await dockCard.count()) > 0 && await dockCard.isEnabled().catch(() => false)) {
+    await dockCard.click({ force: true }).catch(() => undefined);
+  }
+  if ((await focusHandCardButton.count()) > 0 && await focusHandCardButton.isEnabled().catch(() => false)) {
+    await focusHandCardButton.click({ force: true }).catch(() => undefined);
+  }
+
   const quickCommitButton = page.getByRole("button", { name: "Quick commit move", exact: true });
   if ((await quickCommitButton.count()) > 0 && await quickCommitButton.isEnabled().catch(() => false)) {
     const quickCommitClicked = await quickCommitButton
@@ -153,11 +165,37 @@ async function commitMove(page: Page, cardSlot: number, cell: number): Promise<v
     if (dockCommitClicked) return;
   }
 
+  const toolbarCommitButton = page.getByRole("button", { name: "Commit move from focus toolbar", exact: true });
+  if ((await toolbarCommitButton.count()) > 0 && await toolbarCommitButton.isEnabled().catch(() => false)) {
+    const toolbarCommitClicked = await toolbarCommitButton
+      .click({ force: true, timeout: 2_000 })
+      .then(() => true)
+      .catch(() => false);
+    if (toolbarCommitClicked) return;
+  }
+
   const currentHand = page.getByRole("listbox", { name: /Player [AB] hand/i }).first();
-  await currentHand.getByRole("option", { name: new RegExp(`^Card ${cardSlot}:`) }).first().click();
+  const hasHandListbox = (await currentHand.count()) > 0 && await currentHand.isVisible().catch(() => false);
+  if (hasHandListbox) {
+    const option = currentHand.getByRole("option", { name: new RegExp(`^Card ${cardSlot}:`) }).first();
+    if ((await option.count()) > 0) {
+      await option.click({ force: true });
+    }
+  }
   const commitButton = page.getByRole("button", { name: "Commit move", exact: true });
-  await expect(commitButton).toBeEnabled();
-  await commitButton.click();
+  if ((await commitButton.count()) > 0) {
+    await expect(commitButton).toBeEnabled();
+    await commitButton.click();
+    return;
+  }
+
+  const genericCommitButton = page.getByRole("button", { name: /^Commit/i }).first();
+  if ((await genericCommitButton.count()) > 0 && await genericCommitButton.isEnabled().catch(() => false)) {
+    await genericCommitButton.click({ force: true });
+    return;
+  }
+
+  throw new Error("No commit control found");
 }
 
 test.describe("UX regression guardrails", () => {
