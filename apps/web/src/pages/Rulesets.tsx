@@ -10,7 +10,7 @@ import {
   getRulesetMeta,
   resolveRulesetKeyById,
 } from "@/lib/ruleset_discovery";
-import { isValidRulesetKey, type RulesetKey } from "@/lib/ruleset_registry";
+import { isValidRulesetKey, RULESET_KEYS, type RulesetKey } from "@/lib/ruleset_registry";
 
 type OfficialRuleset = {
   name: string;
@@ -34,6 +34,7 @@ const RECOMMENDED_KEYS = getRecommendedRulesetKeys();
 const RECOMMENDED_INDEX = new Map<RulesetKey, number>(
   RECOMMENDED_KEYS.map((key, index) => [key, index]),
 );
+const CLASSIC_KEYS = RULESET_KEYS.filter((key) => key.startsWith("classic_"));
 
 function safeLower(value: string): string {
   return value.toLowerCase();
@@ -241,6 +242,63 @@ export function RulesetsPage() {
                       onClick={() => setParam("rk", row.key)}
                       data-testid={`rulesets-recommended-select-${row.key}`}
                     >
+                      Select
+                    </button>
+                  </div>
+                </article>
+              );
+            })}
+          </div>
+        </section>
+      ) : null}
+
+      {CLASSIC_KEYS.length > 0 ? (
+        <section className="card" data-testid="rulesets-classic-section">
+          <div className="card-hd flex items-center justify-between">
+            <div className="text-base font-semibold">Classic (Beta)</div>
+            <div className="text-xs text-slate-500">Preset shortcuts for classic rules exploration</div>
+          </div>
+          <div className="card-bd grid gap-3 md:grid-cols-3">
+            {CLASSIC_KEYS.map((key) => {
+              const meta = getRulesetMeta(key);
+              const active = selectedRulesetKey === key;
+              return (
+                <article
+                  key={key}
+                  className={[
+                    "rounded-xl border p-3",
+                    active ? "border-amber-300 bg-amber-50" : "border-slate-200 bg-white",
+                  ].join(" ")}
+                  data-testid={`rulesets-classic-card-${key}`}
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <div>
+                      <div className="text-sm font-semibold text-slate-900">{meta.title}</div>
+                      <div className="mt-1 text-xs text-slate-600">{meta.summary}</div>
+                    </div>
+                    {active ? (
+                      <span className="rounded-full border border-amber-300 bg-amber-100 px-2 py-0.5 text-[10px] font-semibold text-amber-700">
+                        Selected
+                      </span>
+                    ) : null}
+                  </div>
+
+                  <div className="mt-2 flex flex-wrap gap-1">
+                    {meta.tags.map((tag) => (
+                      <span
+                        key={tag}
+                        className="rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-[10px] text-slate-600"
+                      >
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    <Link className="btn btn-sm no-underline" to={buildMatchRulesetUrl(key)}>
+                      このルールで対戦
+                    </Link>
+                    <button className="btn btn-sm" onClick={() => setParam("rk", key)}>
                       Select
                     </button>
                   </div>

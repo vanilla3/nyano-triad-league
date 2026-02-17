@@ -21,6 +21,13 @@ export type RulesetKey =
   | "v2"
   | "full"
   | "classic_plus_same"
+  | "classic_custom"
+  | "classic_plus"
+  | "classic_same"
+  | "classic_reverse"
+  | "classic_ace_killer"
+  | "classic_type_ascend"
+  | "classic_type_descend"
   | "classic_order"
   | "classic_chaos"
   | "classic_swap"
@@ -33,6 +40,13 @@ export const RULESET_KEYS: readonly RulesetKey[] = [
   "v2",
   "full",
   "classic_plus_same",
+  "classic_custom",
+  "classic_plus",
+  "classic_same",
+  "classic_reverse",
+  "classic_ace_killer",
+  "classic_type_ascend",
+  "classic_type_descend",
   "classic_order",
   "classic_chaos",
   "classic_swap",
@@ -53,6 +67,54 @@ const CLASSIC_CHAOS_RULESET_CONFIG_V2: RulesetConfig = {
   classic: {
     ...DEFAULT_RULESET_CONFIG_V2.classic,
     chaos: true,
+  },
+};
+
+const CLASSIC_PLUS_RULESET_CONFIG_V2: RulesetConfig = {
+  ...DEFAULT_RULESET_CONFIG_V2,
+  classic: {
+    ...DEFAULT_RULESET_CONFIG_V2.classic,
+    plus: true,
+  },
+};
+
+const CLASSIC_SAME_RULESET_CONFIG_V2: RulesetConfig = {
+  ...DEFAULT_RULESET_CONFIG_V2,
+  classic: {
+    ...DEFAULT_RULESET_CONFIG_V2.classic,
+    same: true,
+  },
+};
+
+const CLASSIC_REVERSE_RULESET_CONFIG_V2: RulesetConfig = {
+  ...DEFAULT_RULESET_CONFIG_V2,
+  classic: {
+    ...DEFAULT_RULESET_CONFIG_V2.classic,
+    reverse: true,
+  },
+};
+
+const CLASSIC_ACE_KILLER_RULESET_CONFIG_V2: RulesetConfig = {
+  ...DEFAULT_RULESET_CONFIG_V2,
+  classic: {
+    ...DEFAULT_RULESET_CONFIG_V2.classic,
+    aceKiller: true,
+  },
+};
+
+const CLASSIC_TYPE_ASCEND_RULESET_CONFIG_V2: RulesetConfig = {
+  ...DEFAULT_RULESET_CONFIG_V2,
+  classic: {
+    ...DEFAULT_RULESET_CONFIG_V2.classic,
+    typeAscend: true,
+  },
+};
+
+const CLASSIC_TYPE_DESCEND_RULESET_CONFIG_V2: RulesetConfig = {
+  ...DEFAULT_RULESET_CONFIG_V2,
+  classic: {
+    ...DEFAULT_RULESET_CONFIG_V2.classic,
+    typeDescend: true,
   },
 };
 
@@ -85,6 +147,13 @@ const REGISTRY: Record<RulesetKey, RulesetConfig> = {
   v2: ONCHAIN_CORE_TACTICS_SHADOW_RULESET_CONFIG_V2,
   full: DEFAULT_RULESET_CONFIG_V1,
   classic_plus_same: CLASSIC_PLUS_SAME_RULESET_CONFIG_V2,
+  classic_custom: DEFAULT_RULESET_CONFIG_V2,
+  classic_plus: CLASSIC_PLUS_RULESET_CONFIG_V2,
+  classic_same: CLASSIC_SAME_RULESET_CONFIG_V2,
+  classic_reverse: CLASSIC_REVERSE_RULESET_CONFIG_V2,
+  classic_ace_killer: CLASSIC_ACE_KILLER_RULESET_CONFIG_V2,
+  classic_type_ascend: CLASSIC_TYPE_ASCEND_RULESET_CONFIG_V2,
+  classic_type_descend: CLASSIC_TYPE_DESCEND_RULESET_CONFIG_V2,
   classic_order: CLASSIC_ORDER_RULESET_CONFIG_V2,
   classic_chaos: CLASSIC_CHAOS_RULESET_CONFIG_V2,
   classic_swap: CLASSIC_SWAP_RULESET_CONFIG_V2,

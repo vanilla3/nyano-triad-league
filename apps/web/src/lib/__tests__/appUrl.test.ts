@@ -126,6 +126,17 @@ describe("buildReplayShareUrl", () => {
     expect(url).toBe("/replay?z=abc123&mode=auto&ui=engine&step=9");
   });
 
+  it("includes classic replay params when provided", () => {
+    import.meta.env.BASE_URL = "/";
+    const url = buildReplayShareUrl({
+      data: { key: "z", value: "abc123" },
+      rulesetKey: "classic_custom",
+      classicMask: "1z",
+      absolute: false,
+    });
+    expect(url).toBe("/replay?z=abc123&rk=classic_custom&cr=1z");
+  });
+
   it("includes pointsDeltaA query param when provided", () => {
     import.meta.env.BASE_URL = "/";
     const url = buildReplayShareUrl({

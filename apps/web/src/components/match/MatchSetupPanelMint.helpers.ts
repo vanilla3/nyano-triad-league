@@ -14,6 +14,20 @@ export function describeRulesetKey(rulesetKey: RulesetKey): string {
       return "full traits+formations";
     case "classic_plus_same":
       return "classic plus+same";
+    case "classic_custom":
+      return "classic custom";
+    case "classic_plus":
+      return "classic plus";
+    case "classic_same":
+      return "classic same";
+    case "classic_reverse":
+      return "classic reverse";
+    case "classic_ace_killer":
+      return "classic ace killer";
+    case "classic_type_ascend":
+      return "classic type ascend";
+    case "classic_type_descend":
+      return "classic type descend";
     case "classic_order":
       return "classic order";
     case "classic_chaos":
@@ -57,6 +71,7 @@ export function buildMatchSetupSummaryLine(input: {
   deckBName: string | null;
   isEvent: boolean;
   rulesetKey: RulesetKey;
+  classicRuleTags?: readonly string[];
   opponentMode: MatchSetupOpponentMode;
   firstPlayerMode: FirstPlayerResolutionMode;
   ui: MatchSetupBoardUi;
@@ -64,10 +79,15 @@ export function buildMatchSetupSummaryLine(input: {
   const deckA = input.deckAName ?? "Deck A: unset";
   const deckB = input.isEvent ? "Deck B: event fixed" : input.deckBName ?? "Deck B: unset";
   const opponent = input.opponentMode === "vs_nyano_ai" ? "Nyano AI" : "Human vs Human";
+  const rulesetSummary = input.rulesetKey === "classic_custom"
+    ? input.classicRuleTags && input.classicRuleTags.length > 0
+      ? `classic custom (${input.classicRuleTags.join("+")})`
+      : "classic custom (none)"
+    : describeRulesetKey(input.rulesetKey);
   return [
     deckA,
     deckB,
-    describeRulesetKey(input.rulesetKey),
+    rulesetSummary,
     opponent,
     `first=${describeFirstPlayerMode(input.firstPlayerMode)}`,
     `board=${describeBoardUi(input.ui)}`,

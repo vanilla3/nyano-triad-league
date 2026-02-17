@@ -5,6 +5,7 @@ import { Link, useLocation, useNavigate, useSearchParams } from "react-router-do
 import type { BoardState, CardData, FlipTraceV1, MatchResultWithHistory, PlayerIndex, RulesetConfig, TranscriptV1, Turn, TurnSummary } from "@nyano/triad-engine";
 import {
   computeRulesetId,
+  DEFAULT_RULESET_CONFIG_V2,
   resolveClassicForcedCardIndex,
   resolveClassicOpenCardIndices,
   resolveClassicSwapIndices,
@@ -76,6 +77,12 @@ import { computeStageBoardSizing, shouldShowStageSecondaryControls } from "@/lib
 import { BattleStageEngine } from "@/engine/components/BattleStageEngine";
 import { applyVfxQualityToDocument, resolveVfxQuality, type VfxQuality } from "@/lib/visual/visualSettings";
 import { MAX_CHAIN_CAP_PER_TURN, parseChainCapPerTurnParam } from "@/lib/ruleset_meta";
+import {
+  decodeClassicRulesMask,
+  encodeClassicRulesMask,
+  listClassicRuleTags,
+  normalizeClassicRulesConfig,
+} from "@/lib/classic_rules_param";
 import {
   deriveChoiceCommitHex,
   deriveRevealCommitHex,
@@ -278,7 +285,14 @@ function parseMatchBoardUi(v: string | null): MatchBoardUi {
 }
 
 /** Lazy QR code for share URL - avoids computing gzip in render */
-function ShareQrCode({ sim, event, ui }: { sim: SimState; event: EventV1 | null; ui?: string }) {
+function ShareQrCode(props: {
+  sim: SimState;
+  event: EventV1 | null;
+  ui?: string;
+  rulesetKey?: RulesetKey;
+  classicMask?: string;
+}) {
+  const { sim, event, ui, rulesetKey, classicMask } = props;
   const [url, setUrl] = React.useState<string | null>(null);
   React.useEffect(() => {
     if (!sim.ok) return;
@@ -290,10 +304,12 @@ function ShareQrCode({ sim, event, ui }: { sim: SimState; event: EventV1 | null;
         step: 9,
         eventId: event?.id,
         ui,
+        rulesetKey,
+        classicMask,
         absolute: true,
       })
     );
-  }, [sim, event, ui]);
+  }, [sim, event, ui, rulesetKey, classicMask]);
 
   if (!url) return <div className="text-xs text-slate-400">Generating...</div>;
   return <QrCode value={url} size={160} />;
@@ -417,6 +433,15 @@ export function MatchPage() {
   const uiParam: MatchBoardUi = ui;
 
   const rulesetKeyParam = parseRulesetKeyOrDefault(searchParams.get("rk"), "v2");
+  const classicMaskParam = searchParams.get("cr");
+  const classicCustomConfigParam = React.useMemo(
+    () => decodeClassicRulesMask(classicMaskParam),
+    [classicMaskParam],
+  );
+  const classicCustomMaskParam = React.useMemo(
+    () => encodeClassicRulesMask(classicCustomConfigParam),
+    [classicCustomConfigParam],
+  );
   const chainCapRawParam = searchParams.get("ccap");
   const chainCapPerTurnParam = parseChainCapPerTurnParam(chainCapRawParam);
   const seasonIdParam = parseSeason(searchParams.get("season"));
@@ -779,10 +804,37 @@ export function MatchPage() {
     }
   }, [isEvent, firstPlayerModeParam, searchParams, setSearchParams]);
 
+  React.useEffect(() => {
+    if (isEvent) return;
+    if (rulesetKeyParam === "classic_custom") {
+      if (classicMaskParam === classicCustomMaskParam) return;
+      const { next, changed } = applySearchParamPatch(searchParams, { cr: classicCustomMaskParam });
+      if (changed) setSearchParams(next, { replace: true });
+      return;
+    }
+    if (classicMaskParam === null) return;
+    const { next, changed } = applySearchParamPatch(searchParams, { cr: undefined });
+    if (changed) setSearchParams(next, { replace: true });
+  }, [
+    isEvent,
+    rulesetKeyParam,
+    classicMaskParam,
+    classicCustomMaskParam,
+    searchParams,
+    setSearchParams,
+  ]);
+
   const setParam = (key: string, value: string) => {
     const next = new URLSearchParams(searchParams);
     if (!value) next.delete(key);
     else next.set(key, value);
+    if (key === "rk") {
+      if (value === "classic_custom") {
+        if (!next.get("cr")) next.set("cr", "0");
+      } else {
+        next.delete("cr");
+      }
+    }
     setSearchParams(next, { replace: true });
   };
 
@@ -811,6 +863,18 @@ export function MatchPage() {
     }
     setParams({ ui: nextUi, focus: undefined, layout: undefined });
   };
+
+  const handleRulesetKeyChange = React.useCallback((nextKey: RulesetKey) => {
+    if (nextKey === "classic_custom") {
+      setParams({ rk: nextKey, cr: classicCustomMaskParam });
+      return;
+    }
+    setParams({ rk: nextKey, cr: undefined });
+  }, [setParams, classicCustomMaskParam]);
+
+  const handleClassicMaskChange = React.useCallback((nextMask: string) => {
+    setParams({ rk: "classic_custom", cr: nextMask });
+  }, [setParams]);
 
   const handleFirstPlayerModeChange = (nextMode: FirstPlayerResolutionMode) => {
     setParams({
@@ -856,7 +920,19 @@ export function MatchPage() {
   const effectiveDeckATokens = isGuestMode && guestDeckATokens.length === 5 ? guestDeckATokens : deckATokens;
   const effectiveDeckBTokens = isGuestMode && guestDeckBTokens.length === 5 ? guestDeckBTokens : deckBTokens;
 
-  const baseRuleset = React.useMemo(() => resolveRulesetOrThrow(rulesetKey), [rulesetKey]);
+  const classicCustomConfig = React.useMemo(
+    () => normalizeClassicRulesConfig(classicCustomConfigParam),
+    [classicCustomConfigParam],
+  );
+  const baseRuleset = React.useMemo(() => {
+    if (rulesetKey === "classic_custom") {
+      return {
+        ...DEFAULT_RULESET_CONFIG_V2,
+        classic: { ...classicCustomConfig },
+      } as RulesetConfig;
+    }
+    return resolveRulesetOrThrow(rulesetKey);
+  }, [rulesetKey, classicCustomConfig]);
   const ruleset: RulesetConfig = React.useMemo(() => {
     const next = structuredClone(baseRuleset) as RulesetConfig;
     if (chainCapPerTurnParam !== null) {
@@ -953,6 +1029,14 @@ export function MatchPage() {
       ? "Classic Open: all cards revealed"
       : `Classic Three Open: A[${formatClassicOpenSlots(classicOpenCardIndices.playerA)}] / B[${formatClassicOpenSlots(classicOpenCardIndices.playerB)}]`
     : null;
+  const activeClassicRuleTags = React.useMemo(() => {
+    if (ruleset.version !== 2) return [];
+    return listClassicRuleTags(ruleset.classic);
+  }, [ruleset]);
+  const activeClassicMask = React.useMemo(() => {
+    if (rulesetKey !== "classic_custom") return undefined;
+    return encodeClassicRulesMask(classicCustomConfig);
+  }, [rulesetKey, classicCustomConfig]);
 
   const handleRandomizeCommitReveal = () => {
     setParams({
@@ -1762,9 +1846,11 @@ export function MatchPage() {
       step: 9,
       eventId: event?.id,
       ui: uiParam,
+      rulesetKey,
+      classicMask: activeClassicMask,
       absolute,
     });
-  }, [sim, event, cards, uiParam]);
+  }, [sim, event, cards, uiParam, rulesetKey, activeClassicMask]);
 
   const copyShareUrl = async () => {
     setError(null);
@@ -2338,6 +2424,9 @@ export function MatchPage() {
           maxChainCapPerTurn={MAX_CHAIN_CAP_PER_TURN}
           classicSwapLabel={classicSwapLabel}
           classicOpenLabel={classicOpenLabel}
+          classicCustomMaskParam={classicCustomMaskParam}
+          classicCustomConfig={classicCustomConfig}
+          classicRuleTags={activeClassicRuleTags}
           rulesetId={rulesetId}
           firstPlayerMode={firstPlayerMode}
           manualFirstPlayerParam={manualFirstPlayerParam}
@@ -2366,6 +2455,8 @@ export function MatchPage() {
           overlayUrl={overlayUrl}
           onSetParam={setParam}
           onSetFocusMode={setFocusMode}
+          onRulesetKeyChange={handleRulesetKeyChange}
+          onSetClassicMask={handleClassicMaskChange}
           onFirstPlayerModeChange={handleFirstPlayerModeChange}
           onBoardUiChange={handleBoardUiChange}
           onSetDataMode={setDataMode}
@@ -2846,7 +2937,7 @@ export function MatchPage() {
                         disabled={turns.length >= 9 || isAiTurn || draftCell === null || draftCardIndex === null}
                         aria-label="Quick commit move"
                       >
-                        Commit Move
+                        Commit move
                       </button>
                       <button
                         className="btn h-10 px-4"
@@ -3114,7 +3205,7 @@ export function MatchPage() {
                           disabled={turns.length >= 9 || isAiTurn || draftCell === null || draftCardIndex === null}
                           aria-label="Commit move"
                         >
-                          Commit Move
+                          Commit move
                         </button>
                         <button
                           className={isRpg ? "rpg-result__btn" : ["btn", isStageFocusRoute ? "h-10 px-4" : ""].join(" ").trim()}
@@ -3321,7 +3412,13 @@ export function MatchPage() {
                         <details className="text-xs">
                           <summary className="cursor-pointer text-sky-600 hover:text-sky-700 font-medium">QR Code</summary>
                           <div className="mt-2 flex justify-center">
-                            <ShareQrCode sim={sim} event={event} ui={uiParam} />
+                            <ShareQrCode
+                              sim={sim}
+                              event={event}
+                              ui={uiParam}
+                              rulesetKey={rulesetKey}
+                              classicMask={activeClassicMask}
+                            />
                           </div>
                         </details>
                       )}

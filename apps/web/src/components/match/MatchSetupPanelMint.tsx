@@ -1,11 +1,12 @@
 import React from "react";
 import { Link } from "react-router-dom";
 
-import type { PlayerIndex } from "@nyano/triad-engine";
+import type { ClassicRulesConfigV1, PlayerIndex } from "@nyano/triad-engine";
 import type { AiDifficulty } from "@/lib/ai/nyano_ai";
 import type { DeckV1 } from "@/lib/deck_store";
 import type { FirstPlayerResolution, FirstPlayerResolutionMode } from "@/lib/first_player_resolve";
 import type { RulesetKey } from "@/lib/ruleset_registry";
+import { MintRulesetPicker } from "./MintRulesetPicker";
 import {
   buildMatchSetupSummaryLine,
   describeRulesetKey,
@@ -48,6 +49,9 @@ type MatchSetupPanelMintProps = {
   maxChainCapPerTurn: number;
   classicSwapLabel: string | null;
   classicOpenLabel: string | null;
+  classicCustomMaskParam: string;
+  classicCustomConfig: ClassicRulesConfigV1;
+  classicRuleTags: readonly string[];
   rulesetId: `0x${string}`;
   firstPlayerMode: FirstPlayerResolutionMode;
   manualFirstPlayerParam: PlayerIndex;
@@ -76,6 +80,8 @@ type MatchSetupPanelMintProps = {
   overlayUrl: string;
   onSetParam: (key: string, value: string) => void;
   onSetFocusMode: (enabled: boolean) => void;
+  onRulesetKeyChange: (nextKey: RulesetKey) => void;
+  onSetClassicMask: (nextMask: string) => void;
   onFirstPlayerModeChange: (nextMode: FirstPlayerResolutionMode) => void;
   onBoardUiChange: (nextUi: MatchSetupBoardUi) => void;
   onSetDataMode: (value: MatchSetupDataMode) => void;
@@ -115,6 +121,9 @@ export function MatchSetupPanelMint(props: MatchSetupPanelMintProps) {
     maxChainCapPerTurn,
     classicSwapLabel,
     classicOpenLabel,
+    classicCustomMaskParam,
+    classicCustomConfig,
+    classicRuleTags,
     rulesetId,
     firstPlayerMode,
     manualFirstPlayerParam,
@@ -143,6 +152,8 @@ export function MatchSetupPanelMint(props: MatchSetupPanelMintProps) {
     overlayUrl,
     onSetParam,
     onSetFocusMode,
+    onRulesetKeyChange,
+    onSetClassicMask,
     onFirstPlayerModeChange,
     onBoardUiChange,
     onSetDataMode,
@@ -170,6 +181,7 @@ export function MatchSetupPanelMint(props: MatchSetupPanelMintProps) {
     deckBName: deckB?.name ?? null,
     isEvent,
     rulesetKey,
+    classicRuleTags,
     opponentMode,
     firstPlayerMode,
     ui,
@@ -298,11 +310,19 @@ export function MatchSetupPanelMint(props: MatchSetupPanelMintProps) {
 
               <div className="grid gap-2">
                 <div className="text-xs font-medium text-slate-600">Ruleset</div>
+                <MintRulesetPicker
+                  rulesetKey={rulesetKey}
+                  classicConfig={classicCustomConfig}
+                  classicRuleTags={classicRuleTags}
+                  disabled={isEvent}
+                  onSelectRulesetKey={onRulesetKeyChange}
+                  onSetClassicMask={onSetClassicMask}
+                />
                 <select
                   className="input"
                   value={rulesetKey}
                   disabled={isEvent}
-                  onChange={(e) => onSetParam("rk", e.target.value)}
+                  onChange={(e) => onRulesetKeyChange(e.target.value as RulesetKey)}
                   aria-label="Ruleset"
                   data-testid="match-setup-ruleset"
                 >
@@ -310,6 +330,13 @@ export function MatchSetupPanelMint(props: MatchSetupPanelMintProps) {
                   <option value="v2">v2 (shadow ignores warning mark)</option>
                   <option value="full">full (tactics+traits+formations)</option>
                   <option value="classic_plus_same">classic (plus+same)</option>
+                  <option value="classic_custom">classic (custom)</option>
+                  <option value="classic_plus">classic (plus)</option>
+                  <option value="classic_same">classic (same)</option>
+                  <option value="classic_reverse">classic (reverse)</option>
+                  <option value="classic_ace_killer">classic (ace killer)</option>
+                  <option value="classic_type_ascend">classic (type ascend)</option>
+                  <option value="classic_type_descend">classic (type descend)</option>
                   <option value="classic_order">classic (order)</option>
                   <option value="classic_chaos">classic (chaos)</option>
                   <option value="classic_swap">classic (swap)</option>
@@ -317,6 +344,9 @@ export function MatchSetupPanelMint(props: MatchSetupPanelMintProps) {
                   <option value="classic_three_open">classic (three open)</option>
                 </select>
                 <div className="text-xs text-slate-500">Current: {describeRulesetKey(rulesetKey)}</div>
+                {rulesetKey === "classic_custom" ? (
+                  <div className="text-xs font-mono text-slate-500">cr={classicCustomMaskParam}</div>
+                ) : null}
               </div>
             </div>
           </section>

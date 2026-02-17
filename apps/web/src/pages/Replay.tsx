@@ -9,6 +9,8 @@ import { MintIcon, type MintIconName } from "@/components/mint/icons/MintIcon";
 
 import type { BoardCell, CardData, MatchResultWithHistory, RulesetConfig, TranscriptV1, TurnSummary } from "@nyano/triad-engine";
 import {
+  computeRulesetId,
+  DEFAULT_RULESET_CONFIG_V2,
   resolveClassicOpenCardIndices,
   resolveClassicSwapIndices,
   simulateMatchV1WithHistory,
@@ -52,7 +54,7 @@ import { parseReplayPayload } from "@/lib/replay_bundle";
 import { annotateReplayMoves } from "@/lib/ai/replay_annotations";
 import { assessBoardAdvantage, type BoardAdvantage } from "@/lib/ai/board_advantage";
 import { AdvantageBadge } from "@/components/AdvantageBadge";
-import { resolveRulesetById } from "@/lib/ruleset_registry";
+import { resolveRuleset, resolveRulesetById } from "@/lib/ruleset_registry";
 import { writeClipboardText } from "@/lib/clipboard";
 import { appAbsoluteUrl, appPath, buildReplayShareUrl } from "@/lib/appUrl";
 import { computeStageBoardSizing, shouldShowStageSecondaryControls } from "@/lib/stage_layout";
@@ -78,6 +80,7 @@ import {
 } from "@/lib/replay_timeline";
 import { MINT_PAGE_GUIDES } from "@/lib/mint_page_guides";
 import { appendThemeToPath, resolveAppTheme } from "@/lib/theme";
+import { decodeClassicRulesMask, listClassicRuleTags, normalizeClassicRulesConfig } from "@/lib/classic_rules_param";
 
 type Mode = "auto" | "v1" | "v2" | "compare";
 
@@ -89,6 +92,8 @@ type SimState =
       cards: Map<bigint, CardData>;
       owners: Map<bigint, `0x${string}`>;
       currentRulesetLabel: string;
+      resolvedRuleset: RulesetConfig | null;
+      rulesetIdMismatchWarning: string | null;
       current: MatchResultWithHistory;
       v1: MatchResultWithHistory;
       v2: MatchResultWithHistory;
@@ -225,24 +230,30 @@ function rulesetLabelFromConfig(cfg: RulesetConfig): string {
 
 function rulesetLabelFromRegistryConfig(cfg: RulesetConfig): string {
   if (cfg.version === 2) {
-    const c = cfg.classic;
-    const tags = [
-      c.order && "order",
-      c.chaos && "chaos",
-      c.swap && "swap",
-      c.reverse && "reverse",
-      c.aceKiller && "aceKiller",
-      c.plus && "plus",
-      c.same && "same",
-      c.typeAscend && "typeAscend",
-      c.typeDescend && "typeDescend",
-      c.allOpen && "allOpen",
-      c.threeOpen && "threeOpen",
-    ].filter(Boolean) as string[];
+    const tags = listClassicRuleTags(cfg.classic);
     if (tags.length > 0) return `rulesetId registry (classic: ${tags.join(", ")})`;
     return "rulesetId registry (v2)";
   }
   return "rulesetId registry (v1)";
+}
+
+function rulesetLabelFromUrlFallback(cfg: RulesetConfig): string {
+  if (cfg.version !== 2) return "URL fallback (v1)";
+  const tags = listClassicRuleTags(cfg.classic);
+  if (tags.length === 0) return "URL fallback (classic custom: none)";
+  return `URL fallback (classic: ${tags.join(", ")})`;
+}
+
+function resolveReplayRulesetFromParams(rulesetKeyParam: string | null, classicMaskParam: string | null): RulesetConfig | null {
+  if (!rulesetKeyParam) return null;
+  if (rulesetKeyParam === "classic_custom") {
+    const classic = normalizeClassicRulesConfig(decodeClassicRulesMask(classicMaskParam));
+    return {
+      ...DEFAULT_RULESET_CONFIG_V2,
+      classic: { ...classic },
+    };
+  }
+  return resolveRuleset(rulesetKeyParam);
 }
 
 function pickDefaultMode(rulesetId: string): Mode {
@@ -778,9 +789,18 @@ protocolV1: {
 
       // Determine preferred mode from rulesetId if mode=auto.
       const mode0 = override?.mode ?? mode;
+      const fallbackRulesetFromParams = resolveReplayRulesetFromParams(
+        searchParams.get("rk"),
+        searchParams.get("cr"),
+      );
       const rulesetById = resolveRulesetById(transcript.header.rulesetId);
-      const useRegistryRuleset = mode0 === "auto" && rulesetById !== null;
+      const resolvedReplayRuleset = rulesetById ?? fallbackRulesetFromParams;
+      const useResolvedRuleset = mode0 === "auto" && resolvedReplayRuleset !== null;
       const effectiveMode: Mode = mode0 === "auto" ? pickDefaultMode(transcript.header.rulesetId) : mode0;
+      const rulesetIdMismatchWarning = !rulesetById && fallbackRulesetFromParams
+        && computeRulesetId(fallbackRulesetFromParams).toLowerCase() !== transcript.header.rulesetId.toLowerCase()
+        ? "URL classic settings do not match transcript rulesetId. Replay is using URL fallback rules."
+        : null;
 
       // v2: use embedded card data (no network calls needed)
       // v1: resolve via game index first (fast/cached), RPC fallback for missing
@@ -810,14 +830,18 @@ protocolV1: {
       // Always compute both (cheap compared to RPC reads)
       const v1 = simulateMatchV1WithHistory(transcript, cards, ONCHAIN_CORE_TACTICS_RULESET_CONFIG_V1);
       const v2 = simulateMatchV1WithHistory(transcript, cards, ONCHAIN_CORE_TACTICS_SHADOW_RULESET_CONFIG_V2);
-      const byId = rulesetById ? simulateMatchV1WithHistory(transcript, cards, rulesetById) : null;
+      const byResolvedRuleset = resolvedReplayRuleset
+        ? simulateMatchV1WithHistory(transcript, cards, resolvedReplayRuleset)
+        : null;
 
       let current: MatchResultWithHistory = v1;
       let label = rulesetLabelFromConfig(ONCHAIN_CORE_TACTICS_RULESET_CONFIG_V1);
 
-      if (useRegistryRuleset && byId) {
-        current = byId;
-        label = rulesetLabelFromRegistryConfig(rulesetById!);
+      if (useResolvedRuleset && byResolvedRuleset && resolvedReplayRuleset) {
+        current = byResolvedRuleset;
+        label = rulesetById
+          ? rulesetLabelFromRegistryConfig(rulesetById)
+          : rulesetLabelFromUrlFallback(resolvedReplayRuleset);
       } else if (effectiveMode === "v2") {
         current = v2;
         label = rulesetLabelFromConfig(ONCHAIN_CORE_TACTICS_SHADOW_RULESET_CONFIG_V2);
@@ -830,7 +854,18 @@ protocolV1: {
         label = rulesetLabelFromConfig(ONCHAIN_CORE_TACTICS_RULESET_CONFIG_V1);
       }
 
-      setSim({ ok: true, transcript, cards, owners, currentRulesetLabel: label, current, v1, v2 });
+      setSim({
+        ok: true,
+        transcript,
+        cards,
+        owners,
+        currentRulesetLabel: label,
+        resolvedRuleset: resolvedReplayRuleset,
+        rulesetIdMismatchWarning,
+        current,
+        v1,
+        v2,
+      });
 
       const stepMax = current.boardHistory.length - 1;
       const startStep = clampInt(override?.step ?? 0, 0, stepMax);
@@ -910,7 +945,7 @@ protocolV1: {
   const stepStatusText = replayStepStatusText(step);
   const replayClassicSwap = React.useMemo(() => {
     if (!sim.ok) return null;
-    const ruleset = resolveRulesetById(sim.transcript.header.rulesetId);
+    const ruleset = sim.resolvedRuleset;
     if (!ruleset) return null;
     return resolveClassicSwapIndices({
       ruleset,
@@ -919,7 +954,7 @@ protocolV1: {
   }, [sim]);
   const replayClassicOpen = React.useMemo(() => {
     if (!sim.ok) return null;
-    const ruleset = resolveRulesetById(sim.transcript.header.rulesetId);
+    const ruleset = sim.resolvedRuleset;
     if (!ruleset) return null;
     return resolveClassicOpenCardIndices({
       ruleset,
@@ -1134,7 +1169,12 @@ protocolV1: {
     return () => window.clearInterval(timer);
   }, [isPlaying, playbackSpeed, stepMax, sim.ok, canPlay]);
 
-  const compare = sim.ok && (mode === "compare" || (mode === "auto" && shouldAutoCompareByRulesetId(sim.transcript.header.rulesetId)));
+  const compare = sim.ok && (
+    mode === "compare"
+    || (mode === "auto"
+      && sim.resolvedRuleset === null
+      && shouldAutoCompareByRulesetId(sim.transcript.header.rulesetId))
+  );
   const diverged = sim.ok ? !boardEquals(sim.v1.boardHistory[step], sim.v2.boardHistory[step]) : false;
   const replayNyanoReactionInput = React.useMemo(
     () => (sim.ok ? buildNyanoReactionInput(sim.current, step) : null),
@@ -1352,6 +1392,8 @@ protocolV1: {
       pointsDeltaA: pointsDeltaA ?? undefined,
       mode: "auto",
       ui: uiParam,
+      rulesetKey: searchParams.get("rk") ?? undefined,
+      classicMask: searchParams.get("cr") ?? undefined,
       step: 9,
       absolute: true,
     });
@@ -1401,6 +1443,8 @@ protocolV1: {
       pointsDeltaA: pointsDeltaA ?? undefined,
       mode,
       ui: uiParam,
+      rulesetKey: searchParams.get("rk") ?? undefined,
+      classicMask: searchParams.get("cr") ?? undefined,
       step,
       absolute: true,
     });
@@ -2244,6 +2288,11 @@ protocolV1: {
                         <div className="min-w-0">
                           <span className="font-medium">rulesetId</span>: <code className="font-mono break-all">{sim.transcript.header.rulesetId}</code>
                         </div>
+                        {sim.rulesetIdMismatchWarning ? (
+                          <div className="rounded-md border border-amber-300 bg-amber-50 px-2 py-1 text-[11px] font-medium text-amber-800">
+                            {sim.rulesetIdMismatchWarning}
+                          </div>
+                        ) : null}
                         {replayClassicSwap ? (
                           <div>
                             <span className="font-medium">classic swap</span>: A{replayClassicSwap.aIndex + 1} ↔ B{replayClassicSwap.bIndex + 1}

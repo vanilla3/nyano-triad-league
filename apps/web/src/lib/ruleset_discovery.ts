@@ -34,6 +34,48 @@ const RULESET_META: Record<RulesetKey, RulesetDiscoveryMeta> = {
     tags: ["classic", "combo"],
     recommended: true,
   },
+  classic_custom: {
+    title: "Classic Custom",
+    summary: "Build your own classic combination and share via URL.",
+    tags: ["classic", "custom"],
+    recommended: false,
+  },
+  classic_plus: {
+    title: "Classic Plus",
+    summary: "Classic mode with Plus capture rule enabled.",
+    tags: ["classic", "plus"],
+    recommended: false,
+  },
+  classic_same: {
+    title: "Classic Same",
+    summary: "Classic mode with Same capture rule enabled.",
+    tags: ["classic", "same"],
+    recommended: false,
+  },
+  classic_reverse: {
+    title: "Classic Reverse",
+    summary: "Reversed edge comparison: lower values can capture higher values.",
+    tags: ["classic", "reverse"],
+    recommended: false,
+  },
+  classic_ace_killer: {
+    title: "Classic Ace Killer",
+    summary: "Classic Ace Killer rule (1 captures 10) for sharp tactical swings.",
+    tags: ["classic", "ace_killer"],
+    recommended: false,
+  },
+  classic_type_ascend: {
+    title: "Classic Type Ascend",
+    summary: "Repeated trait placements gain strength over time.",
+    tags: ["classic", "type", "ascend"],
+    recommended: false,
+  },
+  classic_type_descend: {
+    title: "Classic Type Descend",
+    summary: "Repeated trait placements lose strength over time.",
+    tags: ["classic", "type", "descend"],
+    recommended: false,
+  },
   classic_order: {
     title: "Classic Order",
     summary: "Classic mode where hand order impacts play flow.",
