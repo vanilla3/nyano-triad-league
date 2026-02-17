@@ -17,12 +17,9 @@ import {
   type UxTargetStatus,
 } from "@/lib/telemetry";
 import {
-  ONBOARDING_STEPS,
-  completedOnboardingStepCount,
   isOnboardingCompleted,
   markOnboardingStepDone,
   readOnboardingProgress,
-  resetOnboardingProgress,
 } from "@/lib/onboarding";
 import { writeClipboardText } from "@/lib/clipboard";
 import { errorMessage } from "@/lib/errorMessage";
@@ -32,6 +29,7 @@ import { MintPressable } from "@/components/mint/MintPressable";
 import { MintTitleText, MintLabel } from "@/components/mint/MintTypography";
 import { MintIcon } from "@/components/mint/icons/MintIcon";
 import { appendThemeToPath, resolveAppTheme } from "@/lib/theme";
+import { isDebugMode } from "@/lib/debug";
 
 const DIFFICULTIES = [
   { key: "easy", label: "Easy", labelJa: "はじめて" },
@@ -77,14 +75,11 @@ export function HomePage() {
   const [uxSnapshotHistory, setUxSnapshotHistory] = React.useState(() =>
     readUxTelemetrySnapshotHistory(5),
   );
-  const onboardingCompleted = React.useMemo(
-    () => completedOnboardingStepCount(onboardingProgress),
-    [onboardingProgress],
-  );
   const onboardingAllDone = React.useMemo(
     () => isOnboardingCompleted(onboardingProgress),
     [onboardingProgress],
   );
+  const showDevTools = React.useMemo(() => isDebugMode(), []);
   const uxTargetChecks = React.useMemo(() => evaluateUxTargets(uxStats), [uxStats]);
 
   const themed = React.useCallback((to: string) => appendThemeToPath(to, theme), [theme]);
@@ -255,9 +250,6 @@ export function HomePage() {
           <MintTitleText as="h3" className="mint-home-onboarding__title">
             最短2ステップで対戦開始
           </MintTitleText>
-          <GlassPanel variant="pill" className="mint-home-onboarding__progress">
-            進捗 {onboardingCompleted}/{ONBOARDING_STEPS.length}
-          </GlassPanel>
         </div>
         <p className="mint-home-onboarding__note">
           ゲスト対戦は 2 までで開始できます。3 は慣れてきたら進める任意ステップです。
@@ -267,9 +259,6 @@ export function HomePage() {
           <GlassPanel variant="card" className="mint-home-step">
             <div className="mint-home-step__index">1</div>
             <MintTitleText as="h3" className="mint-home-step__title">ルールを知る</MintTitleText>
-            <div className="mint-home-step__status">
-              {onboardingProgress.steps.read_quick_guide ? "完了" : "未完了"}
-            </div>
             <MintPressable tone="soft" onClick={openQuickGuide}>
               ルールを開く
             </MintPressable>
@@ -278,9 +267,6 @@ export function HomePage() {
           <GlassPanel variant="card" className="mint-home-step">
             <div className="mint-home-step__index">2</div>
             <MintTitleText as="h3" className="mint-home-step__title">ゲストで対戦</MintTitleText>
-            <div className="mint-home-step__status">
-              {onboardingProgress.steps.start_first_match ? "完了" : "未完了"}
-            </div>
             <MintPressable to={quickPlayUrl} tone="primary" onClick={handleQuickPlayStart}>
               今すぐ対戦
             </MintPressable>
@@ -289,9 +275,6 @@ export function HomePage() {
           <GlassPanel variant="card" className="mint-home-step">
             <div className="mint-home-step__index">3</div>
             <MintTitleText as="h3" className="mint-home-step__title">慣れたら最初の手を確定</MintTitleText>
-            <div className="mint-home-step__status">
-              {onboardingProgress.steps.commit_first_move ? "完了" : "任意"}
-            </div>
             <MintPressable to={quickCommitUrl} tone="soft">
               Matchを開く
             </MintPressable>
@@ -301,16 +284,6 @@ export function HomePage() {
         <div className="mint-home-onboarding__footer">
           <MintPressable to={themed("/start")} tone="soft">
             1分スタート画面へ
-          </MintPressable>
-          <MintPressable
-            tone="ghost"
-            onClick={() => {
-              resetOnboardingProgress();
-              refreshOnboarding();
-              toast.success("クイックスタートをリセットしました", "オンボーディング進捗を初期化しました。");
-            }}
-          >
-            クイックスタートをリセット
           </MintPressable>
           {onboardingAllDone ? (
             <span className="mint-home-onboarding__done">遊ぶ準備が整いました。好きなモードを選んで始めましょう。</span>
@@ -329,11 +302,12 @@ export function HomePage() {
         </GlassPanel>
       </section>
 
-      <section className="mint-home-tools">
-        <details className="mint-home-disclosure">
-          <summary>ツール / 設定 (Tools / Settings)</summary>
-          <div className="mint-home-tools__body">
-            <div className="mint-home-tools__actions">
+      {showDevTools ? (
+        <section className="mint-home-tools">
+          <details className="mint-home-disclosure">
+            <summary>開発ツール</summary>
+            <div className="mint-home-tools__body">
+              <div className="mint-home-tools__actions">
               <MintPressable tone="soft" size="sm" onClick={() => {
                 resetTutorialSeen();
                 toast.success("チュートリアルをリセットしました", "次のゲスト対戦で再表示されます。");
@@ -366,55 +340,56 @@ export function HomePage() {
               }}>
                 履歴を削除 (Clear History)
               </MintPressable>
-            </div>
+              </div>
 
-            <div className="mint-home-metrics-grid">
-              <GlassPanel variant="card" className="mint-home-metric">
-                <MintLabel>セッション (Sessions)</MintLabel>
-                <div>{uxStats.sessions}</div>
-              </GlassPanel>
-              <GlassPanel variant="card" className="mint-home-metric">
-                <MintLabel>初回操作まで平均 (Avg first interaction)</MintLabel>
-                <div>{formatSecondsFromMs(uxStats.avg_first_interaction_ms)}</div>
-              </GlassPanel>
-              <GlassPanel variant="card" className="mint-home-metric">
-                <MintLabel>初回配置まで平均 (Avg first place)</MintLabel>
-                <div>{formatSecondsFromMs(uxStats.avg_first_place_ms)}</div>
-              </GlassPanel>
-              <GlassPanel variant="card" className="mint-home-metric">
-                <MintLabel>ホームLCP平均 (Avg Home LCP)</MintLabel>
-                <div>{formatSecondsFromMs(uxStats.avg_home_lcp_ms)}</div>
-              </GlassPanel>
-            </div>
-
-            <div className="mint-home-targets">
-              {uxTargetChecks.map((check) => (
-                <GlassPanel key={check.id} variant="card" className="mint-home-target">
-                  <div className="mint-home-target__top">
-                    <span>{check.id}</span>
-                    <span className={targetStatusClass(check.status)}>{targetStatusLabel(check.status)}</span>
-                  </div>
-                  <div className="mint-home-target__value">目標 target: {check.target}</div>
-                  <div className="mint-home-target__value">現在 current: {check.valueText}</div>
+              <div className="mint-home-metrics-grid">
+                <GlassPanel variant="card" className="mint-home-metric">
+                  <MintLabel>セッション (Sessions)</MintLabel>
+                  <div>{uxStats.sessions}</div>
                 </GlassPanel>
-              ))}
-            </div>
+                <GlassPanel variant="card" className="mint-home-metric">
+                  <MintLabel>初回操作まで平均 (Avg first interaction)</MintLabel>
+                  <div>{formatSecondsFromMs(uxStats.avg_first_interaction_ms)}</div>
+                </GlassPanel>
+                <GlassPanel variant="card" className="mint-home-metric">
+                  <MintLabel>初回配置まで平均 (Avg first place)</MintLabel>
+                  <div>{formatSecondsFromMs(uxStats.avg_first_place_ms)}</div>
+                </GlassPanel>
+                <GlassPanel variant="card" className="mint-home-metric">
+                  <MintLabel>ホームLCP平均 (Avg Home LCP)</MintLabel>
+                  <div>{formatSecondsFromMs(uxStats.avg_home_lcp_ms)}</div>
+                </GlassPanel>
+              </div>
 
-            {uxSnapshotHistory.length > 0 ? (
-              <div className="mint-home-snapshots">
-                {uxSnapshotHistory.map((snapshot, index) => (
-                  <GlassPanel key={`${snapshot.generatedAtIso}-${index}`} variant="card" className="mint-home-snapshot">
-                    <div>{snapshot.generatedAtIso}</div>
-                    <div>{snapshot.context ? `${snapshot.context.route} / ${snapshot.context.viewport}` : "コンテキストなし (Context unavailable)"}</div>
+              <div className="mint-home-targets">
+                {uxTargetChecks.map((check) => (
+                  <GlassPanel key={check.id} variant="card" className="mint-home-target">
+                    <div className="mint-home-target__top">
+                      <span>{check.id}</span>
+                      <span className={targetStatusClass(check.status)}>{targetStatusLabel(check.status)}</span>
+                    </div>
+                    <div className="mint-home-target__value">目標 target: {check.target}</div>
+                    <div className="mint-home-target__value">現在 current: {check.valueText}</div>
                   </GlassPanel>
                 ))}
               </div>
-            ) : (
-              <div className="mint-home-snapshots__empty">スナップショット履歴はまだありません。(No snapshot history yet.)</div>
-            )}
-          </div>
-        </details>
-      </section>
+
+              {uxSnapshotHistory.length > 0 ? (
+                <div className="mint-home-snapshots">
+                  {uxSnapshotHistory.map((snapshot, index) => (
+                    <GlassPanel key={`${snapshot.generatedAtIso}-${index}`} variant="card" className="mint-home-snapshot">
+                      <div>{snapshot.generatedAtIso}</div>
+                      <div>{snapshot.context ? `${snapshot.context.route} / ${snapshot.context.viewport}` : "コンテキストなし (Context unavailable)"}</div>
+                    </GlassPanel>
+                  ))}
+                </div>
+              ) : (
+                <div className="mint-home-snapshots__empty">スナップショット履歴はまだありません。(No snapshot history yet.)</div>
+              )}
+            </div>
+          </details>
+        </section>
+      ) : null}
 
       {showQuickGuide ? (
         <div className="mint-home-modal">

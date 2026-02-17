@@ -3004,3 +3004,25 @@
 - pnpm.cmd -C apps/web test OK
 - pnpm.cmd -C apps/web typecheck OK
 - pnpm.cmd -C apps/web build OK
+
+## 2026-02-18 - Home onboarding status cleanup for player-facing clarity
+
+### Why
+- On Home onboarding cards, labels like "?? / ???" were not clear to players and looked like internal progress markers.
+- Home also exposed developer-oriented tools/metrics text in normal view.
+
+### What
+- apps/web/src/pages/Home.tsx
+  - Removed per-card status labels from onboarding cards (?????? / ?????? / ???????????).
+  - Removed onboarding progress pill from the heading area.
+  - Removed "?????????????" action from default onboarding footer.
+  - Gated Home developer tools section behind `debug=1` and changed summary label to `?????`.
+- apps/web/e2e/home.spec.ts
+  - Updated default Home expectations (no status labels, no dev tools by default).
+  - Added `debug=1` case to verify dev tools remain available when explicitly enabled.
+
+### Verify
+- pnpm.cmd -C apps/web e2e -- e2e/home.spec.ts OK (2 passed)
+- pnpm.cmd -C apps/web test OK
+- pnpm.cmd -C apps/web typecheck OK
+- pnpm.cmd -C apps/web build OK
