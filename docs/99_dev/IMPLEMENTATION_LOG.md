@@ -1,50 +1,25 @@
-# 実装ログ
+# 実裁E��グ
 
-> 1コミット=1まとまりで追記する（Why/What/Verify）。
-
-## 2026-02-13 — WO005-B follow-up: responsive stage secondary controls
+> 1コミッチE1まとまりで追記する！Ehy/What/Verify�E�、E
+## 2026-02-13  EWO005-B follow-up: responsive stage secondary controls
 
 ### Why
-- Stage focus中にウィンドウ幅が変わった場合、補助コントロール表示が初期値のままで、狭幅で情報過多/広幅で操作導線不足になることがあった。
-- Stageの「1画面導線」を維持するため、表示閾値の共通化と resize追従が必要だった。
-
+- Stage focus中にウィンドウ幁E��変わった場合、補助コントロール表示が�E期値のままで、狭幁E��惁E��過夁E庁E��E��操作導線不足になることがあった、E- Stageの、E画面導線」を維持するため、表示閾値の共通化と resize追従が忁E��だった、E
 ### What
 - `apps/web/src/lib/stage_layout.ts`
-  - `shouldShowStageSecondaryControls` を追加し、補助コントロール表示のブレークポイント判定を共通化。
-- `apps/web/src/lib/__tests__/stage_layout.test.ts`
-  - 補助コントロール表示判定（390/768/769/NaN）を検証。
-- `apps/web/src/pages/Match.tsx`
-  - Stage controls の初期表示/再計算を共通判定に切替。
-  - resize時の自動追従を追加（手動トグル後は manual override でユーザー設定を優先）。
-- `apps/web/src/pages/Replay.tsx`
-  - Stage transport controls に同等の resize追従 + manual override を追加。
-- `apps/web/e2e/stage-focus.spec.ts`
-  - mobile `replay-stage` で controls が初期非表示であること、
-  - `Show controls` で復帰できることを追加検証。
-  - 375px 幅 `battle-stage` で Commit ボタンが viewport 内に収まることを検証。
-  - 375px 幅で横方向オーバーフローが発生しないことを検証。
-  - game index / RPC 失敗時でも `replay-stage` の `Load replay` / `Retry load` / `Clear share params` が表示され、リカバリ導線が維持されることを検証。
-- `apps/web/src/lib/ai/turn_timing.ts`
-  - AI自動打ちの待機時間を再調整（base/turn-step/difficulty/jitter を引き上げ）。
-  - 「早すぎて機械的」に見えるテンポを抑え、思考演出の体感を改善。
-- `apps/web/src/lib/ai/__tests__/turn_timing.test.ts`
-  - baseline と upper bound の期待値を更新し、調整後の決定論を検証。
-- `apps/web/src/components/NyanoReaction.tsx`
-  - `reduced-motion` と `data-vfx`（off/low/medium/high）に応じて cut-in timing を切替。
-  - `vfx=off` / reduced-motion 時は burst 無効 + 表示時間短縮で負荷と過演出を抑制。
-  - `vfx=low` 時は impact を抑えつつ burst を無効化。
-- `apps/web/src/components/__tests__/NyanoReaction.timing.test.ts`
-  - reduced-motion / vfx off / vfx low / vfx high の timing 分岐を検証。
-- `apps/web/src/lib/demo_decks.ts`
-  - `buildEmergencyGuestFallbackData` を追加し、index非依存で guest 5v5 を生成可能化。
-- `apps/web/src/pages/Match.tsx`
-  - Game Index 読込失敗時、guest mode では緊急フォールバックを適用して対戦継続。
-  - `error/status` と toast でフォールバック状態を明示。
-- `apps/web/src/lib/__tests__/demo_decks.test.ts`
-  - 緊急フォールバックデッキの構成（5v5/10枚 map）を検証。
-- `apps/web/e2e/stage-focus.spec.ts`
-  - battle-stage guest で index 読込失敗時にフォールバックで継続できることを検証。
-
+  - `shouldShowStageSecondaryControls` を追加し、補助コントロール表示のブレークポイント判定を共通化、E- `apps/web/src/lib/__tests__/stage_layout.test.ts`
+  - 補助コントロール表示判定！E90/768/769/NaN�E�を検証、E- `apps/web/src/pages/Match.tsx`
+  - Stage controls の初期表示/再計算を共通判定に刁E��、E  - resize時�E自動追従を追加�E�手動トグル後�E manual override でユーザー設定を優先）、E- `apps/web/src/pages/Replay.tsx`
+  - Stage transport controls に同等�E resize追征E+ manual override を追加、E- `apps/web/e2e/stage-focus.spec.ts`
+  - mobile `replay-stage` で controls が�E期非表示であること、E  - `Show controls` で復帰できることを追加検証、E  - 375px 幁E`battle-stage` で Commit ボタンぁEviewport 冁E��収まることを検証、E  - 375px 幁E��横方向オーバ�Eフローが発生しなぁE��とを検証、E  - game index / RPC 失敗時でめE`replay-stage` の `Load replay` / `Retry load` / `Clear share params` が表示され、リカバリ導線が維持されることを検証、E- `apps/web/src/lib/ai/turn_timing.ts`
+  - AI自動打ちの征E��時間を再調整�E�Ease/turn-step/difficulty/jitter を引き上げ�E�、E  - 「早すぎて機械皁E��に見えるテンポを抑え、思老E���Eの体感を改喁E��E- `apps/web/src/lib/ai/__tests__/turn_timing.test.ts`
+  - baseline と upper bound の期征E��を更新し、調整後�E決定論を検証、E- `apps/web/src/components/NyanoReaction.tsx`
+  - `reduced-motion` と `data-vfx`�E�Eff/low/medium/high�E�に応じて cut-in timing を�E替、E  - `vfx=off` / reduced-motion 時�E burst 無効 + 表示時間短縮で負荷と過演�Eを抑制、E  - `vfx=low` 時�E impact を抑えつつ burst を無効化、E- `apps/web/src/components/__tests__/NyanoReaction.timing.test.ts`
+  - reduced-motion / vfx off / vfx low / vfx high の timing 刁E��を検証、E- `apps/web/src/lib/demo_decks.ts`
+  - `buildEmergencyGuestFallbackData` を追加し、index非依存で guest 5v5 を生成可能化、E- `apps/web/src/pages/Match.tsx`
+  - Game Index 読込失敗時、guest mode では緊急フォールバックを適用して対戦継続、E  - `error/status` と toast でフォールバック状態を明示、E- `apps/web/src/lib/__tests__/demo_decks.test.ts`
+  - 緊急フォールバックチE��キの構�E�E�Ev5/10极Emap�E�を検証、E- `apps/web/e2e/stage-focus.spec.ts`
+  - battle-stage guest で index 読込失敗時にフォールバックで継続できることを検証、E
 ### Verify
 - `pnpm -C apps/web lint`
 - `pnpm -C apps/web test`
@@ -55,22 +30,16 @@
 - `pnpm -C apps/web test -- src/components/__tests__/NyanoReaction.timing.test.ts`
 - `pnpm -C apps/web test -- src/lib/__tests__/demo_decks.test.ts`
 
-## 2026-02-13 — WO005-A follow-up: Stage route canonicalization + smoke coverage
+## 2026-02-13  EWO005-A follow-up: Stage route canonicalization + smoke coverage
 
 ### Why
-- `/battle-stage` `/replay-stage` のクエリ正規化ロジックがページごとに重複しており、回帰時に差分を見落としやすかった。
-- Stage専用ルートのスモークが E2E で未カバーだったため、URL互換と起動安定性を自動で担保する必要があった。
-
+- `/battle-stage` `/replay-stage` のクエリ正規化ロジチE��が�Eージごとに重褁E��ており、回帰時に差刁E��見落としやすかった、E- Stage専用ルート�EスモークぁEE2E で未カバ�Eだったため、URL互換と起動安定性を�E動で拁E��する忁E��があった、E
 ### What
 - `apps/web/src/lib/stage_focus_params.ts` を追加:
-  - `ui=engine` 強制、`focus=1` 正規化、legacy `layout` の除去を共通化。
-- `apps/web/src/pages/BattleStage.tsx` / `apps/web/src/pages/ReplayStage.tsx`:
-  - 重複していた `useEffect` 内のクエリ補正処理を `normalizeStageFocusParams` に統一。
-- `apps/web/src/lib/__tests__/stage_focus_params.test.ts` を追加:
-  - 欠損補完、legacy `layout=focus` 吸収、`focus=focus` 正規化、no-op ケースを検証。
-- `apps/web/e2e/stage-focus.spec.ts` を追加:
-  - `/battle-stage` `/replay-stage` のURL正規化と、主要UI（Hand Dock / replay focus guard）表示を確認。
-
+  - `ui=engine` 強制、`focus=1` 正規化、legacy `layout` の除去を�E通化、E- `apps/web/src/pages/BattleStage.tsx` / `apps/web/src/pages/ReplayStage.tsx`:
+  - 重褁E��てぁE�� `useEffect` 冁E�Eクエリ補正処琁E�� `normalizeStageFocusParams` に統一、E- `apps/web/src/lib/__tests__/stage_focus_params.test.ts` を追加:
+  - 欠損補完、legacy `layout=focus` 吸収、`focus=focus` 正規化、no-op ケースを検証、E- `apps/web/e2e/stage-focus.spec.ts` を追加:
+  - `/battle-stage` `/replay-stage` のURL正規化と、主要UI�E�Eand Dock / replay focus guard�E�表示を確認、E
 ### Verify
 - `pnpm -C apps/web lint`
 - `pnpm -C apps/web test`
@@ -78,30 +47,18 @@
 - `pnpm -C apps/web build`
 - `pnpm -C apps/web e2e -- stage-focus.spec.ts`
 
-## 2026-02-13 — WO005-A: Stage UI/UX foundation (viewport fit + hierarchy)
+## 2026-02-13  EWO005-A: Stage UI/UX foundation (viewport fit + hierarchy)
 
 ### Why
-- `/battle-stage` と `/replay-stage` の Pixi 盤面サイズが固定寄りで、PC環境によっては主要操作導線が縦方向に伸びやすかった。
-- AGENTS/Work Order更新に合わせ、Stage-firstで UI/UX 基盤（情報階層 + 1画面導線）を先に安定化する必要があった。
-
+- `/battle-stage` と `/replay-stage` の Pixi 盤面サイズが固定寁E��で、PC環墁E��よっては主要操作導線が縦方向に伸びめE��かった、E- AGENTS/Work Order更新に合わせ、Stage-firstで UI/UX 基盤�E�情報階層 + 1画面導線）を先に安定化する忁E��があった、E
 ### What
-- `codex/execplans/005_uiux_foundation.md` を新規作成し、Milestone A の実装計画を文書化。
-- `apps/web/src/lib/stage_layout.ts` を追加:
-  - viewport と stage種別（battle/replay）から `maxWidthPx` / `minHeightPx` を算出。
-- `apps/web/src/lib/__tests__/stage_layout.test.ts` を追加:
-  - desktop/mobile/invalid入力の境界を検証。
-- `apps/web/src/pages/Match.tsx`:
-  - battle-stage で viewport追従サイズを使用。
-  - stage専用レイアウトクラス（root/toolbar/arena/board/cutin/dock）を適用。
-  - stage routeでは desktop quick-commit 重複表示を抑止。
-- `apps/web/src/pages/Replay.tsx`:
-  - replay-stage で viewport追従サイズを使用。
-  - stage専用レイアウトクラス（root/toolbar/cutin/arena-inner）を適用。
-- `apps/web/src/styles.css`:
-  - stage shell/panel のトークン変数を追加。
-- `apps/web/src/mint-theme/mint-theme.css`:
-  - `stage-focus-*` と `mint-focus-hand-dock--stage` スタイルを追加し、視線誘導と下部操作導線を強化。
-
+- `codex/execplans/005_uiux_foundation.md` を新規作�Eし、Milestone A の実裁E��画を文書化、E- `apps/web/src/lib/stage_layout.ts` を追加:
+  - viewport と stage種別�E�Eattle/replay�E�かめE`maxWidthPx` / `minHeightPx` を算�E、E- `apps/web/src/lib/__tests__/stage_layout.test.ts` を追加:
+  - desktop/mobile/invalid入力�E墁E��を検証、E- `apps/web/src/pages/Match.tsx`:
+  - battle-stage で viewport追従サイズを使用、E  - stage専用レイアウトクラス�E�Eoot/toolbar/arena/board/cutin/dock�E�を適用、E  - stage routeでは desktop quick-commit 重褁E��示を抑止、E- `apps/web/src/pages/Replay.tsx`:
+  - replay-stage で viewport追従サイズを使用、E  - stage専用レイアウトクラス�E�Eoot/toolbar/cutin/arena-inner�E�を適用、E- `apps/web/src/styles.css`:
+  - stage shell/panel のト�Eクン変数を追加、E- `apps/web/src/mint-theme/mint-theme.css`:
+  - `stage-focus-*` と `mint-focus-hand-dock--stage` スタイルを追加し、視線誘導と下部操作導線を強化、E
 ### Verify
 - `pnpm -C apps/web lint`
 - `pnpm -C apps/web test`
@@ -110,278 +67,169 @@
 - `pnpm -C apps/web e2e -- smoke.spec.ts`
 
 
-## 2026-02-01 — commit-0002
+## 2026-02-01  Ecommit-0002
 
 ### Why
-- 初期ZIPの構成上、`nyano-triad-league-starter/` が同梱されており、ワークスペースの中心が曖昧だった。
-- 公式戦（検証可能）に必要な **matchIdの定義** を、JSON等の揺れる形式ではなく Solidity 互換の固定エンコードに寄せたかった。
-- Design v2.0 の Layer2（TACTICS）の核である **警戒マーク** は、早期に入れることでゲームの“読み合い”が立ち上がる。
-
+- 初期ZIPの構�E上、`nyano-triad-league-starter/` が同梱されており、ワークスペ�Eスの中忁E��曖昧だった、E- 公式戦�E�検証可能�E�に忁E��な **matchIdの定義** を、JSON等�E揺れる形式ではなぁESolidity 互換の固定エンコードに寁E��たかった、E- Design v2.0 の Layer2�E�EACTICS�E��E核である **警戒�Eーク** は、早期に入れることでゲームの“読み合い”が立ち上がる、E
 ### What
-- `packages/triad-engine` を正規位置へ移設し、starter同梱を解消。
-- Transcript v1 の matchId を `keccak256(abi.encode(...))` 相当の **固定ABIエンコード** に変更（TS参照実装）。
-- Layer2：警戒マークを実装（最大3回／1ターン有効／踏んだカードTriad-1）。
-- ゴールデンテスト追加（警戒マークの有無で中心がフリップする/しない）。
-- `TRANSCRIPT_SPEC` に固定ABIエンコードを明記。
-- CI：lockfile未コミット段階を想定し `--frozen-lockfile` を一時解除。
-
+- `packages/triad-engine` を正規位置へ移設し、starter同梱を解消、E- Transcript v1 の matchId めE`keccak256(abi.encode(...))` 相当�E **固定ABIエンコーチE* に変更�E�ES参�E実裁E��、E- Layer2�E�警戒�Eークを実裁E��最大3回！Eターン有効�E�踏んだカードTriad-1�E�、E- ゴールチE��チE��ト追加�E�警戒�Eークの有無で中忁E��フリチE�Eする/しなぁE��、E- `TRANSCRIPT_SPEC` に固定ABIエンコードを明記、E- CI�E�lockfile未コミット段階を想定し `--frozen-lockfile` を一時解除、E
 ### Verify
 - `pnpm -C packages/triad-engine test`
-- `docs/99_dev/Nyano_Triad_League_DEV_TODO_v1_ja.md` と `docs/02_protocol/Nyano_Triad_League_TRANSCRIPT_SPEC_v1_ja.md` の更新確認
+- `docs/99_dev/Nyano_Triad_League_DEV_TODO_v1_ja.md` と `docs/02_protocol/Nyano_Triad_League_TRANSCRIPT_SPEC_v1_ja.md` の更新確誁E
 
-
-## 2026-02-01 — commit-0003
+## 2026-02-01  Ecommit-0003
 
 ### Why
-- Design v2.0 の Layer2（TACTICS）のもう一つの柱である **コンボボーナス** を早期に入れ、連鎖（コンボ）を「狙う理由」を作りたかった。
-- 公式戦（検証可能）では、同じトランスクリプトから **同じ派生効果（次ターンバフ）** が再現できる必要があるため、コンボ数の定義を仕様として固定したかった。
-- 「運営がいなくても盛り上がる」方向に向け、ERC-6551（TBA）とステーキングを **プロトコル部品** としてどう使うかを並行して整理しておきたかった。
-
+- Design v2.0 の Layer2�E�EACTICS�E��Eもう一つの柱である **コンボ�Eーナス** を早期に入れ、E��鎖（コンボ）を「狙ぁE��由」を作りたかった、E- 公式戦�E�検証可能�E�では、同じトランスクリプトから **同じ派生効果（次ターンバフ�E�E* が�E現できる忁E��があるため、コンボ数の定義を仕様として固定したかった、E- 「運営がいなくても盛り上がる」方向に向け、ERC-6551�E�EBA�E�とスチE�EキングめE**プロトコル部品E* としてどぁE��ぁE��を並行して整琁E��ておきたかった、E
 ### What
-- TSエンジンに **コンボボーナス** を実装：
-  - `comboCount = 1（配置） + flipCount（このターンでひっくり返した枚数）`
-  - 3: Momentum（次の自分のカード 全辺+1）
-  - 4: Domination（次の自分のカード 全辺+2）
-  - 5+: Nyano Fever（次の自分のカードが警戒マークを無効化）
-- 参照実装の出力に `turns: TurnSummary[]` を追加し、UI/解析が “運営なし” でも作りやすい形にした。
-- ゴールデンテスト追加：Momentum が次ターンのカードに +1 として反映されるケース。
-- `RULESET_CONFIG_SPEC` と `TRANSCRIPT_SPEC` に、コンボ数の定義と派生値の扱いを追記。
-- 自律化検討として `ERC6551_and_Staking_Notes_v1_ja.md` を追加（TBA/ステーキングの使い所と段階導入案）。
-
+- TSエンジンに **コンボ�Eーナス** を実裁E��E  - `comboCount = 1�E��E置�E�E+ flipCount�E�このターンでひっくり返した枚数�E�`
+  - 3: Momentum�E�次の自刁E�EカーチE全辺+1�E�E  - 4: Domination�E�次の自刁E�EカーチE全辺+2�E�E  - 5+: Nyano Fever�E�次の自刁E�Eカードが警戒�Eークを無効化！E- 参�E実裁E�E出力に `turns: TurnSummary[]` を追加し、UI/解析が “運営なし Eでも作りめE��ぁE��にした、E- ゴールチE��チE��ト追加�E�Momentum が次ターンのカードに +1 として反映されるケース、E- `RULESET_CONFIG_SPEC` と `TRANSCRIPT_SPEC` に、コンボ数の定義と派生値の扱ぁE��追記、E- 自律化検討として `ERC6551_and_Staking_Notes_v1_ja.md` を追加�E�EBA/スチE�Eキングの使ぁE��と段階導�E案）、E
 ### Verify
 - `pnpm -C packages/triad-engine test`
-- 仕様更新：`docs/02_protocol/*` と `docs/99_dev/*` の差分確認
+- 仕様更新�E�`docs/02_protocol/*` と `docs/99_dev/*` の差刁E��誁E
 
-
-## 2026-02-01 — commit-0004
+## 2026-02-01  Ecommit-0004
 
 ### Why
-- Layer2（警戒マーク/コンボボーナス/後攻補正）は「シーズンやルールセット」で ON/OFF を切り替えられる必要がある（運営が消えてもコミュニティが環境を作れるため）。
-- 設計ドキュメント v2.0 にある「先攻・後攻バランス（後攻初手+1 もしくは後攻警戒+1回）」を、エンジン側で安全に選択できる形にしたかった。
-- 警戒マークの Triad 下限（0 or 1）が曖昧だと、境界ケースの結果がズレて後から地獄になるため、v1の決定を固定したかった。
-
+- Layer2�E�警戒�Eーク/コンボ�Eーナス/後攻補正�E��E「シーズンめE��ールセチE��」で ON/OFF を�Eり替えられる忁E��がある�E�運営が消えてもコミュニティが環墁E��作れるためE��、E- 設計ドキュメンチEv2.0 にある「�E攻・後攻バランス�E�後攻初手+1 もしく�E後攻警戁E1回）」を、エンジン側で安�Eに選択できる形にしたかった、E- 警戒�Eークの Triad 下限�E�E or 1�E�が曖昧だと、墁E��ケースの結果がズレて後から地獁E��なるため、v1の決定を固定したかった、E
 ### What
-- `RulesetConfigV1`（engine-side subset）を導入し、`simulateMatchV1(..., ruleset)` でルールを指定可能にした（未指定は `DEFAULT_RULESET_CONFIG_V1`）。
-- 警戒マーク：
-  - rulesetで `enabled` を切り替え可能（無効時は transcript フィールドを無視）。
-  - 使用回数を `maxUsesPerPlayer` に明確化し、後攻に `secondPlayerExtraUses` を付与可能にした。
-  - Triad下限は **0（0..10にクランプ）** を v1の決定として types/spec に明記。
-- コンボボーナス：
-  - rulesetで `enabled` を切り替え可能にし、閾値/効果量も設定で変更できるようにした（v2デフォルトは維持）。
-- 後攻補正：
-  - rulesetで `secondPlayerBalance.firstMoveTriadPlus` を指定すると、後攻の初手に全辺+Xを付与できる。
-- テスト追加：
-  - 後攻初手+1 の有無でフリップ結果が変わるケース。
-  - 後攻だけ警戒マーク +1 回を許可するケース（4回目でthrowしない）。
-
+- `RulesetConfigV1`�E�Engine-side subset�E�を導�Eし、`simulateMatchV1(..., ruleset)` でルールを指定可能にした�E�未持E���E `DEFAULT_RULESET_CONFIG_V1`�E�、E- 警戒�Eーク�E�E  - rulesetで `enabled` を�Eり替え可能�E�無効時�E transcript フィールドを無視）、E  - 使用回数めE`maxUsesPerPlayer` に明確化し、後攻に `secondPlayerExtraUses` を付与可能にした、E  - Triad下限は **0�E�E..10にクランプ！E* めEv1の決定として types/spec に明記、E- コンボ�Eーナス�E�E  - rulesetで `enabled` を�Eり替え可能にし、E��値/効果量も設定で変更できるようにした�E�E2チE��ォルト�E維持E��、E- 後攻補正�E�E  - rulesetで `secondPlayerBalance.firstMoveTriadPlus` を指定すると、後攻の初手に全辺+Xを付与できる、E- チE��ト追加�E�E  - 後攻初手+1 の有無でフリチE�E結果が変わるケース、E  - 後攻だけ警戒�Eーク +1 回を許可するケース�E�E回目でthrowしなぁE��、E
 ### Verify
 - `pnpm -C packages/triad-engine test`
-- ドキュメント更新：`docs/02_protocol/Nyano_Triad_League_RULESET_CONFIG_SPEC_v1_ja.md` / `docs/99_dev/Nyano_Triad_League_DEV_TODO_v1_ja.md` の差分確認
-
+- ドキュメント更新�E�`docs/02_protocol/Nyano_Triad_League_RULESET_CONFIG_SPEC_v1_ja.md` / `docs/99_dev/Nyano_Triad_League_DEV_TODO_v1_ja.md` の差刁E��誁E
 ---
 
-## Commit0005 — Layer3（Synergy / Trait効果 v1）
-
-- 実装：`packages/triad-engine` に TraitEffectsConfig を追加し、v1のTrait効果を決定論で実装。
-- 追加/更新した仕様：
-  - `docs/02_protocol/Nyano_Triad_League_RULESET_CONFIG_SPEC_v1_ja.md`（TS shape に合わせて具体化）
-  - `docs/02_protocol/Nyano_Triad_League_TRANSCRIPT_SPEC_v1_ja.md`（Earth選択の必須条件を明確化）
-  - `docs/02_protocol/Nyano_Triad_League_TRAIT_EFFECTS_SPEC_v1_ja.md`（新規：Traitの厳密仕様）
-
-### 実装したTrait（v1）
-- Cosmic：角配置 allTriad +1
-- Light：隣接味方 allTriad +1（非スタック既定）
-- Shadow：警戒マーク debuff 無効化（消費はする）
-- Forest：最初のフリップ試行を1回無効化（shield）
-- Metal：連鎖攻撃ではフリップ不可
-- Flame：Triad同値時、じゃんけんで常に勝つ（相手がFlameでない場合）
-- Aqua：斜め4方向にも攻撃（斜め強度は `min(edgeA, edgeB)` 既定）
-- Thunder：隣接敵カードの全辺 -1（永続、capture前に適用）
-- Wind：先攻/後攻選択（transcriptのfirstPlayerで表現）
-- Earth：辺選択 +2 / 対辺 -1（`earthBoostEdge`、requireChoice既定 true）
-
-### ゴールデンテスト追加
-- Shadow が警戒マークを無視するケース
-- Forest shield が1回だけフリップを無効化するケース
+## Commit0005  ELayer3�E�Eynergy / Trait効极Ev1�E�E
+- 実裁E��`packages/triad-engine` に TraitEffectsConfig を追加し、v1のTrait効果を決定論で実裁E��E- 追加/更新した仕様！E  - `docs/02_protocol/Nyano_Triad_League_RULESET_CONFIG_SPEC_v1_ja.md`�E�ES shape に合わせて具体化�E�E  - `docs/02_protocol/Nyano_Triad_League_TRANSCRIPT_SPEC_v1_ja.md`�E�Earth選択�E忁E��条件を�E確化！E  - `docs/02_protocol/Nyano_Triad_League_TRAIT_EFFECTS_SPEC_v1_ja.md`�E�新規：Traitの厳寁E��様！E
+### 実裁E��たTrait�E�E1�E�E- Cosmic�E�角�E置 allTriad +1
+- Light�E�隣接味方 allTriad +1�E�非スタチE��既定！E- Shadow�E�警戒�Eーク debuff 無効化（消費はする�E�E- Forest�E�最初�EフリチE�E試行を1回無効化！Ehield�E�E- Metal�E�連鎖攻撁E��はフリチE�E不可
+- Flame�E�Triad同値時、じめE��けんで常に勝つ�E�相手がFlameでなぁE��合！E- Aqua�E�斜めE方向にも攻撁E��斜め強度は `min(edgeA, edgeB)` 既定！E- Thunder�E�隣接敵カード�E全辺 -1�E�永続、capture前に適用�E�E- Wind�E��E攻/後攻選択！EranscriptのfirstPlayerで表現�E�E- Earth�E�辺選抁E+2 / 対辺 -1�E�EearthBoostEdge`、requireChoice既宁Etrue�E�E
+### ゴールチE��チE��ト追加
+- Shadow が警戒�Eークを無視するケース
+- Forest shield ぁE回だけフリチE�Eを無効化するケース
 - Earth の選択で結果が変わるケース
 - Thunder の永続デバフ
 - Light の隣接バフで結果が変わるケース
 
 ### 次の焦点
-- Nyano Peace のオンチェーン属性 → TraitType 導出の暫定ルール（JSON公開＋議論可能な形）
-- Formation bonuses（Layer3拡張）
+- Nyano Peace のオンチェーン属性 ↁETraitType 導�Eの暫定ルール�E�ESON公開＋議論可能な形�E�E- Formation bonuses�E�Eayer3拡張�E�E
 
-
-## 2026-02-02 — commit-0006
+## 2026-02-02  Ecommit-0006
 
 ### Why
-- Layer3（Trait効果）を実装した時点で、次のボトルネックは「Nyano Peace のオンチェーン Trait（classId/seasonId/rarity）を、ゲーム内 TraitType（10種）へどう落とすか」だった。
-- 導出規則が曖昧なままだと、インデクサやUIごとに解釈が割れて **replay / 公式戦オンチェーン決済が破綻**する。
-- さらに、class/season/rarity がオンチェーンで公開されている以上、それをゲーム性（環境設計/デッキ予算など）に接続できる「拡張点」として、ルールセットに含めておきたかった。
-
+- Layer3�E�Erait効果）を実裁E��た時点で、次のボトルネックは「Nyano Peace のオンチェーン Trait�E�ElassId/seasonId/rarity�E�を、ゲーム冁ETraitType�E�E0種�E�へどぁE��とすか」だった、E- 導�E規則が曖昧なままだと、インチE��サやUIごとに解釈が割れて **replay / 公式戦オンチェーン決済が破綻**する、E- さらに、class/season/rarity がオンチェーンで公開されてぁE��以上、それをゲーム性�E�環墁E��訁EチE��キ予算など�E�に接続できる「拡張点」として、ルールセチE��に含めておきたかった、E
 ### What
-- `RulesetConfigV1.synergy.traitDerivation`（NyanoTraitDerivationConfigV1）を追加。
-- TS参照実装に Nyano用ヘルパを追加（`packages/triad-engine/src/nyano.ts`）：
-  - `DEFAULT_NYANO_TRAIT_DERIVATION_CONFIG_V1`
+- `RulesetConfigV1.synergy.traitDerivation`�E�EyanoTraitDerivationConfigV1�E�を追加、E- TS参�E実裁E�� Nyano用ヘルパを追加�E�Epackages/triad-engine/src/nyano.ts`�E�！E  - `DEFAULT_NYANO_TRAIT_DERIVATION_CONFIG_V1`
   - `deriveTraitTypeFromNyanoTraitV1(...)`
-  - `makeCardDataFromNyano(...)`（on-chain read → CardData の組み立て）
-- デフォルトルールセットに `traitDerivation` を同梱（ルールの“標準解釈”を固定）。
-- 仕様追加：`Nyano_Triad_League_TRAIT_DERIVATION_SPEC_v1_ja.md`
-- 既存仕様更新：ruleset/transcript/trait-effects が導出ルールを参照するように追記。
-- テスト追加：rarityごとの導出分岐と `makeCardDataFromNyano` の組み立てをゴールデン化。
+  - `makeCardDataFromNyano(...)`�E�En-chain read ↁECardData の絁E��立て�E�E- チE��ォルトルールセチE��に `traitDerivation` を同梱�E�ルールの“標準解釈”を固定）、E- 仕様追加�E�`Nyano_Triad_League_TRAIT_DERIVATION_SPEC_v1_ja.md`
+- 既存仕様更新�E�ruleset/transcript/trait-effects が導�Eルールを参照するように追記、E- チE��ト追加�E�rarityごとの導�E刁E��と `makeCardDataFromNyano` の絁E��立てをゴールチE��化、E
+### Verify
+- `pnpm -C packages/triad-engine test`
+- `pnpm -C packages/triad-engine build`
+- `docs/02_protocol/*` / `docs/99_dev/*` の差刁E��誁E
+## 2026-02-02  Ecommit-0007
+
+### Why
+- Design v2.0 の「フォーメーションボ�Eナス�E�E.3.3�E�」�E、デチE��構築を“強カード�E寁E��雁E��”から脱却させる中核なので、早めに参�E実裁E��落としたかった、E- まぁESeason 3 の例（五行調和�Eーナス3倁E/ Light+Shadow=日食）にあるように、シーズン環墁E��Eayer4�E�が **倍率・追加効极E* として上書きできる土台が忁E��だった、E- “運営がいなくても盛り上がる”には、第三老E��リプレイめE��墁E�E析を作れるよぁE��どのformationが有効だったかを結果に含めておくのが重要、E
+### What
+- `RulesetConfigV1.synergy.formationBonuses` を追加�E�Eata-driven�E�、E- v1の最小セチE��として、Eつのformationを実裁E��E  - **五行調和！Eive Elements Harmony�E�E*�E�E    - 条件�E�Flame/Aqua/Earth/Wind/Thunder がデチE��に揁E��
+    - 効果：comboBonus�E�Eomentum/Domination�E��E triadPlus めE`comboBonusScale` 倁E  - **日食！Eclipse�E�E*�E�E    - 条件�E�Light と Shadow がデチE��に揁E��
+    - 効果！EulesetでON/OFF可能�E�！E      - Lightが警戒�Eークの -1 を無効匁E      - ShadowめELight光源として扱ぁE��Light aura を発生させる
+- `MatchResult.formations` を追加し、UI/解析が “運営なし Eでも作りめE��ぁE��にした、E- 仕様追加�E�E  - `Nyano_Triad_League_FORMATION_BONUS_SPEC_v1_ja.md`
+- 既存仕様追従！E  - ruleset spec / transcript spec めEformation 仕様に追従させた、E- チE��ト追加�E�E  - 五行調和による comboBonus 倍率適用が次ターンに反映されること
+  - 日食により Light が警戒�Eークを踏んでめEtriad が下がらなぁE��と
 
 ### Verify
 - `pnpm -C packages/triad-engine test`
 - `pnpm -C packages/triad-engine build`
-- `docs/02_protocol/*` / `docs/99_dev/*` の差分確認
-
-## 2026-02-02 — commit-0007
+- 仕様差刁E��`docs/02_protocol/*` / `docs/99_dev/*` の更新確誁E
+## 2026-02-02  Ecommit-0008
 
 ### Why
-- Design v2.0 の「フォーメーションボーナス（2.3.3）」は、デッキ構築を“強カードの寄せ集め”から脱却させる中核なので、早めに参照実装へ落としたかった。
-- また Season 3 の例（五行調和ボーナス3倍 / Light+Shadow=日食）にあるように、シーズン環境（Layer4）が **倍率・追加効果** として上書きできる土台が必要だった。
-- “運営がいなくても盛り上がる”には、第三者がリプレイや環境分析を作れるよう、どのformationが有効だったかを結果に含めておくのが重要。
-
+- “運営がいなくても回る”ためには、コミュニティが提案すめEruleset ぁE**衝突せずに識別**できる忁E��がある、E- JSONのような曖昧なシリアライズだと、言語差�E�キー頁E�E数値表記�EUnicode等）で **同じルールなのにIDが�E裁E* しやすい、E- 封E��オンチェーンに RulesetRegistry を置く場合も、Solidity側で同じIDを計算できる形�E�E fixed ABI encoding�E�が望ましい、E
 ### What
-- `RulesetConfigV1.synergy.formationBonuses` を追加（data-driven）。
-- v1の最小セットとして、2つのformationを実装：
-  - **五行調和（Five Elements Harmony）**：
-    - 条件：Flame/Aqua/Earth/Wind/Thunder がデッキに揃う
-    - 効果：comboBonus（Momentum/Domination）の triadPlus を `comboBonusScale` 倍
-  - **日食（Eclipse）**：
-    - 条件：Light と Shadow がデッキに揃う
-    - 効果（rulesetでON/OFF可能）：
-      - Lightが警戒マークの -1 を無効化
-      - Shadowを Light光源として扱い、Light aura を発生させる
-- `MatchResult.formations` を追加し、UI/解析が “運営なし” でも作りやすい形にした。
-- 仕様追加：
-  - `Nyano_Triad_League_FORMATION_BONUS_SPEC_v1_ja.md`
-- 既存仕様追従：
-  - ruleset spec / transcript spec を formation 仕様に追従させた。
-- テスト追加：
-  - 五行調和による comboBonus 倍率適用が次ターンに反映されること
-  - 日食により Light が警戒マークを踏んでも triad が下がらないこと
+- `computeRulesetIdV1(ruleset)` を追加�E�ES参�E実裁E��、E  - `rulesetId = keccak256(abi.encode(RulesetConfigV1Canonical))` を固定、E  - 無効化セクション�E�Enabled=false�E��E **ゼロ化して正規化**�E�同じ挙動でIDが�E裂しなぁE��、E  - 五行調和�E `requiredElements` は雁E��として扱ぁE��E*頁E��を無要E*�E�Eode昁E��E��ソート）、E- 仕様追加�E�E  - `Nyano_Triad_League_RULESET_ID_SPEC_v1_ja.md`
+  - RULESET_CONFIG_SPEC / TRANSCRIPT_SPEC を参照追訁E- チE��ト追加�E�E  - default rulesetId の test vector を固宁E  - 無効化セクションの正規化が効ぁE��ぁE��こと
+  - requiredElements の頁E��がIDに影響しなぁE��と
 
 ### Verify
 - `pnpm -C packages/triad-engine test`
 - `pnpm -C packages/triad-engine build`
-- 仕様差分：`docs/02_protocol/*` / `docs/99_dev/*` の更新確認
+- 仕様差刁E��`docs/02_protocol/*` / `docs/99_dev/*` の更新確誁E
 
-## 2026-02-02 — commit-0008
-
+## 2026-02-08  Ecommit-0083: /stream parser統一�E�票割れゼロ�E�E
 ### Why
-- “運営がいなくても回る”ためには、コミュニティが提案する ruleset が **衝突せずに識別**できる必要がある。
-- JSONのような曖昧なシリアライズだと、言語差（キー順・数値表記・Unicode等）で **同じルールなのにIDが分裂** しやすい。
-- 将来オンチェーンに RulesetRegistry を置く場合も、Solidity側で同じIDを計算できる形（= fixed ABI encoding）が望ましい。
-
+- Stream.tsx に 9 個�E重褁E��数があり、triad_vote_utils / triad_viewer_command と同じ計算を独自実裁E��てぁE��、E- `parseChatMove()` が独自パ�Eス実裁E��、`parseViewerMoveTextLoose()` と異なる正規化をするため票割れが発生してぁE��、E
 ### What
-- `computeRulesetIdV1(ruleset)` を追加（TS参照実装）。
-  - `rulesetId = keccak256(abi.encode(RulesetConfigV1Canonical))` を固定。
-  - 無効化セクション（enabled=false）は **ゼロ化して正規化**（同じ挙動でIDが分裂しない）。
-  - 五行調和の `requiredElements` は集合として扱い、**順序を無視**（code昇順にソート）。
-- 仕様追加：
-  - `Nyano_Triad_League_RULESET_ID_SPEC_v1_ja.md`
-  - RULESET_CONFIG_SPEC / TRANSCRIPT_SPEC を参照追記
-- テスト追加：
-  - default rulesetId の test vector を固定
-  - 無効化セクションの正規化が効いていること
-  - requiredElements の順序がIDに影響しないこと
-
-### Verify
-- `pnpm -C packages/triad-engine test`
-- `pnpm -C packages/triad-engine build`
-- 仕様差分：`docs/02_protocol/*` / `docs/99_dev/*` の更新確認
-
-
-## 2026-02-08 — commit-0083: /stream parser統一（票割れゼロ）
-
-### Why
-- Stream.tsx に 9 個の重複関数があり、triad_vote_utils / triad_viewer_command と同じ計算を独自実装していた。
-- `parseChatMove()` が独自パース実装で、`parseViewerMoveTextLoose()` と異なる正規化をするため票割れが発生していた。
-
-### What
-- `triad_viewer_command.ts` に `parseChatMoveLoose()` を追加。canonical / legacy / shorthand 全てを `formatViewerMoveText()` で同一キーに正規化。
-- Stream.tsx から 9 個の重複関数を削除、triad_vote_utils / triad_viewer_command の import に置換。
-- `parseChatMove()` を `parseChatMoveLoose()` に置換。`ParsedMove` 型 → `ViewerMove` に統一。
-- `buildStateJsonContent()` / `buildAiPrompt()` を `computeStrictAllowed()` / `computeToPlay()` に切替。
-- Match.tsx のスマートクォート（U+201C/U+201D）ビルドエラーを修正。
-
+- `triad_viewer_command.ts` に `parseChatMoveLoose()` を追加。canonical / legacy / shorthand 全てめE`formatViewerMoveText()` で同一キーに正規化、E- Stream.tsx から 9 個�E重褁E��数を削除、triad_vote_utils / triad_viewer_command の import に置換、E- `parseChatMove()` めE`parseChatMoveLoose()` に置換。`ParsedMove` 垁EↁE`ViewerMove` に統一、E- `buildStateJsonContent()` / `buildAiPrompt()` めE`computeStrictAllowed()` / `computeToPlay()` に刁E��、E- Match.tsx のスマ�Eトクォート！E+201C/U+201D�E�ビルドエラーを修正、E
 ### Verify
 - `pnpm build:web` 成功
 
 
-## 2026-02-08 — commit-0084: エラー表示常設 + flip理由表示統一
+## 2026-02-08  Ecommit-0084: エラー表示常設 + flip琁E��表示統一
 
 ### Why
-- 外部連携（warudo等）の成功/失敗が一時的な toast でしか表示されず、ストリーマーが見逃しやすかった。
-- Overlay の flip 理由表示が手動の flipStats 集計で、TurnLog の FlipTraceBadges と一致しなかった。
-
+- 外部連携�E�Earudo等）�E成功/失敗が一時的な toast でしか表示されず、ストリーマ�Eが見送E��めE��かった、E- Overlay の flip 琁E��表示が手動�E flipStats 雁E��で、TurnLog の FlipTraceBadges と一致しなかった、E
 ### What
-- StreamOperationsHUD に `ExternalResult` 型と `ExternalStatusRow` コンポーネントを追加。
-- Stream.tsx に `lastExternalResult` state を追加、`sendNyanoWarudo()` で記録。
-- `OverlayStateV1` に `externalStatus` フィールドを追加（互換拡張）。
-- Overlay.tsx の手動 flipStats バッジ → `FlipTraceBadges` コンポーネントに置換。
-- Overlay.tsx の手動 "Why:" セクション → `flipTracesSummary()` に統一。
-
+- StreamOperationsHUD に `ExternalResult` 型と `ExternalStatusRow` コンポ�Eネントを追加、E- Stream.tsx に `lastExternalResult` state を追加、`sendNyanoWarudo()` で記録、E- `OverlayStateV1` に `externalStatus` フィールドを追加�E�互換拡張�E�、E- Overlay.tsx の手動 flipStats バッジ ↁE`FlipTraceBadges` コンポ�Eネントに置換、E- Overlay.tsx の手動 "Why:" セクション ↁE`flipTracesSummary()` に統一、E
 ### Verify
 - `pnpm build:web` 成功
 
 
-## 2026-02-08 — commit-0085: Overlay HUD 視認性 + UI クオリティアップ
+## 2026-02-08  Ecommit-0085: Overlay HUD 視認性 + UI クオリチE��アチE�E
 
 ### Why
-- OBS controls=0 モードで 720p/1080p 表示時に文字が小さすぎて判読困難だった。
-- パネル背景の透過が強く、配信映像と重なると文字が見えにくかった。
-
+- OBS controls=0 モードで 720p/1080p 表示時に斁E��が小さすぎて判読困難だった、E- パネル背景の透過が強く、E�E信映像と重なると斁E��が見えにくかった、E
 ### What
-- ScoreBar に `size` prop を追加（"sm" | "md" | "lg"）。
-- Overlay OBS モードのフォント階層を一律引き上げ（10px→12px, 11px→12px, xs→sm, sm→base）。
-- パネル背景 `bg-white/70` → `bg-white/90`（OBS モード）。
-- toPlay 表示を `to-play-pill` コンポーネント化（プレイヤーカラー付き）。
-- セル座標ラベルを常時表示に変更。ボード gap を OBS モードで拡大。
-- index.css に `vote-countdown-inline`, `to-play-pill` CSS コンポーネントを追加。
-
+- ScoreBar に `size` prop を追加�E�Esm" | "md" | "lg"�E�、E- Overlay OBS モード�Eフォント階層を一律引き上げ�E�E0pxↁE2px, 11pxↁE2px, xs→sm, sm→base�E�、E- パネル背景 `bg-white/70` ↁE`bg-white/90`�E�EBS モード）、E- toPlay 表示めE`to-play-pill` コンポ�Eネント化�E��Eレイヤーカラー付き�E�、E- セル座標ラベルを常時表示に変更。�EーチEgap めEOBS モードで拡大、E- index.css に `vote-countdown-inline`, `to-play-pill` CSS コンポ�Eネントを追加、E
 ### Verify
 - `pnpm build:web` 成功
 
 
-## 2026-02-12 — commit-0086: Quick Play 導線テレメトリ追加（Home→初手配置）
-
+## 2026-02-12  Ecommit-0086: Quick Play 導線テレメトリ追加�E�Eome→�E手�E置�E�E
 ### Why
-- UX スコアカード B-1「Home から試合開始まで10秒以内」が未計測で、改善のループを回しにくかった。
-- 既存の `first_place_ms` は Match ページ起点のため、Home CTA からの体験時間を直接評価できなかった。
-
+- UX スコアカーチEB-1「Home から試合開始まで10秒以冁E��が未計測で、改喁E�Eループを回しにくかった、E- 既存�E `first_place_ms` は Match ペ�Eジ起点のため、Home CTA からの体験時間を直接評価できなかった、E
 ### What
-- `telemetry.ts` に `quickplay_to_first_place_ms` を追加（Session + Cumulative 平均）。
-- Home の「🎮 すぐ遊ぶ」押下時に `markQuickPlayStart()` を記録し、Match 側の初回配置で消費して計測するようにした。
-- Home > Settings の UX Telemetry パネルに `Avg quick-play to first place` を表示追加。
-- テスト追加：
-  - Home マーカーありで計測されること
-  - マーカーが1回で消費されること
-- ドキュメント更新：
-  - `UX_SCORECARD` の B-1 を「計測可能」に更新
-  - テレメトリ一覧へ `quickplay_to_first_place_ms` を追加
+- `telemetry.ts` に `quickplay_to_first_place_ms` を追加�E�Eession + Cumulative 平坁E��、E- Home の「🎮 すぐ遊�E」押下時に `markQuickPlayStart()` を記録し、Match 側の初回配置で消費して計測するようにした、E- Home > Settings の UX Telemetry パネルに `Avg quick-play to first place` を表示追加、E- チE��ト追加�E�E  - Home マ�Eカーありで計測されること
+  - マ�EカーぁE回で消費されること
+- ドキュメント更新�E�E  - `UX_SCORECARD` の B-1 を「計測可能」に更新
+  - チE��メトリ一覧へ `quickplay_to_first_place_ms` を追加
 
 ### Verify
 - `pnpm -C apps/web test`
 - `pnpm -C apps/web build`
 
 
-## 2026-02-12 — commit-0087: Home LCP ローカル計測追加（G-3）
+## 2026-02-12  Ecommit-0087: Home LCP ローカル計測追加�E�E-3�E�E
+### Why
+- UX スコアカーチEG-3�E�ECP < 2.5s�E�が未計測で、改喁E��後�E比輁E��できなかった、E- 既存�E Home Settings チE��メトリに、パフォーマンスの中核持E��を同じ導線で表示したかった、E
+### What
+- `telemetry.ts` の cumulative stats に `avg_home_lcp_ms` を追加、E- `recordHomeLcpMs()` を追加し、Home ペ�Eジの LCP をローカル雁E��できるようにした、E- Home で `PerformanceObserver`�E�Elargest-contentful-paint`�E�を監視し、`visibilitychange/pagehide` ぁE6 秒フォールバックで記録、E- Home > Settings のメトリクスに `Avg Home LCP` を追加、E- チE��ト追加�E�E  - Home LCP 平坁E�E計箁E  - 不正値�E�EaN / 負数 / Infinity�E�を無視する挙勁E- `UX_SCORECARD` を更新し、G-3 を「計測可能」に変更、E
+### Verify
+- `pnpm -C apps/web test`
+- `pnpm -C apps/web lint`
+- `pnpm -C apps/web build`
+
+
+## 2026-02-12  Ecommit-0088: UX目標スナップショチE��表示 + quick-play計測の堁E��匁E
+### Why
+- チE��メトリ値が増えてきたため、E�E信前チェチE��で「目標を満たしてぁE��か」を即判定できる表示が忁E��だった、E- `quickplay_to_first_place_ms` は古ぁE��始時刻が残ると外れ値になり得るため、異常値ガードを入れて誤判定を防ぎたかった、E
+### What
+- `telemetry.ts` に `evaluateUxTargets(stats)` を追加し、A-1/B-1/B-4/G-3 の PASS/FAIL/INSUFFICIENT を算�E可能にした、E- Home > Settings に `UX Target Snapshot` を追加し、上訁E頁E��を目標値と現在値つきで可視化、E- quick-play 計測に上限�E�E0刁E��を追加し、古ぁE��始時刻による外れ値を無視するよぁE��した、E- チE��ト追加�E�E  - stale quick-play marker を無視すること
+  - `evaluateUxTargets` の insufficient 判宁E  - pass/fail 混在ケースの判宁E
+### Verify
+- `pnpm -C apps/web test`
+- `pnpm -C apps/web lint`
+- `pnpm -C apps/web build`
+
+
+## 2026-02-12  Ecommit-0089: UX計測ログのコピ�E導緁E+ Playtest Log チE��プレ
 
 ### Why
-- UX スコアカード G-3（LCP < 2.5s）が未計測で、改善前後の比較ができなかった。
-- 既存の Home Settings テレメトリに、パフォーマンスの中核指標を同じ導線で表示したかった。
-
+- 計測値が見えるよぁE��なった一方で、`UX_SCORECARD` 運用の記録転記が手作業で、継続しにくかった、E- 配信剁E改修後に同じフォーマットで比輁E��きるログ出力を、UIから1クリチE��で取得したかった、E
 ### What
-- `telemetry.ts` の cumulative stats に `avg_home_lcp_ms` を追加。
-- `recordHomeLcpMs()` を追加し、Home ページの LCP をローカル集計できるようにした。
-- Home で `PerformanceObserver`（`largest-contentful-paint`）を監視し、`visibilitychange/pagehide` か 6 秒フォールバックで記録。
-- Home > Settings のメトリクスに `Avg Home LCP` を追加。
-- テスト追加：
-  - Home LCP 平均の計算
-  - 不正値（NaN / 負数 / Infinity）を無視する挙動
-- `UX_SCORECARD` を更新し、G-3 を「計測可能」に変更。
+- `telemetry.ts` に以下を追加�E�E  - `buildUxTelemetrySnapshot(stats)`�E�Eimestamp + stats + target checks�E�E  - `formatUxTelemetrySnapshotMarkdown(snapshot)`�E�EPLAYTEST_LOG.md` 貼り付け形式！E- Home Settings の `UX Telemetry` に `Copy Snapshot` ボタンを追加、E  - クリチE��で markdown をクリチE�Eボ�Eドにコピ�Eし、`docs/ux/PLAYTEST_LOG.md` への貼り付けを案�E、E- `docs/ux/PLAYTEST_LOG.md` を新規作�Eし、記録チE��プレを追加、E- `UX_SCORECARD` の記録先表記をチE��プレ作�E済み状態へ更新、E- チE��ト追加�E�E  - snapshot 生�Eの timestamp/shape
+  - markdown 整形冁E��
 
 ### Verify
 - `pnpm -C apps/web test`
@@ -389,63 +237,13 @@
 - `pnpm -C apps/web build`
 
 
-## 2026-02-12 — commit-0088: UX目標スナップショット表示 + quick-play計測の堅牢化
-
+## 2026-02-12  Ecommit-0090: lint warning 0 化！Eeb�E�E
 ### Why
-- テレメトリ値が増えてきたため、配信前チェックで「目標を満たしているか」を即判定できる表示が必要だった。
-- `quickplay_to_first_place_ms` は古い開始時刻が残ると外れ値になり得るため、異常値ガードを入れて誤判定を防ぎたかった。
-
-### What
-- `telemetry.ts` に `evaluateUxTargets(stats)` を追加し、A-1/B-1/B-4/G-3 の PASS/FAIL/INSUFFICIENT を算出可能にした。
-- Home > Settings に `UX Target Snapshot` を追加し、上記4項目を目標値と現在値つきで可視化。
-- quick-play 計測に上限（10分）を追加し、古い開始時刻による外れ値を無視するようにした。
-- テスト追加：
-  - stale quick-play marker を無視すること
-  - `evaluateUxTargets` の insufficient 判定
-  - pass/fail 混在ケースの判定
-
-### Verify
-- `pnpm -C apps/web test`
-- `pnpm -C apps/web lint`
-- `pnpm -C apps/web build`
-
-
-## 2026-02-12 — commit-0089: UX計測ログのコピー導線 + Playtest Log テンプレ
-
-### Why
-- 計測値が見えるようになった一方で、`UX_SCORECARD` 運用の記録転記が手作業で、継続しにくかった。
-- 配信前/改修後に同じフォーマットで比較できるログ出力を、UIから1クリックで取得したかった。
-
-### What
-- `telemetry.ts` に以下を追加：
-  - `buildUxTelemetrySnapshot(stats)`（timestamp + stats + target checks）
-  - `formatUxTelemetrySnapshotMarkdown(snapshot)`（`PLAYTEST_LOG.md` 貼り付け形式）
-- Home Settings の `UX Telemetry` に `Copy Snapshot` ボタンを追加。
-  - クリックで markdown をクリップボードにコピーし、`docs/ux/PLAYTEST_LOG.md` への貼り付けを案内。
-- `docs/ux/PLAYTEST_LOG.md` を新規作成し、記録テンプレを追加。
-- `UX_SCORECARD` の記録先表記をテンプレ作成済み状態へ更新。
-- テスト追加：
-  - snapshot 生成の timestamp/shape
-  - markdown 整形内容
-
-### Verify
-- `pnpm -C apps/web test`
-- `pnpm -C apps/web lint`
-- `pnpm -C apps/web build`
-
-
-## 2026-02-12 — commit-0090: lint warning 0 化（web）
-
-### Why
-- `pnpm -C apps/web lint` に既知 warning が2件残っており、日常の検証でノイズになっていた。
-- warning を放置すると、新規 warning の検知性が落ちるため早めに解消したかった。
-
+- `pnpm -C apps/web lint` に既知 warning ぁE件残っており、日常の検証でノイズになってぁE��、E- warning を放置すると、新要Ewarning の検知性が落ちるため早めに解消したかった、E
 ### What
 - `apps/web/src/engine/renderers/pixi/cellAnimations.ts`
-  - 未使用引数 `cellH` を `_cellH` に変更（API互換を維持して lint 準拠）。
-- `apps/web/src/engine/__tests__/cellAnimations.test.ts`
-  - 未使用の型 import `CellAnimFrame` を削除。
-
+  - 未使用引数 `cellH` めE`_cellH` に変更�E�EPI互換を維持して lint 準拠�E�、E- `apps/web/src/engine/__tests__/cellAnimations.test.ts`
+  - 未使用の垁Eimport `CellAnimFrame` を削除、E
 ### Verify
 - `pnpm -C apps/web test`
 - `pnpm -C apps/web lint`
@@ -453,22 +251,13 @@
 - `pnpm -C apps/web build`
 
 
-## 2026-02-12 — commit-0091: UX snapshot に環境コンテキストを追加
+## 2026-02-12  Ecommit-0091: UX snapshot に環墁E��ンチE��ストを追加
 
 ### Why
-- 同じ指標でも端末や表示サイズで体験値が変わるため、snapshot比較時に実行環境を残す必要があった。
-- `PLAYTEST_LOG.md` に貼る情報を増やし、後から「なぜ差が出たか」を追跡しやすくしたかった。
-
+- 同じ持E��でも端末めE��示サイズで体験値が変わるため、snapshot比輁E��に実行環墁E��残す忁E��があった、E- `PLAYTEST_LOG.md` に貼る情報を増やし、後から「なぜ差が�Eたか」を追跡しやすくしたかった、E
 ### What
-- `telemetry.ts` に `UxTelemetryContext` を追加し、snapshotへ `context` を含められるようにした。
-- `formatUxTelemetrySnapshotMarkdown()` を拡張し、`route / viewport / language / userAgent` を出力するようにした。
-- Home の `Copy Snapshot` でブラウザ情報を収集して snapshot に埋め込むようにした。
-- `PLAYTEST_LOG.md` のテンプレに context 例を追記。
-- テスト追加：
-  - context あり snapshot 生成
-  - markdown の context 出力
-- e2e `home.spec.ts` を更新し、Settings 内の `Copy Snapshot` / `UX Target Snapshot` 表示を検証対象に追加。
-
+- `telemetry.ts` に `UxTelemetryContext` を追加し、snapshotへ `context` を含められるようにした、E- `formatUxTelemetrySnapshotMarkdown()` を拡張し、`route / viewport / language / userAgent` を�E力するよぁE��した、E- Home の `Copy Snapshot` でブラウザ惁E��を収雁E��て snapshot に埋め込むようにした、E- `PLAYTEST_LOG.md` のチE��プレに context 例を追記、E- チE��ト追加�E�E  - context あり snapshot 生�E
+  - markdown の context 出劁E- e2e `home.spec.ts` を更新し、Settings 冁E�E `Copy Snapshot` / `UX Target Snapshot` 表示を検証対象に追加、E
 ### Verify
 - `pnpm -C apps/web test`
 - `pnpm -C apps/web lint`
@@ -576,27 +365,15 @@
 ## 2026-02-13 - commit-0113: settled import automation + verified ladder record mode
 
 ### Why
-- Commit0112 でローカル import UI は入ったが、入力が手貼り前提で運用負荷が残っていた。
-- pointsDelta を `settled_attested` として扱う導線には、署名検証済み record を選べるモードが必要だった。
-- 既存の season points 移行を壊さずに、`fast import` と `verified import` を段階導入する必要があった。
-
+- Commit0112 でローカル import UI は入ったが、�E力が手貼り前提で運用負荷が残ってぁE��、E- pointsDelta めE`settled_attested` として扱ぁE��線には、署名検証済み record を選べるモードが忁E��だった、E- 既存�E season points 移行を壊さずに、`fast import` と `verified import` を段階導�Eする忁E��があった、E
 ### What
 - `apps/web/src/lib/settled_points_import.ts`
-  - `parseVerifiedLadderRecordsImportJson(...)` を追加。
-  - payload 形式 `{ domain, records }` を受け取り、`verifyLadderMatchRecordV1(...)` で record ごとに検証。
-  - issue code `attestation_invalid` を追加し、検証失敗理由を集約。
-  - duplicate 判定ロジックを `pushUniqueSettledEvent(...)` に共通化。
-- `apps/web/src/lib/__tests__/settled_points_import.test.ts`
-  - verified import の schema 不正ケース・attestation 失敗ケースを追加。
-- `apps/web/src/pages/Events.tsx`
-  - import mode 切替 UI を追加：
-    - `Settled events (fast)`
+  - `parseVerifiedLadderRecordsImportJson(...)` を追加、E  - payload 形弁E`{ domain, records }` を受け取り、`verifyLadderMatchRecordV1(...)` で record ごとに検証、E  - issue code `attestation_invalid` を追加し、検証失敗理由を集紁E��E  - duplicate 判定ロジチE��めE`pushUniqueSettledEvent(...)` に共通化、E- `apps/web/src/lib/__tests__/settled_points_import.test.ts`
+  - verified import の schema 不正ケース・attestation 失敗ケースを追加、E- `apps/web/src/pages/Events.tsx`
+  - import mode 刁E�� UI を追加�E�E    - `Settled events (fast)`
     - `Verified records (domain + signatures)`
-  - `/game/settled_events.json` 自動読込ボタンを追加。
-  - mode に応じて parser を切り替え、同じ apply フローで local attempts に反映。
-- `docs/99_dev/Nyano_Triad_League_DEV_TODO_v1_ja.md`
-  - Commit0113 完了を追記し、Doing を「バックエンド経由の自動供給と定期同期」へ更新。
-
+  - `/game/settled_events.json` 自動読込ボタンを追加、E  - mode に応じて parser を�Eり替え、同ぁEapply フローで local attempts に反映、E- `docs/99_dev/Nyano_Triad_League_DEV_TODO_v1_ja.md`
+  - Commit0113 完亁E��追記し、Doing を「バチE��エンド経由の自動供給と定期同期」へ更新、E
 ### Verify
 - `pnpm -C apps/web typecheck`
 - `pnpm -C apps/web lint`
@@ -607,31 +384,19 @@
 ## 2026-02-13 - commit-0112: settled event JSON import for local pointsDelta migration
 
 ### Why
-- DEV_TODO の Doing では、Phase 4 の pointsDelta 連携を URL 手入力から `on-chain settled event` 取り込みへ進める段階だった。
-- 既存フローは Replay URL の `pda` 依存のため、後から settled event を一括反映する導線がなく、season points の移行効率が低かった。
-- ローカル保存の event attempts に対して、安全に `pointsDeltaA` を適用するには、`matchId` 一致だけでなく winner / tiles 整合チェックが必要だった。
-
+- DEV_TODO の Doing では、Phase 4 の pointsDelta 連携めEURL 手�E力かめE`on-chain settled event` 取り込みへ進める段階だった、E- 既存フローは Replay URL の `pda` 依存�Eため、後かめEsettled event を一括反映する導線がなく、season points の移行効玁E��低かった、E- ローカル保存�E event attempts に対して、安�Eに `pointsDeltaA` を適用するには、`matchId` 一致だけでなぁEwinner / tiles 整合チェチE��が忁E��だった、E
 ### What
-- `apps/web/src/lib/settled_points_import.ts` を追加。
-  - 入力 schema 対応:
-    - settled event 配列
+- `apps/web/src/lib/settled_points_import.ts` を追加、E  - 入劁Eschema 対忁E
+    - settled event 配�E
     - `{ settledEvents: [...] }`
     - `{ records: [{ settled: ... }] }`
-  - `validateLadderMatchSettledEventV1(...)` を使って settled event を検証。
-  - `matchId` 単位で正規化し、競合 duplicate を issue として報告。
-  - `applySettledPointsToAttempts(...)` でローカル attempt へ適用:
-    - no local / winner mismatch / tiles mismatch / draw を安全にスキップ
-    - 整合した attempt のみ `pointsDeltaA` + `pointsDeltaSource=settled_attested` を更新
+  - `validateLadderMatchSettledEventV1(...)` を使って settled event を検証、E  - `matchId` 単位で正規化し、競吁Eduplicate めEissue として報告、E  - `applySettledPointsToAttempts(...)` でローカル attempt へ適用:
+    - no local / winner mismatch / tiles mismatch / draw を安�EにスキチE�E
+    - 整合しぁEattempt のみ `pointsDeltaA` + `pointsDeltaSource=settled_attested` を更新
 - `apps/web/src/pages/Events.tsx`
-  - `Settled points import (local)` UI を追加（JSON貼り付け、適用、入力クリア）。
-  - import 結果サマリ（input/valid/updated/matched/unchanged/no-local/mismatch）と issue 抜粋表示を追加。
-  - `Apply settled JSON` 実行時に更新対象 attempt を `upsertEventAttempt(...)` で永続化。
-  - My Pawprints 一覧に `deltaA` バッジ表示を追加。
-- `apps/web/src/lib/__tests__/settled_points_import.test.ts`
-  - parse（複数schema）・duplicate conflict・apply（正常更新/不整合/ローカル未一致）を検証。
-- `docs/99_dev/Nyano_Triad_League_DEV_TODO_v1_ja.md`
-  - Commit0112 完了を追記し、Doing を「取得自動化と署名検証フロー統合」へ更新。
-
+  - `Settled points import (local)` UI を追加�E�ESON貼り付け、E��用、�E力クリア�E�、E  - import 結果サマリ�E�Enput/valid/updated/matched/unchanged/no-local/mismatch�E�と issue 抜粋表示を追加、E  - `Apply settled JSON` 実行時に更新対象 attempt めE`upsertEventAttempt(...)` で永続化、E  - My Pawprints 一覧に `deltaA` バッジ表示を追加、E- `apps/web/src/lib/__tests__/settled_points_import.test.ts`
+  - parse�E�褁E��schema�E��Eduplicate conflict・apply�E�正常更新/不整吁Eローカル未一致�E�を検証、E- `docs/99_dev/Nyano_Triad_League_DEV_TODO_v1_ja.md`
+  - Commit0112 完亁E��追記し、Doing を「取得�E動化と署名検証フロー統合」へ更新、E
 ### Verify
 - `pnpm -C apps/web test -- src/lib/__tests__/settled_points_import.test.ts`
 - `pnpm -C apps/web typecheck`
@@ -641,66 +406,35 @@
 ## 2026-02-13 - commit-0111: phased pointsDelta integration for season progress
 
 ### Why
-- DEV_TODO の Doing「pointsDelta 連携へ段階拡張」に対し、現状の season points は provisional ルールのみだった。
-- on-chain settled event の自動取り込み前に、`pointsDeltaA` を安全に受け取って集計に反映できる移行レイヤーが必要だった。
-- 既存履歴との互換性を守るため、部分データで順位が不安定化しない採用条件を固定したかった。
-
+- DEV_TODO の Doing「pointsDelta 連携へ段階拡張」に対し、現状の season points は provisional ルールのみだった、E- on-chain settled event の自動取り込み前に、`pointsDeltaA` を安�Eに受け取って雁E��に反映できる移行レイヤーが忁E��だった、E- 既存履歴との互換性を守るため、E��刁E��ータで頁E��が不安定化しなぁE��用条件を固定したかった、E
 ### What
 - `apps/web/src/lib/event_attempts.ts`
-  - `EventAttemptV1` に optional `pointsDeltaA` / `pointsDeltaSource` を追加。
-- `apps/web/src/lib/appUrl.ts`
-  - replay share URL に `pda`（pointsDeltaA）を追加できるよう拡張。
-- `apps/web/src/pages/Replay.tsx`
-  - `?pda=` を int32 で解析。
-  - Event attempt 保存時に `pointsDeltaA` を保持。
-  - share/canonical link でも `pda` を維持。
-- `apps/web/src/lib/season_archive.ts`
-  - event単位の `pointsDeltaTotal` / `pointsDeltaAttemptCount` / `pointsDeltaCoveragePercent` を追加。
-  - archive markdown に delta 列を追加。
-- `apps/web/src/lib/season_progress.ts`
-  - source 概念（`provisional` / `points_delta`）を追加。
-  - event内で `pointsDeltaA` が100%揃った場合のみ `points_delta` 採用、未充足は provisional 維持。
-  - source mix 集計と markdown 出力を追加。
-- `apps/web/src/pages/Events.tsx`
-  - progress パネルに source mix 表示を追加。
-  - board に source badge（delta/provisional）と coverage 表示を追加。
-  - event行に delta total / coverage を追加。
-- Tests
+  - `EventAttemptV1` に optional `pointsDeltaA` / `pointsDeltaSource` を追加、E- `apps/web/src/lib/appUrl.ts`
+  - replay share URL に `pda`�E�EointsDeltaA�E�を追加できるよう拡張、E- `apps/web/src/pages/Replay.tsx`
+  - `?pda=` めEint32 で解析、E  - Event attempt 保存時に `pointsDeltaA` を保持、E  - share/canonical link でめE`pda` を維持、E- `apps/web/src/lib/season_archive.ts`
+  - event単位�E `pointsDeltaTotal` / `pointsDeltaAttemptCount` / `pointsDeltaCoveragePercent` を追加、E  - archive markdown に delta 列を追加、E- `apps/web/src/lib/season_progress.ts`
+  - source 概念�E�Eprovisional` / `points_delta`�E�を追加、E  - event冁E�� `pointsDeltaA` ぁE00%揁E��た場合�Eみ `points_delta` 採用、未允E��は provisional 維持、E  - source mix 雁E��と markdown 出力を追加、E- `apps/web/src/pages/Events.tsx`
+  - progress パネルに source mix 表示を追加、E  - board に source badge�E�Eelta/provisional�E�と coverage 表示を追加、E  - event行に delta total / coverage を追加、E- Tests
   - `apps/web/src/lib/__tests__/appUrl.test.ts`
   - `apps/web/src/lib/__tests__/season_archive.test.ts`
   - `apps/web/src/lib/__tests__/season_progress.test.ts`
-  - pointsDelta 入力・集計・採用条件を追加検証。
-
+  - pointsDelta 入力�E雁E���E採用条件を追加検証、E
 ### Verify
 - `pnpm -C apps/web typecheck`
 - `pnpm -C apps/web lint`
 - `pnpm -C apps/web build`
 - `pnpm -C apps/web test -- src/lib/__tests__/appUrl.test.ts src/lib/__tests__/season_archive.test.ts src/lib/__tests__/season_progress.test.ts`
-  - この実行環境では `vite/vitest` 起動時に `spawn EPERM` で完走不可
+  - こ�E実行環墁E��は `vite/vitest` 起動時に `spawn EPERM` で完走不可
 
 ## 2026-02-13 - commit-0110: local season points and reward-tier guidance on /events
 
 ### Why
-- Phase 4 の未完了項目「シーズン制（ランキング/報酬/アーカイブ）」に対して、archive は実装済みだが ranking/reward の導線が不足していた。
-- 公式の on-chain `pointsDelta` 連携を入れる前段として、ローカル履歴から決定的に再計算できる暫定進行指標が必要だった。
-- 集計ロジックを UI に埋め込むと将来の pointsDelta 移行時に回帰しやすいため、pure function として分離する必要があった。
-
+- Phase 4 の未完亁E��E��「シーズン制�E�ランキング/報酬/アーカイブ）」に対して、archive は実裁E��みだぁEranking/reward の導線が不足してぁE��、E- 公式�E on-chain `pointsDelta` 連携を�Eれる前段として、ローカル履歴から決定的に再計算できる暫定進行指標が忁E��だった、E- 雁E��ロジチE��めEUI に埋め込むと封E��の pointsDelta 移行時に回帰しやすいため、pure function として刁E��する忁E��があった、E
 ### What
-- `apps/web/src/lib/season_progress.ts` を追加。
-  - `Win +3 / Loss +1 / Event clear +2` のローカル points ルールを固定。
-  - reward tier（Rookie/Bronze/Silver/Gold/Legend）判定を追加。
-  - event別 points board を決定的 tie-break で生成。
-  - progress markdown 出力を追加。
-- `apps/web/src/pages/Events.tsx`
-  - `Local season points (provisional)` パネルを追加（tier / next / progress bar / hint）。
-  - `Season points board`（event別）を追加。
-  - `Copy summary` を archive + progress の結合出力へ拡張。
-- `apps/web/src/lib/__tests__/season_progress.test.ts`
-  - points算出、tier遷移、tie-break、markdown 出力を検証。
-- Docs
-  - `docs/99_dev/Nyano_Triad_League_DEV_TODO_v1_ja.md` に Commit0110 を追記。
-  - `docs/00_handoff/Nyano_Triad_League_LONG_TERM_ROADMAP_v1_ja.md` の Phase 4 進捗を更新。
-
+- `apps/web/src/lib/season_progress.ts` を追加、E  - `Win +3 / Loss +1 / Event clear +2` のローカル points ルールを固定、E  - reward tier�E�Eookie/Bronze/Silver/Gold/Legend�E�判定を追加、E  - event別 points board を決定的 tie-break で生�E、E  - progress markdown 出力を追加、E- `apps/web/src/pages/Events.tsx`
+  - `Local season points (provisional)` パネルを追加�E�Eier / next / progress bar / hint�E�、E  - `Season points board`�E�Event別�E�を追加、E  - `Copy summary` めEarchive + progress の結合出力へ拡張、E- `apps/web/src/lib/__tests__/season_progress.test.ts`
+  - points算�E、tier遷移、tie-break、markdown 出力を検証、E- Docs
+  - `docs/99_dev/Nyano_Triad_League_DEV_TODO_v1_ja.md` に Commit0110 を追記、E  - `docs/00_handoff/Nyano_Triad_League_LONG_TERM_ROADMAP_v1_ja.md` の Phase 4 進捗を更新、E
 ### Verify
 - `pnpm -C apps/web test`
 - `pnpm -C apps/web typecheck`
@@ -710,147 +444,83 @@
 ## 2026-02-12 - commit-0107: phase4 onboarding quickstart (Home checklist + Match progress sync)
 
 ### Why
-- Phase 4 の参加導線で「新規参加者向けチュートリアル（3分理解→1分参加）」が未実装だった。
-- ルール確認から初回対戦までを短くし、離脱しやすい最初の1分をプロダクト側で補助する必要があった。
-
+- Phase 4 の参加導線で「新規参加老E��けチュートリアル�E�E刁E��解ↁE刁E��加�E�」が未実裁E��った、E- ルール確認から�E回対戦までを短くし、E��脱しやすい最初�E1刁E��プロダクト�Eで補助する忁E��があった、E
 ### What
-- `apps/web/src/lib/onboarding.ts` を新規追加。
-  - 進捗3ステップ（`read_quick_guide` / `start_first_match` / `commit_first_move`）を定義。
-  - localStorage への読み書き、完了数集計、全完了判定、reset を実装。
-- `apps/web/src/lib/__tests__/onboarding.test.ts` を新規追加。
-  - 既定値、進捗永続化、完了数判定、異常payload fallback、reset を検証。
-- `apps/web/src/pages/Home.tsx`
-  - 「はじめての1分スタート」チェックリストUIを追加。
-  - 1分ルールモーダルを追加し、表示時に `read_quick_guide` を更新。
-  - クイック対戦導線で `start_first_match` を更新し、進捗リセット操作を追加。
-- `apps/web/src/pages/Match.tsx`
-  - guest match 開始時に `start_first_match` を更新。
-  - 最初の手が確定したタイミング（`turns.length >= 1`）で `commit_first_move` を更新。
-- `docs/00_handoff/Nyano_Triad_League_LONG_TERM_ROADMAP_v1_ja.md`
-  - Phase 4 の「新規参加者向けチュートリアル」項目を完了に更新。
-- `docs/99_dev/Nyano_Triad_League_DEV_TODO_v1_ja.md`
-  - Commit0107 を追記し、Doing を次フェーズへ更新。
-
+- `apps/web/src/lib/onboarding.ts` を新規追加、E  - 進捁EスチE��プ！Eread_quick_guide` / `start_first_match` / `commit_first_move`�E�を定義、E  - localStorage への読み書き、完亁E��雁E��、�E完亁E��定、reset を実裁E��E- `apps/web/src/lib/__tests__/onboarding.test.ts` を新規追加、E  - 既定値、E��捗永続化、完亁E��判定、異常payload fallback、reset を検証、E- `apps/web/src/pages/Home.tsx`
+  - 「�Eじめての1刁E��タート」チェチE��リスチEIを追加、E  - 1刁E��ールモーダルを追加し、表示時に `read_quick_guide` を更新、E  - クイチE��対戦導線で `start_first_match` を更新し、E��捗リセチE��操作を追加、E- `apps/web/src/pages/Match.tsx`
+  - guest match 開始時に `start_first_match` を更新、E  - 最初�E手が確定したタイミング�E�Eturns.length >= 1`�E�で `commit_first_move` を更新、E- `docs/00_handoff/Nyano_Triad_League_LONG_TERM_ROADMAP_v1_ja.md`
+  - Phase 4 の「新規参加老E��けチュートリアル」頁E��を完亁E��更新、E- `docs/99_dev/Nyano_Triad_League_DEV_TODO_v1_ja.md`
+  - Commit0107 を追記し、Doing を次フェーズへ更新、E
 ### Verify
 - `pnpm -C apps/web typecheck`
 - `pnpm -C apps/web lint`
 - `pnpm -C apps/web build`
 - `pnpm -C apps/web test -- src/lib/__tests__/onboarding.test.ts`
-  - この実行環境では `vite/vitest` 起動時に `spawn EPERM` が発生し完走不可
+  - こ�E実行環墁E��は `vite/vitest` 起動時に `spawn EPERM` が発生し完走不可
 
 ## 2026-02-12 - commit-0108: stream moderation controls (NG words / ban / slow mode)
 
 ### Why
-- Phase 4 の未完了項目「モデレーション機能（NGワード、BAN、スローモード連携）」が `/stream` に不足していた。
-- 既存 anti-spam（レート制限・投票変更回数）だけでは、配信現場での明示的な除外制御が足りなかった。
-
+- Phase 4 の未完亁E��E��「モチE��ーション機�E�E�EGワード、BAN、スローモード連携�E�」が `/stream` に不足してぁE��、E- 既孁Eanti-spam�E�レート制限�E投票変更回数�E�だけでは、E�E信現場での明示皁E��除外制御が足りなかった、E
 ### What
-- `apps/web/src/lib/stream_moderation.ts` を新規追加。
-  - BAN 判定、NGワード判定、slow mode 判定を pure function 化。
-  - comma/newline 形式の設定文字列を正規化・重複除去するパーサを追加。
-- `apps/web/src/pages/Stream.tsx`
-  - moderation 設定 state を追加（slow mode 秒数 / banned users / blocked words）。
-  - localStorage 永続化を追加（`stream.moderation.*`）。
-  - `addVoteFromChat` で受理前に moderation 判定を適用:
+- `apps/web/src/lib/stream_moderation.ts` を新規追加、E  - BAN 判定、NGワード判定、slow mode 判定を pure function 化、E  - comma/newline 形式�E設定文字�Eを正規化・重褁E��去するパ�Eサを追加、E- `apps/web/src/pages/Stream.tsx`
+  - moderation 設宁Estate を追加�E�Elow mode 秒数 / banned users / blocked words�E�、E  - localStorage 永続化を追加�E�Estream.moderation.*`�E�、E  - `addVoteFromChat` で受理前に moderation 判定を適用:
     - banned user reject
     - blocked word reject
     - slow mode reject
-  - vote audit に `banned/ng-word/slow` の reject カウンタを追加。
-- `apps/web/src/components/stream/VoteControlPanel.tsx`
-  - Moderation UI（slow mode秒数・BAN list・NG words）を追加。
-  - audit 表示に moderation reject 内訳を追加。
-- `apps/web/src/lib/local_settings.ts`
-  - moderation 設定の read/write ヘルパを追加。
-- Tests:
-  - `apps/web/src/lib/__tests__/stream_moderation.test.ts` を追加。
-  - `apps/web/src/lib/__tests__/local_settings.test.ts` に moderation roundtrip を追加。
-- Docs:
-  - `docs/00_handoff/Nyano_Triad_League_LONG_TERM_ROADMAP_v1_ja.md` の Phase 4 moderation 項目を完了に更新。
-  - `docs/99_dev/Nyano_Triad_League_DEV_TODO_v1_ja.md` に Commit0108 を追記。
-
+  - vote audit に `banned/ng-word/slow` の reject カウンタを追加、E- `apps/web/src/components/stream/VoteControlPanel.tsx`
+  - Moderation UI�E�Elow mode秒数・BAN list・NG words�E�を追加、E  - audit 表示に moderation reject 冁E��を追加、E- `apps/web/src/lib/local_settings.ts`
+  - moderation 設定�E read/write ヘルパを追加、E- Tests:
+  - `apps/web/src/lib/__tests__/stream_moderation.test.ts` を追加、E  - `apps/web/src/lib/__tests__/local_settings.test.ts` に moderation roundtrip を追加、E- Docs:
+  - `docs/00_handoff/Nyano_Triad_League_LONG_TERM_ROADMAP_v1_ja.md` の Phase 4 moderation 頁E��を完亁E��更新、E  - `docs/99_dev/Nyano_Triad_League_DEV_TODO_v1_ja.md` に Commit0108 を追記、E
 ### Verify
 - `pnpm -C apps/web typecheck`
 - `pnpm -C apps/web lint`
 - `pnpm -C apps/web build`
 - `pnpm -C apps/web test -- src/lib/__tests__/stream_moderation.test.ts src/lib/__tests__/local_settings.test.ts`
-  - この実行環境では `vite/vitest` 起動時に `spawn EPERM` が発生し完走不可
+  - こ�E実行環墁E��は `vite/vitest` 起動時に `spawn EPERM` が発生し完走不可
 
 ## 2026-02-12 - commit-0105: permissionless ladder format v1 (record verify + deterministic standings)
 
 ### Why
-- DEV_TODO の高優先項目「ラダー（ランキング）を許可不要で第三者運用できるフォーマット」が未完了だった。
-- transcript / settled event / 署名の3点を最小セットで固定しないと、同じデータでも再計算結果が揺れるリスクがあった。
-- indexer依存を避けるため、重複処理・ソート順・tie-break順を仕様として固定する必要があった。
-
+- DEV_TODO の高優先頁E��「ラダー�E�ランキング�E�を許可不要で第三老E��用できるフォーマット」が未完亁E��った、E- transcript / settled event / 署名�E3点を最小セチE��で固定しなぁE��、同じデータでも�E計算結果が揺れるリスクがあった、E- indexer依存を避けるため、E��褁E�E琁E�Eソート頁E�Etie-break頁E��仕様として固定する忁E��があった、E
 ### What
-- `packages/triad-engine/src/ladder.ts` を新規追加。
-  - `LadderMatchAttestationV1`（EIP-712）を追加。
-    - typed-data payload / digest / signer recover / signature verify を実装。
-  - `LadderMatchRecordV1` 検証を実装。
-    - `hashTranscriptV1(transcript) == settled.matchId` を必須化。
-    - transcript header と settled event の ruleset/season/player 一致を検証。
-    - playerA/playerB の両署名検証を必須化。
-  - `buildLadderStandingsV1(...)` を実装。
-    - sourceキー（chainId:blockNumber:txHash:logIndex）で重複排除。
-    - 同一sourceの内容不一致を reject。
-    - points / wins / draws / losses / tileDiff を集計。
-    - tie-break順を固定（points desc → wins desc → tileDiff desc → losses asc → address asc）。
-- `packages/triad-engine/src/index.ts`
-  - `ladder` エクスポートを追加。
-- `packages/triad-engine/test/ladder.test.js`
-  - 正常系、transcript不一致、署名不一致、重複排除、conflicting duplicate rejection、固定tie-breakを追加検証。
-- `docs/02_protocol/Nyano_Triad_League_LADDER_FORMAT_SPEC_v1_ja.md`
-  - ladder v1 のフォーマット仕様を新規追加。
-- `docs/99_dev/Nyano_Triad_League_DEV_TODO_v1_ja.md`
-  - ladder項目を完了に更新。
-
+- `packages/triad-engine/src/ladder.ts` を新規追加、E  - `LadderMatchAttestationV1`�E�EIP-712�E�を追加、E    - typed-data payload / digest / signer recover / signature verify を実裁E��E  - `LadderMatchRecordV1` 検証を実裁E��E    - `hashTranscriptV1(transcript) == settled.matchId` を忁E��化、E    - transcript header と settled event の ruleset/season/player 一致を検証、E    - playerA/playerB の両署名検証を忁E��化、E  - `buildLadderStandingsV1(...)` を実裁E��E    - sourceキー�E�EhainId:blockNumber:txHash:logIndex�E�で重褁E��除、E    - 同一sourceの冁E��不一致めEreject、E    - points / wins / draws / losses / tileDiff を集計、E    - tie-break頁E��固定！Eoints desc ↁEwins desc ↁEtileDiff desc ↁElosses asc ↁEaddress asc�E�、E- `packages/triad-engine/src/index.ts`
+  - `ladder` エクスポ�Eトを追加、E- `packages/triad-engine/test/ladder.test.js`
+  - 正常系、transcript不一致、署名不一致、E��褁E��除、conflicting duplicate rejection、固定tie-breakを追加検証、E- `docs/02_protocol/Nyano_Triad_League_LADDER_FORMAT_SPEC_v1_ja.md`
+  - ladder v1 のフォーマット仕様を新規追加、E- `docs/99_dev/Nyano_Triad_League_DEV_TODO_v1_ja.md`
+  - ladder頁E��を完亁E��更新、E
 ### Verify
 - `pnpm -C packages/triad-engine lint`
 - `pnpm -C packages/triad-engine build`
-- `pnpm -C packages/triad-engine test`（この実行環境では `node:test` が `spawn EPERM` のため完走不可）
-- `node -e ...` で ladder の署名検証・standings集計をスモーク実行（成功）
-
+- `pnpm -C packages/triad-engine test`�E�この実行環墁E��は `node:test` ぁE`spawn EPERM` のため完走不可�E�E- `node -e ...` で ladder の署名検証・standings雁E��をスモーク実行（�E功！E
 ## 2026-02-12 - commit-0106: phase3 hardening (web error tracking + release runbook)
 
 ### Why
-- Phase 3 の未完了項目（エラートラッキング / リリース手順）が残っており、回帰検知と出荷手順の標準化が不足していた。
-- 依存追加を最小に抑えつつ、まず実運用できるエラー収集の基盤が必要だった。
-
+- Phase 3 の未完亁E��E���E�エラートラチE��ング / リリース手頁E��が残っており、回帰検知と出荷手頁E�E標準化が不足してぁE��、E- 依存追加を最小に抑えつつ、まず実運用できるエラー収集の基盤が忁E��だった、E
 ### What
-- `apps/web/src/lib/error_tracking.ts` を新規追加。
-  - global `error` / `unhandledrejection` 向けの収集ロジックを実装。
-  - sink を切替可能化（`local` / `console` / `remote`）。
-  - localStorage リングバッファ（既定50件）で履歴保持。
-  - env 設定:
+- `apps/web/src/lib/error_tracking.ts` を新規追加、E  - global `error` / `unhandledrejection` 向けの収集ロジチE��を実裁E��E  - sink を�E替可能化！Elocal` / `console` / `remote`�E�、E  - localStorage リングバッファ�E�既宁E0件�E�で履歴保持、E  - env 設宁E
     - `VITE_ERROR_TRACKING_MODE`
     - `VITE_ERROR_TRACKING_ENDPOINT`
     - `VITE_ERROR_TRACKING_MAX_EVENTS`
     - `VITE_APP_RELEASE`
 - `apps/web/src/main.tsx`
-  - `installGlobalErrorTracking()` を起動時に導入。
-- `apps/web/src/lib/__tests__/error_tracking.test.ts`
-  - sink解析、イベント正規化、ローカル保持、クリア、console sink を検証。
-- `package.json`
-  - `release:check` スクリプトを追加（engine lint/build + web typecheck/lint/build）。
-- `docs/99_dev/RELEASE_RUNBOOK_v1_ja.md`
-  - versioning / changelog / rollback / feature flag / release check を定義。
-- `docs/00_handoff/Nyano_Triad_League_LONG_TERM_ROADMAP_v1_ja.md`
-  - Phase 3 の未完了2項目を完了に更新。
-- `docs/99_dev/Nyano_Triad_League_DEV_TODO_v1_ja.md`
-  - Commit0106 を反映し、Doing を次フェーズへ更新。
-
+  - `installGlobalErrorTracking()` を起動時に導�E、E- `apps/web/src/lib/__tests__/error_tracking.test.ts`
+  - sink解析、イベント正規化、ローカル保持、クリア、console sink を検証、E- `package.json`
+  - `release:check` スクリプトを追加�E�Engine lint/build + web typecheck/lint/build�E�、E- `docs/99_dev/RELEASE_RUNBOOK_v1_ja.md`
+  - versioning / changelog / rollback / feature flag / release check を定義、E- `docs/00_handoff/Nyano_Triad_League_LONG_TERM_ROADMAP_v1_ja.md`
+  - Phase 3 の未完亁E頁E��を完亁E��更新、E- `docs/99_dev/Nyano_Triad_League_DEV_TODO_v1_ja.md`
+  - Commit0106 を反映し、Doing を次フェーズへ更新、E
 ### Verify
 - `pnpm -C apps/web typecheck`
 - `pnpm -C apps/web lint`
 - `pnpm -C apps/web test -- src/lib/__tests__/error_tracking.test.ts`
-  - この実行環境では `vite/vitest` 起動時に `spawn EPERM` が発生し完走不可
+  - こ�E実行環墁E��は `vite/vitest` 起動時に `spawn EPERM` が発生し完走不可
 
 ## 2026-02-12 - commit-0096: first-player flow adoption (committed mutual + web seed mode)
 
 ### Why
-- `resolveFirstPlayerV1` を導入した後も、両者合意フローの「commit検証付き」導線が不足していた。
-- web 側の first-player UI は `manual / mutual / commit_reveal` の3モードのみで、seed フローを直接検証できなかった。
-
+- `resolveFirstPlayerV1` を導�Eした後も、両老E��意フローの「commit検証付き」導線が不足してぁE��、E- web 側の first-player UI は `manual / mutual / commit_reveal` の3モード�Eみで、seed フローを直接検証できなかった、E
 ### What
 - `packages/triad-engine/src/first_player.ts`
   - Added `FirstPlayerCommittedMutualChoiceV1Input`.
@@ -890,9 +560,7 @@
 ## 2026-02-12 - commit-0097: web first-player resolver adds committed mutual-choice mode
 
 ### Why
-- Engine側で `committed_mutual_choice` を追加済みだったが、web Match UI からは選択・検証できなかった。
-- 「公平な先攻決定（commit付き両者合意）」を実運用で試すには、URLパラメータとUIの両方で再現可能にする必要があった。
-
+- Engine側で `committed_mutual_choice` を追加済みだったが、web Match UI からは選択�E検証できなかった、E- 「�E平な先攻決定！Eommit付き両老E��意）」を実運用で試すには、URLパラメータとUIの両方で再現可能にする忁E��があった、E
 ### What
 - `apps/web/src/lib/first_player_resolve.ts`
   - Added `FirstPlayerResolutionMode` value: `committed_mutual_choice`.
@@ -929,24 +597,17 @@
 ## 2026-02-12 - commit-0098: web first-player resolver now delegates to engine unified API
 
 ### Why
-- web 側 `first_player_resolve` が engine の判定ロジックを部分的に再実装しており、将来モード追加時に乖離リスクがあった。
-- `commit_reveal` で片側commitだけを受け入れる余地が残っていたため、engine側ポリシーと揃える必要があった。
-
+- web 側 `first_player_resolve` ぁEengine の判定ロジチE��を部刁E��に再実裁E��ており、封E��モード追加時に乖離リスクがあった、E- `commit_reveal` で牁E�Ecommitだけを受け入れる余地が残ってぁE��ため、engine側ポリシーと揁E��る忁E��があった、E
 ### What
 - `apps/web/src/lib/first_player_resolve.ts`
   - `resolveFirstPlayerV1(...)` を利用する形に統一:
-    - `mutual` → `mode: "mutual_choice"`
-    - `seed` → `mode: "seed"`
-    - `committed_mutual_choice` → `mode: "committed_mutual_choice"`
-    - `commit_reveal` → `mode: "commit_reveal"`
-  - `commit_reveal` のcommit入力を厳密化:
-    - commitA/commitB どちらか片方のみはエラー。
-    - 両方入力時のみ engine resolver へ commit pair を渡す。
-  - 既存の UI 向けエラーハンドリング（manual fallback + error文字列）は維持。
-- `apps/web/src/lib/__tests__/first_player_resolve.test.ts`
-  - `commit_reveal` の不一致テストを「両側commit入力あり」の形に更新。
-  - 片側commit入力を明示的に reject するテストを追加。
-
+    - `mutual` ↁE`mode: "mutual_choice"`
+    - `seed` ↁE`mode: "seed"`
+    - `committed_mutual_choice` ↁE`mode: "committed_mutual_choice"`
+    - `commit_reveal` ↁE`mode: "commit_reveal"`
+  - `commit_reveal` のcommit入力を厳寁E��:
+    - commitA/commitB どちらか牁E��のみはエラー、E    - 両方入力時のみ engine resolver へ commit pair を渡す、E  - 既存�E UI 向けエラーハンドリング�E�Eanual fallback + error斁E���E�E��E維持、E- `apps/web/src/lib/__tests__/first_player_resolve.test.ts`
+  - `commit_reveal` の不一致チE��トを「両側commit入力あり」�E形に更新、E  - 牁E�Ecommit入力を明示皁E�� reject するチE��トを追加、E
 ### Verify
 - `pnpm -C apps/web typecheck`
 - `pnpm -C apps/web lint`
@@ -956,9 +617,7 @@
 ## 2026-02-12 - commit-0099: Match first-player params update hardening (atomic URL updates)
 
 ### Why
-- `Match.tsx` の first-player 設定ボタンで `setParam(...)` を連続呼び出ししており、URLパラメータ更新が取りこぼれる可能性があった。
-- `commit_reveal` / `committed_mutual_choice` の入力条件がUI上で伝わりづらく、誤入力時の手戻りが発生しやすかった。
-
+- `Match.tsx` の first-player 設定�Eタンで `setParam(...)` を連続呼び出ししており、URLパラメータ更新が取りこぼれる可能性があった、E- `commit_reveal` / `committed_mutual_choice` の入力条件がUI上で伝わりづらく、誤入力時の手戻りが発生しめE��かった、E
 ### What
 - `apps/web/src/pages/Match.tsx`
   - Added `setParams(updates)` helper to apply multiple query param updates in one `setSearchParams(...)` call.
@@ -980,17 +639,14 @@
 ## 2026-02-12 - commit-0100: first-player mode switch default-fill for safer setup UX
 
 ### Why
-- モード切替時に不要パラメータは消えるようになったが、必須入力が空のまま残るケースがあり、切替直後に invalid になりやすかった。
-- `seed / commit_reveal / committed_mutual_choice` では、初回入力コストと入力ミスを減らすために安全な初期値補完が必要だった。
-
+- モード�E替時に不要パラメータは消えるよぁE��なったが、忁E���E力が空のまま残るケースがあり、�E替直後に invalid になりやすかった、E- `seed / commit_reveal / committed_mutual_choice` では、�E回�E力コストと入力ミスを減らすために安�Eな初期値補完が忁E��だった、E
 ### What
 - `apps/web/src/lib/first_player_params.ts`
   - Added `buildFirstPlayerModeDefaultParamPatch(mode, current, randomBytes32Hex)`.
   - Mode switch default-fill behavior:
-    - `manual`: `fp` を 0/1 に正規化
-    - `mutual`: `fpa/fpb` を 0/1 に正規化
-    - `seed`: `fps/fpsd` が bytes32 でなければ自動補完
-    - `commit_reveal`: `fps/fra/frb` を自動補完し、`fca/fcb` はクリア
+    - `manual`: `fp` めE0/1 に正規化
+    - `mutual`: `fpa/fpb` めE0/1 に正規化
+    - `seed`: `fps/fpsd` ぁEbytes32 でなければ自動補宁E    - `commit_reveal`: `fps/fra/frb` を�E動補完し、`fca/fcb` はクリア
     - `committed_mutual_choice`: `fps/fpna/fpnb` 自動補完、`fpoa/fpob` 既定アドレス補完、`fpa/fpb` 正規化、`fcoa/fcob` クリア
 - `apps/web/src/lib/__tests__/first_player_params.test.ts`
   - Added tests for default-fill patch behavior across modes.
@@ -1009,16 +665,13 @@
 ## 2026-02-12 - commit-0101: Match first-player mode transition e2e coverage
 
 ### Why
-- first-player モード切替は URL パラメータ状態に強く依存するため、ユニットテストだけでは画面実動作の回帰を拾いきれない。
-- mode transition 時の「不要値クリア + 必須値補完」が崩れると、共有URL再現性とUXが悪化する。
-
+- first-player モード�E替は URL パラメータ状態に強く依存するため、ユニットテストだけでは画面実動作�E回帰を拾ぁE��れなぁE��E- mode transition 時�E「不要値クリア + 忁E��値補完」が崩れると、�E有URL再現性とUXが悪化する、E
 ### What
-- `apps/web/e2e/match-first-player.spec.ts` を新規追加。
-  - Case 1: `manual` → `commit_reveal`
-    - `fps/fra/frb` が bytes32 で埋まること
+- `apps/web/e2e/match-first-player.spec.ts` を新規追加、E  - Case 1: `manual` ↁE`commit_reveal`
+    - `fps/fra/frb` ぁEbytes32 で埋まること
     - `fpsd` / committed-mutual系パラメータがクリアされること
-  - Case 2: `commit_reveal` → `committed_mutual_choice`
-    - `fps/fpna/fpnb` が bytes32 で埋まること
+  - Case 2: `commit_reveal` ↁE`committed_mutual_choice`
+    - `fps/fpna/fpnb` ぁEbytes32 で埋まること
     - `fpa/fpb` が正規化されること
     - `fpoa/fpob` が既定値で補完されること
     - `fra/frb/fca/fcb/fpsd` がクリアされること
@@ -1065,9 +718,7 @@
 ## 2026-02-12 - commit-0103: Nyano card-art retry CTA + nonce-based reload
 
 ### Why
-- `NyanoCardArt` は gateway fallback を試した後に即 placeholder 固定となり、回線復帰時にユーザーが再試行できなかった。
-- 同じ URL への再読込ではブラウザキャッシュにより失敗状態が残るケースがあり、明示的な cache-busting が必要だった。
-
+- `NyanoCardArt` は gateway fallback を試した後に即 placeholder 固定となり、回線復帰時にユーザーが�E試行できなかった、E- 同じ URL への再読込ではブラウザキャチE��ュにより失敗状態が残るケースがあり、�E示皁E�� cache-busting が忁E��だった、E
 ### What
 - `apps/web/src/lib/card_image_retry.ts`
   - Added image retry utilities:
@@ -1097,13 +748,9 @@
 ## 2026-02-12 - commit-0104: season council minimal protocol (proposal / vote / adopt)
 
 ### Why
-- DEV_TODO の高優先項目として「シーズンの議会（ruleset proposal / vote / adopt）」が未完了だった。
-- 運営不在でも第三者が同じ採択結果を再現できるように、決定論な集計規則を先に固定する必要があった。
-- 署名投票（EIP-712）を導入する前提を崩さない形で、最小の TS 参照実装を追加したかった。
-
+- DEV_TODO の高優先頁E��として「シーズンの議会！Euleset proposal / vote / adopt�E�」が未完亁E��った、E- 運営不在でも第三老E��同じ採択結果を�E現できるように、決定論な雁E��規則を�Eに固定する忁E��があった、E- 署名投票�E�EIP-712�E�を導�Eする前提を崩さなぁE��で、最小�E TS 参�E実裁E��追加したかった、E
 ### What
-- `packages/triad-engine/src/season_council.ts` を新規追加。
-  - Proposal:
+- `packages/triad-engine/src/season_council.ts` を新規追加、E  - Proposal:
     - `canonicalizeSeasonCouncilCandidatesV1(...)`
     - `hashSeasonCouncilCandidateSetV1(...)`
     - `buildSeasonCouncilProposalIdV1(...)`
@@ -1117,26 +764,19 @@
   - Tally/Adopt:
     - `tallySeasonCouncilVotesV1(...)`
       - 同一 voter は最大 nonce 採用
-      - 同一 nonce 競合はエラー
-      - proposal不一致 / 期限切れ / 候補外は reject
-      - 同率は `rulesetId` 昇順で tie-break
+      - 同一 nonce 競合�Eエラー
+      - proposal不一致 / 期限刁E�� / 候補外�E reject
+      - 同率は `rulesetId` 昁E��E�� tie-break
     - `adoptSeasonCouncilRulesetV1(...)`
-      - quorum 到達 + winner 存在時のみ採択
-- `packages/triad-engine/src/index.ts`
-  - `season_council` エクスポートを追加。
-- `packages/triad-engine/test/season_council.test.js`
-  - proposalId canonicalization、vote hash 決定性、EIP-712 sign/verify/recover、nonce 競合、tally/adopt 条件を追加検証。
-- `docs/02_protocol/Nyano_Triad_League_SEASON_COUNCIL_SPEC_v1_ja.md`
-  - v1 最小プロトコル仕様を新規追加（proposal/vote/adopt、deterministic rule、EIP-712 型）。
-- `docs/99_dev/Nyano_Triad_League_DEV_TODO_v1_ja.md`
-  - Wind公平化を完了に更新。
-  - 「シーズンの議会」項目を完了に更新。
-  - Doing を「ラダー format 固定」へ更新。
-
+      - quorum 到遁E+ winner 存在時�Eみ採抁E- `packages/triad-engine/src/index.ts`
+  - `season_council` エクスポ�Eトを追加、E- `packages/triad-engine/test/season_council.test.js`
+  - proposalId canonicalization、vote hash 決定性、EIP-712 sign/verify/recover、nonce 競合、tally/adopt 条件を追加検証、E- `docs/02_protocol/Nyano_Triad_League_SEASON_COUNCIL_SPEC_v1_ja.md`
+  - v1 最小�Eロトコル仕様を新規追加�E�Eroposal/vote/adopt、deterministic rule、EIP-712 型）、E- `docs/99_dev/Nyano_Triad_League_DEV_TODO_v1_ja.md`
+  - Wind公平化を完亁E��更新、E  - 「シーズンの議会」頁E��を完亁E��更新、E  - Doing を「ラダー format 固定」へ更新、E
 ### Verify
 - `pnpm -C packages/triad-engine lint`
 - `pnpm -C packages/triad-engine test`
-## 2026-02-13 — WO005-H follow-up: Pixi texture failure status + retry controls
+## 2026-02-13  EWO005-H follow-up: Pixi texture failure status + retry controls
 
 ### Why
 - Stage routes now keep gameplay available during index/RPC failures, but card-art texture failures in Pixi mode had no explicit feedback path.
@@ -1172,7 +812,7 @@
 - `pnpm -C apps/web typecheck`
 - `pnpm -C apps/web e2e -- stage-focus.spec.ts`
 - `pnpm -C apps/web build`
-## 2026-02-13 — WO005-I follow-up: auto fallback to Mint board when Pixi/WebGL init fails
+## 2026-02-13  EWO005-I follow-up: auto fallback to Mint board when Pixi/WebGL init fails
 
 ### Why
 - `ui=engine` stage routes previously showed an init error placeholder when Pixi failed, but did not keep an interactive board path.
@@ -1199,7 +839,7 @@
 - `pnpm -C apps/web test -- src/engine/__tests__/BattleStageEngine.test.ts src/engine/__tests__/rendererHardening.test.ts`
 - `pnpm -C apps/web e2e -- stage-focus.spec.ts`
 - `pnpm -C apps/web build`
-## 2026-02-13 — WO005-J follow-up: replay-stage WebGL fallback e2e coverage
+## 2026-02-13  EWO005-J follow-up: replay-stage WebGL fallback e2e coverage
 
 ### Why
 - We added Pixi-init failure fallback to Mint board in both battle and replay routes, but only battle had explicit e2e protection.
@@ -1316,7 +956,7 @@
 - `pnpm -C apps/web typecheck`
 - `pnpm -C apps/web lint`
 - `pnpm -C apps/web e2e -- stage-focus.spec.ts`
-## 2026-02-13 — WO005-L follow-up: replay toolbar quick transport in stage focus
+## 2026-02-13  EWO005-L follow-up: replay toolbar quick transport in stage focus
 
 ### Why
 - Replay stage focus still depended on lower replay transport controls, which could require scrolling on desktop flows.
@@ -1343,7 +983,7 @@
 - `pnpm -C apps/web typecheck`
 - `pnpm -C apps/web lint`
 - `pnpm -C apps/web e2e -- stage-focus.spec.ts`
-## 2026-02-13 — WO005-M follow-up: battle toolbar warning mark selector
+## 2026-02-13  EWO005-M follow-up: battle toolbar warning mark selector
 
 ### Why
 - Battle stage focus already had top `Commit/Undo`, but warning-mark selection still depended on lower controls.
@@ -1363,7 +1003,7 @@
 - `pnpm -C apps/web typecheck`
 - `pnpm -C apps/web lint`
 - `pnpm -C apps/web e2e -- stage-focus.spec.ts`
-## 2026-02-13 — WO005-N follow-up: stage toolbar guidance hints
+## 2026-02-13  EWO005-N follow-up: stage toolbar guidance hints
 
 ### Why
 - As top toolbar actions expanded on battle/replay stage routes, first-time users still needed quick guidance for how to use this row.
@@ -1377,7 +1017,7 @@
   - Upgraded replay toolbar status from raw step fraction to semantic text:
     - `stepStatusText · phaseInfo.label`.
   - Added `Replay focus toolbar hint` text:
-    - `hotkeys: ← → space [ ]`.
+    - `hotkeys: ↁEↁEspace [ ]`.
 - `apps/web/src/mint-theme/mint-theme.css`
   - Added shared `stage-focus-toolbar-hint` style.
   - Added responsive wrapping for hint text under mobile widths.
@@ -1388,7 +1028,7 @@
 - `pnpm -C apps/web typecheck`
 - `pnpm -C apps/web lint`
 - `pnpm -C apps/web e2e -- stage-focus.spec.ts`
-## 2026-02-13 — WO005-O follow-up: replay toolbar highlight jump controls
+## 2026-02-13  EWO005-O follow-up: replay toolbar highlight jump controls
 
 ### Why
 - Replay stage focus already had transport controls at the top, but highlight jump controls still lived in the timeline panel below.
@@ -1409,7 +1049,7 @@
 - `pnpm -C apps/web typecheck`
 - `pnpm -C apps/web lint`
 - `pnpm -C apps/web e2e -- stage-focus.spec.ts`
-## 2026-02-13 — WO005-P follow-up: sticky stage focus toolbars
+## 2026-02-13  EWO005-P follow-up: sticky stage focus toolbars
 
 ### Why
 - Stage focus routes now have richer top toolbars, but long pages could still push users to scroll and lose context.
@@ -1438,7 +1078,7 @@
 - `pnpm -C apps/web typecheck`
 - `pnpm -C apps/web lint`
 - `pnpm -C apps/web e2e -- stage-focus.spec.ts`
-## 2026-02-13 — WO005-Q follow-up: stage keyboard shortcuts
+## 2026-02-13  EWO005-Q follow-up: stage keyboard shortcuts
 
 ### Why
 - Stage focus controls became rich enough that keyboard shortcuts are useful for PC play/replay flow.
@@ -1471,7 +1111,7 @@
 - `pnpm -C apps/web typecheck`
 - `pnpm -C apps/web lint`
 - `pnpm -C apps/web e2e -- stage-focus.spec.ts`
-## 2026-02-13 — WO005-R follow-up: Escape-to-exit focus mode
+## 2026-02-13  EWO005-R follow-up: Escape-to-exit focus mode
 
 ### Why
 - Stage keyboard shortcuts improved flow, but exiting focus mode still required pointer interaction (`Exit Focus` button).
@@ -1495,7 +1135,7 @@
 - `pnpm -C apps/web typecheck`
 - `pnpm -C apps/web lint`
 - `pnpm -C apps/web e2e -- stage-focus.spec.ts`
-## 2026-02-13 — WO005-K follow-up: stage toolbar quick commit controls
+## 2026-02-13  EWO005-K follow-up: stage toolbar quick commit controls
 
 ### Why
 - In stage focus mode, commit controls existed in the hand dock only, so users could still feel commit confirmation is far from the top flow.
@@ -1745,7 +1385,7 @@
 
 ### Why
 - Stage shell and HUD were upgraded, but Nyano cut-in and focus hand dock still looked comparatively flat.
-- We wanted stronger “battle feel” in moment-to-moment interactions while keeping existing controls and route behavior unchanged.
+- We wanted stronger “battle feel Ein moment-to-moment interactions while keeping existing controls and route behavior unchanged.
 
 ### What
 - `apps/web/src/mint-theme/mint-theme.css`
@@ -1959,19 +1599,9 @@
   - `apps/web/src/components/__tests__/flipTraceDescribe.test.ts`
 
 ### Verify
-- `pnpm.cmd lint` ✅
-- `pnpm.cmd test` ✅
-- `pnpm.cmd -C packages/triad-engine build` ✅
-- `pnpm.cmd -C packages/triad-engine lint` ✅
-- `node packages/triad-engine/test/classic_ruleset_id_v2.test.js` ✅
-- `node packages/triad-engine/test/classic_order_chaos_swap.test.js` ✅
-- `node packages/triad-engine/test/classic_reverse_ace.test.js` ✅
-- `node packages/triad-engine/test/classic_plus_same.test.js` ✅
-- `node packages/triad-engine/test/classic_type_ascend_descend.test.js` ✅
-- `pnpm.cmd -C apps/web build` ✅
-- `pnpm.cmd -C apps/web typecheck` ❌ (env issue: TS cannot resolve `pixi.js` / `fflate` in this sandbox run)
-- `pnpm.cmd -C apps/web test -- ...` ❌ (sandbox `spawn EPERM` while loading vite/esbuild)
-- `pnpm.cmd build:web` ❌ (sandbox `spawn EPERM` in nested pnpm/vite invocation)
+- `pnpm.cmd lint` ✁E- `pnpm.cmd test` ✁E- `pnpm.cmd -C packages/triad-engine build` ✁E- `pnpm.cmd -C packages/triad-engine lint` ✁E- `node packages/triad-engine/test/classic_ruleset_id_v2.test.js` ✁E- `node packages/triad-engine/test/classic_order_chaos_swap.test.js` ✁E- `node packages/triad-engine/test/classic_reverse_ace.test.js` ✁E- `node packages/triad-engine/test/classic_plus_same.test.js` ✁E- `node packages/triad-engine/test/classic_type_ascend_descend.test.js` ✁E- `pnpm.cmd -C apps/web build` ✁E- `pnpm.cmd -C apps/web typecheck` ❁E(env issue: TS cannot resolve `pixi.js` / `fflate` in this sandbox run)
+- `pnpm.cmd -C apps/web test -- ...` ❁E(sandbox `spawn EPERM` while loading vite/esbuild)
+- `pnpm.cmd build:web` ❁E(sandbox `spawn EPERM` in nested pnpm/vite invocation)
 
 ## 2026-02-14 - WO007 follow-up: stream strict allowlist parity for Classic Order/Chaos
 
@@ -2403,7 +2033,7 @@
 - Rebuilt `apps/web/src/pages/Rulesets.tsx` with:
   - Recommended section (`おすすめ`) using top curated presets.
   - One-line summary surfaced for each ruleset row.
-  - Direct CTA `このルールで対戦` linking to `/match?ui=mint&rk=<rulesetKey>`.
+  - Direct CTA `こ�Eルールで対戦` linking to `/match?ui=mint&rk=<rulesetKey>`.
   - URL-backed filter/selection via `q` and `rk` query params.
 - Added `apps/web/src/lib/ruleset_discovery.ts`:
   - `rulesetId -> rulesetKey` resolver
@@ -2541,9 +2171,7 @@
 ## 2026-02-15 - WO012: Mint Top HUD (score/turn fixed placement)
 
 ### Why
-- 参照画像ベースのUI強化で、上部の状況把握（スコア/ターン）を定位置化し、盤面への視線集中を改善する必要があった。
-- 既存 `BattleHudMint` は情報量が多く、`density=minimal` ではよりシンプルな固定HUDが必要だった。
-
+- 参�E画像�EースのUI強化で、上部の状況把握�E�スコア/ターン�E�を定位置化し、盤面への視線集中を改喁E��る忁E��があった、E- 既孁E`BattleHudMint` は惁E��量が多く、`density=minimal` ではよりシンプルな固定HUDが忁E��だった、E
 ### What
 - Added `apps/web/src/components/BattleTopHudMint.tsx`:
   - New top HUD with left logo, center A/B score, right turn pill.
@@ -2569,9 +2197,7 @@
 ## 2026-02-15 - WO013: Mint stage layout + side player panels
 
 ### Why
-- 参照画像にある「左右プレイヤーパネル + 盤面中心」の対戦レイアウトを導入し、対戦の存在感を高める必要があった。
-- 既存の盤面入力系を崩さず、見た目レイヤーとして追加する方針が必要だった。
-
+- 参�E画像にある「左右プレイヤーパネル + 盤面中忁E���E対戦レイアウトを導�Eし、対戦の存在感を高める忁E��があった、E- 既存�E盤面入力系を崩さず、見た目レイヤーとして追加する方針が忁E��だった、E
 ### What
 - Added `apps/web/src/components/PlayerSidePanelMint.tsx`:
   - New side panel component with avatar, player label, and remaining cards.
@@ -2598,9 +2224,7 @@
 ## 2026-02-15 - WO014: Mint hand tray + action prompt polish
 
 ### Why
-- 操作の起点（手札選択）と次アクション誘導（prompt）は、参照画像ベースUIの体験品質に直結する。
-- 既存UIでは手札が単純な行表示で、prompt も1段表示だったため、ゲーム画面としての“定位置感”を強化する必要があった。
-
+- 操作�E起点�E�手札選択）と次アクション誘導！Erompt�E��E、参照画像�EースUIの体験品質に直結する、E- 既存UIでは手札が単純な行表示で、prompt めE段表示だったため、ゲーム画面としての“定位置感”を強化する忁E��があった、E
 ### What
 - Updated `apps/web/src/components/HandDisplayMint.tsx`:
   - Added tray wrapper (`mint-hand-tray`, `mint-hand-tray__rail`) around the hand.
@@ -2623,91 +2247,54 @@
 ## 2026-02-15 - WO015: NyanoReaction layout stability v2 (CLS hardening)
 
 ### Why
-- Nyano コメント表示時に slot 高さや文言差分で縦方向の揺れが残る可能性があり、Mint match の安定感を損なっていた。
-- 既存のレイアウト安定化を補強し、`input` はあるが `kind=idle` で実表示がないケースも安全に扱う必要があった。
-
+- Nyano コメント表示時に slot 高さめE��言差刁E��縦方向�E揺れが残る可能性があり、Mint match の安定感を損なってぁE��、E- 既存�Eレイアウト安定化を補強し、`input` はあるぁE`kind=idle` で実表示がなぁE��ースも安�Eに扱ぁE��E��があった、E
 ### What
 - Updated `apps/web/src/components/NyanoReactionSlot.tsx`:
-  - `pickReactionKind` を使って `hasVisibleReaction` を判定。
-  - slot 内は常時 placeholder をマウントし、`mint-nyano-reaction-slot__content` に reaction を重ねる構造へ変更。
-  - `input !== null` でも `kind=idle` の場合は idle slot class を維持。
-- Updated `apps/web/src/mint-theme/mint-theme.css`:
-  - slot を `min-height` 依存から `height: clamp(...)` + `overflow: hidden` に変更。
-  - `mint-nyano-reaction-slot__content` を absolute overlay 化し、reaction 本体を `inset: 0` で固定。
-  - `stage-focus-cutin` の余白を除去して slot 内収まりを安定化。
-- Updated `apps/web/src/components/__tests__/NyanoReactionSlot.test.tsx`:
-  - placeholder + content wrapper 構造に合わせてテスト更新。
-  - `kind=idle` ケースで slot が idle 扱いになることを追加検証。
-- Updated `apps/web/e2e/ux-guardrails.spec.ts`:
-  - LayoutShift API の軽量プローブを追加。
-  - Nyano slot シナリオで line-clamp/overflow と合わせて layout-shift しきい値チェックを追加。
-
+  - `pickReactionKind` を使って `hasVisibleReaction` を判定、E  - slot 冁E�E常晁Eplaceholder を�Eウントし、`mint-nyano-reaction-slot__content` に reaction を重ねる構造へ変更、E  - `input !== null` でめE`kind=idle` の場合�E idle slot class を維持、E- Updated `apps/web/src/mint-theme/mint-theme.css`:
+  - slot めE`min-height` 依存かめE`height: clamp(...)` + `overflow: hidden` に変更、E  - `mint-nyano-reaction-slot__content` めEabsolute overlay 化し、reaction 本体を `inset: 0` で固定、E  - `stage-focus-cutin` の余白を除去して slot 冁E��まりを安定化、E- Updated `apps/web/src/components/__tests__/NyanoReactionSlot.test.tsx`:
+  - placeholder + content wrapper 構造に合わせてチE��ト更新、E  - `kind=idle` ケースで slot ぁEidle 扱ぁE��なることを追加検証、E- Updated `apps/web/e2e/ux-guardrails.spec.ts`:
+  - LayoutShift API の軽量�Eローブを追加、E  - Nyano slot シナリオで line-clamp/overflow と合わせて layout-shift しきぁE��チェチE��を追加、E
 ### Verify
 - `pnpm.cmd -C apps/web test -- NyanoReactionSlot` OK
 - `pnpm.cmd -C apps/web e2e -- e2e/ux-guardrails.spec.ts` OK
 - `pnpm.cmd -C apps/web build` OK
-- `pnpm.cmd -C apps/web typecheck` NG（既存依存不足: `pixi.js` / `fflate` 型解決エラー）
-
+- `pnpm.cmd -C apps/web typecheck` NG�E�既存依存不足: `pixi.js` / `fflate` 型解決エラー�E�E
 ## 2026-02-15 - WO016: Mint microinteraction polish (press/hover/focus unification)
 
 ### Why
-- Mint UI 内でセル・手札・ボタンの押下文法が場所ごとに微妙に異なり、“触り心地” の統一感が不足していた。
-- キーボード操作時の視認性（focus-visible）も揃える必要があった。
-
+- Mint UI 冁E��セル・手札・ボタンの押下文法が場所ごとに微妙に異なり、“触り忁E�� Eの統一感が不足してぁE��、E- キーボ�Eド操作時の視認性�E�Eocus-visible�E�も揁E��る忁E��があった、E
 ### What
 - Updated `apps/web/src/mint-theme/mint-theme.css`:
-  - 共通ユーティリティ `mint-pressable` / `mint-pressable--cell|--card|--pill` を追加。
-  - hover/active/focus-visible を CSS 変数 `--mint-press-*` で統一。
-  - selected ring/glow を `--mint-selected-ring` / `--mint-selected-glow` に統一し、A/B 色と両立。
-  - `prefers-reduced-motion` と `data-vfx=off|low` に press演出抑制を追加。
-- Updated `apps/web/src/components/BoardViewMint.tsx`:
-  - selectable cell に `mint-pressable mint-pressable--cell` を付与。
-  - `tabIndex=0` と Enter/Space でのセル選択を追加（focus-visible 導線）。
-- Updated `apps/web/src/components/HandDisplayMint.tsx`:
-  - hand card に `mint-pressable mint-pressable--card` を付与。
-- Updated `apps/web/src/components/GameResultOverlayMint.tsx`:
-  - result action buttons に `mint-pressable mint-pressable--pill` を付与。
-- Updated `apps/web/e2e/ux-guardrails.spec.ts`:
-  - Nyano slot シナリオで hand card / board cell の `mint-pressable` 適用を検証。
-
+  - 共通ユーチE��リチE�� `mint-pressable` / `mint-pressable--cell|--card|--pill` を追加、E  - hover/active/focus-visible めECSS 変数 `--mint-press-*` で統一、E  - selected ring/glow めE`--mint-selected-ring` / `--mint-selected-glow` に統一し、A/B 色と両立、E  - `prefers-reduced-motion` と `data-vfx=off|low` に press演�E抑制を追加、E- Updated `apps/web/src/components/BoardViewMint.tsx`:
+  - selectable cell に `mint-pressable mint-pressable--cell` を付与、E  - `tabIndex=0` と Enter/Space でのセル選択を追加�E�Eocus-visible 導線）、E- Updated `apps/web/src/components/HandDisplayMint.tsx`:
+  - hand card に `mint-pressable mint-pressable--card` を付与、E- Updated `apps/web/src/components/GameResultOverlayMint.tsx`:
+  - result action buttons に `mint-pressable mint-pressable--pill` を付与、E- Updated `apps/web/e2e/ux-guardrails.spec.ts`:
+  - Nyano slot シナリオで hand card / board cell の `mint-pressable` 適用を検証、E
 ### Verify
 - `pnpm.cmd -C apps/web e2e -- e2e/ux-guardrails.spec.ts` OK
 - `pnpm.cmd -C apps/web build` OK
-- `pnpm.cmd -C apps/web typecheck` NG（既存依存不足: `pixi.js` / `fflate` 型解決エラー）
-
+- `pnpm.cmd -C apps/web typecheck` NG�E�既存依存不足: `pixi.js` / `fflate` 型解決エラー�E�E
 ## 2026-02-15 - WO016/WO010 follow-up: keyboard + reduced-motion UX guardrails
 
 ### Why
-- WO016 で追加した `mint-pressable` と Enter/Space 導線は、見た目より先に操作感が壊れやすい。
-- 既存 `ux-guardrails` は URL同期とレイアウト安定が中心で、キーボード導線と reduced-motion 抑制の回帰を捕まえられていなかった。
-
+- WO016 で追加した `mint-pressable` と Enter/Space 導線�E、見た目より先に操作感が壊れめE��ぁE��E- 既孁E`ux-guardrails` は URL同期とレイアウト安定が中忁E��、キーボ�Eド導線と reduced-motion 抑制の回帰を捕まえられてぁE��かった、E
 ### What
 - Updated `apps/web/e2e/ux-guardrails.spec.ts`:
   - Added test: `Mint board cells remain keyboard-selectable via Enter`
-    - Mint match で hand card 選択後、`data-board-cell` へフォーカスして Enter で `mint-cell--selected` になることを検証。
-  - Added test: `Reduced motion disables pressable transition feedback in Mint battle UI`
-    - `page.emulateMedia({ reducedMotion: "reduce" })` 下で hand card / board cell の `transitionDuration` が `0s` を含むことを検証。
-
+    - Mint match で hand card 選択後、`data-board-cell` へフォーカスして Enter で `mint-cell--selected` になることを検証、E  - Added test: `Reduced motion disables pressable transition feedback in Mint battle UI`
+    - `page.emulateMedia({ reducedMotion: "reduce" })` 下で hand card / board cell の `transitionDuration` ぁE`0s` を含むことを検証、E
 ### Verify
-- `pnpm.cmd -C apps/web e2e -- e2e/ux-guardrails.spec.ts` OK（4 passed）
-
-## 2026-02-15 - Match UX fix: Nyanoコメント時の盤面ズレ抑止 + Prompt文字サイズ調整
+- `pnpm.cmd -C apps/web e2e -- e2e/ux-guardrails.spec.ts` OK�E�E passed�E�E
+## 2026-02-15 - Match UX fix: Nyanoコメント時の盤面ズレ抑止 + Prompt斁E��サイズ調整
 
 ### Why
-- バトル中、Nyanoコメントに同期して盤面が「ずれる」体感があり、操作の安定感を損なっていた。
-- あわせて ActionPrompt（「カードを選んでください」）が大きすぎ、盤面視認性を阻害していた。
-
+- バトル中、Nyanoコメントに同期して盤面が「ずれる」体感があり、操作�E安定感を損なってぁE��、E- あわせて ActionPrompt�E�「カードを選んでください」）が大きすぎ、盤面視認性を阻害してぁE��、E
 ### What
 - Updated `apps/web/src/mint-theme/mint-theme.css`:
-  - `mint-stage-impact-board` の transform系アニメーションを廃止し、位置を動かさない `mint-stage-impact-board-glow` へ置換。
-  - `mint-nyano-reaction-slot` に `contain: layout paint` を追加し、コメント描画のレイアウト影響を局所化。
-  - `mint-prompt__ja` / `mint-prompt__en` のフォントサイズを縮小（desktop/mobile両方）。
-- Updated `apps/web/e2e/ux-guardrails.spec.ts`:
-  - Nyano slotシナリオで board frame の document座標差分チェックを追加（Deck Preview状態を固定して計測）。
-
+  - `mint-stage-impact-board` の transform系アニメーションを廁E��し、位置を動かさなぁE`mint-stage-impact-board-glow` へ置換、E  - `mint-nyano-reaction-slot` に `contain: layout paint` を追加し、コメント描画のレイアウト影響を局所化、E  - `mint-prompt__ja` / `mint-prompt__en` のフォントサイズを縮小！Eesktop/mobile両方�E�、E- Updated `apps/web/e2e/ux-guardrails.spec.ts`:
+  - Nyano slotシナリオで board frame の document座標差刁E��ェチE��を追加�E�Eeck Preview状態を固定して計測�E�、E
 ### Verify
-- `pnpm.cmd -C apps/web e2e -- e2e/ux-guardrails.spec.ts` OK（4 passed）
-- `pnpm.cmd -C apps/web build` OK
+- `pnpm.cmd -C apps/web e2e -- e2e/ux-guardrails.spec.ts` OK�E�E passed�E�E- `pnpm.cmd -C apps/web build` OK
 
 ## 2026-02-15 - Match UX follow-up: commentary text stability + board/panel rebalance
 
@@ -2937,18 +2524,13 @@
 ## 2026-02-15 - Mint follow-up: app chrome focusRoute compatibility guardrails
 
 ### Why
-- `focusRoute` (`focus=1`, `/battle-stage`, `/replay-stage`) では App chrome を出さない前提があり、Mint画面拡張後もこの互換を固定しておく必要がある。
-- Mint tab navigation 時の `theme=mint` 引き回し（URL互換）も e2e で直接担保したい。
-
+- `focusRoute` (`focus=1`, `/battle-stage`, `/replay-stage`) では App chrome を�EさなぁE��提があり、Mint画面拡張後もこ�E互換を固定しておく忁E��がある、E- Mint tab navigation 時�E `theme=mint` 引き回し�E�ERL互換�E�も e2e で直接拁E��したい、E
 ### What
 - Updated `apps/web/e2e/mint-app-screens-guardrails.spec.ts`:
   - Added `Mint app chrome preserves theme query across tab navigation`
-    - `/?theme=mint` から Arena/Decks タブ遷移時に `theme=mint` を保持することを確認。
-  - Added `focus routes keep app chrome hidden for layout compatibility`
+    - `/?theme=mint` から Arena/Decks タブ�E移時に `theme=mint` を保持することを確認、E  - Added `focus routes keep app chrome hidden for layout compatibility`
     - `/match?...&focus=1` と `/battle-stage?...&focus=1` で
-      `.mint-app-chrome` / `.mint-app-footer` / `.app-header` / `.app-footer` が非表示であることを確認。
-    - `/battle-stage` では `Commit move from focus hand dock` 可視も確認して、focus動線が維持されることを検証。
-
+      `.mint-app-chrome` / `.mint-app-footer` / `.app-header` / `.app-footer` が非表示であることを確認、E    - `/battle-stage` では `Commit move from focus hand dock` 可視も確認して、focus動線が維持されることを検証、E
 ### Verify
 - `pnpm -C apps/web test` OK
 - `pnpm -C apps/web typecheck` OK
@@ -3036,85 +2618,59 @@
 - `pnpm -C apps/web test` OK
 - `pnpm -C apps/web typecheck` OK
 - `pnpm -C apps/web build` OK
-## 2026-02-17 — Arena follow-up: guide/difficulty styles completion + encoding cleanup
+## 2026-02-17  EArena follow-up: guide/difficulty styles completion + encoding cleanup
 
 ### Why
-- `Arena` で追加された `MintPageGuide` と難易度ヒント行のクラスに対応CSSが未実装で、表示が素のままになる箇所が残っていた。
-- `apps/web/src/pages/Arena.tsx` が UTF-8 BOM 付きになっており、差分ノイズとエンコーディング不統一を避けるため正規化が必要だった。
-- 変更運用ルールに合わせ、今回の差分を実装ログへ明示しておく必要があった。
-
+- `Arena` で追加されぁE`MintPageGuide` と難易度ヒント行�Eクラスに対応CSSが未実裁E��、表示が素のままになる箁E��が残ってぁE��、E- `apps/web/src/pages/Arena.tsx` ぁEUTF-8 BOM 付きになっており、差刁E��イズとエンコーチE��ング不統一を避けるため正規化が忁E��だった、E- 変更運用ルールに合わせ、今回の差刁E��実裁E��グへ明示しておく忁E��があった、E
 ### What
 - `apps/web/src/mint-theme/mint-theme.css`
-  - `mint-page-guide__*` スタイル群を追加（head/grid/item/title/detail）。
-  - `mint-arena-difficulty__top` / `mint-arena-difficulty__hint` を追加。
-  - レスポンシブ時の `mint-page-guide__grid` を `1100px` / `760px` で段階的に縮退。
-- `apps/web/src/pages/Arena.tsx`
-  - 難易度選択ボタンに `type="button"` を追加してフォーム文脈での誤 submit を予防。
-  - UTF-8 BOM を除去し、UTF-8 (BOMなし) に統一。
-- `docs/99_dev/Nyano_Triad_League_DEV_TODO_v1_ja.md`
-  - 本 follow-up の完了項目を追記。
-
+  - `mint-page-guide__*` スタイル群を追加�E�Eead/grid/item/title/detail�E�、E  - `mint-arena-difficulty__top` / `mint-arena-difficulty__hint` を追加、E  - レスポンシブ時の `mint-page-guide__grid` めE`1100px` / `760px` で段階的に縮退、E- `apps/web/src/pages/Arena.tsx`
+  - 難易度選択�Eタンに `type="button"` を追加してフォーム斁E��での誤 submit を予防、E  - UTF-8 BOM を除去し、UTF-8 (BOMなぁE に統一、E- `docs/99_dev/Nyano_Triad_League_DEV_TODO_v1_ja.md`
+  - 本 follow-up の完亁E��E��を追記、E
 ### Verify
 - `pnpm -C apps/web test`
 - `pnpm -C apps/web typecheck`
 - `pnpm -C apps/web build`
-## 2026-02-17 — Mint guide rollout: apply shared page guide to Events/Replay/Stream
+## 2026-02-17  EMint guide rollout: apply shared page guide to Events/Replay/Stream
 
 ### Why
-- `apps/web/src/lib/mint_page_guides.ts` には `events/replay/stream` の文言定義がある一方、実際の画面反映は `Arena` のみで、定義と実装が不整合だった。
-- 画面遷移時の学習導線を揃え、Mint二次画面の情報設計を統一する必要があった。
-
+- `apps/web/src/lib/mint_page_guides.ts` には `events/replay/stream` の斁E��定義がある一方、実際の画面反映は `Arena` のみで、定義と実裁E��不整合だった、E- 画面遷移時�E学習導線を揁E��、Mint二次画面の惁E��設計を統一する忁E��があった、E
 ### What
 - `apps/web/src/pages/Events.tsx`
-  - `MintPageGuide` / `MINT_PAGE_GUIDES` を導入し、Mintテーマ時に `MINT_PAGE_GUIDES.events` を表示。
-- `apps/web/src/pages/Replay.tsx`
-  - `MintPageGuide` / `MINT_PAGE_GUIDES` を導入し、`!isStageFocus` 条件下で `MINT_PAGE_GUIDES.replay` を表示。
-  - Stage focus の board-first 導線は維持。
-- `apps/web/src/pages/Stream.tsx`
-  - `MintPageGuide` / `MINT_PAGE_GUIDES` を導入し、Mintテーマ時に `MINT_PAGE_GUIDES.stream` を表示。
-
+  - `MintPageGuide` / `MINT_PAGE_GUIDES` を導�Eし、MintチE�Eマ時に `MINT_PAGE_GUIDES.events` を表示、E- `apps/web/src/pages/Replay.tsx`
+  - `MintPageGuide` / `MINT_PAGE_GUIDES` を導�Eし、`!isStageFocus` 条件下で `MINT_PAGE_GUIDES.replay` を表示、E  - Stage focus の board-first 導線�E維持、E- `apps/web/src/pages/Stream.tsx`
+  - `MintPageGuide` / `MINT_PAGE_GUIDES` を導�Eし、MintチE�Eマ時に `MINT_PAGE_GUIDES.stream` を表示、E
 ### Verify
 - `pnpm -C apps/web lint`
 - `pnpm -C apps/web typecheck`
 - `pnpm -C apps/web test`
 - `pnpm -C apps/web build`
 - `pnpm.cmd -C apps/web e2e -- e2e/mint-app-screens-guardrails.spec.ts`
-## 2026-02-17 — Mint guide rollout follow-up: e2e guardrails for page guides
+## 2026-02-17  EMint guide rollout follow-up: e2e guardrails for page guides
 
 ### Why
-- 共通ガイドは UI 導線の土台なので、再び「定義だけあり未表示」になる回帰を防ぐ必要があった。
-
+- 共通ガイド�E UI 導線�E土台なので、�Eび「定義だけあり未表示」になる回帰を防ぐ忁E��があった、E
 ### What
 - `apps/web/e2e/mint-app-screens-guardrails.spec.ts`
-  - `/arena` `/events` `/replay` `/stream` で `.mint-page-guide` 可視を追加検証。
-  - 既存の 390px 到達性・横オーバーフロー検証と同時にチェック。
-
+  - `/arena` `/events` `/replay` `/stream` で `.mint-page-guide` 可視を追加検証、E  - 既存�E 390px 到達性・横オーバ�Eフロー検証と同時にチェチE��、E
 ### Verify
 - `pnpm.cmd -C apps/web e2e -- e2e/mint-app-screens-guardrails.spec.ts`
-## 2026-02-17 — Stage focus overlap fix + UX guardrail commit fallback hardening
+## 2026-02-17  EStage focus overlap fix + UX guardrail commit fallback hardening
 
 ### Why
-- CI で `e2e/stage-focus.spec.ts` の「boardAboveDock」判定が失敗し、`/battle-stage` で盤面下端と hand dock が重なるケースが確認された。
-- 同じ CI 実行で `ux-guardrails` の `Quick commit move` クリックがタイミング依存で flaky になっていた。
-
+- CI で `e2e/stage-focus.spec.ts` の「boardAboveDock」判定が失敗し、`/battle-stage` で盤面下端と hand dock が重なるケースが確認された、E- 同じ CI 実行で `ux-guardrails` の `Quick commit move` クリチE��がタイミング依存で flaky になってぁE��、E
 ### What
 - `apps/web/src/mint-theme/mint-theme.css`
-  - `.mint-focus-hand-dock--stage` の transform を `translate(-50%, 0)` に統一。
-  - desktop 条件（`min-width: 1200px` かつ `min-height: 700px`）で `translate(-50%, 10px)` を適用し、board/dock の重なりを解消。
-- `apps/web/e2e/ux-guardrails.spec.ts`
-  - `commitMove` で quick commit のクリックに短い timeout と失敗時フォールバックを追加し、描画タイミング差の flaky を抑制。
-- `apps/web/src/lib/stage_layout.ts`
-  - battle desktop の reserve height を 380 → 400 に調整。
-- `apps/web/src/lib/__tests__/stage_layout.test.ts`
-  - 上記調整に合わせて期待値を更新。
-
+  - `.mint-focus-hand-dock--stage` の transform めE`translate(-50%, 0)` に統一、E  - desktop 条件�E�Emin-width: 1200px` かつ `min-height: 700px`�E�で `translate(-50%, 10px)` を適用し、board/dock の重なりを解消、E- `apps/web/e2e/ux-guardrails.spec.ts`
+  - `commitMove` で quick commit のクリチE��に短ぁEtimeout と失敗時フォールバックを追加し、描画タイミング差の flaky を抑制、E- `apps/web/src/lib/stage_layout.ts`
+  - battle desktop の reserve height めE380 ↁE400 に調整、E- `apps/web/src/lib/__tests__/stage_layout.test.ts`
+  - 上記調整に合わせて期征E��を更新、E
 ### Verify
 - `pnpm -C apps/web typecheck`
 - `pnpm.cmd -C apps/web test -- src/lib/__tests__/stage_layout.test.ts`
 - `pnpm.cmd -C apps/web e2e -- e2e/stage-focus.spec.ts`
 - `pnpm.cmd -C apps/web e2e -- e2e/ux-guardrails.spec.ts`
-- `pnpm.cmd -C apps/web e2e` はローカル実行環境の `spawn EPERM` で完走不可（対象specは個別実行で確認）。
-## 2026-02-17 - ui=mint parity follow-up: align board/hand/commentary/status flow with Pixi
+- `pnpm.cmd -C apps/web e2e` はローカル実行環墁E�E `spawn EPERM` で完走不可�E�対象specは個別実行で確認）、E## 2026-02-17 - ui=mint parity follow-up: align board/hand/commentary/status flow with Pixi
 
 ### Why
 - ui=mint and Pixi (ui=engine) still had different battle flow on Match: hand operation location, HUD/commentary presentation tone, and control discovery differed.
@@ -3224,3 +2780,158 @@
 - pnpm -C apps/web test OK
 - pnpm -C apps/web typecheck OK
 - pnpm -C apps/web build OK
+
+## 2026-02-17 - Public copy cleanup for Home/Start/Stream
+
+### Why
+- Home/Start/Stream contained developer-facing or roadmap-like copy (`現在のフェーズ`, `次のマイルスト�Eン`, `導線`, `暫定`, `DONE/TODO`) visible to end users.
+- Requirement: keep navigation/functionality unchanged and replace internal phrasing with player-facing copy.
+
+### What
+- apps/web/src/pages/Home.tsx
+  - Replaced hero/menu/infobar copy with player-facing text.
+  - Replaced onboarding status labels from DONE/TODO/AUTO to Japanese user-facing labels.
+  - Replaced onboarding completion sentence with play-ready wording.
+- apps/web/src/pages/Start.tsx
+  - Replaced DONE/TODO labels with user-facing status labels.
+  - Replaced quickstart footer sentence with user-facing Japanese copy.
+  - Fixed step-title typos (`戦闘` -> `対戦`, `本初` -> `最初`).
+- apps/web/src/pages/Stream.tsx
+  - Replaced internal planning wording in studio description/callout heading with public-facing copy.
+
+### Verify
+- pnpm -C apps/web test
+- pnpm -C apps/web typecheck
+- pnpm -C apps/web build
+
+## 2026-02-17 - Japanese-first UI copy pass (Replay-centric)
+
+### Why
+- Several user-facing pages still used English-heavy copy (especially Replay), making the product tone inconsistent for Japanese users.
+- Requirement: make UI text Japanese-first without breaking existing links/protocols and without destabilizing layout/E2E guardrails.
+
+### What
+- Replay
+  - `apps/web/src/pages/Replay.tsx`
+    - Converted major UI copy to Japanese-first across summary chips, focus toolbar feedback, setup/help, timeline/detail panels, and deck inspector.
+    - Kept E2E-sensitive strings where needed (`Replay from transcript`, `Show controls`, etc.) or embedded compatibility phrases.
+    - Localized replay error/help toasts and fallback warnings.
+  - `apps/web/src/lib/replay_timeline.ts`
+    - Localized phase/status labels (`準備/序盤/中盤/終盤/終局`, `初期盤面`).
+  - `apps/web/src/lib/replay_highlights.ts`
+    - Localized highlight labels (`大量反転/連鎁EコンチE警告`).
+  - `apps/web/src/lib/__tests__/replay_timeline.test.ts`
+  - `apps/web/src/lib/__tests__/replay_highlights.test.ts`
+    - Updated expected labels to match Japanese-first output.
+  - `apps/web/e2e/replay-ruleset-fallback-guardrails.spec.ts`
+    - Updated to accept both old/new fallback warning text patterns for compatibility.
+
+- Secondary pages (Japanese-first baseline)
+  - `apps/web/src/pages/Arena.tsx`: quick play/banner copy localized.
+  - `apps/web/src/pages/Decks.tsx`: headings/buttons/toasts localized while keeping `Save Deck` text for selector compatibility.
+  - `apps/web/src/pages/Rulesets.tsx`: list/filter/action copy localized with `Ruleset Registry` compatibility kept in heading.
+  - `apps/web/src/pages/Events.tsx`: summary/quick action/import-area copy localized.
+
+### Verify
+- pnpm -C apps/web test OK
+- pnpm -C apps/web typecheck OK
+- pnpm -C apps/web build OK
+- pnpm.cmd -C apps/web e2e:ux OK (15 passed)
+
+## 2026-02-17 - Stream/HUD 日本語コピ�E追補と説明文クリーンアチE�E
+
+### Why
+- Stream 周辺に英語寁E��の補助斁E��・ト�Eストが残っており、日本語�Eースの体験にムラがあった、E- `_design/Home` にユーザーに見せるべきでなぁE��捗系表現�E�フェーズ/マイルスト�Eン�E�が残存してぁE��、E
+### What
+- `apps/web/src/pages/Stream.tsx`
+  - 経過時間ラベルを日本語化�E�Eたった今` / `秒前` / `刁E��`�E�、E  - 視�E老E��け案�Eコピ�E時トーストを日本語化、E  - ライブ状態�E `Event` / `Turn` 表示めE`イベンチE / `ターン` に統一、E- `apps/web/src/components/stream/StreamSharePanel.tsx`
+  - 視�E老E���E/Nightbot コピ�E完亁E��ーストを日本語化、E- `apps/web/src/components/stream/WarudoBridgePanel.tsx`
+  - `viewer cmd format` 表示を日本語ラベルへ変更、E  - サンプル出力ブロチE��のインチE��トずれを整形、E- `apps/web/src/components/StreamOperationsHUD.tsx`
+  - ヘッダー整形を修正、E  - `VOTE OPEN` / `Vote Status` などを日本語ラベルへ調整、E  - `Last Error` / `Health` / `Ops Log` を日本語化、E  - 相対時刻表示を日本語化、E- `apps/web/src/pages/_design/Home.tsx`
+  - 「現在のフェーズ」「次のマイルスト�Eン」をユーザー向け斁E��へ置換、E  - 進捗説明調のチE��ストを一般皁E��利用導線説明へ更新、E
+### Verify
+- pnpm -C apps/web test OK
+- pnpm -C apps/web typecheck OK
+- pnpm -C apps/web build OK
+- pnpm.cmd -C apps/web e2e:ux OK (15 passed)
+
+## 2026-02-17 - Overlay 日本語�Eース化！E2E互換キーワード維持E��E
+### Why
+- Overlay は配信表示での露出が多い一方、補助斁E��が英語中忁E��日本語トーンと不整合だった、E- ただぁEE2E ぁE`Now Playing` / `Chat voting` / `No signal yet` / `OPEN` / `remaining` に依存してぁE��ため互換維持が忁E��だった、E
+### What
+- `apps/web/src/pages/Overlay.tsx`
+  - 時刻表記を日本語化�E�Eたった仁E/ 秒前 / 刁E�� / 時間前`�E�、E  - スチE�Eタス要紁E��日本語化�E�勝老Eターン/タイル/征E��中�E�、E  - 上部コントロール・警告�E直前手・投票・エラー・ヘルプ文言を日本語�Eースへ調整、E  - E2E依存語�E併記して維持E��侁E `対戦中 (Now Playing)`, `投票状況E(Chat voting)`, `信号征E�� (No signal yet)`, `残り ...s remaining`�E�、E  - strictAllowed まわりの補助斁E��を日本語化�E�合法手/WM候裁Eホスト征E��中�E�、E
+### Verify
+- pnpm -C apps/web test OK
+- pnpm -C apps/web typecheck OK
+- pnpm -C apps/web build OK
+- pnpm.cmd -C apps/web e2e:ux OK (15 passed)
+- `e2e/cross-tab-overlay.spec.ts` / `e2e/smoke.spec.ts` の個別実行�E環墁E��来 `spawn EPERM` で未完亁E��コマンド実行�E体�E試行済み�E�、E
+- `apps/web/src/App.tsx`
+  - ヘッダーグループ見�Eし！Elay/Watch�E�を日本語化、E  - Mint/通常フッターリンク斁E��を日本語�Eースへ統一、E  - フッタータグラインめE`決定諁E· コミュニティ主導` に更新、E
+
+## 2026-02-17 - Home/Playground ���{��x�[�X�Ǖ�iE2E�݊����ێ��j
+
+### Why
+- Home �� Tools/metrics �̈�� Playground �ɉp��D�ʂ̕������c���Ă���A���{��x�[�X�̌��Ƀ������������B
+- ������ Home/Replay �� E2E �͉p����� selector �Ƃ��ĎQ�Ƃ��邽�߁A���S�u���ł͂Ȃ��݊����L���K�v�������B
+
+### What
+- apps/web/src/pages/Playground.tsx
+  - ���o��/���앶��/��ԕ\������{��x�[�X���i��: �x�N�^�Z�b�g�A�P�[�X�A�^�[�����O�A�f�b�L�m�F�A���݂̏��ҁj�B
+  - Nyano Lab �ȂǊ���E2E���Q�Ƃ����͕ێ����A���{������֓���B
+  - �R�s�[����g�[�X�g����{�ꉻ�B
+- apps/web/src/pages/Home.tsx
+  - Tools/Settings�E�e�{�^���E���g���N�X���x������{��D��֕ύX�B
+  - E2E�ˑ���͕��L�ŕێ��i��: Tools / Settings, Copy Snapshot, Reset Metrics�j�B
+  - �X�i�b�v�V���b�g�֘A�g�[�X�g/���ԕ�������{�ꉻ�B
+
+### Verify
+- pnpm -C apps/web test OK
+- pnpm -C apps/web typecheck OK
+- pnpm -C apps/web build OK
+- pnpm.cmd -C apps/web exec playwright test e2e/home.spec.ts e2e/smoke.spec.ts e2e/replay-url.spec.ts �̓��[�J�������� spawn EPERM �ɂ�薢����
+
+
+## 2026-02-18 - Events/Decks/Replay ���{��UI�Ǖ�
+
+### What
+- Decks: �ݒ�^�u������{�ꉻ���ASave Deck ���w�f�b�L�ۑ� (Save Deck)�x�֓���B�ۑ��ς݃f�b�L�̃R�s�[�������wJSON���R�s�[�x�֕ύX�BQuick Play�\�L���w�N�C�b�N�ΐ�x�֒����B
+- Events: ��荞�ݎ��s���胁�b�Z�[�W�A���Ճ��O�iMy Pawprints�j�A���[�J�����𑀍�A���s�\���AOpen/Copy/Remove ����{�ꉻ�B
+- Replay: �⏕�����i���Ǎ��A���ǂ���ړ��ANyano�f�b�L tokenIds�Aclassic swap/open �⏕�A�c�[���`�b�v�j����{�ꉻ�B
+
+### Verify
+- pnpm -C apps/web test OK
+- pnpm -C apps/web typecheck OK
+- pnpm -C apps/web build OK
+- pnpm.cmd -C apps/web e2e:ux OK (15 passed)
+
+## 2026-02-18 - Match/Decks �������� + guest-game E2E�Ǐ]
+
+### What
+- Match: �t�H�[���o�b�N/�Ǎ�/���L/������CTA/�f�b�L�v���r���[���ӂ̉p�ꕶ������{��x�[�X���B
+- Match: E2E�ˑ��̕����iGuest Quick Play�ACommit move�n�ALoad replay�n�j�͈ێ��B
+- Decks: Deck Builder/My Deck/Set as A/Edit/Delete/Save Deck �̉p��g�[�N�����݊����L�����{��D��֒����B
+- E2E: pps/web/e2e/guest-game.spec.ts �� Commit Move �Œ�A�T�[�V���������sUI�݊��iQuick commit / Commit move / focus hand dock�j�֍X�V�B
+
+### Verify
+- pnpm -C apps/web test OK
+- pnpm -C apps/web typecheck OK
+- pnpm -C apps/web build OK
+- pnpm.cmd -C apps/web e2e:ux OK (15 passed)
+- pnpm.cmd -C apps/web e2e -- e2e/decks-match.spec.ts e2e/quick-play.spec.ts e2e/guest-game.spec.ts OK (5 passed)
+
+## 2026-02-17 - i18n copy cleanup (Home/Events/Match/Replay) + stage-focus compatibility
+
+### What
+- Home onboarding completion copy was replaced with neutral player-facing wording.
+- Events copy was rewritten to Japanese-first user guidance and internal memo text was replaced with player guide text.
+- Match visible copy was updated to Japanese-first while preserving E2E-critical English selector labels.
+- Replay copy was updated to Japanese-first and compatibility tokens were restored: `Replay from transcript`, `Load replay`, `Error:`, `Retry load`, `Clear share params`.
+
+### Verify
+- pnpm -C apps/web test OK
+- pnpm.cmd -C apps/web typecheck OK (elevated run needed in this Windows environment due junction EPERM)
+- pnpm -C apps/web build OK
+- pnpm.cmd -C apps/web e2e -- e2e/stage-focus.spec.ts OK (15 passed)
+- pnpm.cmd -C apps/web e2e -- e2e/ux-guardrails.spec.ts e2e/mint-stage-visual-guardrails.spec.ts OK (10 passed)

@@ -1,163 +1,163 @@
-﻿# Nyano Triad League 窶・髢狗匱TODO・・1・・
+# Nyano Triad League  E開発TODO�E�E1�E�E
 
-縺薙・繝輔ぃ繧､繝ｫ縺ｯ縲御ｻ翫↑縺ｫ繧剃ｽ懊▲縺ｦ縺・ｋ縺九阪梧ｬ｡縺ｫ縺ｪ縺ｫ繧剃ｽ懊ｋ縺九阪ｒ縲√さ繝溘Η繝九ユ繧｣縺ｨ蜈ｱ譛峨☆繧九◆繧√・螳溯｣・ODO縺ｧ縺吶・
+こ�Eファイルは「今なにを作ってぁE��か」「次になにを作るか」を、コミュニティと共有するため�E実裁EODOです、E
 
 ---
 
-## 笨・Done
+## ✁EDone
 
-- 笨・Commit0001: 蛻晄悄繧ｻ繝・ヨ繧｢繝・・・・ocs髮帛ｽ｢縲》riad-engine skeleton・・
-- 笨・Commit0002: 繝医Λ繝ｳ繧ｹ繧ｯ繝ｪ繝励ヨv1・・IP-712 / matchId譁ｹ驥晢ｼ・ ruleset config spec・域ｦょｿｵ・・
-- 笨・Commit0003: 繧ｪ繝ｼ繝医ヮ繝溘・隕也せ・磯°蝟ｶ荳榊惠縺ｧ繧ょ屓繧倶ｻ慕ｵ・∩・峨・繝ｭ繝ｼ繝峨・繝・・闕画｡・+ ERC-6551 / staking讀懆ｨ弱Γ繝｢
-- 笨・Commit0004: triad-engine Layer2・・arning mark / combo bonus / second-player balance・牙ｮ溯｣・+ 繧ｴ繝ｼ繝ｫ繝・Φ繝・せ繝・
-- 笨・Commit0005: triad-engine Layer3・・rait蜉ｹ譫・v1・牙ｮ溯｣・+ 莉墓ｧ俶峩譁ｰ
-- 笨・Commit0006: Nyano Peace 繧ｪ繝ｳ繝√ぉ繝ｼ繝ｳ Trait 竊・繧ｲ繝ｼ繝蜀・TraitType 縺ｮ蟆主・・・1・・
-  - `synergy.traitDerivation` 繧・ruleset 縺ｫ霑ｽ蜉
-  - TS繝倥Ν繝托ｼ・makeCardDataFromNyano` / `deriveTraitTypeFromNyanoTraitV1`・・
-  - `TRAIT_DERIVATION_SPEC` 霑ｽ蜉
+- ✁ECommit0001: 初期セチE��アチE�E�E�Eocs雛形、triad-engine skeleton�E�E
+- ✁ECommit0002: トランスクリプトv1�E�EIP-712 / matchId方針！E ruleset config spec�E�概念�E�E
+- ✁ECommit0003: オートノミ�E視点�E�運営不在でも回る仕絁E���E��Eロード�EチE�E草桁E+ ERC-6551 / staking検討メモ
+- ✁ECommit0004: triad-engine Layer2�E�Earning mark / combo bonus / second-player balance�E�実裁E+ ゴールチE��チE��チE
+- ✁ECommit0005: triad-engine Layer3�E�Erait効极Ev1�E�実裁E+ 仕様更新
+- ✁ECommit0006: Nyano Peace オンチェーン Trait ↁEゲーム冁ETraitType の導�E�E�E1�E�E
+  - `synergy.traitDerivation` めEruleset に追加
+  - TSヘルパ！EmakeCardDataFromNyano` / `deriveTraitTypeFromNyanoTraitV1`�E�E
+  - `TRAIT_DERIVATION_SPEC` 追加
 
   - Shadow / Forest / Earth / Thunder / Light
   - Cosmic / Metal / Flame / Aqua / Wind
-  - `TRAIT_EFFECTS_SPEC` 霑ｽ蜉縲∵里蟄倅ｻ墓ｧ假ｼ・uleset/transcript・峨ｒ螳溯｣・↓霑ｽ蠕・
+  - `TRAIT_EFFECTS_SPEC` 追加、既存仕様！Euleset/transcript�E�を実裁E��追征E
 
 ---
 
-- 笨・Commit0007: Formation bonuses・・ayer3諡｡蠑ｵ・益1 螳溯｣・+ 莉墓ｧ倩ｿｽ蜉
-  - 莠碑｡瑚ｪｿ蜥鯉ｼ・ive Elements Harmony・会ｼ喞omboBonus 縺ｮ triadPlus 繧貞咲紫驕ｩ逕ｨ
-  - 譌･鬟滂ｼ・clipse・会ｼ哭ight+Shadow 縺ｮ繧ｯ繝ｭ繧ｹ・・ight縺瑚ｭｦ謌堤┌蜉ｹ・輯hadow縺鍬ight蜈画ｺ撰ｼ・
-  - MatchResult 縺ｫ `formations` 繧定ｿｽ蜉・・I/隗｣譫舌′ 窶憺°蝟ｶ縺ｪ縺冷・縺ｧ繧ゆｽ懊ｊ繧・☆縺・ｼ・
-  - `FORMATION_BONUS_SPEC` 霑ｽ蜉縲〉uleset/transcript 霑ｽ蠕・
+- ✁ECommit0007: Formation bonuses�E�Eayer3拡張�E�v1 実裁E+ 仕様追加
+  - 五行調和！Eive Elements Harmony�E�：comboBonus の triadPlus を倍率適用
+  - 日食！Eclipse�E�：Light+Shadow のクロス�E�Eightが警戒無効�E�ShadowがLight光源！E
+  - MatchResult に `formations` を追加�E�EI/解析が “運営なし Eでも作りめE��ぁE��E
+  - `FORMATION_BONUS_SPEC` 追加、ruleset/transcript 追征E
 
 
-- 笨・Commit0008: rulesetId 蜿ら・螳溯｣・ｼ亥崋螳哂BI繧ｨ繝ｳ繧ｳ繝ｼ繝会ｼ・ RULESET_ID_SPEC + 繝・せ繝医・繧ｯ繧ｿ
-  - 辟｡蜉ｹ蛹悶そ繧ｯ繧ｷ繝ｧ繝ｳ繧呈ｭ｣隕丞喧・亥酔謖吝虚縺ｧID縺悟・陬ゅ＠縺ｪ縺・ｼ・
-  - 莠碑｡瑚ｪｿ蜥後・ requiredElements 繧帝寔蜷域桶縺・ｼ磯・ｺ上ｒ辟｡隕厄ｼ・
-  - `computeRulesetIdV1(ruleset)` 繧定ｿｽ蜉・・S蜿ら・螳溯｣・ｼ・
-- 笨・Sprint UX: Home縲後☆縺宣♀縺ｶ縲坂・蛻晄焔驟咲ｽｮ縺ｾ縺ｧ縺ｮ譎る俣險域ｸｬ繧定ｿｽ蜉・・quickplay_to_first_place_ms`・・
-- 笨・Sprint UX: Home LCP 縺ｮ繝ｭ繝ｼ繧ｫ繝ｫ險域ｸｬ繧定ｿｽ蜉・・home_lcp_ms`・・
-- 笨・Sprint UX: Home Settings 縺ｫ UX逶ｮ讓吶・ PASS/FAIL 蛻､螳壹ｒ霑ｽ蜉・・-1/B-1/B-4/G-3・・
-- 笨・Sprint UX: `Copy Snapshot` 縺ｨ `PLAYTEST_LOG.md` 繧定ｿｽ蜉縺励∬ｨ域ｸｬ繝ｭ繧ｰ驕狗畑繧貞崋螳・
-- 笨・Sprint UX: web lint warning 2莉ｶ繧定ｧ｣豸茨ｼ・pnpm -C apps/web lint` warning 0・・
-- 笨・Sprint UX: Snapshot縺ｫ迺ｰ蠅・さ繝ｳ繝・く繧ｹ繝茨ｼ・oute/viewport/language/UA・峨ｒ蜷ｫ繧√∵ｯ碑ｼ・Ο繧ｰ邊ｾ蠎ｦ繧貞髄荳・
-- 笨・Sprint UX: NyanoCardArt 縺ｮ螟ｱ謨玲凾縺ｫ Retry 蟆守ｷ壹ｒ霑ｽ蜉・・etry nonce 莉倥″蜀崎ｪｭ霎ｼ・・
-- 笨・Commit0104: 縲後す繝ｼ繧ｺ繝ｳ縺ｮ隴ｰ莨壹肴怙蟆上・繝ｭ繝医さ繝ｫ・・roposal / vote / adopt・峨ｒ TS 蜿ら・螳溯｣・
-  - `season_council.ts` 繧定ｿｽ蜉・・roposalId / vote hash / EIP-712 vote verify / tally / adopt・・
-  - 豎ｺ螳夊ｫ悶Ν繝ｼ繝ｫ繧貞崋螳夲ｼ亥呵｣憺寔蜷・canonicalize縲∝酔荳voter縺ｯ譛螟ｧnonce謗｡逕ｨ縲∝酔邇・・ rulesetId 譏・・ｼ・
-  - 莉墓ｧ俶嶌 `SEASON_COUNCIL_SPEC` 繧定ｿｽ蜉
-- 笨・Commit0105: permissionless ladder format v1・・ranscript + settled event + 荳｡鄂ｲ蜷搾ｼ峨ｒ TS 蜿ら・螳溯｣・
-  - `ladder.ts` 繧定ｿｽ蜉・・IP-712 attestation / record verify / deterministic standings・・
-  - indexer 髱樔ｾ晏ｭ倥・ tie-break 繧貞崋螳夲ｼ・oints 竊・wins 竊・tileDiff 竊・losses 竊・address・・
-  - 莉墓ｧ俶嶌 `LADDER_FORMAT_SPEC` 繧定ｿｽ蜉
-- 笨・Commit0106: Phase 3 hardening・・rror tracking + release runbook・峨ｒ譛蟆丞ｮ溯｣・
-  - `apps/web/src/lib/error_tracking.ts` 繧定ｿｽ蜉・・lobal error / unhandledrejection 縺ｮ蜿朱寔・・
-  - sink 繧貞・譖ｿ蜿ｯ閭ｽ蛹厄ｼ・ocal / console / remote, env險ｭ螳夲ｼ・
-  - `docs/99_dev/RELEASE_RUNBOOK_v1_ja.md` 繧定ｿｽ蜉・・ersioning/changelog/rollback/feature flag・・
-  - `pnpm run release:check` 繧定ｿｽ蜉・亥・闕ｷ蜑阪メ繧ｧ繝・け縺ｮ讓呎ｺ門喧・・
-- 笨・Commit0107: 譁ｰ隕丞盾蜉閠・髄縺・quickstart 蟆守ｷ夲ｼ・繧ｹ繝・ャ繝鈴ｲ謐暦ｼ峨ｒ螳溯｣・
-  - `apps/web/src/lib/onboarding.ts` 繧定ｿｽ蜉・・ocalStorage豌ｸ邯壼喧繝ｻ騾ｲ謐鈴寔險医・繝ｪ繧ｻ繝・ヨ・・
-  - Home 縺ｫ縲後・縺倥ａ縺ｦ縺ｮ1蛻・せ繧ｿ繝ｼ繝医阪メ繧ｧ繝・け繝ｪ繧ｹ繝医→1蛻・Ν繝ｼ繝ｫ繝｢繝ｼ繝繝ｫ繧定ｿｽ蜉
-  - Match 縺ｮ繧ｲ繧ｹ繝亥ｯｾ謌ｦ蟆守ｷ壹〒 `start_first_match` / `commit_first_move` 繧定・蜍墓峩譁ｰ
-  - `onboarding.test.ts` 繧定ｿｽ蜉・域里螳壼､縲∵ｰｸ邯壼喧縲∫焚蟶ｸ蛟､fallback縲〉eset・・
-- 笨・Commit0108: /stream 繝｢繝・Ξ繝ｼ繧ｷ繝ｧ繝ｳ・・G繝ｯ繝ｼ繝・/ BAN / slow mode・峨ｒ螳溯｣・
-  - `stream_moderation.ts` 繧定ｿｽ蜉・亥愛螳壹Ο繧ｸ繝・け繧・pure function 蛹厄ｼ・
-  - VoteControlPanel 縺ｫ moderation 險ｭ螳啅I・・low mode遘呈焚 / banned users / blocked words・峨ｒ霑ｽ蜉
-  - 謚慕･ｨ蜿礼炊蜑阪↓ BAN / NG繝ｯ繝ｼ繝・/ slow mode 繧帝←逕ｨ縺励∥udit 縺ｫ reject 逅・罰繧定ｨ倬鹸
-  - `local_settings` 縺ｫ moderation 豌ｸ邯壼喧繧ｭ繝ｼ繧定ｿｽ蜉・・oundtrip test 莉倥″・・
-- 笨・Commit0109: /events 縺ｫ Season Archive・・ocal・峨ｒ霑ｽ蜉
-  - `season_archive.ts` 繧定ｿｽ蜉・・eason/event蜊倅ｽ阪・髮・ｨ医ｒ pure function 蛹厄ｼ・
-  - Events 縺ｫ season 蛻・崛繝ｻ蜍晉紫/謖第姶謨ｰ繧ｵ繝槭Μ繝ｼ繝ｻ譛譁ｰReplay蟆守ｷ壹・Markdown繧ｳ繝斐・繧定ｿｽ蜉
-  - `event_attempts` 縺ｫ蜈ｨ莉ｶ蜿門ｾ・蜈ｨ豸亥悉 API 繧定ｿｽ蜉・医Ο繝ｼ繧ｫ繝ｫ驕狗畑縺ｮ菫晏ｮ域ｧ蜷台ｸ奇ｼ・
-  - `season_archive.test.ts` / `event_attempts.test.ts` 縺ｧ髮・ｨ医→ storage API 繧呈､懆ｨｼ
-- 笨・WO005-A follow-up: Stage route query豁｣隕丞喧 + Stage E2E繧ｹ繝｢繝ｼ繧ｯ繧定ｿｽ蜉
-  - `normalizeStageFocusParams` 繧貞ｰ主・縺励～ui=engine` + `focus=1` + `layout`髯､蜴ｻ繧貞・騾壼喧
-  - `/battle-stage` `/replay-stage` 蜷代￠ `stage-focus.spec.ts` 繧定ｿｽ蜉縺励ゞRL豁｣隕丞喧縺ｨ荳ｻ隕ゞI蜃ｺ迴ｾ繧呈､懆ｨｼ
-- 笨・WO005-B follow-up: Stage陬懷勧繧ｳ繝ｳ繝医Ο繝ｼ繝ｫ縺ｮ繝ｬ繧ｹ繝昴Φ繧ｷ繝冶ｿｽ蠕薙ｒ蠑ｷ蛹・
-  - `shouldShowStageSecondaryControls` 繧貞ｰ主・縺励√せ繝・・繧ｸ陬懷勧UI縺ｮ陦ｨ遉ｺ髢ｾ蛟､繧貞・騾壼喧
-  - Match/Replay 縺ｮ stage route 縺ｧ resize 霑ｽ蠕・+ 謇句虚繝医げ繝ｫ蜆ｪ蜈茨ｼ・anual override・峨ｒ螳溯｣・
-  - mobile replay-stage 縺ｧ transport 髱櫁｡ｨ遉ｺ繝・ヵ繧ｩ繝ｫ繝・+ Show controls 蠕ｩ蟶ｰ繧・E2E 縺ｧ讀懆ｨｼ
-- 笨・WO005-C follow-up: 375px蟷・〒 Commit 蟆守ｷ壹・蜿ｯ隕匁ｧ繧脱2E蝗ｺ螳・
-  - battle-stage focus 謇区惆繝峨ャ繧ｯ縺ｮ Commit 繝懊ち繝ｳ縺・viewport 蜀・↓蜿弱∪繧九％縺ｨ繧呈､懆ｨｼ
-  - 讓ｪ譁ｹ蜷代が繝ｼ繝舌・繝輔Ο繝ｼ・・scrollWidth - clientWidth`・峨′逋ｺ逕溘＠縺ｪ縺・％縺ｨ繧呈､懆ｨｼ
-- 笨・WO005-D follow-up: replay-stage 縺ｮ螟ｱ謨玲凾繝ｪ繧ｫ繝舌Μ蟆守ｷ壹ｒE2E蝗ｺ螳・
-  - game index / RPC 螟ｱ謨玲凾縺ｧ繧・replay-stage 縺ｮ `Load replay` 蟆守ｷ壹′谿九ｋ縺薙→繧呈､懆ｨｼ
-  - `Retry load` 縺ｨ `Clear share params` 縺瑚｡ｨ遉ｺ縺輔ｌ縲∝・隧ｦ陦悟庄閭ｽ縺ｧ縺ゅｋ縺薙→繧呈､懆ｨｼ
-- 笨・WO005-E follow-up: Nyano AI 縺ｮ諤晁・ｾ・ｩ溘ユ繝ｳ繝昴ｒ隱ｿ謨ｴ
-  - `computeAiAutoMoveDelayMs` 縺ｮ蝓ｺ貅門､/髮｣譏灘ｺｦ菫よ焚/繧ｸ繝・ち繝ｼ繧定ｦ狗峩縺励∝叉謇薙■諢溘ｒ謚大宛
-  - `turn_timing.test.ts` 縺ｮ蠅・阜繝ｻ荳企剞譛溷ｾ・､繧呈峩譁ｰ縺励∵ｱｺ螳夊ｫ悶ｒ邯ｭ謖・
-- 笨・WO005-F follow-up: Nyano cut-in 繧・reduced-motion / low-vfx 縺ｧ霆ｽ驥丞喧
-  - `NyanoReaction` 縺ｮ cut-in timing 繧・`reduced-motion` 縺ｨ `data-vfx` 縺ｧ谿ｵ髫主宛蠕｡
-  - `vfx=off/low` 譎ゅ↓ burst 貍泌・繧呈椛蛻ｶ縺励∬｡ｨ遉ｺ譎る俣繧堤洒邵ｮ
-  - `NyanoReaction.timing.test.ts` 繧定ｿｽ蜉縺励∵嫌蜍輔ｒ繝ｦ繝九ャ繝域､懆ｨｼ
-- 笨・WO005-G follow-up: Game Index 螟ｱ謨玲凾縺ｮ guest battle 繝輔か繝ｼ繝ｫ繝舌ャ繧ｯ繧定ｿｽ蜉
-  - Game Index 隱ｭ霎ｼ螟ｱ謨玲凾縺ｫ guest mode 縺ｧ邱頑･繝・ャ繧ｭ縺ｸ閾ｪ蜍輔ヵ繧ｩ繝ｼ繝ｫ繝舌ャ繧ｯ
-  - stage battle 縺檎ｶ咏ｶ壼庄閭ｽ・医き繝ｼ繝峨Ο繝ｼ繝牙､ｱ謨励〒隧ｰ縺ｾ繧峨↑縺・ｼ峨％縺ｨ繧・E2E 縺ｧ讀懆ｨｼ
-- 笨・Commit0110: /events 縺ｫ Local Season Points・医Λ繝ｳ繧ｭ繝ｳ繧ｰ/蝣ｱ驟ｬ蟆守ｷ夲ｼ峨ｒ霑ｽ蜉
-  - `season_progress.ts` 繧定ｿｽ蜉・・oints邂怜・繝ｻtier蛻､螳壹・event蛻･繝ｩ繝ｳ繧ｭ繝ｳ繧ｰ繧・pure function 蛹厄ｼ・
-  - Events 縺ｫ `Local season points (provisional)` 繝代ロ繝ｫ・・ier/谺｡Tier縺ｾ縺ｧ/騾ｲ謐励ヰ繝ｼ・峨ｒ霑ｽ蜉
-  - `Season points board` 縺ｨ markdown 蜃ｺ蜉幢ｼ・rchive + progress・峨ｒ霑ｽ蜉
-  - `season_progress.test.ts` 繧定ｿｽ蜉・・oints/tier/tie-break/markdown・・
-- 笨・Commit0111: /events 縺ｮ season points 繧・pointsDelta 谿ｵ髫朱｣謳ｺ縺ｸ諡｡蠑ｵ
-  - Replay URL 縺ｮ `pda`・・ointsDeltaA・峨ｒ Event attempt 縺ｫ菫晏ｭ伜庄閭ｽ蛹・
-  - `season_archive.ts` 縺ｫ pointsDelta 蜷郁ｨ・繧ｫ繝舌Ξ繝・ず髮・ｨ医ｒ霑ｽ蜉
-  - `season_progress.ts` 縺ｧ縲憩vent蜀・・蜈ｨattempt縺ｫ pointsDelta 縺後≠繧句ｴ蜷医・縺ｿ縲膏ointsDelta謗｡逕ｨ・域悴蜈・ｶｳ縺ｯ provisional 邯ｭ謖・ｼ・
-  - Events UI 縺ｨ markdown 縺ｫ source mix・・ointsDelta/provisional・芽｡ｨ遉ｺ繧定ｿｽ蜉
-- 笨・Commit0112: /events 縺ｫ settled event JSON 蜿悶ｊ霎ｼ縺ｿ繧定ｿｽ蜉・医Ο繝ｼ繧ｫ繝ｫ pointsDelta 蜿肴丐・・
-  - `settled_points_import.ts` 繧定ｿｽ蜉・・chema蟇ｾ蠢懊・settled event讀懆ｨｼ繝ｻwinner/tiles謨ｴ蜷医メ繧ｧ繝・け・・
-  - Events 縺ｫ `Settled points import (local)` UI 繧定ｿｽ蜉・郁ｲｼ繧贋ｻ倥￠竊帝←逕ｨ竊帝寔險育ｵ先棡陦ｨ遉ｺ・・
-  - matchId 荳閾ｴ縺九▽邨先棡謨ｴ蜷医・ local attempt 縺ｫ `pointsDeltaA` / `pointsDeltaSource=settled_attested` 繧貞渚譏
-- 笨・Commit0113: /events 縺ｮ settled import 繧偵悟叙蠕苓・蜍募喧 + 鄂ｲ蜷肴､懆ｨｼ繝｢繝ｼ繝峨阪↓諡｡蠑ｵ
-  - `parseVerifiedLadderRecordsImportJson` 繧定ｿｽ蜉・・{domain, records}` 繧・`verifyLadderMatchRecordV1` 縺ｧ讀懆ｨｼ・・
-  - import UI 縺ｫ mode 蛻・崛・・settled events` / `verified records`・峨ｒ霑ｽ蜉
-  - `/game/settled_events.json` 閾ｪ蜍戊ｪｭ霎ｼ繝懊ち繝ｳ繧定ｿｽ蜉
-  - verified import 縺ｮ螟ｱ謨礼炊逕ｱ・・attestation_invalid`・峨ｒ issue 縺ｫ髮・ｴ・
-## 圦 Doing (now)
+- ✁ECommit0008: rulesetId 参�E実裁E��固定ABIエンコード！E RULESET_ID_SPEC + チE��ト�Eクタ
+  - 無効化セクションを正規化�E�同挙動でIDが�E裂しなぁE��E
+  - 五行調和�E requiredElements を集合扱ぁE��頁E��を無視！E
+  - `computeRulesetIdV1(ruleset)` を追加�E�ES参�E実裁E��E
+- ✁ESprint UX: Home「すぐ遊ぶ」�E初手配置までの時間計測を追加�E�Equickplay_to_first_place_ms`�E�E
+- ✁ESprint UX: Home LCP のローカル計測を追加�E�Ehome_lcp_ms`�E�E
+- ✁ESprint UX: Home Settings に UX目標�E PASS/FAIL 判定を追加�E�E-1/B-1/B-4/G-3�E�E
+- ✁ESprint UX: `Copy Snapshot` と `PLAYTEST_LOG.md` を追加し、計測ログ運用を固宁E
+- ✁ESprint UX: web lint warning 2件を解消！Epnpm -C apps/web lint` warning 0�E�E
+- ✁ESprint UX: Snapshotに環墁E��ンチE��スト！Eoute/viewport/language/UA�E�を含め、比輁E��グ精度を向丁E
+- ✁ESprint UX: NyanoCardArt の失敗時に Retry 導線を追加�E�Eetry nonce 付き再読込�E�E
+- ✁ECommit0104: 「シーズンの議会」最小�Eロトコル�E�Eroposal / vote / adopt�E�を TS 参�E実裁E
+  - `season_council.ts` を追加�E�EroposalId / vote hash / EIP-712 vote verify / tally / adopt�E�E
+  - 決定論ルールを固定（候補集吁Ecanonicalize、同一voterは最大nonce採用、同玁E�E rulesetId 昁E��E��E
+  - 仕様書 `SEASON_COUNCIL_SPEC` を追加
+- ✁ECommit0105: permissionless ladder format v1�E�Eranscript + settled event + 両署名）を TS 参�E実裁E
+  - `ladder.ts` を追加�E�EIP-712 attestation / record verify / deterministic standings�E�E
+  - indexer 非依存�E tie-break を固定！Eoints ↁEwins ↁEtileDiff ↁElosses ↁEaddress�E�E
+  - 仕様書 `LADDER_FORMAT_SPEC` を追加
+- ✁ECommit0106: Phase 3 hardening�E�Error tracking + release runbook�E�を最小実裁E
+  - `apps/web/src/lib/error_tracking.ts` を追加�E�Elobal error / unhandledrejection の収集�E�E
+  - sink を�E替可能化！Eocal / console / remote, env設定！E
+  - `docs/99_dev/RELEASE_RUNBOOK_v1_ja.md` を追加�E�Eersioning/changelog/rollback/feature flag�E�E
+  - `pnpm run release:check` を追加�E��E荷前チェチE��の標準化�E�E
+- ✁ECommit0107: 新規参加老E��ぁEquickstart 導線！EスチE��プ進捗）を実裁E
+  - `apps/web/src/lib/onboarding.ts` を追加�E�EocalStorage永続化・進捗集計�EリセチE���E�E
+  - Home に「�Eじめての1刁E��タート」チェチE��リストと1刁E��ールモーダルを追加
+  - Match のゲスト対戦導線で `start_first_match` / `commit_first_move` を�E動更新
+  - `onboarding.test.ts` を追加�E�既定値、永続化、異常値fallback、reset�E�E
+- ✁ECommit0108: /stream モチE��ーション�E�EGワーチE/ BAN / slow mode�E�を実裁E
+  - `stream_moderation.ts` を追加�E�判定ロジチE��めEpure function 化！E
+  - VoteControlPanel に moderation 設定UI�E�Elow mode秒数 / banned users / blocked words�E�を追加
+  - 投票受理前に BAN / NGワーチE/ slow mode を適用し、audit に reject 琁E��を記録
+  - `local_settings` に moderation 永続化キーを追加�E�Eoundtrip test 付き�E�E
+- ✁ECommit0109: /events に Season Archive�E�Eocal�E�を追加
+  - `season_archive.ts` を追加�E�Eeason/event単位�E雁E��を pure function 化！E
+  - Events に season 刁E��・勝率/挑戦数サマリー・最新Replay導線�EMarkdownコピ�Eを追加
+  - `event_attempts` に全件取征E全消去 API を追加�E�ローカル運用の保守性向上！E
+  - `season_archive.test.ts` / `event_attempts.test.ts` で雁E��と storage API を検証
+- ✁EWO005-A follow-up: Stage route query正規化 + Stage E2Eスモークを追加
+  - `normalizeStageFocusParams` を導�Eし、`ui=engine` + `focus=1` + `layout`除去を�E通化
+  - `/battle-stage` `/replay-stage` 向け `stage-focus.spec.ts` を追加し、URL正規化と主要UI出現を検証
+- ✁EWO005-B follow-up: Stage補助コントロールのレスポンシブ追従を強匁E
+  - `shouldShowStageSecondaryControls` を導�Eし、スチE�Eジ補助UIの表示閾値を�E通化
+  - Match/Replay の stage route で resize 追征E+ 手動トグル優先！Eanual override�E�を実裁E
+  - mobile replay-stage で transport 非表示チE��ォルチE+ Show controls 復帰めEE2E で検証
+- ✁EWO005-C follow-up: 375px幁E�� Commit 導線�E可視性をE2E固宁E
+  - battle-stage focus 手札ドックの Commit ボタンぁEviewport 冁E��収まることを検証
+  - 横方向オーバ�Eフロー�E�EscrollWidth - clientWidth`�E�が発生しなぁE��とを検証
+- ✁EWO005-D follow-up: replay-stage の失敗時リカバリ導線をE2E固宁E
+  - game index / RPC 失敗時でめEreplay-stage の `Load replay` 導線が残ることを検証
+  - `Retry load` と `Clear share params` が表示され、�E試行可能であることを検証
+- ✁EWO005-E follow-up: Nyano AI の思老E��E��テンポを調整
+  - `computeAiAutoMoveDelayMs` の基準値/難易度係数/ジチE��ーを見直し、即打ち感を抑制
+  - `turn_timing.test.ts` の墁E��・上限期征E��を更新し、決定論を維持E
+- ✁EWO005-F follow-up: Nyano cut-in めEreduced-motion / low-vfx で軽量化
+  - `NyanoReaction` の cut-in timing めE`reduced-motion` と `data-vfx` で段階制御
+  - `vfx=off/low` 時に burst 演�Eを抑制し、表示時間を短縮
+  - `NyanoReaction.timing.test.ts` を追加し、挙動をユニット検証
+- ✁EWO005-G follow-up: Game Index 失敗時の guest battle フォールバックを追加
+  - Game Index 読込失敗時に guest mode で緊急チE��キへ自動フォールバック
+  - stage battle が継続可能�E�カードロード失敗で詰まらなぁE��ことめEE2E で検証
+- ✁ECommit0110: /events に Local Season Points�E�ランキング/報酬導線）を追加
+  - `season_progress.ts` を追加�E�Eoints算�E・tier判定�Eevent別ランキングめEpure function 化！E
+  - Events に `Local season points (provisional)` パネル�E�Eier/次Tierまで/進捗バー�E�を追加
+  - `Season points board` と markdown 出力！Erchive + progress�E�を追加
+  - `season_progress.test.ts` を追加�E�Eoints/tier/tie-break/markdown�E�E
+- ✁ECommit0111: /events の season points めEpointsDelta 段階連携へ拡張
+  - Replay URL の `pda`�E�EointsDeltaA�E�を Event attempt に保存可能匁E
+  - `season_archive.ts` に pointsDelta 合訁EカバレチE��雁E��を追加
+  - `season_progress.ts` で「event冁E�E全attemptに pointsDelta がある場合�Eみ」pointsDelta採用�E�未允E��は provisional 維持E��E
+  - Events UI と markdown に source mix�E�EointsDelta/provisional�E�表示を追加
+- ✁ECommit0112: /events に settled event JSON 取り込みを追加�E�ローカル pointsDelta 反映�E�E
+  - `settled_points_import.ts` を追加�E�Echema対応�Esettled event検証・winner/tiles整合チェチE���E�E
+  - Events に `Settled points import (local)` UI を追加�E�貼り付け→適用→集計結果表示�E�E
+  - matchId 一致かつ結果整合�E local attempt に `pointsDeltaA` / `pointsDeltaSource=settled_attested` を反映
+- ✁ECommit0113: /events の settled import を「取得�E動化 + 署名検証モード」に拡張
+  - `parseVerifiedLadderRecordsImportJson` を追加�E�E{domain, records}` めE`verifyLadderMatchRecordV1` で検証�E�E
+  - import UI に mode 刁E���E�Esettled events` / `verified records`�E�を追加
+  - `/game/settled_events.json` 自動読込ボタンを追加
+  - verified import の失敗理由�E�Eattestation_invalid`�E�を issue に雁E��E
+## 🚧 Doing (now)
 
-- 肌 Phase 4 縺ｮ驕狗畑髱｢・医Λ繝ｳ繧ｭ繝ｳ繧ｰ / 蝣ｱ驟ｬ蟆守ｷ夲ｼ峨ｒ pointsDelta 騾｣謳ｺ縺ｸ谿ｵ髫取僑蠑ｵ縺吶ｋ・域焔蜍募叙繧願ｾｼ縺ｿ/讀懆ｨｼUI縺ｾ縺ｧ螳御ｺ・よｬ｡縺ｯ繝舌ャ繧ｯ繧ｨ繝ｳ繝臥ｵ檎罰縺ｮ閾ｪ蜍穂ｾ帷ｵｦ縺ｨ螳壽悄蜷梧悄・・
-- 肌 WO005・・tage UI/UX蝓ｺ逶､・・ `/battle-stage` `/replay-stage` 縺ｮ菴朱・螟ｱ謨玲凾菴馴ｨ薙→蟆守ｷ壽､懆ｨｼ繧堤ｶ咏ｶ壹☆繧・
+- 🔧 Phase 4 の運用面�E�ランキング / 報酬導線）を pointsDelta 連携へ段階拡張する�E�手動取り込み/検証UIまで完亁E��次はバックエンド経由の自動供給と定期同期�E�E
+- 🔧 WO005�E�Etage UI/UX基盤�E�E `/battle-stage` `/replay-stage` の低送E失敗時体験と導線検証を継続すめE
 
-## ｧｩ Next (high priority)
+## 🧩 Next (high priority)
 
 
-### A. 繝ｫ繝ｼ繝ｫ繝ｻ繝励Ο繝医さ繝ｫ縺ｮ螳牙ｮ壼喧
-- [x] 蜈ｬ蠑乗姶蜷代￠・售olidity蛛ｴ縺ｮTranscript讀懆ｨｼ・・1 ABI-encode hash・・
-- [x] RulesetRegistry・・ermissionless・画怙蟆丞ｮ溯｣・ｼ嗷ulesetId -> config hash / metadata 繧堤匳骭ｲ縺ｧ縺阪ｋ
-- [x] 縲係ind・亥・謾ｻ/蠕梧判驕ｸ謚橸ｼ峨阪・蜈ｬ蟷ｳ縺ｪ陦ｨ迴ｾ・・ommit-reveal / seed / 荳｡閠・粋諢上↑縺ｩ・・
+### A. ルール・プロトコルの安定化
+- [x] 公式戦向け�E�Solidity側のTranscript検証�E�E1 ABI-encode hash�E�E
+- [x] RulesetRegistry�E�Eermissionless�E�最小実裁E��rulesetId -> config hash / metadata を登録できる
+- [x] 「Wind�E��E攻/後攻選択）」�E公平な表現�E�Eommit-reveal / seed / 両老E��意など�E�E
 
-### B. 繧ｲ繝ｼ繝縺ｮ窶憺擇逋ｽ縺補昴ｒ遨阪∩蠅励☆・医◆縺縺玲ｱｺ螳夊ｫ悶〒・・
-- [x] 繝｡繧ｿ・・ayer4・峨・蟆上＆縺ｪ蜿ｯ螟会ｼ井ｾ具ｼ喞orner boost / center locked / chain cap・峨ｒ1縺､霑ｽ蜉
-  - `meta.chainCapPerTurn` 繧・TS蜿ら・繧ｨ繝ｳ繧ｸ繝ｳ縺ｫ霑ｽ蜉・・繧ｿ繝ｼ繝ｳ縺ｮ謌仙粥繝輔Μ繝・・謨ｰ繧剃ｸ企剞蛹門庄閭ｽ・・
-  - v1縺ｧ縺ｯ engine-only・・ulesetId canonicalization 縺ｫ縺ｯ譛ｪ蜿肴丐・・
+### B. ゲームの“面白さ”を積み増す�E�ただし決定論で�E�E
+- [x] メタ�E�Eayer4�E��E小さな可変（例：corner boost / center locked / chain cap�E�を1つ追加
+  - `meta.chainCapPerTurn` めETS参�Eエンジンに追加�E�Eターンの成功フリチE�E数を上限化可能�E�E
+  - v1では engine-only�E�EulesetId canonicalization には未反映�E�E
 
-### C. 閾ｪ襍ｰ縺吶ｋ繧ｳ繝溘Η繝九ユ繧｣險ｭ險茨ｼ磯°蝟ｶ縺梧ｶ医∴縺ｦ繧ょ屓繧具ｼ・
-- [x] 縲後す繝ｼ繧ｺ繝ｳ縺ｮ隴ｰ莨壹搾ｼ嗷uleset proposal / vote / adopt 縺ｮ譛蟆上・繝ｭ繝医さ繝ｫ
-- [x] 繝ｩ繝繝ｼ・医Λ繝ｳ繧ｭ繝ｳ繧ｰ・峨ｒ窶懆ｨｱ蜿ｯ荳崎ｦ≫昴〒隨ｬ荳芽・′驕狗畑縺ｧ縺阪ｋ繝輔か繝ｼ繝槭ャ繝・
-  - transcript + settled event + EIP-712 attestation 縺ｧ蜀崎ｨ育ｮ怜庄閭ｽ
-  - indexer 髱樔ｾ晏ｭ倥・蝗ｺ螳・tie-break 繧貞ｮ溯｣・ｼ・buildLadderStandingsV1`・・
+### C. 自走するコミュニティ設計（運営が消えても回る！E
+- [x] 「シーズンの議会」：ruleset proposal / vote / adopt の最小�Eロトコル
+- [x] ラダー�E�ランキング�E�を“許可不要”で第三老E��運用できるフォーマッチE
+  - transcript + settled event + EIP-712 attestation で再計算可能
+  - indexer 非依存�E固宁Etie-break を実裁E��EbuildLadderStandingsV1`�E�E
 
 ---
 
-## 溌 Research / Optional
+## 🔬 Research / Optional
 
-- [ ] ERC-6551・・yano繝医・繧ｯ繝ｳ蠅・阜縺ｮ繧｢繧ｫ繧ｦ繝ｳ繝茨ｼ峨ｒ菴ｿ縺｣縺溘後メ繝ｼ繝/繧ｮ繝ｫ繝峨・
-- [ ] NFT繧ｹ繝・・繧ｭ繝ｳ繧ｰ縺ｧ Season Pass / 繝ｫ繝ｼ繝ｫ謚慕･ｨ讓ｩ / 蜿ょ刈譫・・ybil蟇ｾ遲厄ｼ峨ｒ謠蝉ｾ帙☆繧玖ｨｭ險・
-- [ ] 莠呈鋤諤ｧ・夐℃蜴ｻ縺ｮOasys繧ｨ繧ｳ繧ｷ繧ｹ繝・Β縺九ｉ縺ｮ雉・肇遘ｻ陦梧婿驥晢ｼ亥ｿ・ｦ√↑繧会ｼ・
+- [ ] ERC-6551�E�Eyanoト�Eクン墁E��のアカウント）を使った「チーム/ギルド、E
+- [ ] NFTスチE�Eキングで Season Pass / ルール投票権 / 参加枠�E�Eybil対策）を提供する設訁E
+- [ ] 互換性�E�過去のOasysエコシスチE��からの賁E��移行方針（忁E��なら！E
 - Sprint UX: Home Settings now keeps local UX snapshot history (save on copy, view recent 5, clear history).
-- 笨・WO005-H follow-up: Pixi card-art texture failure guidance + manual retry
-  - `BattleStageEngine` 縺ｫ card-art 縺ｮ隱ｭ縺ｿ霎ｼ縺ｿ迥ｶ諷・螟ｱ謨礼憾諷九ｒ陦ｨ遉ｺ縺励～Retry card art` 繧定ｿｽ蜉
-  - `TextureResolver` 縺ｫ failed/pending 迥ｶ諷狗ｮ｡逅・→ status event 繧定ｿｽ蜉縺励※縲∝､ｱ謨玲凾縺ｮ辟｡髯仙・隧ｦ陦後ｒ髦ｲ豁｢
-  - `textureResolverPreload.test.ts` 縺ｫ failed->retry success 縺ｮ讀懆ｨｼ繧定ｿｽ蜉
-- 笨・WO005-I follow-up: Pixi/WebGL init failure auto fallback
-  - `ui=engine` 縺ｧ Pixi 蛻晄悄蛹門､ｱ謨玲凾縺ｫ `BoardViewMint` 縺ｸ閾ｪ蜍輔ヵ繧ｩ繝ｼ繝ｫ繝舌ャ繧ｯ縺励※騾ｲ陦檎ｶ咏ｶ・
-  - `/battle-stage` `/replay-stage` 縺ｫ `Retry Pixi` 蟆守ｷ壹ｒ霑ｽ蜉
-  - stage-focus E2E 縺ｫ WebGL unavailable 繧ｱ繝ｼ繧ｹ繧定ｿｽ蜉縺励※蝗槫ｸｰ髦ｲ豁｢
-- ✅ WO005-J follow-up: replay-stage WebGL fallback の E2E回帰防止を追加
-  - `/replay-stage` の WebGL unavailable 時に Mint fallback + retry導線を stage-focus E2Eで固定
-  - 375px commit可視性テストを fallback モードも許容する判定へ強化
+- ✁EWO005-H follow-up: Pixi card-art texture failure guidance + manual retry
+  - `BattleStageEngine` に card-art の読み込み状慁E失敗状態を表示し、`Retry card art` を追加
+  - `TextureResolver` に failed/pending 状態管琁E�� status event を追加して、失敗時の無限�E試行を防止
+  - `textureResolverPreload.test.ts` に failed->retry success の検証を追加
+- ✁EWO005-I follow-up: Pixi/WebGL init failure auto fallback
+  - `ui=engine` で Pixi 初期化失敗時に `BoardViewMint` へ自動フォールバックして進行継綁E
+  - `/battle-stage` `/replay-stage` に `Retry Pixi` 導線を追加
+  - stage-focus E2E に WebGL unavailable ケースを追加して回帰防止
+- ? WO005-J follow-up: replay-stage WebGL fallback �� E2E��A�h�~��ǉ�
+  - `/replay-stage` �� WebGL unavailable ���� Mint fallback + retry������ stage-focus E2E�ŌŒ�
+  - 375px commit�����e�X�g�� fallback ���[�h�����e���锻��֋���
 
 - [x] 2026-02-14 WO006/WO007 Classic Rules implemented (engine + web): RulesetConfigV2, classic RNG, Order/Chaos/Swap/Reverse/AceKiller/Plus/Same/Type Ascend/Descend, Match UI integration, and classic test coverage.
 - [x] Follow-up: update stream strict allowlist for Order/Chaos in `apps/web/src/lib/triad_vote_utils.ts` if Classic is enabled in stream voting mode.
 - [x] Follow-up: replay `mode=auto` now resolves known Classic `rulesetId` via local ruleset registry instead of falling back to v1/v2 compare.
-- [x] Follow-up: show deterministic Classic Swap slot mapping (`A{n} ↔ B{m}`) in Match setup and Replay details when swap is active.
+- [x] Follow-up: show deterministic Classic Swap slot mapping (`A{n} ? B{m}`) in Match setup and Replay details when swap is active.
 - [x] Follow-up: add deterministic Classic Open visibility (`allOpen` / `threeOpen`) metadata in Match/Replay, and expose `classic_swap`, `classic_all_open`, `classic_three_open` presets in ruleset selector.
 - [x] Follow-up: in Guest Match deck preview, hide Nyano cards unless revealed by Classic Open rules (`allOpen` / `threeOpen`).
 - [x] Follow-up: in Replay Deck inspector, mask unrevealed slots for both players under Classic Three Open (and keep all visible under All Open).
@@ -165,67 +165,69 @@
 - [x] Follow-up: hide Replay owners mapping under Three Open by default, and reveal it together with the hidden-slot toggle.
 - [x] Follow-up: extract hidden deck-slot UI into shared `HiddenDeckPreviewCard` component and reuse in Match/Replay.
 - [x] Follow-up: show resolved Classic Open metadata in Stream live status (from `protocolV1.header` + ruleset registry).
-- [x] Follow-up: show resolved Classic Open metadata in Overlay “Now Playing” panel for operator/OBS visibility.
+- [x] Follow-up: show resolved Classic Open metadata in Overlay �gNow Playing�h panel for operator/OBS visibility.
 - [x] Follow-up: add additive Classic metadata (`classic.open` / `classic.swap`) to `/stream` `state_json v1` and ai_prompt context for nyano-warudo/operator parity.
-- [x] Follow-up: show deterministic Classic Swap mapping in Stream live status and Overlay “Now Playing”.
+- [x] Follow-up: show deterministic Classic Swap mapping in Stream live status and Overlay �gNow Playing�h.
 - [x] Follow-up: update `state_json v1` sample/spec docs to include additive optional `classic` metadata.
 - [x] Follow-up: sync `triad_league_snapshot_request_sample_v1.json` embedded `content` with latest `state_json` sample.
 - [x] Follow-up: refactor duplicated Classic Open/Swap resolution into shared `apps/web/src/lib/classic_ruleset_visibility.ts` with unit tests.
 - [x] Follow-up: harden Classic metadata resolver to return null (not throw) on malformed `protocolV1.header`.
 - [x] Follow-up: sync `triad_league_ai_prompt_sample_v1.txt` and Bridge spec with optional `classic_open` / `classic_swap` ai_prompt lines.
-- [x] 2026-02-14 WO006: NyanoReaction slotを `Match/Replay` に導入し、コメント表示時のレイアウトシフトを抑止（2行クランプ + unit test付き）。
-- [x] 2026-02-14 WO007: Mint盤面/ステージの質感を磨き込み（board sheen, stage rim/atmo, warning-mode視覚強調, vfx/reduced-motion分岐, mobile最適化）。
-- [x] 2026-02-14 WO008: Match Setup を MatchSetupPanelMint へ分離し、Primary/Secondary/Advanced 構成・1行サマリ・Setup URLコピー導線を追加。URLパラメータ互換を維持。
-- [x] 2026-02-14 WO009: Rulesets画面に『おすすめ』『要約』『このルールで対戦』導線を追加し、/match への遷移を明確化。
-- [x] 2026-02-15 WO010: `apps/web/e2e/ux-guardrails.spec.ts` を安定化（tutorial回避・selector強化・quick commit fallback）。`pnpm.cmd -C apps/web e2e -- e2e/ux-guardrails.spec.ts` で 2 passed を確認。
-- [x] 2026-02-15 WO010運用: `apps/web/package.json` に `e2e:ux` を追加し、`.github/workflows/ci.yml` に `E2E UX guardrails` ステップを追加（full E2E 前に最小UXガードを先行検証）。
-- [x] 2026-02-15 WO007追補: `apps/web/e2e/mint-stage-visual-guardrails.spec.ts` を追加し、manual確認項目（vfx=off / reduced-motion / 390px）をE2E化。`pnpm.cmd -C apps/web e2e:ux` で 5 passed を確認。
-- [x] 2026-02-15 WO009追補: `apps/web/e2e/rulesets-ux-guardrails.spec.ts` を追加し、Rulesets導線（おすすめ表示 + このルールで対戦遷移 + rk保持）をE2E化。`pnpm.cmd -C apps/web e2e:ux` で 7 passed を確認。
-- [x] 2026-02-15 WO008追補: `apps/web/e2e/match-setup-ux-guardrails.spec.ts` を追加し、Match Setup導線（1行サマリ同期 + Advanced自動展開 + ccap URL同期）をE2E化。`pnpm.cmd -C apps/web e2e:ux` で 9 passed を確認。
-- [x] 2026-02-15 WO011: Mint gamefeel背景を実装（pastel gradient + paw pattern + sparkle/bokeh）し、`prefers-reduced-motion` / `data-vfx` 分岐で演出強度を制御。`DuelStageMint` は `mint-stage--gamefeel` に統一。
-- [x] 2026-02-15 WO012: Mint Top HUD（左ロゴ/中央A-Bスコア/右TURN）を `ui=mint` 向けに追加。`density=minimal` は Top HUD優先、`standard/full` は既存 `BattleHudMint` 併用に整理。
-- [x] 2026-02-15 WO013: Mint盤面の左右にプレイヤーパネル（Avatar/Label/Remaining）を追加。Desktopは `panel|board|panel`、mobileはパネル非表示で盤面優先。
-- [x] 2026-02-15 WO014: Mint手札をガラス調トレイ + 軽い重なりへ更新し、ActionPromptを二段ピル化。`mint-prompt-slot` で表示揺れを抑制。
-- [x] 2026-02-15 WO015: NyanoReaction slotを fixed-height + absolute overlay 化し、`kind=idle` 時も placeholder を維持。LayoutShift API を `ux-guardrails` に追加してCLS回帰を軽量監視。
-- [x] 2026-02-15 WO016: `mint-pressable` を導入し、board cell / hand card / result button の押下文法（hover/active/focus-visible）を統一。reduced-motion / data-vfx 抑制分岐を追加。
-- [x] 2026-02-15 WO016/WO010追補: `ux-guardrails` にキーボードEnter選択と reduced-motion 時の pressable transition 抑制テストを追加（4 passed）。
-- [x] 2026-02-15 Match UX修正: Nyanoコメント連動の盤面ズレ要因だった stage impact の transformアニメを非位置変化型へ置換。あわせて「カードを選んでください」の文字サイズを縮小。
-- [x] 2026-02-15 Match UX追補: 状況実況テキスト起因の盤面ズレを抑制（HUD/AI noticeの固定スロット化）。合わせて盤面を拡大し、左右プレイヤーパネルを縮小。
-- [x] 2026-02-15 Match UX修正: バトル画面「詳細情報」ドロワーの × で閉じない問題を修正（close伝播制御 + 開いている間はトグル非表示）。
-- [x] 2026-02-15 Match UX修正: 状況表示テキスト（Battle summary）を固定スロット化し、表示/非表示で盤面位置がずれないよう改善。
-- [x] 2026-02-15 Battle Stage focus UX改善: 手札ドックを下部固定化し、重複ツールバー操作を整理。盤面サイズ算出を拡大寄りに調整して、`ui=engine&focus=1` でスクロール前提になりにくい導線へ改善。`stage-focus` / `ux-guardrails` E2Eで回帰確認済み。
-- [x] 2026-02-15 Battle Stage UX追補: stage focus の「状況表示 + Nyanoコメント」を盤面上部の固定スロットへ移設。下側（手札導線近傍）の表示を止め、視線導線とレイアウト安定性を改善。
-- [x] 2026-02-15 Battle Stage UX追補: stage-focus E2Eに「コメント/状況表示が盤面・手札ドックより上にある」ガードレールを追加。
-- [x] 2026-02-15 Battle Stage UX追補: 手札ドックが盤面に被る問題を修正（fixed基準の是正 + stageドック縦圧縮 + board占有補正）。`stage-focus` / `ux-guardrails` E2Eで回帰確認済み。
-- [x] 2026-02-15 Match/Stage UX追補: `/match?ui=mint` の Nyanoコメント+状況表示を盤面上部固定スタックへ統一し、表示ON/OFFでの位置ずれを抑制。Prompt文字を縮小。Details `×` の閉じる導線を安定化（再オープン抑止含む）。stage focus の Pixi盤面/手札ドックを再バランスし、手札可視性を回復しつつ board-dock 非重なりを維持（stage-focus 15 passed / ux-guardrails 7 passed）。
-- [x] 2026-02-15 WO017: `MintGameShell` / `MintAppChrome` を追加し、Mintテーマ時の App chrome をゲームUI化。`focusRoute`（`/battle-stage` `/replay-stage` / `focus=1`）は既存挙動を維持。
-- [x] 2026-02-15 WO018: Home を Mintメインメニュー構成へ更新（Arena/Decks/Replay/Stream の4大ボタン、3ステップ導線、下部インフォバー、Tools/Settings 折りたたみ）。
-- [x] 2026-02-15 WO019: Arena をモード選択UIへ更新（左サイドナビ、中央バナー、右Quick Play、下部難易度カード + `difficulty` クエリ保持）。
-- [x] 2026-02-15 WO020: Decks を Deck Builder 3カラムへ更新（Deck Stats/Filter、Card Browser、中央フォーム、右Deck Summary + Save Deck）。
-- [x] 2026-02-15 WO021: `/start` ページを追加し、Onboarding 3カード + DONE進捗 pill を実装。Home から遷移導線を追加。
-- [x] 2026-02-15 WO022: Mint UIプリミティブを追加（`GlassPanel` `MintPressable` `MintIcon` `MintBigButton` `MintTabNav` `MintTypography`）し、主要画面に適用。
-- [x] 2026-02-15 WO023: Gemini画像生成パイプラインを確認・整備（`scripts/gemini_image_gen.mjs` / `scripts/asset_prompts/nytl_ui_assets.v1.json` / `docs/01_design/NYTL_ASSET_GEN_GEMINI_NANO_BANANA_PRO_v1_ja.md` / `apps/web/public/assets/gen/.gitkeep`）。
-- [x] 2026-02-15 WO024: e2e/visual guardrails を追加（`e2e/mint-app-screens-guardrails.spec.ts`）し、Home/Decks系既存e2e期待値をMint UIに追従更新。
-- [x] 2026-02-15 Follow-up: `MintPressable` の未使用変数lint警告を解消し、`MatchSetupPanelMint` の helper を `MatchSetupPanelMint.helpers.ts` へ分離して Fast Refresh 警告を解消。
-- [x] 2026-02-15 Follow-up: `src/lib/theme.ts` の回帰防止として `src/lib/__tests__/theme.test.ts` を追加（theme解決優先順位 / URL query+hash 互換を固定）。
-- [x] 2026-02-15 Follow-up: `e2e/mint-app-screens-guardrails.spec.ts` を拡張し、Mint App Chrome の `theme` クエリ保持（Tab遷移時）と `focusRoute`（`/match?focus=1` `/battle-stage`）での chrome 非表示互換を回帰テスト化。
-- [x] 2026-02-15 Follow-up: Events/Replay/Stream を Mint二次画面トーンへ揃え、Replay の 390px 横スクロール回帰を修正（長い `rulesetId`/`matchId` 折返し + debug pre の幅拘束）。`mint-app-screens-guardrails` で 390px 到達性を固定化。
-- [x] 2026-02-15 Follow-up: Events/Replay/Stream に共通 Mint クイックナビ導線を追加し、`theme` 伝播を強化。あわせて Match 盤面に `mint-match-board-shell` / `mint-match-quick-commit` の見た目強化クラスを追加し、secondary screen と board のゲームUIトーンを統一。
-- [x] 2026-02-15 Follow-up: Events/Replay/Stream の先頭に要約ステータス帯（overview pills）を追加し、重要情報の優先順位を可視化。あわせて quicknav のアイコン視認性・テキスト可読性・余白を改善して「見やすくわかりやすい」導線へ調整。
-- [x] 2026-02-17 Arena follow-up: `MintPageGuide` / difficulty hint の未実装CSSを `mint-theme.css` に追加し、`Arena.tsx` の UTF-8 BOM を除去。合わせて難易度ボタンに `type="button"` を追加。
-- [x] 2026-02-17 Mint guide rollout: `MINT_PAGE_GUIDES` の `events/replay/stream` を各ページに接続し、Mintテーマ時の共通ガイド導線を統一（Replayは `!isStageFocus` 条件を維持）。
-- [x] 2026-02-17 Mint guide rollout follow-up: `e2e/mint-app-screens-guardrails.spec.ts` に `.mint-page-guide` 可視アサーションを追加し、Arena/Events/Replay/Stream のガイド導線回帰を防止。
-- [x] 2026-02-17 CI follow-up: `/battle-stage` の board/dock 重なりを desktop 条件で解消（`.mint-focus-hand-dock--stage` 補正）。あわせて `ux-guardrails` の quick commit クリックをフォールバック付きにして flaky を低減。
-- [x] 2026-02-17 ui=mint Pixi parity follow-up: /match で hand dock + HUD/commentary tone を Pixi寄せに統一し、mint専用Top HUD/side panelを抑止。あわせて ux-guardrails を hand dock 導線対応へ更新し、reduced-motion 時の dock card transition 抑制を追加（pnpm.cmd -C apps/web e2e -- e2e/ux-guardrails.spec.ts 7 passed / pnpm.cmd -C apps/web e2e -- e2e/stage-focus.spec.ts 15 passed）。
-- [x] 2026-02-17 e2e:ux follow-up: mint-stage-visual-guardrails の commit control 判定を hand dock/quick commit 互換に更新し、ui=mint 新導線でのCI失敗を解消（pnpm.cmd -C apps/web e2e:ux 14 passed）。
+- [x] 2026-02-14 WO006: NyanoReaction slot�� `Match/Replay` �ɓ������A�R�����g�\�����̃��C�A�E�g�V�t�g��}�~�i2�s�N�����v + unit test�t���j�B
+- [x] 2026-02-14 WO007: Mint�Ֆ�/�X�e�[�W�̎����𖁂����݁iboard sheen, stage rim/atmo, warning-mode���o����, vfx/reduced-motion����, mobile�œK���j�B
+- [x] 2026-02-14 WO008: Match Setup �� MatchSetupPanelMint �֕������APrimary/Secondary/Advanced �\���E1�s�T�}���ESetup URL�R�s�[������ǉ��BURL�p�����[�^�݊����ێ��B
+- [x] 2026-02-14 WO009: Rulesets��ʂɁw�������߁x�w�v��x�w���̃��[���őΐ�x������ǉ����A/match �ւ̑J�ڂ𖾊m���B
+- [x] 2026-02-15 WO010: `apps/web/e2e/ux-guardrails.spec.ts` �����艻�itutorial����Eselector�����Equick commit fallback�j�B`pnpm.cmd -C apps/web e2e -- e2e/ux-guardrails.spec.ts` �� 2 passed ���m�F�B
+- [x] 2026-02-15 WO010�^�p: `apps/web/package.json` �� `e2e:ux` ��ǉ����A`.github/workflows/ci.yml` �� `E2E UX guardrails` �X�e�b�v��ǉ��ifull E2E �O�ɍŏ�UX�K�[�h���s���؁j�B
+- [x] 2026-02-15 WO007�Ǖ�: `apps/web/e2e/mint-stage-visual-guardrails.spec.ts` ��ǉ����Amanual�m�F���ځivfx=off / reduced-motion / 390px�j��E2E���B`pnpm.cmd -C apps/web e2e:ux` �� 5 passed ���m�F�B
+- [x] 2026-02-15 WO009�Ǖ�: `apps/web/e2e/rulesets-ux-guardrails.spec.ts` ��ǉ����ARulesets�����i�������ߕ\�� + ���̃��[���őΐ�J�� + rk�ێ��j��E2E���B`pnpm.cmd -C apps/web e2e:ux` �� 7 passed ���m�F�B
+- [x] 2026-02-15 WO008�Ǖ�: `apps/web/e2e/match-setup-ux-guardrails.spec.ts` ��ǉ����AMatch Setup�����i1�s�T�}������ + Advanced�����W�J + ccap URL�����j��E2E���B`pnpm.cmd -C apps/web e2e:ux` �� 9 passed ���m�F�B
+- [x] 2026-02-15 WO011: Mint gamefeel�w�i�������ipastel gradient + paw pattern + sparkle/bokeh�j���A`prefers-reduced-motion` / `data-vfx` ����ŉ��o���x�𐧌�B`DuelStageMint` �� `mint-stage--gamefeel` �ɓ���B
+- [x] 2026-02-15 WO012: Mint Top HUD�i�����S/����A-B�X�R�A/�ETURN�j�� `ui=mint` �����ɒǉ��B`density=minimal` �� Top HUD�D��A`standard/full` �͊��� `BattleHudMint` ���p�ɐ����B
+- [x] 2026-02-15 WO013: Mint�Ֆʂ̍��E�Ƀv���C���[�p�l���iAvatar/Label/Remaining�j��ǉ��BDesktop�� `panel|board|panel`�Amobile�̓p�l����\���ŔՖʗD��B
+- [x] 2026-02-15 WO014: Mint��D���K���X���g���C + �y���d�Ȃ�֍X�V���AActionPrompt���i�s�����B`mint-prompt-slot` �ŕ\���h���}���B
+- [x] 2026-02-15 WO015: NyanoReaction slot�� fixed-height + absolute overlay �����A`kind=idle` ���� placeholder ���ێ��BLayoutShift API �� `ux-guardrails` �ɒǉ�����CLS��A���y�ʊĎ��B
+- [x] 2026-02-15 WO016: `mint-pressable` �𓱓����Aboard cell / hand card / result button �̉������@�ihover/active/focus-visible�j�𓝈�Breduced-motion / data-vfx �}�������ǉ��B
+- [x] 2026-02-15 WO016/WO010�Ǖ�: `ux-guardrails` �ɃL�[�{�[�hEnter�I���� reduced-motion ���� pressable transition �}���e�X�g��ǉ��i4 passed�j�B
+- [x] 2026-02-15 Match UX�C��: Nyano�R�����g�A���̔ՖʃY���v�������� stage impact �� transform�A�j�����ʒu�ω��^�֒u���B���킹�āu�J�[�h��I��ł��������v�̕����T�C�Y���k���B
+- [x] 2026-02-15 Match UX�Ǖ�: �󋵎����e�L�X�g�N���̔ՖʃY����}���iHUD/AI notice�̌Œ�X���b�g���j�B���킹�ĔՖʂ��g�債�A���E�v���C���[�p�l�����k���B
+- [x] 2026-02-15 Match UX�C��: �o�g����ʁu�ڍ׏��v�h�����[�� �~ �ŕ��Ȃ������C���iclose�`�d���� + �J���Ă���Ԃ̓g�O����\���j�B
+- [x] 2026-02-15 Match UX�C��: �󋵕\���e�L�X�g�iBattle summary�j���Œ�X���b�g�����A�\��/��\���ŔՖʈʒu������Ȃ��悤���P�B
+- [x] 2026-02-15 Battle Stage focus UX���P: ��D�h�b�N�������Œ艻���A�d���c�[���o�[����𐮗��B�ՖʃT�C�Y�Z�o���g����ɒ������āA`ui=engine&focus=1` �ŃX�N���[���O��ɂȂ�ɂ��������։��P�B`stage-focus` / `ux-guardrails` E2E�ŉ�A�m�F�ς݁B
+- [x] 2026-02-15 Battle Stage UX�Ǖ�: stage focus �́u�󋵕\�� + Nyano�R�����g�v��Ֆʏ㕔�̌Œ�X���b�g�ֈڐ݁B�����i��D�����ߖT�j�̕\�����~�߁A���������ƃ��C�A�E�g���萫�����P�B
+- [x] 2026-02-15 Battle Stage UX�Ǖ�: stage-focus E2E�Ɂu�R�����g/�󋵕\�����ՖʁE��D�h�b�N����ɂ���v�K�[�h���[����ǉ��B
+- [x] 2026-02-15 Battle Stage UX�Ǖ�: ��D�h�b�N���Ֆʂɔ������C���ifixed��̐��� + stage�h�b�N�c���k + board��L�␳�j�B`stage-focus` / `ux-guardrails` E2E�ŉ�A�m�F�ς݁B
+- [x] 2026-02-15 Match/Stage UX�Ǖ�: `/match?ui=mint` �� Nyano�R�����g+�󋵕\����Ֆʏ㕔�Œ�X�^�b�N�֓��ꂵ�A�\��ON/OFF�ł̈ʒu�����}���BPrompt�������k���BDetails `�~` �̕��铱�������艻�i�ăI�[�v���}�~�܂ށj�Bstage focus �� Pixi�Ֆ�/��D�h�b�N���ăo�����X���A��D�������񕜂��� board-dock ��d�Ȃ���ێ��istage-focus 15 passed / ux-guardrails 7 passed�j�B
+- [x] 2026-02-15 WO017: `MintGameShell` / `MintAppChrome` ��ǉ����AMint�e�[�}���� App chrome ���Q�[��UI���B`focusRoute`�i`/battle-stage` `/replay-stage` / `focus=1`�j�͊����������ێ��B
+- [x] 2026-02-15 WO018: Home �� Mint���C�����j���[�\���֍X�V�iArena/Decks/Replay/Stream ��4��{�^���A3�X�e�b�v�����A�����C���t�H�o�[�ATools/Settings �܂肽���݁j�B
+- [x] 2026-02-15 WO019: Arena �����[�h�I��UI�֍X�V�i���T�C�h�i�r�A�����o�i�[�A�EQuick Play�A������Փx�J�[�h + `difficulty` �N�G���ێ��j�B
+- [x] 2026-02-15 WO020: Decks �� Deck Builder 3�J�����֍X�V�iDeck Stats/Filter�ACard Browser�A�����t�H�[���A�EDeck Summary + Save Deck�j�B
+- [x] 2026-02-15 WO021: `/start` �y�[�W��ǉ����AOnboarding 3�J�[�h + DONE�i�� pill �������BHome ����J�ړ�����ǉ��B
+- [x] 2026-02-15 WO022: Mint UI�v���~�e�B�u��ǉ��i`GlassPanel` `MintPressable` `MintIcon` `MintBigButton` `MintTabNav` `MintTypography`�j���A��v��ʂɓK�p�B
+- [x] 2026-02-15 WO023: Gemini�摜�����p�C�v���C�����m�F�E�����i`scripts/gemini_image_gen.mjs` / `scripts/asset_prompts/nytl_ui_assets.v1.json` / `docs/01_design/NYTL_ASSET_GEN_GEMINI_NANO_BANANA_PRO_v1_ja.md` / `apps/web/public/assets/gen/.gitkeep`�j�B
+- [x] 2026-02-15 WO024: e2e/visual guardrails ��ǉ��i`e2e/mint-app-screens-guardrails.spec.ts`�j���AHome/Decks�n����e2e���Ғl��Mint UI�ɒǏ]�X�V�B
+- [x] 2026-02-15 Follow-up: `MintPressable` �̖��g�p�ϐ�lint�x�����������A`MatchSetupPanelMint` �� helper �� `MatchSetupPanelMint.helpers.ts` �֕������� Fast Refresh �x���������B
+- [x] 2026-02-15 Follow-up: `src/lib/theme.ts` �̉�A�h�~�Ƃ��� `src/lib/__tests__/theme.test.ts` ��ǉ��itheme�����D�揇�� / URL query+hash �݊����Œ�j�B
+- [x] 2026-02-15 Follow-up: `e2e/mint-app-screens-guardrails.spec.ts` ���g�����AMint App Chrome �� `theme` �N�G���ێ��iTab�J�ڎ��j�� `focusRoute`�i`/match?focus=1` `/battle-stage`�j�ł� chrome ��\���݊�����A�e�X�g���B
+- [x] 2026-02-15 Follow-up: Events/Replay/Stream �� Mint�񎟉�ʃg�[���֑����AReplay �� 390px ���X�N���[����A���C���i���� `rulesetId`/`matchId` �ܕԂ� + debug pre �̕��S���j�B`mint-app-screens-guardrails` �� 390px ���B�����Œ艻�B
+- [x] 2026-02-15 Follow-up: Events/Replay/Stream �ɋ��� Mint �N�C�b�N�i�r������ǉ����A`theme` �`�d�������B���킹�� Match �Ֆʂ� `mint-match-board-shell` / `mint-match-quick-commit` �̌����ڋ����N���X��ǉ����Asecondary screen �� board �̃Q�[��UI�g�[���𓝈�B
+- [x] 2026-02-15 Follow-up: Events/Replay/Stream �̐擪�ɗv��X�e�[�^�X�сioverview pills�j��ǉ����A�d�v���̗D�揇�ʂ������B���킹�� quicknav �̃A�C�R�����F���E�e�L�X�g�ǐ��E�]�������P���āu���₷���킩��₷���v�����֒����B
+- [x] 2026-02-17 Arena follow-up: `MintPageGuide` / difficulty hint �̖�����CSS�� `mint-theme.css` �ɒǉ����A`Arena.tsx` �� UTF-8 BOM �������B���킹�ē�Փx�{�^���� `type="button"` ��ǉ��B
+- [x] 2026-02-17 Mint guide rollout: `MINT_PAGE_GUIDES` �� `events/replay/stream` ���e�y�[�W�ɐڑ����AMint�e�[�}���̋��ʃK�C�h�����𓝈�iReplay�� `!isStageFocus` �������ێ��j�B
+- [x] 2026-02-17 Mint guide rollout follow-up: `e2e/mint-app-screens-guardrails.spec.ts` �� `.mint-page-guide` ���A�T�[�V������ǉ����AArena/Events/Replay/Stream �̃K�C�h������A��h�~�B
+- [x] 2026-02-17 CI follow-up: `/battle-stage` �� board/dock �d�Ȃ�� desktop �����ŉ����i`.mint-focus-hand-dock--stage` �␳�j�B���킹�� `ux-guardrails` �� quick commit �N���b�N���t�H�[���o�b�N�t���ɂ��� flaky ��ጸ�B
+- [x] 2026-02-17 ui=mint Pixi parity follow-up: /match �� hand dock + HUD/commentary tone �� Pixi�񂹂ɓ��ꂵ�Amint��pTop HUD/side panel��}�~�B���킹�� ux-guardrails �� hand dock �����Ή��֍X�V���Areduced-motion ���� dock card transition �}����ǉ��ipnpm.cmd -C apps/web e2e -- e2e/ux-guardrails.spec.ts 7 passed / pnpm.cmd -C apps/web e2e -- e2e/stage-focus.spec.ts 15 passed�j�B
+- [x] 2026-02-17 e2e:ux follow-up: mint-stage-visual-guardrails �� commit control ����� hand dock/quick commit �݊��ɍX�V���Aui=mint �V�����ł�CI���s�������ipnpm.cmd -C apps/web e2e:ux 14 passed�j�B
+- [x] 2026-02-17 copy cleanup follow-up: Home/Start/Stream �̓������������i�t�F�[�Y/�}�C���X�g�[��/����/�b��/DONE-TODO�j�����[�U�[�����\���֒u�����A���JUI����J���i�������������Ȃ��悤�����B
+- [x] 2026-02-17 i18n UX follow-up: Replay���S�� Arena/Decks/Rulesets/Events �̉p��UI��������{��x�[�X�֒����i�e�X�g�ˑ��̉p�ꃉ�x���͌݊��ێ��j�B`replay_timeline`/`replay_highlights` ���������{�ꉻ���A`e2e/replay-ruleset-fallback-guardrails.spec.ts` ����p�݊��A�T�[�V�����֍X�V�B`pnpm -C apps/web test` / `typecheck` / `build` / `pnpm.cmd -C apps/web e2e:ux` �ŉ�A�m�F�B
 
 ---
 
 ## Next (Planned)
 
-- [ ] 2026-02-17 WO025: Classic Rules プリセット拡充（reverse / aceKiller / typeAscend / typeDescend / plus / same）+ UI から選択可能に。
-- [ ] 2026-02-17 WO026: Classic Rules カスタムビルダー（複数組み合わせ）+ Share/Replay 互換（URL param `cr` bitmask）。
-- [ ] 2026-02-17 WO027: ルール設定 UI を “触れば分かる” Nintendo 品質へ（MintRulesetPicker）。
+- [ ] 2026-02-17 WO025: Classic Rules �v���Z�b�g�g�[�ireverse / aceKiller / typeAscend / typeDescend / plus / same�j+ UI ����I���\�ɁB
+- [ ] 2026-02-17 WO026: Classic Rules �J�X�^���r���_�[�i�����g�ݍ��킹�j+ Share/Replay �݊��iURL param `cr` bitmask�j�B
+- [ ] 2026-02-17 WO027: ���[���ݒ� UI �� �g�G��Ε�����h Nintendo �i���ցiMintRulesetPicker�j�B
 
 
 ## Update 2026-02-17 (WO025/WO026/WO027)
@@ -253,3 +255,14 @@
   - Validates rk/cr fallback + mismatch warning visibility.
 - [x] Integrated replay fallback guardrail into pnpm -C apps/web e2e:ux.
 - [x] Hardened UX E2E commit helper for dock/toolbar/legacy commit paths to reduce flaky failures.
+- [x] 2026-02-17 Stream copy follow-up: Stream/HUD/Warudo/Share �̕⏕�����ƃg�[�X�g����{��x�[�X�ɓ��ꂵ�A`_design/Home` �́u���݂̃t�F�[�Y/���̃}�C���X�g�[���v�����[�U�[���������֒u���B`pnpm -C apps/web test` / `typecheck` / `build` / `pnpm.cmd -C apps/web e2e:ux` �ŉ�A�m�F�B
+- [x] 2026-02-17 Overlay copy follow-up: Overlay�̎�v�\���i�㕔�X�e�[�^�X/���[/�G���[/OBS�e���v���j����{��x�[�X�֒������A`Now Playing`/`Chat voting`/`No signal yet`/`remaining` ����E2E�ˑ���͕��L�Ō݊��ێ��B`pnpm -C apps/web test` / `typecheck` / `build` / `pnpm.cmd -C apps/web e2e:ux` ��ʉ߁B
+- [x] 2026-02-17 App chrome copy follow-up: �w�b�_�[���o���ƃt�b�^�[�����N/�^�O���C������{��x�[�X�֒����iURL�\���͕s�ρj�B`pnpm -C apps/web test` / `typecheck` / `build` / `pnpm.cmd -C apps/web e2e:ux` ��ʉ߁B
+
+- [x] 2026-02-17 i18n follow-up: Home/Playground �̎�v�\����������{��x�[�X�֒������AE2E�ˑ���iTools / Settings / Copy Snapshot / Reset Metrics / Nyano Lab�j�͕��L�Ō݊��ێ��Bpnpm -C apps/web test / typecheck / build �͒ʉ߁A�ǉ�E2E�ʎ��s�� spawn EPERM �Ŗ������B
+
+- [x] 2026-02-18 i18n follow-up: Events/Decks/Replay �̎c�p��UI����{��x�[�X�֒����iE2E�ˑ���� Save Deck / Replay from transcript / Load replay / Show controls ���͌݊��ێ��j�Bpnpm -C apps/web test / typecheck / build ��ʉ߁B
+- [x] 2026-02-18 i18n follow-up verify: pnpm.cmd -C apps/web e2e:ux 15 passed�B
+
+- [x] 2026-02-18 i18n/e2e follow-up: Match �� Decks �̕�������{��x�[�X�֒������p��g�[�N���݊����ێ��Bpps/web/e2e/guest-game.spec.ts �����sUI�֒Ǐ]�C���Bpnpm -C apps/web test / typecheck / build / pnpm.cmd -C apps/web e2e:ux / ��v3spec ��ʉ߁B
+- [x] 2026-02-17 i18n follow-up: Home/Events/Match/Replay copy was adjusted to Japanese-first player-facing text; stage-focus compatibility labels were preserved (`Replay from transcript`, `Load replay`, `Error:`, `Retry load`, `Clear share params`). Verified with `pnpm -C apps/web test`, `pnpm.cmd -C apps/web typecheck`, `pnpm -C apps/web build`, and targeted Playwright (`stage-focus`, `ux-guardrails`, `mint-stage-visual-guardrails`).
