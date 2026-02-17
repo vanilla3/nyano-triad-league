@@ -1571,13 +1571,19 @@
   position: fixed;
   left: 50%;
   bottom: max(6px, env(safe-area-inset-bottom));
-  transform: translateX(-50%);
+  transform: translate(-50%, 0);
   width: min(1120px, calc(100vw - env(safe-area-inset-left) - env(safe-area-inset-right) - 16px));
   padding: 4px 8px;
   z-index: 42;
   backdrop-filter: blur(14px) saturate(1.06);
   -webkit-backdrop-filter: blur(14px) saturate(1.06);
   pointer-events: auto;
+}
+
+@media (min-width: 1200px) and (min-height: 700px) {
+  .mint-focus-hand-dock--stage {
+    transform: translate(-50%, 10px);
+  }
 }
 
 .mint-focus-hand-dock--stage .mint-focus-hand-row {

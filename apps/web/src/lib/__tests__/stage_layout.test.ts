@@ -14,7 +14,7 @@ describe("computeStageBoardSizing", () => {
 
     expect(size.maxWidthPx).toBeLessThanOrEqual(1120);
     expect(size.maxWidthPx).toBeLessThanOrEqual(1920 - 92);
-    expect(size.maxWidthPx).toBeLessThanOrEqual(1080 - 380);
+    expect(size.maxWidthPx).toBeLessThanOrEqual(1080 - 400);
     expect(size.minHeightPx).toBeLessThanOrEqual(size.maxWidthPx);
   });
 

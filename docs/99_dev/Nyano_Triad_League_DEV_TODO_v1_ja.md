@@ -215,3 +215,4 @@
 - [x] 2026-02-17 Arena follow-up: `MintPageGuide` / difficulty hint の未実装CSSを `mint-theme.css` に追加し、`Arena.tsx` の UTF-8 BOM を除去。合わせて難易度ボタンに `type="button"` を追加。
 - [x] 2026-02-17 Mint guide rollout: `MINT_PAGE_GUIDES` の `events/replay/stream` を各ページに接続し、Mintテーマ時の共通ガイド導線を統一（Replayは `!isStageFocus` 条件を維持）。
 - [x] 2026-02-17 Mint guide rollout follow-up: `e2e/mint-app-screens-guardrails.spec.ts` に `.mint-page-guide` 可視アサーションを追加し、Arena/Events/Replay/Stream のガイド導線回帰を防止。
+- [x] 2026-02-17 CI follow-up: `/battle-stage` の board/dock 重なりを desktop 条件で解消（`.mint-focus-hand-dock--stage` 補正）。あわせて `ux-guardrails` の quick commit クリックをフォールバック付きにして flaky を低減。

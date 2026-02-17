@@ -100,9 +100,12 @@ async function dismissGuestTutorialIfPresent(page: Page): Promise<void> {
 async function commitMove(page: Page, cardSlot: number, cell: number): Promise<void> {
   await page.locator(`[data-board-cell="${cell}"]`).click({ force: true });
   const quickCommitButton = page.getByRole("button", { name: "Quick commit move", exact: true });
-  if (await quickCommitButton.isEnabled().catch(() => false)) {
-    await quickCommitButton.click({ force: true });
-    return;
+  if ((await quickCommitButton.count()) > 0 && await quickCommitButton.isEnabled().catch(() => false)) {
+    const quickCommitClicked = await quickCommitButton
+      .click({ force: true, timeout: 2_000 })
+      .then(() => true)
+      .catch(() => false);
+    if (quickCommitClicked) return;
   }
   const currentHand = page.getByRole("listbox", { name: /Player [AB] hand/i }).first();
   await currentHand.getByRole("option", { name: new RegExp(`^Card ${cardSlot}:`) }).first().click();

@@ -3091,3 +3091,26 @@
 
 ### Verify
 - `pnpm.cmd -C apps/web e2e -- e2e/mint-app-screens-guardrails.spec.ts`
+## 2026-02-17 — Stage focus overlap fix + UX guardrail commit fallback hardening
+
+### Why
+- CI で `e2e/stage-focus.spec.ts` の「boardAboveDock」判定が失敗し、`/battle-stage` で盤面下端と hand dock が重なるケースが確認された。
+- 同じ CI 実行で `ux-guardrails` の `Quick commit move` クリックがタイミング依存で flaky になっていた。
+
+### What
+- `apps/web/src/mint-theme/mint-theme.css`
+  - `.mint-focus-hand-dock--stage` の transform を `translate(-50%, 0)` に統一。
+  - desktop 条件（`min-width: 1200px` かつ `min-height: 700px`）で `translate(-50%, 10px)` を適用し、board/dock の重なりを解消。
+- `apps/web/e2e/ux-guardrails.spec.ts`
+  - `commitMove` で quick commit のクリックに短い timeout と失敗時フォールバックを追加し、描画タイミング差の flaky を抑制。
+- `apps/web/src/lib/stage_layout.ts`
+  - battle desktop の reserve height を 380 → 400 に調整。
+- `apps/web/src/lib/__tests__/stage_layout.test.ts`
+  - 上記調整に合わせて期待値を更新。
+
+### Verify
+- `pnpm -C apps/web typecheck`
+- `pnpm.cmd -C apps/web test -- src/lib/__tests__/stage_layout.test.ts`
+- `pnpm.cmd -C apps/web e2e -- e2e/stage-focus.spec.ts`
+- `pnpm.cmd -C apps/web e2e -- e2e/ux-guardrails.spec.ts`
+- `pnpm.cmd -C apps/web e2e` はローカル実行環境の `spawn EPERM` で完走不可（対象specは個別実行で確認）。

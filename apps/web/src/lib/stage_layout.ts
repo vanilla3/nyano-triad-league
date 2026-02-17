@@ -27,7 +27,7 @@ function clampInt(value: number, min: number, max: number): number {
 }
 
 function reserveHeightPx(kind: StageLayoutKind, viewportWidthPx: number): number {
-  if (viewportWidthPx >= 1200) return kind === "battle" ? 380 : 300;
+  if (viewportWidthPx >= 1200) return kind === "battle" ? 400 : 300;
   if (viewportWidthPx >= 768) return kind === "battle" ? 286 : 280;
   return kind === "battle" ? 248 : 248;
 }
