@@ -81,7 +81,7 @@ export function NyanoPage() {
 
   const copyWithToast = async (label: string, text: string) => {
     await writeClipboardText(text);
-    toast.success("Copied", label);
+    toast.success("コピーしました", label);
   };
 
   const openEtherscan = (tokenId: bigint) => {
@@ -101,14 +101,14 @@ export function NyanoPage() {
     try {
       const ids = await fetchMintedTokenIds(6, 0);
       if (ids.length === 0) {
-        toast.warn("No minted tokens", "totalSupply=0?");
+        toast.warn("Mint済みトークンなし", "totalSupply=0 の可能性があります");
         return;
       }
       const text = ids.map((x) => x.toString()).join(" ");
       setInput(text);
-      toast.success("Sample tokenIds loaded", text);
+      toast.success("サンプル tokenId を取得", text);
     } catch (e: unknown) {
-      toast.error("Sample load failed", errorMessage(e));
+      toast.error("サンプル取得失敗", errorMessage(e));
     } finally {
       setSampleLoading(false);
     }
@@ -146,8 +146,8 @@ export function NyanoPage() {
     try {
       const r = await pingRpcUrl(rpcDraft);
       setRpcProbe(r);
-      if (r.ok) toast.success("RPC OK", `chainId=${r.chainId ?? "?"}`);
-      else toast.warn("RPC NG", r.error ?? "unknown error");
+      if (r.ok) toast.success("RPC疎通OK", `chainId=${r.chainId ?? "?"}`);
+      else toast.warn("RPC疎通NG", r.error ?? "不明なエラー");
     } finally {
       setRpcProbing(false);
     }
@@ -157,9 +157,9 @@ export function NyanoPage() {
     try {
       setUserRpcOverride(rpcDraft);
       setRpcProbe(null);
-      toast.success("RPC switched", rpcLabel(rpcDraft));
+      toast.success("RPCを切替", rpcLabel(rpcDraft));
     } catch (e: unknown) {
-      toast.error("RPC switch failed", errorMessage(e));
+      toast.error("RPC切替失敗", errorMessage(e));
     }
   };
 
@@ -167,7 +167,7 @@ export function NyanoPage() {
     clearUserRpcOverride();
     setRpcDraft(getRpcUrl());
     setRpcProbe(null);
-    toast.success("RPC reset", "env/default に戻しました");
+    toast.success("RPCをリセット", "env/default に戻しました");
   };
 
   return (
@@ -183,7 +183,7 @@ export function NyanoPage() {
             </div>
             <div className="flex flex-wrap items-center gap-2">
               <button className="btn btn-soft" onClick={openNyanoMint} title="Nyano公式Mintサイトを開きます">
-                Open mint.nyano.ai
+                mint.nyano.ai を開く
               </button>
             </div>
           </div>
@@ -204,7 +204,7 @@ export function NyanoPage() {
 
             <div className="flex flex-wrap gap-2">
               <button className="btn btn-sm" onClick={loadSampleMinted} disabled={sampleLoading}>
-                {sampleLoading ? "Loading…" : "サンプル（存在するtokenId）を取得"}
+                {sampleLoading ? "読み込み中…" : "サンプル（存在するtokenId）を取得"}
               </button>
               {EXAMPLES.map((ex) => (
                 <button key={ex.label} className="btn btn-sm" onClick={() => setInput(ex.value)}>
@@ -217,9 +217,9 @@ export function NyanoPage() {
           </div>
 
           <div className="grid gap-2">
-            <div className="text-xs font-medium text-slate-600">Actions</div>
+            <div className="text-xs font-medium text-slate-600">操作</div>
             <button className="btn btn-primary" onClick={load} disabled={loading}>
-              {loading ? "Loading…" : "Load from chain"}
+              {loading ? "読み込み中…" : "チェーンから取得"}
             </button>
             {error ? <div className="callout callout-warn">{error}</div> : null}
 
@@ -242,7 +242,7 @@ export function NyanoPage() {
             </div>
 
             <div className="mt-2 grid gap-2">
-              <div className="text-xs font-medium text-slate-600">RPC Settings</div>
+              <div className="text-xs font-medium text-slate-600">RPC設定</div>
               <div className="callout callout-info text-xs">
                 「Load Cards / Load from chain」が <span className="font-mono">Failed to fetch</span> で落ちる場合、公開RPCのCORS/混雑のことが多いです。
                 ここでRPCを切り替えると改善することがあります。
@@ -265,13 +265,13 @@ export function NyanoPage() {
 
               <div className="flex flex-wrap gap-2">
                 <button className="btn btn-sm" onClick={testRpc} disabled={rpcProbing}>
-                  {rpcProbing ? "Testing…" : "Test"}
+                  {rpcProbing ? "検査中…" : "接続テスト"}
                 </button>
                 <button className="btn btn-primary btn-sm" onClick={applyRpc} disabled={!rpcDraft.trim()}>
-                  Use this RPC
+                  このRPCを使う
                 </button>
                 <button className="btn btn-soft btn-sm" onClick={resetRpc} disabled={!userOverride}>
-                  Reset
+                  リセット
                 </button>
               </div>
 
@@ -282,7 +282,7 @@ export function NyanoPage() {
                   </div>
                 ) : (
                   <div className="callout callout-warn text-xs">
-                    ❌ NG: <span className="font-mono">{rpcProbe.error ?? "unknown error"}</span>
+                    ❌ NG: <span className="font-mono">{rpcProbe.error ?? "不明なエラー"}</span>
                   </div>
                 )
               ) : null}
@@ -353,18 +353,18 @@ export function NyanoPage() {
 
                     <div className="flex flex-wrap items-center gap-2">
                       <button className="btn" onClick={() => copyWithToast("CardData", stringifyWithBigInt(it.data.card))}>
-                        Copy CardData JSON
+                        CardData JSONをコピー
                       </button>
                       <button className="btn" onClick={() => copyWithToast("tokenId", it.tokenId.toString())}>
-                        Copy tokenId
+                        tokenIdをコピー
                       </button>
                       <button className="btn btn-sm" onClick={() => copyWithToast("owner", it.data.owner)}>
-                        Copy owner
+                        ownerをコピー
                       </button>
                     </div>
                   </>
                 ) : (
-                  <div className="callout callout-warn">Error: {it.error}</div>
+                  <div className="callout callout-warn">エラー: {it.error}</div>
                 )}
               </div>
             </div>

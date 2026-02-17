@@ -68,9 +68,9 @@ export function AppLayout() {
 
   const mintFooterLinks = React.useMemo(
     () => [
-      { to: appendThemeToPath("/playground", theme), label: "Playground" },
-      { to: appendThemeToPath("/nyano", theme), label: "Card Data" },
-      { to: appendThemeToPath("/rulesets", theme), label: "Rulesets" },
+      { to: appendThemeToPath("/playground", theme), label: "プレイグラウンド" },
+      { to: appendThemeToPath("/nyano", theme), label: "カードデータ" },
+      { to: appendThemeToPath("/rulesets", theme), label: "ルールセット" },
     ],
     [theme],
   );
@@ -131,7 +131,7 @@ export function AppLayout() {
               </Link>
 
               <nav className="flex flex-wrap items-center gap-3 md:gap-4">
-                <NavGroup title="Play">
+                <NavGroup title="プレイ">
                   <NavItem to="/arena" label="Arena" emoji="⚔️" />
                   <NavItem to="/events" label="Events" emoji="🏆" />
                   <NavItem to="/decks" label="Decks" emoji="🃏" />
@@ -139,7 +139,7 @@ export function AppLayout() {
 
                 <div className="hidden md:block w-px h-5 bg-surface-200" />
 
-                <NavGroup title="Watch">
+                <NavGroup title="観戦">
                   <NavItem to="/replay" label="Replay" emoji="📼" />
                   <NavItem to="/stream" label="Stream" emoji="📺" />
                 </NavGroup>
@@ -169,11 +169,11 @@ export function AppLayout() {
                 </span>
               </div>
               <div className="flex flex-wrap items-center gap-4 text-[11px] text-surface-400">
-                <Link to="/playground" className="hover:text-surface-600 transition-colors no-underline">Playground</Link>
-                <Link to="/nyano" className="hover:text-surface-600 transition-colors no-underline">Card Data</Link>
-                <Link to="/rulesets" className="hover:text-surface-600 transition-colors no-underline">Rulesets</Link>
+                <Link to="/playground" className="hover:text-surface-600 transition-colors no-underline">プレイグラウンド</Link>
+                <Link to="/nyano" className="hover:text-surface-600 transition-colors no-underline">カードデータ</Link>
+                <Link to="/rulesets" className="hover:text-surface-600 transition-colors no-underline">ルールセット</Link>
                 <span className="text-surface-300">·</span>
-                <span>deterministic · community-driven</span>
+                <span>決定論 · コミュニティ主導</span>
               </div>
             </div>
           </footer>}

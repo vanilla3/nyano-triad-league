@@ -26,24 +26,24 @@ describe("replayStepProgress", () => {
 
 describe("replayStepStatusText", () => {
   it("formats setup and turn labels", () => {
-    expect(replayStepStatusText(0)).toBe("Initial board state");
-    expect(replayStepStatusText(7)).toBe("After turn 7");
+    expect(replayStepStatusText(0)).toBe("初期盤面");
+    expect(replayStepStatusText(7)).toBe("7手目の後");
   });
 });
 
 describe("replayPhaseInfo", () => {
   it("returns dynamic phases with default triad length", () => {
-    expect(replayPhaseInfo(0, 9)).toEqual({ label: "Setup", tone: "setup" });
-    expect(replayPhaseInfo(2, 9)).toEqual({ label: "Opening", tone: "opening" });
-    expect(replayPhaseInfo(5, 9)).toEqual({ label: "Midgame", tone: "mid" });
-    expect(replayPhaseInfo(8, 9)).toEqual({ label: "Endgame", tone: "end" });
-    expect(replayPhaseInfo(9, 9)).toEqual({ label: "Final", tone: "final" });
+    expect(replayPhaseInfo(0, 9)).toEqual({ label: "準備", tone: "setup" });
+    expect(replayPhaseInfo(2, 9)).toEqual({ label: "序盤", tone: "opening" });
+    expect(replayPhaseInfo(5, 9)).toEqual({ label: "中盤", tone: "mid" });
+    expect(replayPhaseInfo(8, 9)).toEqual({ label: "終盤", tone: "end" });
+    expect(replayPhaseInfo(9, 9)).toEqual({ label: "終局", tone: "final" });
   });
 
   it("adapts when stepMax is shorter", () => {
-    expect(replayPhaseInfo(1, 3)).toEqual({ label: "Opening", tone: "opening" });
-    expect(replayPhaseInfo(2, 3)).toEqual({ label: "Midgame", tone: "mid" });
-    expect(replayPhaseInfo(3, 3)).toEqual({ label: "Final", tone: "final" });
+    expect(replayPhaseInfo(1, 3)).toEqual({ label: "序盤", tone: "opening" });
+    expect(replayPhaseInfo(2, 3)).toEqual({ label: "中盤", tone: "mid" });
+    expect(replayPhaseInfo(3, 3)).toEqual({ label: "終局", tone: "final" });
   });
 });
 

@@ -11,10 +11,10 @@ export type ReplayStepHighlight = {
 export type ReplayHighlightSummary = Record<ReplayHighlightKind, number>;
 
 const HIGHLIGHT_KIND_LABELS: Record<ReplayHighlightKind, string> = {
-  big_flip: "Big Flip",
-  chain: "Chain",
-  combo: "Combo",
-  warning: "Warning",
+  big_flip: "大量反転",
+  chain: "連鎖",
+  combo: "コンボ",
+  warning: "警告",
 };
 
 export function detectReplayHighlights(
@@ -30,15 +30,15 @@ export function detectReplayHighlights(
     const warningTriggered = Boolean(turn.warningTriggered);
 
     if (flipCount >= 3) {
-      highlights.push({ step, kind: "big_flip", label: `${flipCount} flips` });
+      highlights.push({ step, kind: "big_flip", label: `${flipCount}枚反転` });
     } else if (hasChain) {
-      highlights.push({ step, kind: "chain", label: "Chain" });
+      highlights.push({ step, kind: "chain", label: "連鎖" });
     } else if (comboEffect !== "none") {
       highlights.push({ step, kind: "combo", label: comboEffect });
     }
 
     if (warningTriggered) {
-      highlights.push({ step, kind: "warning", label: "Warning!" });
+      highlights.push({ step, kind: "warning", label: "警告!" });
     }
   }
   return highlights;

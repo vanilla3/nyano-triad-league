@@ -9,10 +9,10 @@ import { MINT_PAGE_GUIDES } from "@/lib/mint_page_guides";
 import { appendThemeToPath, resolveAppTheme } from "@/lib/theme";
 
 const DIFFICULTIES = [
-  { key: "easy", ja: "はじめて", en: "Easy", hint: "Learn basics", icon: "rules" as const },
-  { key: "normal", ja: "ふつう", en: "Normal", hint: "Balanced", icon: "arena" as const },
-  { key: "hard", ja: "つよい", en: "Hard", hint: "Think ahead", icon: "match" as const },
-  { key: "expert", ja: "めっちゃつよい", en: "Expert", hint: "Max challenge", icon: "sparkle" as const },
+  { key: "easy", ja: "はじめて", en: "Easy", hint: "基本を学ぶ", icon: "rules" as const },
+  { key: "normal", ja: "ふつう", en: "Normal", hint: "バランス型", icon: "arena" as const },
+  { key: "hard", ja: "つよい", en: "Hard", hint: "先読み重視", icon: "match" as const },
+  { key: "expert", ja: "めっちゃつよい", en: "Expert", hint: "最高難度", icon: "sparkle" as const },
 ] as const;
 
 type DifficultyKey = (typeof DIFFICULTIES)[number]["key"];
@@ -64,20 +64,20 @@ export function ArenaPage() {
             <MintTitleText as="h2" className="mint-arena-banner__title">
               Nyano Triad League Arena
             </MintTitleText>
-            <p className="mint-arena-banner__subtitle">Pick a difficulty, hit Play Now, and start in seconds.</p>
+            <p className="mint-arena-banner__subtitle">難易度を選んで、すぐに対戦を始めよう。</p>
           </div>
         </GlassPanel>
 
         <GlassPanel as="section" variant="panel" className="mint-arena-quickplay">
-          <div className="mint-arena-quickplay__header">Quick Play</div>
+          <div className="mint-arena-quickplay__header">クイック対戦</div>
           <MintPressable to={quickPlayUrl} tone="primary" size="lg" fullWidth>
-            Play Now
+            今すぐ遊ぶ
           </MintPressable>
           <MintPressable to={quickStageUrl} tone="soft" fullWidth>
             Pixi Stage
           </MintPressable>
           <Link to={themed("/events")} className="mint-arena-quickplay__link">
-            Open Events
+            Eventsを開く
           </Link>
         </GlassPanel>
       </section>

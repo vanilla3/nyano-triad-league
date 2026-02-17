@@ -46,11 +46,11 @@ function toCardsMap(bundles: Map<bigint, { card: CardData }>): Map<bigint, CardD
 const STRATEGIES: DeckStrategy[] = ["balanced", "aggressive", "defensive", "janken_mix"];
 
 const FILTER_PRESETS = [
-  { id: "all", label: "All", hand: -1 as const, minEdgeSum: 0 },
-  { id: "attacker", label: "Attacker", hand: 0 as const, minEdgeSum: 0 },
-  { id: "defender", label: "Defender", hand: 2 as const, minEdgeSum: 0 },
-  { id: "power", label: "Power", hand: -1 as const, minEdgeSum: 27 },
-  { id: "other", label: "Other", hand: 1 as const, minEdgeSum: 0 },
+  { id: "all", label: "すべて", hand: -1 as const, minEdgeSum: 0 },
+  { id: "attacker", label: "アタッカー", hand: 0 as const, minEdgeSum: 0 },
+  { id: "defender", label: "ディフェンダー", hand: 2 as const, minEdgeSum: 0 },
+  { id: "power", label: "高火力", hand: -1 as const, minEdgeSum: 27 },
+  { id: "other", label: "その他", hand: 1 as const, minEdgeSum: 0 },
 ] as const;
 
 type FilterPresetId = (typeof FILTER_PRESETS)[number]["id"];
@@ -156,14 +156,14 @@ export function DecksPage() {
     }
 
     const deck = upsertDeck({ id: editingId ?? undefined, name, tokenIds });
-    toast.success("Saved deck", deck.name);
+    toast.success("デッキを保存しました", deck.name);
     refresh();
     setEditingId(deck.id);
   };
 
   const copy = async (label: string, text: string) => {
     await writeClipboardText(text);
-    toast.success("Copied", label);
+    toast.success("コピーしました", label);
   };
 
   const doExportAll = async () => {
@@ -175,7 +175,7 @@ export function DecksPage() {
     try {
       const { imported, skipped } = importDecksJson(importText);
       refresh();
-      toast.success("Imported decks", `imported=${imported}, skipped=${skipped}`);
+      toast.success("デッキを取り込みました", `imported=${imported}, skipped=${skipped}`);
     } catch (e) {
       setError(errorMessage(e));
     }
@@ -212,7 +212,7 @@ export function DecksPage() {
       { to: themed("/events"), label: "Events", icon: "events" as const },
       { to: themed("/replay"), label: "Replay", icon: "replay" as const },
       { to: themed("/stream"), label: "Stream", icon: "stream" as const },
-      { to: themed("/"), label: "Settings", icon: "settings" as const },
+      { to: themed("/"), label: "設定", icon: "settings" as const },
     ],
     [themed],
   );
@@ -221,7 +221,7 @@ export function DecksPage() {
     <div className="mint-decks-screen">
       <section className="mint-decks-header">
         <MintTitleText as="h2" className="mint-decks-header__title">
-          Nyano Triad League - Deck Builder
+          Nyano Triad League - デッキビルダー (Deck Builder)
         </MintTitleText>
         <MintTabNav items={tabs} className="mint-decks-header__tabs" />
       </section>
@@ -229,16 +229,16 @@ export function DecksPage() {
       <section className="mint-decks-layout">
         <aside className="mint-decks-left">
           <GlassPanel variant="panel" className="mint-decks-panel">
-            <MintTitleText as="h3" className="mint-decks-panel__title">Deck Stats</MintTitleText>
+            <MintTitleText as="h3" className="mint-decks-panel__title">デッキ統計</MintTitleText>
             <div className="mint-decks-stats">
-              <div><span>Total Decks</span><strong>{decks.length}</strong></div>
-              <div><span>Total Cards</span><strong>{deckCardTotal}</strong></div>
-              <div><span>Unique Cards</span><strong>{uniqueTokenCount}</strong></div>
+              <div><span>デッキ数</span><strong>{decks.length}</strong></div>
+              <div><span>カード総数</span><strong>{deckCardTotal}</strong></div>
+              <div><span>ユニークカード数</span><strong>{uniqueTokenCount}</strong></div>
             </div>
           </GlassPanel>
 
           <GlassPanel variant="panel" className="mint-decks-panel">
-            <MintTitleText as="h3" className="mint-decks-panel__title">Glass Filter</MintTitleText>
+            <MintTitleText as="h3" className="mint-decks-panel__title">フィルター</MintTitleText>
             <div className="mint-decks-filters">
               {FILTER_PRESETS.map((filter) => (
                 <button
@@ -257,7 +257,7 @@ export function DecksPage() {
 
           {gameIndex ? (
             <GlassPanel variant="panel" className="mint-decks-panel">
-              <MintTitleText as="h3" className="mint-decks-panel__title">Quick Deck</MintTitleText>
+              <MintTitleText as="h3" className="mint-decks-panel__title">おすすめデッキ</MintTitleText>
               <div className="mint-decks-quickdeck">
                 {STRATEGIES.map((strategy) => (
                   <MintPressable
@@ -273,7 +273,7 @@ export function DecksPage() {
                         memo: deck.memo,
                       });
                       refresh();
-                      toast.success("Deck created", `${strategyLabel(strategy)} Deck`);
+                      toast.success("デッキを作成しました", `${strategyLabel(strategy)} Deck`);
                     }}
                   >
                     {strategyLabel(strategy)}
@@ -284,10 +284,10 @@ export function DecksPage() {
           ) : null}
 
           <GlassPanel variant="panel" className="mint-decks-panel">
-            <MintTitleText as="h3" className="mint-decks-panel__title">Import / Export</MintTitleText>
+            <MintTitleText as="h3" className="mint-decks-panel__title">取り込み / 書き出し</MintTitleText>
             <div className="mint-decks-import-export">
               <MintPressable size="sm" tone="soft" onClick={doExportAll}>
-                Export JSON
+                JSONを書き出し
               </MintPressable>
               <textarea
                 className="mint-decks-textarea"
@@ -296,7 +296,7 @@ export function DecksPage() {
                 placeholder='[{"id":"...","name":"...","tokenIds":["1","2","3","4","5"]}]'
               />
               <MintPressable size="sm" tone="primary" onClick={doImport}>
-                Import
+                取り込み
               </MintPressable>
             </div>
           </GlassPanel>
@@ -306,12 +306,12 @@ export function DecksPage() {
           <GlassPanel variant="panel" className="mint-decks-panel mint-decks-form-panel">
             <div className="mint-decks-form-grid">
               <label className="mint-decks-label">
-                Deck name
+                デッキ名
                 <input
                   className="mint-decks-input"
                   value={name}
                   onChange={(event) => setName(event.target.value)}
-                  placeholder="My Deck"
+                  placeholder="マイデッキ (My Deck)"
                 />
               </label>
 
@@ -328,13 +328,13 @@ export function DecksPage() {
               <div className="mint-decks-form-actions">
                 <MintPressable tone="primary" onClick={doSave}>
                   <MintIcon name="save" size={16} />
-                  <span>Save Deck</span>
+                  <span>デッキ保存 (Save Deck)</span>
                 </MintPressable>
                 <MintPressable tone="soft" onClick={doPreview} disabled={previewLoading}>
-                  {previewLoading ? "Loading..." : "Preview Cards"}
+                  {previewLoading ? "読み込み中..." : "カードを確認"}
                 </MintPressable>
                 <MintPressable tone="ghost" onClick={resetForm}>
-                  Reset
+                  リセット
                 </MintPressable>
               </div>
             </div>
@@ -352,11 +352,11 @@ export function DecksPage() {
 
           <GlassPanel variant="panel" className="mint-decks-panel mint-decks-browser-panel">
             <div className="mint-decks-browser-header">
-              <MintTitleText as="h3" className="mint-decks-panel__title">Card Browser</MintTitleText>
-              <span className="mint-decks-browser-filter">Filter: {filterPreset.label}</span>
+              <MintTitleText as="h3" className="mint-decks-panel__title">カードブラウザ</MintTitleText>
+              <span className="mint-decks-browser-filter">フィルター: {filterPreset.label}</span>
             </div>
             {indexLoading ? (
-              <div className="mint-decks-loading">Loading game index...</div>
+              <div className="mint-decks-loading">game index を読み込み中...</div>
             ) : gameIndex ? (
               <CardBrowser
                 key={`browser-${selectedFilter}`}
@@ -368,12 +368,12 @@ export function DecksPage() {
                     const trimmed = previous.trim();
                     return trimmed.length > 0 ? `${trimmed}, ${tokenId}` : tokenId;
                   });
-                  toast.info("Added", `Token #${tokenId} added to form`);
+                  toast.info("追加しました", `Token #${tokenId} をフォームへ追加`);
                 }}
               />
             ) : (
               <div className="mint-decks-loading">
-                Game index not available. Place <code>index.v1.json</code> in <code>/game/</code>.
+                game index が利用できません。<code>/game/</code> に <code>index.v1.json</code> を配置してください。
               </div>
             )}
           </GlassPanel>
@@ -381,7 +381,7 @@ export function DecksPage() {
 
         <aside className="mint-decks-right">
           <GlassPanel variant="panel" className="mint-decks-panel mint-decks-summary">
-            <MintTitleText as="h3" className="mint-decks-panel__title">Deck Summary</MintTitleText>
+            <MintTitleText as="h3" className="mint-decks-panel__title">デッキ概要</MintTitleText>
             <div className="mint-decks-summary__cards">
               {selectedCardMap && selectedTokenIds.length > 0 ? (
                 selectedTokenIds.map((tokenId) => {
@@ -397,12 +397,12 @@ export function DecksPage() {
               )}
             </div>
             <MintPressable tone="primary" onClick={doSave} fullWidth>
-              Save Deck
+              デッキ保存 (Save Deck)
             </MintPressable>
           </GlassPanel>
 
           <GlassPanel variant="panel" className="mint-decks-panel mint-decks-saved">
-            <MintTitleText as="h3" className="mint-decks-panel__title">Saved Decks</MintTitleText>
+            <MintTitleText as="h3" className="mint-decks-panel__title">保存済みデッキ</MintTitleText>
             {decks.length === 0 ? (
               <div className="mint-decks-saved__empty">デッキがまだありません。</div>
             ) : (
@@ -411,26 +411,26 @@ export function DecksPage() {
                   <GlassPanel key={deck.id} variant="card" className="mint-decks-saved__item">
                     <div className="mint-decks-saved__name">{deck.name}</div>
                     <div className="mint-decks-saved__meta">{deck.tokenIds.join(", ")}</div>
-                    <div className="mint-decks-saved__meta">updated: {formatDateShort(deck.updatedAt)}</div>
+                    <div className="mint-decks-saved__meta">更新: {formatDateShort(deck.updatedAt)}</div>
                     <div className="mint-decks-saved__actions">
-                      <MintPressable size="sm" tone="soft" onClick={() => loadDeckToForm(deck)}>Edit</MintPressable>
-                      <MintPressable size="sm" tone="soft" to={themed(`/match?a=${deck.id}&ui=mint`)}>Set as A</MintPressable>
-                      <MintPressable size="sm" tone="soft" to={themed(`/match?b=${deck.id}&ui=mint`)}>Set as B</MintPressable>
+                      <MintPressable size="sm" tone="soft" onClick={() => loadDeckToForm(deck)}>編集 (Edit)</MintPressable>
+                      <MintPressable size="sm" tone="soft" to={themed(`/match?a=${deck.id}&ui=mint`)}>Aに設定 (Set as A)</MintPressable>
+                      <MintPressable size="sm" tone="soft" to={themed(`/match?b=${deck.id}&ui=mint`)}>Bに設定 (Set as B)</MintPressable>
                       <MintPressable size="sm" tone="ghost" onClick={() => copy("Deck JSON", JSON.stringify(deck, null, 2))}>
-                        Copy
+                        JSONをコピー
                       </MintPressable>
                       <MintPressable
                         size="sm"
                         tone="ghost"
                         onClick={() => {
-                          if (!window.confirm(`Delete deck: ${deck.name}?`)) return;
+                          if (!window.confirm(`デッキを削除しますか: ${deck.name}`)) return;
                           deleteDeck(deck.id);
                           refresh();
-                          toast.success("Deleted deck", deck.name);
+                          toast.success("デッキを削除しました", deck.name);
                           if (editingId === deck.id) resetForm();
                         }}
                       >
-                        Delete
+                        削除 (Delete)
                       </MintPressable>
                     </div>
                   </GlassPanel>
@@ -438,7 +438,7 @@ export function DecksPage() {
               </div>
             )}
             <Link className="mint-decks-saved__quickplay" to={themed("/match?mode=guest&opp=vs_nyano_ai&ai=normal&rk=v2&ui=mint")}>
-              Quick Play（デッキ不要）
+              クイック対戦（デッキ不要）
             </Link>
           </GlassPanel>
         </aside>

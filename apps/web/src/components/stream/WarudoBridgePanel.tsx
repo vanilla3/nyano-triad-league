@@ -61,7 +61,7 @@ export const WarudoBridgePanel: React.FC<WarudoBridgePanelProps> = React.memo(fu
     <div className="mt-3 grid gap-3 md:grid-cols-2">
       <div className="rounded-xl border border-slate-200 bg-white px-3 py-2">
         <div className="flex items-center justify-between gap-2">
-          <div className="text-[11px] font-semibold text-slate-700">Nyano Warudo Bridge</div>
+          <div className="text-[11px] font-semibold text-slate-700">Nyano Warudo 連携</div>
           <div className="text-[11px] text-slate-500 font-mono">POST /v1/snapshots</div>
         </div>
         <div className="mt-2 space-y-2">
@@ -87,7 +87,7 @@ export const WarudoBridgePanel: React.FC<WarudoBridgePanelProps> = React.memo(fu
                 disabled={settingsLocked}
                 aria-label="Auto-send state_json on vote start"
               />
-              vote start → state_json (strictAllowed lock)
+              投票開始時 → state_json (strictAllowed lock)
             </label>
 
             <label className="flex items-center gap-2 text-xs text-slate-700">
@@ -98,7 +98,7 @@ export const WarudoBridgePanel: React.FC<WarudoBridgePanelProps> = React.memo(fu
                 disabled={settingsLocked}
                 aria-label="Auto-send ai_prompt on vote start"
               />
-              vote start → ai_prompt (optional)
+              投票開始時 → ai_prompt (任意)
             </label>
 
             <label className="flex items-center gap-2 text-xs text-slate-700">
@@ -109,7 +109,7 @@ export const WarudoBridgePanel: React.FC<WarudoBridgePanelProps> = React.memo(fu
                 disabled={settingsLocked}
                 aria-label="Auto-refresh state_json during vote"
               />
-              vote open → refresh state_json on state updates
+              投票受付中 → state更新時に state_json を再送
             </label>
 
             <label className="flex items-center gap-2 text-xs text-slate-700">
@@ -120,7 +120,7 @@ export const WarudoBridgePanel: React.FC<WarudoBridgePanelProps> = React.memo(fu
                 disabled={settingsLocked}
                 aria-label="Auto-send state_json on vote end"
               />
-              vote end → state_json
+              投票終了時 → state_json
             </label>
           </div>
 
@@ -130,39 +130,39 @@ export const WarudoBridgePanel: React.FC<WarudoBridgePanelProps> = React.memo(fu
 
           <div className="mt-2 flex flex-wrap items-center gap-2">
             <button className="btn btn-sm btn-primary" onClick={onSendAiPrompt} aria-label="Send AI prompt to Warudo">
-              Send ai_prompt
+              ai_prompt を送信
             </button>
             <button className="btn btn-sm" onClick={onSendStateJson} aria-label="Send state JSON to Warudo">
-              Send state_json
+              state_json を送信
             </button>
           </div>
 
           <div className="mt-2 rounded-lg border border-slate-200 bg-slate-50 px-2 py-2">
-            <div className="text-[11px] font-semibold text-slate-700">Samples (share to nyano-warudo)</div>
+            <div className="text-[11px] font-semibold text-slate-700">サンプル出力（nyano-warudo 共有用）</div>
             <div className="mt-1 text-[11px] text-slate-500">
               &quot;実戦の1ゲーム分サンプル&quot; を渡す用途。payload は右の欄にも残ります。
             </div>
             <div className="mt-2 flex flex-wrap items-center gap-2">
               <button className="btn btn-sm" onClick={onDownloadStateJson}>
-                Download state_json
+                state_json をダウンロード
               </button>
               <button className="btn btn-sm" onClick={onDownloadTranscript}>
-                Download transcript
+                transcript をダウンロード
               </button>
               <button className="btn btn-sm" onClick={onDownloadAiPrompt}>
-                Download ai_prompt
+                ai_prompt をダウンロード
               </button>
             </div>
           </div>
 
           <div className="mt-2 text-[11px] text-slate-500">
-            viewer cmd format: <span className="font-mono">#triad A2-&gt;B2 wm=C1</span>
+            視聴者コマンド形式: <span className="font-mono">#triad A2-&gt;B2 wm=C1</span>
           </div>
         </div>
       </div>
 
       <div className="rounded-xl border border-slate-200 bg-white px-3 py-2">
-        <div className="text-[11px] font-semibold text-slate-700">Last payload / result</div>
+        <div className="text-[11px] font-semibold text-slate-700">直近 payload / result</div>
         <div className="mt-2 space-y-2">
           <CopyField label="payload (content)" value={lastBridgePayload || "—"} />
           <CopyField label="result" value={lastBridgeResult || "—"} />

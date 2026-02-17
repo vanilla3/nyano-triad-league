@@ -38,9 +38,9 @@ test.describe("Replay ruleset fallback guardrails", () => {
     await page.goto(`/replay?z=${zParam}&rk=classic_custom&cr=2`);
 
     await expect(page.getByText("Replay from transcript")).toBeVisible({ timeout: 10_000 });
-    await expect(page.getByText("URL fallback (classic: reverse)").first()).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByText(/URL fallback[\(（]classic: reverse[\)）]/).first()).toBeVisible({ timeout: 10_000 });
     await expect(
-      page.getByText("URL classic settings do not match transcript rulesetId. Replay is using URL fallback rules."),
+      page.getByText(/(URL classic settings do not match transcript rulesetId\. Replay is using URL fallback rules\.)|(URL の classic 設定が transcript rulesetId と一致しません。URL fallback ルールで再生しています。)/),
     ).toBeVisible({ timeout: 10_000 });
   });
 });

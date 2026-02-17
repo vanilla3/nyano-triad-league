@@ -39,14 +39,14 @@ export function StartPage() {
     },
     {
       id: "start_first_match",
-      title: "2) ゲストで戦闘を開始する",
+      title: "2) ゲストで対戦を開始する",
       icon: "arena",
       to: themed("/match?mode=guest&opp=vs_nyano_ai&ai=normal&rk=v2&ui=mint"),
       action: "今すぐ対戦",
     },
     {
       id: "commit_first_move",
-      title: "3) Match で本初の手を確定する",
+      title: "3) Match で最初の手を確定する",
       icon: "match",
       to: themed("/match?mode=guest&opp=vs_nyano_ai&ai=normal&rk=v2&ui=mint"),
       action: "Matchへ",
@@ -75,7 +75,7 @@ export function StartPage() {
               <MintTitleText as="h3" className="mint-start-card__title">
                 {step.title}
               </MintTitleText>
-              <div className="mint-start-card__status">{done ? "DONE" : "TODO"}</div>
+              <div className="mint-start-card__status">{done ? "完了" : "未完了"}</div>
               <MintPressable
                 to={step.to}
                 tone={done ? "soft" : "primary"}
@@ -106,7 +106,7 @@ export function StartPage() {
             </MintPressable>
           </div>
           <div className="mint-start-footer__state">
-            {isDone ? "Quickstart completed." : "Complete all 3 steps to finish quickstart."}
+            {isDone ? "準備完了。Decks / Arena で遊べます。" : "3ステップを完了すると準備完了です。"}
           </div>
           <Link to={themed("/")} className="mint-start-footer__back">
             Homeへ戻る

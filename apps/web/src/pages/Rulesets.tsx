@@ -102,7 +102,7 @@ export function RulesetsPage() {
 
   const selectedSummary = selectedRulesetKey
     ? getRulesetMeta(selectedRulesetKey).summary
-    : "Select a ruleset to show a quick summary.";
+    : "ルールセットを選ぶと要約が表示されます。";
 
   const notes = Array.isArray(OFFICIAL.notes) ? OFFICIAL.notes : [];
 
@@ -119,8 +119,8 @@ export function RulesetsPage() {
   const copyWithToast = React.useCallback(
     async (label: string, text: string) => {
       const ok = await writeClipboardText(text);
-      if (ok) toast.success("Copied", label);
-      else toast.warn("Copy failed", label);
+      if (ok) toast.success("コピーしました", label);
+      else toast.warn("コピー失敗", label);
     },
     [toast],
   );
@@ -131,16 +131,16 @@ export function RulesetsPage() {
         <div className="card-hd">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
-              <div className="text-base font-semibold">Ruleset Registry</div>
+              <div className="text-base font-semibold">ルールセット一覧 (Ruleset Registry)</div>
               <div className="text-xs text-slate-500">
-                Find recommended presets quickly and jump directly into a match.
+                おすすめプリセットを素早く探して、そのまま対戦できます。
               </div>
             </div>
             <div
               className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600"
               data-testid="rulesets-selected-summary"
             >
-              <div className="font-medium text-slate-900">Selected summary</div>
+              <div className="font-medium text-slate-900">選択中の要約</div>
               <div className="mt-1">{selectedSummary}</div>
             </div>
           </div>
@@ -149,25 +149,25 @@ export function RulesetsPage() {
         <div className="card-bd grid gap-4">
           <div className="grid gap-2 md:grid-cols-3">
             <div className="grid gap-2 md:col-span-2">
-              <div className="text-xs font-medium text-slate-600">Filter</div>
+              <div className="text-xs font-medium text-slate-600">絞り込み</div>
               <input
                 className="input"
                 value={q}
                 onChange={(event) => setParam("q", event.target.value || null)}
-                placeholder="name / rulesetId / key"
+                placeholder="name / rulesetId / key で検索"
                 aria-label="Ruleset filter"
                 data-testid="rulesets-filter-input"
               />
             </div>
             <div className="grid gap-2">
-              <div className="text-xs font-medium text-slate-600">Count</div>
+              <div className="text-xs font-medium text-slate-600">件数</div>
               <div className="callout callout-muted text-sm">
                 <div className="flex items-center justify-between">
-                  <span>shown</span>
+                  <span>表示中</span>
                   <span className="font-medium">{filtered.length}</span>
                 </div>
                 <div className="mt-1 flex items-center justify-between text-xs text-slate-500">
-                  <span>total</span>
+                  <span>全体</span>
                   <span>{rows.length}</span>
                 </div>
               </div>
@@ -188,7 +188,7 @@ export function RulesetsPage() {
         <section className="card" data-testid="rulesets-recommended-section">
           <div className="card-hd flex items-center justify-between">
             <div className="text-base font-semibold">おすすめ</div>
-            <div className="text-xs text-slate-500">Pick one and start immediately</div>
+            <div className="text-xs text-slate-500">選んですぐに対戦</div>
           </div>
           <div className="card-bd grid gap-3 md:grid-cols-3">
             {featuredRows.map((row) => {
@@ -213,7 +213,7 @@ export function RulesetsPage() {
                     </div>
                     {active ? (
                       <span className="rounded-full border border-emerald-300 bg-emerald-100 px-2 py-0.5 text-[10px] font-semibold text-emerald-700">
-                        Selected
+                        選択中
                       </span>
                     ) : null}
                   </div>
@@ -242,7 +242,7 @@ export function RulesetsPage() {
                       onClick={() => setParam("rk", row.key)}
                       data-testid={`rulesets-recommended-select-${row.key}`}
                     >
-                      Select
+                      選択
                     </button>
                   </div>
                 </article>
@@ -256,7 +256,7 @@ export function RulesetsPage() {
         <section className="card" data-testid="rulesets-classic-section">
           <div className="card-hd flex items-center justify-between">
             <div className="text-base font-semibold">Classic (Beta)</div>
-            <div className="text-xs text-slate-500">Preset shortcuts for classic rules exploration</div>
+            <div className="text-xs text-slate-500">classic ルール探索向けのプリセット</div>
           </div>
           <div className="card-bd grid gap-3 md:grid-cols-3">
             {CLASSIC_KEYS.map((key) => {
@@ -278,7 +278,7 @@ export function RulesetsPage() {
                     </div>
                     {active ? (
                       <span className="rounded-full border border-amber-300 bg-amber-100 px-2 py-0.5 text-[10px] font-semibold text-amber-700">
-                        Selected
+                        選択中
                       </span>
                     ) : null}
                   </div>
@@ -299,7 +299,7 @@ export function RulesetsPage() {
                       このルールで対戦
                     </Link>
                     <button className="btn btn-sm" onClick={() => setParam("rk", key)}>
-                      Select
+                      選択
                     </button>
                   </div>
                 </article>
@@ -311,19 +311,19 @@ export function RulesetsPage() {
 
       <section className="card">
         <div className="card-hd flex items-center justify-between">
-          <div className="text-base font-semibold">Ruleset List</div>
-          <div className="text-xs text-slate-500" data-testid="rulesets-list-count">{filtered.length} items</div>
+          <div className="text-base font-semibold">ルールセット一覧</div>
+          <div className="text-xs text-slate-500" data-testid="rulesets-list-count">{filtered.length} 件</div>
         </div>
 
         <div className="card-bd overflow-x-auto">
           <table className="w-full text-left text-sm" data-testid="rulesets-list-table">
             <thead className="text-xs text-slate-500">
               <tr>
-                <th className="py-2 pr-3">name</th>
-                <th className="py-2 pr-3">summary</th>
+                <th className="py-2 pr-3">名前</th>
+                <th className="py-2 pr-3">要約</th>
                 <th className="py-2 pr-3">rulesetId</th>
                 <th className="py-2 pr-3">configHash</th>
-                <th className="py-2 pr-3">actions</th>
+                <th className="py-2 pr-3">操作</th>
               </tr>
             </thead>
             <tbody className="align-top">
@@ -349,7 +349,7 @@ export function RulesetsPage() {
 
                     <td className="py-3 pr-3">
                       <div className="text-xs text-slate-700">
-                        {meta?.summary ?? "No local summary for this rulesetId."}
+                        {meta?.summary ?? "この rulesetId のローカル要約は未登録です。"}
                       </div>
                     </td>
 
@@ -373,7 +373,7 @@ export function RulesetsPage() {
                           </Link>
                         ) : (
                           <span className="rounded-full border border-slate-200 bg-slate-50 px-2 py-1 text-[10px] text-slate-500">
-                            Match link unavailable
+                            Matchリンク未対応
                           </span>
                         )}
                         {row.key ? (
@@ -382,20 +382,20 @@ export function RulesetsPage() {
                             onClick={() => setParam("rk", row.key)}
                             data-testid={`rulesets-list-select-${row.key}`}
                           >
-                            Select
+                            選択
                           </button>
                         ) : null}
                         <button
                           className="btn btn-sm"
                           onClick={() => copyWithToast("rulesetId", row.rulesetId)}
                         >
-                          Copy rulesetId
+                          rulesetIdをコピー
                         </button>
                         <button
                           className="btn btn-sm"
                           onClick={() => copyWithToast("configHash", row.configHash)}
                         >
-                          Copy configHash
+                          configHashをコピー
                         </button>
                       </div>
                     </td>
@@ -406,7 +406,7 @@ export function RulesetsPage() {
           </table>
 
           {filtered.length === 0 ? (
-            <div className="mt-4 text-sm text-slate-600">No rulesets found.</div>
+            <div className="mt-4 text-sm text-slate-600">該当するルールセットが見つかりません。</div>
           ) : null}
         </div>
       </section>

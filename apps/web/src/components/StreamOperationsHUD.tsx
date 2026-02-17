@@ -226,7 +226,7 @@ export function StreamOperationsHUD({
         <div className="flex items-center justify-between px-4 py-2 border-b border-surface-100 bg-white/80 backdrop-blur-sm">
           <div className="flex items-center gap-2">
             <span className="text-sm font-display font-bold text-surface-800">
-              ⚡ Live Operations
+              ⚡ ライブ運用
             </span>
             {settingsLocked && (
               <span className="badge badge-sm bg-red-100 text-red-700 border-red-200">
@@ -235,7 +235,7 @@ export function StreamOperationsHUD({
             )}
             {voteOpen && (
               <span className="badge badge-solid badge-nyano badge-sm animate-pulse">
-                VOTE OPEN
+                投票受付中
               </span>
             )}
           </div>
@@ -277,12 +277,12 @@ export function StreamOperationsHUD({
         <div className="grid grid-cols-2 md:grid-cols-4 gap-px bg-surface-100">
           {/* Turn & Player */}
           <HUDCell
-            label="Turn"
+            label="ターン"
             primary={turn !== null ? `${turn}/9` : "—"}
             secondary={
               toPlay !== null
-                ? `${toPlay === 0 ? "A" : "B"} to play`
-                : "waiting"
+                ? `${toPlay === 0 ? "A" : "B"} の手番`
+                : "待機中"
             }
             accentColor={
               toPlay === 0
@@ -295,13 +295,13 @@ export function StreamOperationsHUD({
 
           {/* Controlled Side & Status */}
           <HUDCell
-            label="Control"
-            primary={controlledSide === 0 ? "Side A" : "Side B"}
+            label="操作側"
+            primary={controlledSide === 0 ? "A側" : "B側"}
             secondary={
               isControlledTurn
-                ? "✅ Your turn"
+                ? "✅ あなたの手番"
                 : toPlay !== null
-                  ? "⏳ Opponent"
+                  ? "⏳ 相手の手番"
                   : "—"
             }
             accentColor={isControlledTurn ? "nyano" : "surface"}
@@ -310,7 +310,7 @@ export function StreamOperationsHUD({
           {/* Allowlist */}
           <HUDCell
             label="strictAllowed"
-            primary={`${strictCount} moves`}
+            primary={`${strictCount} 手`}
             secondary={
               <span className="font-mono text-[10px]" title={allowlistHash}>
                 hash {allowlistHash}
@@ -321,7 +321,7 @@ export function StreamOperationsHUD({
 
           {/* Vote Status */}
           <HUDCell
-            label={voteOpen ? "Vote Timer" : "Vote Status"}
+            label={voteOpen ? "投票タイマー" : "投票状態"}
             primary={
               voteOpen
                 ? timeLeft !== null
@@ -332,11 +332,11 @@ export function StreamOperationsHUD({
             secondary={
               voteOpen ? (
                 <span>
-                  {totalVotes} vote{totalVotes !== 1 ? "s" : ""} · turn{" "}
+                  {totalVotes} 票 · ターン{" "}
                   {voteTurn ?? "?"}
                 </span>
               ) : (
-                "Start vote to begin"
+                "Start vote で開始"
               )
             }
             accentColor={voteOpen ? "nyano" : "surface"}
@@ -352,21 +352,21 @@ export function StreamOperationsHUD({
         {/* Secondary info row */}
         <div className="flex flex-wrap items-center gap-3 px-4 py-2 bg-white/60 border-t border-surface-100 text-xs text-surface-500">
           <span>
-            Empty cells:{" "}
+            空きセル:{" "}
             <span className="font-mono font-medium text-surface-700">
               {emptyCells.map(cellIndexToCoord).join(", ") || "—"}
             </span>
           </span>
           <span className="text-surface-200">|</span>
           <span>
-            Hand slots:{" "}
+            手札スロット:{" "}
             <span className="font-mono font-medium text-surface-700">
               {remainCards.map((i) => `A${i + 1}`).join(", ") || "—"}
             </span>
           </span>
           <span className="text-surface-200">|</span>
           <span>
-            WM remaining:{" "}
+            WM残り:{" "}
             <span className="font-mono font-medium text-surface-700">
               {wmRemaining}
             </span>
@@ -386,7 +386,7 @@ export function StreamOperationsHUD({
         {/* Board mini preview + log export */}
         <div className="flex items-center justify-between gap-3 border-t border-surface-100 px-4 py-1.5 bg-white/60">
           <div className="flex items-center gap-2">
-            <span className="text-[10px] font-semibold uppercase tracking-wider text-surface-400">Board</span>
+            <span className="text-[10px] font-semibold uppercase tracking-wider text-surface-400">盤面</span>
             <BoardMiniPreview board={miniBoard} lastCell={lastCell} />
           </div>
           {opsLog && opsLog.length > 0 && (
@@ -402,7 +402,7 @@ export function StreamOperationsHUD({
               }}
               title="Copy ops log to clipboard"
             >
-              Export log
+              ログ出力
             </button>
           )}
         </div>
@@ -422,12 +422,12 @@ export function StreamOperationsHUD({
 
 function LastErrorBanner({ error, onDismiss }: { error: PersistentError; onDismiss?: () => void }) {
   const ageSec = Math.max(0, Math.floor((Date.now() - error.timestampMs) / 1000));
-  const ageText = ageSec < 2 ? "just now" : ageSec < 60 ? `${ageSec}s ago` : `${Math.floor(ageSec / 60)}m ago`;
+  const ageText = ageSec < 2 ? "たった今" : ageSec < 60 ? `${ageSec}秒前` : `${Math.floor(ageSec / 60)}分前`;
 
   return (
     <div className="flex items-center gap-2 px-4 py-2 bg-red-50 border-b border-red-200 text-xs text-red-800">
       <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse shrink-0" />
-      <span className="font-semibold">Last Error</span>
+      <span className="font-semibold">直近エラー</span>
       <span className="truncate flex-1">{error.message}</span>
       <span className="text-red-500 shrink-0">{ageText}</span>
       {onDismiss && (
@@ -435,7 +435,7 @@ function LastErrorBanner({ error, onDismiss }: { error: PersistentError; onDismi
           type="button"
           className="ml-1 px-1.5 py-0.5 rounded text-red-600 hover:bg-red-100 font-bold"
           onClick={onDismiss}
-          title="Dismiss error"
+          title="エラーを閉じる"
         >
           ✕
         </button>
@@ -487,7 +487,7 @@ function HUDCell({
 
 function ExternalStatusRow({ result }: { result: ExternalResult }) {
   const ageSec = Math.max(0, Math.floor((Date.now() - result.timestampMs) / 1000));
-  const ageText = ageSec < 2 ? "just now" : ageSec < 60 ? `${ageSec}s ago` : `${Math.floor(ageSec / 60)}m ago`;
+  const ageText = ageSec < 2 ? "たった今" : ageSec < 60 ? `${ageSec}秒前` : `${Math.floor(ageSec / 60)}分前`;
 
   return (
     <div className={[
@@ -518,7 +518,7 @@ function ConnectionHealthRow({ health }: { health: ConnectionHealth }) {
   return (
     <div className="flex items-center gap-3 px-4 py-1.5 border-t border-surface-100 bg-white/60">
       <span className="text-[10px] font-semibold uppercase tracking-wider text-surface-400">
-        Health
+        連携状態
       </span>
       {dots.map((d) => (
         <div key={d.label} className="flex items-center gap-1">
@@ -550,7 +550,7 @@ function OpsLogRow({ entries }: { entries: OpsLogEntry[] }) {
   return (
     <details className="border-t border-surface-100">
       <summary className="flex items-center gap-2 px-4 py-1.5 bg-white/60 cursor-pointer text-[10px] font-semibold uppercase tracking-wider text-surface-400 select-none">
-        Ops Log ({entries.length})
+        操作ログ ({entries.length})
       </summary>
       <div className="px-4 py-1.5 bg-surface-50/50 space-y-0.5 max-h-32 overflow-y-auto">
         {recent.map((entry, i) => {

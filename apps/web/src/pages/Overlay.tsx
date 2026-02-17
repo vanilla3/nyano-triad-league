@@ -91,12 +91,12 @@ function nowMs() {
 function ageLabel(updatedAtMs: number): string {
   const delta = Math.max(0, nowMs() - updatedAtMs);
   const s = Math.floor(delta / 1000);
-  if (s < 1) return "now";
-  if (s < 60) return `${s}s ago`;
+  if (s < 1) return "たった今";
+  if (s < 60) return `${s}秒前`;
   const m = Math.floor(s / 60);
-  if (m < 60) return `${m}m ago`;
+  if (m < 60) return `${m}分前`;
   const h = Math.floor(m / 60);
-  return `${h}h ago`;
+  return `${h}時間前`;
 }
 
 function isTransparentBg(bg: string | null): boolean {
@@ -305,10 +305,10 @@ export function OverlayPage() {
 
   const sub =
     state?.status?.finished && winnerLabel
-      ? `Winner: ${winnerLabel}${Number.isFinite(tiles.a) && Number.isFinite(tiles.b) ? ` · tiles A:${tiles.a}/B:${tiles.b}` : ""}`
+      ? `勝者: ${winnerLabel}${Number.isFinite(tiles.a) && Number.isFinite(tiles.b) ? ` · タイル A:${tiles.a}/B:${tiles.b}` : ""}`
       : typeof state?.turn === "number"
-        ? `Turn ${state.turn}/9 · tiles A:${tiles.a}/B:${tiles.b}`
-        : "Waiting…";
+        ? `ターン ${state.turn}/9 · タイル A:${tiles.a}/B:${tiles.b}`
+        : "待機中…";
 
   const toPlay = React.useMemo(() => computeToPlay(state), [state]);
   const toPlayLabel = sideLabel(toPlay);
@@ -477,18 +477,18 @@ export function OverlayPage() {
                 🎥 Overlay · <span className="text-rose-600">{title}</span> {modeBadge}
               </div>
               <div className="text-[11px] text-slate-500">
-                {state?.updatedAtMs ? `Updated ${ageLabel(state.updatedAtMs)} · ` : null}
+                {state?.updatedAtMs ? `更新: ${ageLabel(state.updatedAtMs)} · ` : null}
                 {sub}
-                {matchIdShort ? <span> · match {matchIdShort}</span> : null}
+                {matchIdShort ? <span> · 対戦ID {matchIdShort}</span> : null}
               </div>
             </div>
 
             <div className="flex flex-wrap items-center gap-2">
               <a className="btn btn-sm no-underline" href={window.location.href} target="_blank" rel="noreferrer noopener">
-                Open
+                開く
               </a>
               <Link className="btn btn-sm no-underline" to="/stream">
-                Stream Studio
+                配信スタジオ
               </Link>
               <Link className="btn btn-sm no-underline" to="/match?ui=mint">
                 Match
@@ -503,7 +503,7 @@ export function OverlayPage() {
         {/* Stale data warning banner (Phase 0 stability) */}
         {state?.updatedAtMs && (Date.now() - state.updatedAtMs > 10_000) ? (
           <div className="mb-3 rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-xs font-semibold text-amber-700 animate-pulse">
-            ⚠ Data stale ({ageLabel(state.updatedAtMs)}) — check Match tab connection
+            ⚠ Data stale ({ageLabel(state.updatedAtMs)}) - Match タブの接続を確認してください
           </div>
         ) : null}
 
@@ -563,12 +563,12 @@ export function OverlayPage() {
                   ].join(" ")
               }>
                 <div className="flex items-center justify-between gap-2">
-                  <div className={controls ? "text-xs font-semibold text-slate-800" : "text-sm font-semibold text-slate-800"}>Last move</div>
+                  <div className={controls ? "text-xs font-semibold text-slate-800" : "text-sm font-semibold text-slate-800"}>直前の手</div>
                   {state?.updatedAtMs ? <span className={controls ? "text-xs text-slate-400" : "text-xs text-slate-400"}>{ageLabel(state.updatedAtMs)}</span> : null}
                 </div>
 
                 <div className={controls ? "mt-1 text-sm text-slate-700" : "mt-1 font-bold text-slate-800"} style={controls ? undefined : { fontSize: "var(--ol-turn, 16px)" }}>
-                  Turn {state.lastMove.turnIndex + 1}:{" "}
+                  ターン {state.lastMove.turnIndex + 1}:{" "}
                   <span className="font-semibold">{state.lastMove.by === 0 ? "A" : "B"}</span>{" "}
                   <span className="font-mono">
                     {toViewerMoveText({
@@ -585,7 +585,7 @@ export function OverlayPage() {
                 <div className="mt-2 flex flex-wrap items-center gap-2">
                   <span className="badge badge-sky">{flipBadgeLabel}</span>
                   {typeof state.lastMove.warningMarkCell === "number" ? <span className="badge badge-amber">MARK</span> : null}
-                  {flipCountLabel === 0 ? <span className="badge">NO FLIP</span> : null}
+                  {flipCountLabel === 0 ? <span className="badge">反転なし</span> : null}
                   {swingBadge}
 
                   {lastTurnSummary && lastTurnSummary.comboEffect !== "none" ? (
@@ -600,8 +600,8 @@ export function OverlayPage() {
                   ) : null}
 
                   {lastTurnSummary?.ignoreWarningMark ? <span className="badge badge-nyano">IGNORE MARK</span> : null}
-                  {lastTurnSummary?.warningTriggered ? <span className="badge badge-amber">TRIGGERED MARK</span> : null}
-                  {typeof lastTurnSummary?.warningPlaced === "number" ? <span className="badge badge-amber">PLACED MARK</span> : null}
+                  {lastTurnSummary?.warningTriggered ? <span className="badge badge-amber">MARK発動</span> : null}
+                  {typeof lastTurnSummary?.warningPlaced === "number" ? <span className="badge badge-amber">MARK設置</span> : null}
 
                   {lastTurnSummary && Array.isArray(lastTurnSummary.flips) && lastTurnSummary.flips.length > 0 ? (
                     <FlipTraceBadges flipTraces={lastTurnSummary.flips} limit={controls ? 4 : 6} />
@@ -619,13 +619,13 @@ export function OverlayPage() {
 
                 {typeof lastTurnSummary?.warningPlaced === "number" ? (
                   <div className="mt-1 text-xs text-slate-500">
-                    placed warning mark → <span className="font-mono">{cellIndexToCoord(lastTurnSummary.warningPlaced)}</span>
+                    設置した warning mark → <span className="font-mono">{cellIndexToCoord(lastTurnSummary.warningPlaced)}</span>
                   </div>
                 ) : null}
 
                 {density !== "minimal" && lastFlippedCells.length > 0 ? (
                   <div className="mt-1 text-xs text-slate-500">
-                    flipped: <span className="font-mono">{lastFlippedCells.map(cellIndexToCoord).join(", ")}</span>
+                    反転: <span className="font-mono">{lastFlippedCells.map(cellIndexToCoord).join(", ")}</span>
                   </div>
                 ) : null}
 
@@ -639,7 +639,7 @@ export function OverlayPage() {
                 {controls && lastTurnSummary && Array.isArray(lastTurnSummary.flips) && lastTurnSummary.flips.length > 0 ? (
                   <div className="mt-3 rounded-xl border border-slate-200 bg-white/60 px-3 py-2">
                     <div className="flex items-center justify-between gap-2">
-                      <div className="text-xs font-semibold text-slate-700">Flip traces</div>
+                      <div className="text-xs font-semibold text-slate-700">反転トレース</div>
                       <div className="text-xs text-slate-500">(debug)</div>
                     </div>
                     <FlipTraceDetailList flipTraces={lastTurnSummary.flips as FlipTraceV1[]} />
@@ -660,7 +660,7 @@ export function OverlayPage() {
                   ) : (
                     <NyanoAvatar size={controls ? 28 : avatarSize} expression="calm" />
                   )}
-                  <div className={controls ? "text-xs font-semibold text-slate-800" : "text-sm font-semibold text-slate-800"}>Now Playing</div>
+                  <div className={controls ? "text-xs font-semibold text-slate-800" : "text-sm font-semibold text-slate-800"}>対戦中 (Now Playing)</div>
                 </div>
                 <div className="flex items-center gap-2">
                   {reactionInput ? <NyanoReactionBadge input={reactionInput} turnIndex={typeof state?.turn === "number" ? state.turn : 0} /> : null}
@@ -672,7 +672,7 @@ export function OverlayPage() {
                 <span className={controls ? "" : "ol-turn-label"} style={controls ? undefined : { fontSize: "var(--ol-turn, 16px)" }}>{sub}</span>
                 {toPlayLabel ? (
                   <span className={toPlay === 0 ? "to-play-pill to-play-pill-a" : "to-play-pill to-play-pill-b"}>
-                    Next: {toPlayLabel}
+                    次手: {toPlayLabel}
                   </span>
                 ) : null}
               </div>
@@ -681,7 +681,7 @@ export function OverlayPage() {
                   Classic Open:{" "}
                   <span className="font-mono">
                     {overlayClassicOpen.mode === "all_open"
-                      ? "all cards revealed"
+                      ? "全カード公開"
                       : `A[${formatClassicOpenSlots(overlayClassicOpen.playerA)}] / B[${formatClassicOpenSlots(overlayClassicOpen.playerB)}]`}
                   </span>
                 </div>
@@ -703,7 +703,7 @@ export function OverlayPage() {
                 />
               </div>
 
-              {matchIdShort ? <div className={controls ? "mt-1 text-xs text-slate-400" : "mt-1 ol-detail-text text-slate-400"}>match: {matchIdShort}</div> : null}
+              {matchIdShort ? <div className={controls ? "mt-1 text-xs text-slate-400" : "mt-1 ol-detail-text text-slate-400"}>対戦ID: {matchIdShort}</div> : null}
             </div>
 
             {/* 2.5 Advantage indicator (hidden in minimal density) — Tier 2: Secondary */}
@@ -741,7 +741,7 @@ export function OverlayPage() {
             {density !== "minimal" && state?.aiNote ? (
               <div className={controls ? "callout callout-info" : "callout callout-info ol-panel-secondary"}>
                 <div className="flex items-center gap-2">
-                  <div className="text-xs font-semibold">Nyano says</div>
+                  <div className="text-xs font-semibold">Nyanoコメント</div>
                   {state.aiReasonCode ? (
                     <AiReasonBadge reasonCode={state.aiReasonCode as AiReasonCode} />
                   ) : null}
@@ -755,7 +755,7 @@ export function OverlayPage() {
             {voteEnabled ? (
               <div className={controls ? "rounded-2xl border border-slate-200 bg-white/70 px-4 py-3 shadow-sm" : "rounded-2xl border border-slate-200 ol-panel-secondary ol-pad shadow-sm"}>
                 <div className="flex items-center justify-between gap-2">
-                  <div className={controls ? "text-xs font-semibold text-slate-800" : "text-sm font-semibold text-slate-800"}>Chat voting</div>
+                  <div className={controls ? "text-xs font-semibold text-slate-800" : "text-sm font-semibold text-slate-800"}>投票状況 (Chat voting)</div>
                   {voteState?.status === "open" ? (
                     <span className={controls ? "badge badge-emerald" : "badge badge-lg badge-emerald"}>OPEN</span>
                   ) : (
@@ -776,27 +776,27 @@ export function OverlayPage() {
                     }
                     style={controls ? undefined : { fontSize: "var(--ol-countdown, 28px)" }}
                     aria-live="polite"
-                    aria-label={`${voteRemainingSec} seconds remaining`}
+                    aria-label={`残り ${voteRemainingSec} seconds remaining`}
                   >
-                    {voteRemainingSec}s remaining
+                    残り {voteRemainingSec}s remaining
                   </div>
                 ) : null}
 
                 {/* commit-0084: OBS-critical vote metadata — theme-scaled */}
                 <div className={controls ? "mt-1 text-xs text-slate-600" : "mt-1 ol-detail-text text-slate-300"}>
-                  controls:{" "}
+                  操作側:{" "}
                   <span className="font-mono">{voteState?.controlledSide === 1 ? "B" : voteState?.controlledSide === 0 ? "A" : "—"}</span>
-                  {" "}· turn:{" "}
+                  {" "}· ターン:{" "}
                   <span className="font-mono">{voteState?.status === "open" ? (voteTurn ?? "?") : "—"}</span>
-                  {" "}· votes:{" "}
+                  {" "}· 票数:{" "}
                   <span className="font-mono font-bold">{typeof voteState?.totalVotes === "number" ? voteState.totalVotes : 0}</span>
                 </div>
 
                 {/* Sync badges */}
                 {voteState?.status === "open" ? (
                   <div className="mt-2 flex flex-wrap items-center gap-2 text-xs">
-                    {voteTurnOk === true ? <span className="badge badge-slate">turn ok</span> : voteTurnOk === false ? <span className="badge badge-rose">TURN MISMATCH</span> : <span className="badge">turn ?</span>}
-                    {voteSideOk === true ? <span className="badge badge-slate">side ok</span> : voteSideOk === false ? <span className="badge badge-rose">SIDE MISMATCH</span> : <span className="badge">side ?</span>}
+                    {voteTurnOk === true ? <span className="badge badge-slate">ターン一致</span> : voteTurnOk === false ? <span className="badge badge-rose">TURN MISMATCH</span> : <span className="badge">ターン?</span>}
+                    {voteSideOk === true ? <span className="badge badge-slate">操作側一致</span> : voteSideOk === false ? <span className="badge badge-rose">SIDE MISMATCH</span> : <span className="badge">操作側?</span>}
                     {strictAllowed ? (
                       <span className="badge badge-slate" title={strictAllowed.hash}>
                         strictAllowed {strictAllowed.count} · {strictAllowed.hash}
@@ -806,7 +806,7 @@ export function OverlayPage() {
                     )}
                   </div>
                 ) : (
-                  <div className={controls ? "mt-2 text-xs text-slate-500" : "mt-2 ol-detail-text text-slate-400"}>Vote is closed.</div>
+                  <div className={controls ? "mt-2 text-xs text-slate-500" : "mt-2 ol-detail-text text-slate-400"}>投票は終了しています。</div>
                 )}
 
                 {voteState?.status === "open" && Array.isArray(voteState.top) && voteState.top.length > 0 ? (
@@ -844,7 +844,7 @@ export function OverlayPage() {
               {strictAllowed ? (
                 <>
                   <div className="mt-1 text-xs text-slate-600">
-                    toPlay: <span className="font-mono">{sideLabel(strictAllowed.toPlay)}</span> · moves:{" "}
+                    toPlay: <span className="font-mono">{sideLabel(strictAllowed.toPlay)}</span> · 合法手:{" "}
                     <span className="font-mono">{strictAllowed.count}</span>
                     {typeof strictAllowed.warningMark?.remaining === "number" ? (
                       <>
@@ -860,12 +860,12 @@ export function OverlayPage() {
 
                   {strictAllowed.warningMark.remaining > 0 ? (
                     <div className="mt-1 text-xs text-slate-500">
-                      WM candidates: <span className="font-mono">{strictAllowed.warningMark.candidates.join(", ")}</span>
+                      WM候補: <span className="font-mono">{strictAllowed.warningMark.candidates.join(", ")}</span>
                     </div>
                   ) : null}
                 </>
               ) : (
-                <div className="mt-1 text-xs text-slate-500">Waiting for host…</div>
+                <div className="mt-1 text-xs text-slate-500">ホスト待機中…</div>
               )}
             </div> : null}
 
@@ -874,7 +874,7 @@ export function OverlayPage() {
               <div className="callout callout-error opacity-80">
                 <div className="flex items-center gap-2">
                   <div className="h-2 w-2 shrink-0 rounded-full bg-amber-500" />
-                  <div className="text-xs font-semibold">Last Error (fading)</div>
+                  <div className="text-xs font-semibold">直近エラー (Last Error)</div>
                 </div>
                 <div className="mt-1 text-sm">{stickyError}</div>
               </div>
@@ -885,7 +885,7 @@ export function OverlayPage() {
               <div className="callout callout-error" role="alert">
                 <div className="flex items-center gap-2">
                   <div className="h-2 w-2 shrink-0 rounded-full bg-red-500 animate-pulse" />
-                  <div className="text-xs font-semibold">Error</div>
+                  <div className="text-xs font-semibold">エラー</div>
                 </div>
                 <div className="mt-1 whitespace-pre-wrap text-sm">{state.error}</div>
               </div>
@@ -896,9 +896,9 @@ export function OverlayPage() {
               <div className="callout callout-error" role="alert">
                 <div className="flex items-center gap-2">
                   <div className="h-2 w-2 shrink-0 rounded-full bg-red-500 animate-pulse" />
-                  <div className="text-xs font-semibold">Integration error</div>
+                  <div className="text-xs font-semibold">連携エラー</div>
                 </div>
-                <div className="mt-1 text-sm">{state.externalStatus.lastMessage ?? "Unknown error"}</div>
+                <div className="mt-1 text-sm">{state.externalStatus.lastMessage ?? "不明なエラー"}</div>
               </div>
             ) : null}
 
@@ -907,19 +907,19 @@ export function OverlayPage() {
               <div className="callout callout-error" role="alert">
                 <div className="flex items-center gap-2">
                   <div className="h-2 w-2 shrink-0 rounded-full bg-red-500 animate-pulse" />
-                  <div className="text-xs font-semibold">RPC Error</div>
+                  <div className="text-xs font-semibold">RPCエラー</div>
                 </div>
-                <div className="mt-1 text-sm">{state.rpcStatus.message ?? "RPC connection failed"}</div>
+                <div className="mt-1 text-sm">{state.rpcStatus.message ?? "RPC接続に失敗しました"}</div>
               </div>
             ) : null}
 
             {!state ? (
               <div className="callout callout-muted">
-                <div className="text-xs font-semibold">No signal yet</div>
+                <div className="text-xs font-semibold">信号待ち (No signal yet)</div>
                 <div className="mt-1 text-sm text-slate-700">
-                  Open <span className="font-mono">{matchPath}</span> or <span className="font-mono">{replayPath}</span>, then send state to the overlay.
+                  <span className="font-mono">{matchPath}</span> または <span className="font-mono">{replayPath}</span> を開き、overlayへ状態を送信してください。
                   <br />
-                  The overlay will pick up the latest state automatically.
+                  overlay は最新状態を自動で受け取ります。
                 </div>
               </div>
             ) : null}
@@ -928,7 +928,7 @@ export function OverlayPage() {
               <div className="space-y-3">
                 {/* Theme picker */}
                 <div className="rounded-2xl border border-slate-200 bg-white/70 px-4 py-3 shadow-sm">
-                  <div className="text-xs font-semibold text-slate-800">Theme</div>
+                  <div className="text-xs font-semibold text-slate-800">テーマ (Theme)</div>
                   <div className="mt-2 flex flex-wrap gap-1.5">
                     {OVERLAY_THEMES.map((t) => (
                       <button
@@ -952,17 +952,17 @@ export function OverlayPage() {
                 </div>
 
                 <div className="rounded-2xl border border-slate-200 bg-white/70 px-4 py-3 text-xs text-slate-500 shadow-sm">
-                  Tips:
+                  ヒント:
                   <ul className="mt-1 list-disc pl-4">
                     <li>
-                      OBS BrowserSource: use <span className="font-mono">{themedObsUrl}</span> (and optionally{" "}
-                      <span className="font-mono">bg=transparent</span>)
+                      OBS BrowserSource は <span className="font-mono">{themedObsUrl}</span> を使用（必要なら{" "}
+                      <span className="font-mono">bg=transparent</span>）。
                     </li>
                     <li>
-                      Vote UI: toggle by <span className="font-mono">vote=0</span>
+                      投票UIは <span className="font-mono">vote=0</span> で非表示化。
                     </li>
                     <li>
-                      Density: <span className="font-mono">{density}</span> — {density === "minimal" ? "hides advantage/AI badges" : density === "full" ? "all badges, larger text" : "balanced view"}
+                      密度: <span className="font-mono">{density}</span> - {density === "minimal" ? "形勢/AIバッジを省略" : density === "full" ? "情報多め・文字大きめ" : "標準表示"}
                     </li>
                   </ul>
                 </div>
@@ -970,35 +970,35 @@ export function OverlayPage() {
                 {/* OBS Scene Templates (Phase 1) */}
                 <details className="rounded-2xl border border-slate-200 bg-white/70 px-4 py-3 shadow-sm">
                   <summary className="text-xs font-semibold text-slate-800 cursor-pointer select-none">
-                    OBS Scene Templates
+                    OBSシーンテンプレート
                   </summary>
                   <div className="mt-2 grid gap-3 text-xs text-slate-600">
                     <div>
-                      <div className="font-semibold text-slate-700">720p Stream (1280x720)</div>
+                      <div className="font-semibold text-slate-700">720p配信 (1280x720)</div>
                       <ul className="list-disc pl-4 mt-1 space-y-0.5">
-                        <li>Theme: <code className="font-mono bg-slate-100 px-1 rounded">720p-standard</code> or <code className="font-mono bg-slate-100 px-1 rounded">720p-minimal</code></li>
-                        <li>Browser Source: 400x720 (right side)</li>
+                        <li>Theme: <code className="font-mono bg-slate-100 px-1 rounded">720p-standard</code> または <code className="font-mono bg-slate-100 px-1 rounded">720p-minimal</code></li>
+                        <li>Browser Source: 400x720（右側）</li>
                         <li>URL: <code className="font-mono bg-slate-100 px-1 rounded text-[10px]">{obs720pUrl}</code></li>
                       </ul>
                     </div>
                     <div>
-                      <div className="font-semibold text-slate-700">1080p Stream (1920x1080)</div>
+                      <div className="font-semibold text-slate-700">1080p配信 (1920x1080)</div>
                       <ul className="list-disc pl-4 mt-1 space-y-0.5">
-                        <li>Theme: <code className="font-mono bg-slate-100 px-1 rounded">1080p-standard</code> or <code className="font-mono bg-slate-100 px-1 rounded">1080p-full</code></li>
-                        <li>Browser Source: 500x1080 (right side)</li>
+                        <li>Theme: <code className="font-mono bg-slate-100 px-1 rounded">1080p-standard</code> または <code className="font-mono bg-slate-100 px-1 rounded">1080p-full</code></li>
+                        <li>Browser Source: 500x1080（右側）</li>
                         <li>URL: <code className="font-mono bg-slate-100 px-1 rounded text-[10px]">{obs1080pUrl}</code></li>
                       </ul>
                     </div>
                     <div>
-                      <div className="font-semibold text-slate-700">Full Screen Overlay</div>
+                      <div className="font-semibold text-slate-700">フルスクリーン Overlay</div>
                       <ul className="list-disc pl-4 mt-1 space-y-0.5">
                         <li>Browser Source: 1920x1080</li>
                         <li>URL: <code className="font-mono bg-slate-100 px-1 rounded text-[10px]">{obsFullUrl}</code></li>
                       </ul>
                     </div>
                     <div className="text-[10px] text-slate-400 border-t border-slate-100 pt-2">
-                      Add <code className="font-mono bg-slate-100 px-1 rounded">vote=0</code> to hide voting panel.
-                      Use <code className="font-mono bg-slate-100 px-1 rounded">bg=transparent</code> for chroma-key.
+                      <code className="font-mono bg-slate-100 px-1 rounded">vote=0</code> を付けると投票パネルを非表示にできます。
+                      クロマキー運用は <code className="font-mono bg-slate-100 px-1 rounded">bg=transparent</code> を利用してください。
                     </div>
                   </div>
                 </details>
