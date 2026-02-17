@@ -5192,6 +5192,13 @@
   gap: 10px;
 }
 
+.mint-home-onboarding__note {
+  margin: -2px 0 0;
+  font-size: 13px;
+  font-weight: 700;
+  color: #475569;
+}
+
 .mint-home-step {
   padding: 12px;
   display: grid;

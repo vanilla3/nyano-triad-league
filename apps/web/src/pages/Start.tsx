@@ -46,7 +46,7 @@ export function StartPage() {
     },
     {
       id: "commit_first_move",
-      title: "3) Match で最初の手を確定する",
+      title: "3) 慣れたら最初の手を確定する",
       icon: "match",
       to: themed("/match?mode=guest&opp=vs_nyano_ai&ai=normal&rk=v2&ui=mint"),
       action: "Matchへ",
@@ -60,7 +60,7 @@ export function StartPage() {
           はじめての1分スタート
         </MintTitleText>
         <GlassPanel variant="pill" className="mint-start-header__progress">
-          {doneCount}/{ONBOARDING_STEPS.length} steps
+          進捗 {doneCount}/{ONBOARDING_STEPS.length}
         </GlassPanel>
       </section>
 
@@ -75,7 +75,9 @@ export function StartPage() {
               <MintTitleText as="h3" className="mint-start-card__title">
                 {step.title}
               </MintTitleText>
-              <div className="mint-start-card__status">{done ? "完了" : "未完了"}</div>
+              <div className="mint-start-card__status">
+                {done ? "完了" : step.id === "commit_first_move" ? "任意" : "未完了"}
+              </div>
               <MintPressable
                 to={step.to}
                 tone={done ? "soft" : "primary"}
@@ -106,7 +108,9 @@ export function StartPage() {
             </MintPressable>
           </div>
           <div className="mint-start-footer__state">
-            {isDone ? "準備完了。Decks / Arena で遊べます。" : "3ステップを完了すると準備完了です。"}
+            {isDone
+              ? "準備完了。Decks / Arena で遊べます。"
+              : "最短2ステップで対戦開始できます。3つ目は任意の練習ステップです。"}
           </div>
           <Link to={themed("/")} className="mint-start-footer__back">
             Homeへ戻る

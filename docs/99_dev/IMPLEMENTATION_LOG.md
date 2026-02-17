@@ -2979,3 +2979,28 @@
 - pnpm.cmd -C apps/web test OK
 - pnpm.cmd -C apps/web typecheck OK
 - pnpm.cmd -C apps/web build OK
+
+## 2026-02-18 - Home onboarding wording alignment (2-step start)
+
+### Why
+- Users can start a guest battle after step 2, so the fixed heading "3-step start" was misleading.
+
+### What
+- apps/web/src/pages/Home.tsx
+  - Updated onboarding heading to "??2?????????".
+  - Added note clarifying step 3 is optional practice.
+  - Updated progress chip text to neutral "?? X/3".
+  - Updated step 3 label/status to optional wording.
+- apps/web/src/pages/Start.tsx
+  - Updated progress label to "?? X/3".
+  - Updated step 3 and footer copy to clarify optional third step.
+- apps/web/src/mint-theme/mint-theme.css
+  - Added `.mint-home-onboarding__note` style.
+- apps/web/e2e/home.spec.ts
+  - Updated expected heading text.
+
+### Verify
+- pnpm.cmd -C apps/web e2e -- e2e/home.spec.ts OK (1 passed)
+- pnpm.cmd -C apps/web test OK
+- pnpm.cmd -C apps/web typecheck OK
+- pnpm.cmd -C apps/web build OK

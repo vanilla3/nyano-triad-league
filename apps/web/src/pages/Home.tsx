@@ -253,12 +253,15 @@ export function HomePage() {
       <section className="mint-home-onboarding">
         <div className="mint-home-onboarding__heading">
           <MintTitleText as="h3" className="mint-home-onboarding__title">
-            3ステップで始めよう
+            最短2ステップで対戦開始
           </MintTitleText>
           <GlassPanel variant="pill" className="mint-home-onboarding__progress">
-            {onboardingCompleted}/{ONBOARDING_STEPS.length} ステップ
+            進捗 {onboardingCompleted}/{ONBOARDING_STEPS.length}
           </GlassPanel>
         </div>
+        <p className="mint-home-onboarding__note">
+          ゲスト対戦は 2 までで開始できます。3 は慣れてきたら進める任意ステップです。
+        </p>
 
         <div className="mint-home-onboarding__grid">
           <GlassPanel variant="card" className="mint-home-step">
@@ -285,9 +288,9 @@ export function HomePage() {
 
           <GlassPanel variant="card" className="mint-home-step">
             <div className="mint-home-step__index">3</div>
-            <MintTitleText as="h3" className="mint-home-step__title">最初の手を確定</MintTitleText>
+            <MintTitleText as="h3" className="mint-home-step__title">慣れたら最初の手を確定</MintTitleText>
             <div className="mint-home-step__status">
-              {onboardingProgress.steps.commit_first_move ? "完了" : "対戦で更新"}
+              {onboardingProgress.steps.commit_first_move ? "完了" : "任意"}
             </div>
             <MintPressable to={quickCommitUrl} tone="soft">
               Matchを開く

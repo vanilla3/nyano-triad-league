@@ -6,7 +6,7 @@ test("Home page loads with mint menu and Tools/Settings", async ({ page }) => {
 
   await page.goto("/?theme=mint");
   await expect(page.locator("text=すぐ遊ぶ").first()).toBeVisible({ timeout: 10_000 });
-  await expect(page.getByText("3ステップで始めよう")).toBeVisible();
+  await expect(page.getByText("最短2ステップで対戦開始")).toBeVisible();
 
   const summary = page.locator("summary", { hasText: "Tools / Settings" });
   await expect(summary).toBeVisible();
