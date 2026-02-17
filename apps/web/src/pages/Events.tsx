@@ -2,6 +2,7 @@ import React from "react";
 import { useToast } from "@/components/Toast";
 import { Link, useSearchParams } from "react-router-dom";
 import { GlassPanel } from "@/components/mint/GlassPanel";
+import { MintPageGuide } from "@/components/mint/MintPageGuide";
 import { MintPressable } from "@/components/mint/MintPressable";
 import { MintIcon, type MintIconName } from "@/components/mint/icons/MintIcon";
 
@@ -24,6 +25,7 @@ import {
   parseSettledPointsImportJson,
   type SettledPointsImportIssue,
 } from "@/lib/settled_points_import";
+import { MINT_PAGE_GUIDES } from "@/lib/mint_page_guides";
 import { appendThemeToPath, resolveAppTheme } from "@/lib/theme";
 
 function StatusBadge(props: { status: string }) {
@@ -282,6 +284,7 @@ export function EventsPage() {
           </GlassPanel>
         </section>
       ) : null}
+      {isMintTheme ? <MintPageGuide spec={MINT_PAGE_GUIDES.events} className="mint-events-guide" /> : null}
 
       <section className="card events-page__hero">
         <div className="card-hd">

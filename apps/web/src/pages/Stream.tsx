@@ -5,6 +5,7 @@ import { StreamOperationsHUD, computeConnectionHealth, type ExternalResult, type
 
 import { NyanoImage } from "@/components/NyanoImage";
 import { GlassPanel } from "@/components/mint/GlassPanel";
+import { MintPageGuide } from "@/components/mint/MintPageGuide";
 import { MintPressable } from "@/components/mint/MintPressable";
 import { MintIcon, type MintIconName } from "@/components/mint/icons/MintIcon";
 import { useToast } from "@/components/Toast";
@@ -63,6 +64,7 @@ import {
   type ViewerMove,
 } from "@/lib/triad_vote_utils";
 import { publishOverlayState, publishStreamCommand, makeStreamCommandId, publishStreamVoteState, readStoredOverlayState, subscribeOverlayState, type OverlayStateV1 } from "@/lib/streamer_bus";
+import { MINT_PAGE_GUIDES } from "@/lib/mint_page_guides";
 import { appendThemeToPath, resolveAppTheme } from "@/lib/theme";
 
 function pickDefaultEvent(events: EventV1[]): string {
@@ -1237,6 +1239,7 @@ return (
           </GlassPanel>
         </section>
       ) : null}
+      {isMintTheme ? <MintPageGuide spec={MINT_PAGE_GUIDES.stream} className="mint-stream-guide" /> : null}
 
       <StreamOperationsHUD
         live={live}

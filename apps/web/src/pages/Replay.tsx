@@ -3,6 +3,7 @@ import { useToast } from "@/components/Toast";
 import { Disclosure } from "@/components/Disclosure";
 import { Link, useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { GlassPanel } from "@/components/mint/GlassPanel";
+import { MintPageGuide } from "@/components/mint/MintPageGuide";
 import { MintPressable } from "@/components/mint/MintPressable";
 import { MintIcon, type MintIconName } from "@/components/mint/icons/MintIcon";
 
@@ -75,6 +76,7 @@ import {
   replayStepStatusText,
   type ReplayPhaseInfo,
 } from "@/lib/replay_timeline";
+import { MINT_PAGE_GUIDES } from "@/lib/mint_page_guides";
 import { appendThemeToPath, resolveAppTheme } from "@/lib/theme";
 
 type Mode = "auto" | "v1" | "v2" | "compare";
@@ -1460,6 +1462,9 @@ protocolV1: {
             <span className="mint-replay-summary__value">{stepStatusText}</span>
           </GlassPanel>
         </section>
+      ) : null}
+      {isMintTheme && !isStageFocus ? (
+        <MintPageGuide spec={MINT_PAGE_GUIDES.replay} className="mint-replay-guide" />
       ) : null}
 
       {isEngineFocus ? (
