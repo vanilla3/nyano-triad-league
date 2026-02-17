@@ -3026,3 +3026,18 @@
 - pnpm.cmd -C apps/web test OK
 - pnpm.cmd -C apps/web typecheck OK
 - pnpm.cmd -C apps/web build OK
+
+## 2026-02-18 - Start page copy cleanup aligned with Home onboarding UX
+
+### What
+- apps/web/src/pages/Start.tsx
+  - Removed card-level status labels (`??/???/??`).
+  - Updated header pill to guidance copy (`?? 2 ???????`).
+  - Updated footer helper copy to emphasize 1->2 path and optional step 3.
+  - Localized footer quick links (`Decks`/`Arena` -> `???`/`????`).
+
+### Verify
+- pnpm.cmd -C apps/web e2e -- e2e/home.spec.ts OK (2 passed)
+- pnpm.cmd -C apps/web test OK
+- pnpm.cmd -C apps/web typecheck OK
+- pnpm.cmd -C apps/web build OK

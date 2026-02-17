@@ -2,7 +2,6 @@ import React from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import {
   ONBOARDING_STEPS,
-  completedOnboardingStepCount,
   isOnboardingCompleted,
   markOnboardingStepDone,
   readOnboardingProgress,
@@ -26,7 +25,6 @@ export function StartPage() {
   const theme = resolveAppTheme(searchParams);
   const themed = React.useCallback((path: string) => appendThemeToPath(path, theme), [theme]);
   const [progress, setProgress] = React.useState(() => readOnboardingProgress());
-  const doneCount = completedOnboardingStepCount(progress);
   const isDone = isOnboardingCompleted(progress);
 
   const steps: StartStep[] = [
@@ -60,7 +58,7 @@ export function StartPage() {
           はじめての1分スタート
         </MintTitleText>
         <GlassPanel variant="pill" className="mint-start-header__progress">
-          進捗 {doneCount}/{ONBOARDING_STEPS.length}
+          最短 2 ステップで開始
         </GlassPanel>
       </section>
 
@@ -75,9 +73,6 @@ export function StartPage() {
               <MintTitleText as="h3" className="mint-start-card__title">
                 {step.title}
               </MintTitleText>
-              <div className="mint-start-card__status">
-                {done ? "完了" : step.id === "commit_first_move" ? "任意" : "未完了"}
-              </div>
               <MintPressable
                 to={step.to}
                 tone={done ? "soft" : "primary"}
@@ -100,17 +95,17 @@ export function StartPage() {
           <div className="mint-start-footer__links">
             <MintPressable to={themed("/decks")} tone="soft">
               <MintIcon name="decks" size={18} />
-              <span>Decks</span>
+              <span>デッキ</span>
             </MintPressable>
             <MintPressable to={themed("/arena")} tone="soft">
               <MintIcon name="arena" size={18} />
-              <span>Arena</span>
+              <span>アリーナ</span>
             </MintPressable>
           </div>
           <div className="mint-start-footer__state">
             {isDone
               ? "準備完了。Decks / Arena で遊べます。"
-              : "最短2ステップで対戦開始できます。3つ目は任意の練習ステップです。"}
+              : "まずは 1→2 の順で進めると、すぐに対戦を始められます。3 は任意です。"}
           </div>
           <Link to={themed("/")} className="mint-start-footer__back">
             Homeへ戻る
