@@ -18,6 +18,21 @@ async function prepareMintMatchDefaults(page: Page, vfx: "auto" | "off" | "low" 
   }, vfx);
 }
 
+async function expectCommitControlVisible(page: Page): Promise<void> {
+  const legacyCommit = page.getByRole("button", { name: "Commit move", exact: true });
+  const dockCommit = page.getByRole("button", { name: "Commit move from focus hand dock", exact: true });
+  const quickCommit = page.getByRole("button", { name: "Quick commit move", exact: true });
+
+  await expect
+    .poll(async () => {
+      const legacyVisible = (await legacyCommit.count()) > 0 && await legacyCommit.isVisible().catch(() => false);
+      const dockVisible = (await dockCommit.count()) > 0 && await dockCommit.isVisible().catch(() => false);
+      const quickVisible = (await quickCommit.count()) > 0 && await quickCommit.isVisible().catch(() => false);
+      return legacyVisible || dockVisible || quickVisible;
+    })
+    .toBe(true);
+}
+
 test.describe("Mint stage visual guardrails", () => {
   test("vfx=off hides heavy stage atmosphere while keeping board usable", async ({ page }) => {
     await prepareMintMatchDefaults(page, "off");
@@ -31,7 +46,7 @@ test.describe("Mint stage visual guardrails", () => {
       .toBe("off");
 
     await expect(page.locator(".mint-stage__atmo").first()).toBeHidden();
-    await expect(page.getByRole("button", { name: "Commit move", exact: true })).toBeVisible();
+    await expectCommitControlVisible(page);
   });
 
   test("prefers-reduced-motion resolves visual quality to off", async ({ page }) => {
@@ -56,7 +71,7 @@ test.describe("Mint stage visual guardrails", () => {
     await expect(stage).toBeVisible({ timeout: 15_000 });
     await stage.scrollIntoViewIfNeeded();
     await expect(stage).toBeInViewport();
-    await expect(page.getByRole("button", { name: "Commit move", exact: true })).toBeVisible({ timeout: 15_000 });
+    await expectCommitControlVisible(page);
 
     const overflowPx = await readHorizontalOverflowPx(page);
     expect(overflowPx).toBeLessThanOrEqual(1);

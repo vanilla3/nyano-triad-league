@@ -3136,3 +3136,18 @@
 - pnpm -C apps/web typecheck OK
 - pnpm.cmd -C apps/web e2e -- e2e/ux-guardrails.spec.ts OK (7 passed)
 - pnpm.cmd -C apps/web e2e -- e2e/stage-focus.spec.ts OK (15 passed)
+## 2026-02-17 - e2e:ux follow-up: mint stage guardrails accept dock-style commit controls
+
+### Why
+- ui=mint now prioritizes hand dock flow, so legacy-only Commit move assertions in mint-stage-visual-guardrails failed on CI.
+
+### What
+- pps/web/e2e/mint-stage-visual-guardrails.spec.ts
+  - Added expectCommitControlVisible() helper.
+  - Updated commit-control assertions to accept any valid mint control path:
+    - Commit move
+    - Commit move from focus hand dock
+    - Quick commit move
+
+### Verify
+- pnpm.cmd -C apps/web e2e:ux OK (14 passed)
