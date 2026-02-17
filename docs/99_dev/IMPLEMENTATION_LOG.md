@@ -3036,3 +3036,58 @@
 - `pnpm -C apps/web test` OK
 - `pnpm -C apps/web typecheck` OK
 - `pnpm -C apps/web build` OK
+## 2026-02-17 — Arena follow-up: guide/difficulty styles completion + encoding cleanup
+
+### Why
+- `Arena` で追加された `MintPageGuide` と難易度ヒント行のクラスに対応CSSが未実装で、表示が素のままになる箇所が残っていた。
+- `apps/web/src/pages/Arena.tsx` が UTF-8 BOM 付きになっており、差分ノイズとエンコーディング不統一を避けるため正規化が必要だった。
+- 変更運用ルールに合わせ、今回の差分を実装ログへ明示しておく必要があった。
+
+### What
+- `apps/web/src/mint-theme/mint-theme.css`
+  - `mint-page-guide__*` スタイル群を追加（head/grid/item/title/detail）。
+  - `mint-arena-difficulty__top` / `mint-arena-difficulty__hint` を追加。
+  - レスポンシブ時の `mint-page-guide__grid` を `1100px` / `760px` で段階的に縮退。
+- `apps/web/src/pages/Arena.tsx`
+  - 難易度選択ボタンに `type="button"` を追加してフォーム文脈での誤 submit を予防。
+  - UTF-8 BOM を除去し、UTF-8 (BOMなし) に統一。
+- `docs/99_dev/Nyano_Triad_League_DEV_TODO_v1_ja.md`
+  - 本 follow-up の完了項目を追記。
+
+### Verify
+- `pnpm -C apps/web test`
+- `pnpm -C apps/web typecheck`
+- `pnpm -C apps/web build`
+## 2026-02-17 — Mint guide rollout: apply shared page guide to Events/Replay/Stream
+
+### Why
+- `apps/web/src/lib/mint_page_guides.ts` には `events/replay/stream` の文言定義がある一方、実際の画面反映は `Arena` のみで、定義と実装が不整合だった。
+- 画面遷移時の学習導線を揃え、Mint二次画面の情報設計を統一する必要があった。
+
+### What
+- `apps/web/src/pages/Events.tsx`
+  - `MintPageGuide` / `MINT_PAGE_GUIDES` を導入し、Mintテーマ時に `MINT_PAGE_GUIDES.events` を表示。
+- `apps/web/src/pages/Replay.tsx`
+  - `MintPageGuide` / `MINT_PAGE_GUIDES` を導入し、`!isStageFocus` 条件下で `MINT_PAGE_GUIDES.replay` を表示。
+  - Stage focus の board-first 導線は維持。
+- `apps/web/src/pages/Stream.tsx`
+  - `MintPageGuide` / `MINT_PAGE_GUIDES` を導入し、Mintテーマ時に `MINT_PAGE_GUIDES.stream` を表示。
+
+### Verify
+- `pnpm -C apps/web lint`
+- `pnpm -C apps/web typecheck`
+- `pnpm -C apps/web test`
+- `pnpm -C apps/web build`
+- `pnpm.cmd -C apps/web e2e -- e2e/mint-app-screens-guardrails.spec.ts`
+## 2026-02-17 — Mint guide rollout follow-up: e2e guardrails for page guides
+
+### Why
+- 共通ガイドは UI 導線の土台なので、再び「定義だけあり未表示」になる回帰を防ぐ必要があった。
+
+### What
+- `apps/web/e2e/mint-app-screens-guardrails.spec.ts`
+  - `/arena` `/events` `/replay` `/stream` で `.mint-page-guide` 可視を追加検証。
+  - 既存の 390px 到達性・横オーバーフロー検証と同時にチェック。
+
+### Verify
+- `pnpm.cmd -C apps/web e2e -- e2e/mint-app-screens-guardrails.spec.ts`
