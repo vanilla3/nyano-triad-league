@@ -311,7 +311,7 @@ function ShareQrCode(props: {
     );
   }, [sim, event, ui, rulesetKey, classicMask]);
 
-  if (!url) return <div className="text-xs text-slate-400">Generating...</div>;
+  if (!url) return <div className="text-xs text-slate-400">生成中...</div>;
   return <QrCode value={url} size={160} />;
 }
 
@@ -755,7 +755,7 @@ export function MatchPage() {
     const ts = new Date();
     const datePart = ts.toLocaleDateString("ja-JP", { year: "numeric", month: "2-digit", day: "2-digit" });
     const timePart = ts.toLocaleTimeString("ja-JP", { hour: "2-digit", minute: "2-digit" });
-    const label = `Guest Deck ${datePart} ${timePart}`;
+    const label = `ゲストデッキ ${datePart} ${timePart}`;
     upsertDeck({
       name: label,
       tokenIds: guestDeckATokens,
@@ -765,7 +765,7 @@ export function MatchPage() {
       memo: `${aiDifficulty} / ${rulesetKey}`,
     });
     setGuestDeckSaved(true);
-    toast.success("Deck saved!", "Find it on the Decks page.");
+    toast.success("デッキを保存しました", "Decks ページで確認できます。");
   };
 
   React.useEffect(() => {
@@ -887,8 +887,8 @@ export function MatchPage() {
     const path = location.pathname.replace(/^\//, "");
     const url = appAbsoluteUrl(query ? `${path}?${query}` : path);
     const ok = await writeClipboardText(url);
-    if (ok) toast.success("Copied", "Setup link copied");
-    else toast.warn("Copy failed", "Please copy the URL manually.");
+    if (ok) toast.success("コピーしました", "セットアップリンクをコピーしました。");
+    else toast.warn("コピー失敗", "URLを手動でコピーしてください。");
   };
 
   React.useEffect(() => {
@@ -1110,9 +1110,9 @@ export function MatchPage() {
       setOwners(null);
       setPlayerA("0x0000000000000000000000000000000000000001" as `0x${string}`);
       setPlayerB("0x0000000000000000000000000000000000000002" as `0x${string}`);
-      setError(`Game Index load failed; fallback guest deck was used. (${reason})`);
-      setStatus(`Guest mode: fallback deck loaded (${fallback.cardsByTokenId.size} cards)`);
-      toast.warn("Game Index unavailable", "Fallback guest cards loaded");
+      setError(`Game Index の読み込みに失敗したため、フォールバックのゲストデッキを使用しました。(${reason})`);
+      setStatus(`ゲストモード: フォールバックデッキを読み込みました（${fallback.cardsByTokenId.size}枚）`);
+      toast.warn("Game Index利用不可", "フォールバックのゲストカードを読み込みました。");
     };
 
     try {
@@ -1122,7 +1122,7 @@ export function MatchPage() {
           applyGuestFallback("index unavailable");
           return;
         }
-        setError("Game Index unavailable. Please try Verified mode.");
+        setError("Game Index が利用できません。Verified モードをお試しください。");
         return;
       }
 
@@ -1140,7 +1140,7 @@ export function MatchPage() {
         setOwners(null);
         setPlayerA("0x0000000000000000000000000000000000000001" as `0x${string}`);
         setPlayerB("0x0000000000000000000000000000000000000002" as `0x${string}`);
-        setStatus(`Guest mode: loaded ${cardMap.size} cards from game index`);
+        setStatus(`ゲストモード: game index から ${cardMap.size} 枚読み込みました`);
       } else {
         // Fast mode for normal play
         const allTokenIds = [...deckATokens, ...deckBTokens].map((t) => t.toString());
@@ -1148,7 +1148,7 @@ export function MatchPage() {
 
         if (cardMap.size < allTokenIds.length) {
           const missing = allTokenIds.filter((id) => !cardMap.has(BigInt(id)));
-          setError(`Missing tokenIds in Game Index: ${missing.join(", ")}. Please try Verified mode.`);
+          setError(`Game Index に tokenId が不足しています: ${missing.join(", ")}。Verified モードをお試しください。`);
           return;
         }
 
@@ -1158,14 +1158,14 @@ export function MatchPage() {
           const playerTokenIds = deckATokens.map((t) => t.toString());
           const validation = validateDeckAgainstRestriction(playerTokenIds, rule);
           if (!validation.valid) {
-            setError(`Deck restriction violation (${rule.label}): ${validation.violations.join("; ")}`);
+            setError(`デッキ制限違反 (${rule.label}): ${validation.violations.join("; ")}`);
             return;
           }
         }
 
         setCards(cardMap);
         setOwners(null);
-        setStatus(`Fast mode: loaded ${cardMap.size} cards from game index`);
+        setStatus(`Fast モード: game index から ${cardMap.size} 枚読み込みました`);
       }
     } catch (e: unknown) {
       const msg = errorMessage(e);
@@ -1173,7 +1173,7 @@ export function MatchPage() {
         applyGuestFallback(msg);
         return;
       }
-      setError(`Game Index load failed: ${msg}`);
+      setError(`Game Index 読み込み失敗: ${msg}`);
     } finally {
       setLoading(false);
     }
@@ -1184,11 +1184,11 @@ export function MatchPage() {
     setStatus(null);
 
     if (!deckA || deckATokens.length !== 5) {
-      setError("Please select Deck A (5 cards).");
+      setError("Deck A を選択してください（5枚）。");
       return;
     }
     if (deckBTokens.length !== 5) {
-      setError("Deck B is invalid (must contain 5 cards).");
+      setError("Deck B が不正です（5枚必要）。");
       return;
     }
 
@@ -1206,7 +1206,7 @@ export function MatchPage() {
           setEventNyanoDeckOverride(minted);
 
           toast.success(
-            "Nyano deck auto-selected",
+            "Nyanoデッキを自動選択しました",
             minted.map((t) => `#${t.toString()}`).join(", ")
           );
         }
@@ -1231,7 +1231,7 @@ export function MatchPage() {
       if (a0 !== undefined) setPlayerA(ownersByTokenId.get(a0) ?? playerA);
       if (b0 !== undefined) setPlayerB(ownersByTokenId.get(b0) ?? playerB);
 
-      setStatus(`Verified: loaded ${bundles.size} cards from mainnet`);
+      setStatus(`Verified: mainnet から ${bundles.size} 枚読み込みました`);
       rpcStatusRef.current = { ok: true, timestampMs: Date.now() };
     } catch (e: unknown) {
       const msg = errorMessage(e);
@@ -1239,9 +1239,9 @@ export function MatchPage() {
       rpcStatusRef.current = { ok: false, message: msg, timestampMs: Date.now() };
 
       if (msg.includes("missing tokenid")) {
-        toast.warn("Card load failed", "Missing tokenId found. Please verify it on /nyano.");
+        toast.warn("カード読込失敗", "不足している tokenId が見つかりました。/nyano で確認してください。");
       } else if (looksLikeRpcError(msg)) {
-        toast.warn("Card load failed", "RPC request failed. Check /nyano RPC Settings.");
+        toast.warn("カード読込失敗", "RPC リクエストに失敗しました。/nyano の RPC 設定を確認してください。");
       }
     } finally {
       setLoading(false);
@@ -1264,8 +1264,8 @@ export function MatchPage() {
   }, [isGuestMode]);
 
   const sim: SimState = React.useMemo(() => {
-    if (!cards) return { ok: false, error: "Cards are not loaded. Press Load Cards first." };
-    if (effectiveDeckATokens.length !== 5 || effectiveDeckBTokens.length !== 5) return { ok: false, error: "Deck A/B must each have 5 cards." };
+    if (!cards) return { ok: false, error: "カードが未読込です。先に「カードを読み込む」を押してください。" };
+    if (effectiveDeckATokens.length !== 5 || effectiveDeckBTokens.length !== 5) return { ok: false, error: "Deck A/B はそれぞれ 5 枚必要です。" };
 
     try {
       const header = {
@@ -1539,39 +1539,39 @@ export function MatchPage() {
       }
 
       if (next.cardIndex < 0 || next.cardIndex > 4) {
-        setError("cardIndex must be in range 0..4.");
+        setError("cardIndex は 0..4 の範囲で指定してください。");
         telemetry.recordInvalidAction();
         return;
       }
       if (classicForcedCardIndex !== null && next.cardIndex !== classicForcedCardIndex) {
-        setError(`This turn requires cardIndex ${classicForcedCardIndex}.`);
+        setError(`このターンは cardIndex ${classicForcedCardIndex} を選ぶ必要があります。`);
         telemetry.recordInvalidAction();
         return;
       }
       if (currentUsed.has(next.cardIndex)) {
-        setError(`cardIndex ${next.cardIndex} is already used.`);
+        setError(`cardIndex ${next.cardIndex} はすでに使用済みです。`);
         telemetry.recordInvalidAction();
         return;
       }
 
       if (next.warningMarkCell !== undefined) {
         if (currentWarnRemaining <= 0) {
-          setError("No warning marks remaining.");
+          setError("警告マークの残りがありません。");
           telemetry.recordInvalidAction();
           return;
         }
         if (next.warningMarkCell === next.cell) {
-          setError("warningMarkCell は placed cell と同じにできません");
+          setError("warningMarkCell は配置セルと同じにできません。");
           telemetry.recordInvalidAction();
           return;
         }
         if (next.warningMarkCell < 0 || next.warningMarkCell > 8) {
-          setError("warningMarkCell must be in range 0..8.");
+          setError("warningMarkCell は 0..8 の範囲で指定してください。");
           telemetry.recordInvalidAction();
           return;
         }
         if (used.cells.has(next.warningMarkCell)) {
-          setError(`warningMarkCell ${next.warningMarkCell} is already occupied.`);
+          setError(`warningMarkCell ${next.warningMarkCell} はすでに埋まっています。`);
           telemetry.recordInvalidAction();
           return;
         }
@@ -1858,9 +1858,9 @@ export function MatchPage() {
       const url = buildReplayUrl(true);
       if (!url) { toast.warn("Share", "Match not ready - play 9 turns first"); return; }
       await copyToClipboard(url);
-      toast.success("Copied!", "Share URL copied to clipboard");
+      toast.success("コピーしました", "Share URL をクリップボードへコピーしました。");
     } catch (e: unknown) {
-      toast.error("Share failed", errorMessage(e));
+      toast.error("共有に失敗しました", errorMessage(e));
     }
   };
 
@@ -1869,11 +1869,11 @@ export function MatchPage() {
     setStatus(null);
     try {
       const url = buildReplayUrl(false);
-      if (!url) { toast.warn("Replay", "Match not ready - play 9 turns first"); return; }
+      if (!url) { toast.warn("Replay", "Match が未完了です。9手まで進めてください。"); return; }
       // SPA navigation via react-router (popup-safe, preserves client state)
       navigate(url);
     } catch (e: unknown) {
-      toast.error("Replay failed", errorMessage(e));
+      toast.error("リプレイ遷移に失敗しました", errorMessage(e));
     }
   }, [buildReplayUrl, navigate, toast]);
 
@@ -1895,7 +1895,7 @@ export function MatchPage() {
   }, [isStageFocusRoute, playMatchUiSfx, pushStageActionFeedback]);
 
   const toggleStageFullscreenWithFeedback = React.useCallback(() => {
-    pushStageActionFeedback(isStageFullscreen ? "Exit fullscreen" : "Enter fullscreen");
+    pushStageActionFeedback(isStageFullscreen ? "全画面を終了" : "全画面に切替");
     playMatchUiSfx("card_place");
     void toggleStageFullscreen();
   }, [isStageFullscreen, playMatchUiSfx, pushStageActionFeedback, toggleStageFullscreen]);
@@ -2215,19 +2215,19 @@ export function MatchPage() {
         >
           <div className="flex flex-wrap items-center justify-between gap-2">
             <div className="text-xs font-semibold" style={{ color: "var(--mint-text-secondary, #4B5563)" }}>
-              Pixi Focus Mode · turn {currentTurnIndex}/9 · warning left {currentWarnRemaining}
+              Pixiフォーカスモード · {currentTurnIndex}/9 手 · 警告残り {currentWarnRemaining}
             </div>
             <div className="flex flex-wrap items-center gap-2">
               {showFocusToolbarActions ? (
                 <div className="stage-focus-toolbar-actions">
                   <span className="stage-focus-toolbar-status">
-                    {draftCardIndex !== null ? `card ${draftCardIndex + 1}` : "pick card"} | {draftCell !== null ? `cell ${draftCell}` : "pick cell"}
+                    {draftCardIndex !== null ? `カード ${draftCardIndex + 1}` : "カード選択"} | {draftCell !== null ? `セル ${draftCell}` : "セル選択"}
                   </span>
                   <span className="stage-focus-toolbar-hint" aria-label="Battle focus toolbar hint">
-                    tap/drag then commit · Enter/Backspace · F/C/H/R/Esc
+                    タップ/ドラッグで配置準備 → 確定 · Enter/Backspace · F/C/H/R/Esc
                   </span>
                   <label className="stage-focus-toolbar-speed">
-                    warning
+                    警告
                     <select
                       className="stage-focus-toolbar-speed-select"
                       value={draftWarningMarkCell === null ? "" : String(draftWarningMarkCell)}
@@ -2238,7 +2238,7 @@ export function MatchPage() {
                       disabled={isAiTurn || turns.length >= 9 || currentWarnRemaining <= 0}
                       aria-label="Warning mark from focus toolbar"
                     >
-                      <option value="">none</option>
+                      <option value="">なし</option>
                       {availableCells
                         .filter((c) => c !== draftCell)
                         .map((c) => (
@@ -2252,7 +2252,7 @@ export function MatchPage() {
                     disabled={!canCommitFromFocusToolbar}
                     aria-label="Commit move from focus toolbar"
                   >
-                    Commit
+                    確定
                   </button>
                   <button
                     className="btn btn-sm"
@@ -2260,7 +2260,7 @@ export function MatchPage() {
                     disabled={!canUndoFromFocusToolbar}
                     aria-label="Undo move from focus toolbar"
                   >
-                    Undo
+                    取り消し
                   </button>
                   {canManualAiMoveFromFocusToolbar ? (
                     <button
@@ -2283,7 +2283,7 @@ export function MatchPage() {
                   aria-live="polite"
                   aria-label="Battle focus action feedback"
                 >
-                  {stageActionFeedback || "Ready"}
+                  {stageActionFeedback || "準備完了"}
                 </span>
               ) : null}
               {isStageFocusRoute ? (
@@ -2317,7 +2317,7 @@ export function MatchPage() {
                     </button>
                   ) : null}
                   <button className="btn btn-sm" onClick={toggleStageFullscreenWithFeedback}>
-                    {isStageFullscreen ? "Exit Fullscreen" : "Fullscreen"}
+                    {isStageFullscreen ? "全画面解除" : "全画面"}
                   </button>
                   <button className="btn btn-sm" onClick={toggleStageControlsWithFeedback}>
                     {showStageControls ? "Hide Controls" : "Show Controls"}
@@ -2328,10 +2328,10 @@ export function MatchPage() {
                 </>
               ) : null}
               <button className="btn btn-sm" onClick={exitFocusModeWithFeedback}>
-                Exit Focus
+                フォーカス終了
               </button>
               <button className="btn btn-sm" onClick={openReplayWithFeedback} disabled={!canFinalize}>
-                Replay
+                リプレイ
               </button>
             </div>
           </div>
@@ -2345,12 +2345,12 @@ export function MatchPage() {
           <div className="min-w-0">
             <div className="text-xl font-semibold">Nyano Triad League</div>
             <div className="mt-1 text-sm text-slate-600">
-              Play Nyano NFT cards in a community-driven triad battle. Share transcripts, stream matches, and gather votes.
+              Nyano NFTカードで対戦し、リプレイ共有や配信連携まで一気に楽しめます。
             </div>
             <div className="mt-3 flex flex-wrap gap-2 text-xs text-slate-500">
-              <span className="rounded-full border border-slate-200 bg-slate-50 px-2 py-1">ETH on-chain</span>
-              <span className="rounded-full border border-slate-200 bg-slate-50 px-2 py-1">Replay share</span>
-              <span className="rounded-full border border-slate-200 bg-slate-50 px-2 py-1">Twitch voting</span>
+              <span className="rounded-full border border-slate-200 bg-slate-50 px-2 py-1">ETHオンチェーン</span>
+              <span className="rounded-full border border-slate-200 bg-slate-50 px-2 py-1">リプレイ共有</span>
+              <span className="rounded-full border border-slate-200 bg-slate-50 px-2 py-1">配信投票</span>
             </div>
           </div>
         </div>
@@ -2363,18 +2363,18 @@ export function MatchPage() {
             <div>
               <div className="text-base font-semibold">Event: {event.title}</div>
               <div className="text-xs text-slate-500">
-                status: <span className="font-medium">{eventStatus}</span> · ruleset={event.rulesetKey} · ai={event.aiDifficulty}
+                状態: <span className="font-medium">{eventStatus}</span> · ルール={event.rulesetKey} · AI={event.aiDifficulty}
               </div>
             </div>
             <div className="flex flex-wrap items-center gap-2">
-              <Link className="btn no-underline" to="/events">All events</Link>
-              <button className="btn" onClick={clearEvent}>Leave event</button>
+              <Link className="btn no-underline" to="/events">イベント一覧</Link>
+              <button className="btn" onClick={clearEvent}>イベントを離脱</button>
             </div>
           </div>
           <div className="card-bd grid gap-2 text-sm text-slate-700">
             <p>{event.description}</p>
             <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-700">
-              Nyano deck tokenIds: <span className="font-mono">{event.nyanoDeckTokenIds.join(", ")}</span>
+              NyanoデッキのtokenIds: <span className="font-mono">{event.nyanoDeckTokenIds.join(", ")}</span>
             </div>
           </div>
         </section>
@@ -2386,9 +2386,9 @@ export function MatchPage() {
           <div className="flex items-center gap-3">
             <NyanoAvatar size={48} expression="playful" />
             <div>
-              <div className="font-semibold text-nyano-800">Guest Quick Play</div>
+              <div className="font-semibold text-nyano-800">ゲスト対戦 (Guest Quick Play)</div>
               <div className="text-xs text-nyano-600">
-                Trying a random deck in guest mode. To play with your own deck, create one in <Link className="font-medium underline" to="/decks">Decks</Link>.
+                ゲストモードでランダムデッキを使用中です。自分のデッキで遊ぶ場合は <Link className="font-medium underline" to="/decks">Decks</Link> で作成してください。
               </div>
             </div>
           </div>
@@ -2494,16 +2494,16 @@ export function MatchPage() {
           <div className="card-hd flex flex-wrap items-start justify-between gap-2">
             <div>
             <div className="text-base font-semibold">
-              Game · turn {currentTurnIndex}/9
-              {isAiTurn ? " · Nyano AI" : ` · Player ${currentPlayer === 0 ? "A" : "B"}`}
+              対戦中 · {currentTurnIndex}/9 手
+              {isAiTurn ? " · Nyano AI" : ` · プレイヤー${currentPlayer === 0 ? "A" : "B"}`}
             </div>
             <div className="text-xs text-slate-500">
-              warning marks left: {currentWarnRemaining}
-              {streamMode ? " · stream mode ON" : ""}
-              {isGuestMode ? " · guest" : ""}
+              警告マーク残り: {currentWarnRemaining}
+              {streamMode ? " · 配信モードON" : ""}
+              {isGuestMode ? " · ゲスト" : ""}
               {!isGuestMode && (
                 <span className={`ml-1 rounded-full border px-1.5 py-0.5 text-[10px] font-medium ${dataMode === "fast" ? "border-amber-200 bg-amber-50 text-amber-700" : "border-emerald-200 bg-emerald-50 text-emerald-700"}`}>
-                  {dataMode === "fast" ? "Fast (index)" : "Verified (on-chain)"}
+                  {dataMode === "fast" ? "高速 (index)" : "検証済み (on-chain)"}
                 </span>
               )}
             </div>
@@ -2511,10 +2511,10 @@ export function MatchPage() {
             {isEngine ? (
               <div className="flex flex-wrap items-center gap-2">
                 <button className="btn btn-sm" onClick={() => setFocusMode(true)}>
-                  Enter Pixi Focus
+                  Pixiフォーカスへ
                 </button>
                 <Link className="btn btn-sm no-underline" to={stageMatchUrl}>
-                  Open Stage Page
+                  Stageページを開く
                 </Link>
               </div>
             ) : null}
@@ -2533,18 +2533,18 @@ export function MatchPage() {
           {!cards ? (
             <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-8 text-center text-sm text-slate-600">
               {loading ? (
-                <div className="grid gap-4 py-4">
-                  <SkeletonBoard className="max-w-[280px] mx-auto" />
-                  <SkeletonHand className="max-w-[400px] mx-auto" />
-                  <div className="text-center text-xs text-surface-400">Loading cards...</div>
-                </div>
-              ) : isGuestMode ? (
-                <button className="btn btn-primary" onClick={() => void loadCardsFromIndex()}>Start Guest Match</button>
-              ) : (
-                <>Select decks in Match Setup, then press <strong>Load Cards</strong>.</>
-              )}
-            </div>
-          ) : (
+                  <div className="grid gap-4 py-4">
+                    <SkeletonBoard className="max-w-[280px] mx-auto" />
+                    <SkeletonHand className="max-w-[400px] mx-auto" />
+                    <div className="text-center text-xs text-surface-400">カードを読み込み中...</div>
+                  </div>
+                ) : isGuestMode ? (
+                  <button className="btn btn-primary" onClick={() => void loadCardsFromIndex()}>ゲスト対戦を開始</button>
+                ) : (
+                  <>Match Setup でデッキを選択し、<strong>カードを読み込む</strong>を押してください。</>
+                )}
+              </div>
+            ) : (
             <div
               className={
                 useMintUi
@@ -2566,11 +2566,11 @@ export function MatchPage() {
                 {!isEngineFocus && isGuestMode && cards && (
                   <details open={turns.length === 0} className="rounded-lg border border-surface-200 bg-surface-50 p-3">
                     <summary className="cursor-pointer text-sm font-medium text-surface-700">
-                      Deck Preview
+                      デッキプレビュー (Deck Preview)
                     </summary>
                     <div className="mt-2 grid gap-3 md:grid-cols-2">
                       <div>
-                        <div className="text-xs font-medium text-player-a-600 mb-1">Your Deck (A)</div>
+                        <div className="text-xs font-medium text-player-a-600 mb-1">あなたのデッキ (A)</div>
                         <div className="deck-preview-grid grid grid-cols-5 gap-2">
                           {guestDeckATokens.map((tid, i) => {
                             const c = cards.get(tid);
@@ -2579,12 +2579,12 @@ export function MatchPage() {
                         </div>
                       </div>
                       <div>
-                        <div className="text-xs font-medium text-player-b-600 mb-1">Nyano Deck (B)</div>
+                        <div className="text-xs font-medium text-player-b-600 mb-1">Nyanoデッキ (B)</div>
                         {classicOpenCardIndices ? (
                           <div className="mb-1 text-[11px] text-slate-500">
                             {classicOpenCardIndices.mode === "all_open"
-                              ? "Open rule: all cards revealed"
-                              : `Open rule: slots ${formatClassicOpenSlots(classicOpenCardIndices.playerB)} revealed`}
+                              ? "Openルール: 全カード公開"
+                              : `Openルール: スロット ${formatClassicOpenSlots(classicOpenCardIndices.playerB)} を公開`}
                           </div>
                         ) : null}
                         <div className="deck-preview-grid grid grid-cols-5 gap-2">
@@ -2685,16 +2685,16 @@ export function MatchPage() {
                       <div className="mint-ai-notice" role="status" aria-live="polite">
                         {aiAutoPlay ? (
                           <span>
-                            <span className="font-semibold animate-pulse">Nyano is thinking...</span>
+                            <span className="font-semibold animate-pulse">考え中… (Nyano is thinking...)</span>
                             {aiCountdownMs !== null ? ` ${Math.max(0.1, aiCountdownMs / 1000).toFixed(1)}s` : ""}
                           </span>
                         ) : (
-                          "Nyano turn. Press \"Nyano Move\"."
+                          "Nyanoの番です。\"Nyano Move\" を押してください。(Nyano turn. Press \"Nyano Move\".)"
                         )}
                       </div>
                     ) : (
                       <div className="mint-ai-notice mint-ai-notice--placeholder" aria-hidden="true">
-                        Nyano is thinking...
+                        考え中… (Nyano is thinking...)
                       </div>
                     )}
                   </div>
@@ -2702,11 +2702,11 @@ export function MatchPage() {
                   <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900">
                     {aiAutoPlay ? (
                       <span>
-                        <span className="font-semibold animate-pulse">Nyano is thinking...</span>
+                        <span className="font-semibold animate-pulse">考え中… (Nyano is thinking...)</span>
                         {aiCountdownMs !== null ? ` ${Math.max(0.1, aiCountdownMs / 1000).toFixed(1)}s` : ""}
                       </span>
                     ) : (
-                      "Nyano turn. Press \"Nyano Move\"."
+                      "Nyanoの番です。\"Nyano Move\" を押してください。(Nyano turn. Press \"Nyano Move\".)"
                     )}
                   </div>
                 ) : null}
@@ -2718,11 +2718,11 @@ export function MatchPage() {
                       <div className={["mint-status-summary-slot", !lastFlipSummaryText && "mint-status-summary-slot--idle"].filter(Boolean).join(" ")}>
                         {lastFlipSummaryText ? (
                           <div className="mint-status-summary" role="status" aria-live="polite">
-                            <span className="mint-status-summary__text">Battle: {lastFlipSummaryText}</span>
+                            <span className="mint-status-summary__text">バトル: {lastFlipSummaryText}</span>
                           </div>
                         ) : (
                           <div className="mint-status-summary mint-status-summary--placeholder" aria-hidden="true">
-                            <span className="mint-status-summary__text">Battle status</span>
+                            <span className="mint-status-summary__text">バトル状況</span>
                           </div>
                         )}
                       </div>
@@ -2749,7 +2749,7 @@ export function MatchPage() {
                     ].join(" ")}
                   >
                     <span title={engineRendererError ?? undefined}>
-                      Pixi renderer is unavailable. Showing Mint fallback board.
+                      Pixi renderer is unavailable. Mintフォールバック盤面を表示します。
                     </span>
                     <button
                       type="button"
@@ -2757,7 +2757,7 @@ export function MatchPage() {
                       onClick={handleRetryEngineRenderer}
                       aria-label="Retry Pixi renderer"
                     >
-                      Retry Pixi
+                      Pixi再試行 (Retry Pixi)
                     </button>
                   </div>
                 )}
@@ -2900,10 +2900,10 @@ export function MatchPage() {
                   >
                     <div className="grid gap-0.5 text-xs">
                       <div className="mint-match-quick-commit__title font-semibold">
-                        Quick Commit
+                        クイック確定
                       </div>
                       <div className="mint-match-quick-commit__hint">
-                        card {draftCardIndex !== null ? draftCardIndex + 1 : "-"} to cell {draftCell ?? "-"}
+                        カード {draftCardIndex !== null ? draftCardIndex + 1 : "-"} → セル {draftCell ?? "-"}
                       </div>
                     </div>
 
@@ -2912,7 +2912,7 @@ export function MatchPage() {
                         className="inline-flex items-center gap-2 text-xs font-semibold"
                         style={{ color: "var(--mint-text-secondary, #4B5563)" }}
                       >
-                        warning
+                        警告
                         <select
                           className="input h-10 min-w-[170px]"
                           value={draftWarningMarkCell === null ? "" : String(draftWarningMarkCell)}
@@ -2923,11 +2923,11 @@ export function MatchPage() {
                           disabled={turns.length >= 9 || isAiTurn || currentWarnRemaining <= 0}
                           aria-label="Quick warning mark cell"
                         >
-                          <option value="">None</option>
+                          <option value="">なし</option>
                           {availableCells
                             .filter((c) => c !== draftCell)
                             .map((c) => (
-                              <option key={`quick-${c}`} value={String(c)}>cell {c}</option>
+                              <option key={`quick-${c}`} value={String(c)}>セル {c}</option>
                             ))}
                         </select>
                       </label>
@@ -2975,7 +2975,7 @@ export function MatchPage() {
                     : undefined
                   }
                   >
-                    Battle: {lastFlipSummaryText}
+                    バトル: {lastFlipSummaryText}
                   </div>
                 ) : null}
 
@@ -2988,9 +2988,9 @@ export function MatchPage() {
                     ].filter(Boolean).join(" ")}
                   >
                     <div className="flex items-center justify-between gap-2">
-                      <div className="text-[11px] font-semibold text-slate-700">Hand Dock</div>
+                      <div className="text-[11px] font-semibold text-slate-700">手札ドック (Hand Dock)</div>
                       <div className="text-[10px] text-slate-500">
-                        {isAiTurn ? "Nyano is thinking..." : `${draftCardIndex !== null ? `card ${draftCardIndex + 1}` : "pick card"} to ${draftCell !== null ? `cell ${draftCell}` : "tap cell"}`}
+                        {isAiTurn ? "考え中… (Nyano is thinking...)" : `${draftCardIndex !== null ? `カード ${draftCardIndex + 1}` : "カード選択"} → ${draftCell !== null ? `セル ${draftCell}` : "セルをタップ"}`}
                       </div>
                     </div>
 
@@ -3024,7 +3024,7 @@ export function MatchPage() {
                               disabled
                             >
                               <div className="text-[10px] font-semibold text-slate-500">#{tid.toString()}</div>
-                              <div className="mt-1 text-[10px] text-slate-400">loading</div>
+                              <div className="mt-1 text-[10px] text-slate-400">読み込み中</div>
                             </button>
                           );
                         }
@@ -3076,11 +3076,11 @@ export function MatchPage() {
                         disabled={currentWarnRemaining <= 0 || isAiTurn}
                         aria-label="Focus dock warning mark cell"
                       >
-                        <option value="">Warning: none</option>
+                        <option value="">警告: なし</option>
                         {availableCells
                           .filter((c) => c !== draftCell)
                           .map((c) => (
-                            <option key={`focus-w-${c}`} value={String(c)}>warning {c}</option>
+                            <option key={`focus-w-${c}`} value={String(c)}>警告 {c}</option>
                           ))}
                       </select>
 
@@ -3090,7 +3090,7 @@ export function MatchPage() {
                         disabled={isAiTurn || draftCell === null || draftCardIndex === null}
                         aria-label="Commit move from focus hand dock"
                       >
-                        Commit
+                        確定
                       </button>
                       <button
                         className="btn h-9 px-3 text-xs"
@@ -3098,7 +3098,7 @@ export function MatchPage() {
                         disabled={isAiTurn || turns.length === 0}
                         aria-label="Undo move from focus hand dock"
                       >
-                        Undo
+                        取り消し
                       </button>
                     </div>
                   </div>
@@ -3116,9 +3116,9 @@ export function MatchPage() {
                     }
                       style={isRpg ? { fontFamily: "'Cinzel', serif", color: "var(--rpg-text-gold, #E8D48B)" } : undefined}
                     >
-                      {currentPlayer === 0 ? "Player A" : "Player B"} Hand
-                      {draftCell !== null && <span className={isRpg ? "" : " text-slate-400"}> · placing on cell {draftCell}</span>}
-                      {isHandDragging && <span className={isRpg ? "" : " text-cyan-500"}> · drop on board to commit</span>}
+                      {currentPlayer === 0 ? "プレイヤーA" : "プレイヤーB"} の手札
+                      {draftCell !== null && <span className={isRpg ? "" : " text-slate-400"}> · セル {draftCell} に配置予定</span>}
+                      {isHandDragging && <span className={isRpg ? "" : " text-cyan-500"}> · 盤面にドロップで確定</span>}
                     </div>
 
                     {useMintUi && currentHandCards.length > 0 ? (
@@ -3177,7 +3177,7 @@ export function MatchPage() {
                         <div className={isRpg ? "text-[10px] uppercase tracking-wider" : "text-[11px] text-slate-600"}
                           style={isRpg ? { fontFamily: "'Cinzel', serif", color: "var(--rpg-text-dim, #8A7E6B)" } : undefined}
                         >
-                          Warning Mark ({currentWarnRemaining} left)
+                          警告マーク（残り {currentWarnRemaining}）
                         </div>
                         <select
                           className={["input", isStageFocusRoute ? "h-10 min-w-[180px]" : ""].join(" ").trim()}
@@ -3189,11 +3189,11 @@ export function MatchPage() {
                           disabled={turns.length >= 9 || isAiTurn || currentWarnRemaining <= 0}
                           aria-label="Warning mark cell"
                         >
-                          <option value="">None</option>
+                          <option value="">なし</option>
                           {availableCells
                             .filter((c) => c !== draftCell)
                             .map((c) => (
-                              <option key={c} value={String(c)}>cell {c}</option>
+                              <option key={c} value={String(c)}>セル {c}</option>
                             ))}
                         </select>
                       </div>
@@ -3225,10 +3225,10 @@ export function MatchPage() {
                   </div>
                 ) : (
                   <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600">
-                    Controls are hidden for board focus.
+                    盤面フォーカス中のため操作UIを非表示にしています。
                     {draftCardIndex !== null || draftCell !== null ? (
                       <span className="ml-1">
-                        (selected: card {draftCardIndex !== null ? draftCardIndex + 1 : "-"} to cell {draftCell ?? "-"})
+                        （選択中: カード {draftCardIndex !== null ? draftCardIndex + 1 : "-"} → セル {draftCell ?? "-"}）
                       </span>
                     ) : null}
                   </div>
@@ -3258,7 +3258,7 @@ export function MatchPage() {
                           }}
                           onClick={() => handleDensityChange(d)}
                         >
-                          {d === "minimal" ? "Simple" : d === "standard" ? "Balanced" : "Full"}
+                          {d === "minimal" ? "簡易" : d === "standard" ? "標準" : "詳細"}
                         </button>
                       ))}
                     </div>
@@ -3274,27 +3274,27 @@ export function MatchPage() {
                         boardAdvantages={boardAdvantages}
                       />
                     ) : (
-                      <div className="text-xs" style={{ color: "var(--mint-text-hint)" }}>Load cards to see turn log.</div>
+                      <div className="text-xs" style={{ color: "var(--mint-text-hint)" }}>ターンログを見るにはカードを読み込んでください。</div>
                     )}
 
                     {/* Winner / Match info */}
                     {turns.length === 9 && sim.ok ? (
                       <div className="rounded-xl border p-3 text-xs" style={{ background: "var(--mint-surface-dim)", borderColor: "var(--mint-accent-muted)", color: "var(--mint-text-primary)" }}>
-                        <div>winner: <span className="font-medium">{sim.full.winner}</span> (tiles A/B = {sim.full.tiles.A}/{sim.full.tiles.B})</div>
+                        <div>勝者: <span className="font-medium">{sim.full.winner}</span>（タイル A/B = {sim.full.tiles.A}/{sim.full.tiles.B}）</div>
                         <div className="font-mono mt-1 truncate" style={{ color: "var(--mint-text-secondary)" }}>matchId: {sim.full.matchId}</div>
                       </div>
                     ) : (
                       <div className="rounded-xl border px-3 py-2 text-xs" style={{ background: "var(--mint-surface-dim)", borderColor: "var(--mint-accent-muted)", color: "var(--mint-text-secondary)" }}>
-                        Winner info appears after all 9 turns.
+                        勝者情報は 9 手終了後に表示されます。
                       </div>
                     )}
 
                     {/* Share buttons */}
                     <div className="grid gap-2">
                       <div className="flex flex-wrap items-center gap-2">
-                        <button className="btn" onClick={copyTranscriptJson} disabled={!sim.ok}>Copy JSON</button>
-                        <button className="btn" onClick={copyShareUrl} disabled={!canFinalize}>Share URL</button>
-                        <button className="btn" onClick={openReplay} disabled={!canFinalize}>Replay</button>
+                        <button className="btn" onClick={copyTranscriptJson} disabled={!sim.ok}>JSONをコピー</button>
+                        <button className="btn" onClick={copyShareUrl} disabled={!canFinalize}>共有URL</button>
+                        <button className="btn" onClick={openReplay} disabled={!canFinalize}>リプレイ (Replay)</button>
                       </div>
                     </div>
 
@@ -3323,7 +3323,7 @@ export function MatchPage() {
                       onSelect={(i) => setSelectedTurnIndex(i)}
                     />
                   ) : (
-                    <div className="text-xs text-slate-600">Load cards to see turn log.</div>
+                    <div className="text-xs text-slate-600">ターンログを見るにはカードを読み込んでください。</div>
                   )
                 )}
 
@@ -3336,7 +3336,7 @@ export function MatchPage() {
                   }
                   style={isRpg ? { background: "rgba(0,0,0,0.4)", color: "#F5F0E1", border: "1px solid rgba(201,168,76,0.2)" } : undefined}
                   >
-                    <div>winner: <span className="font-medium">{sim.full.winner}</span> (tiles A/B = {sim.full.tiles.A}/{sim.full.tiles.B})</div>
+                    <div>勝者: <span className="font-medium">{sim.full.winner}</span>（タイル A/B = {sim.full.tiles.A}/{sim.full.tiles.B}）</div>
                     <div className="font-mono mt-1 truncate">matchId: {sim.full.matchId}</div>
                   </div>
                 ) : (
@@ -3347,7 +3347,7 @@ export function MatchPage() {
                   }
                   style={isRpg ? { background: "rgba(0,0,0,0.3)", color: "var(--rpg-text-dim, #8A7E6B)" } : undefined}
                   >
-                    Winner info appears after all 9 turns.
+                    勝者情報は 9 手終了後に表示されます。
                   </div>
                 )}
 
@@ -3355,13 +3355,13 @@ export function MatchPage() {
                 <div className="grid gap-2">
                   <div className="flex flex-wrap items-center gap-2">
                     <button className={isRpg ? "rpg-result__btn" : "btn"} onClick={copyTranscriptJson} disabled={!sim.ok}>
-                      Copy JSON
+                      JSONをコピー
                     </button>
                     <button className={isRpg ? "rpg-result__btn" : "btn"} onClick={copyShareUrl} disabled={!canFinalize}>
-                      Share URL
+                      共有URL
                     </button>
                     <button className={isRpg ? "rpg-result__btn" : "btn"} onClick={openReplay} disabled={!canFinalize}>
-                      Replay
+                      リプレイ (Replay)
                     </button>
                   </div>
                 </div>
@@ -3369,48 +3369,48 @@ export function MatchPage() {
                 {/* Guest mode post-game CTA */}
                 {isGuestMode && turns.length >= 9 && (
                   <div className={["grid gap-2 rounded-lg border border-nyano-200 bg-nyano-50 p-3", isStageFocusRoute ? "stage-focus-side-panel" : ""].filter(Boolean).join(" ")}>
-                    <div className="text-sm font-medium text-nyano-800">Ready for the real thing?</div>
+                    <div className="text-sm font-medium text-nyano-800">本番デッキで遊んでみますか？</div>
                     <div className="flex flex-wrap gap-2">
-                      <Link className="btn btn-primary no-underline text-xs" to="/decks">Create Your Own Deck</Link>
+                      <Link className="btn btn-primary no-underline text-xs" to="/decks">自分のデッキを作る</Link>
                       <button className="btn btn-primary text-xs" onClick={handleRematch}>
-                        Rematch (same decks)
+                        再戦（同じデッキ）
                       </button>
                       <button className="btn text-xs" onClick={() => { resetMatch(); void loadCardsFromIndex(); }}>
-                        New Decks
+                        新しいデッキ
                       </button>
                       <button
                         className="btn text-xs"
                         onClick={handleSaveGuestDeck}
                         disabled={guestDeckSaved}
                       >
-                        {guestDeckSaved ? "Deck Saved" : "Save My Deck"}
+                        {guestDeckSaved ? "保存済み" : "デッキを保存"}
                       </button>
                     </div>
                     <div className="grid gap-2 border-t border-nyano-200 pt-2">
                       <div className="flex flex-wrap gap-2">
                         <button className="btn text-xs" onClick={copyShareUrl} disabled={!canFinalize}>
-                          Share URL
+                          共有URL
                         </button>
                         <button className="btn text-xs" onClick={async () => {
                           try {
                             const url = buildReplayUrl(true);
-                            if (!url) { toast.warn("Share", "Match not ready"); return; }
-                            const msg = `Nyano Triad match!\n${url}`;
+                            if (!url) { toast.warn("共有", "Match が未準備です"); return; }
+                            const msg = `Nyano Triad 対戦共有\n${url}`;
                             await copyToClipboard(msg);
-                            toast.success("Copied", "share template");
+                            toast.success("コピーしました", "共有テンプレート");
                           } catch (e: unknown) {
-                            toast.error("Share failed", errorMessage(e));
+                            toast.error("共有に失敗しました", errorMessage(e));
                           }
                         }} disabled={!canFinalize}>
-                          Share Template
+                          共有テンプレート
                         </button>
                         <button className="btn text-xs" onClick={openReplay} disabled={!canFinalize}>
-                          Replay
+                          リプレイ (Replay)
                         </button>
                       </div>
                       {canFinalize && (
                         <details className="text-xs">
-                          <summary className="cursor-pointer text-sky-600 hover:text-sky-700 font-medium">QR Code</summary>
+                          <summary className="cursor-pointer text-sky-600 hover:text-sky-700 font-medium">QRコード (QR Code)</summary>
                           <div className="mt-2 flex justify-center">
                             <ShareQrCode
                               sim={sim}

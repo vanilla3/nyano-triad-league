@@ -96,7 +96,7 @@ export function HomePage() {
       { to: themed("/arena"), title: "Arena", subtitle: "対戦モードへ", icon: "arena" },
       { to: themed("/decks"), title: "Decks", subtitle: "デッキ編集", icon: "decks" },
       { to: themed("/replay"), title: "Replay", subtitle: "対戦を振り返る", icon: "replay" },
-      { to: themed("/stream"), title: "Stream", subtitle: "配信導線へ", icon: "stream" },
+      { to: themed("/stream"), title: "Stream", subtitle: "配信ツールへ", icon: "stream" },
     ],
     [themed],
   );
@@ -134,9 +134,9 @@ export function HomePage() {
 
     try {
       await writeClipboardText(formatUxTelemetrySnapshotMarkdown(snapshot));
-      toast.success("Snapshot copied", "Paste into docs/ux/PLAYTEST_LOG.md");
+      toast.success("スナップショットをコピーしました", "docs/ux/PLAYTEST_LOG.md に貼り付けてください。");
     } catch (e) {
-      toast.error("Copy failed", `${errorMessage(e)} (snapshot saved locally)`);
+      toast.error("コピーに失敗しました", `${errorMessage(e)}（ローカル保存は完了）`);
     }
   }, [toast, uxStats]);
 
@@ -202,7 +202,7 @@ export function HomePage() {
         <MintTitleText as="h2" className="mint-home-title">
           Nyano Triad League
         </MintTitleText>
-        <p className="mint-home-subtitle">スマホゲームUIの導線で、すぐに対戦を始めよう</p>
+        <p className="mint-home-subtitle">デッキを選んで、すぐに対戦を始めよう</p>
       </section>
 
       <section className="mint-home-menu-grid" aria-label="Main menu">
@@ -220,7 +220,7 @@ export function HomePage() {
       <section className="mint-home-quickplay">
         <GlassPanel variant="panel" className="mint-home-quickplay__panel">
           <div className="mint-home-quickplay__head">
-            <MintLabel>Quick Play</MintLabel>
+            <MintLabel>クイック対戦 (Quick Play)</MintLabel>
             <div className="mint-home-quickplay__difficulty">
               {DIFFICULTIES.map((item) => (
                 <button
@@ -256,7 +256,7 @@ export function HomePage() {
             3ステップで始めよう
           </MintTitleText>
           <GlassPanel variant="pill" className="mint-home-onboarding__progress">
-            {onboardingCompleted}/{ONBOARDING_STEPS.length} steps
+            {onboardingCompleted}/{ONBOARDING_STEPS.length} ステップ
           </GlassPanel>
         </div>
 
@@ -265,7 +265,7 @@ export function HomePage() {
             <div className="mint-home-step__index">1</div>
             <MintTitleText as="h3" className="mint-home-step__title">ルールを知る</MintTitleText>
             <div className="mint-home-step__status">
-              {onboardingProgress.steps.read_quick_guide ? "DONE" : "TODO"}
+              {onboardingProgress.steps.read_quick_guide ? "完了" : "未完了"}
             </div>
             <MintPressable tone="soft" onClick={openQuickGuide}>
               ルールを開く
@@ -276,7 +276,7 @@ export function HomePage() {
             <div className="mint-home-step__index">2</div>
             <MintTitleText as="h3" className="mint-home-step__title">ゲストで対戦</MintTitleText>
             <div className="mint-home-step__status">
-              {onboardingProgress.steps.start_first_match ? "DONE" : "TODO"}
+              {onboardingProgress.steps.start_first_match ? "完了" : "未完了"}
             </div>
             <MintPressable to={quickPlayUrl} tone="primary" onClick={handleQuickPlayStart}>
               今すぐ対戦
@@ -287,7 +287,7 @@ export function HomePage() {
             <div className="mint-home-step__index">3</div>
             <MintTitleText as="h3" className="mint-home-step__title">最初の手を確定</MintTitleText>
             <div className="mint-home-step__status">
-              {onboardingProgress.steps.commit_first_move ? "DONE" : "AUTO"}
+              {onboardingProgress.steps.commit_first_move ? "完了" : "対戦で更新"}
             </div>
             <MintPressable to={quickCommitUrl} tone="soft">
               Matchを開く
@@ -304,13 +304,13 @@ export function HomePage() {
             onClick={() => {
               resetOnboardingProgress();
               refreshOnboarding();
-              toast.success("Quickstart reset", "オンボーディング進捗を初期化しました。");
+              toast.success("クイックスタートをリセットしました", "オンボーディング進捗を初期化しました。");
             }}
           >
-            Reset quickstart
+            クイックスタートをリセット
           </MintPressable>
           {onboardingAllDone ? (
-            <span className="mint-home-onboarding__done">すべて完了。Decks / Arena へ進めます。</span>
+            <span className="mint-home-onboarding__done">遊ぶ準備が整いました。好きなモードを選んで始めましょう。</span>
           ) : null}
         </div>
       </section>
@@ -318,68 +318,68 @@ export function HomePage() {
       <section className="mint-home-infobar">
         <GlassPanel variant="pill" className="mint-home-pill">
           <MintIcon name="events" size={14} />
-          <span>現在のフェーズ: 検証・共有フェーズ</span>
+          <span>まずはゲスト対戦でルールを覚えよう</span>
         </GlassPanel>
         <GlassPanel variant="pill" className="mint-home-pill">
           <MintIcon name="sparkle" size={14} />
-          <span>次のマイルストーン: 運営品質のゲーム体験</span>
+          <span>Decks と Arena で自分の戦い方を見つけよう</span>
         </GlassPanel>
       </section>
 
       <section className="mint-home-tools">
         <details className="mint-home-disclosure">
-          <summary>Tools / Settings</summary>
+          <summary>ツール / 設定 (Tools / Settings)</summary>
           <div className="mint-home-tools__body">
             <div className="mint-home-tools__actions">
               <MintPressable tone="soft" size="sm" onClick={() => {
                 resetTutorialSeen();
-                toast.success("Tutorial reset", "The tutorial will appear on your next guest match.");
+                toast.success("チュートリアルをリセットしました", "次のゲスト対戦で再表示されます。");
               }}>
-                Reset Tutorial
+                チュートリアルをリセット (Reset Tutorial)
               </MintPressable>
               <MintPressable tone="soft" size="sm" onClick={() => {
                 clearGameIndexCache();
-                toast.success("Cache cleared", "Game index cache has been cleared.");
+                toast.success("キャッシュを削除しました", "ゲームインデックスのキャッシュを初期化しました。");
               }}>
-                Reset Game Cache
+                ゲームキャッシュを初期化 (Reset Game Cache)
               </MintPressable>
               <MintPressable tone="soft" size="sm" onClick={refreshUxStats}>
-                Refresh Metrics
+                指標を更新 (Refresh Metrics)
               </MintPressable>
               <MintPressable tone="primary" size="sm" onClick={copyUxSnapshot}>
-                Copy Snapshot
+                スナップショットをコピー (Copy Snapshot)
               </MintPressable>
               <MintPressable tone="ghost" size="sm" onClick={() => {
                 clearCumulativeStats();
                 refreshUxStats();
-                toast.success("Telemetry reset", "Local UX metrics have been cleared.");
+                toast.success("指標をリセットしました", "ローカルUX指標を初期化しました。");
               }}>
-                Reset Metrics
+                指標をリセット (Reset Metrics)
               </MintPressable>
               <MintPressable tone="ghost" size="sm" onClick={() => {
                 clearUxTelemetrySnapshotHistory();
                 setUxSnapshotHistory([]);
-                toast.success("Snapshot history reset", "Local snapshot history has been cleared.");
+                toast.success("履歴を削除しました", "ローカルのスナップショット履歴を初期化しました。");
               }}>
-                Clear History
+                履歴を削除 (Clear History)
               </MintPressable>
             </div>
 
             <div className="mint-home-metrics-grid">
               <GlassPanel variant="card" className="mint-home-metric">
-                <MintLabel>Sessions</MintLabel>
+                <MintLabel>セッション (Sessions)</MintLabel>
                 <div>{uxStats.sessions}</div>
               </GlassPanel>
               <GlassPanel variant="card" className="mint-home-metric">
-                <MintLabel>Avg first interaction</MintLabel>
+                <MintLabel>初回操作まで平均 (Avg first interaction)</MintLabel>
                 <div>{formatSecondsFromMs(uxStats.avg_first_interaction_ms)}</div>
               </GlassPanel>
               <GlassPanel variant="card" className="mint-home-metric">
-                <MintLabel>Avg first place</MintLabel>
+                <MintLabel>初回配置まで平均 (Avg first place)</MintLabel>
                 <div>{formatSecondsFromMs(uxStats.avg_first_place_ms)}</div>
               </GlassPanel>
               <GlassPanel variant="card" className="mint-home-metric">
-                <MintLabel>Avg Home LCP</MintLabel>
+                <MintLabel>ホームLCP平均 (Avg Home LCP)</MintLabel>
                 <div>{formatSecondsFromMs(uxStats.avg_home_lcp_ms)}</div>
               </GlassPanel>
             </div>
@@ -391,8 +391,8 @@ export function HomePage() {
                     <span>{check.id}</span>
                     <span className={targetStatusClass(check.status)}>{targetStatusLabel(check.status)}</span>
                   </div>
-                  <div className="mint-home-target__value">target {check.target}</div>
-                  <div className="mint-home-target__value">current {check.valueText}</div>
+                  <div className="mint-home-target__value">目標 target: {check.target}</div>
+                  <div className="mint-home-target__value">現在 current: {check.valueText}</div>
                 </GlassPanel>
               ))}
             </div>
@@ -402,12 +402,12 @@ export function HomePage() {
                 {uxSnapshotHistory.map((snapshot, index) => (
                   <GlassPanel key={`${snapshot.generatedAtIso}-${index}`} variant="card" className="mint-home-snapshot">
                     <div>{snapshot.generatedAtIso}</div>
-                    <div>{snapshot.context ? `${snapshot.context.route} / ${snapshot.context.viewport}` : "Context unavailable"}</div>
+                    <div>{snapshot.context ? `${snapshot.context.route} / ${snapshot.context.viewport}` : "コンテキストなし (Context unavailable)"}</div>
                   </GlassPanel>
                 ))}
               </div>
             ) : (
-              <div className="mint-home-snapshots__empty">No snapshot history yet.</div>
+              <div className="mint-home-snapshots__empty">スナップショット履歴はまだありません。(No snapshot history yet.)</div>
             )}
           </div>
         </details>
