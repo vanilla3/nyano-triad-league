@@ -1962,20 +1962,23 @@ export function MatchPage() {
     }));
   }, [sim, cards]);
 
-  const showMintTopHud = isMint && showStageAssistUi && sim.ok;
-  const showMintDetailHud = useMintUi && showStageAssistUi && sim.ok && (!isMint || density !== "minimal");
-  const showMintPlayerPanels = isMint && !isStageFocusRoute;
+  const useMintPixiParity = isMint && !isRpg;
+  const usePixiPresentation = isEngine || useMintPixiParity;
+  const mintHudTone: "mint" | "pixi" = usePixiPresentation ? "pixi" : "mint";
+  const showFocusHandDock = useMintUi
+    && !isRpg
+    && turns.length < 9
+    && currentDeckTokens.length > 0;
+  const showMintTopHud = isMint && showStageAssistUi && sim.ok && !showFocusHandDock && !useMintPixiParity;
+  const showMintDetailHud = useMintUi && showStageAssistUi && sim.ok && (usePixiPresentation || density !== "minimal");
+  const showMintPlayerPanels = isMint && !isStageFocusRoute && !showFocusHandDock && !useMintPixiParity;
   const showDesktopQuickCommit = useMintUi
     && !isRpg
     && !isAiTurn
     && turns.length < 9
     && (draftCardIndex !== null || draftCell !== null)
+    && !showFocusHandDock
     && !isStageFocusRoute;
-  const showFocusHandDock = isEngineFocus
-    && useMintUi
-    && !isRpg
-    && turns.length < 9
-    && currentDeckTokens.length > 0;
   const showStageFocusHandDock = isStageFocusRoute && showFocusHandDock;
   const stageFocusEngineBoardMaxWidthCapPx =
     isStageFocusRoute && showStageFocusHandDock
@@ -2546,7 +2549,7 @@ export function MatchPage() {
                               turnCount={turns.length}
                               maxTurns={9}
                               currentPlayer={currentPlayer}
-                              tone={isEngine ? "pixi" : "mint"}
+                              tone={mintHudTone}
                               gamePhase={
                                 turns.length >= 9 ? "game_over"
                                   : isAiTurn ? "ai_turn"
@@ -2640,7 +2643,7 @@ export function MatchPage() {
                       turnIndex={turns.length}
                       rpg={isRpg}
                       mint={useMintUi}
-                      tone={isEngine ? "pixi" : "mint"}
+                      tone={mintHudTone}
                       aiReasonCode={currentAiReasonCode}
                       stageFocus={isStageFocusRoute}
                     />

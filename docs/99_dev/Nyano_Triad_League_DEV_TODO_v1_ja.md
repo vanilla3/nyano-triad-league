@@ -216,3 +216,4 @@
 - [x] 2026-02-17 Mint guide rollout: `MINT_PAGE_GUIDES` の `events/replay/stream` を各ページに接続し、Mintテーマ時の共通ガイド導線を統一（Replayは `!isStageFocus` 条件を維持）。
 - [x] 2026-02-17 Mint guide rollout follow-up: `e2e/mint-app-screens-guardrails.spec.ts` に `.mint-page-guide` 可視アサーションを追加し、Arena/Events/Replay/Stream のガイド導線回帰を防止。
 - [x] 2026-02-17 CI follow-up: `/battle-stage` の board/dock 重なりを desktop 条件で解消（`.mint-focus-hand-dock--stage` 補正）。あわせて `ux-guardrails` の quick commit クリックをフォールバック付きにして flaky を低減。
+- [x] 2026-02-17 ui=mint Pixi parity follow-up: /match で hand dock + HUD/commentary tone を Pixi寄せに統一し、mint専用Top HUD/side panelを抑止。あわせて ux-guardrails を hand dock 導線対応へ更新し、reduced-motion 時の dock card transition 抑制を追加（pnpm.cmd -C apps/web e2e -- e2e/ux-guardrails.spec.ts 7 passed / pnpm.cmd -C apps/web e2e -- e2e/stage-focus.spec.ts 15 passed）。

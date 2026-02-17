@@ -3114,3 +3114,25 @@
 - `pnpm.cmd -C apps/web e2e -- e2e/stage-focus.spec.ts`
 - `pnpm.cmd -C apps/web e2e -- e2e/ux-guardrails.spec.ts`
 - `pnpm.cmd -C apps/web e2e` はローカル実行環境の `spawn EPERM` で完走不可（対象specは個別実行で確認）。
+## 2026-02-17 - ui=mint parity follow-up: align board/hand/commentary/status flow with Pixi
+
+### Why
+- ui=mint and Pixi (ui=engine) still had different battle flow on Match: hand operation location, HUD/commentary presentation tone, and control discovery differed.
+- Requirement: keep Mint renderer fallback/path, but align board/hand/commentary/status presentation and interaction flow to Pixi-style operation.
+
+### What
+- apps/web/src/pages/Match.tsx
+  - Enabled focus hand dock flow for ui=mint as well (non-RPG), not only engine focus.
+  - Disabled mint-only top HUD and side player panels while mint/pixi parity mode is active.
+  - Unified BattleHudMint and NyanoReactionSlot tone to pixi for the mint parity path.
+  - Kept URL/protocol behavior unchanged (ui params, replay/state handling untouched).
+- apps/web/e2e/ux-guardrails.spec.ts
+  - Updated hand-control detection to accept either legacy hand listbox or focus hand dock.
+  - Extended commitMove helper with dock commit action support and robust board-cell selection fallback (click/evaluate/keyboard).
+- apps/web/src/mint-theme/mint-theme.css
+  - Added .mint-focus-hand-card to reduced-motion transition suppression branch so dock cards also respect prefers-reduced-motion.
+
+### Verify
+- pnpm -C apps/web typecheck OK
+- pnpm.cmd -C apps/web e2e -- e2e/ux-guardrails.spec.ts OK (7 passed)
+- pnpm.cmd -C apps/web e2e -- e2e/stage-focus.spec.ts OK (15 passed)

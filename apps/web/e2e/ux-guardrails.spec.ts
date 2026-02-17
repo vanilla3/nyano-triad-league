@@ -97,8 +97,44 @@ async function dismissGuestTutorialIfPresent(page: Page): Promise<void> {
   }
 }
 
+async function expectPrimaryHandControlVisible(page: Page): Promise<void> {
+  const handOption = page.getByRole("option", { name: /^Card 1:/ }).first();
+  const dockCard = page.locator('[data-hand-card="0"]').first();
+
+  await expect
+    .poll(async () => {
+      const optionVisible = (await handOption.count()) > 0 && await handOption.isVisible().catch(() => false);
+      const dockVisible = (await dockCard.count()) > 0 && await dockCard.isVisible().catch(() => false);
+      return optionVisible || dockVisible;
+    })
+    .toBe(true);
+}
+
 async function commitMove(page: Page, cardSlot: number, cell: number): Promise<void> {
-  await page.locator(`[data-board-cell="${cell}"]`).click({ force: true });
+  const dockCard = page.locator(`[data-hand-card="${cardSlot - 1}"]`).first();
+  if ((await dockCard.count()) > 0 && await dockCard.isEnabled().catch(() => false)) {
+    await dockCard.click({ force: true });
+  }
+
+  const boardCell = page.locator(`[data-board-cell="${cell}"]`).first();
+  await boardCell.click({ force: true });
+  const isBoardCellSelected = async (): Promise<boolean> =>
+    boardCell
+      .evaluate((el) =>
+        el.getAttribute("aria-selected") === "true"
+        || el.className.includes("mint-cell--selected"))
+      .catch(() => false);
+  if (!await isBoardCellSelected()) {
+    await boardCell.evaluate((el) => (el as HTMLElement).click()).catch(() => undefined);
+  }
+  if (!await isBoardCellSelected()) {
+    await boardCell.focus().catch(() => undefined);
+    await page.keyboard.press("Enter").catch(() => undefined);
+  }
+  await expect
+    .poll(isBoardCellSelected)
+    .toBe(true);
+
   const quickCommitButton = page.getByRole("button", { name: "Quick commit move", exact: true });
   if ((await quickCommitButton.count()) > 0 && await quickCommitButton.isEnabled().catch(() => false)) {
     const quickCommitClicked = await quickCommitButton
@@ -107,6 +143,16 @@ async function commitMove(page: Page, cardSlot: number, cell: number): Promise<v
       .catch(() => false);
     if (quickCommitClicked) return;
   }
+
+  const dockCommitButton = page.getByRole("button", { name: "Commit move from focus hand dock", exact: true });
+  if ((await dockCommitButton.count()) > 0 && await dockCommitButton.isEnabled().catch(() => false)) {
+    const dockCommitClicked = await dockCommitButton
+      .click({ force: true, timeout: 2_000 })
+      .then(() => true)
+      .catch(() => false);
+    if (dockCommitClicked) return;
+  }
+
   const currentHand = page.getByRole("listbox", { name: /Player [AB] hand/i }).first();
   await currentHand.getByRole("option", { name: new RegExp(`^Card ${cardSlot}:`) }).first().click();
   const commitButton = page.getByRole("button", { name: "Commit move", exact: true });
@@ -142,10 +188,13 @@ test.describe("UX regression guardrails", () => {
     await dismissGuestTutorialIfPresent(page);
 
     await expect(page.getByText("Guest Quick Play")).toBeVisible({ timeout: 15_000 });
-    await expect(page.getByRole("option", { name: /^Card 1:/ }).first()).toBeVisible({ timeout: 15_000 });
+    await expectPrimaryHandControlVisible(page);
 
     const firstHandCard = page.locator('[data-hand-card="0"]').first();
-    await expect(firstHandCard).toHaveClass(/mint-pressable/);
+    await expect(firstHandCard).toBeVisible();
+    await expect
+      .poll(async () => (await firstHandCard.getAttribute("class")) ?? "")
+      .toMatch(/mint-(pressable|focus-hand-card)/);
 
     const firstCell = page.locator('[data-board-cell="0"]').first();
     await expect(firstCell).toHaveClass(/mint-pressable/);
@@ -213,7 +262,7 @@ test.describe("UX regression guardrails", () => {
     await dismissGuestTutorialIfPresent(page);
 
     await expect(page.getByText("Guest Quick Play")).toBeVisible({ timeout: 15_000 });
-    await expect(page.getByRole("option", { name: /^Card 1:/ }).first()).toBeVisible({ timeout: 15_000 });
+    await expectPrimaryHandControlVisible(page);
 
     const deckPreview = page.locator("details").filter({ hasText: "Deck Preview" }).first();
     if (await deckPreview.isVisible().catch(() => false)) {
@@ -275,7 +324,7 @@ test.describe("UX regression guardrails", () => {
     await dismissGuestTutorialIfPresent(page);
 
     await expect(page.getByText("Guest Quick Play")).toBeVisible({ timeout: 15_000 });
-    await expect(page.getByRole("option", { name: /^Card 1:/ }).first()).toBeVisible({ timeout: 15_000 });
+    await expectPrimaryHandControlVisible(page);
 
     const deckPreview = page.locator("details").filter({ hasText: "Deck Preview" }).first();
     if (await deckPreview.isVisible().catch(() => false)) {
