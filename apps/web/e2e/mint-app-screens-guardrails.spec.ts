@@ -107,6 +107,7 @@ test.describe("Mint app screen guardrails", () => {
 
     await page.goto("/arena?theme=mint");
     await expect(page.locator(".mint-arena-layout")).toBeVisible({ timeout: 10_000 });
+    await expect(page.locator(".mint-page-guide")).toBeVisible({ timeout: 10_000 });
     await assertNoHorizontalOverflow(page);
 
     await page.goto("/decks?theme=mint");
@@ -146,16 +147,19 @@ test.describe("Mint app screen guardrails", () => {
 
     await page.goto("/events?theme=mint");
     await expect(page.locator(".events-page")).toBeVisible({ timeout: 10_000 });
+    await expect(page.locator(".mint-page-guide")).toBeVisible({ timeout: 10_000 });
     await assertNoHorizontalOverflow(page);
 
     const zParam = encodeTranscriptZ(REPLAY_TRANSCRIPT_JSON);
     await page.goto(`/replay?theme=mint&mode=v2&z=${zParam}`);
     await expect(page.locator(".replay-page")).toBeVisible({ timeout: 10_000 });
     await expect(page.locator(".mint-board-view--replay")).toBeVisible({ timeout: 10_000 });
+    await expect(page.locator(".mint-page-guide")).toBeVisible({ timeout: 10_000 });
     await assertNoHorizontalOverflow(page);
 
     await page.goto("/stream?theme=mint");
     await expect(page.locator(".stream-page")).toBeVisible({ timeout: 10_000 });
+    await expect(page.locator(".mint-page-guide")).toBeVisible({ timeout: 10_000 });
     await assertNoHorizontalOverflow(page);
   });
 
