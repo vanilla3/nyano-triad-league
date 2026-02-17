@@ -1,5 +1,5 @@
 import React from "react";
-import { Link, useSearchParams } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { GlassPanel } from "@/components/mint/GlassPanel";
 import { MintPageGuide } from "@/components/mint/MintPageGuide";
 import { MintPressable } from "@/components/mint/MintPressable";
@@ -23,6 +23,7 @@ function parseDifficulty(value: string | null): DifficultyKey {
 }
 
 export function ArenaPage() {
+  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const theme = resolveAppTheme(searchParams);
   const difficulty = parseDifficulty(searchParams.get("difficulty"));
@@ -35,6 +36,7 @@ export function ArenaPage() {
     const params = new URLSearchParams(searchParams);
     params.set("difficulty", next);
     setSearchParams(params, { replace: true });
+    navigate(themed(`/match?mode=guest&opp=vs_nyano_ai&ai=${next}&rk=v2&ui=mint`));
   };
 
   const sideItems = [
@@ -105,6 +107,7 @@ export function ArenaPage() {
           </button>
         ))}
       </section>
+      <p className="mint-arena-difficulty__assist">難易度カードを押すと、そのまま対戦開始します。</p>
     </div>
   );
 }

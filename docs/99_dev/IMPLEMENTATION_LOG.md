@@ -2935,3 +2935,23 @@
 - pnpm -C apps/web build OK
 - pnpm.cmd -C apps/web e2e -- e2e/stage-focus.spec.ts OK (15 passed)
 - pnpm.cmd -C apps/web e2e -- e2e/ux-guardrails.spec.ts e2e/mint-stage-visual-guardrails.spec.ts OK (10 passed)
+
+## 2026-02-18 - Arena quick-start flow improvement
+
+### Why
+- Arena required two actions (difficulty select then quick play button) to start a guest battle, so the primary flow felt indirect.
+
+### What
+- apps/web/src/pages/Arena.tsx
+  - Difficulty card click now updates the difficulty query and immediately navigates to guest match.
+  - Added assist copy that cards start battle immediately.
+- apps/web/src/mint-theme/mint-theme.css
+  - Added mint-arena-difficulty__assist style.
+- apps/web/e2e/quick-play.spec.ts
+  - Added guardrail test for immediate start from Arena difficulty card.
+
+### Verify
+- pnpm.cmd -C apps/web e2e -- e2e/quick-play.spec.ts OK (2 passed)
+- pnpm.cmd -C apps/web test OK
+- pnpm.cmd -C apps/web typecheck OK
+- pnpm.cmd -C apps/web build OK
