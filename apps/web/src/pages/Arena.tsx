@@ -40,10 +40,10 @@ export function ArenaPage() {
   };
 
   const sideItems = [
-    { to: themed("/decks"), label: "Decks", icon: "decks" as const },
-    { to: themed("/match?ui=mint"), label: "Match", icon: "match" as const },
-    { to: themed("/replay"), label: "Replay", icon: "replay" as const },
-    { to: themed("/playground"), label: "Playground", icon: "playground" as const },
+    { to: themed("/decks"), label: "デッキ", icon: "decks" as const },
+    { to: themed("/match?ui=mint"), label: "対戦設定", icon: "match" as const },
+    { to: themed("/replay"), label: "リプレイ", icon: "replay" as const },
+    { to: themed("/playground"), label: "練習場", icon: "playground" as const },
   ];
 
   return (
@@ -64,7 +64,7 @@ export function ArenaPage() {
           </div>
           <div className="mint-arena-banner__copy">
             <MintTitleText as="h2" className="mint-arena-banner__title">
-              Nyano Triad League Arena
+              Nyano Triad League アリーナ
             </MintTitleText>
             <p className="mint-arena-banner__subtitle">難易度を選んで、すぐに対戦を始めよう。</p>
           </div>
@@ -79,7 +79,7 @@ export function ArenaPage() {
             Pixi Stage
           </MintPressable>
           <Link to={themed("/events")} className="mint-arena-quickplay__link">
-            Eventsを開く
+            イベント一覧を開く
           </Link>
         </GlassPanel>
       </section>

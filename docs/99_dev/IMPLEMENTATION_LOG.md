@@ -2955,3 +2955,27 @@
 - pnpm.cmd -C apps/web test OK
 - pnpm.cmd -C apps/web typecheck OK
 - pnpm.cmd -C apps/web build OK
+
+## 2026-02-18 - User-facing copy cleanup (debug label removal + Arena JP guidance)
+
+### Why
+- Some user-visible labels still exposed developer-facing wording such as "debug".
+- Arena side navigation still mixed English-first labels while the product is moving to Japanese-first copy.
+
+### What
+- apps/web/src/pages/Overlay.tsx
+  - Replaced the visible "(debug)" label with "??".
+- apps/web/src/pages/Replay.tsx
+  - Replaced disclosure title "?JSON????debug?" with "??JSON???".
+- apps/web/src/pages/Playground.tsx
+  - Replaced disclosure title "?JSON????debug?" with "??JSON???".
+- apps/web/src/pages/Arena.tsx
+  - Side nav labels switched to Japanese-first (??? / ???? / ???? / ???).
+  - Banner title adjusted to "Nyano Triad League ????".
+  - Events link copy adjusted to "?????????".
+
+### Verify
+- pnpm.cmd -C apps/web e2e -- e2e/quick-play.spec.ts OK (2 passed)
+- pnpm.cmd -C apps/web test OK
+- pnpm.cmd -C apps/web typecheck OK
+- pnpm.cmd -C apps/web build OK

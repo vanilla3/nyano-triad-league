@@ -1,4 +1,4 @@
-import React from "react";
+﻿import React from "react";
 import { useToast } from "@/components/Toast";
 import { Disclosure } from "@/components/Disclosure";
 import { Link, useLocation, useNavigate, useSearchParams } from "react-router-dom";
@@ -2328,7 +2328,7 @@ protocolV1: {
                       </div>
 
                       <div className="mt-3">
-                        <Disclosure title={<span>生JSONを表示（debug）</span>}>
+                        <Disclosure title={<span>詳細JSONを表示</span>}>
                           <div className="grid grid-cols-1 gap-3">
                             <div className="min-w-0">
                               <div className="text-xs font-medium text-slate-600">transcript</div>

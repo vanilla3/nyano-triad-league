@@ -1,4 +1,4 @@
-import React from "react";
+﻿import React from "react";
 import { useSearchParams } from "react-router-dom";
 import { useToast } from "@/components/Toast";
 import { Disclosure } from "@/components/Disclosure";
@@ -398,7 +398,7 @@ export function PlaygroundPage() {
                   </div>
 
                   <div className="mt-3">
-                    <Disclosure title={<span>生JSONを表示（debug）</span>}>
+                    <Disclosure title={<span>詳細JSONを表示</span>}>
                       <div className="grid gap-3">
                         <div>
                           <div className="text-xs font-medium text-slate-600">transcript</div>
