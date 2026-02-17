@@ -218,3 +218,38 @@
 - [x] 2026-02-17 CI follow-up: `/battle-stage` の board/dock 重なりを desktop 条件で解消（`.mint-focus-hand-dock--stage` 補正）。あわせて `ux-guardrails` の quick commit クリックをフォールバック付きにして flaky を低減。
 - [x] 2026-02-17 ui=mint Pixi parity follow-up: /match で hand dock + HUD/commentary tone を Pixi寄せに統一し、mint専用Top HUD/side panelを抑止。あわせて ux-guardrails を hand dock 導線対応へ更新し、reduced-motion 時の dock card transition 抑制を追加（pnpm.cmd -C apps/web e2e -- e2e/ux-guardrails.spec.ts 7 passed / pnpm.cmd -C apps/web e2e -- e2e/stage-focus.spec.ts 15 passed）。
 - [x] 2026-02-17 e2e:ux follow-up: mint-stage-visual-guardrails の commit control 判定を hand dock/quick commit 互換に更新し、ui=mint 新導線でのCI失敗を解消（pnpm.cmd -C apps/web e2e:ux 14 passed）。
+
+---
+
+## Next (Planned)
+
+- [ ] 2026-02-17 WO025: Classic Rules プリセット拡充（reverse / aceKiller / typeAscend / typeDescend / plus / same）+ UI から選択可能に。
+- [ ] 2026-02-17 WO026: Classic Rules カスタムビルダー（複数組み合わせ）+ Share/Replay 互換（URL param `cr` bitmask）。
+- [ ] 2026-02-17 WO027: ルール設定 UI を “触れば分かる” Nintendo 品質へ（MintRulesetPicker）。
+
+
+## Update 2026-02-17 (WO025/WO026/WO027)
+
+- [x] WO025: Classic preset surface expansion completed.
+  - Added reverse / aceKiller / typeAscend / typeDescend / plus / same presets to registry and setup UI.
+  - Added Classic discoverability section in /rulesets.
+- [x] WO026: Classic custom builder + URL/share/replay compatibility completed.
+  - Added rk=classic_custom and cr (base36 bitmask) encode/decode.
+  - Match stores/restores custom rules via URL; Replay can fallback-restore from rk/cr when rulesetId is unmapped.
+  - Added mismatch warning when fallback rulesetId differs from transcript rulesetId.
+- [x] WO027: Nintendo-quality rules setup flow completed (incremental).
+  - Added MintRulesetPicker (family -> preset/custom -> summary/help).
+  - Kept existing select[data-testid=match-setup-ruleset] for compatibility while moving primary UX to picker.
+
+### Residual follow-ups
+- [ ] Add dedicated Replay UX test for rulesetId mismatch warning pill (rk/cr fallback mismatch case).
+- [ ] Consider splitting MintRulesetPicker visual primitives into mint theme CSS tokens if further polish is required.
+
+
+## Update 2026-02-17 (follow-up)
+
+- [x] Added replay fallback guardrail E2E:
+  - apps/web/e2e/replay-ruleset-fallback-guardrails.spec.ts
+  - Validates rk/cr fallback + mismatch warning visibility.
+- [x] Integrated replay fallback guardrail into pnpm -C apps/web e2e:ux.
+- [x] Hardened UX E2E commit helper for dock/toolbar/legacy commit paths to reduce flaky failures.

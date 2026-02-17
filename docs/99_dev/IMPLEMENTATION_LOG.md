@@ -3151,3 +3151,76 @@
 
 ### Verify
 - pnpm.cmd -C apps/web e2e:ux OK (14 passed)
+
+## 2026-02-17 - WO025/026/027: classic presets + custom ruleset mask + Mint ruleset picker
+
+### Why
+- Classic rules were partially implemented in engine/registry but not fully surfaced in Mint setup and replay/share workflows.
+- Replay/share needed a backward-compatible way to restore non-registry classic combinations.
+- Match setup needed clearer rules UX (preset vs custom, summary-first, low-friction controls).
+
+### What
+- apps/web/src/lib/ruleset_registry.ts
+  - Added classic presets: classic_plus, classic_same, classic_reverse, classic_ace_killer, classic_type_ascend, classic_type_descend.
+  - Added classic_custom key (base v2 classic-off baseline for custom composition flow).
+- apps/web/src/lib/ruleset_discovery.ts
+  - Added metadata for all new classic presets and classic_custom.
+- apps/web/src/pages/Rulesets.tsx
+  - Added Classic (Beta) discoverability section with direct /match?ui=mint&rk=... CTAs.
+- apps/web/src/lib/classic_rules_param.ts (new)
+  - Added classic mask encode/decode/normalize (cr base36 bitmask) and active-tag utility.
+- apps/web/src/pages/Match.tsx
+  - Added rk=classic_custom + cr decode flow to build runtime classic config.
+  - Added URL canonicalization (classic_custom => ensure cr, non-custom => remove cr).
+  - Added replay/share URL propagation for rk/cr.
+- apps/web/src/pages/Replay.tsx
+  - Added fallback ruleset reconstruction from URL params when rulesetId is not found in registry.
+  - Added mismatch warning when reconstructed rulesetId differs from transcript header rulesetId.
+  - Reused reconstructed ruleset for classic swap/open metadata rendering.
+- apps/web/src/components/match/MintRulesetPicker.tsx (new)
+  - Added family/preset/custom UX with exclusive radio-like groups and toggle groups.
+  - Added short contextual help and active summary.
+- apps/web/src/components/match/MatchSetupPanelMint.tsx
+  - Integrated MintRulesetPicker while keeping legacy select[data-testid=match-setup-ruleset] for compatibility.
+  - Added custom mask visibility (cr=...) when custom mode is active.
+- apps/web/src/components/match/MatchSetupPanelMint.helpers.ts
+  - Added labels for new classic keys and custom summary rendering.
+- apps/web/src/lib/appUrl.ts
+  - Extended buildReplayShareUrl options with optional rulesetKey/classicMask (rk/cr).
+- Tests
+  - Added apps/web/src/lib/__tests__/classic_rules_param.test.ts.
+  - Updated registry/helper/url tests for new keys and URL params.
+- Stability follow-up
+  - Normalized visible commit button text to Commit move for UX/e2e consistency.
+
+### Verify
+- pnpm -C apps/web test OK
+- pnpm -C apps/web typecheck OK
+- pnpm -C apps/web build OK
+- pnpm.cmd -C apps/web e2e:ux OK (14 passed)
+
+
+## 2026-02-17 - Replay fallback mismatch guardrail + UX commit fallback hardening
+
+### Why
+- After adding classic custom URL fallback (rk/cr), Replay needed a dedicated E2E guardrail for mismatch warning visibility.
+- ux-guardrails commit helper still had edge-case flakiness when only focus-hand-dock controls were present.
+
+### What
+- apps/web/e2e/replay-ruleset-fallback-guardrails.spec.ts (new)
+  - Added guardrail test for /replay?rk=classic_custom&cr=... fallback restore in auto mode.
+  - Asserts URL fallback label and rulesetId mismatch warning are visible.
+- apps/web/package.json
+  - Added the new replay fallback guardrail spec to e2e:ux.
+- apps/web/e2e/ux-guardrails.spec.ts
+  - Hardened commitMove helper with additional fallback paths:
+    - focus hand card button selection (Focus hand card N)
+    - focus toolbar commit action
+    - generic commit action fallback
+  - Re-applies hand selection after board-cell selection to avoid dock-only state race.
+
+### Verify
+- pnpm.cmd -C apps/web e2e:ux OK (15 passed)
+- pnpm -C apps/web test OK
+- pnpm -C apps/web typecheck OK
+- pnpm -C apps/web build OK
