@@ -1,16 +1,18 @@
 import React from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { GlassPanel } from "@/components/mint/GlassPanel";
+import { MintPageGuide } from "@/components/mint/MintPageGuide";
 import { MintPressable } from "@/components/mint/MintPressable";
 import { MintTitleText } from "@/components/mint/MintTypography";
 import { MintIcon } from "@/components/mint/icons/MintIcon";
+import { MINT_PAGE_GUIDES } from "@/lib/mint_page_guides";
 import { appendThemeToPath, resolveAppTheme } from "@/lib/theme";
 
 const DIFFICULTIES = [
-  { key: "easy", ja: "はじめて", en: "Easy" },
-  { key: "normal", ja: "ふつう", en: "Normal" },
-  { key: "hard", ja: "つよい", en: "Hard" },
-  { key: "expert", ja: "めっちゃつよい", en: "Expert" },
+  { key: "easy", ja: "はじめて", en: "Easy", hint: "Learn basics", icon: "rules" as const },
+  { key: "normal", ja: "ふつう", en: "Normal", hint: "Balanced", icon: "arena" as const },
+  { key: "hard", ja: "つよい", en: "Hard", hint: "Think ahead", icon: "match" as const },
+  { key: "expert", ja: "めっちゃつよい", en: "Expert", hint: "Max challenge", icon: "sparkle" as const },
 ] as const;
 
 type DifficultyKey = (typeof DIFFICULTIES)[number]["key"];
@@ -62,9 +64,7 @@ export function ArenaPage() {
             <MintTitleText as="h2" className="mint-arena-banner__title">
               Nyano Triad League Arena
             </MintTitleText>
-            <p className="mint-arena-banner__subtitle">
-              対戦難易度を選んで Play Now へ。Pixi Stage もここから開始できます。
-            </p>
+            <p className="mint-arena-banner__subtitle">Pick a difficulty, hit Play Now, and start in seconds.</p>
           </div>
         </GlassPanel>
 
@@ -77,21 +77,29 @@ export function ArenaPage() {
             Pixi Stage
           </MintPressable>
           <Link to={themed("/events")} className="mint-arena-quickplay__link">
-            Events へ
+            Open Events
           </Link>
         </GlassPanel>
       </section>
+
+      <MintPageGuide spec={MINT_PAGE_GUIDES.arena} className="mint-arena-guide" />
 
       <section className="mint-arena-difficulty" aria-label="Difficulty selection">
         {DIFFICULTIES.map((item) => (
           <button
             key={item.key}
+            type="button"
             className={[
-              "mint-pressable mint-arena-difficulty__card",
+              "mint-pressable mint-ui-pressable mint-ui-pressable--soft mint-ui-pressable--lg mint-arena-difficulty__card",
               difficulty === item.key ? "mint-arena-difficulty__card--active" : "",
             ].join(" ")}
             onClick={() => handleDifficultySelect(item.key)}
+            aria-pressed={difficulty === item.key}
           >
+            <span className="mint-arena-difficulty__top">
+              <MintIcon name={item.icon} size={18} />
+              <span className="mint-arena-difficulty__hint">{item.hint}</span>
+            </span>
             <span className="mint-arena-difficulty__ja">{item.ja}</span>
             <span className="mint-arena-difficulty__en">{item.en}</span>
           </button>

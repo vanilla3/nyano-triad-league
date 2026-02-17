@@ -5490,6 +5490,62 @@
   text-decoration: none;
 }
 
+.mint-page-guide {
+  padding: 12px;
+  display: grid;
+  gap: 10px;
+}
+
+.mint-page-guide__head {
+  display: grid;
+  gap: 4px;
+}
+
+.mint-page-guide__title {
+  margin: 0;
+  font-size: clamp(1.25rem, 2.4vw, 1.65rem);
+  color: #0f172a;
+}
+
+.mint-page-guide__subtitle {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 700;
+  color: #334155;
+}
+
+.mint-page-guide__grid {
+  display: grid;
+  gap: 8px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.mint-page-guide__item {
+  min-height: 76px;
+  padding: 10px;
+  display: grid;
+  grid-template-columns: 22px minmax(0, 1fr);
+  align-items: start;
+  gap: 8px;
+}
+
+.mint-page-guide__item-copy {
+  display: grid;
+  gap: 2px;
+}
+
+.mint-page-guide__item-title {
+  font-size: 13px;
+  font-weight: 900;
+  color: #0f172a;
+}
+
+.mint-page-guide__item-detail {
+  font-size: 12px;
+  line-height: 1.35;
+  color: #475569;
+}
+
 .mint-arena-difficulty {
   display: grid;
   gap: 10px;
@@ -5511,6 +5567,19 @@
   box-shadow:
     0 0 0 2px rgba(14, 165, 233, 0.24),
     0 20px 28px -24px rgba(14, 116, 144, 0.92);
+}
+
+.mint-arena-difficulty__top {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 800;
+  color: #0f766e;
+}
+
+.mint-arena-difficulty__hint {
+  line-height: 1.2;
 }
 
 .mint-arena-difficulty__ja {
@@ -6306,6 +6375,10 @@
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
+  .mint-page-guide__grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .mint-decks-layout {
     grid-template-columns: 1fr;
   }
@@ -6376,6 +6449,10 @@
 
   .mint-arena-difficulty {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .mint-page-guide__grid {
+    grid-template-columns: 1fr;
   }
 
   .mint-decks-left,
