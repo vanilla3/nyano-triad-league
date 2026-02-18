@@ -101,10 +101,8 @@ a {
 .btn {
   @apply inline-flex items-center justify-center gap-2 rounded-xl border px-3 py-2 text-sm font-medium transition active:translate-y-px disabled:cursor-not-allowed disabled:opacity-50;
   border-color: rgba(148, 163, 184, 0.36);
-  background: var(--nytl-glass-bg-soft);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.94), rgba(241, 247, 255, 0.9));
   box-shadow: 0 10px 20px -18px rgba(15, 23, 42, 0.68), inset 0 1px 0 rgba(255, 255, 255, 0.55);
-  backdrop-filter: blur(10px) saturate(1.18);
-  -webkit-backdrop-filter: blur(10px) saturate(1.18);
 }
 
 .btn:hover:not(:disabled) {
