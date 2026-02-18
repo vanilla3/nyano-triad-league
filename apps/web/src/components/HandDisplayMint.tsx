@@ -20,6 +20,7 @@ export interface HandDisplayMintProps {
   owner: PlayerIndex;
   usedIndices: Set<number>;
   selectedIndex: number | null;
+  forcedIndex?: number | null;
   onSelect?: (index: number) => void;
   disabled?: boolean;
   /** Enable desktop drag-and-drop from hand to board */
@@ -33,6 +34,7 @@ export function HandDisplayMint({
   owner,
   usedIndices,
   selectedIndex,
+  forcedIndex = null,
   onSelect,
   disabled = false,
   enableDragDrop = false,
@@ -40,13 +42,23 @@ export function HandDisplayMint({
   onCardDragEnd,
 }: HandDisplayMintProps) {
   const preview = useCardPreview();
+  const [pressedIndex, setPressedIndex] = React.useState<number | null>(null);
+  const playerSuffix = owner === 0 ? "A" : "B";
+  const handAriaLabel = `プレイヤー${playerSuffix}手札 (Player ${playerSuffix} hand)`;
+  const handTrayAriaLabel = `プレイヤー${playerSuffix}手札トレイ (Player ${playerSuffix} hand tray)`;
+
+  React.useEffect(() => {
+    if (!disabled) return;
+    setPressedIndex(null);
+  }, [disabled]);
 
   return (
-    <div className="mint-hand-tray" aria-label={`Player ${owner === 0 ? "A" : "B"} hand tray`}>
-      <div className="mint-hand mint-hand-tray__rail" role="listbox" aria-label={`Player ${owner === 0 ? "A" : "B"} hand`}>
+    <div className="mint-hand-tray" aria-label={handTrayAriaLabel}>
+      <div className="mint-hand mint-hand-tray__rail" role="listbox" aria-label={handAriaLabel}>
         {cards.map((card, idx) => {
           const isUsed = usedIndices.has(idx);
           const isSelected = selectedIndex === idx;
+          const isForced = forcedIndex === idx && !isUsed;
           const isDisabled = isUsed || disabled;
 
           const classes = [
@@ -56,6 +68,8 @@ export function HandDisplayMint({
             idx > 0 && "mint-hand-card--stacked",
             owner === 0 ? "mint-hand-card--a" : "mint-hand-card--b",
             isSelected && "mint-hand-card--selected",
+            isForced && "mint-hand-card--forced",
+            pressedIndex === idx && "mint-hand-card--pressed",
             isUsed && "mint-hand-card--used",
             enableDragDrop && !isDisabled && "mint-hand-card--draggable",
           ].filter(Boolean).join(" ");
@@ -68,7 +82,7 @@ export function HandDisplayMint({
               role="option"
               aria-selected={isSelected}
               aria-disabled={isDisabled}
-              aria-label={`Card ${idx + 1}: edges ${card.edges.up}/${card.edges.right}/${card.edges.down}/${card.edges.left}${isUsed ? " (used)" : ""}`}
+              aria-label={`Card ${idx + 1}: edges ${card.edges.up}/${card.edges.right}/${card.edges.down}/${card.edges.left}${isUsed ? " (used)" : ""}${isForced ? " (fixed slot)" : ""}`}
               className={classes}
               style={{ zIndex: isSelected ? 20 : cards.length - idx }}
               disabled={isDisabled}
@@ -90,7 +104,16 @@ export function HandDisplayMint({
                 onCardDragEnd?.();
               }}
               onPointerEnter={(e) => { if (!isUsed) preview.show(card, owner, e.currentTarget); }}
-              onPointerLeave={() => preview.hide()}
+              onPointerLeave={() => {
+                preview.hide();
+                setPressedIndex((prev) => (prev === idx ? null : prev));
+              }}
+              onPointerDown={() => {
+                if (isDisabled) return;
+                setPressedIndex(idx);
+              }}
+              onPointerUp={() => setPressedIndex((prev) => (prev === idx ? null : prev))}
+              onPointerCancel={() => setPressedIndex((prev) => (prev === idx ? null : prev))}
               onTouchStart={lp?.onTouchStart}
               onTouchEnd={lp?.onTouchEnd}
               onTouchMove={lp?.onTouchMove}
@@ -105,6 +128,12 @@ export function HandDisplayMint({
               >
                 {idx + 1}
               </div>
+
+              {isForced && (
+                <div className="mint-hand-card__fixed-badge" aria-hidden="true">
+                  FIX
+                </div>
+              )}
 
               {/* Card content */}
               <CardNyanoDuel card={card} owner={owner} className={!isSelected ? "opacity-80" : ""} />

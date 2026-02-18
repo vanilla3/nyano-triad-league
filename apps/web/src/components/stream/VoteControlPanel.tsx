@@ -130,7 +130,7 @@ export const VoteControlPanel: React.FC<VoteControlPanelProps> = React.memo(func
       {/* ── Vote control + Live status ── */}
       <div className="mt-3 grid gap-3 md:grid-cols-2">
         <div className="rounded-xl border border-slate-200 bg-white px-3 py-2">
-          <div className="text-[11px] font-semibold text-slate-700">投票操作</div>
+          <div className="text-[11px] font-semibold text-slate-700">投票操作 (Vote control)</div>
 
           <div className="mt-2 grid gap-2">
             <label className="text-[11px] text-slate-600">操作側</label>
@@ -167,7 +167,7 @@ export const VoteControlPanel: React.FC<VoteControlPanelProps> = React.memo(func
 
           <div className="mt-3 flex flex-wrap items-center gap-2">
             <button className="btn btn-sm btn-primary" onClick={onStartVote} disabled={!canVoteNow} aria-label="Start vote">
-              投票開始
+              Start vote
             </button>
             <button className="btn btn-sm" onClick={onFinalizeVote} disabled={!voteOpen} aria-label="End vote and send">
               投票終了して送信
@@ -176,9 +176,9 @@ export const VoteControlPanel: React.FC<VoteControlPanelProps> = React.memo(func
               票をクリア
             </button>
             {voteOpen ? (
-              <span className="badge badge-emerald" role="status" aria-live="polite">受付中 · {timeLeft ?? "?"}秒</span>
+              <span className="badge badge-emerald" role="status" aria-live="polite">OPEN · {timeLeft ?? "?"}s</span>
             ) : (
-              <span className="badge" role="status">受付終了</span>
+              <span className="badge" role="status">CLOSED</span>
             )}
           </div>
 
@@ -188,7 +188,7 @@ export const VoteControlPanel: React.FC<VoteControlPanelProps> = React.memo(func
 
           {/* Anti-spam settings (P2-SPAM) */}
           <details className="mt-3">
-            <summary className="cursor-pointer text-[11px] font-semibold text-slate-600">スパム対策</summary>
+            <summary className="cursor-pointer text-[11px] font-semibold text-slate-600">スパム対策 (Anti-Spam)</summary>
             <div className="mt-2 grid gap-2">
               <label className="text-[11px] text-slate-600">
                 レート制限(ms): <span className="font-mono">{antiSpamRateLimitMs}</span>
@@ -218,7 +218,7 @@ export const VoteControlPanel: React.FC<VoteControlPanelProps> = React.memo(func
           </details>
 
           <details className="mt-3">
-            <summary className="cursor-pointer text-[11px] font-semibold text-slate-600">モデレーション</summary>
+            <summary className="cursor-pointer text-[11px] font-semibold text-slate-600">モデレーション (Moderation)</summary>
             <div className="mt-2 grid gap-2">
               <label className="text-[11px] text-slate-600">スローモード（ユーザーごとの秒数, 0=OFF）</label>
               <input
@@ -264,13 +264,12 @@ export const VoteControlPanel: React.FC<VoteControlPanelProps> = React.memo(func
       {/* ── Viewer command help callout ── */}
       <div className="mt-3 rounded-xl border border-emerald-200 bg-emerald-50/60 px-4 py-3">
         <div className="flex items-center justify-between gap-2">
-          <div className="text-xs font-semibold text-emerald-800">視聴者コマンド案内</div>
+          <div className="text-xs font-semibold text-emerald-800">視聴者コマンド案内 (Viewer Command Guide)</div>
           <button
             className="btn btn-sm"
             onClick={onCopyViewerInstructions}
-            aria-label="Copy Viewer Instructions"
           >
-            視聴者向け案内をコピー
+            Copy Viewer Instructions
           </button>
         </div>
         <div className="mt-2 grid gap-1.5 text-xs text-emerald-700">
@@ -284,7 +283,7 @@ export const VoteControlPanel: React.FC<VoteControlPanelProps> = React.memo(func
           </div>
         </div>
         <div className="mt-2 text-[11px] text-emerald-600">
-          <span className="font-semibold">よくあるミス:</span>{" "}
+          <span className="font-semibold">Common mistakes:</span>{" "}
           側の記号違い（{sideLabel}を使用） · スロット範囲外（1-5） · 既に埋まっているセル指定 · <span className="font-mono">#triad</span> プレフィックス不足
         </div>
       </div>
@@ -292,7 +291,7 @@ export const VoteControlPanel: React.FC<VoteControlPanelProps> = React.memo(func
       {/* ── Simulated chat input + Top votes ── */}
       <div className="mt-3 grid gap-3 md:grid-cols-2">
         <div className="rounded-xl border border-slate-200 bg-white px-3 py-2">
-          <div className="text-[11px] font-semibold text-slate-700">模擬チャット入力</div>
+          <div className="text-[11px] font-semibold text-slate-700">模擬チャット入力 (Simulated chat input)</div>
           <div className="mt-2 grid grid-cols-3 gap-2">
             <input
               className="rounded-lg border border-slate-200 bg-white px-2 py-1 text-xs"
@@ -317,14 +316,14 @@ export const VoteControlPanel: React.FC<VoteControlPanelProps> = React.memo(func
               return (
                 <div className="mt-1 flex items-center gap-1.5 text-[11px] text-emerald-600">
                   <span className="inline-flex h-4 w-4 items-center justify-center rounded-full bg-emerald-100 text-[10px] font-bold text-emerald-700">&#x2713;</span>
-                  <span>有効: <span className="font-mono font-semibold">{moveText}</span>（セル {cellIndexToCoord(parsed.cell)}、スロット {parsed.cardIndex + 1}{typeof parsed.warningMarkCell === "number" ? `、wm=${cellIndexToCoord(parsed.warningMarkCell)}` : ""}）</span>
+                  <span>Valid: <span className="font-mono font-semibold">{moveText}</span> (cell {cellIndexToCoord(parsed.cell)}, slot {parsed.cardIndex + 1}{typeof parsed.warningMarkCell === "number" ? `, wm=${cellIndexToCoord(parsed.warningMarkCell)}` : ""})</span>
                 </div>
               );
             }
             return (
               <div className="mt-1 flex items-center gap-1.5 text-[11px] text-red-500">
                 <span className="inline-flex h-4 w-4 items-center justify-center rounded-full bg-red-100 text-[10px] font-bold text-red-600">&#x2717;</span>
-                <span>コマンド形式が不正です。形式: <span className="font-mono">#triad {sideLabel}2-&gt;B2</span></span>
+                <span>Invalid command. Use format: <span className="font-mono">#triad {sideLabel}2-&gt;B2</span></span>
               </div>
             );
           })()}

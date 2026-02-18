@@ -24,35 +24,35 @@ test.describe("Page smoke tests", () => {
 
   test("/arena loads", async ({ page }) => {
     await page.goto("/arena");
-    await expect(page.getByRole("main").getByText(/Arena|アリーナ/)).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByRole("main").getByText(/Arena|アリーナ/).first()).toBeVisible({ timeout: 10_000 });
   });
 
   test("/decks loads", async ({ page }) => {
     await page.goto("/decks?theme=mint");
-    await expect(page.getByText(/Deck Builder|デッキビルダー/)).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByText(/Deck Builder|デッキビルダー/).first()).toBeVisible({ timeout: 10_000 });
   });
 
   test("/replay loads", async ({ page }) => {
     await page.goto("/replay");
-    await expect(page.getByText(/Replay from transcript|リプレイ読込/)).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByText(/Replay from transcript|リプレイ読込/).first()).toBeVisible({ timeout: 10_000 });
   });
 
   test("/rulesets loads", async ({ page }) => {
     await page.goto("/rulesets");
-    await expect(page.getByText(/Ruleset Registry|ルールセット一覧/)).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByText(/Ruleset Registry|ルールセット一覧/).first()).toBeVisible({ timeout: 10_000 });
   });
 
   test("/overlay?controls=0 loads", async ({ page }) => {
     await page.goto("/overlay?controls=0");
-    // Overlay in no-controls mode shows "No signal yet/信号待ち" and/or "Now Playing/対戦中"
+    // Overlay in no-controls mode shows "No signal yet" and/or "Now Playing"
     await expect(
-      page.getByText(/No signal yet|信号待ち/).or(page.getByText(/Now Playing|対戦中/)).first(),
+      page.getByText("No signal yet").or(page.getByText("Now Playing")).first(),
     ).toBeVisible({ timeout: 10_000 });
   });
 
   test("/events loads", async ({ page }) => {
     await page.goto("/events");
-    await expect(page.getByRole("main").getByText(/Events|イベント/)).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByRole("main").getByText(/Events|イベント/).first()).toBeVisible({ timeout: 10_000 });
   });
 
   test("/playground loads", async ({ page }) => {
@@ -62,7 +62,7 @@ test.describe("Page smoke tests", () => {
 
   test("/stream loads", async ({ page }) => {
     await page.goto("/stream");
-    await expect(page.getByText("Nyano Stream Studio")).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByText(/Nyano Stream Studio|配信スタジオ/).first()).toBeVisible({ timeout: 10_000 });
   });
 
   test("/nyano loads", async ({ page }) => {

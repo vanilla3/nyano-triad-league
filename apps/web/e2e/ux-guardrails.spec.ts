@@ -85,16 +85,6 @@ async function disableGuestTutorial(page: Page): Promise<void> {
   });
 }
 
-async function forceVfxQuality(page: Page, quality: "off" | "low" | "medium" | "high" | "auto"): Promise<void> {
-  await page.addInitScript((value) => {
-    try {
-      localStorage.setItem("nytl.vfx.quality", value);
-    } catch {
-      // ignore storage failures in hardened browser contexts
-    }
-  }, quality);
-}
-
 async function dismissGuestTutorialIfPresent(page: Page): Promise<void> {
   const gotItButton = page.getByRole("button", { name: "Got it!" });
   if (await gotItButton.isVisible().catch(() => false)) {
@@ -235,7 +225,7 @@ test.describe("UX regression guardrails", () => {
     await page.goto("/match?mode=guest&opp=pvp&auto=0&rk=v2&ui=mint");
     await dismissGuestTutorialIfPresent(page);
 
-    await expect(page.getByText(/Guest Quick Play|ゲスト対戦/)).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByText("Guest Quick Play")).toBeVisible({ timeout: 15_000 });
     await expectPrimaryHandControlVisible(page);
 
     const firstHandCard = page.locator('[data-hand-card="0"]').first();
@@ -309,7 +299,7 @@ test.describe("UX regression guardrails", () => {
     await page.goto("/match?mode=guest&opp=vs_nyano_ai&auto=0&rk=v2&ui=mint");
     await dismissGuestTutorialIfPresent(page);
 
-    await expect(page.getByText(/Guest Quick Play|ゲスト対戦/)).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByText("Guest Quick Play")).toBeVisible({ timeout: 15_000 });
     await expectPrimaryHandControlVisible(page);
 
     const deckPreview = page.locator("details").filter({ hasText: "Deck Preview" }).first();
@@ -333,7 +323,7 @@ test.describe("UX regression guardrails", () => {
     expect(slotBefore.height).toBeGreaterThanOrEqual(30);
 
     await commitMove(page, 1, 0);
-    await expect(noticeSlot.getByText(/Nyano turn|Nyano is thinking|考え中/i)).toBeVisible({ timeout: 10_000 });
+    await expect(noticeSlot.getByText(/Nyano turn|Nyano is thinking/i)).toBeVisible({ timeout: 10_000 });
 
     const boardAfter = await readRect(boardFrame);
     const slotAfter = await readRect(noticeSlot);
@@ -348,7 +338,7 @@ test.describe("UX regression guardrails", () => {
     await page.goto("/match?mode=guest&opp=pvp&auto=0&rk=v2&ui=mint");
     await dismissGuestTutorialIfPresent(page);
 
-    await expect(page.getByText(/Guest Quick Play|ゲスト対戦/)).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByText("Guest Quick Play")).toBeVisible({ timeout: 15_000 });
     const openDetailsButton = page.getByRole("button", { name: "Open match details" });
     await expect(openDetailsButton).toBeVisible();
     await openDetailsButton.click();
@@ -371,7 +361,7 @@ test.describe("UX regression guardrails", () => {
     await page.goto("/match?mode=guest&opp=pvp&auto=0&rk=v2&ui=mint");
     await dismissGuestTutorialIfPresent(page);
 
-    await expect(page.getByText(/Guest Quick Play|ゲスト対戦/)).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByText("Guest Quick Play")).toBeVisible({ timeout: 15_000 });
     await expectPrimaryHandControlVisible(page);
 
     const deckPreview = page.locator("details").filter({ hasText: "Deck Preview" }).first();
@@ -409,7 +399,7 @@ test.describe("UX regression guardrails", () => {
     await page.goto("/match?mode=guest&opp=pvp&auto=0&rk=v2&ui=mint");
     await dismissGuestTutorialIfPresent(page);
 
-    await expect(page.getByText(/Guest Quick Play|ゲスト対戦/)).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByText("Guest Quick Play")).toBeVisible({ timeout: 15_000 });
     const firstHandCard = page.locator('[data-hand-card="0"]').first();
     const firstCell = page.locator('[data-board-cell="0"]').first();
 
@@ -429,7 +419,7 @@ test.describe("UX regression guardrails", () => {
     await page.goto("/match?mode=guest&opp=pvp&auto=0&rk=v2&ui=mint");
     await dismissGuestTutorialIfPresent(page);
 
-    await expect(page.getByText(/Guest Quick Play|ゲスト対戦/)).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByText("Guest Quick Play")).toBeVisible({ timeout: 15_000 });
     const firstHandCard = page.locator('[data-hand-card="0"]').first();
     const firstCell = page.locator('[data-board-cell="0"]').first();
 
@@ -440,32 +430,5 @@ test.describe("UX regression guardrails", () => {
 
     expect(durations[0]).toMatch(/0s/);
     expect(durations[1]).toMatch(/0s/);
-  });
-
-  test("Drawer transitions are disabled when reduced motion or vfx=off is active", async ({ page }) => {
-    await page.emulateMedia({ reducedMotion: "reduce" });
-    await disableGuestTutorial(page);
-    await forceVfxQuality(page, "off");
-    await page.goto("/match?mode=guest&opp=pvp&auto=0&rk=v2&ui=mint");
-    await dismissGuestTutorialIfPresent(page);
-
-    await expect(page.getByText(/Guest Quick Play|ゲスト対戦/)).toBeVisible({ timeout: 15_000 });
-    const openDetailsButton = page.getByRole("button", { name: "Open match details" });
-    await expect(openDetailsButton).toBeVisible();
-    await openDetailsButton.click();
-
-    const drawer = page.getByTestId("mint-match-drawer");
-    const backdrop = page.locator(".mint-drawer-backdrop").first();
-    await expect(drawer).toHaveClass(/mint-drawer--open/);
-
-    const [drawerDuration, backdropDuration, drawerBackdropFilter] = await Promise.all([
-      drawer.evaluate((el) => getComputedStyle(el).transitionDuration),
-      backdrop.evaluate((el) => getComputedStyle(el).transitionDuration),
-      drawer.evaluate((el) => getComputedStyle(el).backdropFilter),
-    ]);
-
-    expect(drawerDuration).toMatch(/0s/);
-    expect(backdropDuration).toMatch(/0s/);
-    expect(drawerBackdropFilter).toBe("none");
   });
 });

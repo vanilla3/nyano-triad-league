@@ -4,11 +4,6 @@ export default defineConfig({
   testDir: "./e2e",
   timeout: 30_000,
   retries: process.env.CI ? 1 : 0,
-  workers: process.env.PW_WORKERS
-    ? Math.max(1, Number(process.env.PW_WORKERS))
-    : process.platform === "win32"
-      ? 2
-      : undefined,
   webServer: {
     command: "pnpm dev",
     port: 5173,

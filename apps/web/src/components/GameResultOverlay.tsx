@@ -105,7 +105,7 @@ export function GameResultOverlay({
 
   const stateConfig = {
     victory: {
-      title: "勝利！",
+      title: "Victory!",
       subtitle: "おめでとう！",
       bgClass: "bg-gradient-to-br from-emerald-400 to-emerald-600",
       textClass: "text-white",
@@ -114,7 +114,7 @@ export function GameResultOverlay({
       expression: "happy" as ExpressionName,
     },
     defeat: {
-      title: "敗北",
+      title: "Defeat",
       subtitle: "また挑戦しよう！",
       bgClass: "bg-gradient-to-br from-surface-600 to-surface-800",
       textClass: "text-white",
@@ -123,7 +123,7 @@ export function GameResultOverlay({
       expression: "sadTears" as ExpressionName,
     },
     draw: {
-      title: "引き分け",
+      title: "Draw!",
       subtitle: "引き分け",
       bgClass: "bg-gradient-to-br from-amber-400 to-amber-600",
       textClass: "text-white",
@@ -132,8 +132,8 @@ export function GameResultOverlay({
       expression: "calm" as ExpressionName,
     },
     neutral: {
-      title: result.winner === "draw" ? "引き分け" : `プレイヤー${result.winner === 0 ? "A" : "B"}の勝ち！`,
-      subtitle: "対戦終了",
+      title: result.winner === "draw" ? "Draw!" : `Player ${result.winner === 0 ? "A" : "B"} Wins!`,
+      subtitle: "Game Over",
       bgClass:
         result.winner === 0
           ? "bg-gradient-to-br from-player-a-400 to-player-a-600"
@@ -213,10 +213,10 @@ export function GameResultOverlay({
               >
                 {result.tilesA}
               </div>
-              <div className="text-sm font-semibold text-player-a-600">プレイヤーA</div>
+              <div className="text-sm font-semibold text-player-a-600">Player A</div>
               {result.winner === 0 && (
                 <span className="inline-block mt-1 px-2 py-0.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-700">
-                  勝者
+                  Winner
                 </span>
               )}
             </div>
@@ -235,10 +235,10 @@ export function GameResultOverlay({
               >
                 {result.tilesB}
               </div>
-              <div className="text-sm font-semibold text-player-b-600">プレイヤーB</div>
+              <div className="text-sm font-semibold text-player-b-600">Player B</div>
               {result.winner === 1 && (
                 <span className="inline-block mt-1 px-2 py-0.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-700">
-                  勝者
+                  Winner
                 </span>
               )}
             </div>
@@ -257,22 +257,22 @@ export function GameResultOverlay({
         <div className="bg-surface-50 px-6 py-4 flex gap-3">
           {onRematch && (
             <button className="btn btn-secondary flex-1" onClick={onRematch}>
-              🔄 もう一回
+              🔄 Rematch
             </button>
           )}
           {onReplay && (
             <button className="btn btn-secondary flex-1" onClick={onReplay}>
-              📼 リプレイ
+              📼 Replay
             </button>
           )}
           {onShare && (
             <button className="btn btn-primary flex-1" onClick={onShare}>
-              📤 共有
+              📤 Share
             </button>
           )}
           {!onRematch && !onReplay && !onShare && onDismiss && (
             <button className="btn btn-primary flex-1" onClick={onDismiss}>
-              閉じる
+              Close
             </button>
           )}
         </div>
@@ -294,10 +294,10 @@ export interface GameResultBannerProps {
 export function GameResultBanner({ result, compact = false, className = "" }: GameResultBannerProps) {
   const winnerLabel =
     result.winner === "draw"
-      ? "引き分け"
+      ? "Draw"
       : result.winner === 0
-        ? "プレイヤーAの勝ち"
-        : "プレイヤーBの勝ち";
+        ? "Player A Wins"
+        : "Player B Wins";
 
   const bgClass =
     result.winner === "draw"
@@ -338,7 +338,7 @@ export function GameResultBanner({ result, compact = false, className = "" }: Ga
         <div>
           <div className={["text-lg font-bold font-display", textClass].join(" ")}>{winnerLabel}</div>
           <div className="text-sm text-surface-600">
-            最終スコア: {result.tilesA} - {result.tilesB}
+            Final Score: {result.tilesA} - {result.tilesB}
           </div>
         </div>
         <div className="flex items-center gap-2">
@@ -406,12 +406,12 @@ export function TurnIndicator({
             currentPlayer === 0 ? "bg-player-a-500" : "bg-player-b-500",
           ].join(" ")}
         />
-        プレイヤー {currentPlayer === 0 ? "A" : "B"}
+        Player {currentPlayer === 0 ? "A" : "B"}
       </div>
 
       {/* Turn counter */}
       <div className="text-sm text-surface-600">
-        手{" "}
+        Turn{" "}
         <span className="font-bold font-display text-surface-900">
           {turnNumber + 1}
         </span>

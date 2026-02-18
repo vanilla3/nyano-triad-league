@@ -9,7 +9,7 @@ import type { RulesetKey } from "@/lib/ruleset_registry";
 import { MintRulesetPicker } from "./MintRulesetPicker";
 import {
   buildMatchSetupSummaryLine,
-  describeRulesetKey,
+  describeRulesetKeyDisplay,
   shouldOpenAdvancedSetup,
   type MatchSetupBoardUi,
   type MatchSetupOpponentMode,
@@ -196,8 +196,8 @@ export function MatchSetupPanelMint(props: MatchSetupPanelMintProps) {
         aria-expanded={open}
       >
         <div>
-          <div className="text-base font-semibold">対戦設定</div>
-          <div className="text-xs text-slate-500">デッキ・ルール・対戦相手を順番に設定します</div>
+          <div className="text-base font-semibold">対戦設定 (Match Setup)</div>
+          <div className="text-xs text-slate-500">デッキ・ルール・対戦相手を順番に決めます</div>
         </div>
         <span className="text-sm text-slate-400">{open ? "▲" : "▼"}</span>
       </button>
@@ -206,10 +206,10 @@ export function MatchSetupPanelMint(props: MatchSetupPanelMintProps) {
         <div className="card-bd grid gap-4 text-sm">
           <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-700">
             <div className="flex flex-wrap items-center gap-2">
-              <span className="font-semibold text-slate-900">現在の設定</span>
+              <span className="font-semibold text-slate-900">設定サマリー</span>
               <span className="min-w-0 flex-1 truncate" data-testid="match-setup-summary-line">{summaryLine}</span>
               <button type="button" className="btn btn-sm" onClick={onCopySetupLink}>
-                設定リンクをコピー
+                設定URLをコピー
               </button>
             </div>
           </div>
@@ -220,7 +220,7 @@ export function MatchSetupPanelMint(props: MatchSetupPanelMintProps) {
               <div className="grid gap-2 rounded-lg border border-slate-200 bg-slate-50 p-3">
                 <div className="text-xs font-medium text-slate-600">デッキA</div>
                 <select className="input" value={deckAId} onChange={(e) => onSetParam("a", e.target.value)} aria-label="Deck A">
-                  <option value="">選択...</option>
+                  <option value="">選択してください</option>
                   {decks.map((d) => (
                     <option key={d.id} value={d.id}>
                       {d.name}
@@ -240,12 +240,12 @@ export function MatchSetupPanelMint(props: MatchSetupPanelMintProps) {
                 <div className="text-xs font-medium text-slate-600">デッキB</div>
                 {eventDeckTokenIds ? (
                   <div className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs text-slate-700">
-                    イベントデッキ（固定）: <span className="font-mono">{eventDeckTokenIds.join(", ")}</span>
+                    イベント固定デッキ: <span className="font-mono">{eventDeckTokenIds.join(", ")}</span>
                   </div>
                 ) : (
                   <>
                     <select className="input" value={deckBId} onChange={(e) => onSetParam("b", e.target.value)} aria-label="Deck B">
-                      <option value="">選択...</option>
+                      <option value="">選択してください</option>
                       {decks.map((d) => (
                         <option key={d.id} value={d.id}>
                           {d.name}
@@ -273,7 +273,7 @@ export function MatchSetupPanelMint(props: MatchSetupPanelMintProps) {
                     disabled={isEvent}
                     data-testid="match-setup-opponent-pvp"
                   >
-                    2人対戦
+                    対人 (Human vs Human)
                   </button>
                   <button
                     type="button"
@@ -295,21 +295,21 @@ export function MatchSetupPanelMint(props: MatchSetupPanelMintProps) {
                       aria-label="AI difficulty"
                       data-testid="match-setup-ai-difficulty"
                     >
-                      <option value="easy">はじめて (Easy)</option>
+                      <option value="easy">かんたん (Easy)</option>
                       <option value="normal">ふつう (Normal)</option>
-                      <option value="hard">つよい (Hard)</option>
-                      <option value="expert">めっちゃつよい (Expert)</option>
+                      <option value="hard">むずかしい (Hard)</option>
+                      <option value="expert">エキスパート (Expert)</option>
                     </select>
                     <label className="flex items-center gap-2 text-xs text-slate-700">
                       <input type="checkbox" checked={aiAutoPlay} onChange={(e) => onSetParam("auto", e.target.checked ? "1" : "0")} aria-label="AI auto play" />
-                      Nyanoターンを自動進行
+                      Nyanoの手番を自動進行
                     </label>
                   </div>
                 ) : null}
               </div>
 
               <div className="grid gap-2">
-                <div className="text-xs font-medium text-slate-600">ルール</div>
+                <div className="text-xs font-medium text-slate-600">ルールセット</div>
                 <MintRulesetPicker
                   rulesetKey={rulesetKey}
                   classicConfig={classicCustomConfig}
@@ -326,24 +326,24 @@ export function MatchSetupPanelMint(props: MatchSetupPanelMintProps) {
                   aria-label="Ruleset"
                   data-testid="match-setup-ruleset"
                 >
-                  <option value="v1">v1（基本 + タクティクス）</option>
-                  <option value="v2">v2（shadow が warning mark を無視）</option>
-                  <option value="full">full（tactics + traits + formations）</option>
-                  <option value="classic_plus_same">classic（plus + same）</option>
-                  <option value="classic_custom">classic（custom）</option>
-                  <option value="classic_plus">classic（plus）</option>
-                  <option value="classic_same">classic（same）</option>
-                  <option value="classic_reverse">classic（reverse）</option>
-                  <option value="classic_ace_killer">classic（ace killer）</option>
-                  <option value="classic_type_ascend">classic（type ascend）</option>
-                  <option value="classic_type_descend">classic（type descend）</option>
-                  <option value="classic_order">classic（order）</option>
-                  <option value="classic_chaos">classic（chaos）</option>
-                  <option value="classic_swap">classic（swap）</option>
-                  <option value="classic_all_open">classic（all open）</option>
-                  <option value="classic_three_open">classic（three open）</option>
+                  <option value="v1">v1 (core+tactics)</option>
+                  <option value="v2">v2 (shadow ignores warning mark)</option>
+                  <option value="full">full (tactics+traits+formations)</option>
+                  <option value="classic_plus_same">classic (plus+same)</option>
+                  <option value="classic_custom">classic (custom)</option>
+                  <option value="classic_plus">classic (plus)</option>
+                  <option value="classic_same">classic (same)</option>
+                  <option value="classic_reverse">classic (reverse)</option>
+                  <option value="classic_ace_killer">classic (ace killer)</option>
+                  <option value="classic_type_ascend">classic (type ascend)</option>
+                  <option value="classic_type_descend">classic (type descend)</option>
+                  <option value="classic_order">classic (order)</option>
+                  <option value="classic_chaos">classic (chaos)</option>
+                  <option value="classic_swap">classic (swap)</option>
+                  <option value="classic_all_open">classic (all open)</option>
+                  <option value="classic_three_open">classic (three open)</option>
                 </select>
-                <div className="text-xs text-slate-500">現在: {describeRulesetKey(rulesetKey)}</div>
+                <div className="text-xs text-slate-500">現在: {describeRulesetKeyDisplay(rulesetKey)}</div>
                 {rulesetKey === "classic_custom" ? (
                   <div className="text-xs font-mono text-slate-500">cr={classicCustomMaskParam}</div>
                 ) : null}
@@ -352,11 +352,11 @@ export function MatchSetupPanelMint(props: MatchSetupPanelMintProps) {
           </section>
 
           <section className="grid gap-3 rounded-xl border border-slate-200 bg-white p-3">
-            <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">追加設定</div>
+            <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">補助設定</div>
 
             <div className="grid gap-3 md:grid-cols-4">
               <div className="grid gap-2">
-                <div className="text-xs font-medium text-slate-600">盤面表示</div>
+                <div className="text-xs font-medium text-slate-600">盤面UI</div>
                 <select
                   className="input"
                   value={ui}
@@ -364,9 +364,9 @@ export function MatchSetupPanelMint(props: MatchSetupPanelMintProps) {
                   aria-label="Board renderer"
                   data-testid="match-setup-board-ui"
                 >
-                  <option value="mint">mint</option>
-                  <option value="engine">engine (pixi)</option>
-                  <option value="rpg">rpg</option>
+                  <option value="mint">mint (標準)</option>
+                  <option value="engine">engine (Pixi)</option>
+                  <option value="rpg">rpg (演出重視)</option>
                 </select>
                 {isEngine ? (
                   <div className="flex flex-wrap items-center gap-2">
@@ -374,14 +374,14 @@ export function MatchSetupPanelMint(props: MatchSetupPanelMintProps) {
                       Pixiフォーカスへ
                     </button>
                     <Link className="btn btn-sm no-underline" to={stageMatchUrl}>
-                      ステージページを開く
+                      ステージ画面を開く
                     </Link>
                   </div>
                 ) : null}
               </div>
 
               <div className="grid gap-2">
-                <div className="text-xs font-medium text-slate-600">先攻決定</div>
+                <div className="text-xs font-medium text-slate-600">先手決定</div>
                 <select
                   className="input"
                   value={firstPlayerMode}
@@ -392,7 +392,7 @@ export function MatchSetupPanelMint(props: MatchSetupPanelMintProps) {
                 >
                   <option value="manual">手動 (Manual)</option>
                   <option value="mutual">相互選択 (Mutual choice)</option>
-                  <option value="committed_mutual_choice">相互コミット (Committed mutual choice)</option>
+                  <option value="committed_mutual_choice">コミット相互選択 (Committed mutual choice)</option>
                   <option value="seed">シード (Seed)</option>
                   <option value="commit_reveal">コミットリビール (Commit-reveal)</option>
                 </select>
@@ -404,12 +404,12 @@ export function MatchSetupPanelMint(props: MatchSetupPanelMintProps) {
                     onChange={(e) => onSetParam("fp", e.target.value)}
                     aria-label="Manual first player"
                   >
-                    <option value="0">A先攻</option>
-                    <option value="1">B先攻</option>
+                    <option value="0">A先手</option>
+                    <option value="1">B先手</option>
                   </select>
                 ) : null}
                 <div className={`text-xs ${!isEvent && !firstPlayerResolution.valid ? "text-rose-600" : "text-slate-500"}`}>
-                  解決結果: {firstPlayer === 0 ? "A先攻" : "B先攻"}
+                  解決結果: {firstPlayer === 0 ? "A先手" : "B先手"}
                   {!isEvent && !firstPlayerResolution.valid && firstPlayerResolution.error ? ` (${firstPlayerResolution.error})` : ""}
                 </div>
               </div>
@@ -418,10 +418,10 @@ export function MatchSetupPanelMint(props: MatchSetupPanelMintProps) {
                 <div className="text-xs font-medium text-slate-600">データ取得</div>
                 <div className="inline-flex w-full rounded-lg border border-slate-200 bg-white p-1">
                   <button type="button" className={chipButtonClass(dataMode === "fast")} onClick={() => onSetDataMode("fast")} aria-label="Data mode fast">
-                    高速
+                    高速 (Fast)
                   </button>
                   <button type="button" className={chipButtonClass(dataMode === "verified")} onClick={() => onSetDataMode("verified")} aria-label="Data mode verified">
-                    検証
+                    検証付き (Verified)
                   </button>
                 </div>
               </div>
@@ -430,7 +430,7 @@ export function MatchSetupPanelMint(props: MatchSetupPanelMintProps) {
                 <div className="text-xs font-medium text-slate-600">配信モード</div>
                 <label className="flex items-center gap-2 text-xs text-slate-700">
                   <input type="checkbox" checked={streamMode} onChange={(e) => onSetParam("stream", e.target.checked ? "1" : "0")} aria-label="Stream mode" />
-                  配信操作ルートを有効化
+                  配信コントロール経路を有効化
                 </label>
                 {streamMode ? (
                   <select className="input" value={streamCtrlParam} onChange={(e) => onSetParam("ctrl", e.target.value)} aria-label="Chat controlled side">
@@ -450,8 +450,8 @@ export function MatchSetupPanelMint(props: MatchSetupPanelMintProps) {
               aria-expanded={advancedOpen}
               data-testid="match-setup-advanced-toggle"
             >
-              <span className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">詳細パラメータ</span>
-              <span className="text-xs text-slate-500">{advancedOpen ? "URL詳細を隠す" : "URL詳細を表示"}</span>
+              <span className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">詳細設定</span>
+              <span className="text-xs text-slate-500">{advancedOpen ? "非表示" : "表示"} URLパラメータ設定</span>
             </button>
             {advancedOpen ? (
               <div className="grid gap-3 border-t border-slate-100 pt-3" data-testid="match-setup-advanced-content">
@@ -462,9 +462,9 @@ export function MatchSetupPanelMint(props: MatchSetupPanelMintProps) {
                     disabled={isEvent}
                     onChange={(e) => onSetParam("ccap", e.target.value)}
                     aria-label="Chain cap per turn"
-                  data-testid="match-setup-chain-cap"
+                    data-testid="match-setup-chain-cap"
                   >
-                    <option value="">連鎖上限: 無効</option>
+                    <option value="">連鎖上限: オフ (ccap)</option>
                     {Array.from({ length: maxChainCapPerTurn + 1 }, (_, n) => (
                       <option key={n} value={String(n)}>
                         連鎖上限 = {n}
@@ -472,24 +472,24 @@ export function MatchSetupPanelMint(props: MatchSetupPanelMintProps) {
                     ))}
                   </select>
                   {chainCapRawParam !== null && chainCapPerTurnParam === null ? (
-                    <div className="text-xs text-rose-600">連鎖上限の設定値が不正です（許可: 0..{maxChainCapPerTurn}）</div>
+                    <div className="text-xs text-rose-600">ccap パラメータが不正です (許容値: 0..{maxChainCapPerTurn})</div>
                   ) : (
-                    <div className="text-xs text-slate-500">追加設定（engine盤面向け。ルールIDは変更されません）</div>
+                    <div className="text-xs text-slate-500">連鎖上限の試験設定（表示調整のみ。rulesetId は変わりません）</div>
                   )}
                   {classicSwapLabel ? <div className="text-xs text-amber-700">{classicSwapLabel}</div> : null}
                   {classicOpenLabel ? <div className="text-xs text-emerald-700">{classicOpenLabel}</div> : null}
-                  <div className="text-xs font-mono text-slate-500">ルールID: {rulesetId}</div>
+                  <div className="text-xs font-mono text-slate-500">現在の rulesetId: {rulesetId}</div>
                 </div>
 
                 {firstPlayerMode === "mutual" ? (
                   <div className="grid grid-cols-2 gap-2">
                     <select className="input" value={String(mutualChoiceAParam)} disabled={isEvent} onChange={(e) => onSetParam("fpa", e.target.value)} aria-label="Mutual choice A">
-                      <option value="0">AがA先攻を選ぶ</option>
-                      <option value="1">AがB先攻を選ぶ</option>
+                      <option value="0">AがA先手を選択</option>
+                      <option value="1">AがB先手を選択</option>
                     </select>
                     <select className="input" value={String(mutualChoiceBParam)} disabled={isEvent} onChange={(e) => onSetParam("fpb", e.target.value)} aria-label="Mutual choice B">
-                      <option value="0">BがA先攻を選ぶ</option>
-                      <option value="1">BがB先攻を選ぶ</option>
+                      <option value="0">BがA先手を選択</option>
+                      <option value="1">BがB先手を選択</option>
                     </select>
                   </div>
                 ) : null}
@@ -501,13 +501,13 @@ export function MatchSetupPanelMint(props: MatchSetupPanelMintProps) {
                     <input className="input font-mono text-xs" placeholder="revealB (bytes32 hex)" value={commitRevealBParam} disabled={isEvent} onChange={(e) => onSetParam("frb", e.target.value.trim())} aria-label="Commit reveal B" />
                     <input className="input font-mono text-xs" placeholder="commitA (bytes32 hex; set A/B together if used)" value={commitRevealCommitAParam} disabled={isEvent} onChange={(e) => onSetParam("fca", e.target.value.trim())} aria-label="Commit A (optional)" />
                     <input className="input font-mono text-xs" placeholder="commitB (bytes32 hex; set A/B together if used)" value={commitRevealCommitBParam} disabled={isEvent} onChange={(e) => onSetParam("fcb", e.target.value.trim())} aria-label="Commit B (optional)" />
-                    <div className="text-[11px] text-slate-500">commit を使う場合は Commit A/B の両方を設定してください。</div>
+                    <div className="text-[11px] text-slate-500">Commit を使う場合は Commit A / Commit B の両方を設定してください。</div>
                     <div className="flex items-center gap-2">
                       <button type="button" className="btn btn-sm" disabled={isEvent} onClick={onRandomizeCommitReveal}>
                         入力をランダム生成
                       </button>
                       <button type="button" className="btn btn-sm" disabled={isEvent} onClick={onDeriveCommitRevealCommits}>
-                        Commit を生成
+                        Commit を導出
                       </button>
                     </div>
                   </div>
@@ -518,12 +518,12 @@ export function MatchSetupPanelMint(props: MatchSetupPanelMintProps) {
                     <input className="input font-mono text-xs" placeholder="matchSalt (bytes32 hex)" value={commitRevealSaltParam} disabled={isEvent} onChange={(e) => onSetParam("fps", e.target.value.trim())} aria-label="Committed mutual match salt" />
                     <div className="grid grid-cols-2 gap-2">
                       <select className="input" value={String(mutualChoiceAParam)} disabled={isEvent} onChange={(e) => onSetParam("fpa", e.target.value)} aria-label="Committed mutual choice A">
-                        <option value="0">AがA先攻を選ぶ</option>
-                        <option value="1">AがB先攻を選ぶ</option>
+                        <option value="0">A chooses A first</option>
+                        <option value="1">A chooses B first</option>
                       </select>
                       <select className="input" value={String(mutualChoiceBParam)} disabled={isEvent} onChange={(e) => onSetParam("fpb", e.target.value)} aria-label="Committed mutual choice B">
-                        <option value="0">BがA先攻を選ぶ</option>
-                        <option value="1">BがB先攻を選ぶ</option>
+                        <option value="0">B chooses A first</option>
+                        <option value="1">B chooses B first</option>
                       </select>
                     </div>
                     <input className="input font-mono text-xs" placeholder="playerA (0x address)" value={committedMutualPlayerAParam} disabled={isEvent} onChange={(e) => onSetParam("fpoa", e.target.value.trim())} aria-label="Committed mutual player A" />
@@ -532,13 +532,13 @@ export function MatchSetupPanelMint(props: MatchSetupPanelMintProps) {
                     <input className="input font-mono text-xs" placeholder="playerB (0x address)" value={committedMutualPlayerBParam} disabled={isEvent} onChange={(e) => onSetParam("fpob", e.target.value.trim())} aria-label="Committed mutual player B" />
                     <input className="input font-mono text-xs" placeholder="nonceB (bytes32 hex)" value={committedMutualNonceBParam} disabled={isEvent} onChange={(e) => onSetParam("fpnb", e.target.value.trim())} aria-label="Committed mutual nonce B" />
                     <input className="input font-mono text-xs" placeholder="commitB (bytes32 hex)" value={committedMutualCommitBParam} disabled={isEvent} onChange={(e) => onSetParam("fcob", e.target.value.trim())} aria-label="Committed mutual commit B" />
-                    <div className="text-[11px] text-slate-500">先攻を確定するには Choice A と Choice B を一致させてください。</div>
+                    <div className="text-[11px] text-slate-500">先手を確定するには Choice A と Choice B が一致している必要があります。</div>
                     <div className="flex items-center gap-2">
                       <button type="button" className="btn btn-sm" disabled={isEvent} onClick={onRandomizeCommittedMutualChoice}>
                         入力をランダム生成
                       </button>
                       <button type="button" className="btn btn-sm" disabled={isEvent} onClick={onDeriveCommittedMutualChoiceCommits}>
-                        Commit を生成
+                        Commit を導出
                       </button>
                     </div>
                   </div>
@@ -561,12 +561,12 @@ export function MatchSetupPanelMint(props: MatchSetupPanelMintProps) {
 
           <div className="flex flex-wrap items-center gap-2">
             <button className="btn btn-primary" disabled={!canLoad || loading} onClick={onLoadCards}>
-              {loading ? "読み込み中..." : dataMode === "fast" ? "カードを読み込む（高速）" : "カードを読み込む（検証）"}
+              {loading ? "読み込み中..." : dataMode === "fast" ? "カード読込 (Fast)" : "カード読込 (Verified)"}
             </button>
             <button className="btn" onClick={onResetMatch}>対戦をリセット</button>
-            <button className="btn" onClick={onNewSalt}>新しい Salt</button>
+            <button className="btn" onClick={onNewSalt}>Saltを再生成</button>
             <a className="btn" href={overlayUrl} target="_blank" rel="noreferrer noopener">
-              オーバーレイを開く
+              Overlayを開く
             </a>
           </div>
 
@@ -576,7 +576,7 @@ export function MatchSetupPanelMint(props: MatchSetupPanelMintProps) {
               <div>{error}</div>
               {showRpcSettingsCta ? (
                 <div className="mt-2 flex flex-wrap gap-2">
-                  <Link className="btn btn-sm" to="/nyano">RPC 設定</Link>
+                  <Link className="btn btn-sm" to="/nyano">RPC設定</Link>
                 </div>
               ) : null}
             </div>

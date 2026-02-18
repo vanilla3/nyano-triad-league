@@ -123,8 +123,8 @@ test.describe("Cross-tab overlay communication", () => {
     // The title appears in multiple places; use .first() to avoid strict mode violation
     await expect(overlayPage.getByText("E2E Cross-Tab Test").first()).toBeVisible({ timeout: 5_000 });
 
-    // Overlay should show "Now Playing / 対戦中" panel
-    await expect(overlayPage.getByText(/Now Playing|対戦中/)).toBeVisible({ timeout: 3_000 });
+    // Overlay should show "Now Playing" panel
+    await expect(overlayPage.getByText("Now Playing")).toBeVisible({ timeout: 3_000 });
   });
 
   test("overlay receives vote state when stream publishes vote open", async ({ context }) => {
@@ -147,11 +147,11 @@ test.describe("Cross-tab overlay communication", () => {
     await publishVoteFromPage(streamPage, voteState);
 
     // Overlay should show "Chat voting" section with OPEN badge
-    await expect(overlayPage.getByText(/Chat voting|投票状況/)).toBeVisible({ timeout: 5_000 });
-    await expect(overlayPage.getByText(/OPEN|受付中/).first()).toBeVisible({ timeout: 3_000 });
+    await expect(overlayPage.getByText("Chat voting")).toBeVisible({ timeout: 5_000 });
+    await expect(overlayPage.getByText("OPEN", { exact: true })).toBeVisible({ timeout: 3_000 });
 
     // Overlay should show vote countdown (remaining seconds)
-    await expect(overlayPage.getByText(/remaining|残り/)).toBeVisible({ timeout: 3_000 });
+    await expect(overlayPage.getByText(/remaining/)).toBeVisible({ timeout: 3_000 });
   });
 
   test("localStorage persistence allows overlay recovery after refresh", async ({ context }) => {
@@ -169,6 +169,6 @@ test.describe("Cross-tab overlay communication", () => {
 
     // Overlay reads localStorage on mount via readStoredOverlayState()
     await expect(overlayPage.getByText("E2E Cross-Tab Test").first()).toBeVisible({ timeout: 5_000 });
-    await expect(overlayPage.getByText(/Now Playing|対戦中/)).toBeVisible({ timeout: 3_000 });
+    await expect(overlayPage.getByText("Now Playing")).toBeVisible({ timeout: 3_000 });
   });
 });

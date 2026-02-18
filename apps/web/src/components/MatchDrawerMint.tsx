@@ -56,18 +56,17 @@ export function MatchDrawerMint({ open, onClose, children }: MatchDrawerMintProp
         ref={drawerRef}
         className={[
           "mint-drawer",
-          open ? "mint-drawer--open" : "mint-drawer--closed",
+          open && "mint-drawer--open",
         ].filter(Boolean).join(" ")}
         role="dialog"
         aria-modal="true"
         aria-label="Match details"
-        data-testid="mint-match-drawer"
         tabIndex={-1}
         onClick={(event) => event.stopPropagation()}
         onPointerDown={(event) => event.stopPropagation()}
       >
         <div className="mint-drawer__header">
-          <span className="mint-drawer__title">詳細</span>
+          <span className="mint-drawer__title">Details</span>
           <button
             type="button"
             className="mint-drawer__close"
@@ -100,9 +99,9 @@ export function DrawerToggleButton({
       className={["mint-drawer-toggle", className].filter(Boolean).join(" ")}
       onClick={onClick}
       aria-label="Open match details"
-      title="詳細を開く (Open details)"
+      title="Open details"
     >
-      ≡
+      menu
     </button>
   );
 }

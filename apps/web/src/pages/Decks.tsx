@@ -8,8 +8,14 @@ import { CardBrowserMint } from "@/components/CardBrowserMint";
 import { useToast } from "@/components/Toast";
 import { errorMessage } from "@/lib/errorMessage";
 import { writeClipboardText } from "@/lib/clipboard";
-import { fetchGameIndex, searchCards, type GameIndexV1, type JankenHand } from "@/lib/nyano/gameIndex";
+import { fetchGameIndex, type GameIndexV1, type JankenHand } from "@/lib/nyano/gameIndex";
 import { buildCardDataFromIndex, generateRecommendedDeck, strategyLabel, type DeckStrategy } from "@/lib/demo_decks";
+import {
+  DECK_FILTER_PRESETS,
+  normalizeDeckFilterPresetId,
+  resolveDeckFilterPreset,
+  type DeckFilterPresetId,
+} from "@/lib/deck_filters";
 import { GlassPanel } from "@/components/mint/GlassPanel";
 import { MintPressable } from "@/components/mint/MintPressable";
 import { MintTabNav } from "@/components/mint/MintTabNav";
@@ -45,63 +51,14 @@ function toCardsMap(bundles: Map<bigint, { card: CardData }>): Map<bigint, CardD
 
 const STRATEGIES: DeckStrategy[] = ["balanced", "aggressive", "defensive", "janken_mix"];
 
-const FILTER_PRESETS = [
-  {
-    id: "all",
-    label: "すべて",
-    hand: -1 as const,
-    minEdgeSum: 0,
-    detail: "手札タイプを問わず表示",
-    usage: "全体傾向を見たいとき",
-  },
-  {
-    id: "attacker",
-    label: "グー",
-    hand: 0 as const,
-    minEdgeSum: 0,
-    detail: "手札タイプ: グー",
-    usage: "同値時のじゃんけん有利を寄せたいとき",
-  },
-  {
-    id: "defender",
-    label: "パー",
-    hand: 2 as const,
-    minEdgeSum: 0,
-    detail: "手札タイプ: パー",
-    usage: "グー対策を増やしたいとき",
-  },
-  {
-    id: "power",
-    label: "高エッジ",
-    hand: -1 as const,
-    minEdgeSum: 27,
-    detail: "辺合計 27 以上",
-    usage: "序盤の取り合いで押し込みたいとき",
-  },
-  {
-    id: "other",
-    label: "チョキ",
-    hand: 1 as const,
-    minEdgeSum: 0,
-    detail: "手札タイプ: チョキ",
-    usage: "パー対策を増やしたいとき",
-  },
-] as const;
-
-type FilterPresetId = (typeof FILTER_PRESETS)[number]["id"];
-
 function formatDateShort(iso: string): string {
   const dt = new Date(iso);
   if (Number.isNaN(dt.getTime())) return iso;
   return `${dt.getMonth() + 1}/${dt.getDate()} ${dt.getHours()}:${dt.getMinutes().toString().padStart(2, "0")}`;
 }
 
-function formatPercent(value: number): string {
-  return `${(value * 100).toFixed(1)}%`;
-}
-
 export function DecksPage() {
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const theme = resolveAppTheme(searchParams);
   const themed = React.useCallback((path: string) => appendThemeToPath(path, theme), [theme]);
 
@@ -113,7 +70,9 @@ export function DecksPage() {
   const [previewLoading, setPreviewLoading] = React.useState(false);
   const [previewCards, setPreviewCards] = React.useState<Map<bigint, CardData> | null>(null);
   const [importText, setImportText] = React.useState("");
-  const [selectedFilter, setSelectedFilter] = React.useState<FilterPresetId>("all");
+  const [selectedFilter, setSelectedFilter] = React.useState<DeckFilterPresetId>(() =>
+    resolveDeckFilterPreset(searchParams.get("df")).id,
+  );
 
   const [gameIndex, setGameIndex] = React.useState<GameIndexV1 | null>(null);
   const [indexLoading, setIndexLoading] = React.useState(false);
@@ -129,6 +88,25 @@ export function DecksPage() {
       })
       .catch(() => setIndexLoading(false));
   }, []);
+
+  React.useEffect(() => {
+    const rawDf = searchParams.get("df");
+    const normalizedDf = normalizeDeckFilterPresetId(rawDf);
+    const fromUrl = normalizedDf ?? "all";
+    setSelectedFilter((prev) => (prev === fromUrl ? prev : fromUrl));
+
+    if (!rawDf) return;
+    const next = new URLSearchParams(searchParams);
+    if (!normalizedDf) {
+      next.delete("df");
+      setSearchParams(next, { replace: true });
+      return;
+    }
+    if (rawDf !== normalizedDf) {
+      next.set("df", normalizedDf);
+      setSearchParams(next, { replace: true });
+    }
+  }, [searchParams, setSearchParams]);
 
   const refresh = () => setDecks(listDecks());
 
@@ -206,7 +184,7 @@ export function DecksPage() {
   };
 
   const doExportAll = async () => {
-    await copy("デッキJSON", exportDecksJson());
+    await copy("Decks JSON", exportDecksJson());
   };
 
   const doImport = () => {
@@ -229,31 +207,21 @@ export function DecksPage() {
     return ids.size;
   }, [decks]);
 
-  const filterPreset = FILTER_PRESETS.find((x) => x.id === selectedFilter) ?? FILTER_PRESETS[0];
-  const filterPresetCounts = React.useMemo(() => {
-    const counts = new Map<FilterPresetId, number>();
-    if (!gameIndex) return counts;
-    for (const preset of FILTER_PRESETS) {
-      const matched = searchCards(gameIndex, {
-        hand: preset.hand === -1 ? undefined : preset.hand,
-        minEdgeSum: preset.minEdgeSum > 0 ? preset.minEdgeSum : undefined,
-      }).length;
-      counts.set(preset.id, matched);
-    }
-    return counts;
-  }, [gameIndex]);
-  const totalIndexCards = React.useMemo(() => (gameIndex ? Object.keys(gameIndex.tokens).length : 0), [gameIndex]);
-  const selectedPresetCount = filterPresetCounts.get(filterPreset.id);
-  const selectedPresetRatio = React.useMemo(() => {
-    if (!gameIndex || !selectedPresetCount || totalIndexCards <= 0) return 0;
-    return selectedPresetCount / totalIndexCards;
-  }, [gameIndex, selectedPresetCount, totalIndexCards]);
-  const selectedPresetDensity = React.useMemo(() => {
-    if (!gameIndex || totalIndexCards <= 0) return null;
-    if (selectedPresetRatio <= 0.08) return "絞り込み: 強め";
-    if (selectedPresetRatio >= 0.45) return "絞り込み: 広め";
-    return "絞り込み: 標準";
-  }, [gameIndex, selectedPresetRatio, totalIndexCards]);
+  const filterPreset = React.useMemo(
+    () => resolveDeckFilterPreset(selectedFilter),
+    [selectedFilter],
+  );
+
+  const handleFilterSelect = React.useCallback(
+    (nextFilter: DeckFilterPresetId) => {
+      setSelectedFilter(nextFilter);
+      const next = new URLSearchParams(searchParams);
+      if (nextFilter === "all") next.delete("df");
+      else next.set("df", nextFilter);
+      setSearchParams(next, { replace: true });
+    },
+    [searchParams, setSearchParams],
+  );
 
   const selectedTokenIds = React.useMemo(() => {
     try {
@@ -270,11 +238,11 @@ export function DecksPage() {
 
   const tabs = React.useMemo(
     () => [
-      { to: themed("/decks"), label: "デッキ", icon: "decks" as const, exact: true },
-      { to: themed("/arena"), label: "アリーナ", icon: "arena" as const },
-      { to: themed("/events"), label: "イベント", icon: "events" as const },
-      { to: themed("/replay"), label: "リプレイ", icon: "replay" as const },
-      { to: themed("/stream"), label: "配信", icon: "stream" as const },
+      { to: themed("/decks"), label: "Decks", icon: "decks" as const, exact: true },
+      { to: themed("/arena"), label: "Arena", icon: "arena" as const },
+      { to: themed("/events"), label: "Events", icon: "events" as const },
+      { to: themed("/replay"), label: "Replay", icon: "replay" as const },
+      { to: themed("/stream"), label: "Stream", icon: "stream" as const },
       { to: themed("/"), label: "設定", icon: "settings" as const },
     ],
     [themed],
@@ -284,7 +252,7 @@ export function DecksPage() {
     <div className="mint-decks-screen">
       <section className="mint-decks-header">
         <MintTitleText as="h2" className="mint-decks-header__title">
-          Nyano Triad League - デッキビルダー
+          Nyano Triad League - デッキビルダー (Deck Builder)
         </MintTitleText>
         <MintTabNav items={tabs} className="mint-decks-header__tabs" />
       </section>
@@ -303,32 +271,25 @@ export function DecksPage() {
           <GlassPanel variant="panel" className="mint-decks-panel">
             <MintTitleText as="h3" className="mint-decks-panel__title">フィルター</MintTitleText>
             <div className="mint-decks-filters">
-              {FILTER_PRESETS.map((filter) => (
-                <MintPressable
+              {DECK_FILTER_PRESETS.map((filter) => (
+                <button
                   key={filter.id}
+                  type="button"
+                  data-testid={`decks-filter-${filter.id}`}
                   className={[
-                    "mint-decks-filter",
+                    "mint-pressable mint-decks-filter",
                     selectedFilter === filter.id ? "mint-decks-filter--active" : "",
                   ].join(" ")}
-                  tone={selectedFilter === filter.id ? "primary" : "soft"}
-                  size="sm"
-                  onClick={() => setSelectedFilter(filter.id)}
+                  title={filter.hint}
+                  onClick={() => handleFilterSelect(filter.id)}
                 >
                   {filter.label}
-                  {gameIndex ? ` (${filterPresetCounts.get(filter.id) ?? 0})` : ""}
-                </MintPressable>
+                </button>
               ))}
             </div>
-            <div className="mt-2 text-xs text-slate-500">条件: {filterPreset.detail}</div>
-            <div className="mt-1 text-xs text-slate-500">用途: {filterPreset.usage}</div>
-            {gameIndex ? (
-              <div className="mt-1 text-xs text-slate-500">
-                候補: {selectedPresetCount ?? 0} / {totalIndexCards}（{formatPercent(selectedPresetRatio)}）
-              </div>
-            ) : null}
-            {selectedPresetDensity ? (
-              <div className="mt-1 text-xs text-slate-500">{selectedPresetDensity}</div>
-            ) : null}
+            <p className="text-xs text-slate-500">
+              このゲームでは手札タイプ（グー/チョキ/パー）と辺の合計値が、置き順と反転しやすさに直結します。
+            </p>
           </GlassPanel>
 
           {gameIndex ? (
@@ -349,7 +310,7 @@ export function DecksPage() {
                         memo: deck.memo,
                       });
                       refresh();
-                      toast.success("デッキを作成しました", `${strategyLabel(strategy)} デッキ`);
+                      toast.success("デッキを作成しました", `${strategyLabel(strategy)} Deck`);
                     }}
                   >
                     {strategyLabel(strategy)}
@@ -387,7 +348,7 @@ export function DecksPage() {
                   className="mint-decks-input"
                   value={name}
                   onChange={(event) => setName(event.target.value)}
-                  placeholder="マイデッキ"
+                  placeholder="マイデッキ (My Deck)"
                 />
               </label>
 
@@ -404,7 +365,7 @@ export function DecksPage() {
               <div className="mint-decks-form-actions">
                 <MintPressable tone="primary" onClick={doSave}>
                   <MintIcon name="save" size={16} />
-                  <span>デッキを保存</span>
+                  <span>デッキ保存 (Save Deck)</span>
                 </MintPressable>
                 <MintPressable tone="soft" onClick={doPreview} disabled={previewLoading}>
                   {previewLoading ? "読み込み中..." : "カードを確認"}
@@ -429,14 +390,10 @@ export function DecksPage() {
           <GlassPanel variant="panel" className="mint-decks-panel mint-decks-browser-panel">
             <div className="mint-decks-browser-header">
               <MintTitleText as="h3" className="mint-decks-panel__title">カードブラウザ</MintTitleText>
-              <span className="mint-decks-browser-filter">
-                フィルター: {filterPreset.label}
-                （{filterPreset.detail}）
-                {gameIndex ? `・${selectedPresetCount ?? 0}件・${formatPercent(selectedPresetRatio)}` : ""}
-              </span>
+              <span className="mint-decks-browser-filter">フィルター: {filterPreset.label}（{filterPreset.hint}）</span>
             </div>
             {indexLoading ? (
-              <div className="mint-decks-loading">カードインデックスを読み込み中...</div>
+              <div className="mint-decks-loading">game index を読み込み中...</div>
             ) : gameIndex ? (
               <CardBrowserMint
                 key={`browser-${selectedFilter}`}
@@ -453,7 +410,7 @@ export function DecksPage() {
               />
             ) : (
               <div className="mint-decks-loading">
-                カードインデックスが利用できません。<code>/game/</code> に <code>index.v1.json</code> を配置してください。
+                game index が利用できません。<code>/game/</code> に <code>index.v1.json</code> を配置してください。
               </div>
             )}
           </GlassPanel>
@@ -477,7 +434,7 @@ export function DecksPage() {
               )}
             </div>
             <MintPressable tone="primary" onClick={doSave} fullWidth>
-              デッキを保存
+              デッキ保存 (Save Deck)
             </MintPressable>
           </GlassPanel>
 
@@ -493,10 +450,10 @@ export function DecksPage() {
                     <div className="mint-decks-saved__meta">{deck.tokenIds.join(", ")}</div>
                     <div className="mint-decks-saved__meta">更新: {formatDateShort(deck.updatedAt)}</div>
                     <div className="mint-decks-saved__actions">
-                      <MintPressable size="sm" tone="soft" onClick={() => loadDeckToForm(deck)}>編集</MintPressable>
-                      <MintPressable size="sm" tone="soft" to={themed(`/match?a=${deck.id}&ui=mint`)}>Aにセット</MintPressable>
-                      <MintPressable size="sm" tone="soft" to={themed(`/match?b=${deck.id}&ui=mint`)}>Bにセット</MintPressable>
-                      <MintPressable size="sm" tone="ghost" onClick={() => copy("デッキJSON", JSON.stringify(deck, null, 2))}>
+                      <MintPressable size="sm" tone="soft" onClick={() => loadDeckToForm(deck)}>編集 (Edit)</MintPressable>
+                      <MintPressable size="sm" tone="soft" to={themed(`/match?a=${deck.id}&ui=mint`)}>Aに設定 (Set as A)</MintPressable>
+                      <MintPressable size="sm" tone="soft" to={themed(`/match?b=${deck.id}&ui=mint`)}>Bに設定 (Set as B)</MintPressable>
+                      <MintPressable size="sm" tone="ghost" onClick={() => copy("Deck JSON", JSON.stringify(deck, null, 2))}>
                         JSONをコピー
                       </MintPressable>
                       <MintPressable
@@ -510,7 +467,7 @@ export function DecksPage() {
                           if (editingId === deck.id) resetForm();
                         }}
                       >
-                        削除
+                        削除 (Delete)
                       </MintPressable>
                     </div>
                   </GlassPanel>

@@ -35,14 +35,14 @@ export function ErrorAlert({ error, className = "" }: ErrorAlertProps) {
 export function RpcErrorAlert({ error, className = "" }: ErrorAlertProps) {
   return (
     <div className={`rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800 ${className}`}>
-      <div className="font-medium">RPC接続に失敗しました</div>
+      <div className="font-medium">RPC connection failed</div>
       <div className="mt-1 text-xs text-red-600">{error}</div>
       <div className="mt-2 flex flex-wrap gap-2">
         <Link to="/nyano" className="btn btn-sm no-underline">
-          RPC設定
+          RPC Settings
         </Link>
         <span className="text-xs text-red-500">
-          RPC設定を確認するか、時間を置いて再試行してください。公開RPCは混雑で失敗する場合があります。
+          Check your RPC settings or try again later. Public RPCs may be rate-limited.
         </span>
       </div>
     </div>
@@ -52,10 +52,10 @@ export function RpcErrorAlert({ error, className = "" }: ErrorAlertProps) {
 export function UnmintedTokenAlert({ error, className = "" }: ErrorAlertProps) {
   return (
     <div className={`rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 ${className}`}>
-      <div className="font-medium">トークンが未ミントです</div>
+      <div className="font-medium">Token not minted</div>
       <div className="mt-1 text-xs text-amber-600">{error}</div>
       <div className="mt-2 text-xs text-amber-500">
-        この tokenId はオンチェーン上に存在しません。デモ対戦にはカードインデックス（高速読み込み）を使うか、tokenId を確認してください。
+        This tokenId does not exist on-chain. Try using the Game Index (Fast mode) for demo play, or check the tokenId.
       </div>
     </div>
   );
@@ -64,7 +64,7 @@ export function UnmintedTokenAlert({ error, className = "" }: ErrorAlertProps) {
 export function GenericErrorAlert({ error, className = "" }: ErrorAlertProps) {
   return (
     <div className={`rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800 ${className}`}>
-      <div className="font-medium">エラー</div>
+      <div className="font-medium">Error</div>
       <div className="mt-1 text-xs text-red-600">{error}</div>
     </div>
   );

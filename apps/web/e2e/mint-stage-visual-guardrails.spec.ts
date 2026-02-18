@@ -38,7 +38,7 @@ test.describe("Mint stage visual guardrails", () => {
     await prepareMintMatchDefaults(page, "off");
     await page.goto("/match?mode=guest&opp=vs_nyano_ai&ai=normal&rk=v2&ui=mint&auto=0");
 
-    await expect(page.getByText(/Guest Quick Play|ゲスト対戦/)).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByText("Guest Quick Play")).toBeVisible({ timeout: 15_000 });
     await expect(page.locator(".mint-stage").first()).toBeVisible({ timeout: 15_000 });
 
     await expect
@@ -54,7 +54,7 @@ test.describe("Mint stage visual guardrails", () => {
     await prepareMintMatchDefaults(page, "auto");
     await page.goto("/match?mode=guest&opp=vs_nyano_ai&ai=normal&rk=v2&ui=mint&auto=0");
 
-    await expect(page.getByText(/Guest Quick Play|ゲスト対戦/)).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByText("Guest Quick Play")).toBeVisible({ timeout: 15_000 });
     await expect
       .poll(() => page.evaluate(() => document.documentElement.dataset.vfx ?? ""))
       .toBe("off");

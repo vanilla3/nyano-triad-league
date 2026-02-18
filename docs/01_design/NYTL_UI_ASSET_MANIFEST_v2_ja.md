@@ -1,120 +1,83 @@
-# NYTL UI Asset Manifest v2（Mint / Gamefeel）
+# NYTL UI Asset Manifest v2（Battle Board / Material 強化版）
 
-このマニフェストは、UI を参考画像レベルへ寄せるために
-**あると効くアセット**を一覧化したものです。
-
-原則:
-
-- “必須” と “加点” を分ける（まず動く、次に盛る）
-- 9-slice（UI を画像で切り抜く）に寄せすぎない（解像度・テーマ変更に弱い）
-- ただし **背景の柄** と **粒状ノイズ** は画像が強い（CSSだけだと限界がある）
-
-格納先の提案:
-
-- `apps/web/public/assets/ui/...`（手作り/デザイナー入稿系）
-- `apps/web/public/assets/gen/...`（Gemini 生成・量産系）
-
-運用メモ（現在のMint CSS実装）:
-
-- `apps/web/src/mint-theme/mint-theme.css` は `assets/gen` を直接参照する。
-- 既定ファイル名:
-  - `bg_cloud_corners_16x9_v3.png`
-  - `bg_paw_tile_512_v1.png`
-  - `fx_sparkle_tile_512_v1.png`
-  - `tx_noise_256_v1.png`
-  - `slot_inner_shadow_256_v1.png`（任意）
-  - `board_tray_tex_1024_v1.png`（任意）
+> v1: `docs/01_design/NYTL_UI_ASSET_MANIFEST_v1_ja.md`
+>
+> v2 は「盤面の質感（ガラス/ボタン感）」を一段上げるための追加リストです。
+> **画像がなくても CSS fallback で成立**する設計を前提にしています。
 
 ---
 
-## 1) 必須（これがないと“のっぺり”に見える）
+## 0) 共有ルール（推奨）
 
-### BG-001: Paw pattern tile
-
-- 目的: 背景に “Nyano らしさ” を足す（密度は低め）
-- 形式: PNG（透過）
-- サイズ: 512x512（tile）
-- パス: `apps/web/public/assets/ui/bg_paw_tile_512.png`
-- 運用: CSS の `background-repeat: repeat` で敷く（opacity 0.06〜0.12）
-
-### BG-002: Cloud corners / sky layer
-
-- 目的: 画面上部/下部の “ゲームっぽいフレーム感”
-- 形式: PNG（透過）
-- サイズ: 1920x1080 or 2048x1152（16:9）
-- パス: `apps/web/public/assets/ui/bg_cloud_corners_16x9.png`
-- 運用: `background-position: center` / `cover` で 1枚貼り
-
-### TX-001: Subtle noise tile
-
-- 目的: ガラス/グラデのバンディングを消し、質感を上げる
-- 形式: PNG（透過）
-- サイズ: 256x256（tile）
-- パス: `apps/web/public/assets/ui/tx_noise_256.png`
-- 運用: panel/button の `::after` に `mix-blend-mode: overlay` / opacity 0.08
+- 形式: PNG（透過）または WEBP（透過）
+- 文字は入れない（多言語対応と差し替えを楽にする）
+- コントラストは低め（UI の“主役”にならない）
 
 ---
 
-## 2) 加点（あると一気に“プロ感”が出る）
+## 1) Material（質感）を作るための“薄素材”
 
-### FX-001: Sparkle tile / stickers
+### MAT-001: UI Noise Tile（極薄ノイズ・タイル）
 
-- 目的: 背景に星/キラを薄く漂わせる（参考画像のニュアンス）
+- 用途: ベタ塗り回避。パネル/セル/ボタンの表面に 2〜6% で重ねる
+- サイズ: 512×512（シームレス）
 - 形式: PNG（透過）
-- サイズ: 512x512（tile）
-- パス: `apps/web/public/assets/ui/fx_sparkle_tile_512.png`
-- 運用: `mix-blend-mode: screen` / opacity 0.10〜0.22
+- 実装: `background-image` の最上段に `url(...)` を追加
 
-### UI-001: Glass sheen overlay（任意）
+### MAT-002: Specular Sheen Tile（斜めの光・タイル）
 
-- 目的: ボタンやパネルに “艶の筋” を足す（CSSでも代替可）
+- 用途: “ガラスっぽさ” の決め手。斜めシーンを薄く重ねる
+- サイズ: 1024×1024（できればシームレス）
 - 形式: PNG（透過）
-- サイズ: 512x256
-- パス: `apps/web/public/assets/ui/ui_glass_sheen_512x256.png`
+- 実装: `::before` で `mix-blend-mode: screen` + opacity 0.08〜0.16
 
-### BD-001: Board tray texture（任意）
+### MAT-003: Soft Shadow Blob（淡い影のにじみ）
 
-- 目的: 盤面の外周/トレイを「玩具っぽい質感」に寄せる
+- 用途: 盤面トレイや大きなパネルを “置いた感” にする
+- サイズ: 1024×1024（単体で OK）
 - 形式: PNG（透過）
-- サイズ: 1024x1024
-- パス: `apps/web/public/assets/ui/board_tray_tex_1024.png`
-
-### BD-002: Slot inner shadow overlay（任意）
-
-- 目的: 空セルを “凹み” に見せる内側影（CSSでも可）
-- 形式: PNG（透過）
-- サイズ: 256x256
-- パス: `apps/web/public/assets/ui/slot_inner_shadow_256.png`
+- 実装: `::after` で敷く（filter/blur は避け、画像で持つ）
 
 ---
 
-## 3) 画面別おすすめセット
+## 2) Match 盤面（トレイ/セル）
 
-### Home / Arena
+### MATCH-004: Board Tray Overlay（盤面トレイの表面）
 
-- BG-001 / BG-002 / FX-001
-- TX-001（背景のバンディング対策）
+- 用途: 盤面全体の “厚み + 透明感” を固定で担保
+- サイズ: 1024×768（4:3）
+- 形式: PNG（透過）
+- 備考: 中央は空ける。縁のハイライトだけ描く
 
-### Decks（図鑑/デッキ）
+### MATCH-005: Cell Well Frame（セルの凹みフレーム）
 
-- TX-001（パネル/ボタン/カード枠）
-- UI-001（艶、必要なら）
+- 用途: 空セルを「置き台」に見せる（凹み + 内側ハイライト）
+- サイズ: 256×256
+- 形式: PNG（透過）
 
-### Match（盤面）
+### MATCH-006: Cell Corner Sparkle（セルの角きらめき）
 
-- BD-001 / BD-002（盤面の“玩具っぽさ”）
-- TX-001
+- 用途: selectable 状態の “かわいい反応” を作る（過剰に点滅させない）
+- サイズ: 128×128
+- 形式: PNG（透過）
+- 実装: `data-vfx=high` の時だけ
 
 ---
 
-## 4) 生成するなら（Gemini）
+## 3) 生成プロンプト叩き台（Gemini 向け）
 
-`scripts/asset_prompts/nytl_ui_assets.v3.json` を参照。
+> 生成は `scripts/gemini_image_gen.mjs` と batch JSON を使用。
+
+- MAT-001:
+  - `very subtle seamless noise texture, fine film grain, low contrast, transparent background, tileable, no text`
+- MAT-002:
+  - `soft diagonal specular highlight overlay, subtle, transparent background, no text, tileable`
+- MAT-003:
+  - `soft shadow blob overlay, very subtle, transparent background, no text`
 
 ---
 
-## 5) 注意点
+## 4) 実装メモ
 
-- 背景が強すぎるとカードが死ぬ。**opacity 低め + ぼかし気味**が基本
-- ノイズは “見える” まで入れると安っぽい。**感じる程度**で止める
-- 画像を増やすほどネットワーク/初回ロードが重くなる。小さな tile を再利用する
+- 画像が存在しない場合は CSS だけで成立するように作る（必須アセットにしない）
+- `prefers-reduced-motion` と `data-vfx` で粒子/シーン/グローを段階的に抑制する

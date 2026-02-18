@@ -9,53 +9,40 @@
   },
   "jobs": [
     {
-      "id": "bg_cloud_corners_16x9",
-      "out": "apps/web/public/assets/gen/bg_cloud_corners_16x9_v3.png",
-      "aspect": "16:9",
+      "id": "ui_noise_tile_512",
+      "out": "apps/web/public/assets/gen/ui_noise_tile_512_v1.png",
+      "prompt": "very subtle seamless noise texture, fine film grain, low contrast, transparent background, tileable, no text"
+    },
+    {
+      "id": "ui_specular_sheen_tile_1024",
+      "out": "apps/web/public/assets/gen/ui_specular_sheen_tile_1024_v1.png",
+      "size": "1K",
+      "prompt": "soft diagonal specular highlight overlay texture, very subtle, transparent background, tileable, no text"
+    },
+    {
+      "id": "ui_soft_shadow_blob_1024",
+      "out": "apps/web/public/assets/gen/ui_soft_shadow_blob_1024_v1.png",
+      "size": "1K",
+      "prompt": "soft shadow blob overlay, very subtle, transparent background, no text"
+    },
+    {
+      "id": "match_cell_well_frame_v1",
+      "out": "apps/web/public/assets/gen/match_cell_well_frame_v1.png",
+      "size": "1K",
+      "prompt": "square cell well frame for a card slot, recessed glass cavity, pastel gradient border, inner bevel, subtle shine, no text, centered, transparent background"
+    },
+    {
+      "id": "match_cell_corner_sparkle_v1",
+      "out": "apps/web/public/assets/gen/match_cell_corner_sparkle_v1.png",
+      "size": "1K",
+      "prompt": "tiny corner sparkle sticker for UI, pastel, very subtle, no text, centered, transparent background"
+    },
+    {
+      "id": "match_board_tray_overlay_v1",
+      "out": "apps/web/public/assets/gen/match_board_tray_overlay_v1.png",
+      "aspect": "4:3",
       "size": "2K",
-      "prompt": "soft pastel sky gradient background with fluffy white clouds in the corners, subtle sparkles, very light bokeh, no characters, no text, cute mobile game UI background, 16:9"
-    },
-    {
-      "id": "bg_paw_tile",
-      "out": "apps/web/public/assets/gen/bg_paw_tile_512_v1.png",
-      "aspect": "1:1",
-      "size": "1K",
-      "prompt": "seamless tileable paw print pattern, very subtle pastel outlines, low contrast, transparent background, no text"
-    },
-    {
-      "id": "fx_sparkle_tile",
-      "out": "apps/web/public/assets/gen/fx_sparkle_tile_512_v1.png",
-      "aspect": "1:1",
-      "size": "1K",
-      "prompt": "seamless tileable sparkle + tiny star + bokeh overlay texture, pastel, very subtle, transparent background, no text"
-    },
-    {
-      "id": "tx_noise_tile",
-      "out": "apps/web/public/assets/gen/tx_noise_256_v1.png",
-      "aspect": "1:1",
-      "size": "1K",
-      "prompt": "seamless tileable subtle grain noise texture, monochrome gray, very fine film grain, transparent background, no text"
-    },
-    {
-      "id": "ui_glass_sheen",
-      "out": "apps/web/public/assets/gen/ui_glass_sheen_512x256_v1.png",
-      "aspect": "2:1",
-      "size": "1K",
-      "prompt": "soft diagonal glass sheen overlay, subtle highlight streaks, pastel white, transparent background, no text"
-    },
-    {
-      "id": "slot_inner_shadow",
-      "out": "apps/web/public/assets/gen/slot_inner_shadow_256_v1.png",
-      "aspect": "1:1",
-      "size": "1K",
-      "prompt": "square inner shadow overlay for a recessed slot, soft rounded corners, subtle dark gradient around edges, transparent center, transparent background, no text"
-    },
-    {
-      "id": "board_tray_tex",
-      "out": "apps/web/public/assets/gen/board_tray_tex_1024_v1.png",
-      "aspect": "1:1",
-      "size": "1K",
-      "prompt": "seamless toy board tray texture, soft pastel mint and cyan plastic grain, very subtle low-contrast pattern, no text"
+      "prompt": "glass tray overlay frame (edges only) for a 3x3 card board, pastel gradient border, inner highlight, subtle shine, no text, empty center, transparent background"
     }
   ]
 }

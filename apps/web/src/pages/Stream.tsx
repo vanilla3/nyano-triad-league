@@ -209,10 +209,10 @@ export function StreamPage() {
   );
   const streamQuickActions = React.useMemo<Array<{ to: string; label: string; subtitle: string; icon: MintIconName }>>(
     () => [
-      { to: themed(`/match?event=${encodeURIComponent(eventId)}&ui=mint`), label: "対戦", subtitle: "配信対戦", icon: "match" },
-      { to: themed("/overlay?controls=0"), label: "オーバーレイ", subtitle: "OBS表示", icon: "stream" },
-      { to: themed("/replay?broadcast=1"), label: "リプレイ", subtitle: "配信モード", icon: "replay" },
-      { to: themed("/events"), label: "イベント", subtitle: "シーズン一覧", icon: "events" },
+      { to: themed(`/match?event=${encodeURIComponent(eventId)}&ui=mint`), label: "対戦 (Match)", subtitle: "配信対戦", icon: "match" },
+      { to: themed("/overlay?controls=0"), label: "オーバーレイ (Overlay)", subtitle: "OBS表示", icon: "stream" },
+      { to: themed("/replay?broadcast=1"), label: "リプレイ (Replay)", subtitle: "配信モード", icon: "replay" },
+      { to: themed("/events"), label: "イベント (Events)", subtitle: "シーズン一覧", icon: "events" },
     ],
     [eventId, themed],
   );
@@ -269,10 +269,10 @@ function safeFileStem(): string {
   React.useEffect(() => {
     if (!live) return;
     if (live.rpcStatus && !live.rpcStatus.ok) {
-      setLastError({ message: live.rpcStatus.message ?? "RPC connection failed", timestampMs: live.rpcStatus.timestampMs });
+      setLastError({ message: live.rpcStatus.message ?? "RPC接続エラー (RPC connection failed)", timestampMs: live.rpcStatus.timestampMs });
     }
     if (live.externalStatus && live.externalStatus.lastOk === false) {
-      setLastError({ message: live.externalStatus.lastMessage ?? "External integration error", timestampMs: live.externalStatus.lastTimestampMs ?? Date.now() });
+      setLastError({ message: live.externalStatus.lastMessage ?? "外部連携エラー (External integration error)", timestampMs: live.externalStatus.lastTimestampMs ?? Date.now() });
     }
   }, [live?.rpcStatus, live?.externalStatus]); // eslint-disable-line react-hooks/exhaustive-deps -- only re-run on status change
 
@@ -1124,7 +1124,7 @@ React.useEffect(() => {
     endsAtMs: voteEndsAtMs ?? undefined,
     totalVotes,
     top,
-    note: canVoteNow ? "投票受付中…" : "ホスト準備待ち…",
+    note: canVoteNow ? "投票受付中 (Voting…)" : "ホスト待機中 (Waiting for host…)",
   });
 }, [voteOpen, voteEndsAtMs, voteTurn, votesByUser, counts, controlledSide, live?.eventId, live?.eventTitle, liveTurn, canVoteNow]);
 
@@ -1222,7 +1222,7 @@ return (
             <span className="mint-stream-summary__value">{connectionHealth.overlayConnected ? "接続中" : "待機中"}</span>
           </GlassPanel>
           <GlassPanel variant="pill" className="mint-stream-summary__item">
-            <span className="mint-stream-summary__label">対戦バス</span>
+            <span className="mint-stream-summary__label">対戦連携</span>
             <span className="mint-stream-summary__value">{connectionHealth.matchConnected ? "接続中" : "待機中"}</span>
           </GlassPanel>
           <GlassPanel variant="pill" className="mint-stream-summary__item">
@@ -1269,9 +1269,9 @@ return (
             }
             setSettingsLocked((v) => !v);
           }}
-          aria-label={settingsLocked ? "設定ロック解除 (Unlock settings)" : "設定ロック (Lock settings)"}
+          aria-label={settingsLocked ? "Unlock settings" : "Lock settings"}
         >
-          {settingsLocked ? "🔒 設定ロック中 (解除)" : "🔓 設定をロック"}
+          {settingsLocked ? "🔒 設定ロック中 (解除)" : "🔓 設定をロックする"}
         </button>
       </div>
       <div className="card stream-page__studio-card">
@@ -1279,10 +1279,10 @@ return (
           <div>
             <div className="flex items-center gap-3">
               <NyanoImage size={56} className="shrink-0" alt="Nyano" />
-              <div className="text-lg font-semibold">🎥 Nyano Stream Studio</div>
+              <div className="text-lg font-semibold">🎥 配信スタジオ (Nyano Stream Studio)</div>
             </div>
             <div className="text-sm text-slate-600">
-              OBSオーバーレイとチャット投票を使って、視聴者と一緒に対戦を楽しめます。
+              OBSオーバーレイとチャット投票を使って、視聴者と一緒に対戦を進行できます。
             </div>
           </div>
         </div>
@@ -1329,19 +1329,19 @@ return (
             <div className="mt-1 text-sm text-slate-800">
               視聴者には <span className="font-mono">対戦リンク</span> を配り、勝ったリプレイURLをチャットに貼ってもらいます。
               <br />
-              配信側は <Link to={themed("/replay")}>リプレイ</Link> で回収して、解説・採点・ランキング化へ。
+              配信側は <Link to={themed("/replay")}>リプレイ</Link> で回収して、解説や採点に活用します。
             </div>
           </div>
 
           <div className="stream-page__step rounded-2xl border border-slate-200 bg-white/70 px-4 py-3 shadow-sm">
             <div className="text-xs font-semibold text-slate-800">ステップ3 · リプレイを配信で確認</div>
             <div className="mt-1 text-sm text-slate-700">
-              <span className="font-mono">{replayPath}</span> で共有URLを開き、<span className="font-semibold">オーバーレイ送信</span> をONにすると、
-              オーバーレイが手順と一緒に追随します（解説がしやすい）。
+              <span className="font-mono">{replayPath}</span> で共有URLを開き、<span className="font-semibold">Overlayへ配信 (Broadcast to overlay)</span> をONにすると、
+              オーバーレイが手順と一緒に追随します（解説しやすくなります）。
             </div>
             <div className="mt-3 flex flex-wrap items-center gap-2">
-              <button className="btn btn-sm btn-primary" onClick={() => copy("リプレイ配信URL", themedReplayBroadcastUrl)}>
-                リプレイ配信URLをコピー
+              <button className="btn btn-sm btn-primary" onClick={() => copy("Replay (broadcast)", themedReplayBroadcastUrl)}>
+                リプレイURLをコピー (broadcast)
               </button>
               <a className="btn btn-sm no-underline" href={themedReplayBroadcastUrl} target="_blank" rel="noreferrer noopener">
                 開く
@@ -1355,9 +1355,9 @@ return (
           <div className="stream-page__step rounded-2xl border border-slate-200 bg-white/70 px-4 py-3 shadow-sm">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <div>
-                <div className="text-xs font-semibold text-slate-800">ステップ4 · Nyano vs チャット投票</div>
+                <div className="text-xs font-semibold text-slate-800">ステップ4 · Nyano vs Chat（投票ベータ）</div>
                 <div className="mt-1 text-xs text-slate-600">
-                  Twitch連携の前に、まずは <span className="font-mono">{streamPath}</span> で投票集計 → <span className="font-mono">{matchPath}</span> に反映する最小ループを作ります。
+                  Twitch連携の前段として、<span className="font-mono">{streamPath}</span> の投票集計を <span className="font-mono">{matchPath}</span> に反映する運用を行います。
                 </div>
               </div>
 
@@ -1368,7 +1368,7 @@ return (
 
             <div className="mt-3 grid gap-3 md:grid-cols-2">
               <div className="stream-page__live-status rounded-xl border border-slate-200 bg-white px-3 py-2">
-                <div className="text-[11px] font-semibold text-slate-700">ライブ状態（オーバーレイ連携）</div>
+                <div className="text-[11px] font-semibold text-slate-700">ライブ状態（連携バス）</div>
                 <div className="mt-1 text-xs text-slate-700">
                   イベント: <span className="font-mono">{live?.eventId ?? "—"}</span>
                 </div>
@@ -1378,7 +1378,7 @@ return (
                 </div>
                 {liveClassicOpen ? (
                   <div className="mt-1 text-xs text-slate-700">
-                    classic 公開:{" "}
+                    クラシック Open:{" "}
                     <span className="font-mono">
                       {liveClassicOpen.mode === "all_open"
                         ? "全カード公開"
@@ -1388,7 +1388,7 @@ return (
                 ) : null}
                 {liveClassic?.swap ? (
                   <div className="mt-1 text-xs text-slate-700">
-                    Classic 入れ替え: <span className="font-mono">{formatClassicSwapSlots(liveClassic.swap.aIndex, liveClassic.swap.bIndex)}</span>
+                    クラシック Swap: <span className="font-mono">{formatClassicSwapSlots(liveClassic.swap.aIndex, liveClassic.swap.bIndex)}</span>
                   </div>
                 ) : null}
                 {live?.lastMove ? (
@@ -1459,7 +1459,7 @@ return (
             />
 
             <div className="mt-3 text-[11px] text-slate-500">
-              ここで使うコマンド連携は、次の段階で Twitch 連携（EventSub/IRC）に置き換え可能です。
+              現在のコマンド連携は、将来的に Twitch Bridge（EventSub/IRC）へ置き換えできる設計です。
             </div>
           </div>
         </div>
@@ -1467,7 +1467,7 @@ return (
 
       {/* ── Recovery / Troubleshooting (Phase 2 — one-click + guide) ── */}
       <div className="card stream-page__recovery rounded-2xl border border-amber-200 bg-amber-50/50 px-4 py-3">
-        <div className="text-xs font-semibold text-amber-800 mb-2">復旧メニュー</div>
+        <div className="text-xs font-semibold text-amber-800 mb-2">復旧メニュー (Recovery)</div>
         <div className="flex flex-wrap gap-2 mb-3">
           {(["clear_overlay", "clear_votes", "full_reset"] as const).map((action) => (
             <button
@@ -1492,7 +1492,7 @@ return (
           <summary className="text-xs text-amber-700 cursor-pointer">トラブルシューティング</summary>
           <div className="mt-2 grid gap-3 text-xs text-amber-900">
             <div>
-              <div className="font-semibold">オーバーレイに「データ更新停止」が出る</div>
+              <div className="font-semibold">Overlay に &quot;Data stale&quot; が出る</div>
               <ol className="list-decimal pl-4 mt-1 space-y-0.5">
                 <li>Match タブが開いていて接続中か確認する</li>
                 <li>Match タブを再読み込みする（stateは localStorage から復元）</li>
@@ -1500,9 +1500,9 @@ return (
               </ol>
             </div>
             <div>
-              <div className="font-semibold">投票結果がオーバーレイに表示されない</div>
+              <div className="font-semibold">投票結果が overlay に表示されない</div>
               <ol className="list-decimal pl-4 mt-1 space-y-0.5">
-                <li>Stream タブと Overlay タブが同じオリジンか確認する</li>
+                <li>Stream タブと Overlay タブが同じ origin か確認する</li>
                 <li>ブラウザコンソールで BroadcastChannel エラーを確認する</li>
                 <li>両タブを再読み込みする（vote state はリセット）</li>
               </ol>
@@ -1510,8 +1510,8 @@ return (
             <div>
               <div className="font-semibold">Warudo bridge が応答しない</div>
               <ol className="list-decimal pl-4 mt-1 space-y-0.5">
-                <li>base URL が正しいか確認する（末尾にスラッシュなし）</li>
-                <li>「state送信」を手動実行して疎通を確認する</li>
+                <li>base URL が正しいか確認する（末尾の slash なし）</li>
+                <li>&quot;Send state&quot; を手動実行して疎通を確認する</li>
                 <li>nyano-warudo の server logs で CORS/timeout を確認する</li>
               </ol>
             </div>
@@ -1528,16 +1528,16 @@ return (
         </div>
         <div className="card-bd flex flex-wrap items-center gap-2">
           <Link className="btn no-underline" to={themed("/events")}>
-            イベント
+            イベント (Events)
           </Link>
           <Link className="btn no-underline" to={themed("/match?ui=mint")}>
-            対戦
+            対戦 (Match)
           </Link>
           <Link className="btn no-underline" to={themed("/replay")}>
-            リプレイ
+            リプレイ (Replay)
           </Link>
           <a className="btn no-underline" href={themedOverlayUrl} target="_blank" rel="noreferrer noopener">
-            オーバーレイ
+            オーバーレイ (Overlay)
           </a>
         </div>
       </div>

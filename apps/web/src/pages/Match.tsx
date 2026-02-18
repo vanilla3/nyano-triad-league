@@ -24,6 +24,8 @@ import { BattleTopHudMint } from "@/components/BattleTopHudMint";
 import { HandDisplayMint } from "@/components/HandDisplayMint";
 import { GameResultOverlayMint } from "@/components/GameResultOverlayMint";
 import { PlayerSidePanelMint } from "@/components/PlayerSidePanelMint";
+import { ClassicRulesRibbonMint } from "@/components/ClassicRulesRibbonMint";
+import { ClassicOpenHandMiniMint } from "@/components/ClassicOpenHandMiniMint";
 import { ScoreBar } from "@/components/ScoreBar";
 import { LastMoveFeedback, useBoardFlipAnimation } from "@/components/BoardFlipAnimator";
 import { CardFlight } from "@/components/CardFlight";
@@ -71,6 +73,7 @@ import { readUiDensity, readVfxQuality, writeUiDensity, writeVfxQuality, type Ui
 import type { FlipTraceArrow } from "@/components/FlipArrowOverlay";
 import { MatchDrawerMint, DrawerToggleButton } from "@/components/MatchDrawerMint";
 import { MatchSetupPanelMint } from "@/components/match/MatchSetupPanelMint";
+import { getClassicOpenModeLabel, getPlayerDisplayLabel } from "@/components/match/classicRulesUi";
 import { writeClipboardText } from "@/lib/clipboard";
 import { appAbsoluteUrl, buildReplayShareUrl } from "@/lib/appUrl";
 import { computeStageBoardSizing, shouldShowStageSecondaryControls } from "@/lib/stage_layout";
@@ -547,7 +550,7 @@ export function MatchPage() {
   const handleEngineRendererInitError = React.useCallback((message: string) => {
     setEngineRendererFailed(true);
     setEngineRendererError(message);
-    toast.warn("Pixiレンダラーを初期化できませんでした", "Mint盤面に切り替えました");
+    toast.warn("Pixi renderer unavailable", "Switched to Mint fallback board");
   }, [toast]);
   const handleRetryEngineRenderer = React.useCallback(() => {
     setEngineRendererFailed(false);
@@ -765,7 +768,7 @@ export function MatchPage() {
       memo: `${aiDifficulty} / ${rulesetKey}`,
     });
     setGuestDeckSaved(true);
-    toast.success("デッキを保存しました", "デッキ画面で確認できます。");
+    toast.success("デッキを保存しました", "Decks ページで確認できます。");
   };
 
   React.useEffect(() => {
@@ -887,7 +890,7 @@ export function MatchPage() {
     const path = location.pathname.replace(/^\//, "");
     const url = appAbsoluteUrl(query ? `${path}?${query}` : path);
     const ok = await writeClipboardText(url);
-    if (ok) toast.success("コピーしました", "セットアップリンクをコピーしました。");
+    if (ok) toast.success("コピーしました", "セットアップURLをコピーしました。");
     else toast.warn("コピー失敗", "URLを手動でコピーしてください。");
   };
 
@@ -995,6 +998,14 @@ export function MatchPage() {
     if (!cards) return [];
     return currentDeckTokens.map((tid) => cards.get(tid)).filter(Boolean) as CardData[];
   }, [cards, currentDeckTokens]);
+  const deckACards: (CardData | null)[] = React.useMemo(() => {
+    if (!cards) return effectiveDeckATokens.map(() => null);
+    return effectiveDeckATokens.map((tid) => cards.get(tid) ?? null);
+  }, [cards, effectiveDeckATokens]);
+  const deckBCards: (CardData | null)[] = React.useMemo(() => {
+    if (!cards) return effectiveDeckBTokens.map(() => null);
+    return effectiveDeckBTokens.map((tid) => cards.get(tid) ?? null);
+  }, [cards, effectiveDeckBTokens]);
 
   const availableCells = React.useMemo(() => {
     const out: number[] = [];
@@ -1026,13 +1037,36 @@ export function MatchPage() {
     : null;
   const classicOpenLabel = classicOpenCardIndices
     ? classicOpenCardIndices.mode === "all_open"
-      ? "classic 公開: すべて公開"
-      : `classic 3枚公開: A[${formatClassicOpenSlots(classicOpenCardIndices.playerA)}] / B[${formatClassicOpenSlots(classicOpenCardIndices.playerB)}]`
+      ? "Classic Open: all cards revealed"
+      : `Classic Three Open: A[${formatClassicOpenSlots(classicOpenCardIndices.playerA)}] / B[${formatClassicOpenSlots(classicOpenCardIndices.playerB)}]`
     : null;
+  const classicOpenPresentation = React.useMemo(() => {
+    if (!classicOpenCardIndices) return null;
+    const modeLabel = getClassicOpenModeLabel(classicOpenCardIndices.mode);
+    return {
+      modeLabel,
+      playerA: {
+        cards: deckACards,
+        openCardIndices: new Set<number>(classicOpenCardIndices.playerA),
+        usedCardIndices: used.usedA,
+      },
+      playerB: {
+        cards: deckBCards,
+        openCardIndices: new Set<number>(classicOpenCardIndices.playerB),
+        usedCardIndices: used.usedB,
+      },
+    };
+  }, [classicOpenCardIndices, deckACards, deckBCards, used.usedA, used.usedB]);
   const activeClassicRuleTags = React.useMemo(() => {
     if (ruleset.version !== 2) return [];
     return listClassicRuleTags(ruleset.classic);
   }, [ruleset]);
+  const classicForcedRuleLabel = React.useMemo(() => {
+    if (classicForcedCardIndex === null) return null;
+    if (activeClassicRuleTags.includes("order")) return "ORDER";
+    if (activeClassicRuleTags.includes("chaos")) return "CHAOS";
+    return "FIX";
+  }, [activeClassicRuleTags, classicForcedCardIndex]);
   const activeClassicMask = React.useMemo(() => {
     if (rulesetKey !== "classic_custom") return undefined;
     return encodeClassicRulesMask(classicCustomConfig);
@@ -1052,11 +1086,11 @@ export function MatchPage() {
     const commitA = deriveRevealCommitHex(commitRevealSaltParam, commitRevealAParam);
     const commitB = deriveRevealCommitHex(commitRevealSaltParam, commitRevealBParam);
     if (!commitA || !commitB) {
-      toast.warn("コミット生成に失敗しました", "matchSalt/revealA/revealB は bytes32 hex で指定してください。");
+      toast.warn("Commit導出失敗", "matchSalt/revealA/revealB は bytes32 hex 形式で入力してください。");
       return;
     }
     setParams({ fca: commitA, fcb: commitB });
-    toast.success("コミットを生成しました", "reveal から commitA/commitB を更新しました。");
+    toast.success("Commit導出完了", "reveal 値から commitA/commitB を更新しました。");
   };
 
   const handleRandomizeCommittedMutualChoice = () => {
@@ -1083,11 +1117,11 @@ export function MatchPage() {
       nonce: committedMutualNonceBParam,
     });
     if (!commitA || !commitB) {
-      toast.warn("コミット生成に失敗しました", "matchSalt/player/choice/nonce の値を確認してください。");
+      toast.warn("Commit導出失敗", "matchSalt/player/choice/nonce の入力を確認してください。");
       return;
     }
     setParams({ fcoa: commitA, fcob: commitB });
-    toast.success("コミットを生成しました", "先攻選択コミットを更新しました。");
+    toast.success("Commit導出完了", "コミット相互選択の commit 値を更新しました。");
   };
 
   const handleRandomizeSeedResolution = () => {
@@ -1110,9 +1144,9 @@ export function MatchPage() {
       setOwners(null);
       setPlayerA("0x0000000000000000000000000000000000000001" as `0x${string}`);
       setPlayerB("0x0000000000000000000000000000000000000002" as `0x${string}`);
-      setError(`カードインデックスの読み込みに失敗したため、フォールバックのゲストデッキを使用しました。(${reason})`);
+      setError(`Game Index の読み込みに失敗したため、フォールバックのゲストデッキを使用しました。(${reason})`);
       setStatus(`ゲストモード: フォールバックデッキを読み込みました（${fallback.cardsByTokenId.size}枚）`);
-      toast.warn("カードインデックス利用不可", "フォールバックのゲストカードを読み込みました。");
+      toast.warn("Game Index利用不可", "フォールバックのゲストカードを読み込みました。");
     };
 
     try {
@@ -1122,7 +1156,7 @@ export function MatchPage() {
           applyGuestFallback("index unavailable");
           return;
         }
-        setError("カードインデックスが利用できません。RPC読み込みをお試しください。");
+        setError("Game Index が利用できません。Verified モードをお試しください。");
         return;
       }
 
@@ -1140,7 +1174,7 @@ export function MatchPage() {
         setOwners(null);
         setPlayerA("0x0000000000000000000000000000000000000001" as `0x${string}`);
         setPlayerB("0x0000000000000000000000000000000000000002" as `0x${string}`);
-        setStatus(`ゲストモード: カードインデックスから ${cardMap.size} 枚読み込みました`);
+        setStatus(`ゲストモード: game index から ${cardMap.size} 枚読み込みました`);
       } else {
         // Fast mode for normal play
         const allTokenIds = [...deckATokens, ...deckBTokens].map((t) => t.toString());
@@ -1148,7 +1182,7 @@ export function MatchPage() {
 
         if (cardMap.size < allTokenIds.length) {
           const missing = allTokenIds.filter((id) => !cardMap.has(BigInt(id)));
-          setError(`カードインデックスに tokenId が不足しています: ${missing.join(", ")}。RPC読み込みをお試しください。`);
+          setError(`Game Index に tokenId が不足しています: ${missing.join(", ")}。Verified モードをお試しください。`);
           return;
         }
 
@@ -1165,7 +1199,7 @@ export function MatchPage() {
 
         setCards(cardMap);
         setOwners(null);
-        setStatus(`高速読み込み: カードインデックスから ${cardMap.size} 枚読み込みました`);
+        setStatus(`Fast モード: game index から ${cardMap.size} 枚読み込みました`);
       }
     } catch (e: unknown) {
       const msg = errorMessage(e);
@@ -1173,7 +1207,7 @@ export function MatchPage() {
         applyGuestFallback(msg);
         return;
       }
-      setError(`カードインデックス読み込み失敗: ${msg}`);
+      setError(`Game Index 読み込み失敗: ${msg}`);
     } finally {
       setLoading(false);
     }
@@ -1231,7 +1265,7 @@ export function MatchPage() {
       if (a0 !== undefined) setPlayerA(ownersByTokenId.get(a0) ?? playerA);
       if (b0 !== undefined) setPlayerB(ownersByTokenId.get(b0) ?? playerB);
 
-      setStatus(`RPC読み込み: mainnet から ${bundles.size} 枚読み込みました`);
+      setStatus(`Verified: mainnet から ${bundles.size} 枚読み込みました`);
       rpcStatusRef.current = { ok: true, timestampMs: Date.now() };
     } catch (e: unknown) {
       const msg = errorMessage(e);
@@ -1522,7 +1556,7 @@ export function MatchPage() {
       setStatus(null);
 
       if (turns.length >= 9) {
-        setError("9手すべて確定済みです。対戦をリセットして続けてください。");
+        setError("9手すべて確定済みです。続けるには対戦をリセットしてください。");
         telemetry.recordInvalidAction();
         return;
       }
@@ -1533,23 +1567,23 @@ export function MatchPage() {
         return;
       }
       if (used.cells.has(next.cell)) {
-        setError(`セル ${next.cell} はすでに使用されています。`);
+        setError(`セル ${next.cell} はすでに使用済みです。`);
         telemetry.recordInvalidAction();
         return;
       }
 
       if (next.cardIndex < 0 || next.cardIndex > 4) {
-        setError("カード番号は 0..4 の範囲で指定してください。");
+        setError("cardIndex は 0..4 の範囲で指定してください。");
         telemetry.recordInvalidAction();
         return;
       }
       if (classicForcedCardIndex !== null && next.cardIndex !== classicForcedCardIndex) {
-        setError(`このターンはカード番号 ${classicForcedCardIndex} を選ぶ必要があります。`);
+        setError(`このターンは cardIndex ${classicForcedCardIndex} を選ぶ必要があります。`);
         telemetry.recordInvalidAction();
         return;
       }
       if (currentUsed.has(next.cardIndex)) {
-        setError(`カード番号 ${next.cardIndex} はすでに使用済みです。`);
+        setError(`カードスロット ${next.cardIndex + 1} はすでに使用済みです。`);
         telemetry.recordInvalidAction();
         return;
       }
@@ -1561,17 +1595,17 @@ export function MatchPage() {
           return;
         }
         if (next.warningMarkCell === next.cell) {
-          setError("警告マスは配置セルと同じにできません。");
+          setError("warningMarkCell は配置セルと同じにできません。");
           telemetry.recordInvalidAction();
           return;
         }
         if (next.warningMarkCell < 0 || next.warningMarkCell > 8) {
-          setError("警告マスは 0..8 の範囲で指定してください。");
+          setError("warningMarkCell は 0..8 の範囲で指定してください。");
           telemetry.recordInvalidAction();
           return;
         }
         if (used.cells.has(next.warningMarkCell)) {
-          setError(`警告マス ${next.warningMarkCell} はすでに埋まっています。`);
+          setError(`warningMarkCell ${next.warningMarkCell} はすでに埋まっています。`);
           telemetry.recordInvalidAction();
           return;
         }
@@ -1596,7 +1630,7 @@ export function MatchPage() {
     };
 
     if (isStageFocusRoute) {
-      pushStageActionFeedback("手を確定しました (Move committed)", "success");
+      pushStageActionFeedback("配置を確定しました", "success");
     }
 
     // Card flight animation (mint / engine mode)
@@ -1630,12 +1664,12 @@ export function MatchPage() {
     if (isAiTurn) return;
 
     if (draftCell === null) {
-      setError("先にセルを選択してから手を確定してください。");
+      setError("先に配置先のセルを選択してください。");
       telemetry.recordInvalidAction();
       return;
     }
     if (draftCardIndex === null) {
-      setError("カードを選択してください");
+      setError("card を選択してください");
       telemetry.recordInvalidAction();
       return;
     }
@@ -1643,14 +1677,20 @@ export function MatchPage() {
     commitMoveWithSelection(draftCell, draftCardIndex);
   }, [commitMoveWithSelection, draftCardIndex, draftCell, isAiTurn, telemetry]);
 
+  const selectDraftCard = React.useCallback((idx: number) => {
+    if (classicForcedCardIndex !== null && idx !== classicForcedCardIndex) return;
+    setDraftCardIndex(idx);
+    playMatchUiSfx("tap_soft");
+  }, [classicForcedCardIndex, playMatchUiSfx]);
+
   const handleHandCardDragStart = React.useCallback((idx: number) => {
     if (!enableHandDragDrop) return;
     if (classicForcedCardIndex !== null && idx !== classicForcedCardIndex) return;
     telemetry.recordInteraction();
-    setDraftCardIndex(idx);
+    selectDraftCard(idx);
     setDragCardIndex(idx);
     setIsHandDragging(true);
-  }, [enableHandDragDrop, telemetry, classicForcedCardIndex]);
+  }, [enableHandDragDrop, telemetry, classicForcedCardIndex, selectDraftCard]);
 
   const handleHandCardDragEnd = React.useCallback(() => {
     setIsHandDragging(false);
@@ -1666,7 +1706,7 @@ export function MatchPage() {
     if (!enableHandDragDrop || isAiTurn || turns.length >= 9) return;
     const resolvedCardIndex = classicForcedCardIndex ?? dragCardIndex ?? draftCardIndex;
     if (resolvedCardIndex === null) {
-      setError("card を選択してください");
+      setError("先にカードを選択してください。");
       telemetry.recordInvalidAction();
       return;
     }
@@ -1711,7 +1751,7 @@ export function MatchPage() {
     setDraftWarningMarkCell(null);
     setSelectedTurnIndex((x) => Math.max(0, Math.min(x, Math.max(0, turns.length - 2))));
     if (isStageFocusRoute) {
-      pushStageActionFeedback("1手取り消しました (Move undone)", "info");
+      pushStageActionFeedback("Move undone", "info");
     }
   }, [isStageFocusRoute, pushStageActionFeedback, turns.length]);
 
@@ -1805,7 +1845,7 @@ export function MatchPage() {
           warningMarkCell: typeof wm === "number" ? wm : undefined,
         });
 
-        toast.success("配信操作", `セル ${cmd.move.cell} ・ カード ${resolvedCardIndex}`);
+        toast.success("配信操作を反映", `セル ${cmd.move.cell} · カード ${resolvedCardIndex + 1}`);
       } catch {
         // ignore
       }
@@ -1823,9 +1863,9 @@ export function MatchPage() {
     try {
       const json = stringifyWithBigInt(sim.transcript, 2);
       await copyToClipboard(json);
-      toast.success("コピーしました", "対局ログJSON");
+      toast.success("コピーしました", "transcript JSON");
     } catch (e: unknown) {
-      toast.error("コピー失敗", errorMessage(e));
+      toast.error("コピーに失敗しました", errorMessage(e));
     }
   };
 
@@ -1856,9 +1896,9 @@ export function MatchPage() {
     setError(null);
     try {
       const url = buildReplayUrl(true);
-      if (!url) { toast.warn("共有", "対戦が未完了です。9手まで進めてください。"); return; }
+      if (!url) { toast.warn("共有", "Match が未完了です。9手まで進めてください。"); return; }
       await copyToClipboard(url);
-      toast.success("コピーしました", "共有URLをクリップボードへコピーしました。");
+      toast.success("コピーしました", "Share URL をクリップボードへコピーしました。");
     } catch (e: unknown) {
       toast.error("共有に失敗しました", errorMessage(e));
     }
@@ -1869,7 +1909,7 @@ export function MatchPage() {
     setStatus(null);
     try {
       const url = buildReplayUrl(false);
-      if (!url) { toast.warn("リプレイ", "対戦が未完了です。9手まで進めてください。"); return; }
+      if (!url) { toast.warn("Replay", "Match が未完了です。9手まで進めてください。"); return; }
       // SPA navigation via react-router (popup-safe, preserves client state)
       navigate(url);
     } catch (e: unknown) {
@@ -1878,7 +1918,7 @@ export function MatchPage() {
   }, [buildReplayUrl, navigate, toast]);
 
   const toggleStageControlsWithFeedback = React.useCallback(() => {
-    pushStageActionFeedback(showStageControls ? "操作を隠しました (Controls hidden)" : "操作を表示しました (Controls shown)");
+    pushStageActionFeedback(showStageControls ? "Controls hidden" : "Controls shown");
     playMatchUiSfx("card_place");
     toggleStageControls();
   }, [playMatchUiSfx, pushStageActionFeedback, showStageControls, toggleStageControls]);
@@ -1887,7 +1927,7 @@ export function MatchPage() {
     setShowStageAssist((prev) => {
       const next = !prev;
       if (isStageFocusRoute) {
-        pushStageActionFeedback(next ? "HUDを表示しました (HUD shown)" : "HUDを隠しました (HUD hidden)");
+        pushStageActionFeedback(next ? "HUD shown" : "HUD hidden");
         playMatchUiSfx("card_place");
       }
       return next;
@@ -1901,19 +1941,19 @@ export function MatchPage() {
   }, [isStageFullscreen, playMatchUiSfx, pushStageActionFeedback, toggleStageFullscreen]);
 
   const exitFocusModeWithFeedback = React.useCallback(() => {
-    pushStageActionFeedback("フォーカスを終了します (Exiting focus mode)", "warn");
+    pushStageActionFeedback("Exiting focus mode", "warn");
     playMatchUiSfx("flip");
     setFocusMode(false);
   }, [playMatchUiSfx, pushStageActionFeedback, setFocusMode]);
 
   const openReplayWithFeedback = React.useCallback(() => {
-    pushStageActionFeedback("リプレイを開きます (Opening replay)");
+    pushStageActionFeedback("Opening replay");
     playMatchUiSfx("card_place");
     void openReplay();
   }, [openReplay, playMatchUiSfx, pushStageActionFeedback]);
 
   const doAiMoveWithFeedback = React.useCallback(() => {
-    pushStageActionFeedback("Nyanoの手をリクエストしました (Nyano move requested)");
+    pushStageActionFeedback("Nyano move requested");
     playMatchUiSfx("card_place");
     doAiMove();
   }, [doAiMove, playMatchUiSfx, pushStageActionFeedback]);
@@ -1923,8 +1963,9 @@ export function MatchPage() {
     (cell: number) => {
       if (isAiTurn || turns.length >= 9) return;
       setDraftCell(cell);
+      playMatchUiSfx("tap_soft");
     },
-    [isAiTurn, turns.length],
+    [isAiTurn, turns.length, playMatchUiSfx],
   );
 
   // P1-2: Build NyanoReaction input from last turn
@@ -2242,7 +2283,7 @@ export function MatchPage() {
                       {availableCells
                         .filter((c) => c !== draftCell)
                         .map((c) => (
-                          <option key={`focus-toolbar-w-${c}`} value={String(c)}>cell {c}</option>
+                          <option key={`focus-toolbar-w-${c}`} value={String(c)}>セル {c}</option>
                         ))}
                     </select>
                   </label>
@@ -2268,7 +2309,7 @@ export function MatchPage() {
                       onClick={doAiMoveWithFeedback}
                       aria-label="Nyano AI move from focus toolbar"
                     >
-                      Nyano Move
+                      にゃーの手番
                     </button>
                   ) : null}
                 </div>
@@ -2283,7 +2324,7 @@ export function MatchPage() {
                   aria-live="polite"
                   aria-label="Battle focus action feedback"
                 >
-                  {stageActionFeedback || "操作を選択してください"}
+                  {stageActionFeedback || "準備完了"}
                 </span>
               ) : null}
               {isStageFocusRoute ? (
@@ -2310,7 +2351,7 @@ export function MatchPage() {
                         sfxMuted && "mint-sfx-toggle--muted",
                       ].filter(Boolean).join(" ")}
                       onClick={handleSfxToggle}
-                      title={sfxMuted ? "サウンド ON (Sound ON)" : "サウンド OFF (Sound OFF)"}
+                      title={sfxMuted ? "Sound ON" : "Sound OFF"}
                       aria-label={sfxMuted ? "Unmute sound effects" : "Mute sound effects"}
                     >
                       {sfxMuted ? "🔇" : "🔊"}
@@ -2319,19 +2360,11 @@ export function MatchPage() {
                   <button className="btn btn-sm" onClick={toggleStageFullscreenWithFeedback}>
                     {isStageFullscreen ? "全画面解除" : "全画面"}
                   </button>
-                  <button
-                    className="btn btn-sm"
-                    onClick={toggleStageControlsWithFeedback}
-                    aria-label={showStageControls ? "Hide Controls" : "Show Controls"}
-                  >
-                    {showStageControls ? "操作を隠す (Hide Controls)" : "操作を表示 (Show Controls)"}
+                  <button className="btn btn-sm" onClick={toggleStageControlsWithFeedback}>
+                    {showStageControls ? "Hide Controls" : "Show Controls"}
                   </button>
-                  <button
-                    className="btn btn-sm"
-                    onClick={toggleStageAssistWithFeedback}
-                    aria-label={showStageAssist ? "Hide HUD" : "Show HUD"}
-                  >
-                    {showStageAssist ? "HUDを隠す (Hide HUD)" : "HUDを表示 (Show HUD)"}
+                  <button className="btn btn-sm" onClick={toggleStageAssistWithFeedback}>
+                    {showStageAssist ? "Hide HUD" : "Show HUD"}
                   </button>
                 </>
               ) : null}
@@ -2369,7 +2402,7 @@ export function MatchPage() {
         <section className="card">
           <div className="card-hd flex flex-wrap items-center justify-between gap-2">
             <div>
-              <div className="text-base font-semibold">イベント (Event): {event.title}</div>
+              <div className="text-base font-semibold">Event: {event.title}</div>
               <div className="text-xs text-slate-500">
                 状態: <span className="font-medium">{eventStatus}</span> · ルール={event.rulesetKey} · AI={event.aiDifficulty}
               </div>
@@ -2394,9 +2427,9 @@ export function MatchPage() {
           <div className="flex items-center gap-3">
             <NyanoAvatar size={48} expression="playful" />
             <div>
-              <div className="font-semibold text-nyano-800">ゲスト対戦</div>
+              <div className="font-semibold text-nyano-800">ゲスト対戦 (Guest Quick Play)</div>
               <div className="text-xs text-nyano-600">
-                ゲストモードでランダムデッキを使用中です。自分のデッキで遊ぶ場合は <Link className="font-medium underline" to="/decks">デッキ画面</Link> で作成してください。
+                ゲストモードでランダムデッキを使用中です。自分のデッキで遊ぶ場合は <Link className="font-medium underline" to="/decks">Decks</Link> で作成してください。
               </div>
             </div>
           </div>
@@ -2549,7 +2582,7 @@ export function MatchPage() {
                 ) : isGuestMode ? (
                   <button className="btn btn-primary" onClick={() => void loadCardsFromIndex()}>ゲスト対戦を開始</button>
                 ) : (
-                  <>対戦設定でデッキを選択し、<strong>カードを読み込む</strong>を押してください。</>
+                  <>Match Setup でデッキを選択し、<strong>カードを読み込む</strong>を押してください。</>
                 )}
               </div>
             ) : (
@@ -2631,12 +2664,41 @@ export function MatchPage() {
                                 sfxMuted && "mint-sfx-toggle--muted",
                               ].filter(Boolean).join(" ")}
                               onClick={handleSfxToggle}
-                              title={sfxMuted ? "サウンド ON (Sound ON)" : "サウンド OFF (Sound OFF)"}
+                              title={sfxMuted ? "Sound ON" : "Sound OFF"}
                               aria-label={sfxMuted ? "Unmute sound effects" : "Mute sound effects"}
                             >
                               {sfxMuted ? "🔇" : "🔊"}
                             </button>
                           )}
+                        </div>
+                      )}
+
+                      {activeClassicRuleTags.length > 0 && (
+                        <ClassicRulesRibbonMint
+                          ruleTags={activeClassicRuleTags}
+                          openLabel={classicOpenLabel}
+                          swapLabel={classicSwapLabel}
+                          forcedCardIndex={classicForcedCardIndex}
+                          forcedRuleLabel={classicForcedRuleLabel}
+                        />
+                      )}
+
+                      {classicOpenPresentation && !showMintPlayerPanels && (
+                        <div className="mint-openhand-inline">
+                          <ClassicOpenHandMiniMint
+                            sideLabel={getPlayerDisplayLabel(0)}
+                            cards={classicOpenPresentation.playerA.cards}
+                            openCardIndices={classicOpenPresentation.playerA.openCardIndices}
+                            usedCardIndices={classicOpenPresentation.playerA.usedCardIndices}
+                            modeLabel={classicOpenPresentation.modeLabel}
+                          />
+                          <ClassicOpenHandMiniMint
+                            sideLabel={getPlayerDisplayLabel(1)}
+                            cards={classicOpenPresentation.playerB.cards}
+                            openCardIndices={classicOpenPresentation.playerB.openCardIndices}
+                            usedCardIndices={classicOpenPresentation.playerB.usedCardIndices}
+                            modeLabel={classicOpenPresentation.modeLabel}
+                          />
                         </div>
                       )}
 
@@ -2667,7 +2729,7 @@ export function MatchPage() {
                                 sfxMuted && "mint-sfx-toggle--muted",
                               ].filter(Boolean).join(" ")}
                               onClick={handleSfxToggle}
-                              title={sfxMuted ? "サウンド ON (Sound ON)" : "サウンド OFF (Sound OFF)"}
+                              title={sfxMuted ? "Sound ON" : "Sound OFF"}
                               aria-label={sfxMuted ? "Unmute sound effects" : "Mute sound effects"}
                             >
                               {sfxMuted ? "🔇" : "🔊"}
@@ -2693,16 +2755,16 @@ export function MatchPage() {
                       <div className="mint-ai-notice" role="status" aria-live="polite">
                         {aiAutoPlay ? (
                           <span>
-                            <span className="font-semibold animate-pulse">考え中…</span>
+                            <span className="font-semibold animate-pulse">考え中… (Nyano is thinking...)</span>
                             {aiCountdownMs !== null ? ` ${Math.max(0.1, aiCountdownMs / 1000).toFixed(1)}s` : ""}
                           </span>
                         ) : (
-                          "Nyanoの番です。\"Nyano Move\" を押してください。(Nyano turn. Press \"Nyano Move\".)"
+                          "Nyanoの番です。「にゃーの手番」を押してください。(Nyano turn. Press \"Nyano Move\".)"
                         )}
                       </div>
                     ) : (
                       <div className="mint-ai-notice mint-ai-notice--placeholder" aria-hidden="true">
-                        考え中…
+                        考え中… (Nyano is thinking...)
                       </div>
                     )}
                   </div>
@@ -2710,11 +2772,11 @@ export function MatchPage() {
                   <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900">
                     {aiAutoPlay ? (
                       <span>
-                        <span className="font-semibold animate-pulse">考え中…</span>
+                        <span className="font-semibold animate-pulse">考え中… (Nyano is thinking...)</span>
                         {aiCountdownMs !== null ? ` ${Math.max(0.1, aiCountdownMs / 1000).toFixed(1)}s` : ""}
                       </span>
                     ) : (
-                      "Nyanoの番です。\"Nyano Move\" を押してください。(Nyano turn. Press \"Nyano Move\".)"
+                      "Nyanoの番です。「にゃーの手番」を押してください。(Nyano turn. Press \"Nyano Move\".)"
                     )}
                   </div>
                 ) : null}
@@ -2791,6 +2853,14 @@ export function MatchPage() {
                       playerIndex={0}
                       isActive={currentPlayer === 0}
                       remainingCards={remainingCardsA}
+                      openHand={classicOpenPresentation
+                        ? {
+                            cards: classicOpenPresentation.playerA.cards,
+                            openCardIndices: classicOpenPresentation.playerA.openCardIndices,
+                            usedCardIndices: classicOpenPresentation.playerA.usedCardIndices,
+                            modeLabel: classicOpenPresentation.modeLabel,
+                          }
+                        : null}
                     />
                   )}
 
@@ -2887,7 +2957,7 @@ export function MatchPage() {
                       )
                     ) : (
                       <div className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-xs text-rose-900">
-                        engine error: {!sim.ok ? sim.error : "unknown"}
+                        エンジンエラー: {!sim.ok ? sim.error : "unknown"}
                       </div>
                     )}
                   </div>
@@ -2898,6 +2968,14 @@ export function MatchPage() {
                       playerIndex={1}
                       isActive={currentPlayer === 1}
                       remainingCards={remainingCardsB}
+                      openHand={classicOpenPresentation
+                        ? {
+                            cards: classicOpenPresentation.playerB.cards,
+                            openCardIndices: classicOpenPresentation.playerB.openCardIndices,
+                            usedCardIndices: classicOpenPresentation.playerB.usedCardIndices,
+                            modeLabel: classicOpenPresentation.modeLabel,
+                          }
+                        : null}
                     />
                   )}
                 </div>
@@ -2945,7 +3023,7 @@ export function MatchPage() {
                         disabled={turns.length >= 9 || isAiTurn || draftCell === null || draftCardIndex === null}
                         aria-label="Quick commit move"
                       >
-                        確定 (Commit)
+                        配置を確定
                       </button>
                       <button
                         className="btn h-10 px-4"
@@ -2953,7 +3031,7 @@ export function MatchPage() {
                         disabled={turns.length === 0}
                         aria-label="Quick undo move"
                       >
-                        Undo
+                        1手戻す
                       </button>
                     </div>
                   </div>
@@ -2996,17 +3074,24 @@ export function MatchPage() {
                     ].filter(Boolean).join(" ")}
                   >
                     <div className="flex items-center justify-between gap-2">
-                      <div className="text-[11px] font-semibold text-slate-700">手札ドック</div>
+                      <div className="text-[11px] font-semibold text-slate-700">手札ドック (Hand Dock)</div>
                       <div className="text-[10px] text-slate-500">
-                        {isAiTurn ? "考え中…" : `${draftCardIndex !== null ? `カード ${draftCardIndex + 1}` : "カード選択"} → ${draftCell !== null ? `セル ${draftCell}` : "セルをタップ"}`}
+                        {isAiTurn ? "考え中… (Nyano is thinking...)" : `${draftCardIndex !== null ? `カード ${draftCardIndex + 1}` : "カード選択"} → ${draftCell !== null ? `セル ${draftCell}` : "セルをタップ"}`}
                       </div>
                     </div>
+
+                    {classicForcedCardIndex !== null && (
+                      <div className="mint-order-lock-badge" role="status" aria-live="polite">
+                        固定スロット ({classicForcedRuleLabel ?? "FIX"}): {classicForcedCardIndex + 1}
+                      </div>
+                    )}
 
                     <div className="mint-focus-hand-row">
                       {currentDeckTokens.map((tid, idx) => {
                         const card = cards?.get(tid);
                         const usedHere = effectiveUsedCardIndices.has(idx);
                         const selected = draftCardIndex === idx;
+                        const forced = classicForcedCardIndex === idx;
                         const dockDisabled = usedHere || isAiTurn || turns.length >= 9;
                         const center = (currentDeckTokens.length - 1) / 2;
                         const fanOffset = idx - center;
@@ -3025,6 +3110,7 @@ export function MatchPage() {
                                 "mint-focus-hand-card",
                                 "mint-focus-hand-card--loading",
                                 selected && "mint-focus-hand-card--selected",
+                                forced && "mint-focus-hand-card--forced",
                                 dockDisabled && "mint-focus-hand-card--used",
                               ].join(" ")}
                               style={fanStyle}
@@ -3043,6 +3129,7 @@ export function MatchPage() {
                             className={[
                               "mint-focus-hand-card",
                               selected && "mint-focus-hand-card--selected",
+                              forced && "mint-focus-hand-card--forced",
                               dockDisabled && "mint-focus-hand-card--used",
                             ].join(" ")}
                             style={fanStyle}
@@ -3053,7 +3140,7 @@ export function MatchPage() {
                             onClick={() => {
                               if (dockDisabled) return;
                               telemetry.recordInteraction();
-                              setDraftCardIndex(idx);
+                              selectDraftCard(idx);
                             }}
                             onDragStart={(e) => {
                               if (!enableHandDragDrop || dockDisabled) {
@@ -3067,6 +3154,11 @@ export function MatchPage() {
                             }}
                             onDragEnd={handleHandCardDragEnd}
                           >
+                            {forced && (
+                              <span className="mint-focus-hand-card__fixed-badge" aria-hidden="true">
+                                FIX
+                              </span>
+                            )}
                             <CardMini card={card} owner={currentPlayer} subtle={!selected} className="w-full" />
                           </button>
                         );
@@ -3127,6 +3219,11 @@ export function MatchPage() {
                       {currentPlayer === 0 ? "プレイヤーA" : "プレイヤーB"} の手札
                       {draftCell !== null && <span className={isRpg ? "" : " text-slate-400"}> · セル {draftCell} に配置予定</span>}
                       {isHandDragging && <span className={isRpg ? "" : " text-cyan-500"}> · 盤面にドロップで確定</span>}
+                      {useMintUi && classicForcedCardIndex !== null && (
+                        <span className="mint-order-lock-badge ml-2" role="status" aria-live="polite">
+                          固定スロット ({classicForcedRuleLabel ?? "FIX"}): {classicForcedCardIndex + 1}
+                        </span>
+                      )}
                     </div>
 
                     {useMintUi && currentHandCards.length > 0 ? (
@@ -3136,7 +3233,8 @@ export function MatchPage() {
                         owner={currentPlayer}
                         usedIndices={effectiveUsedCardIndices}
                         selectedIndex={draftCardIndex}
-                        onSelect={(idx) => { telemetry.recordInteraction(); setDraftCardIndex(idx); }}
+                        forcedIndex={classicForcedCardIndex}
+                        onSelect={(idx) => { telemetry.recordInteraction(); selectDraftCard(idx); }}
                         disabled={turns.length >= 9 || isAiTurn}
                         enableDragDrop={enableHandDragDrop}
                         onCardDragStart={handleHandCardDragStart}
@@ -3149,7 +3247,7 @@ export function MatchPage() {
                         owner={currentPlayer}
                         usedIndices={effectiveUsedCardIndices}
                         selectedIndex={draftCardIndex}
-                        onSelect={(idx) => setDraftCardIndex(idx)}
+                        onSelect={(idx) => selectDraftCard(idx)}
                         disabled={turns.length >= 9 || isAiTurn}
                       />
                     ) : (
@@ -3163,7 +3261,7 @@ export function MatchPage() {
                             <button
                               key={idx}
                               disabled={usedHere || turns.length >= 9 || isAiTurn}
-                              onClick={() => setDraftCardIndex(idx)}
+                              onClick={() => selectDraftCard(idx)}
                               aria-label={`Card slot ${idx + 1}${usedHere ? " (used)" : ""}${selected ? " (selected)" : ""}`}
                               className={[
                                 "w-[120px] rounded-xl border p-2",
@@ -3213,7 +3311,7 @@ export function MatchPage() {
                           disabled={turns.length >= 9 || isAiTurn || draftCell === null || draftCardIndex === null}
                           aria-label="Commit move"
                         >
-                          確定 (Commit)
+                          配置を確定
                         </button>
                         <button
                           className={isRpg ? "rpg-result__btn" : ["btn", isStageFocusRoute ? "h-10 px-4" : ""].join(" ").trim()}
@@ -3221,11 +3319,11 @@ export function MatchPage() {
                           disabled={turns.length === 0}
                           aria-label="Undo last move"
                         >
-                          Undo
+                          1手戻す
                         </button>
                         {isVsNyanoAi && !aiAutoPlay && isAiTurn ? (
                           <button className={isRpg ? "rpg-result__btn rpg-result__btn--primary" : ["btn btn-primary", isStageFocusRoute ? "h-10 px-4" : ""].join(" ").trim()} onClick={doAiMove} aria-label="Nyano AI move">
-                            Nyano Move
+                            にゃーの手番
                           </button>
                         ) : null}
                       </div>
@@ -3302,7 +3400,7 @@ export function MatchPage() {
                       <div className="flex flex-wrap items-center gap-2">
                         <button className="btn" onClick={copyTranscriptJson} disabled={!sim.ok}>JSONをコピー</button>
                         <button className="btn" onClick={copyShareUrl} disabled={!canFinalize}>共有URL</button>
-                        <button className="btn" onClick={openReplay} disabled={!canFinalize}>リプレイ</button>
+                        <button className="btn" onClick={openReplay} disabled={!canFinalize}>リプレイ (Replay)</button>
                       </div>
                     </div>
 
@@ -3369,7 +3467,7 @@ export function MatchPage() {
                       共有URL
                     </button>
                     <button className={isRpg ? "rpg-result__btn" : "btn"} onClick={openReplay} disabled={!canFinalize}>
-                      リプレイ
+                      リプレイ (Replay)
                     </button>
                   </div>
                 </div>
@@ -3402,7 +3500,7 @@ export function MatchPage() {
                         <button className="btn text-xs" onClick={async () => {
                           try {
                             const url = buildReplayUrl(true);
-                            if (!url) { toast.warn("共有", "対戦が未準備です"); return; }
+                            if (!url) { toast.warn("共有", "Match が未準備です"); return; }
                             const msg = `Nyano Triad 対戦共有\n${url}`;
                             await copyToClipboard(msg);
                             toast.success("コピーしました", "共有テンプレート");
@@ -3413,12 +3511,12 @@ export function MatchPage() {
                           共有テンプレート
                         </button>
                         <button className="btn text-xs" onClick={openReplay} disabled={!canFinalize}>
-                          リプレイ
+                          リプレイ (Replay)
                         </button>
                       </div>
                       {canFinalize && (
                         <details className="text-xs">
-                          <summary className="cursor-pointer text-sky-600 hover:text-sky-700 font-medium">QRコード</summary>
+                          <summary className="cursor-pointer text-sky-600 hover:text-sky-700 font-medium">QRコード (QR Code)</summary>
                           <div className="mt-2 flex justify-center">
                             <ShareQrCode
                               sim={sim}

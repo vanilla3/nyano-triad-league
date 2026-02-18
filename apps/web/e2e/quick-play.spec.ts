@@ -15,8 +15,8 @@ test("Home → Quick Play loads the match board", async ({ page }) => {
   // Should navigate to match page with guest mode params
   await expect(page).toHaveURL(/\/match.*mode=guest/);
 
-  // Guest quick play banner should be visible
-  await expect(page.getByText(/Guest Quick Play|ゲスト対戦/)).toBeVisible({ timeout: 10_000 });
+  // Guest Quick Play banner should be visible
+  await expect(page.locator("text=Guest Quick Play")).toBeVisible({ timeout: 10_000 });
 
   // No RPC error should be displayed
   await expect(page.locator("text=RPC Error")).not.toBeVisible();
@@ -31,5 +31,5 @@ test("Arena difficulty card starts guest match immediately", async ({ page }) =>
   await easyCard.click();
 
   await expect(page).toHaveURL(/\/match.*mode=guest.*opp=vs_nyano_ai.*ai=easy/);
-  await expect(page.getByText(/Guest Quick Play|ゲスト対戦/)).toBeVisible({ timeout: 10_000 });
+  await expect(page.locator("text=Guest Quick Play")).toBeVisible({ timeout: 10_000 });
 });

@@ -9,6 +9,7 @@ test("Home page loads with mint menu and hides dev tools by default", async ({ p
   await expect(page.getByText("最短2ステップで対戦開始")).toBeVisible();
   await expect(page.getByText("ルールを知る")).toBeVisible();
   await expect(page.getByText("ゲストで対戦")).toBeVisible();
+  await expect(page.getByText("慣れたら最初の手を確定")).toBeVisible();
   await expect(page.getByText("完了")).toHaveCount(0);
   await expect(page.getByText("未完了")).toHaveCount(0);
 

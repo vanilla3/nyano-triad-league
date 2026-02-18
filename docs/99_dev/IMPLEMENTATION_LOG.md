@@ -3042,608 +3042,319 @@
 - pnpm.cmd -C apps/web typecheck OK
 - pnpm.cmd -C apps/web build OK
 
-## 2026-02-18 - WO028/029/030/031 follow-up (Mint material + Deck browser mintification + optional assets)
+## 2026-02-18 - Match Mint battle board gamefeel (WO-028/029/030)
 
 ### Why
-- WO028-031 acceptance still had visible gaps: pressable material depth, board tray/slot depth, Decks browser mint consistency, and asset-layer fallback integration.
+- Improve Mint Match battle board feel toward playful game UI while keeping clarity-first UX.
+- Keep transcript determinism / URL compatibility untouched.
 
 ### What
-- apps/web/src/components/CardBrowserMint.tsx
-  - Added a Mint-first Card Browser component while preserving existing filtering/selection logic.
-  - Added Japanese-first filter labels, query input, filter summary chips, and Mint-style load-more control.
-- apps/web/src/pages/Decks.tsx
-  - Switched Decks page browser from CardBrowser to CardBrowserMint.
-  - Unified filter preset controls with MintPressable (selected/unselected tones).
-- apps/web/src/mint-theme/mint-theme.css
-  - Added Mint material v4 tokens (--mint-surface-*) and optional generated asset tokens (--mint-asset-*).
-  - Upgraded .mint-ui-pressable to v4 layered material (double rim, specular/noise overlay, stronger press shadow delta, focus/disabled refinement, 44px+ small hit area).
-  - Updated MintBigButton and MintTabNav active states to match v4 material semantics.
-  - Reinforced board tray vs inner board material separation and sunken empty slot treatment (.mint-cell--flat) including optional slot shadow overlay.
-  - Integrated optional generated assets into app background/panel/button/board layers with runtime-safe fallback behavior when files are missing.
-  - Added mint-card-browser* styles for responsive 3/2/1 filter layout and no horizontal overflow on small widths.
-  - Added data-vfx=off/low suppression for selectable-cell breathing.
+- WO-028 (`apps/web/src/mint-theme/mint-theme.css`)
+  - Strengthened board tray/cell material layers (rim/well/sheen/noise) with asset-first + CSS fallback.
+  - Added additional `data-vfx` / reduced-motion-friendly gating for decorative sheen layers.
+- WO-029 (`apps/web/src/pages/Match.tsx`, `apps/web/src/components/PlayerSidePanelMint.tsx`, new components + CSS)
+  - Added Classic rules ribbon: `ClassicRulesRibbonMint`.
+  - Added open-hand mini visibility: `ClassicOpenHandMiniMint`.
+  - Wired `classicOpenCardIndices` / `classicForcedCardIndex` into in-match UI (chips + open mini + order lock badge).
+- WO-030 (`apps/web/src/components/BoardViewMint.tsx`, `apps/web/src/components/HandDisplayMint.tsx`, `apps/web/src/lib/sfx.ts`, `apps/web/src/pages/Match.tsx`, CSS)
+  - Added pointer-based pressed states for board cells and hand cards.
+  - Added subtle `tap_soft` SFX and hooked to card/cell selection flows.
+  - Kept reduced-motion behavior (non-error SFX already suppressed in reduced mode).
 
 ### Verify
-- pnpm -C apps/web test OK
-- pnpm -C apps/web typecheck OK
-- pnpm -C apps/web build OK
-- Playwright E2E could not run in this environment due process spawn restriction:
-  - pnpm.cmd e2e:ux -> spawn EPERM
-
-## 2026-02-18 - WO031 polish: asset runbook v3 + placeholders + Decks guardrail
-
-### What
-- docs/01_design/NYTL_ASSET_GEN_GEMINI_NANO_BANANA_PRO_v1_ja.md
-  - Updated batch example to `scripts/asset_prompts/nytl_ui_assets.v3.json`.
-  - Added Windows PowerShell execution example and post-generation verification command.
-- docs/01_design/NYTL_UI_ASSET_MANIFEST_v2_ja.md
-  - Added current Mint CSS-referenced `assets/gen` filenames.
-- scripts/asset_prompts/nytl_ui_assets.v3.json
-  - Added `board_tray_tex_1024_v1.png` generation job.
-- apps/web/public/assets/gen/*.png
-  - Added minimal transparent placeholder PNGs to avoid 404/warning noise while keeping fallback-safe behavior.
-- apps/web/e2e/mint-app-screens-guardrails.spec.ts
-  - Added Decks Mint CardBrowser visibility checks (`.mint-card-browser__filters`, combobox, search input).
-- apps/web/src/components/__tests__/CardBrowserMint.test.ts
-  - Added module export smoke tests.
-- codex/execplans/011_ui_gamefeel_v4_material_board_zukan_rules.md
-  - Updated Progress/Decision/Outcome and discovery notes.
-
-### Verify
-- pnpm -C apps/web test OK
-- pnpm -C apps/web typecheck OK
-- pnpm -C apps/web build OK
-
-## 2026-02-18 - Mint QA path hardening (e2e:mint + Decks browser interactions)
-
-### What
-- apps/web/package.json
-  - Added `e2e:mint` script (`mint-app-screens-guardrails` + `mint-stage-visual-guardrails`).
-- apps/web/e2e/mint-app-screens-guardrails.spec.ts
-  - Added Decks mint browser interaction guardrail:
-    - hand combobox selection reflects in chips (`éËéD: ÉpÅ[`)
-    - query input reflects in chips (`åüçı: 1`)
-
-### Verify
-- pnpm -C apps/web test OK
-- pnpm -C apps/web typecheck OK
-- pnpm -C apps/web build OK
-
-## 2026-02-18 - Copy polish follow-up (Start/Replay Japanese-first wording)
-
-### What
-- apps/web/src/pages/Start.tsx
-  - Updated done state copy to Japanese-first: `èÄîıÇ™Ç≈Ç´Ç‹ÇµÇΩÅBÉfÉbÉL / ÉAÉäÅ[Éi Ç÷êiÇﬂÇ‹Ç∑ÅB`
-  - Updated back link label: `ÉzÅ[ÉÄÇ÷ñﬂÇÈ`.
-- apps/web/src/pages/Replay.tsx
-  - Replaced ambiguous `äÆóπ | step ...` with clearer playback wording: `çƒê∂à íu | ... éË`.
-
-### Verify
-- pnpm -C apps/web test OK
-- pnpm -C apps/web typecheck OK
-- pnpm -C apps/web build OK
-
-## 2026-02-18 - Player side panel copy polish (Japanese-first)
-
-### What
-- apps/web/src/components/PlayerSidePanelMint.tsx
-  - Changed remaining-card visible label to `écÇËÉJÅ[Éh`.
-  - Changed aria-label to Japanese-first wording: `Player A/B ÇÃécÇËÉJÅ[Éh N`.
-- apps/web/src/components/__tests__/PlayerSidePanelMint.test.tsx
-  - Updated aria-label expectation accordingly.
-
-### Verify
-- pnpm -C apps/web test OK
-- pnpm -C apps/web typecheck OK
-- pnpm -C apps/web build OK
-
-## 2026-02-18 - Homeì±ê¸2ÉXÉeÉbÉvâª + stage-focusà¿íËâª
-
-### What
-- apps/web/src/pages/Home.tsx
-  - ÉzÅ[ÉÄÇÃÉIÉìÉ{Å[ÉfÉBÉìÉOÇÅu2ÉXÉeÉbÉvÅvì±ê¸Ç÷êÆóùÇµÅA3ÉXÉeÉbÉvñ⁄ÉJÅ[ÉhÇçÌèúÅB
-  - ÉÜÅ[ÉUÅ[å¸ÇØÇ≈Ç»Ç¢êiíªäÆóπï\é¶ÅiäÆóπèÛë‘ÉÅÉbÉZÅ[ÉWÅjÇçÌèúÇµÇƒÅAàƒì‡ï∂Çä»åââªÅB
-- apps/web/src/mint-theme/mint-theme.css
-  - stage focus + hand dock ïπópéûÇÃ board ç≈ëÂïùÇî˜í≤êÆÇµÅAboard/dock ÇÃèdÇ»ÇËÇó}êßÅB
-- apps/web/e2e/stage-focus.spec.ts
-  - replay load/error/retry ÇÃï∂åæÇì˙âpïπãLÇ÷í«è]Åi`Load replay` / `çƒê∂Çì«Ç›çûÇﬁ` ìôÅjÅB
-  - é©ìÆì«çûíÜÅiì«Ç›çûÇ›íÜ... disabledÅjÇ≈Ç‡é∏îsâÒïúÉeÉXÉgÇ™à¿íËÇ∑ÇÈÇÊÇ§Ç…ï™äÚÇã≠âªÅB
-- apps/web/e2e/home.spec.ts
-  - ÉzÅ[ÉÄÇ™2ÉXÉeÉbÉvç\ê¨Ç…Ç»Ç¡ÇΩÇ±Ç∆Ç…çáÇÌÇπÅAïsóvÇ»3ÉXÉeÉbÉvä˙ë“ílÇçÌèúÅB
-
-### Verify
-- pnpm -C apps/web test OK
-- pnpm -C apps/web typecheck OK
-- pnpm -C apps/web build OK
-- pnpm.cmd -C apps/web e2e:ux OK (15 passed)
-- pnpm.cmd -C apps/web e2e -- e2e/stage-focus.spec.ts OK (15 passed)
-
-## 2026-02-18 - JP copy follow-up (Start/Match/Replay/Stream) + stage-focus recovery test stabilization
-
-### What
-- apps/web/src/pages/Start.tsx
-  - 1ï™ÉXÉ^Å[Égì±ê¸Ç2ÉXÉeÉbÉvç\ê¨Ç…ìùàÍÅi3ÉXÉeÉbÉvñ⁄ÉJÅ[ÉhÇìPãéÅjÅB
-- apps/web/src/pages/Match.tsx
-  - ÉtÉHÅ[ÉJÉXëÄçÏ/èÛë‘ÉtÉBÅ[ÉhÉoÉbÉNÇì˙ñ{åÍÉxÅ[ÉXâªÅiâpåÍÇÕäáå ïπãLÅjÅB
-  - `Hide/Show Controls` Ç∆ `Hide/Show HUD` ÇÕï\é¶ï∂åæÇì˙ñ{åÍâªÇµÇ¬Ç¬ÅAaria-label ÇâpåÍå›ä∑Ç≈à€éùÅB
-  - ã§óLURLñ¢èÄîıÉGÉâÅ[Ç»Ç«Çì˙ñ{åÍâªÅB
-- apps/web/src/pages/Replay.tsx
-  - ÉtÉHÅ[ÉJÉXëÄçÏÉtÉBÅ[ÉhÉoÉbÉNÅicontrols/setup/highlight/startÅjÇì˙ñ{åÍÉxÅ[ÉXâªÅB
-- apps/web/src/pages/Stream.tsx
-  - Quick nav Ç∆ÉXÉeÉbÉvå©èoÇµÅiStep 1/3/4ÅjÇì˙ñ{åÍÉxÅ[ÉXâªÅB
-  - Broadcastånê‡ñæ/É{É^Éìï∂åæÇì˙ñ{åÍÉxÅ[ÉXÇ…êÆóùÅB
-- apps/web/e2e/stage-focus.spec.ts
-  - recoveryÉPÅ[ÉXÇ share param decode failure (`t=invalid`) Ç…äÒÇπÇƒåàíËò_ìIÇ…à¿íËâªÅB
-
-### Verify
-- pnpm -C apps/web test OK
-- pnpm -C apps/web typecheck OK
-- pnpm -C apps/web build OK
-- pnpm.cmd -C apps/web e2e:ux OK (15 passed)
-- pnpm.cmd -C apps/web e2e -- e2e/stage-focus.spec.ts OK (15 passed)
-
-## 2026-02-18 - JP copy cleanup (Match/Replay final pass)
-
-### What
-- apps/web/src/pages/Match.tsx
-  - Changed replay-unavailable toast title to Japanese-first (`ÉäÉvÉåÉC (Replay)`).
-  - Replaced ambiguous stage-focus default feedback from `èÄîıäÆóπ` to `ëÄçÏÇëIëÇµÇƒÇ≠ÇæÇ≥Ç¢`.
-  - Updated visible commit button text to Japanese-first (`ämíË (Commit)`) while keeping English aria-labels for E2E compatibility.
-- apps/web/src/pages/Replay.tsx
-  - Changed initial empty-state error copy to Japanese-first with English parenthetical.
-  - Changed overlay-related toast titles/messages to Japanese-first (`ÉIÅ[ÉoÅ[ÉåÉC (Overlay)`).
-  - Replaced ambiguous stage-focus default feedback from `èÄîıäÆóπ` to `ëÄçÏÇëIëÇµÇƒÇ≠ÇæÇ≥Ç¢`.
-  - Updated stream tools wording to Japanese-first (`ÉIÅ[ÉoÅ[ÉåÉC...`) with English term parenthetical.
-
-### Verify
-- pnpm -C apps/web test OK
-- pnpm -C apps/web typecheck OK
-- pnpm -C apps/web build OK
-## 2026-02-18 - WO027/028 responsive guardrail hardening (mint drawer + viewport checks)
-
-### What
-- apps/web/e2e/mint-app-screens-guardrails.spec.ts
-  - Added a new responsive guardrail that verifies `/`, `/arena`, `/decks`, and `/match?ui=mint` at 390/768/1200.
-  - Added robust commit-control visibility helper for mint match variants.
-- apps/web/package.json
-  - Added `e2e/mint-app-screens-guardrails.spec.ts` into `e2e:ux` command to keep responsive checks in the regular UX guardrail lane.
-- apps/web/src/components/MatchDrawerMint.tsx
-  - Kept drawer/backdrop DOM stable for existing tests, but introduced explicit closed-state class.
-- apps/web/src/mint-theme/mint-theme.css
-  - Added `.mint-drawer--closed { display: none; }` to prevent closed drawer from creating horizontal overflow on medium viewports.
+- `pnpm -C apps/web test` OK
+- `pnpm -C apps/web typecheck` OK
+- `pnpm -C apps/web build` OK
+- `pnpm.cmd -C apps/web e2e:ux` OK (15 passed)
+## 2026-02-18 - Match classic labels and accessibility follow-up
 
 ### Why
-- New 768px guardrail surfaced real horizontal overflow caused by a closed off-canvas drawer.
-- Fix keeps URL/protocol behavior unchanged and only adjusts presentation behavior.
-
-### Verify
-- pnpm.cmd -C apps/web e2e:ux OK (25 passed)
-- pnpm.cmd -C apps/web e2e:mint NG in this env (`spawn EPERM`)
-- pnpm.cmd -C apps/web test OK
-- pnpm.cmd -C apps/web typecheck OK
-- pnpm.cmd -C apps/web build OK
-## 2026-02-18 - Mint drawer UX polish (JP-first copy + motion/vfx guardrails)
+- Keep Mint Match understandable for Japanese-first users while preserving existing automation selectors and URL compatibility.
+- Reduce duplicated label logic by centralizing classic/open/player label helpers.
 
 ### What
-- apps/web/src/components/MatchDrawerMint.tsx
-  - Drawer title changed to Japanese (`è⁄ç◊`) and toggle glyph changed from text to symbol (`Åﬂ`).
-  - Added `data-testid="mint-match-drawer"` for stable guardrail targeting.
-  - Kept existing aria labels (`Open match details` / `Close drawer`) for URL/E2E compatibility.
-- apps/web/src/mint-theme/mint-theme.css
-  - Added reduced-motion and `data-vfx="off"` rules so drawer/backdrop/controls disable transitions.
-  - Disabled drawer/backdrop blur in `data-vfx="off"` mode to reduce visual load.
-- apps/web/e2e/ux-guardrails.spec.ts
-  - Added guardrail test: drawer transitions are disabled when reduced motion + vfx=off.
+- `apps/web/src/components/match/classicRulesUi.ts`
+  - Added `getPlayerDisplayLabel`, `getPlayerEnglishLabel`, `getClassicOpenModeLabel`.
+- `apps/web/src/pages/Match.tsx`
+  - Reused helper labels for open-hand mode and side labels.
+- `apps/web/src/components/PlayerSidePanelMint.tsx`
+  - Updated panel copy to Japanese-first with English in ARIA for compatibility.
+- `apps/web/src/components/HandDisplayMint.tsx`
+  - Updated hand tray/listbox ARIA labels to Japanese-first while keeping `Player A/B hand` tokens.
+- `apps/web/src/components/ClassicOpenHandMiniMint.tsx`
+  - Updated section ARIA label to Japanese copy.
+- Added/updated unit coverage:
+  - `apps/web/src/components/match/__tests__/classicRulesUi.test.ts`
+  - `apps/web/src/components/__tests__/PlayerSidePanelMint.test.tsx`
 
 ### Verify
-- pnpm.cmd -C apps/web e2e:ux OK (26 passed)
-- pnpm.cmd -C apps/web test OK
-- pnpm.cmd -C apps/web typecheck OK
-- pnpm.cmd -C apps/web build OK
-## 2026-02-18 - JP-first copy pass for setup/result/share UI
+- `pnpm -C apps/web test` OK
+- `pnpm -C apps/web typecheck` OK
+- `pnpm -C apps/web build` OK
+## 2026-02-18 - Match Setup Japanese-first usability pass
+
+### Why
+- Match Setup still had many English-only strings, which reduced readability for Japanese-first players.
+- Needed to improve clarity without breaking URL params, determinism, or existing E2E selectors.
 
 ### What
-- apps/web/src/components/match/MatchSetupPanelMint.tsx
-  - Converted visible setup copy to Japanese-first while preserving URL values and existing aria labels.
-  - Localized primary/secondary/advanced labels, opponent/ruleset captions, and action button text.
-- apps/web/src/components/TurnLog.tsx
-  - Localized turn row and board-diff labels (`Turn/placed/flipped/...`) to Japanese-first.
-- apps/web/src/components/GameResultOverlay.tsx
-  - Localized result titles/actions and score labels to Japanese-first.
-- apps/web/src/components/GameResultOverlayMint.tsx
-  - Localized remaining English labels (`Best/Risk/Player`) to Japanese-first.
-- apps/web/src/components/stream/StreamSharePanel.tsx
-  - Localized share URL field labels and quick-command heading to Japanese-first.
-
-### Compatibility notes
-- No logic/schema/url-param changes.
-- Kept existing aria labels required by current E2E selector contracts.
+- `apps/web/src/components/match/MatchSetupPanelMint.tsx`
+  - Converted major visible copy to Japanese-first (header, section labels, deck/opponent/ruleset/help text, advanced panel, action buttons).
+  - Kept key aria labels/test IDs/URL wiring unchanged for compatibility.
+  - Updated `Current` ruleset display to use localized helper label.
+- `apps/web/src/components/match/MatchSetupPanelMint.helpers.ts`
+  - Added `describeRulesetKeyDisplay` for Japanese-first ruleset labels with English token fallback.
+  - Updated setup summary line to Japanese-first while preserving compatibility tokens (e.g. `Human vs Human`, `first=...`, `board=...`).
+- `apps/web/src/components/match/__tests__/MatchSetupPanelMint.test.ts`
+  - Added assertion for new localized ruleset display helper.
 
 ### Verify
-- pnpm.cmd -C apps/web test OK
-- pnpm.cmd -C apps/web typecheck OK
-- pnpm.cmd -C apps/web build OK
-- pnpm.cmd -C apps/web e2e:ux OK (26 passed)
+- `pnpm -C apps/web test` OK
+- `pnpm -C apps/web typecheck` OK
+- `pnpm -C apps/web build` OK
+- `pnpm.cmd -C apps/web e2e:ux` OK (15 passed)
+## 2026-02-18 - Match battle control copy polish (Japanese-first)
 
-## 2026-02-18 - Match setup copy polish (JP-first wording cleanup)
+### Why
+- Match battle controls still mixed English/Japanese labels, making flow less clear for Japanese-first players.
+- Needed to keep E2E selector compatibility and URL/state behavior unchanged.
 
 ### What
-- apps/web/src/components/match/MatchSetupPanelMint.tsx
-  - Simplified visible headings to JP-first labels.
-  - Updated section labels to: ëŒêÌê›íË / åªç›ÇÃê›íË / äÓñ{ê›íË / í«â¡ê›íË / è⁄ç◊ÉpÉâÉÅÅ[É^.
-- apps/web/src/components/match/MintRulesetPicker.tsx
-  - Localized classic preset chip labels and removed extra English parentheticals in visible copy.
-  - Kept compatibility-sensitive aria labels and URL-related values unchanged.
-- apps/web/src/pages/Home.tsx
-  - Replaced toast suffix wording from äÆóπ to é¿é{çœÇ›.
+- `apps/web/src/pages/Match.tsx`
+  - Updated battle error/toast messages to clearer Japanese wording.
+  - Updated focus toolbar warning select option labels (`cell` -> `„Çª„É´`).
+  - Updated visible action labels in battle controls:
+    - `Commit move` -> `ÈÖçÁΩÆ„ÇíÁ¢∫ÂÆö`
+    - `Undo` -> `1ÊâãÊàª„Åô`
+    - `Nyano Move` -> `„Å´„ÇÉ„Éº„ÅÆÊâãÁï™`
+  - Updated AI turn guidance text to match visible action labels.
+  - Updated engine fallback error copy (`„Ç®„É≥„Ç∏„É≥„Ç®„É©„Éº`).
+- Kept all existing aria labels used by E2E (`Commit move`, `Quick commit move`, etc.) unchanged.
 
 ### Verify
-- pnpm.cmd -C apps/web test OK
-- pnpm.cmd -C apps/web typecheck OK
-- pnpm.cmd -C apps/web build OK
-- pnpm.cmd -C apps/web e2e:ux OK (26 passed)
+- `pnpm -C apps/web test` OK
+- `pnpm -C apps/web typecheck` OK
+- `pnpm -C apps/web build` OK
+- `pnpm.cmd -C apps/web e2e:ux` OK (15 passed)
+## 2026-02-18 - Stream copy cleanup and smoke/stage-focus i18n hardening
 
-## 2026-02-18 - Replay/Stream JP-first copy refinement
-
-### What
-- apps/web/src/pages/Replay.tsx
-  - Switched key visible labels to JP-first wording (quick actions, setup header, load CTA, transport/status labels, JSON copy labels, deck/open-rule descriptions).
-  - Kept compatibility-sensitive English phrases used by E2E as parenthetical text (e.g. `Replay from transcript`, `Replay controls are hidden for board focus.`).
-- apps/web/src/pages/Stream.tsx
-  - Simplified quick-action labels to JP-first (`ëŒêÌ`, `ÉIÅ[ÉoÅ[ÉåÉC`, `ÉäÉvÉåÉC`, `ÉCÉxÉìÉg`).
-- apps/web/src/pages/Home.tsx
-  - Removed remaining mixed English from the primary quick-play label and rulesets guide link.
-
-### Verify
-- pnpm.cmd -C apps/web test OK
-- pnpm.cmd -C apps/web typecheck OK
-- pnpm.cmd -C apps/web build OK
-- pnpm.cmd -C apps/web e2e:ux OK (26 passed)
-
-## 2026-02-18 - Replay copy cleanup + fallback label compatibility fix
-
-### What
-- apps/web/src/pages/Replay.tsx
-  - Localized additional visible copy to JP-first (`ëŒã«ÉçÉOJSON`, `ëŒêÌID`, `åãâ `, save notifications, overlay URL copy labels).
-  - Kept E2E-sensitive phrases where required (`Replay from transcript`, `Replay controls are hidden for board focus.`).
-  - Restored `URL fallbackÅi...Åj` wording for ruleset fallback label to preserve guardrail compatibility.
-
-### Verify
-- pnpm.cmd -C apps/web test OK
-- pnpm.cmd -C apps/web typecheck OK
-- pnpm.cmd -C apps/web build OK
-- pnpm.cmd -C apps/web e2e:ux OK (26 passed)
-
-## 2026-02-18 - JP-first copy hardening (Match/Replay/CopyField/Stream/Overlay)
-
-### What
-- apps/web/src/pages/Match.tsx
-  - Localized remaining user-facing error/toast messages to JP-first wording (commit validation, stream command feedback, transcript copy, share/open replay warnings).
-  - Kept E2E-sensitive ARIA labels and URL behavior unchanged.
-- apps/web/src/pages/Replay.tsx
-  - Localized Pixi fallback warning toast to JP-first wording.
-- apps/web/src/components/CopyField.tsx
-  - Localized copy/open/expand controls and copy-failure messages.
-- apps/web/src/pages/Stream.tsx
-  - Renamed visible `Classic Open` label to JP-first wording.
-- apps/web/src/pages/Overlay.tsx
-  - Renamed visible `Classic Open` label to JP-first wording.
-- apps/web/src/components/StreamOperationsHUD.tsx
-  - Localized ops-log copy tooltip.
-
-### Verify
-- pnpm.cmd -C apps/web test OK
-- pnpm.cmd -C apps/web typecheck OK
-- pnpm.cmd -C apps/web build OK
-- pnpm.cmd -C apps/web e2e:ux OK (26 passed)
-
-## 2026-02-18 - JP-first copy continuation (guest/decks/stream vote/tutorial)
-
-### What
-- apps/web/src/pages/Match.tsx
-  - Localized guest-battle, replay button, hand-dock, thinking-state, and Game Index-related status/error messages to JP-first wording.
-  - Kept protocol/URL and E2E-critical aria labels untouched.
-- apps/web/src/pages/Decks.tsx
-  - Localized deck-form/button/browser/saved-actions wording (`Save/Edit/Set as A/B/Delete`, `game index`, placeholders) to JP-first.
-- apps/web/src/components/MiniTutorial.tsx
-  - Replaced fully English tutorial body with JP-first 3-step guidance.
-- apps/web/src/components/stream/VoteControlPanel.tsx
-  - Localized visible vote-control labels (`Vote control`, `Viewer Command Guide`, `Common mistakes`, validation messages, open/closed state) to JP-first.
-  - Preserved `aria-label="Copy Viewer Instructions"` / `aria-label="Start vote"` for compatibility.
-- apps/web/src/components/ErrorAlert.tsx
-  - Localized RPC/token/general error alerts to JP-first.
-- E2E selector compatibility updates:
-  - apps/web/e2e/guest-game.spec.ts
-  - apps/web/e2e/quick-play.spec.ts
-  - apps/web/e2e/mint-stage-visual-guardrails.spec.ts
-  - apps/web/e2e/ux-guardrails.spec.ts
-  - apps/web/e2e/stage-focus.spec.ts
-  - apps/web/e2e/stream-vote.spec.ts
-  - apps/web/e2e/decks-match.spec.ts
-  - apps/web/e2e/smoke.spec.ts
-  - Updated text selectors to Japanese/English dual-match where needed.
-
-### Verify
-- pnpm.cmd -C apps/web test OK
-- pnpm.cmd -C apps/web typecheck OK
-- pnpm.cmd -C apps/web build OK
-- pnpm.cmd -C apps/web e2e:ux OK (26 passed)
-- pnpm.cmd -C apps/web e2e -- ... NG in this env (`spawn EPERM`)
-
-## 2026-02-18 - Stream/Overlay JP-first copy pass (operator + viewer text cleanup)
+### Why
+- Continue Japanese-first UX cleanup while preserving URL/ARIA compatibility and replay recovery affordances.
+- Stabilize E2E assertions after bilingual UI copy updates.
 
 ### What
 - `apps/web/src/pages/Stream.tsx`
-  - Localized operator toasts and status messages (`No live state yet`, vote/picker feedback, download warnings) to JP-first wording.
-  - Localized stream summary labels (`„Ç™„Éº„Éê„Éº„É¨„Ç§`, `ÂØæÊà¶„Éê„Çπ`) and link labels (`„Ç§„Éô„É≥„Éà`, `ÂØæÊà¶`, `„É™„Éó„É¨„Ç§`, `„Ç™„Éº„Éê„Éº„É¨„Ç§`).
-  - Replaced mixed-English user copy in stream steps/recovery panel (`challenge link`, `Broadcast to overlay`, `Data stale`) with JP-first wording.
-  - Kept URL behavior and protocol/state payload compatibility unchanged.
+  - Replaced remaining developer-tone wording (`prototype`, internal bus wording) with player-facing Japanese-first copy.
+  - Localized summary labels (`Overlay` -> `„Ç™„Éº„Éê„Éº„É¨„Ç§`, `Match bus` -> `ÂØæÊà¶ÈÄ£Êê∫`).
+  - Improved guidance text clarity in step sections while preserving compatibility tokens where needed.
+- `apps/web/e2e/smoke.spec.ts`
+  - Updated route smoke assertions to bilingual regex checks (JP/EN) for `/arena`, `/decks`, `/replay`, `/rulesets`, `/events`, `/stream`.
+- `apps/web/e2e/stage-focus.spec.ts`
+  - Updated replay load-failure checks to bilingual selectors for `Load replay`, `Error:`, `Retry load`, `Clear share params`.
+
+### Verify
+- `pnpm.cmd test` (apps/web) OK
+- `pnpm.cmd typecheck` (apps/web) blocked in this environment by module/permission issue (`TS2307 pixi.js/fflate` + `EPERM` reads in node_modules)
+- `pnpm.cmd build` (apps/web) blocked in this environment by `esbuild spawn EPERM`
+## 2026-02-18 - Stream/Overlay Japanese-first message pass
+
+### What
+- `apps/web/src/pages/Stream.tsx`
+  - Localized remaining operator toasts/messages to Japanese-first (`No live state`, download warnings, picker/vote feedback, warudo send result text).
+  - Localized stream vote note text to JP-first while keeping English hint in parentheses.
 - `apps/web/src/pages/Overlay.tsx`
-  - Localized stale/no-signal/now-playing and theme/help copy to JP-first wording.
-  - Localized vote status labels to `Âèó‰ªò‰∏≠` / `Âèó‰ªòÁµÇ‰∫Ü` while preserving compatibility via `aria-label` (`OPEN`/`CLOSED`).
-  - Localized mismatch badges and sticky error heading.
-- `apps/web/src/components/StreamOperationsHUD.tsx`
-  - Localized closed vote status and helper copy to JP-first wording.
-- E2E compatibility updates
-  - `apps/web/e2e/cross-tab-overlay.spec.ts`
-  - `apps/web/e2e/smoke.spec.ts`
-  - `apps/web/e2e/stream-vote.spec.ts`
-  - Updated selectors to JP/EN dual-match for changed visible text.
+  - Localized stale warning banner to Japanese-first with `Data stale` token retained.
 
 ### Verify
-- `pnpm -C apps/web test` OK
-- `pnpm -C apps/web typecheck` OK
-- `pnpm -C apps/web build` OK
-- `pnpm.cmd -C apps/web e2e -- e2e/stream-vote.spec.ts e2e/cross-tab-overlay.spec.ts e2e/smoke.spec.ts` NG in this environment (`spawn EPERM`)
-
-## 2026-02-18 - Replay JP-first copy pass (visible EN cleanup + selector compatibility)
+- `pnpm.cmd test` (apps/web) OK
+## 2026-02-18 - Replay/Rulesets Japanese-first copy follow-up
 
 ### What
 - `apps/web/src/pages/Replay.tsx`
-  - Replaced mixed EN user-facing labels with JP-first wording:
-    - `„É™„Éó„É¨„Ç§Ë™≠ËæºÔºàReplay from transcriptÔºâ` -> `„É™„Éó„É¨„Ç§Ë™≠Ëæº`
-    - `„É™„Éó„É¨„Ç§„ÇíË™≠„ÅøËæº„ÇÄ (Load replay)` -> `„É™„Éó„É¨„Ç§„ÇíË™≠„ÅøËæº„ÇÄ`
-    - `„Ç®„É©„Éº / Error` -> `„Ç®„É©„Éº`
-    - `ÂÜçË™≠Ëæº„Åô„Çã (Retry load)` -> `ÂÜçË™≠Ëæº„Åô„Çã`
-    - `ÂÖ±Êúâ„Éë„É©„É°„Éº„Çø„Çí„ÇØ„É™„Ç¢ (Clear share params)` -> `ÂÖ±Êúâ„Éë„É©„É°„Éº„Çø„Çí„ÇØ„É™„Ç¢`
-    - Removed EN parentheticals from focus guard/transport hidden messages.
-  - Updated stream-assist copy to JP-first (`step` -> `ÊâãÈ†Ü`, placeholder `Playground` -> `„Éó„É¨„Ç§„Ç∞„É©„Ç¶„É≥„Éâ`).
-  - Updated copy labels used in toasts (`transcript`/`result` -> `ÂØæÂ±Ä„É≠„Ç∞JSON`/`ÁµêÊûúJSON`).
-- E2E selector compatibility updates:
-  - `apps/web/e2e/replay-url.spec.ts`
-  - `apps/web/e2e/replay-ruleset-fallback-guardrails.spec.ts`
-  - `apps/web/e2e/stage-focus.spec.ts`
-  - `apps/web/e2e/smoke.spec.ts`
-  - Switched fixed EN assertions to JP/EN dual regex where text changed.
+  - Mode/board UI select labels were changed to Japanese-first while preserving compatibility tokens (`engine v1`, `engine v2`).
+  - Stream tools disclosure and overlay action labels were changed to clearer Japanese-first wording.
+  - Result banner helper labels were polished (`step` -> `ÊâãÈ†Ü`, `matchId„Çí„Ç≥„Éî„Éº`, `ÂØæÂ±Ä„É≠„Ç∞„Çí„Ç≥„Éî„Éº (Transcript)`).
+- `apps/web/src/pages/Rulesets.tsx`
+  - Classic section heading/subcopy was changed to Japanese-first wording (`„ÇØ„É©„Ç∑„ÉÉ„ÇØÔºà„Éô„Éº„ÇøÔºâClassic`).
 
 ### Verify
-- `pnpm -C apps/web test` OK
-- `pnpm -C apps/web typecheck` OK
-- `pnpm -C apps/web build` OK
-- `pnpm.cmd -C apps/web e2e -- e2e/replay-url.spec.ts e2e/replay-ruleset-fallback-guardrails.spec.ts e2e/stage-focus.spec.ts` NG in this environment (`spawn EPERM`)
-
-## 2026-02-18 - Replay focus wording cleanup + Match setup advanced wording cleanup
+- `pnpm.cmd test` (apps/web) OK
+- `apps/web/e2e/rulesets-ux-guardrails.spec.ts`
+  - Updated heading assertion to JP/EN bilingual match (`Ruleset Registry|„É´„Éº„É´„Çª„ÉÉ„Éà‰∏ÄË¶ß`) for copy-change resilience.
+## 2026-02-18 - Replay/Rulesets copy polish (Japanese-first, compatibility-safe)
 
 ### What
 - `apps/web/src/pages/Replay.tsx`
-  - Removed remaining mixed-English focus wording in visible controls/feedback:
-    - `Êìç‰Ωú„ÇíÈö†„Åô (Hide controls)` / `Êìç‰Ωú„ÇíË°®Á§∫ (Show controls)` -> `Êìç‰Ωú„ÇíÈö†„Åô` / `Êìç‰Ωú„ÇíË°®Á§∫`
-    - `Êìç‰Ωú„ÇíÈö†„Åó„Åæ„Åó„Åü (Controls hidden)` / `Ë®≠ÂÆö„ÇíË°®Á§∫„Åó„Åæ„Åó„Åü (Setup shown)` -> JP-only feedback
-    - highlight status text -> JP-only (`Ë¶ã„Å©„Åì„Çç N‰ª∂`)
-    - `ÂÖàÈ†≠„Å∏ÁßªÂãï„Åó„Åæ„Åó„Åü (Jumped to start)` -> `ÂÖàÈ†≠„Å∏ÁßªÂãï„Åó„Åæ„Åó„Åü`
-- `apps/web/src/components/match/MatchSetupPanelMint.tsx`
-  - Reworded advanced options from dev-centric terms to user-facing JP:
-    - `Layer4 chain cap` -> `ÈÄ£Èéñ‰∏äÈôê`
-    - invalid `ccap` message -> JP-first explanatory wording
-    - `Layer4 ÂÆüÈ®ìË®≠ÂÆö...` -> `ËøΩÂä†Ë®≠ÂÆö...`
-    - `rulesetId` label -> `„É´„Éº„É´ID`
-- E2E compatibility updates
-  - `apps/web/e2e/stage-focus.spec.ts`
-  - Updated replay-focus control assertions to JP/EN dual-match for changed visible text.
+  - Added `replayModeDisplay()` and switched summary mode display from raw key to Japanese-first labels.
+  - Refined overlay sync panel copy (`ÊâãÈ†Ü (step)` / `„Ç™„Éº„Éê„Éº„É¨„Ç§„Å∏ÈÄÅ‰ø°ÔºàÊâãÈ†ÜÂêåÊúüÔºâ`).
+  - Refined detail panel labels (`„Çø„Ç§„Éñ„É¨„Éº„ÇØ`, JSON copy button labels, transcript/result section labels).
+- `apps/web/src/pages/Rulesets.tsx`
+  - Search placeholder and row meta labels adjusted to Japanese-first wording (`ÂêçÂâç / rulesetId / „Ç≠„Éº`, `„Ç®„É≥„Ç∏„É≥`, `„Ç≠„ÉºÊú™ÂØæÂøú`).
+  - Updated unmapped action hint (`ÂØæÊà¶„É™„É≥„ÇØÊú™ÂØæÂøú`).
+- `apps/web/e2e/rulesets-ux-guardrails.spec.ts`
+  - Header assertion updated to JP/EN bilingual match.
 
 ### Verify
-- `pnpm -C apps/web test` OK
-- `pnpm -C apps/web typecheck` OK
-- `pnpm -C apps/web build` OK
-- `pnpm.cmd -C apps/web e2e -- e2e/stage-focus.spec.ts e2e/replay-url.spec.ts` NG in this environment (`spawn EPERM`)
-
-## 2026-02-18 - Navigation label JP-first cleanup (Home/Events/Decks)
+- `pnpm.cmd test` (apps/web) OK
+- `apps/web/src/pages/Replay.tsx`
+  - Stage focus transport toggle labels changed to Japanese-first (`Êìç‰Ωú„ÇíÈö†„Åô/Ë°®Á§∫`) with English compatibility tokens retained in parentheses.
+  - Stage focus feedback message changed to Japanese-first with English compatibility token (`Controls hidden/shown`) retained.
+- `apps/web/e2e/stage-focus.spec.ts`
+  - Updated replay focus controls assertions to JP/EN bilingual selectors and feedback checks.
+## 2026-02-18 - Deck filters UX follow-up (game-relevant presets)
 
 ### What
-- `apps/web/src/pages/Home.tsx`
-  - Main menu titles changed to JP-first (`„Ç¢„É™„Éº„Éä`, `„Éá„ÉÉ„Ç≠`, `„É™„Éó„É¨„Ç§`, `ÈÖç‰ø°`).
-- `apps/web/src/pages/Events.tsx`
-  - Quick action labels changed from mixed `Êó•Êú¨Ë™û (English)` to JP-first labels.
-- `apps/web/src/pages/Decks.tsx`
-  - Mint tab labels changed to JP-first (`„Éá„ÉÉ„Ç≠`, `„Ç¢„É™„Éº„Éä`, `„Ç§„Éô„É≥„Éà`, `„É™„Éó„É¨„Ç§`, `ÈÖç‰ø°`).
+- Decks page now uses CardBrowserMint for Japanese-first filter UX.
+- Filter presets were updated to game-relevant categories: all, rock-focused, scissors-focused, paper-focused, high-edge.
+- Added hint text explaining hand type + edge sum relevance.
+- Localized preview success toast and added type="button" for filter buttons.
 
 ### Verify
-- `pnpm -C apps/web test` OK
-- `pnpm -C apps/web typecheck` OK
-- `pnpm -C apps/web build` OK
-
-## 2026-02-18 - Navigation / screen transition audit + rulesets e2e encoding fix
+- pnpm.cmd -C apps/web test OK
+- pnpm.cmd -C apps/web typecheck OK
+- pnpm.cmd -C apps/web build OK
+- Playwright smoke run blocked by spawn EPERM in this environment
+## 2026-02-18 - Decks filter URL-sync guardrail follow-up
 
 ### What
-- Executed transition-focused UX E2E suite and re-audited route/link consistency.
-- Fixed invalid-encoding regression in `apps/web/e2e/rulesets-ux-guardrails.spec.ts` (UTF-8 rewrite).
-  - Removed text-dependent assertion that became mojibake-sensitive.
-  - Switched classic CTA click assertion to robust selector-based targeting.
-- Performed static route audit across `apps/web/src` literal links and confirmed no unknown route targets.
+- Added `data-testid="decks-filter-*"` to Decks filter buttons for stable UI guardrails.
+- Added `Decks filter preset keeps URL sync via df param` to `e2e/mint-app-screens-guardrails.spec.ts`.
+  - Verifies `df=paper` initial restore.
+  - Verifies click updates URL to `df=power`.
+  - Verifies selecting `all` removes `df` and returns to default preset.
 
 ### Verify
-- `pnpm.cmd -C apps/web e2e:ux` OK (26 passed)
-- `pnpm -C apps/web test` OK
-- `pnpm -C apps/web typecheck` OK
-- `pnpm -C apps/web build` OK
-- `pnpm.cmd -C apps/web e2e` NG in this environment (`spawn EPERM`)
-
-## 2026-02-18 - TODO backlog cleanup (dedupe + status alignment)
+- `pnpm.cmd -C apps/web test` OK
+- `pnpm.cmd -C apps/web typecheck` OK
+- `pnpm.cmd -C apps/web build` OK
+- Playwright E2E execution remains environment-blocked (`spawn EPERM`).
+## 2026-02-18 - Decks df backward-compat normalization follow-up
 
 ### What
-- Reconciled stale checklist drift in `Nyano_Triad_League_DEV_TODO_v1_ja.md`.
-- Marked WO025/WO026/WO027 `Next` rows as completed (they were already completed in the following update section).
-- Marked replay mismatch warning-pill dedicated test follow-up as completed.
-- Consolidated repeated `spawn EPERM` E2E blockers into one shared open item and converted duplicated per-section blockers to "aggregated" status notes.
+- `deck_filters` now supports legacy ids and canonical normalization:
+  - `attacker -> rock`
+  - `defender -> paper`
+  - `other -> scissors`
+- `Decks` URL sync now normalizes `df` on load:
+  - unknown `df` is removed
+  - legacy `df` is rewritten to canonical id with `replace` navigation
+- Added e2e guardrail coverage update in `mint-app-screens-guardrails`:
+  - verifies legacy `df=attacker` is normalized to `df=rock`.
 
-### Result
-- Open checklist items are now reduced to true residuals only:
-  - Research/Optional 3 items
-  - MintRulesetPicker token-splitting consideration
-  - Full Playwright E2E environment blocker (`spawn EPERM`)
+### Verify
+- `pnpm.cmd -C apps/web test` OK
+- `pnpm.cmd -C apps/web typecheck` OK
+- `pnpm.cmd -C apps/web build` OK
+- Playwright execution remains blocked in this environment (`spawn EPERM`).
+## 2026-02-18 - Decks df normalization hardening (case/space)
 
-## 2026-02-18 - Mint ruleset picker tokenization follow-up
+### What
+- `normalizeDeckFilterPresetId` now trims and lowercases incoming `df` values.
+- This allows robust recovery from shared links such as `df=ROCK` or `df=%20Defender%20`.
+- Added unit coverage in `deck_filters.test.ts` for case/space normalization.
+
+### Verify
+- `pnpm.cmd -C apps/web test` OK
+- `pnpm.cmd -C apps/web typecheck` OK
+- `pnpm.cmd -C apps/web build` OK
+## 2026-02-18 - Replay fallback mismatch guardrail hardening
+
+### What
+- Added stable selector on Replay mismatch warning pill:
+  - `data-testid="replay-ruleset-mismatch-warning"`
+- Updated `e2e/replay-ruleset-fallback-guardrails.spec.ts` to assert the warning pill by testid in addition to message text.
+- This makes the guardrail resilient to copy adjustments while still validating rk/cr fallback mismatch behavior.
+
+### Verify
+- `pnpm.cmd -C apps/web test` OK
+- `pnpm.cmd -C apps/web typecheck` OK
+- `pnpm.cmd -C apps/web build` OK
+- Playwright run is environment-blocked (`spawn EPERM`).
+
+## 2026-02-18 - Match Setup rules picker visual/token follow-up
 
 ### What
 - `apps/web/src/components/match/MintRulesetPicker.tsx`
-  - Replaced inline utility-first class strings with semantic class names (`mint-ruleset-picker__*`).
-  - Kept `data-testid` attributes and ruleset behavior unchanged.
+  - Shifted picker structure to dedicated mint theme classes (`mint-ruleset-picker__*`) while preserving existing ruleset behavior (`rk`/`cr` URL compatibility is unchanged).
+  - Updated copy to Japanese-first labels with English compatibility tokens in parentheses.
+  - Restored stable selectors and accessibility hints (`data-testid`, `aria-pressed`) for future E2E resilience.
 - `apps/web/src/mint-theme/mint-theme.css`
-  - Added Mint material class block for ruleset picker (family segments, chips, custom toggle chips, summary/help areas).
-  - Added `prefers-reduced-motion` transition suppression for new controls.
-  - Added `data-vfx=off` visual fallback for new surfaces.
+  - Added a dedicated style block for rules picker controls (family buttons, chips, toggles, summary, help).
+  - Added reduced-motion and `data-vfx="off"` handling for picker visuals.
 
 ### Verify
 - `pnpm -C apps/web test` OK
 - `pnpm -C apps/web typecheck` OK
 - `pnpm -C apps/web build` OK
-## 2026-02-18 - Mint material v4 follow-up (buttons / tabs / panels)
+- `pnpm.cmd -C apps/web e2e -- e2e/match-setup-ux-guardrails.spec.ts` failed in this local environment (`spawn EPERM`).
+
+## 2026-02-18 - MintRulesetPicker regression test follow-up
 
 ### What
-- `apps/web/src/mint-theme/mint-theme.css`
-  - Upgraded `.mint-ui-pressable` material layering with dual rim, inner reflection, tuned specular, and stronger press shadow collapse.
-  - Reduced "white film" look by lowering specular opacity and improving face contrast per tone variant.
-  - Updated `--primary/--soft/--ghost` tone variables to keep readable color density.
-  - Updated `.mint-big-button` and `.mint-big-button__icon-wrap` to share the same material language.
-  - Updated `.mint-tab-nav__item--active` so selected state reads as "selected" (face + rim + glow), not simply pressed.
-- `apps/web/playwright.config.ts`
-  - Added `workers` resolution with `PW_WORKERS` override.
-  - Added Windows default worker cap (2) to mitigate local `spawn EPERM` incidents.
+- Added `apps/web/src/components/match/__tests__/MintRulesetPicker.test.tsx`.
+  - Verifies family row/current summary render for non-classic mode.
+  - Verifies classic custom UI renders expected controls, Japanese-first labels, and stable `data-testid` attributes.
+  - Keeps compatibility guardrails lightweight via static-markup tests (aligned with existing component test style).
 
 ### Verify
 - `pnpm -C apps/web test` OK
 - `pnpm -C apps/web typecheck` OK
 - `pnpm -C apps/web build` OK
-- `pnpm.cmd -C apps/web e2e:ux` OK
-- `pnpm.cmd -C apps/web e2e` NG in this environment (`spawn EPERM`)
-## 2026-02-18 - CardBrowser Mint quick-filter pills
+
+## 2026-02-18 - Events copy cleanup (user-facing wording)
 
 ### What
-- `apps/web/src/components/CardBrowserMint.tsx`
-  - Added quick hand filter pills (`„Åô„Åπ„Å¶/„Ç∞„Éº/„ÉÅ„Éß„Ç≠/„Éë„Éº`) using `MintPressable`.
-  - Preserved existing hand `<select>` for compatibility and wired both controls to a shared `applyHandFilter` path.
-  - Added `data-testid="mint-card-browser-hand-pill-*"` for stable E2E hooks.
-- `apps/web/src/mint-theme/mint-theme.css`
-  - Added browser filter layout classes for quick-filter pills (`mint-card-browser__hand-pills`, `__hand-pill`, `__field--wide`).
-  - Added responsive grid handling for the widened hand-filter field.
-- `apps/web/e2e/mint-app-screens-guardrails.spec.ts`
-  - Updated Decks filter interaction to click quick pill (`„Éë„Éº`) and assert chip update.
+- `apps/web/src/pages/Events.tsx`
+  - Replaced user-facing `ébíË` wording with `éQçlíl` in season-point summary/ranking sections.
+  - Kept scoring semantics unchanged; copy only.
 
 ### Verify
 - `pnpm -C apps/web test` OK
 - `pnpm -C apps/web typecheck` OK
 - `pnpm -C apps/web build` OK
-- `pnpm.cmd -C apps/web e2e:ux` OK
-- `pnpm.cmd -C apps/web e2e:mint` NG in this environment (`spawn EPERM`)
-## 2026-02-18 - CardBrowser Mint edge quick presets + reset affordance
+
+## 2026-02-18 - Stream/Overlay fallback error copy cleanup
 
 ### What
-- `apps/web/src/components/CardBrowserMint.tsx`
-  - Added quick edge presets (`0/10/20/30/40`) as `MintPressable` pills.
-  - Added unified reset action (`Êù°‰ª∂„É™„Çª„ÉÉ„Éà`) for hand filter, edge filter, and search query.
-  - Refactored filter updates through `applyHandFilter` / `applyMinEdge` to keep pagination reset behavior consistent.
-- `apps/web/src/mint-theme/mint-theme.css`
-  - Added classes for edge preset pills and reset button placement (`mint-card-browser__edge-*`, `__reset`).
-  - Kept mobile layout stable with responsive updates for widened filter fields.
-- `apps/web/e2e/mint-app-screens-guardrails.spec.ts`
-  - Added interactions/assertions for edge preset pill selection and reset action.
+- `apps/web/src/pages/Stream.tsx`
+  - Local fallback error messages were updated to Japanese-first wording:
+    - `RPCê⁄ë±ÉGÉâÅ[ (RPC connection failed)`
+    - `äOïîòAågÉGÉâÅ[ (External integration error)`
+- `apps/web/src/pages/Overlay.tsx`
+  - Sticky error fallback messages were updated to Japanese-first wording with compatibility tokens in parentheses.
 
 ### Verify
 - `pnpm -C apps/web test` OK
 - `pnpm -C apps/web typecheck` OK
 - `pnpm -C apps/web build` OK
-- `pnpm.cmd -C apps/web e2e:ux` OK## 2026-02-18 - CardBrowser quick filter semantics + tutorial heading clarification
+
+## 2026-02-18 - E2E selector resilience follow-up (stream/replay-stage)
 
 ### What
-- `apps/web/src/components/CardBrowserMint.tsx`
-  - Updated quick-filter container semantics from `radiogroup` to `group` to align with button-based controls (`aria-pressed`).
-  - Kept existing URL/state behavior unchanged and retained test selectors.
-- `apps/web/src/components/MiniTutorial.tsx`
-  - Clarified heading copy from a generic "3 steps" phrase to "1 turn flow (3 steps)" to avoid confusion with home onboarding steps.
+- apps/web/e2e/stream-vote.spec.ts
+  - Replaced brittle English-only assertions with JP/EN dual-match selectors for stream headings, vote panel labels, validation feedback, and start/closed controls.
+  - Updated clipboard assertion to accept both `slot` and JP label tokens.
+- apps/web/e2e/stage-focus.spec.ts
+  - Hardened replay-load-failure case so `Load replay` click is conditional (manual-load and auto-load UI flows both supported).
 
 ### Verify
-- `pnpm -C apps/web test` OK
-- `pnpm -C apps/web typecheck` OK
-- `pnpm -C apps/web build` OK
-- `pnpm.cmd -C apps/web e2e:ux` OK
-## 2026-02-18 - Replay page Japanese-first wording pass
+- pnpm.cmd test (workdir: apps/web) OK
+- pnpm.cmd typecheck (workdir: apps/web) OK
+- pnpm.cmd build (workdir: apps/web) OK
+- pnpm.cmd playwright test e2e/stream-vote.spec.ts (workdir: apps/web) OK
+- pnpm.cmd playwright test e2e/smoke.spec.ts e2e/stage-focus.spec.ts --grep "(/arena loads|/rulesets loads|/events loads|/replay-stage keeps recovery controls when replay load fails)" (workdir: apps/web) OK
+
+## 2026-02-18 - Replay URL E2E selector hardening
 
 ### What
-- `apps/web/src/pages/Replay.tsx`
-  - Localized replay setup labels to Japanese-first copy while keeping query-param values unchanged (`mode`/`ui` compatibility preserved).
-  - Localized replay focus VFX labels (`é©ìÆ/ÉIÉt/í·/íÜ/çÇ`) and stage feedback text.
-  - Localized compare panel labels (`ÉGÉìÉWÉì v1` / `ÉGÉìÉWÉì v2`) to reduce English-heavy UI.
+- apps/web/e2e/replay-url.spec.ts
+  - Updated heading/assertion selectors to JP/EN dual-match for Replay page copy.
+  - Replaced brittle keyboard legend expectation with a JP/EN compatible pattern for replay toggle hint.
+  - Narrowed replay load button selector to `Load replay` (localized label) to avoid strict-mode collision with `Retry load`.
 
 ### Verify
-- `pnpm -C apps/web test` OK
-- `pnpm -C apps/web typecheck` OK
-- `pnpm -C apps/web build` OK
-- `pnpm.cmd -C apps/web e2e:ux` OK
-## 2026-02-18 - Replay Japanese copy pass (mode/status/details)
-
-### What
-- `apps/web/src/pages/Replay.tsx`
-  - Added `replayModeLabel` and switched summary mode display from raw URL values (`auto/v1/v2/compare`) to Japanese labels.
-  - Updated replay fallback notice copy to Japanese-first while preserving `Pixi renderer is unavailable.` text for compatibility.
-  - Localized detail panel labels: `rulesetId` -> `ÉãÅ[ÉãÉZÉbÉgIDÅirulesetIdÅj`, `classic ì¸ë÷/åˆäJ` -> `ÉNÉâÉVÉbÉNì¸ë÷/åˆäJ`.
-
-### Verify
-- `pnpm -C apps/web test` OK
-- `pnpm -C apps/web typecheck` OK
-- `pnpm -C apps/web build` OK
-- `pnpm.cmd -C apps/web e2e:ux` OK
-## 2026-02-18 - E2E text expectation compatibility fix (smoke + stage-focus)
-
-### What
-- `apps/web/e2e/smoke.spec.ts`
-  - Relaxed route smoke assertions to accept both English and Japanese page labels (`Arena/ÉAÉäÅ[Éi`, `Ruleset Registry/ÉãÅ[ÉãÉZÉbÉgàÍóó`, `Events/ÉCÉxÉìÉg`).
-- `apps/web/e2e/stage-focus.spec.ts`
-  - Updated replay-load-failure assertion to match current error copy (`ÉGÉâÅ[:`) as well as existing `Error:`.
-
-### Verify
-- `pnpm -C apps/web test` OK
-- `pnpm -C apps/web typecheck` OK
-- `pnpm -C apps/web build` OK
-- `pnpm.cmd -C apps/web e2e:ux` OK
-- `pnpm -C apps/web e2e -- e2e/smoke.spec.ts e2e/stage-focus.spec.ts` NG in this environment (`spawn EPERM`)
-
-## 2026-02-18 - Decks filter suitability visibility update
-
-### What
-- `apps/web/src/pages/Decks.tsx`
-  - Added `usage` copy for each preset so players can understand when to use each filter in this game.
-  - Added preset result counts computed from Game Index and surfaced in filter buttons and active filter summary.
-  - Kept preset IDs (`all/attacker/defender/power/other`) unchanged for compatibility.
-
-### Verify
-- `pnpm -C apps/web test` OK
-- `pnpm -C apps/web typecheck` OK
-- `pnpm -C apps/web build` OK
-
-## 2026-02-18 - Decks filter ratio and density hint
-
-### What
-- `apps/web/src/pages/Decks.tsx`
-  - Added ratio display (`xx.x%`) for active preset count against total index cards.
-  - Added density hint labels (`çiÇËçûÇ›: ã≠Çﬂ/ïWèÄ/çLÇﬂ`) based on active ratio to support filter suitability judgment.
-  - Kept existing preset ids, URL behavior, and search compatibility unchanged.
-
-### Verify
-- `pnpm -C apps/web test` OK
-- `pnpm -C apps/web typecheck` OK
-- `pnpm -C apps/web build` OK
-
-## 2026-02-18 - Decks filter visibility: UX E2E confirmation
-
-### Verify
-- `pnpm.cmd -C apps/web e2e:ux` OK (26 passed)
+- pnpm.cmd test (workdir: apps/web) OK
+- pnpm.cmd typecheck (workdir: apps/web) OK
+- pnpm.cmd build (workdir: apps/web) OK
+- pnpm.cmd playwright test e2e/replay-url.spec.ts (workdir: apps/web) OK
+- pnpm.cmd e2e (workdir: apps/web) OK (74 passed)

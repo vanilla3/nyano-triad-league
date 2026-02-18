@@ -97,6 +97,7 @@ interface MintCellProps {
   index: number;
   coord: string;
   isSelected: boolean;
+  isPressed: boolean;
   isPlaced: boolean;
   isFlipped: boolean;
   flipDelayClass?: string;
@@ -104,6 +105,8 @@ interface MintCellProps {
   isSelectable: boolean;
   warningMark?: PlayerIndex | null;
   onSelect?: () => void;
+  onPressStart?: () => void;
+  onPressEnd?: () => void;
   /** Long-press / right-click inspect handlers for cards on board */
   inspectHandlers?: {
     onTouchStart: (e: React.TouchEvent) => void;
@@ -123,6 +126,7 @@ function MintCell({
   index,
   coord,
   isSelected,
+  isPressed,
   isPlaced,
   isFlipped,
   flipDelayClass,
@@ -130,6 +134,8 @@ function MintCell({
   isSelectable,
   warningMark,
   onSelect,
+  onPressStart,
+  onPressEnd,
   inspectHandlers,
   showCoordinates,
   isWarningMode,
@@ -154,6 +160,7 @@ function MintCell({
   }
 
   if (isSelected && !hasCard) classes.push("mint-cell--selected");
+  if (isPressed && !hasCard) classes.push("mint-cell--pressed");
   if (dragDropEnabled && !hasCard && isSelectable) classes.push("mint-cell--drop-ready");
   if (isPlaced) classes.push("mint-cell--placed");
   if (isFlipped) {
@@ -195,6 +202,19 @@ function MintCell({
       onDragLeave={() => {
         if (!dragDropEnabled) return;
         onDragHover?.(null);
+      }}
+      onPointerDown={() => {
+        if (!isInteractive) return;
+        onPressStart?.();
+      }}
+      onPointerUp={() => {
+        onPressEnd?.();
+      }}
+      onPointerCancel={() => {
+        onPressEnd?.();
+      }}
+      onPointerLeave={() => {
+        onPressEnd?.();
       }}
       onDrop={(e) => {
         if (!dragDropEnabled || hasCard || !isSelectable) return;
@@ -313,6 +333,7 @@ export function BoardViewMint({
   onCellDragHover,
 }: BoardViewMintProps) {
   const gridRef = React.useRef<HTMLDivElement>(null);
+  const [pressedCell, setPressedCell] = React.useState<number | null>(null);
   const selectableSet = toSelectableSet(selectableCells);
   const score = calcScore(board);
   const inspect = useCardPreview();
@@ -331,9 +352,14 @@ export function BoardViewMint({
 
   const handleSelect = (cell: number) => {
     if (disabled) return;
+    setPressedCell(null);
     const fn = onCellSelect ?? onClickCell;
     if (fn) fn(cell);
   };
+
+  React.useEffect(() => {
+    if (disabled) setPressedCell(null);
+  }, [disabled]);
 
   return (
     <div className={["grid gap-3", className].join(" ")}>
@@ -385,6 +411,7 @@ export function BoardViewMint({
                   index={idx}
                   coord={coord}
                   isSelected={!!isSel}
+                  isPressed={pressedCell === idx}
                   isPlaced={!!isPlaced}
                   isFlipped={!!isFlipped}
                   flipDelayClass={flipDelay}
@@ -392,6 +419,8 @@ export function BoardViewMint({
                   isSelectable={isSelectable}
                   warningMark={warning}
                   onSelect={() => handleSelect(idx)}
+                  onPressStart={() => setPressedCell(idx)}
+                  onPressEnd={() => setPressedCell((prev) => (prev === idx ? null : prev))}
                   inspectHandlers={cellInspect}
                   showCoordinates={showCoordinates}
                   isWarningMode={isWarningMode}

@@ -112,10 +112,10 @@ export function EventsPage() {
   const themed = React.useCallback((to: string) => appendThemeToPath(to, theme), [theme]);
   const quickActions = React.useMemo<Array<{ to: string; label: string; subtitle: string; icon: MintIconName }>>(
     () => [
-      { to: themed("/arena"), label: "アリーナ", subtitle: "対戦モード", icon: "arena" },
-      { to: themed("/decks"), label: "デッキ", subtitle: "デッキ構築", icon: "decks" },
-      { to: themed("/replay"), label: "リプレイ", subtitle: "対戦を振り返る", icon: "replay" },
-      { to: themed("/stream"), label: "配信", subtitle: "配信ツール", icon: "stream" },
+      { to: themed("/arena"), label: "対戦 (Arena)", subtitle: "対戦モード", icon: "arena" },
+      { to: themed("/decks"), label: "デッキ (Decks)", subtitle: "デッキ構築", icon: "decks" },
+      { to: themed("/replay"), label: "リプレイ (Replay)", subtitle: "対戦を振り返る", icon: "replay" },
+      { to: themed("/stream"), label: "配信 (Stream)", subtitle: "配信ツール", icon: "stream" },
     ],
     [themed],
   );
@@ -463,7 +463,7 @@ export function EventsPage() {
                 {selectedSeasonProgress ? (
                   <div className="rounded-lg border border-slate-200 bg-white p-3">
                     <div className="flex flex-wrap items-center justify-between gap-2">
-                      <div className="text-xs font-semibold text-slate-700">ローカルシーズンポイント（暫定）</div>
+                      <div className="text-xs font-semibold text-slate-700">シーズンポイント（参考値）</div>
                       <span className="badge badge-nyano">{selectedSeasonProgress.currentTier.label}</span>
                     </div>
                     <div className="mt-2 grid gap-2 md:grid-cols-4">
@@ -495,7 +495,7 @@ export function EventsPage() {
                       />
                     </div>
                     <div className="mt-2 text-[11px] text-slate-500">
-                      内訳: 確定差分 {selectedSeasonProgress.pointsDeltaEvents} / 暫定 {selectedSeasonProgress.provisionalEvents}
+                      内訳: 確定差分 {selectedSeasonProgress.pointsDeltaEvents} / 参考値 {selectedSeasonProgress.provisionalEvents}
                     </div>
                     <div className="mt-2 text-[11px] text-slate-500">
                       ルール: 勝利 +{selectedSeasonProgress.scoringRule.winPoints} / 敗北 +{selectedSeasonProgress.scoringRule.lossPoints} / イベントクリア +
@@ -515,7 +515,7 @@ export function EventsPage() {
 
                 {selectedSeasonProgress ? (
                   <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2">
-                    <div className="text-xs font-semibold text-slate-700">シーズンポイント順位（ローカル暫定）</div>
+                    <div className="text-xs font-semibold text-slate-700">シーズンポイント順位（参考値）</div>
                     <div className="mt-2 grid gap-1">
                       {selectedSeasonProgress.rankedEvents.map((entry) => (
                         <div
@@ -531,7 +531,7 @@ export function EventsPage() {
                             {entry.pointsSource === "points_delta" ? (
                               <span className="badge badge-sky">delta反映</span>
                             ) : (
-                              <span className="badge badge-slate">暫定</span>
+                              <span className="badge badge-slate">参考値</span>
                             )}
                             <span>
                               W/L {entry.wins}/{entry.losses}

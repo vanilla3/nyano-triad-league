@@ -39,35 +39,7 @@ GEMINI_API_KEY=... node scripts/gemini_image_gen.mjs \
 
 ```bash
 GEMINI_API_KEY=... node scripts/gemini_image_gen.mjs \
-  --batch scripts/asset_prompts/nytl_ui_assets.v3.json
-```
-
-### 3.3 v3 プリセット（WO-031）
-
-`scripts/asset_prompts/nytl_ui_assets.v3.json` は、Mint UI の最低限レイヤーをまとめて生成する前提です。
-
-- `bg_cloud_corners_16x9_v3.png`
-- `bg_paw_tile_512_v1.png`
-- `fx_sparkle_tile_512_v1.png`
-- `tx_noise_256_v1.png`
-- `ui_glass_sheen_512x256_v1.png`（任意）
-- `slot_inner_shadow_256_v1.png`（任意）
-
-出力先はすべて `apps/web/public/assets/gen/` を想定します。
-
----
-
-## 3.4 実行例（Windows / PowerShell）
-
-```powershell
-$env:GEMINI_API_KEY="YOUR_API_KEY"
-node scripts/gemini_image_gen.mjs --batch scripts/asset_prompts/nytl_ui_assets.v3.json
-```
-
-生成後の確認:
-
-```powershell
-Get-ChildItem apps/web/public/assets/gen | Select-Object Name,Length
+  --batch scripts/asset_prompts/nytl_ui_assets.v1.json
 ```
 
 ---
@@ -95,11 +67,6 @@ Get-ChildItem apps/web/public/assets/gen | Select-Object Name,Length
 - 生成物（暫定）: `apps/web/public/assets/gen/`
 - 後で採用する場合: `apps/web/public/assets/ui/` など “管理対象” へ移動し、
   命名規則（purpose_size_v）を揃える。
-
-補足:
-
-- 本番CSSは `apps/web/src/mint-theme/mint-theme.css` で `assets/gen` を参照する。
-- 画像が無い場合でも CSS フォールバックでレイアウトは成立する設計にする。
 
 ---
 
