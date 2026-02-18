@@ -628,3 +628,32 @@
 - [x] `pnpm -C apps/web build`
 - [x] `pnpm.cmd -C apps/web e2e:ux`
 - [ ] `pnpm -C apps/web e2e -- e2e/smoke.spec.ts e2e/stage-focus.spec.ts`（この環境では `spawn EPERM`）
+
+## Update 2026-02-18 (Decks フィルター妥当性の可視化)
+
+- [x] Decks のプリセットに用途説明 (`usage`) を追加し、ゲーム内での使い分けを明示。
+- [x] プリセットごとの候補枚数を Game Index から算出して表示（ボタン内件数 / 選択中件数 / 総数）。
+- [x] 既存プリセットID (`all/attacker/defender/power/other`) は維持し、後方互換を保持。
+
+### Verification status
+- [x] `pnpm -C apps/web test`
+- [x] `pnpm -C apps/web typecheck`
+- [x] `pnpm -C apps/web build`
+
+## Update 2026-02-18 (Decks フィルター候補比率の表示)
+
+- [x] 選択フィルターの候補比率（%）を表示し、絞り込みの強さを即時判断できるようにした。
+- [x] 比率に応じた目安ラベル（強め/標準/広め）を表示して、条件の適切さを可視化。
+- [x] URL・ルール判定・既存プリセットID互換は維持。
+
+### Verification status
+- [x] `pnpm -C apps/web test`
+- [x] `pnpm -C apps/web typecheck`
+- [x] `pnpm -C apps/web build`
+
+## Update 2026-02-18 (Decks フィルター可視化のE2E確認)
+
+- [x] Decks の候補比率・絞り込み目安表示の追加後、UX回帰テストを実施。
+
+### Verification status
+- [x] `pnpm.cmd -C apps/web e2e:ux`

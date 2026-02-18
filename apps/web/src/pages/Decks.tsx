@@ -8,7 +8,7 @@ import { CardBrowserMint } from "@/components/CardBrowserMint";
 import { useToast } from "@/components/Toast";
 import { errorMessage } from "@/lib/errorMessage";
 import { writeClipboardText } from "@/lib/clipboard";
-import { fetchGameIndex, type GameIndexV1, type JankenHand } from "@/lib/nyano/gameIndex";
+import { fetchGameIndex, searchCards, type GameIndexV1, type JankenHand } from "@/lib/nyano/gameIndex";
 import { buildCardDataFromIndex, generateRecommendedDeck, strategyLabel, type DeckStrategy } from "@/lib/demo_decks";
 import { GlassPanel } from "@/components/mint/GlassPanel";
 import { MintPressable } from "@/components/mint/MintPressable";
@@ -46,11 +46,46 @@ function toCardsMap(bundles: Map<bigint, { card: CardData }>): Map<bigint, CardD
 const STRATEGIES: DeckStrategy[] = ["balanced", "aggressive", "defensive", "janken_mix"];
 
 const FILTER_PRESETS = [
-  { id: "all", label: "すべて", hand: -1 as const, minEdgeSum: 0 },
-  { id: "attacker", label: "アタッカー", hand: 0 as const, minEdgeSum: 0 },
-  { id: "defender", label: "ディフェンダー", hand: 2 as const, minEdgeSum: 0 },
-  { id: "power", label: "高火力", hand: -1 as const, minEdgeSum: 27 },
-  { id: "other", label: "その他", hand: 1 as const, minEdgeSum: 0 },
+  {
+    id: "all",
+    label: "すべて",
+    hand: -1 as const,
+    minEdgeSum: 0,
+    detail: "手札タイプを問わず表示",
+    usage: "全体傾向を見たいとき",
+  },
+  {
+    id: "attacker",
+    label: "グー",
+    hand: 0 as const,
+    minEdgeSum: 0,
+    detail: "手札タイプ: グー",
+    usage: "同値時のじゃんけん有利を寄せたいとき",
+  },
+  {
+    id: "defender",
+    label: "パー",
+    hand: 2 as const,
+    minEdgeSum: 0,
+    detail: "手札タイプ: パー",
+    usage: "グー対策を増やしたいとき",
+  },
+  {
+    id: "power",
+    label: "高エッジ",
+    hand: -1 as const,
+    minEdgeSum: 27,
+    detail: "辺合計 27 以上",
+    usage: "序盤の取り合いで押し込みたいとき",
+  },
+  {
+    id: "other",
+    label: "チョキ",
+    hand: 1 as const,
+    minEdgeSum: 0,
+    detail: "手札タイプ: チョキ",
+    usage: "パー対策を増やしたいとき",
+  },
 ] as const;
 
 type FilterPresetId = (typeof FILTER_PRESETS)[number]["id"];
@@ -59,6 +94,10 @@ function formatDateShort(iso: string): string {
   const dt = new Date(iso);
   if (Number.isNaN(dt.getTime())) return iso;
   return `${dt.getMonth() + 1}/${dt.getDate()} ${dt.getHours()}:${dt.getMinutes().toString().padStart(2, "0")}`;
+}
+
+function formatPercent(value: number): string {
+  return `${(value * 100).toFixed(1)}%`;
 }
 
 export function DecksPage() {
@@ -191,6 +230,30 @@ export function DecksPage() {
   }, [decks]);
 
   const filterPreset = FILTER_PRESETS.find((x) => x.id === selectedFilter) ?? FILTER_PRESETS[0];
+  const filterPresetCounts = React.useMemo(() => {
+    const counts = new Map<FilterPresetId, number>();
+    if (!gameIndex) return counts;
+    for (const preset of FILTER_PRESETS) {
+      const matched = searchCards(gameIndex, {
+        hand: preset.hand === -1 ? undefined : preset.hand,
+        minEdgeSum: preset.minEdgeSum > 0 ? preset.minEdgeSum : undefined,
+      }).length;
+      counts.set(preset.id, matched);
+    }
+    return counts;
+  }, [gameIndex]);
+  const totalIndexCards = React.useMemo(() => (gameIndex ? Object.keys(gameIndex.tokens).length : 0), [gameIndex]);
+  const selectedPresetCount = filterPresetCounts.get(filterPreset.id);
+  const selectedPresetRatio = React.useMemo(() => {
+    if (!gameIndex || !selectedPresetCount || totalIndexCards <= 0) return 0;
+    return selectedPresetCount / totalIndexCards;
+  }, [gameIndex, selectedPresetCount, totalIndexCards]);
+  const selectedPresetDensity = React.useMemo(() => {
+    if (!gameIndex || totalIndexCards <= 0) return null;
+    if (selectedPresetRatio <= 0.08) return "絞り込み: 強め";
+    if (selectedPresetRatio >= 0.45) return "絞り込み: 広め";
+    return "絞り込み: 標準";
+  }, [gameIndex, selectedPresetRatio, totalIndexCards]);
 
   const selectedTokenIds = React.useMemo(() => {
     try {
@@ -252,9 +315,20 @@ export function DecksPage() {
                   onClick={() => setSelectedFilter(filter.id)}
                 >
                   {filter.label}
+                  {gameIndex ? ` (${filterPresetCounts.get(filter.id) ?? 0})` : ""}
                 </MintPressable>
               ))}
             </div>
+            <div className="mt-2 text-xs text-slate-500">条件: {filterPreset.detail}</div>
+            <div className="mt-1 text-xs text-slate-500">用途: {filterPreset.usage}</div>
+            {gameIndex ? (
+              <div className="mt-1 text-xs text-slate-500">
+                候補: {selectedPresetCount ?? 0} / {totalIndexCards}（{formatPercent(selectedPresetRatio)}）
+              </div>
+            ) : null}
+            {selectedPresetDensity ? (
+              <div className="mt-1 text-xs text-slate-500">{selectedPresetDensity}</div>
+            ) : null}
           </GlassPanel>
 
           {gameIndex ? (
@@ -355,7 +429,11 @@ export function DecksPage() {
           <GlassPanel variant="panel" className="mint-decks-panel mint-decks-browser-panel">
             <div className="mint-decks-browser-header">
               <MintTitleText as="h3" className="mint-decks-panel__title">カードブラウザ</MintTitleText>
-              <span className="mint-decks-browser-filter">フィルター: {filterPreset.label}</span>
+              <span className="mint-decks-browser-filter">
+                フィルター: {filterPreset.label}
+                （{filterPreset.detail}）
+                {gameIndex ? `・${selectedPresetCount ?? 0}件・${formatPercent(selectedPresetRatio)}` : ""}
+              </span>
             </div>
             {indexLoading ? (
               <div className="mint-decks-loading">カードインデックスを読み込み中...</div>

@@ -3616,3 +3616,34 @@
 - `pnpm -C apps/web build` OK
 - `pnpm.cmd -C apps/web e2e:ux` OK
 - `pnpm -C apps/web e2e -- e2e/smoke.spec.ts e2e/stage-focus.spec.ts` NG in this environment (`spawn EPERM`)
+
+## 2026-02-18 - Decks filter suitability visibility update
+
+### What
+- `apps/web/src/pages/Decks.tsx`
+  - Added `usage` copy for each preset so players can understand when to use each filter in this game.
+  - Added preset result counts computed from Game Index and surfaced in filter buttons and active filter summary.
+  - Kept preset IDs (`all/attacker/defender/power/other`) unchanged for compatibility.
+
+### Verify
+- `pnpm -C apps/web test` OK
+- `pnpm -C apps/web typecheck` OK
+- `pnpm -C apps/web build` OK
+
+## 2026-02-18 - Decks filter ratio and density hint
+
+### What
+- `apps/web/src/pages/Decks.tsx`
+  - Added ratio display (`xx.x%`) for active preset count against total index cards.
+  - Added density hint labels (`çiÇËçûÇ›: ã≠Çﬂ/ïWèÄ/çLÇﬂ`) based on active ratio to support filter suitability judgment.
+  - Kept existing preset ids, URL behavior, and search compatibility unchanged.
+
+### Verify
+- `pnpm -C apps/web test` OK
+- `pnpm -C apps/web typecheck` OK
+- `pnpm -C apps/web build` OK
+
+## 2026-02-18 - Decks filter visibility: UX E2E confirmation
+
+### Verify
+- `pnpm.cmd -C apps/web e2e:ux` OK (26 passed)
