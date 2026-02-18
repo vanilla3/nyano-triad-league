@@ -4976,13 +4976,16 @@
   --mint-surface-border-2-local: var(--mint-surface-border-2);
   --mint-surface-face-a-local: var(--mint-surface-face-a);
   --mint-surface-face-b-local: var(--mint-surface-face-b);
+  --mint-surface-rim-outer-local: rgba(255, 255, 255, 0.54);
+  --mint-surface-rim-inner-local: rgba(148, 163, 184, 0.24);
   --mint-surface-shadow-local: var(--mint-surface-shadow);
   --mint-surface-shadow-press-local: var(--mint-surface-shadow-press);
   --mint-surface-specular-opacity-local: var(--mint-surface-specular-opacity);
+  --mint-surface-face-contrast-local: 1;
   position: relative;
   isolation: isolate;
   overflow: hidden;
-  border: 1px solid var(--mint-surface-border-local);
+  border: 1px solid color-mix(in srgb, var(--mint-surface-border-local) 82%, rgba(255, 255, 255, 0.86));
   border-radius: var(--mint-surface-radius-local);
   font-family: "Nunito", "Rounded Mplus 1c", sans-serif;
   font-weight: 800;
@@ -4996,8 +4999,10 @@
   color: #334155;
   background: linear-gradient(165deg, var(--mint-surface-face-a-local), var(--mint-surface-face-b-local));
   box-shadow:
+    0 0 0 1px var(--mint-surface-rim-outer-local),
     var(--mint-surface-shadow-local),
-    inset 0 1px 0 rgba(255, 255, 255, 0.84);
+    inset 0 1px 0 rgba(255, 255, 255, 0.86),
+    inset 0 -1px 0 rgba(15, 23, 42, 0.08);
   transition:
     transform var(--mint-press-transition),
     border-color var(--mint-press-transition),
@@ -5010,9 +5015,12 @@
 .mint-ui-pressable::before {
   content: "";
   position: absolute;
-  inset: 1px;
+  inset: 1px 1px 2px;
   border-radius: calc(var(--mint-surface-radius-local) - 1px);
-  border: 1px solid var(--mint-surface-border-2-local);
+  border: 1px solid var(--mint-surface-rim-inner-local);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.18), rgba(255, 255, 255, 0) 36%),
+    linear-gradient(0deg, rgba(15, 23, 42, 0.06), rgba(15, 23, 42, 0) 30%);
   pointer-events: none;
 }
 
@@ -5024,26 +5032,32 @@
   pointer-events: none;
   opacity: var(--mint-surface-specular-opacity-local);
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.42), rgba(255, 255, 255, 0.06) 44%, rgba(255, 255, 255, 0) 68%),
-    linear-gradient(120deg, rgba(255, 255, 255, 0.14), transparent 38%);
-  background-size: 100% 100%, 220% 100%;
-  background-repeat: no-repeat, no-repeat;
-  background-position: center, -75% 0;
+    linear-gradient(180deg, rgba(255, 255, 255, 0.34), rgba(255, 255, 255, 0.08) 38%, rgba(255, 255, 255, 0) 64%),
+    linear-gradient(116deg, rgba(255, 255, 255, 0.18), rgba(255, 255, 255, 0) 42%),
+    radial-gradient(circle at 18% 8%, rgba(255, 255, 255, 0.22), rgba(255, 255, 255, 0) 56%);
+  background-size: 100% 100%, 210% 100%, 100% 100%;
+  background-repeat: no-repeat, no-repeat, no-repeat;
+  background-position: center, -96% 0, center;
   mix-blend-mode: normal;
 }
 
 .mint-ui-pressable:hover:not(:disabled):not([aria-disabled="true"]) {
-  border-color: color-mix(in srgb, var(--mint-surface-border-local) 76%, var(--mint-accent) 24%);
+  border-color: color-mix(in srgb, var(--mint-surface-border-local) 66%, var(--mint-accent) 34%);
   box-shadow:
-    0 20px 30px -24px rgba(15, 23, 42, 0.78),
-    inset 0 1px 0 rgba(255, 255, 255, 0.9);
+    0 0 0 1px color-mix(in srgb, var(--mint-surface-rim-outer-local) 72%, rgba(255, 255, 255, 0.9)),
+    0 18px 28px -22px rgba(15, 23, 42, 0.8),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    inset 0 -1px 0 rgba(15, 23, 42, 0.06);
+  filter: contrast(var(--mint-surface-face-contrast-local));
 }
 
 .mint-ui-pressable:active:not(:disabled):not([aria-disabled="true"]) {
   box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--mint-surface-rim-outer-local) 64%, rgba(255, 255, 255, 0.72)),
     var(--mint-surface-shadow-press-local),
-    inset 0 1px 0 rgba(255, 255, 255, 0.76);
-  filter: saturate(0.94);
+    inset 0 1px 0 rgba(255, 255, 255, 0.74),
+    inset 0 10px 14px -12px rgba(15, 23, 42, 0.28);
+  filter: saturate(0.94) brightness(0.98);
 }
 
 .mint-ui-pressable:focus-visible {
@@ -5082,15 +5096,19 @@
 
 .mint-ui-pressable--primary {
   --mint-surface-border-local: rgba(103, 232, 249, 0.65);
-  --mint-surface-border-2-local: rgba(186, 230, 253, 0.46);
-  --mint-surface-face-a-local: #4cc7f7;
-  --mint-surface-face-b-local: #20cddf;
-  --mint-surface-shadow-local: 0 20px 30px -24px rgba(3, 105, 161, 0.85);
-  --mint-surface-shadow-press-local: 0 10px 18px -16px rgba(3, 105, 161, 0.9);
-  --mint-surface-specular-opacity-local: 0.46;
-  color: #ffffff;
+  --mint-surface-border-2-local: rgba(103, 232, 249, 0.44);
+  --mint-surface-rim-outer-local: rgba(186, 230, 253, 0.52);
+  --mint-surface-rim-inner-local: rgba(8, 145, 178, 0.38);
+  --mint-surface-face-a-local: #2ec5f4;
+  --mint-surface-face-b-local: #14b8a6;
+  --mint-surface-shadow-local: 0 18px 28px -22px rgba(3, 105, 161, 0.86);
+  --mint-surface-shadow-press-local: 0 8px 16px -14px rgba(3, 105, 161, 0.88);
+  --mint-surface-specular-opacity-local: 0.34;
+  --mint-surface-face-contrast-local: 1.05;
+  color: #f8fafc;
+  text-shadow: 0 1px 0 rgba(12, 74, 110, 0.34);
   background:
-    linear-gradient(145deg, #38bdf8 0%, #22d3ee 44%, #a78bfa 100%);
+    linear-gradient(145deg, #22d3ee 0%, #10b981 88%);
   box-shadow:
     var(--mint-surface-shadow-local),
     0 0 0 1px rgba(186, 230, 253, 0.35);
@@ -5099,19 +5117,24 @@
 .mint-ui-pressable--soft {
   --mint-surface-border-local: rgba(255, 255, 255, 0.76);
   --mint-surface-border-2-local: rgba(148, 163, 184, 0.24);
-  --mint-surface-face-a-local: rgba(255, 255, 255, 0.78);
-  --mint-surface-face-b-local: rgba(224, 242, 254, 0.56);
+  --mint-surface-rim-outer-local: rgba(255, 255, 255, 0.64);
+  --mint-surface-rim-inner-local: rgba(148, 163, 184, 0.18);
+  --mint-surface-face-a-local: rgba(255, 255, 255, 0.88);
+  --mint-surface-face-b-local: rgba(224, 242, 254, 0.64);
+  --mint-surface-specular-opacity-local: 0.28;
   color: #334155;
 }
 
 .mint-ui-pressable--ghost {
-  --mint-surface-border-local: rgba(255, 255, 255, 0.5);
-  --mint-surface-border-2-local: rgba(148, 163, 184, 0.16);
-  --mint-surface-face-a-local: rgba(255, 255, 255, 0.52);
-  --mint-surface-face-b-local: rgba(241, 245, 249, 0.34);
+  --mint-surface-border-local: rgba(255, 255, 255, 0.58);
+  --mint-surface-border-2-local: rgba(148, 163, 184, 0.2);
+  --mint-surface-rim-outer-local: rgba(255, 255, 255, 0.44);
+  --mint-surface-rim-inner-local: rgba(148, 163, 184, 0.14);
+  --mint-surface-face-a-local: rgba(255, 255, 255, 0.6);
+  --mint-surface-face-b-local: rgba(241, 245, 249, 0.38);
   --mint-surface-shadow-local: 0 10px 18px -16px rgba(15, 23, 42, 0.7);
   --mint-surface-shadow-press-local: 0 4px 10px -8px rgba(15, 23, 42, 0.72);
-  --mint-surface-specular-opacity-local: 0.4;
+  --mint-surface-specular-opacity-local: 0.24;
 }
 
 .mint-ui-pressable--disabled {
@@ -5150,10 +5173,15 @@
   padding-inline: 16px;
   gap: 12px;
   --mint-surface-radius-local: 28px;
-  --mint-surface-specular-opacity-local: 0.46;
+  --mint-surface-rim-outer-local: rgba(255, 255, 255, 0.62);
+  --mint-surface-rim-inner-local: rgba(148, 163, 184, 0.2);
+  --mint-surface-specular-opacity-local: 0.32;
 }
 
 .mint-big-button__icon-wrap {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
   width: 58px;
   height: 58px;
   border-radius: 18px;
@@ -5168,6 +5196,17 @@
   box-shadow:
     0 14px 22px -20px rgba(30, 41, 59, 0.82),
     inset 0 1px 0 rgba(255, 255, 255, 0.86);
+}
+
+.mint-big-button__icon-wrap::after {
+  content: "";
+  position: absolute;
+  inset: 1px;
+  border-radius: inherit;
+  pointer-events: none;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.34), rgba(255, 255, 255, 0) 58%),
+    linear-gradient(120deg, rgba(255, 255, 255, 0.24), transparent 42%);
 }
 
 .mint-big-button__copy {
@@ -5205,15 +5244,18 @@
 
 .mint-tab-nav__item--active {
   color: #155e75;
-  --mint-surface-border-local: rgba(167, 139, 250, 0.6);
-  --mint-surface-border-2-local: rgba(186, 230, 253, 0.52);
+  --mint-surface-border-local: rgba(125, 211, 252, 0.74);
+  --mint-surface-border-2-local: rgba(56, 189, 248, 0.34);
+  --mint-surface-rim-outer-local: rgba(186, 230, 253, 0.62);
+  --mint-surface-rim-inner-local: rgba(56, 189, 248, 0.28);
   --mint-surface-face-a-local: rgba(255, 255, 255, 0.94);
-  --mint-surface-face-b-local: rgba(221, 214, 254, 0.72);
-  --mint-surface-shadow-local: 0 16px 24px -20px rgba(79, 70, 229, 0.4);
-  --mint-surface-shadow-press-local: 0 8px 14px -12px rgba(79, 70, 229, 0.36);
+  --mint-surface-face-b-local: rgba(186, 230, 253, 0.78);
+  --mint-surface-shadow-local: 0 14px 22px -18px rgba(3, 105, 161, 0.35);
+  --mint-surface-shadow-press-local: 0 7px 12px -10px rgba(3, 105, 161, 0.34);
+  --mint-surface-specular-opacity-local: 0.22;
   box-shadow:
-    0 0 0 2px rgba(167, 139, 250, 0.22),
-    0 14px 20px -18px rgba(79, 70, 229, 0.42),
+    0 0 0 2px rgba(125, 211, 252, 0.22),
+    0 12px 18px -16px rgba(3, 105, 161, 0.36),
     inset 0 1px 0 rgba(255, 255, 255, 0.92);
 }
 
@@ -6616,6 +6658,184 @@
     linear-gradient(180deg, rgba(255, 255, 255, 0.88), rgba(239, 246, 255, 0.72));
 }
 
+/* Ruleset picker material (Mint) */
+.mint-ruleset-picker {
+  --mint-ruleset-border: rgba(186, 230, 253, 0.7);
+  --mint-ruleset-border-strong: rgba(125, 211, 252, 0.74);
+  --mint-ruleset-text: #334155;
+  --mint-ruleset-text-strong: #0f172a;
+  --mint-ruleset-surface: linear-gradient(180deg, rgba(255, 255, 255, 0.94), rgba(239, 246, 255, 0.84));
+  --mint-ruleset-chip-surface: linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(241, 245, 249, 0.86));
+  --mint-ruleset-chip-active: linear-gradient(180deg, rgba(236, 253, 245, 0.96), rgba(209, 250, 229, 0.88));
+  display: grid;
+  gap: 10px;
+  border-radius: 14px;
+  border: 1px solid var(--mint-ruleset-border);
+  padding: 12px;
+  background:
+    radial-gradient(circle at 8% -30%, rgba(167, 243, 208, 0.24), transparent 48%),
+    var(--mint-ruleset-surface);
+}
+
+.mint-ruleset-picker__title {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--mint-ruleset-text);
+}
+
+.mint-ruleset-picker__family {
+  display: inline-flex;
+  flex-wrap: wrap;
+  width: 100%;
+  gap: 4px;
+  border-radius: 12px;
+  border: 1px solid var(--mint-ruleset-border);
+  background: rgba(255, 255, 255, 0.85);
+  padding: 4px;
+}
+
+.mint-ruleset-picker__segment {
+  border: 1px solid transparent;
+  border-radius: 10px;
+  padding: 8px 12px;
+  background: transparent;
+  color: var(--mint-ruleset-text);
+  font-size: 12px;
+  line-height: 1;
+  font-weight: 700;
+  transition: background-color 160ms ease, border-color 160ms ease, color 160ms ease;
+}
+
+.mint-ruleset-picker__segment:hover:not(:disabled) {
+  border-color: rgba(191, 219, 254, 0.72);
+  background: rgba(239, 246, 255, 0.8);
+}
+
+.mint-ruleset-picker__segment--active {
+  border-color: var(--mint-ruleset-border-strong);
+  color: var(--mint-ruleset-text-strong);
+  background: linear-gradient(180deg, rgba(240, 253, 250, 0.98), rgba(224, 242, 254, 0.9));
+}
+
+.mint-ruleset-picker__summary {
+  border-radius: 10px;
+  border: 1px solid var(--mint-ruleset-border);
+  background: rgba(255, 255, 255, 0.88);
+  color: var(--mint-ruleset-text);
+  font-size: 12px;
+  padding: 8px 10px;
+}
+
+.mint-ruleset-picker__summary-key {
+  color: var(--mint-ruleset-text-strong);
+  font-weight: 700;
+}
+
+.mint-ruleset-picker__classic-panel {
+  display: grid;
+  gap: 10px;
+  border-radius: 12px;
+  border: 1px solid var(--mint-ruleset-border);
+  background:
+    radial-gradient(circle at 0% -20%, rgba(191, 219, 254, 0.18), transparent 48%),
+    rgba(255, 255, 255, 0.86);
+  padding: 10px;
+}
+
+.mint-ruleset-picker__custom-grid {
+  display: grid;
+  gap: 10px;
+}
+
+.mint-ruleset-picker__group {
+  display: grid;
+  gap: 6px;
+}
+
+.mint-ruleset-picker__group-title {
+  color: #64748b;
+  font-size: 11px;
+  line-height: 1.2;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.mint-ruleset-picker__chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.mint-ruleset-picker__chip {
+  border: 1px solid var(--mint-ruleset-border);
+  border-radius: 10px;
+  padding: 5px 9px;
+  background: var(--mint-ruleset-chip-surface);
+  color: var(--mint-ruleset-text);
+  font-size: 12px;
+  line-height: 1;
+  font-weight: 600;
+  transition: background-color 160ms ease, border-color 160ms ease, color 160ms ease;
+}
+
+.mint-ruleset-picker__chip:hover:not(:disabled) {
+  border-color: var(--mint-ruleset-border-strong);
+}
+
+.mint-ruleset-picker__chip--active {
+  border-color: rgba(52, 211, 153, 0.7);
+  color: #065f46;
+  background: var(--mint-ruleset-chip-active);
+}
+
+.mint-ruleset-picker__toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid var(--mint-ruleset-border);
+  border-radius: 10px;
+  padding: 6px 9px;
+  background: rgba(248, 250, 252, 0.88);
+  color: #334155;
+  font-size: 12px;
+  line-height: 1.1;
+}
+
+.mint-ruleset-picker__toggle input {
+  accent-color: #0ea5e9;
+}
+
+.mint-ruleset-picker__help {
+  border-radius: 10px;
+  border: 1px solid rgba(226, 232, 240, 0.9);
+  background: rgba(248, 250, 252, 0.82);
+  color: #475569;
+  font-size: 12px;
+  padding: 8px 10px;
+}
+
+.mint-ruleset-picker__help-summary {
+  cursor: pointer;
+  font-weight: 700;
+  color: #334155;
+}
+
+.mint-ruleset-picker__help-body {
+  margin-top: 4px;
+}
+
+.mint-ruleset-picker button:disabled,
+.mint-ruleset-picker input:disabled {
+  cursor: not-allowed;
+  opacity: 0.62;
+}
+
+[data-vfx="off"] .mint-ruleset-picker,
+[data-vfx="off"] .mint-ruleset-picker__classic-panel {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.94), rgba(241, 245, 249, 0.9));
+}
+
 /* Match board-side visual polish for Mint mode */
 [data-theme="mint"] .mint-match-board-shell {
   border-radius: 20px;
@@ -6708,7 +6928,9 @@
   [data-theme="mint"] .mint-match-quick-commit,
   [data-theme="mint"] .mint-events-summary__item,
   [data-theme="mint"] .mint-replay-summary__item,
-  [data-theme="mint"] .mint-stream-summary__item {
+  [data-theme="mint"] .mint-stream-summary__item,
+  .mint-ruleset-picker__segment,
+  .mint-ruleset-picker__chip {
     transition: none !important;
   }
 }

@@ -3491,3 +3491,38 @@
   - Research/Optional 3 items
   - MintRulesetPicker token-splitting consideration
   - Full Playwright E2E environment blocker (`spawn EPERM`)
+
+## 2026-02-18 - Mint ruleset picker tokenization follow-up
+
+### What
+- `apps/web/src/components/match/MintRulesetPicker.tsx`
+  - Replaced inline utility-first class strings with semantic class names (`mint-ruleset-picker__*`).
+  - Kept `data-testid` attributes and ruleset behavior unchanged.
+- `apps/web/src/mint-theme/mint-theme.css`
+  - Added Mint material class block for ruleset picker (family segments, chips, custom toggle chips, summary/help areas).
+  - Added `prefers-reduced-motion` transition suppression for new controls.
+  - Added `data-vfx=off` visual fallback for new surfaces.
+
+### Verify
+- `pnpm -C apps/web test` OK
+- `pnpm -C apps/web typecheck` OK
+- `pnpm -C apps/web build` OK
+## 2026-02-18 - Mint material v4 follow-up (buttons / tabs / panels)
+
+### What
+- `apps/web/src/mint-theme/mint-theme.css`
+  - Upgraded `.mint-ui-pressable` material layering with dual rim, inner reflection, tuned specular, and stronger press shadow collapse.
+  - Reduced "white film" look by lowering specular opacity and improving face contrast per tone variant.
+  - Updated `--primary/--soft/--ghost` tone variables to keep readable color density.
+  - Updated `.mint-big-button` and `.mint-big-button__icon-wrap` to share the same material language.
+  - Updated `.mint-tab-nav__item--active` so selected state reads as "selected" (face + rim + glow), not simply pressed.
+- `apps/web/playwright.config.ts`
+  - Added `workers` resolution with `PW_WORKERS` override.
+  - Added Windows default worker cap (2) to mitigate local `spawn EPERM` incidents.
+
+### Verify
+- `pnpm -C apps/web test` OK
+- `pnpm -C apps/web typecheck` OK
+- `pnpm -C apps/web build` OK
+- `pnpm.cmd -C apps/web e2e:ux` OK
+- `pnpm.cmd -C apps/web e2e` NG in this environment (`spawn EPERM`)

@@ -44,17 +44,19 @@ function resolveRulesetFamily(rulesetKey: RulesetKey): RulesetFamily {
 
 function segmentButtonClass(active: boolean): string {
   return [
-    "rounded-md px-3 py-2 text-xs font-semibold transition",
-    active ? "bg-slate-900 text-white" : "text-slate-700 hover:bg-slate-100",
+    "mint-ruleset-picker__segment",
+    "mint-pressable",
+    "mint-pressable--pill",
+    active ? "mint-ruleset-picker__segment--active" : "",
   ].join(" ");
 }
 
 function smallChipClass(active: boolean): string {
   return [
-    "rounded-md border px-2 py-1 text-xs transition",
-    active
-      ? "border-emerald-300 bg-emerald-50 text-emerald-800"
-      : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50",
+    "mint-ruleset-picker__chip",
+    "mint-pressable",
+    "mint-pressable--pill",
+    active ? "mint-ruleset-picker__chip--active" : "",
   ].join(" ");
 }
 
@@ -100,13 +102,13 @@ export function MintRulesetPicker(props: MintRulesetPickerProps) {
 
   return (
     <section
-      className="grid gap-3 rounded-lg border border-slate-200 bg-slate-50 p-3"
+      className="mint-ruleset-picker"
       data-testid="mint-ruleset-picker"
       aria-label="Rules setup panel"
     >
-      <div className="text-xs font-medium text-slate-700">ルール設定</div>
+      <div className="mint-ruleset-picker__title">ルール設定</div>
 
-      <div className="inline-flex w-full flex-wrap rounded-lg border border-slate-200 bg-white p-1" role="radiogroup" aria-label="Ruleset family">
+      <div className="mint-ruleset-picker__family" role="radiogroup" aria-label="Ruleset family">
         <button
           type="button"
           className={segmentButtonClass(family === "v1")}
@@ -149,13 +151,13 @@ export function MintRulesetPicker(props: MintRulesetPickerProps) {
         </button>
       </div>
 
-      <div className="rounded-md border border-slate-200 bg-white px-3 py-2 text-xs text-slate-600" data-testid="mint-ruleset-current-summary">
-        <span className="font-semibold text-slate-900">現在:</span> {summaryText}
+      <div className="mint-ruleset-picker__summary" data-testid="mint-ruleset-current-summary">
+        <span className="mint-ruleset-picker__summary-key">現在:</span> {summaryText}
       </div>
 
       {family === "classic" ? (
-        <div className="grid gap-3 rounded-md border border-slate-200 bg-white p-3">
-          <div className="flex flex-wrap items-center gap-2" role="radiogroup" aria-label="Classic setup mode">
+        <div className="mint-ruleset-picker__classic-panel">
+          <div className="mint-ruleset-picker__chip-row" role="radiogroup" aria-label="Classic setup mode">
             <button
               type="button"
               className={smallChipClass(!isClassicCustom)}
@@ -177,7 +179,7 @@ export function MintRulesetPicker(props: MintRulesetPickerProps) {
           </div>
 
           {!isClassicCustom ? (
-            <div className="flex flex-wrap gap-2">
+            <div className="mint-ruleset-picker__chip-row">
               {CLASSIC_PRESETS.filter((item) => item.key !== "classic_custom").map((item) => (
                 <button
                   key={item.key}
@@ -192,54 +194,54 @@ export function MintRulesetPicker(props: MintRulesetPickerProps) {
               ))}
             </div>
           ) : (
-            <div className="grid gap-3">
-              <div className="grid gap-2">
-                <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">トグル</div>
-                <div className="flex flex-wrap gap-2">
-                  <label className="inline-flex items-center gap-1 rounded-md border border-slate-200 bg-slate-50 px-2 py-1 text-xs">
+            <div className="mint-ruleset-picker__custom-grid">
+              <div className="mint-ruleset-picker__group">
+                <div className="mint-ruleset-picker__group-title">トグル</div>
+                <div className="mint-ruleset-picker__chip-row">
+                  <label className="mint-ruleset-picker__toggle">
                     <input type="checkbox" checked={classicConfig.swap} disabled={disabled} onChange={(e) => updateClassicConfig({ swap: e.target.checked })} data-testid="mint-ruleset-custom-toggle-swap" />
                     入替 (Swap)
                   </label>
-                  <label className="inline-flex items-center gap-1 rounded-md border border-slate-200 bg-slate-50 px-2 py-1 text-xs">
+                  <label className="mint-ruleset-picker__toggle">
                     <input type="checkbox" checked={classicConfig.reverse} disabled={disabled} onChange={(e) => updateClassicConfig({ reverse: e.target.checked })} data-testid="mint-ruleset-custom-toggle-reverse" />
                     反転 (Reverse)
                   </label>
-                  <label className="inline-flex items-center gap-1 rounded-md border border-slate-200 bg-slate-50 px-2 py-1 text-xs">
+                  <label className="mint-ruleset-picker__toggle">
                     <input type="checkbox" checked={classicConfig.aceKiller} disabled={disabled} onChange={(e) => updateClassicConfig({ aceKiller: e.target.checked })} data-testid="mint-ruleset-custom-toggle-ace-killer" />
                     1が10に勝つ (Ace Killer)
                   </label>
-                  <label className="inline-flex items-center gap-1 rounded-md border border-slate-200 bg-slate-50 px-2 py-1 text-xs">
+                  <label className="mint-ruleset-picker__toggle">
                     <input type="checkbox" checked={classicConfig.plus} disabled={disabled} onChange={(e) => updateClassicConfig({ plus: e.target.checked })} data-testid="mint-ruleset-custom-toggle-plus" />
                     Plus
                   </label>
-                  <label className="inline-flex items-center gap-1 rounded-md border border-slate-200 bg-slate-50 px-2 py-1 text-xs">
+                  <label className="mint-ruleset-picker__toggle">
                     <input type="checkbox" checked={classicConfig.same} disabled={disabled} onChange={(e) => updateClassicConfig({ same: e.target.checked })} data-testid="mint-ruleset-custom-toggle-same" />
                     Same
                   </label>
                 </div>
               </div>
 
-              <div className="grid gap-2">
-                <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">手札選択</div>
-                <div className="flex flex-wrap gap-2">
+              <div className="mint-ruleset-picker__group">
+                <div className="mint-ruleset-picker__group-title">手札選択</div>
+                <div className="mint-ruleset-picker__chip-row">
                   <button type="button" className={smallChipClass(!classicConfig.order && !classicConfig.chaos)} disabled={disabled} onClick={() => setCardSelection("none")} data-testid="mint-ruleset-custom-card-none">なし</button>
                   <button type="button" className={smallChipClass(classicConfig.order)} disabled={disabled} onClick={() => setCardSelection("order")} data-testid="mint-ruleset-custom-card-order">順番固定</button>
                   <button type="button" className={smallChipClass(classicConfig.chaos)} disabled={disabled} onClick={() => setCardSelection("chaos")} data-testid="mint-ruleset-custom-card-chaos">ランダム</button>
                 </div>
               </div>
 
-              <div className="grid gap-2">
-                <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">公開ルール</div>
-                <div className="flex flex-wrap gap-2">
+              <div className="mint-ruleset-picker__group">
+                <div className="mint-ruleset-picker__group-title">公開ルール</div>
+                <div className="mint-ruleset-picker__chip-row">
                   <button type="button" className={smallChipClass(!classicConfig.allOpen && !classicConfig.threeOpen)} disabled={disabled} onClick={() => setOpenRule("none")} data-testid="mint-ruleset-custom-open-none">なし</button>
                   <button type="button" className={smallChipClass(classicConfig.allOpen)} disabled={disabled} onClick={() => setOpenRule("allOpen")} data-testid="mint-ruleset-custom-open-all">全公開</button>
                   <button type="button" className={smallChipClass(classicConfig.threeOpen)} disabled={disabled} onClick={() => setOpenRule("threeOpen")} data-testid="mint-ruleset-custom-open-three">3枚公開</button>
                 </div>
               </div>
 
-              <div className="grid gap-2">
-                <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">タイプルール</div>
-                <div className="flex flex-wrap gap-2">
+              <div className="mint-ruleset-picker__group">
+                <div className="mint-ruleset-picker__group-title">タイプルール</div>
+                <div className="mint-ruleset-picker__chip-row">
                   <button type="button" className={smallChipClass(!classicConfig.typeAscend && !classicConfig.typeDescend)} disabled={disabled} onClick={() => setTypeRule("none")} data-testid="mint-ruleset-custom-type-none">なし</button>
                   <button type="button" className={smallChipClass(classicConfig.typeAscend)} disabled={disabled} onClick={() => setTypeRule("typeAscend")} data-testid="mint-ruleset-custom-type-ascend">強化</button>
                   <button type="button" className={smallChipClass(classicConfig.typeDescend)} disabled={disabled} onClick={() => setTypeRule("typeDescend")} data-testid="mint-ruleset-custom-type-descend">弱化</button>
@@ -248,9 +250,9 @@ export function MintRulesetPicker(props: MintRulesetPickerProps) {
             </div>
           )}
 
-          <details className="rounded-md border border-slate-100 bg-slate-50 px-3 py-2 text-xs text-slate-600">
-            <summary className="cursor-pointer font-medium text-slate-700">ルールヘルプ</summary>
-            <div className="mt-1">順番固定/ランダム、公開ルール、タイプルールはそれぞれ排他です。トグル系は同時に有効化できます。</div>
+          <details className="mint-ruleset-picker__help">
+            <summary className="mint-ruleset-picker__help-summary">ルールヘルプ</summary>
+            <div className="mint-ruleset-picker__help-body">順番固定/ランダム、公開ルール、タイプルールはそれぞれ排他です。トグル系は同時に有効化できます。</div>
           </details>
         </div>
       ) : null}

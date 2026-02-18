@@ -245,7 +245,7 @@
 
 ### Residual follow-ups
 - [x] Add dedicated Replay UX test for rulesetId mismatch warning pill (rk/cr fallback mismatch case).
-- [ ] Consider splitting MintRulesetPicker visual primitives into mint theme CSS tokens if further polish is required.
+- [x] Consider splitting MintRulesetPicker visual primitives into mint theme CSS tokens if further polish is required. (Done 2026-02-18)
 
 
 ## Update 2026-02-17 (follow-up)
@@ -536,3 +536,28 @@
 - [x] `pnpm -C apps/web typecheck`
 - [x] `pnpm -C apps/web build`
 - [x] `pnpm.cmd -C apps/web e2e`（未実施理由は共通課題 `spawn EPERM` に集約）
+
+## Update 2026-02-18 (Mint ruleset picker tokenization follow-up)
+
+- [x] `MintRulesetPicker` visual primitives were moved from inline utility strings to semantic Mint classes.
+- [x] Added dedicated Mint theme tokens/classes for ruleset family segments, chips, custom toggle rows, and help block.
+- [x] Preserved URL compatibility and existing test selectors (`data-testid`) with no behavior change in ruleset logic.
+- [x] Added reduced-motion and `data-vfx=off` handling for new ruleset picker surfaces.
+
+### Verification status
+- [x] `pnpm -C apps/web test`
+- [x] `pnpm -C apps/web typecheck`
+- [x] `pnpm -C apps/web build`
+## Update 2026-02-18 (Mint pressable material v4 follow-up)
+
+- [x] `mint-ui-pressable` を v4 面材に更新（rim 2層 / 内側反射 / specular / pressed shadow）。
+- [x] `mint-ui-pressable--primary/soft/ghost` の面・影・コントラストを調整し、白膜感を軽減。
+- [x] `mint-big-button` / icon wrap / `mint-tab-nav__item--active` を同じ material 系で統一。
+- [x] `playwright.config.ts` に `PW_WORKERS` 対応 + Windows 既定 worker 制限（EPERM 緩和）を追加。
+
+### Verification status
+- [x] `pnpm -C apps/web test`
+- [x] `pnpm -C apps/web typecheck`
+- [x] `pnpm -C apps/web build`
+- [x] `pnpm.cmd -C apps/web e2e:ux`
+- [ ] `pnpm.cmd -C apps/web e2e`（この環境では引き続き `spawn EPERM`）
