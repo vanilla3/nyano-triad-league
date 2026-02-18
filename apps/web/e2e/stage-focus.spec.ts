@@ -324,7 +324,7 @@ test.describe("stage routes", () => {
   test("/replay-stage keeps recovery controls when replay load fails", async ({ page }) => {
     await page.goto("/replay-stage?ui=engine&focus=1&t=invalid");
 
-    await expect(page.getByText(/Error:|エラー\s*\/\s*Error:/).first()).toBeVisible({ timeout: 30_000 });
+    await expect(page.getByText(/Error:|エラー:/).first()).toBeVisible({ timeout: 30_000 });
     await expect(page.getByRole("button", { name: /Retry load|再読込する/ })).toBeVisible({ timeout: 10_000 });
     await expect(page.getByRole("button", { name: /Clear share params|共有パラメータをクリア/ })).toBeVisible({ timeout: 10_000 });
   });

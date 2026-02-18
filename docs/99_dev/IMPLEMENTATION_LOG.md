@@ -3602,3 +3602,17 @@
 - `pnpm -C apps/web typecheck` OK
 - `pnpm -C apps/web build` OK
 - `pnpm.cmd -C apps/web e2e:ux` OK
+## 2026-02-18 - E2E text expectation compatibility fix (smoke + stage-focus)
+
+### What
+- `apps/web/e2e/smoke.spec.ts`
+  - Relaxed route smoke assertions to accept both English and Japanese page labels (`Arena/アリーナ`, `Ruleset Registry/ルールセット一覧`, `Events/イベント`).
+- `apps/web/e2e/stage-focus.spec.ts`
+  - Updated replay-load-failure assertion to match current error copy (`エラー:`) as well as existing `Error:`.
+
+### Verify
+- `pnpm -C apps/web test` OK
+- `pnpm -C apps/web typecheck` OK
+- `pnpm -C apps/web build` OK
+- `pnpm.cmd -C apps/web e2e:ux` OK
+- `pnpm -C apps/web e2e -- e2e/smoke.spec.ts e2e/stage-focus.spec.ts` NG in this environment (`spawn EPERM`)

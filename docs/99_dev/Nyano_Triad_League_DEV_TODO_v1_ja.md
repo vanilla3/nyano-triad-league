@@ -617,3 +617,14 @@
 - [x] `pnpm -C apps/web typecheck`
 - [x] `pnpm -C apps/web build`
 - [x] `pnpm.cmd -C apps/web e2e:ux`
+## Update 2026-02-18 (E2E 文言期待値の互換修正)
+
+- [x] `smoke.spec.ts` の `/arena` `/rulesets` `/events` を日英両対応の期待値へ更新。
+- [x] `stage-focus.spec.ts` の replay 読込失敗チェックを現行文言 `エラー:` でも通るよう調整。
+
+### Verification status
+- [x] `pnpm -C apps/web test`
+- [x] `pnpm -C apps/web typecheck`
+- [x] `pnpm -C apps/web build`
+- [x] `pnpm.cmd -C apps/web e2e:ux`
+- [ ] `pnpm -C apps/web e2e -- e2e/smoke.spec.ts e2e/stage-focus.spec.ts`（この環境では `spawn EPERM`）
