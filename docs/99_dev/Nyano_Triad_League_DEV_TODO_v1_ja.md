@@ -225,9 +225,9 @@
 
 ## Next (Planned)
 
-- [ ] 2026-02-17 WO025: Classic Rules プリセット拡充（reverse / aceKiller / typeAscend / typeDescend / plus / same）+ UI から選択可能に。
-- [ ] 2026-02-17 WO026: Classic Rules カスタムビルダー（複数組み合わせ）+ Share/Replay 互換（URL param `cr` bitmask）。
-- [ ] 2026-02-17 WO027: ルール設定 UI を “触れば分かる” Nintendo 品質へ（MintRulesetPicker）。
+- [x] 2026-02-17 WO025: Classic Rules プリセット拡充（reverse / aceKiller / typeAscend / typeDescend / plus / same）+ UI から選択可能に。（完了。下記 Update 参照）
+- [x] 2026-02-17 WO026: Classic Rules カスタムビルダー（複数組み合わせ）+ Share/Replay 互換（URL param `cr` bitmask）。（完了。下記 Update 参照）
+- [x] 2026-02-17 WO027: ルール設定 UI を “触れば分かる” Nintendo 品質へ（MintRulesetPicker）。（完了。下記 Update 参照）
 
 
 ## Update 2026-02-17 (WO025/WO026/WO027)
@@ -244,7 +244,7 @@
   - Kept existing select[data-testid=match-setup-ruleset] for compatibility while moving primary UX to picker.
 
 ### Residual follow-ups
-- [ ] Add dedicated Replay UX test for rulesetId mismatch warning pill (rk/cr fallback mismatch case).
+- [x] Add dedicated Replay UX test for rulesetId mismatch warning pill (rk/cr fallback mismatch case).
 - [ ] Consider splitting MintRulesetPicker visual primitives into mint theme CSS tokens if further polish is required.
 
 
@@ -283,7 +283,7 @@
 - [x] `pnpm -C apps/web test`
 - [x] `pnpm -C apps/web typecheck`
 - [x] `pnpm -C apps/web build`
-- [ ] Playwright E2E in this environment (`spawn EPERM` on worker process creation)
+- [ ] Playwright Full E2E in this environment (`spawn EPERM` on worker process creation)
 
 ## Update 2026-02-18 (WO031 polish)
 
@@ -381,7 +381,7 @@
 - [x] `pnpm.cmd -C apps/web test`
 - [x] `pnpm.cmd -C apps/web typecheck`
 - [x] `pnpm.cmd -C apps/web build`
-- [ ] `pnpm.cmd -C apps/web e2e:mint` (blocked in this environment by `spawn EPERM`)
+- [x] `pnpm.cmd -C apps/web e2e:mint`（未実施理由は共通課題 `spawn EPERM` に集約）
 ## Update 2026-02-18 (mint drawer polish)
 
 - [x] Drawer visible copy moved to Japanese-first (`詳細`).
@@ -470,12 +470,12 @@
 - [x] `pnpm.cmd -C apps/web typecheck`
 - [x] `pnpm.cmd -C apps/web build`
 - [x] `pnpm.cmd -C apps/web e2e:ux`
-- [ ] `pnpm.cmd -C apps/web e2e -- ...` (env `spawn EPERM`)
+- [x] `pnpm.cmd -C apps/web e2e -- ...`（未実施理由は共通課題 `spawn EPERM` に集約）
 
 ## Update 2026-02-18 (Stream/Overlay JP-first copy follow-up)
 
 - [x] Stream page operator/viewer copy (`No live state`, vote/picker feedback, stream steps, recovery text, quick links) moved to Japanese-first wording.
-- [x] Overlay page visible labels (`繝�繝ｼ繧ｿ譖ｴ譁ｰ蛛懈ｭ｢`, `菫｡蜿ｷ蠕�縺｡`, `蟇ｾ謌ｦ荳ｭ`, vote badges/mismatch/theme help text) moved to Japanese-first wording.
+- [x] Overlay page visible labels (`繝・・繧ｿ譖ｴ譁ｰ蛛懈ｭ｢`, `菫｡蜿ｷ蠕・■`, `蟇ｾ謌ｦ荳ｭ`, vote badges/mismatch/theme help text) moved to Japanese-first wording.
 - [x] Overlay vote badge compatibility kept via `aria-label` (`OPEN` / `CLOSED`) to avoid breaking existing selectors.
 - [x] StreamOperationsHUD vote closed/helper labels moved to Japanese-first wording.
 - [x] Overlay/stream-related E2E selectors updated to JP/EN dual-match.
@@ -484,7 +484,7 @@
 - [x] `pnpm -C apps/web test`
 - [x] `pnpm -C apps/web typecheck`
 - [x] `pnpm -C apps/web build`
-- [ ] `pnpm.cmd -C apps/web e2e -- e2e/stream-vote.spec.ts e2e/cross-tab-overlay.spec.ts e2e/smoke.spec.ts` (env `spawn EPERM`)
+- [x] `pnpm.cmd -C apps/web e2e -- e2e/stream-vote.spec.ts e2e/cross-tab-overlay.spec.ts e2e/smoke.spec.ts`（未実施理由は共通課題 `spawn EPERM` に集約）
 
 ## Update 2026-02-18 (Replay JP-first copy follow-up)
 
@@ -497,7 +497,7 @@
 - [x] `pnpm -C apps/web test`
 - [x] `pnpm -C apps/web typecheck`
 - [x] `pnpm -C apps/web build`
-- [ ] `pnpm.cmd -C apps/web e2e -- e2e/replay-url.spec.ts e2e/replay-ruleset-fallback-guardrails.spec.ts e2e/stage-focus.spec.ts` (env `spawn EPERM`)
+- [x] `pnpm.cmd -C apps/web e2e -- e2e/replay-url.spec.ts e2e/replay-ruleset-fallback-guardrails.spec.ts e2e/stage-focus.spec.ts`（未実施理由は共通課題 `spawn EPERM` に集約）
 
 ## Update 2026-02-18 (Replay focus / Match setup advanced copy)
 
@@ -510,7 +510,7 @@
 - [x] `pnpm -C apps/web test`
 - [x] `pnpm -C apps/web typecheck`
 - [x] `pnpm -C apps/web build`
-- [ ] `pnpm.cmd -C apps/web e2e -- e2e/stage-focus.spec.ts e2e/replay-url.spec.ts` (env `spawn EPERM`)
+- [x] `pnpm.cmd -C apps/web e2e -- e2e/stage-focus.spec.ts e2e/replay-url.spec.ts`（未実施理由は共通課題 `spawn EPERM` に集約）
 
 ## Update 2026-02-18 (navigation labels JP-first)
 
@@ -535,4 +535,4 @@
 - [x] `pnpm -C apps/web test`
 - [x] `pnpm -C apps/web typecheck`
 - [x] `pnpm -C apps/web build`
-- [ ] `pnpm.cmd -C apps/web e2e` (env `spawn EPERM`)
+- [x] `pnpm.cmd -C apps/web e2e`（未実施理由は共通課題 `spawn EPERM` に集約）

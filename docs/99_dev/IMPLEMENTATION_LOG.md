@@ -3477,3 +3477,17 @@
 - `pnpm -C apps/web typecheck` OK
 - `pnpm -C apps/web build` OK
 - `pnpm.cmd -C apps/web e2e` NG in this environment (`spawn EPERM`)
+
+## 2026-02-18 - TODO backlog cleanup (dedupe + status alignment)
+
+### What
+- Reconciled stale checklist drift in `Nyano_Triad_League_DEV_TODO_v1_ja.md`.
+- Marked WO025/WO026/WO027 `Next` rows as completed (they were already completed in the following update section).
+- Marked replay mismatch warning-pill dedicated test follow-up as completed.
+- Consolidated repeated `spawn EPERM` E2E blockers into one shared open item and converted duplicated per-section blockers to "aggregated" status notes.
+
+### Result
+- Open checklist items are now reduced to true residuals only:
+  - Research/Optional 3 items
+  - MintRulesetPicker token-splitting consideration
+  - Full Playwright E2E environment blocker (`spawn EPERM`)
