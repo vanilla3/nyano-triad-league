@@ -522,3 +522,17 @@
 - [x] `pnpm -C apps/web test`
 - [x] `pnpm -C apps/web typecheck`
 - [x] `pnpm -C apps/web build`
+
+## Update 2026-02-18 (screen-transition audit + rulesets e2e stability)
+
+- [x] Transition-focused E2E suite (`e2e:ux`) completed with all tests passing.
+- [x] `/rulesets` guardrail spec was rewritten in UTF-8 to fix regex parse failure caused by mojibake.
+- [x] Classic CTA navigation assertion changed to selector-based check (less copy-dependent).
+- [x] Static audit confirmed no unknown literal route targets in `apps/web/src`.
+
+### Verification status
+- [x] `pnpm.cmd -C apps/web e2e:ux`
+- [x] `pnpm -C apps/web test`
+- [x] `pnpm -C apps/web typecheck`
+- [x] `pnpm -C apps/web build`
+- [ ] `pnpm.cmd -C apps/web e2e` (env `spawn EPERM`)

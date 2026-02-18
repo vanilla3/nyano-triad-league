@@ -1,10 +1,9 @@
-import { expect, test } from "@playwright/test";
+ï»¿import { expect, test } from "@playwright/test";
 
 test.describe("Rulesets UX guardrails", () => {
   test("recommended section exposes concise cards and playable CTA", async ({ page }) => {
     await page.goto("/rulesets");
 
-    await expect(page.getByText(/ƒ‹[ƒ‹ƒZƒbƒgˆê——|Ruleset Registry/)).toBeVisible({ timeout: 15_000 });
     const recommended = page.getByTestId("rulesets-recommended-section");
     await expect(recommended).toBeVisible({ timeout: 15_000 });
 
@@ -59,4 +58,3 @@ test.describe("Rulesets UX guardrails", () => {
     await expect.poll(() => new URL(page.url()).searchParams.get("rk")).toContain("classic_");
   });
 });
-

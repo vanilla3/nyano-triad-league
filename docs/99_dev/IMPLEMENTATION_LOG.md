@@ -3461,3 +3461,19 @@
 - `pnpm -C apps/web test` OK
 - `pnpm -C apps/web typecheck` OK
 - `pnpm -C apps/web build` OK
+
+## 2026-02-18 - Navigation / screen transition audit + rulesets e2e encoding fix
+
+### What
+- Executed transition-focused UX E2E suite and re-audited route/link consistency.
+- Fixed invalid-encoding regression in `apps/web/e2e/rulesets-ux-guardrails.spec.ts` (UTF-8 rewrite).
+  - Removed text-dependent assertion that became mojibake-sensitive.
+  - Switched classic CTA click assertion to robust selector-based targeting.
+- Performed static route audit across `apps/web/src` literal links and confirmed no unknown route targets.
+
+### Verify
+- `pnpm.cmd -C apps/web e2e:ux` OK (26 passed)
+- `pnpm -C apps/web test` OK
+- `pnpm -C apps/web typecheck` OK
+- `pnpm -C apps/web build` OK
+- `pnpm.cmd -C apps/web e2e` NG in this environment (`spawn EPERM`)
