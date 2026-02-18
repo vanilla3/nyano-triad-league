@@ -3576,3 +3576,16 @@
 - `pnpm -C apps/web typecheck` OK
 - `pnpm -C apps/web build` OK
 - `pnpm.cmd -C apps/web e2e:ux` OK
+## 2026-02-18 - Replay page Japanese-first wording pass
+
+### What
+- `apps/web/src/pages/Replay.tsx`
+  - Localized replay setup labels to Japanese-first copy while keeping query-param values unchanged (`mode`/`ui` compatibility preserved).
+  - Localized replay focus VFX labels (`自動/オフ/低/中/高`) and stage feedback text.
+  - Localized compare panel labels (`エンジン v1` / `エンジン v2`) to reduce English-heavy UI.
+
+### Verify
+- `pnpm -C apps/web test` OK
+- `pnpm -C apps/web typecheck` OK
+- `pnpm -C apps/web build` OK
+- `pnpm.cmd -C apps/web e2e:ux` OK

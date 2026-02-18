@@ -595,3 +595,14 @@
 - [x] `pnpm -C apps/web typecheck`
 - [x] `pnpm -C apps/web build`
 - [x] `pnpm.cmd -C apps/web e2e:ux`
+## Update 2026-02-18 (Replay 日本語ベース文言の整理)
+
+- [x] `/replay` のモード選択・盤面UI選択の表示文言を日本語ベースへ調整（URL値は既存互換のまま）。
+- [x] フォーカス時の VFX 表示ラベルを `自動/オフ/低/中/高` に統一。
+- [x] 比較表示の見出しを `エンジン v1/v2` に統一し、英語比率を低減。
+
+### Verification status
+- [x] `pnpm -C apps/web test`
+- [x] `pnpm -C apps/web typecheck`
+- [x] `pnpm -C apps/web build`
+- [x] `pnpm.cmd -C apps/web e2e:ux`

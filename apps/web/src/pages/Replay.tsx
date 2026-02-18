@@ -127,16 +127,24 @@ function parseMode(v: string | null): Mode {
 type ReplayBoardUi = "classic" | "rpg" | "engine";
 type MatchBoardUi = "mint" | "rpg" | "engine";
 const STAGE_VFX_OPTIONS: ReadonlyArray<{ value: VfxPreference; label: string }> = [
-  { value: "auto", label: "auto" },
-  { value: "off", label: "off" },
-  { value: "low", label: "low" },
-  { value: "medium", label: "medium" },
-  { value: "high", label: "high" },
+  { value: "auto", label: "自動" },
+  { value: "off", label: "オフ" },
+  { value: "low", label: "低" },
+  { value: "medium", label: "中" },
+  { value: "high", label: "高" },
 ];
 
+function vfxQualityLabel(value: VfxQuality): string {
+  if (value === "off") return "オフ";
+  if (value === "low") return "低";
+  if (value === "medium") return "中";
+  return "高";
+}
+
 function formatStageVfxLabel(pref: VfxPreference, resolved: VfxQuality): string {
-  if (pref === "auto") return `auto (${resolved})`;
-  return pref;
+  if (pref === "auto") return `自動 (${vfxQualityLabel(resolved)})`;
+  const matched = STAGE_VFX_OPTIONS.find((option) => option.value === pref);
+  return matched?.label ?? pref;
 }
 
 function parseReplayBoardUi(v: string | null): ReplayBoardUi {
@@ -224,8 +232,8 @@ function buildNyanoReactionInput(res: MatchResultWithHistory, step: number): Nya
 }
 
 function rulesetLabelFromConfig(cfg: RulesetConfig): string {
-  if (cfg === ONCHAIN_CORE_TACTICS_SHADOW_RULESET_CONFIG_V2) return "engine v2（shadow: warning無視）";
-  return "engine v1（core+tactics）";
+  if (cfg === ONCHAIN_CORE_TACTICS_SHADOW_RULESET_CONFIG_V2) return "エンジン v2（shadow: warning無視）";
+  return "エンジン v1（core+tactics）";
 }
 
 function rulesetLabelFromRegistryConfig(cfg: RulesetConfig): string {
@@ -521,7 +529,7 @@ export function ReplayPage() {
     setResolvedVfxQuality(nextResolved);
     applyVfxQualityToDocument(nextResolved);
     playReplaySfx("card_place");
-    pushStageActionFeedback(`VFX ${formatStageVfxLabel(nextPreference, nextResolved)}`, "info");
+    pushStageActionFeedback(`表示品質 ${formatStageVfxLabel(nextPreference, nextResolved)}`, "info");
   }, [playReplaySfx, pushStageActionFeedback]);
 
   React.useEffect(() => {
@@ -1627,7 +1635,7 @@ protocolV1: {
               {isStageFocus ? (
                 <>
                   <label className="stage-focus-toolbar-speed">
-                    vfx
+                    表示品質
                     <select
                       className="stage-focus-toolbar-speed-select"
                       value={vfxPreference}
@@ -1636,7 +1644,7 @@ protocolV1: {
                     >
                       {STAGE_VFX_OPTIONS.map((option) => (
                         <option key={option.value} value={option.value}>
-                          {option.value === "auto" ? `auto (${resolvedVfxQuality})` : option.label}
+                          {option.value === "auto" ? `自動 (${vfxQualityLabel(resolvedVfxQuality)})` : option.label}
                         </option>
                       ))}
                     </select>
@@ -1746,8 +1754,8 @@ protocolV1: {
                 <span>モード</span>
                 <select className="select w-48" value={mode} onChange={(e) => setMode(parseMode(e.target.value))}>
                   <option value="auto">自動（rulesetId登録/公式）</option>
-                  <option value="v1">engine v1</option>
-                  <option value="v2">engine v2</option>
+                  <option value="v1">エンジン v1</option>
+                  <option value="v2">エンジン v2</option>
                   <option value="compare">比較</option>
                 </select>
                 <span>盤面UI</span>
@@ -1756,12 +1764,12 @@ protocolV1: {
                   value={uiMode}
                   onChange={(e) => setReplayBoardUi(parseReplayBoardUi(e.target.value))}
                 >
-                  <option value="classic">classic</option>
-                  <option value="rpg">rpg</option>
-                  <option value="engine">engine（pixi）</option>
+                  <option value="classic">クラシック</option>
+                  <option value="rpg">RPG</option>
+                  <option value="engine">エンジン（Pixi）</option>
                 </select>
                 {isEngine && compare ? (
-                  <span className="text-[11px] text-slate-500">比較モードでは classic 盤面を表示します。</span>
+                  <span className="text-[11px] text-slate-500">比較モードではクラシック盤面を表示します。</span>
                 ) : null}
                 {isEngine && !isEngineFocus ? (
                   <div className="flex flex-wrap items-center gap-2">
@@ -2157,8 +2165,8 @@ protocolV1: {
                 </div>
                 {compare ? (
                   <div className="grid gap-6 md:grid-cols-2">
-                    {renderReplay("engine v1", sim.v1)}
-                    {renderReplay("engine v2", sim.v2)}
+                    {renderReplay("エンジン v1", sim.v1)}
+                    {renderReplay("エンジン v2", sim.v2)}
                   </div>
                 ) : (
                   renderReplay(sim.currentRulesetLabel, sim.current)
