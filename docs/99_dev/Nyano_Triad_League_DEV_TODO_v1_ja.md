@@ -606,3 +606,14 @@
 - [x] `pnpm -C apps/web typecheck`
 - [x] `pnpm -C apps/web build`
 - [x] `pnpm.cmd -C apps/web e2e:ux`
+## Update 2026-02-18 (Replay 文言の日本語ベース化 追加)
+
+- [x] `/replay` サマリーのモード表示を URL 生値ではなく日本語表示へ変更。
+- [x] Pixi 失敗時の通知を日本語ベースへ調整（互換のため `Pixi renderer is unavailable.` は保持）。
+- [x] 詳細パネルの `rulesetId` / `classic` 見出しを日本語寄りに変更。
+
+### Verification status
+- [x] `pnpm -C apps/web test`
+- [x] `pnpm -C apps/web typecheck`
+- [x] `pnpm -C apps/web build`
+- [x] `pnpm.cmd -C apps/web e2e:ux`

@@ -3589,3 +3589,16 @@
 - `pnpm -C apps/web typecheck` OK
 - `pnpm -C apps/web build` OK
 - `pnpm.cmd -C apps/web e2e:ux` OK
+## 2026-02-18 - Replay Japanese copy pass (mode/status/details)
+
+### What
+- `apps/web/src/pages/Replay.tsx`
+  - Added `replayModeLabel` and switched summary mode display from raw URL values (`auto/v1/v2/compare`) to Japanese labels.
+  - Updated replay fallback notice copy to Japanese-first while preserving `Pixi renderer is unavailable.` text for compatibility.
+  - Localized detail panel labels: `rulesetId` -> `ルールセットID（rulesetId）`, `classic 入替/公開` -> `クラシック入替/公開`.
+
+### Verify
+- `pnpm -C apps/web test` OK
+- `pnpm -C apps/web typecheck` OK
+- `pnpm -C apps/web build` OK
+- `pnpm.cmd -C apps/web e2e:ux` OK

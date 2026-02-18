@@ -147,6 +147,13 @@ function formatStageVfxLabel(pref: VfxPreference, resolved: VfxQuality): string 
   return matched?.label ?? pref;
 }
 
+function replayModeLabel(mode: Mode): string {
+  if (mode === "auto") return "自動";
+  if (mode === "v1") return "エンジン v1";
+  if (mode === "v2") return "エンジン v2";
+  return "比較";
+}
+
 function parseReplayBoardUi(v: string | null): ReplayBoardUi {
   if (v === "rpg") return "rpg";
   if (v === "engine") return "engine";
@@ -1304,7 +1311,7 @@ protocolV1: {
         {isEngine && !compare && engineRendererFailed ? (
           <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900">
             <span title={engineRendererError ?? undefined}>
-              Pixi renderer が利用できないため、Mint fallback board を表示しています。Pixi renderer is unavailable.
+              Pixi renderer が利用できないため、Mint 盤面へフォールバックして表示しています。Pixi renderer is unavailable.
             </span>
             <button
               type="button"
@@ -1510,7 +1517,7 @@ protocolV1: {
           </GlassPanel>
           <GlassPanel variant="pill" className="mint-replay-summary__item mint-replay-summary__item--wide">
             <span className="mint-replay-summary__label">モード</span>
-            <span className="mint-replay-summary__value">{mode} | {phaseInfo.label} | {isPlaying ? "再生中" : "停止中"}</span>
+            <span className="mint-replay-summary__value">{replayModeLabel(mode)} | {phaseInfo.label} | {isPlaying ? "再生中" : "停止中"}</span>
           </GlassPanel>
           <GlassPanel variant="pill" className="mint-replay-summary__item mint-replay-summary__item--wide">
             <span className="mint-replay-summary__label">手順状態</span>
@@ -2297,7 +2304,7 @@ protocolV1: {
 
                       <div className="mt-2 grid min-w-0 gap-2 text-xs text-slate-600">
                         <div className="min-w-0">
-                          <span className="font-medium">rulesetId</span>: <code className="font-mono break-all">{sim.transcript.header.rulesetId}</code>
+                          <span className="font-medium">ルールセットID（rulesetId）</span>: <code className="font-mono break-all">{sim.transcript.header.rulesetId}</code>
                         </div>
                         {sim.rulesetIdMismatchWarning ? (
                           <div className="rounded-md border border-amber-300 bg-amber-50 px-2 py-1 text-[11px] font-medium text-amber-800">
@@ -2306,12 +2313,12 @@ protocolV1: {
                         ) : null}
                         {replayClassicSwap ? (
                           <div>
-                            <span className="font-medium">classic 入替</span>: A{replayClassicSwap.aIndex + 1} ↔ B{replayClassicSwap.bIndex + 1}
+                            <span className="font-medium">クラシック入替</span>: A{replayClassicSwap.aIndex + 1} ↔ B{replayClassicSwap.bIndex + 1}
                           </div>
                         ) : null}
                         {replayClassicOpen ? (
                           <div>
-                            <span className="font-medium">classic 公開</span>: {replayClassicOpen.mode === "all_open"
+                            <span className="font-medium">クラシック公開</span>: {replayClassicOpen.mode === "all_open"
                               ? "全カード公開"
                               : `A[${formatClassicOpenSlots(replayClassicOpen.playerA)}] / B[${formatClassicOpenSlots(replayClassicOpen.playerB)}]`}
                           </div>
