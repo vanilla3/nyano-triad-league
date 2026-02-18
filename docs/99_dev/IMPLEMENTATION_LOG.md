@@ -3526,3 +3526,53 @@
 - `pnpm -C apps/web build` OK
 - `pnpm.cmd -C apps/web e2e:ux` OK
 - `pnpm.cmd -C apps/web e2e` NG in this environment (`spawn EPERM`)
+## 2026-02-18 - CardBrowser Mint quick-filter pills
+
+### What
+- `apps/web/src/components/CardBrowserMint.tsx`
+  - Added quick hand filter pills (`すべて/グー/チョキ/パー`) using `MintPressable`.
+  - Preserved existing hand `<select>` for compatibility and wired both controls to a shared `applyHandFilter` path.
+  - Added `data-testid="mint-card-browser-hand-pill-*"` for stable E2E hooks.
+- `apps/web/src/mint-theme/mint-theme.css`
+  - Added browser filter layout classes for quick-filter pills (`mint-card-browser__hand-pills`, `__hand-pill`, `__field--wide`).
+  - Added responsive grid handling for the widened hand-filter field.
+- `apps/web/e2e/mint-app-screens-guardrails.spec.ts`
+  - Updated Decks filter interaction to click quick pill (`パー`) and assert chip update.
+
+### Verify
+- `pnpm -C apps/web test` OK
+- `pnpm -C apps/web typecheck` OK
+- `pnpm -C apps/web build` OK
+- `pnpm.cmd -C apps/web e2e:ux` OK
+- `pnpm.cmd -C apps/web e2e:mint` NG in this environment (`spawn EPERM`)
+## 2026-02-18 - CardBrowser Mint edge quick presets + reset affordance
+
+### What
+- `apps/web/src/components/CardBrowserMint.tsx`
+  - Added quick edge presets (`0/10/20/30/40`) as `MintPressable` pills.
+  - Added unified reset action (`条件リセット`) for hand filter, edge filter, and search query.
+  - Refactored filter updates through `applyHandFilter` / `applyMinEdge` to keep pagination reset behavior consistent.
+- `apps/web/src/mint-theme/mint-theme.css`
+  - Added classes for edge preset pills and reset button placement (`mint-card-browser__edge-*`, `__reset`).
+  - Kept mobile layout stable with responsive updates for widened filter fields.
+- `apps/web/e2e/mint-app-screens-guardrails.spec.ts`
+  - Added interactions/assertions for edge preset pill selection and reset action.
+
+### Verify
+- `pnpm -C apps/web test` OK
+- `pnpm -C apps/web typecheck` OK
+- `pnpm -C apps/web build` OK
+- `pnpm.cmd -C apps/web e2e:ux` OK## 2026-02-18 - CardBrowser quick filter semantics + tutorial heading clarification
+
+### What
+- `apps/web/src/components/CardBrowserMint.tsx`
+  - Updated quick-filter container semantics from `radiogroup` to `group` to align with button-based controls (`aria-pressed`).
+  - Kept existing URL/state behavior unchanged and retained test selectors.
+- `apps/web/src/components/MiniTutorial.tsx`
+  - Clarified heading copy from a generic "3 steps" phrase to "1 turn flow (3 steps)" to avoid confusion with home onboarding steps.
+
+### Verify
+- `pnpm -C apps/web test` OK
+- `pnpm -C apps/web typecheck` OK
+- `pnpm -C apps/web build` OK
+- `pnpm.cmd -C apps/web e2e:ux` OK

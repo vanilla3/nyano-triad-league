@@ -15,6 +15,7 @@ const HAND_OPTIONS: { value: JankenHand | -1; label: string }[] = [
 ];
 
 const PAGE_SIZE = 50;
+const EDGE_PRESET_OPTIONS = [0, 10, 20, 30, 40] as const;
 
 type CardBrowserMintProps = {
   index: GameIndexV1;
@@ -80,19 +81,49 @@ export function CardBrowserMint({
   }, [index, visibleResults]);
 
   const hasMore = visibleCount < results.length;
+  const applyHandFilter = React.useCallback((next: JankenHand | -1) => {
+    setHandFilter(next);
+    setVisibleCount(PAGE_SIZE);
+  }, []);
+  const applyMinEdge = React.useCallback((next: number) => {
+    setMinEdgeSum(next);
+    setVisibleCount(PAGE_SIZE);
+  }, []);
+  const resetFilters = React.useCallback(() => {
+    setHandFilter(-1);
+    setMinEdgeSum(0);
+    setQuery("");
+    setVisibleCount(PAGE_SIZE);
+  }, []);
 
   return (
     <div className={["mint-card-browser", className].join(" ").trim()}>
       <div className="mint-card-browser__filters">
-        <label className="mint-card-browser__field">
+        <label className="mint-card-browser__field mint-card-browser__field--wide">
           <span className="mint-card-browser__label">手札タイプ</span>
+          <div className="mint-card-browser__hand-pills" role="group" aria-label="手札タイプクイック選択">
+            {HAND_OPTIONS.map((option) => {
+              const active = handFilter === option.value;
+              return (
+                <MintPressable
+                  key={option.value}
+                  size="sm"
+                  tone={active ? "primary" : "soft"}
+                  className={["mint-card-browser__hand-pill", active ? "mint-card-browser__hand-pill--active" : ""].join(" ").trim()}
+                  aria-pressed={active}
+                  data-testid={`mint-card-browser-hand-pill-${option.value}`}
+                  onClick={() => applyHandFilter(option.value)}
+                >
+                  {option.label}
+                </MintPressable>
+              );
+            })}
+          </div>
           <select
             className="mint-card-browser__select"
             value={handFilter}
-            onChange={(event) => {
-              setHandFilter(Number(event.target.value) as JankenHand | -1);
-              setVisibleCount(PAGE_SIZE);
-            }}
+            aria-label="手札タイプ（詳細）"
+            onChange={(event) => applyHandFilter(Number(event.target.value) as JankenHand | -1)}
           >
             {HAND_OPTIONS.map((option) => (
               <option key={option.value} value={option.value}>
@@ -104,6 +135,24 @@ export function CardBrowserMint({
 
         <label className="mint-card-browser__field">
           <span className="mint-card-browser__label">最低エッジ合計: {minEdgeSum}</span>
+          <div className="mint-card-browser__edge-pills" role="group" aria-label="最低エッジクイック選択">
+            {EDGE_PRESET_OPTIONS.map((edge) => {
+              const active = minEdgeSum === edge;
+              return (
+                <MintPressable
+                  key={edge}
+                  size="sm"
+                  tone={active ? "primary" : "soft"}
+                  className={["mint-card-browser__edge-pill", active ? "mint-card-browser__edge-pill--active" : ""].join(" ").trim()}
+                  aria-pressed={active}
+                  data-testid={`mint-card-browser-edge-pill-${edge}`}
+                  onClick={() => applyMinEdge(edge)}
+                >
+                  {edge}
+                </MintPressable>
+              );
+            })}
+          </div>
           <input
             className="mint-card-browser__range"
             type="range"
@@ -111,10 +160,7 @@ export function CardBrowserMint({
             max={40}
             step={1}
             value={minEdgeSum}
-            onChange={(event) => {
-              setMinEdgeSum(Number(event.target.value));
-              setVisibleCount(PAGE_SIZE);
-            }}
+            onChange={(event) => applyMinEdge(Number(event.target.value))}
           />
         </label>
 
@@ -137,6 +183,16 @@ export function CardBrowserMint({
         <span className="mint-card-browser__chip">最低エッジ: {minEdgeSum}</span>
         {queryNormalized ? <span className="mint-card-browser__chip">検索: {queryNormalized}</span> : null}
         <span className="mint-card-browser__count">{results.length} 枚</span>
+        {(handFilter !== -1 || minEdgeSum > 0 || queryNormalized.length > 0) ? (
+          <MintPressable
+            size="sm"
+            tone="ghost"
+            className="mint-card-browser__reset"
+            onClick={resetFilters}
+          >
+            条件リセット
+          </MintPressable>
+        ) : null}
       </div>
 
       {results.length === 0 ? (

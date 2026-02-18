@@ -140,13 +140,19 @@ test.describe("Mint app screen guardrails", () => {
     const filters = page.locator(".mint-card-browser__filters").first();
     await expect(filters).toBeVisible({ timeout: 10_000 });
 
-    const handSelect = page.getByRole("combobox").first();
-    await handSelect.selectOption({ label: "パー" });
+    await page.getByTestId("mint-card-browser-hand-pill-2").first().click();
     await expect(page.getByText("手札: パー").first()).toBeVisible();
+
+    await page.getByTestId("mint-card-browser-edge-pill-20").first().click();
+    await expect(page.getByText("最低エッジ: 20").first()).toBeVisible();
 
     const queryInput = page.getByPlaceholder("tokenId または 手札タイプ");
     await queryInput.fill("1");
     await expect(page.getByText("検索: 1").first()).toBeVisible();
+
+    await page.getByRole("button", { name: "条件リセット" }).first().click();
+    await expect(page.getByText("手札: すべて").first()).toBeVisible();
+    await expect(page.getByText("最低エッジ: 0").first()).toBeVisible();
   });
 
   test("390px: Match mint screen remains interactive", async ({ page }) => {

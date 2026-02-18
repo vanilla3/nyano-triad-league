@@ -561,3 +561,37 @@
 - [x] `pnpm -C apps/web build`
 - [x] `pnpm.cmd -C apps/web e2e:ux`
 - [ ] `pnpm.cmd -C apps/web e2e`（この環境では引き続き `spawn EPERM`）
+## Update 2026-02-18 (CardBrowser Mint quick-filter pills)
+
+- [x] `CardBrowserMint` に手札タイプのクイックフィルタ（MintPressable pill）を追加。
+- [x] 既存 `select` を残して後方互換を維持しつつ、タップ導線を強化。
+- [x] フィルタ変更時の表示件数リセット挙動をクイックフィルタ/`select` で統一。
+- [x] `mint-app-screens-guardrails` にクイックフィルタ操作（パー選択）を反映。
+
+### Verification status
+- [x] `pnpm -C apps/web test`
+- [x] `pnpm -C apps/web typecheck`
+- [x] `pnpm -C apps/web build`
+- [x] `pnpm.cmd -C apps/web e2e:ux`
+- [ ] `pnpm.cmd -C apps/web e2e:mint`（この環境では `spawn EPERM` 再現）
+## Update 2026-02-18 (CardBrowser Mint edge quick presets)
+
+- [x] `最低エッジ` にクイックプリセット（0/10/20/30/40）ピルを追加。
+- [x] `手札タイプ` / `最低エッジ` / 検索語が1タップで初期化できる `条件リセット` を追加。
+- [x] フィルタ変更の state 遷移を `apply*` ヘルパーに寄せて一貫化。
+- [x] `mint-app-screens-guardrails` に最低エッジクイックピル + リセット操作の検証を追加。
+
+### Verification status
+- [x] `pnpm -C apps/web test`
+- [x] `pnpm -C apps/web typecheck`
+- [x] `pnpm -C apps/web build`
+- [x] `pnpm.cmd -C apps/web e2e:ux`## Update 2026-02-18 (CardBrowser quick filter semantics + tutorial copy)
+
+- [x] `CardBrowserMint` のクイックフィルタ容器 role を `radiogroup` から `group` に調整（button + `aria-pressed` と整合）。
+- [x] `MiniTutorial` 見出しを「1手の進め方（3ステップ）」へ変更し、ホーム導線ステップ数との混同を回避。
+
+### Verification status
+- [x] `pnpm -C apps/web test`
+- [x] `pnpm -C apps/web typecheck`
+- [x] `pnpm -C apps/web build`
+- [x] `pnpm.cmd -C apps/web e2e:ux`

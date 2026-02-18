@@ -32,7 +32,7 @@ type Props = {
 };
 
 /**
- * A mini 3-step tutorial shown on first guest match.
+ * A compact turn-flow tutorial shown on first guest match.
  * Stored in localStorage so it only appears once.
  */
 export function MiniTutorial({ onDismiss }: Props) {
@@ -49,7 +49,7 @@ export function MiniTutorial({ onDismiss }: Props) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
       <div className="w-full max-w-md rounded-2xl border border-surface-200 bg-white p-6 shadow-lg">
-        <div className="text-lg font-bold text-surface-900">3ステップで対戦しよう</div>
+        <div className="text-lg font-bold text-surface-900">1手の進め方（3ステップ）</div>
 
         <div className="mt-4 grid gap-3">
           <Step n={1} title="セルを選ぶ" desc="3x3盤面の空いているセルをタップします。" />
