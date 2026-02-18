@@ -4,7 +4,7 @@ test.describe("Rulesets UX guardrails", () => {
   test("recommended section exposes concise cards and playable CTA", async ({ page }) => {
     await page.goto("/rulesets");
 
-    await expect(page.getByText("Ruleset Registry")).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByText(/ルールセット一覧|Ruleset Registry/)).toBeVisible({ timeout: 15_000 });
     const recommended = page.getByTestId("rulesets-recommended-section");
     await expect(recommended).toBeVisible({ timeout: 15_000 });
 
@@ -54,8 +54,9 @@ test.describe("Rulesets UX guardrails", () => {
     await expect(page.getByTestId("rulesets-classic-card-classic_type_ascend")).toBeVisible();
     await expect(page.getByTestId("rulesets-classic-card-classic_type_descend")).toBeVisible();
 
-    await classicSection.getByRole("link", { name: "縺薙�ｮ繝ｫ繝ｼ繝ｫ縺ｧ蟇ｾ謌ｦ" }).first().click();
+    await classicSection.locator('[data-testid^="rulesets-classic-card-"] a[href*="/match?ui=mint&rk=classic_"]').first().click();
     await expect.poll(() => new URL(page.url()).pathname).toBe("/match");
     await expect.poll(() => new URL(page.url()).searchParams.get("rk")).toContain("classic_");
   });
 });
+

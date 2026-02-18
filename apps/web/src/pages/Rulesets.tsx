@@ -64,6 +64,16 @@ function sortByRecommendedOrder(a: RulesetListRow, b: RulesetListRow): number {
   return aIndex - bIndex;
 }
 
+function localizeOfficialNote(note: string): string {
+  if (note === "On-chain settlement is currently supported only for the official fixed configs below.") {
+    return "オンチェーン精算は、現在は以下の公式固定コンフィグのみ対応です。";
+  }
+  if (note === "configHash == rulesetId for v1 (ABI encoded canonical config hashed with keccak256).") {
+    return "v1 では configHash と rulesetId は一致します（ABIエンコード済み正規コンフィグの keccak256）。";
+  }
+  return note;
+}
+
 export function RulesetsPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const q = searchParams.get("q") ?? "";
@@ -104,7 +114,7 @@ export function RulesetsPage() {
     ? getRulesetMeta(selectedRulesetKey).summary
     : "ルールセットを選ぶと要約が表示されます。";
 
-  const notes = Array.isArray(OFFICIAL.notes) ? OFFICIAL.notes : [];
+  const notes = Array.isArray(OFFICIAL.notes) ? OFFICIAL.notes.map(localizeOfficialNote) : [];
 
   const setParam = React.useCallback(
     (key: string, value: string | null) => {
@@ -131,7 +141,7 @@ export function RulesetsPage() {
         <div className="card-hd">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
-              <div className="text-base font-semibold">ルールセット一覧 (Ruleset Registry)</div>
+              <div className="text-base font-semibold">ルールセット一覧</div>
               <div className="text-xs text-slate-500">
                 おすすめプリセットを素早く探して、そのまま対戦できます。
               </div>
@@ -154,8 +164,8 @@ export function RulesetsPage() {
                 className="input"
                 value={q}
                 onChange={(event) => setParam("q", event.target.value || null)}
-                placeholder="name / rulesetId / key で検索"
-                aria-label="Ruleset filter"
+                placeholder="名前 / ルールID / キー で検索"
+                aria-label="ルールセット絞り込み"
                 data-testid="rulesets-filter-input"
               />
             </div>
@@ -255,8 +265,8 @@ export function RulesetsPage() {
       {CLASSIC_KEYS.length > 0 ? (
         <section className="card" data-testid="rulesets-classic-section">
           <div className="card-hd flex items-center justify-between">
-            <div className="text-base font-semibold">Classic (Beta)</div>
-            <div className="text-xs text-slate-500">classic ルール探索向けのプリセット</div>
+            <div className="text-base font-semibold">クラシック（ベータ）</div>
+            <div className="text-xs text-slate-500">クラシック系ルールを比較しやすいプリセット集</div>
           </div>
           <div className="card-bd grid gap-3 md:grid-cols-3">
             {CLASSIC_KEYS.map((key) => {
@@ -321,8 +331,8 @@ export function RulesetsPage() {
               <tr>
                 <th className="py-2 pr-3">名前</th>
                 <th className="py-2 pr-3">要約</th>
-                <th className="py-2 pr-3">rulesetId</th>
-                <th className="py-2 pr-3">configHash</th>
+                <th className="py-2 pr-3">ルールID</th>
+                <th className="py-2 pr-3">設定ハッシュ</th>
                 <th className="py-2 pr-3">操作</th>
               </tr>
             </thead>
@@ -340,16 +350,19 @@ export function RulesetsPage() {
                     ].join(" ")}
                   >
                     <td className="py-3 pr-3">
-                      <div className="font-medium">{row.name}</div>
+                      <div className="font-medium">{meta?.title ?? row.name}</div>
                       <div className="mt-1 text-xs text-slate-500">
-                        engine #{row.engineId}
-                        {row.key ? ` ・ key=${row.key}` : " ・ key=unmapped"}
+                        公式名: {row.name}
+                      </div>
+                      <div className="mt-1 text-xs text-slate-500">
+                        エンジン #{row.engineId}
+                        {row.key ? ` ・ key=${row.key}` : " ・ キー未対応"}
                       </div>
                     </td>
 
                     <td className="py-3 pr-3">
                       <div className="text-xs text-slate-700">
-                        {meta?.summary ?? "この rulesetId のローカル要約は未登録です。"}
+                        {meta?.summary ?? "このルールIDのローカル要約は未登録です。"}
                       </div>
                     </td>
 
@@ -373,7 +386,7 @@ export function RulesetsPage() {
                           </Link>
                         ) : (
                           <span className="rounded-full border border-slate-200 bg-slate-50 px-2 py-1 text-[10px] text-slate-500">
-                            Matchリンク未対応
+                            対戦リンク未対応
                           </span>
                         )}
                         {row.key ? (
@@ -387,15 +400,15 @@ export function RulesetsPage() {
                         ) : null}
                         <button
                           className="btn btn-sm"
-                          onClick={() => copyWithToast("rulesetId", row.rulesetId)}
+                          onClick={() => copyWithToast("ルールID", row.rulesetId)}
                         >
-                          rulesetIdをコピー
+                          ルールIDをコピー
                         </button>
                         <button
                           className="btn btn-sm"
-                          onClick={() => copyWithToast("configHash", row.configHash)}
+                          onClick={() => copyWithToast("設定ハッシュ", row.configHash)}
                         >
-                          configHashをコピー
+                          設定ハッシュをコピー
                         </button>
                       </div>
                     </td>
