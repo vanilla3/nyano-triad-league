@@ -82,7 +82,7 @@ export function GameResultOverlayMint({
       titleEn: result.winner === "draw"
         ? "Draw!"
         : `Player ${result.winner === 0 ? "A" : "B"} Wins!`,
-      subtitleJa: "Game Over",
+      subtitleJa: "対戦終了",
       expression: "playful",
       titleClass: result.winner === 0
         ? "mint-result__title--victory"
@@ -131,7 +131,7 @@ export function GameResultOverlayMint({
               {result.tilesA}
             </div>
             <div style={{ fontSize: 12, color: "var(--mint-pa)", fontWeight: 700, marginTop: 4 }}>
-              Player A
+              プレイヤーA
             </div>
           </div>
 
@@ -142,7 +142,7 @@ export function GameResultOverlayMint({
               {result.tilesB}
             </div>
             <div style={{ fontSize: 12, color: "var(--mint-pb)", fontWeight: 700, marginTop: 4 }}>
-              Player B
+              プレイヤーB
             </div>
           </div>
         </div>
@@ -156,7 +156,7 @@ export function GameResultOverlayMint({
               <div className="mint-result__summary-line">
                 <span className="mint-result__summary-icon">⭐</span>
                 <span className="mint-result__summary-text">
-                  Best: Turn {best.turnIndex + 1}
+                  ベスト: 手 {best.turnIndex + 1}
                 </span>
                 <span className={`mint-result__quality mint-result__quality--${best.quality.toLowerCase()}`}>
                   {QUALITY_DISPLAY[best.quality].ja}
@@ -166,7 +166,7 @@ export function GameResultOverlayMint({
                 <div className="mint-result__summary-line">
                   <span className="mint-result__summary-icon">⚠️</span>
                   <span className="mint-result__summary-text">
-                    Risk: Turn {worst.turnIndex + 1}
+                    注意: 手 {worst.turnIndex + 1}
                   </span>
                   <span className={`mint-result__quality mint-result__quality--${worst.quality.toLowerCase()}`}>
                     {QUALITY_DISPLAY[worst.quality].ja}

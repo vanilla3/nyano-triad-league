@@ -271,3 +271,254 @@
 - [x] 2026-02-18 onboarding copy follow-up: Home/Start ? "3??????" ??????2?????? + 3????????home E2E ? test/typecheck/build ???
 - [x] 2026-02-18 Home UX cleanup: onboarding card ????/???/?????????????????????????debug=1 ???????home e2e + test/typecheck/build ???
 - [x] 2026-02-18 Start UX cleanup: Start ???????????????????2??????????????????????????home e2e + test/typecheck/build ???
+
+## Update 2026-02-18 (WO028/029/030/031 follow-up)
+
+- [x] WO028 follow-up: Mint pressables/big buttons/tab-nav were upgraded to layered material v4 (rim/specular/press shadow/focus-disabled alignment, 44px mobile hit area).
+- [x] WO029 follow-up: Mint board tray vs inner material separation and empty-slot sunken treatment were strengthened, including optional slot overlay support.
+- [x] WO030 follow-up: Added CardBrowserMint and switched Decks browser usage to Mint-first UI while preserving existing card/deck logic.
+- [x] WO031 follow-up: Added optional generated asset integration tokens/layers with runtime-safe fallback when asset files are absent.
+
+### Verification status
+- [x] `pnpm -C apps/web test`
+- [x] `pnpm -C apps/web typecheck`
+- [x] `pnpm -C apps/web build`
+- [ ] Playwright E2E in this environment (`spawn EPERM` on worker process creation)
+
+## Update 2026-02-18 (WO031 polish)
+
+- [x] Updated Gemini asset generation runbook for v3 prompt batch and PowerShell execution flow.
+- [x] Added board tray generation job to `scripts/asset_prompts/nytl_ui_assets.v3.json`.
+- [x] Added placeholder PNGs under `apps/web/public/assets/gen/` so Mint CSS asset references avoid 404 noise even before real generation.
+- [x] Added Decks Mint CardBrowser checks to `e2e/mint-app-screens-guardrails.spec.ts`.
+- [x] Added `CardBrowserMint` unit export smoke tests.
+- [x] Updated ExecPlan 011 progress/decision/outcome sections.
+
+### Verification status
+- [x] `pnpm -C apps/web test`
+- [x] `pnpm -C apps/web typecheck`
+- [x] `pnpm -C apps/web build`
+
+## Update 2026-02-18 (Mint QA path hardening)
+
+- [x] Added `e2e:mint` npm script for Mint-focused Playwright suites.
+- [x] Added Decks mint browser interaction assertions in mint guardrails.
+
+### Verification status
+- [x] `pnpm -C apps/web test`
+- [x] `pnpm -C apps/web typecheck`
+- [x] `pnpm -C apps/web build`
+
+## Update 2026-02-18 (copy polish follow-up)
+
+- [x] Start footer completion copy was changed to Japanese-first player wording.
+- [x] Replay result footer label was changed from ambiguous completion tag to explicit playback position.
+
+### Verification status
+- [x] `pnpm -C apps/web test`
+- [x] `pnpm -C apps/web typecheck`
+- [x] `pnpm -C apps/web build`
+
+## Update 2026-02-18 (player side panel copy polish)
+
+- [x] `PlayerSidePanelMint` remaining-card label/aria wording switched to Japanese-first.
+
+### Verification status
+- [x] `pnpm -C apps/web test`
+- [x] `pnpm -C apps/web typecheck`
+- [x] `pnpm -C apps/web build`
+
+## Update 2026-02-18 (Home 2-step + stage-focus follow-up)
+
+- [x] Home のオンボーディング導線を 2 ステップ構成へ整理し、ユーザー向けでない完了表示を削除。
+- [x] stage-focus で board と hand dock が重なるケースを CSS 側で抑制。
+- [x] stage-focus E2E の replay load/recovery を日英併記UI + 自動読込中ケースに追従。
+- [x] home E2E の期待値を 2 ステップ導線へ更新。
+
+### Verification status
+- [x] `pnpm -C apps/web test`
+- [x] `pnpm -C apps/web typecheck`
+- [x] `pnpm -C apps/web build`
+- [x] `pnpm.cmd -C apps/web e2e:ux`
+- [x] `pnpm.cmd -C apps/web e2e -- e2e/stage-focus.spec.ts`
+
+## Update 2026-02-18 (JP copy follow-up + stage-focus recovery stabilization)
+
+- [x] Start を2ステップ導線へ統一（3ステップ目カードを削除）。
+- [x] Match のフォーカスUI文言を日本語ベース化しつつ、E2E互換の英語aria-labelを維持。
+- [x] Replay のフォーカス操作フィードバック文言を日本語ベース化。
+- [x] Stream の Quick nav / Step 見出し / Broadcast説明を日本語ベース化。
+- [x] stage-focus recovery E2E を `t=invalid` ベースの決定論的失敗ケースへ変更し、フレークを抑制。
+
+### Verification status
+- [x] `pnpm -C apps/web test`
+- [x] `pnpm -C apps/web typecheck`
+- [x] `pnpm -C apps/web build`
+- [x] `pnpm.cmd -C apps/web e2e:ux`
+- [x] `pnpm.cmd -C apps/web e2e -- e2e/stage-focus.spec.ts`
+
+## Update 2026-02-18 (JP copy cleanup: Match/Replay)
+
+- [x] Match stage-focus default feedback text changed from `準備完了` to `操作を選択してください`.
+- [x] Match visible commit labels changed to Japanese-first (`確定 (Commit)`), keeping existing English aria-label compatibility.
+- [x] Replay initial empty-state message changed to Japanese-first with English parenthetical.
+- [x] Replay overlay toast labels and stream-tool labels changed to Japanese-first (`オーバーレイ (Overlay)`).
+- [x] Replay stage-focus default feedback text changed from `準備完了` to `操作を選択してください`.
+
+### Verification status
+- [x] `pnpm -C apps/web test`
+- [x] `pnpm -C apps/web typecheck`
+- [x] `pnpm -C apps/web build`
+## Update 2026-02-18 (responsive guardrail: 390/768/1200 + drawer overflow fix)
+
+- [x] Added responsive e2e guardrail for `/`, `/arena`, `/decks`, `/match?ui=mint` at 390/768/1200.
+- [x] Included `mint-app-screens-guardrails.spec.ts` in `e2e:ux` so viewport checks run continuously.
+- [x] Fixed mint match drawer closed-state overflow by introducing `.mint-drawer--closed { display: none; }`.
+- [x] Preserved existing URL behavior and match/replay compatibility; no protocol/schema changes.
+
+### Verification status
+- [x] `pnpm.cmd -C apps/web e2e:ux`
+- [x] `pnpm.cmd -C apps/web test`
+- [x] `pnpm.cmd -C apps/web typecheck`
+- [x] `pnpm.cmd -C apps/web build`
+- [ ] `pnpm.cmd -C apps/web e2e:mint` (blocked in this environment by `spawn EPERM`)
+## Update 2026-02-18 (mint drawer polish)
+
+- [x] Drawer visible copy moved to Japanese-first (`詳細`).
+- [x] Drawer toggle visual changed from `menu` text to icon-like `≡` glyph.
+- [x] Added reduced-motion + `data-vfx=off` handling for drawer/backdrop transitions.
+- [x] Added UX E2E guardrail to assert drawer transitions are disabled in reduced-motion/vfx-off mode.
+
+### Verification status
+- [x] `pnpm.cmd -C apps/web e2e:ux`
+- [x] `pnpm.cmd -C apps/web test`
+- [x] `pnpm.cmd -C apps/web typecheck`
+- [x] `pnpm.cmd -C apps/web build`
+## Update 2026-02-18 (JP-first copy pass: setup/result/share)
+
+- [x] Match setup panel visible copy moved to Japanese-first (URL/aria compatibility preserved).
+- [x] Turn log labels (`Turn/placed/flipped/...`) moved to Japanese-first.
+- [x] Result overlays (standard + mint) moved to Japanese-first for title/actions/summary labels.
+- [x] Stream share panel URL labels moved to Japanese-first.
+
+### Verification status
+- [x] `pnpm.cmd -C apps/web test`
+- [x] `pnpm.cmd -C apps/web typecheck`
+- [x] `pnpm.cmd -C apps/web build`
+- [x] `pnpm.cmd -C apps/web e2e:ux`
+
+## Update 2026-02-18 (match setup JP-first copy polish)
+
+- [x] Match setup panel heading/section labels were unified to JP-first user wording.
+- [x] Mint ruleset picker visible labels were simplified to JP-first wording.
+- [x] Home toast wording changed from 完了 to 実施済み to avoid internal-status tone.
+
+### Verification status
+- [x] `pnpm.cmd -C apps/web test`
+- [x] `pnpm.cmd -C apps/web typecheck`
+- [x] `pnpm.cmd -C apps/web build`
+- [x] `pnpm.cmd -C apps/web e2e:ux`
+
+## Update 2026-02-18 (Replay/Stream/Home JP-first copy follow-up)
+
+- [x] Replay page visible labels were aligned to JP-first wording while preserving E2E-sensitive English fallback phrases.
+- [x] Stream quick-action labels were simplified to JP-first wording.
+- [x] Home quick-play and rules guide labels were cleaned to JP-first wording.
+
+### Verification status
+- [x] `pnpm.cmd -C apps/web test`
+- [x] `pnpm.cmd -C apps/web typecheck`
+- [x] `pnpm.cmd -C apps/web build`
+- [x] `pnpm.cmd -C apps/web e2e:ux`
+
+## Update 2026-02-18 (Replay copy follow-up + fallback compatibility)
+
+- [x] Replay visible copy was further aligned to JP-first wording (対局ログJSON/対戦ID/結果系ラベル)。
+- [x] `URL fallback` 表記は UX ガードレール互換のため維持（文言回帰を回避）。
+
+### Verification status
+- [x] `pnpm.cmd -C apps/web test`
+- [x] `pnpm.cmd -C apps/web typecheck`
+- [x] `pnpm.cmd -C apps/web build`
+- [x] `pnpm.cmd -C apps/web e2e:ux`
+
+## Update 2026-02-18 (JP-first copy hardening in match/replay/stream)
+
+- [x] Localized remaining user-facing English toasts/errors in `Match.tsx` to JP-first wording.
+- [x] Localized `CopyField` action labels (`Expand/Fold/Copy/Open`) and clipboard failure messages.
+- [x] Unified visible `Classic Open` label in `Stream`/`Overlay`/`Match` details to JP-first wording.
+- [x] Preserved URL compatibility and E2E-sensitive ARIA labels (`Commit move*`, `Replay from transcript`, `URL fallback`).
+
+### Verification status
+- [x] `pnpm.cmd -C apps/web test`
+- [x] `pnpm.cmd -C apps/web typecheck`
+- [x] `pnpm.cmd -C apps/web build`
+- [x] `pnpm.cmd -C apps/web e2e:ux`
+
+## Update 2026-02-18 (JP-first copy continuation: guest/decks/stream vote/tutorial)
+
+- [x] Match guest UI and replay/hand-dock/thinking labels moved to JP-first wording.
+- [x] Match Game Index related user messages moved to JP-first wording.
+- [x] Decks page visible action labels/placeholders moved to JP-first wording (`Save/Edit/Set/Delete` etc.).
+- [x] MiniTutorial copy moved from full English to JP-first 3-step guide.
+- [x] Stream vote panel visible labels and validation messages moved to JP-first wording.
+- [x] ErrorAlert component messages moved to JP-first wording.
+- [x] Related E2E selectors were updated to JP/EN dual-match for compatibility.
+
+### Verification status
+- [x] `pnpm.cmd -C apps/web test`
+- [x] `pnpm.cmd -C apps/web typecheck`
+- [x] `pnpm.cmd -C apps/web build`
+- [x] `pnpm.cmd -C apps/web e2e:ux`
+- [ ] `pnpm.cmd -C apps/web e2e -- ...` (env `spawn EPERM`)
+
+## Update 2026-02-18 (Stream/Overlay JP-first copy follow-up)
+
+- [x] Stream page operator/viewer copy (`No live state`, vote/picker feedback, stream steps, recovery text, quick links) moved to Japanese-first wording.
+- [x] Overlay page visible labels (`繝�繝ｼ繧ｿ譖ｴ譁ｰ蛛懈ｭ｢`, `菫｡蜿ｷ蠕�縺｡`, `蟇ｾ謌ｦ荳ｭ`, vote badges/mismatch/theme help text) moved to Japanese-first wording.
+- [x] Overlay vote badge compatibility kept via `aria-label` (`OPEN` / `CLOSED`) to avoid breaking existing selectors.
+- [x] StreamOperationsHUD vote closed/helper labels moved to Japanese-first wording.
+- [x] Overlay/stream-related E2E selectors updated to JP/EN dual-match.
+
+### Verification status
+- [x] `pnpm -C apps/web test`
+- [x] `pnpm -C apps/web typecheck`
+- [x] `pnpm -C apps/web build`
+- [ ] `pnpm.cmd -C apps/web e2e -- e2e/stream-vote.spec.ts e2e/cross-tab-overlay.spec.ts e2e/smoke.spec.ts` (env `spawn EPERM`)
+
+## Update 2026-02-18 (Replay JP-first copy follow-up)
+
+- [x] Replay setup/recovery/focus visible copy moved further to Japanese-first wording.
+- [x] Removed mixed-English parenthetical labels in replay setup and focus hint messages.
+- [x] Replay-related E2E assertions were updated to JP/EN dual-match for compatibility.
+- [x] URL compatibility, transcript decode flow, and fallback rules display were kept unchanged.
+
+### Verification status
+- [x] `pnpm -C apps/web test`
+- [x] `pnpm -C apps/web typecheck`
+- [x] `pnpm -C apps/web build`
+- [ ] `pnpm.cmd -C apps/web e2e -- e2e/replay-url.spec.ts e2e/replay-ruleset-fallback-guardrails.spec.ts e2e/stage-focus.spec.ts` (env `spawn EPERM`)
+
+## Update 2026-02-18 (Replay focus / Match setup advanced copy)
+
+- [x] Replay focus toolbar/action feedback wording moved to JP-first user wording.
+- [x] Replay highlight status text simplified to JP-first display.
+- [x] Match setup advanced panel wording changed from dev-centric labels to user-facing JP labels.
+- [x] Stage-focus E2E selectors updated to JP/EN dual-match for replay focus controls.
+
+### Verification status
+- [x] `pnpm -C apps/web test`
+- [x] `pnpm -C apps/web typecheck`
+- [x] `pnpm -C apps/web build`
+- [ ] `pnpm.cmd -C apps/web e2e -- e2e/stage-focus.spec.ts e2e/replay-url.spec.ts` (env `spawn EPERM`)
+
+## Update 2026-02-18 (navigation labels JP-first)
+
+- [x] Home main menu labels were changed to Japanese-first wording.
+- [x] Events quick action labels were changed to Japanese-first wording.
+- [x] Decks tab labels were changed to Japanese-first wording.
+
+### Verification status
+- [x] `pnpm -C apps/web test`
+- [x] `pnpm -C apps/web typecheck`
+- [x] `pnpm -C apps/web build`

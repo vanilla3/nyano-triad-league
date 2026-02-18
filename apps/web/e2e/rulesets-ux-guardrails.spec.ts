@@ -43,5 +43,19 @@ test.describe("Rulesets UX guardrails", () => {
     await expect.poll(() => new URL(page.url()).searchParams.get("rk")).toBe(expectedRk);
     await expect(page.getByTestId("match-setup-panel")).toBeVisible({ timeout: 15_000 });
   });
-});
 
+  test("classic section exposes newly surfaced presets and navigates with rk", async ({ page }) => {
+    await page.goto("/rulesets");
+    const classicSection = page.getByTestId("rulesets-classic-section");
+    await expect(classicSection).toBeVisible({ timeout: 15_000 });
+
+    await expect(page.getByTestId("rulesets-classic-card-classic_reverse")).toBeVisible();
+    await expect(page.getByTestId("rulesets-classic-card-classic_ace_killer")).toBeVisible();
+    await expect(page.getByTestId("rulesets-classic-card-classic_type_ascend")).toBeVisible();
+    await expect(page.getByTestId("rulesets-classic-card-classic_type_descend")).toBeVisible();
+
+    await classicSection.getByRole("link", { name: "このルールで対戦" }).first().click();
+    await expect.poll(() => new URL(page.url()).pathname).toBe("/match");
+    await expect.poll(() => new URL(page.url()).searchParams.get("rk")).toContain("classic_");
+  });
+});

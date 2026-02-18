@@ -21,16 +21,16 @@ const CLASSIC_PRESETS: Array<{ key: Exclude<RulesetKey, "v1" | "v2" | "full">; l
   { key: "classic_plus_same", label: "Plus+Same" },
   { key: "classic_plus", label: "Plus" },
   { key: "classic_same", label: "Same" },
-  { key: "classic_reverse", label: "Reverse" },
-  { key: "classic_ace_killer", label: "Ace Killer" },
-  { key: "classic_order", label: "Order" },
-  { key: "classic_chaos", label: "Chaos" },
-  { key: "classic_swap", label: "Swap" },
-  { key: "classic_all_open", label: "All Open" },
-  { key: "classic_three_open", label: "Three Open" },
-  { key: "classic_type_ascend", label: "Type Ascend" },
-  { key: "classic_type_descend", label: "Type Descend" },
-  { key: "classic_custom", label: "Custom" },
+  { key: "classic_reverse", label: "反転" },
+  { key: "classic_ace_killer", label: "エースキラー" },
+  { key: "classic_order", label: "順番固定" },
+  { key: "classic_chaos", label: "ランダム" },
+  { key: "classic_swap", label: "入替" },
+  { key: "classic_all_open", label: "全公開" },
+  { key: "classic_three_open", label: "3枚公開" },
+  { key: "classic_type_ascend", label: "タイプ強化" },
+  { key: "classic_type_descend", label: "タイプ弱化" },
+  { key: "classic_custom", label: "カスタム" },
 ];
 
 type RulesetFamily = "v1" | "v2" | "full" | "classic";
@@ -66,7 +66,7 @@ export function MintRulesetPicker(props: MintRulesetPickerProps) {
 
   const summaryText = React.useMemo(() => {
     if (rulesetKey !== "classic_custom") return describeRulesetKey(rulesetKey);
-    if (classicRuleTags.length === 0) return "classic custom (no rules selected)";
+    if (classicRuleTags.length === 0) return "classic（custom: 未選択）";
     return `classic custom (${classicRuleTags.join(" + ")})`;
   }, [rulesetKey, classicRuleTags]);
 
@@ -99,17 +99,42 @@ export function MintRulesetPicker(props: MintRulesetPickerProps) {
   };
 
   return (
-    <section className="grid gap-3 rounded-lg border border-slate-200 bg-slate-50 p-3" data-testid="mint-ruleset-picker">
-      <div className="text-xs font-medium text-slate-700">Rules setup</div>
+    <section
+      className="grid gap-3 rounded-lg border border-slate-200 bg-slate-50 p-3"
+      data-testid="mint-ruleset-picker"
+      aria-label="Rules setup panel"
+    >
+      <div className="text-xs font-medium text-slate-700">ルール設定</div>
 
-      <div className="inline-flex w-full flex-wrap rounded-lg border border-slate-200 bg-white p-1">
-        <button type="button" className={segmentButtonClass(family === "v1")} disabled={disabled} onClick={() => onSelectRulesetKey("v1")}>
+      <div className="inline-flex w-full flex-wrap rounded-lg border border-slate-200 bg-white p-1" role="radiogroup" aria-label="Ruleset family">
+        <button
+          type="button"
+          className={segmentButtonClass(family === "v1")}
+          disabled={disabled}
+          onClick={() => onSelectRulesetKey("v1")}
+          aria-pressed={family === "v1"}
+          data-testid="mint-ruleset-family-v1"
+        >
           v1
         </button>
-        <button type="button" className={segmentButtonClass(family === "v2")} disabled={disabled} onClick={() => onSelectRulesetKey("v2")}>
+        <button
+          type="button"
+          className={segmentButtonClass(family === "v2")}
+          disabled={disabled}
+          onClick={() => onSelectRulesetKey("v2")}
+          aria-pressed={family === "v2"}
+          data-testid="mint-ruleset-family-v2"
+        >
           v2
         </button>
-        <button type="button" className={segmentButtonClass(family === "full")} disabled={disabled} onClick={() => onSelectRulesetKey("full")}>
+        <button
+          type="button"
+          className={segmentButtonClass(family === "full")}
+          disabled={disabled}
+          onClick={() => onSelectRulesetKey("full")}
+          aria-pressed={family === "full"}
+          data-testid="mint-ruleset-family-full"
+        >
           full
         </button>
         <button
@@ -117,33 +142,37 @@ export function MintRulesetPicker(props: MintRulesetPickerProps) {
           className={segmentButtonClass(family === "classic")}
           disabled={disabled}
           onClick={() => onSelectRulesetKey("classic_plus_same")}
+          aria-pressed={family === "classic"}
+          data-testid="mint-ruleset-family-classic"
         >
           classic
         </button>
       </div>
 
-      <div className="rounded-md border border-slate-200 bg-white px-3 py-2 text-xs text-slate-600">
-        <span className="font-semibold text-slate-900">Current:</span> {summaryText}
+      <div className="rounded-md border border-slate-200 bg-white px-3 py-2 text-xs text-slate-600" data-testid="mint-ruleset-current-summary">
+        <span className="font-semibold text-slate-900">現在:</span> {summaryText}
       </div>
 
       {family === "classic" ? (
         <div className="grid gap-3 rounded-md border border-slate-200 bg-white p-3">
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2" role="radiogroup" aria-label="Classic setup mode">
             <button
               type="button"
               className={smallChipClass(!isClassicCustom)}
               disabled={disabled}
               onClick={() => onSelectRulesetKey("classic_plus_same")}
+              data-testid="mint-ruleset-classic-preset-mode"
             >
-              Preset
+              プリセット
             </button>
             <button
               type="button"
               className={smallChipClass(isClassicCustom)}
               disabled={disabled}
               onClick={() => onSelectRulesetKey("classic_custom")}
+              data-testid="mint-ruleset-classic-custom-mode"
             >
-              Custom
+              カスタム
             </button>
           </div>
 
@@ -156,6 +185,7 @@ export function MintRulesetPicker(props: MintRulesetPickerProps) {
                   className={smallChipClass(rulesetKey === item.key)}
                   disabled={disabled}
                   onClick={() => onSelectRulesetKey(item.key)}
+                  data-testid={`mint-ruleset-preset-${item.key}`}
                 >
                   {item.label}
                 </button>
@@ -164,63 +194,63 @@ export function MintRulesetPicker(props: MintRulesetPickerProps) {
           ) : (
             <div className="grid gap-3">
               <div className="grid gap-2">
-                <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Toggles</div>
+                <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">トグル</div>
                 <div className="flex flex-wrap gap-2">
                   <label className="inline-flex items-center gap-1 rounded-md border border-slate-200 bg-slate-50 px-2 py-1 text-xs">
-                    <input type="checkbox" checked={classicConfig.swap} disabled={disabled} onChange={(e) => updateClassicConfig({ swap: e.target.checked })} />
-                    Swap
+                    <input type="checkbox" checked={classicConfig.swap} disabled={disabled} onChange={(e) => updateClassicConfig({ swap: e.target.checked })} data-testid="mint-ruleset-custom-toggle-swap" />
+                    入替 (Swap)
                   </label>
                   <label className="inline-flex items-center gap-1 rounded-md border border-slate-200 bg-slate-50 px-2 py-1 text-xs">
-                    <input type="checkbox" checked={classicConfig.reverse} disabled={disabled} onChange={(e) => updateClassicConfig({ reverse: e.target.checked })} />
-                    Reverse
+                    <input type="checkbox" checked={classicConfig.reverse} disabled={disabled} onChange={(e) => updateClassicConfig({ reverse: e.target.checked })} data-testid="mint-ruleset-custom-toggle-reverse" />
+                    反転 (Reverse)
                   </label>
                   <label className="inline-flex items-center gap-1 rounded-md border border-slate-200 bg-slate-50 px-2 py-1 text-xs">
-                    <input type="checkbox" checked={classicConfig.aceKiller} disabled={disabled} onChange={(e) => updateClassicConfig({ aceKiller: e.target.checked })} />
-                    Ace Killer
+                    <input type="checkbox" checked={classicConfig.aceKiller} disabled={disabled} onChange={(e) => updateClassicConfig({ aceKiller: e.target.checked })} data-testid="mint-ruleset-custom-toggle-ace-killer" />
+                    1が10に勝つ (Ace Killer)
                   </label>
                   <label className="inline-flex items-center gap-1 rounded-md border border-slate-200 bg-slate-50 px-2 py-1 text-xs">
-                    <input type="checkbox" checked={classicConfig.plus} disabled={disabled} onChange={(e) => updateClassicConfig({ plus: e.target.checked })} />
+                    <input type="checkbox" checked={classicConfig.plus} disabled={disabled} onChange={(e) => updateClassicConfig({ plus: e.target.checked })} data-testid="mint-ruleset-custom-toggle-plus" />
                     Plus
                   </label>
                   <label className="inline-flex items-center gap-1 rounded-md border border-slate-200 bg-slate-50 px-2 py-1 text-xs">
-                    <input type="checkbox" checked={classicConfig.same} disabled={disabled} onChange={(e) => updateClassicConfig({ same: e.target.checked })} />
+                    <input type="checkbox" checked={classicConfig.same} disabled={disabled} onChange={(e) => updateClassicConfig({ same: e.target.checked })} data-testid="mint-ruleset-custom-toggle-same" />
                     Same
                   </label>
                 </div>
               </div>
 
               <div className="grid gap-2">
-                <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Card selection</div>
+                <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">手札選択</div>
                 <div className="flex flex-wrap gap-2">
-                  <button type="button" className={smallChipClass(!classicConfig.order && !classicConfig.chaos)} disabled={disabled} onClick={() => setCardSelection("none")}>None</button>
-                  <button type="button" className={smallChipClass(classicConfig.order)} disabled={disabled} onClick={() => setCardSelection("order")}>Order</button>
-                  <button type="button" className={smallChipClass(classicConfig.chaos)} disabled={disabled} onClick={() => setCardSelection("chaos")}>Chaos</button>
+                  <button type="button" className={smallChipClass(!classicConfig.order && !classicConfig.chaos)} disabled={disabled} onClick={() => setCardSelection("none")} data-testid="mint-ruleset-custom-card-none">なし</button>
+                  <button type="button" className={smallChipClass(classicConfig.order)} disabled={disabled} onClick={() => setCardSelection("order")} data-testid="mint-ruleset-custom-card-order">順番固定</button>
+                  <button type="button" className={smallChipClass(classicConfig.chaos)} disabled={disabled} onClick={() => setCardSelection("chaos")} data-testid="mint-ruleset-custom-card-chaos">ランダム</button>
                 </div>
               </div>
 
               <div className="grid gap-2">
-                <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Open rule</div>
+                <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">公開ルール</div>
                 <div className="flex flex-wrap gap-2">
-                  <button type="button" className={smallChipClass(!classicConfig.allOpen && !classicConfig.threeOpen)} disabled={disabled} onClick={() => setOpenRule("none")}>None</button>
-                  <button type="button" className={smallChipClass(classicConfig.allOpen)} disabled={disabled} onClick={() => setOpenRule("allOpen")}>All Open</button>
-                  <button type="button" className={smallChipClass(classicConfig.threeOpen)} disabled={disabled} onClick={() => setOpenRule("threeOpen")}>Three Open</button>
+                  <button type="button" className={smallChipClass(!classicConfig.allOpen && !classicConfig.threeOpen)} disabled={disabled} onClick={() => setOpenRule("none")} data-testid="mint-ruleset-custom-open-none">なし</button>
+                  <button type="button" className={smallChipClass(classicConfig.allOpen)} disabled={disabled} onClick={() => setOpenRule("allOpen")} data-testid="mint-ruleset-custom-open-all">全公開</button>
+                  <button type="button" className={smallChipClass(classicConfig.threeOpen)} disabled={disabled} onClick={() => setOpenRule("threeOpen")} data-testid="mint-ruleset-custom-open-three">3枚公開</button>
                 </div>
               </div>
 
               <div className="grid gap-2">
-                <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Type rule</div>
+                <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">タイプルール</div>
                 <div className="flex flex-wrap gap-2">
-                  <button type="button" className={smallChipClass(!classicConfig.typeAscend && !classicConfig.typeDescend)} disabled={disabled} onClick={() => setTypeRule("none")}>None</button>
-                  <button type="button" className={smallChipClass(classicConfig.typeAscend)} disabled={disabled} onClick={() => setTypeRule("typeAscend")}>Type Ascend</button>
-                  <button type="button" className={smallChipClass(classicConfig.typeDescend)} disabled={disabled} onClick={() => setTypeRule("typeDescend")}>Type Descend</button>
+                  <button type="button" className={smallChipClass(!classicConfig.typeAscend && !classicConfig.typeDescend)} disabled={disabled} onClick={() => setTypeRule("none")} data-testid="mint-ruleset-custom-type-none">なし</button>
+                  <button type="button" className={smallChipClass(classicConfig.typeAscend)} disabled={disabled} onClick={() => setTypeRule("typeAscend")} data-testid="mint-ruleset-custom-type-ascend">強化</button>
+                  <button type="button" className={smallChipClass(classicConfig.typeDescend)} disabled={disabled} onClick={() => setTypeRule("typeDescend")} data-testid="mint-ruleset-custom-type-descend">弱化</button>
                 </div>
               </div>
             </div>
           )}
 
           <details className="rounded-md border border-slate-100 bg-slate-50 px-3 py-2 text-xs text-slate-600">
-            <summary className="cursor-pointer font-medium text-slate-700">Rule help</summary>
-            <div className="mt-1">Order/Chaos, Open, Type は排他です。トグル系は同時に有効化できます。</div>
+            <summary className="cursor-pointer font-medium text-slate-700">ルールヘルプ</summary>
+            <div className="mt-1">順番固定/ランダム、公開ルール、タイプルールはそれぞれ排他です。トグル系は同時に有効化できます。</div>
           </details>
         </div>
       ) : null}

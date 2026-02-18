@@ -27,6 +27,6 @@ describe("PlayerSidePanelMint", () => {
     const remainingNode = children.find((child) => (child.props as { className?: string }).className === "mint-player-panel__remaining");
 
     expect(nameNode?.props.children).toBe("Player A");
-    expect(remainingNode?.props["aria-label"]).toBe("Player A remaining cards 3");
+    expect(remainingNode?.props["aria-label"]).toBe("Player A の残りカード 3");
   });
 });

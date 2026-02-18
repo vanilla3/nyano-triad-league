@@ -4,7 +4,7 @@ import type { CardData } from "@nyano/triad-engine";
 import { fetchNyanoCards } from "@/lib/nyano_rpc";
 import { deleteDeck, exportDecksJson, importDecksJson, listDecks, upsertDeck, type DeckV1 } from "@/lib/deck_store";
 import { CardMini } from "@/components/CardMini";
-import { CardBrowser } from "@/components/CardBrowser";
+import { CardBrowserMint } from "@/components/CardBrowserMint";
 import { useToast } from "@/components/Toast";
 import { errorMessage } from "@/lib/errorMessage";
 import { writeClipboardText } from "@/lib/clipboard";
@@ -131,7 +131,7 @@ export function DecksPage() {
     try {
       const bundles = await fetchNyanoCards(tokenIds);
       setPreviewCards(toCardsMap(bundles as Map<bigint, { card: CardData }>));
-      toast.info("Preview loaded");
+      toast.info("プレビューを読み込みました");
     } catch (e) {
       setError(errorMessage(e));
     } finally {
@@ -167,7 +167,7 @@ export function DecksPage() {
   };
 
   const doExportAll = async () => {
-    await copy("Decks JSON", exportDecksJson());
+    await copy("デッキJSON", exportDecksJson());
   };
 
   const doImport = () => {
@@ -207,11 +207,11 @@ export function DecksPage() {
 
   const tabs = React.useMemo(
     () => [
-      { to: themed("/decks"), label: "Decks", icon: "decks" as const, exact: true },
-      { to: themed("/arena"), label: "Arena", icon: "arena" as const },
-      { to: themed("/events"), label: "Events", icon: "events" as const },
-      { to: themed("/replay"), label: "Replay", icon: "replay" as const },
-      { to: themed("/stream"), label: "Stream", icon: "stream" as const },
+      { to: themed("/decks"), label: "デッキ", icon: "decks" as const, exact: true },
+      { to: themed("/arena"), label: "アリーナ", icon: "arena" as const },
+      { to: themed("/events"), label: "イベント", icon: "events" as const },
+      { to: themed("/replay"), label: "リプレイ", icon: "replay" as const },
+      { to: themed("/stream"), label: "配信", icon: "stream" as const },
       { to: themed("/"), label: "設定", icon: "settings" as const },
     ],
     [themed],
@@ -221,7 +221,7 @@ export function DecksPage() {
     <div className="mint-decks-screen">
       <section className="mint-decks-header">
         <MintTitleText as="h2" className="mint-decks-header__title">
-          Nyano Triad League - デッキビルダー (Deck Builder)
+          Nyano Triad League - デッキビルダー
         </MintTitleText>
         <MintTabNav items={tabs} className="mint-decks-header__tabs" />
       </section>
@@ -241,16 +241,18 @@ export function DecksPage() {
             <MintTitleText as="h3" className="mint-decks-panel__title">フィルター</MintTitleText>
             <div className="mint-decks-filters">
               {FILTER_PRESETS.map((filter) => (
-                <button
+                <MintPressable
                   key={filter.id}
                   className={[
-                    "mint-pressable mint-decks-filter",
+                    "mint-decks-filter",
                     selectedFilter === filter.id ? "mint-decks-filter--active" : "",
                   ].join(" ")}
+                  tone={selectedFilter === filter.id ? "primary" : "soft"}
+                  size="sm"
                   onClick={() => setSelectedFilter(filter.id)}
                 >
                   {filter.label}
-                </button>
+                </MintPressable>
               ))}
             </div>
           </GlassPanel>
@@ -273,7 +275,7 @@ export function DecksPage() {
                         memo: deck.memo,
                       });
                       refresh();
-                      toast.success("デッキを作成しました", `${strategyLabel(strategy)} Deck`);
+                      toast.success("デッキを作成しました", `${strategyLabel(strategy)} デッキ`);
                     }}
                   >
                     {strategyLabel(strategy)}
@@ -311,7 +313,7 @@ export function DecksPage() {
                   className="mint-decks-input"
                   value={name}
                   onChange={(event) => setName(event.target.value)}
-                  placeholder="マイデッキ (My Deck)"
+                  placeholder="マイデッキ"
                 />
               </label>
 
@@ -328,7 +330,7 @@ export function DecksPage() {
               <div className="mint-decks-form-actions">
                 <MintPressable tone="primary" onClick={doSave}>
                   <MintIcon name="save" size={16} />
-                  <span>デッキ保存 (Save Deck)</span>
+                  <span>デッキを保存</span>
                 </MintPressable>
                 <MintPressable tone="soft" onClick={doPreview} disabled={previewLoading}>
                   {previewLoading ? "読み込み中..." : "カードを確認"}
@@ -356,9 +358,9 @@ export function DecksPage() {
               <span className="mint-decks-browser-filter">フィルター: {filterPreset.label}</span>
             </div>
             {indexLoading ? (
-              <div className="mint-decks-loading">game index を読み込み中...</div>
+              <div className="mint-decks-loading">カードインデックスを読み込み中...</div>
             ) : gameIndex ? (
-              <CardBrowser
+              <CardBrowserMint
                 key={`browser-${selectedFilter}`}
                 index={gameIndex}
                 presetHand={filterPreset.hand as JankenHand | -1}
@@ -373,7 +375,7 @@ export function DecksPage() {
               />
             ) : (
               <div className="mint-decks-loading">
-                game index が利用できません。<code>/game/</code> に <code>index.v1.json</code> を配置してください。
+                カードインデックスが利用できません。<code>/game/</code> に <code>index.v1.json</code> を配置してください。
               </div>
             )}
           </GlassPanel>
@@ -397,7 +399,7 @@ export function DecksPage() {
               )}
             </div>
             <MintPressable tone="primary" onClick={doSave} fullWidth>
-              デッキ保存 (Save Deck)
+              デッキを保存
             </MintPressable>
           </GlassPanel>
 
@@ -413,10 +415,10 @@ export function DecksPage() {
                     <div className="mint-decks-saved__meta">{deck.tokenIds.join(", ")}</div>
                     <div className="mint-decks-saved__meta">更新: {formatDateShort(deck.updatedAt)}</div>
                     <div className="mint-decks-saved__actions">
-                      <MintPressable size="sm" tone="soft" onClick={() => loadDeckToForm(deck)}>編集 (Edit)</MintPressable>
-                      <MintPressable size="sm" tone="soft" to={themed(`/match?a=${deck.id}&ui=mint`)}>Aに設定 (Set as A)</MintPressable>
-                      <MintPressable size="sm" tone="soft" to={themed(`/match?b=${deck.id}&ui=mint`)}>Bに設定 (Set as B)</MintPressable>
-                      <MintPressable size="sm" tone="ghost" onClick={() => copy("Deck JSON", JSON.stringify(deck, null, 2))}>
+                      <MintPressable size="sm" tone="soft" onClick={() => loadDeckToForm(deck)}>編集</MintPressable>
+                      <MintPressable size="sm" tone="soft" to={themed(`/match?a=${deck.id}&ui=mint`)}>Aにセット</MintPressable>
+                      <MintPressable size="sm" tone="soft" to={themed(`/match?b=${deck.id}&ui=mint`)}>Bにセット</MintPressable>
+                      <MintPressable size="sm" tone="ghost" onClick={() => copy("デッキJSON", JSON.stringify(deck, null, 2))}>
                         JSONをコピー
                       </MintPressable>
                       <MintPressable
@@ -430,7 +432,7 @@ export function DecksPage() {
                           if (editingId === deck.id) resetForm();
                         }}
                       >
-                        削除 (Delete)
+                        削除
                       </MintPressable>
                     </div>
                   </GlassPanel>

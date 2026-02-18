@@ -75,7 +75,7 @@ export const StreamSharePanel: React.FC<StreamSharePanelProps> = React.memo(
         <div className="grid gap-3 md:grid-cols-2">
           {/* Viewer challenge link + QR */}
           <div className="rounded-xl border border-slate-200 bg-white/70 px-3 py-2.5 shadow-sm">
-            <CopyField label="Challenge link（視聴者向け）" value={matchUrl} href={matchUrl} />
+            <CopyField label="対戦リンク（視聴者向け）" value={matchUrl} href={matchUrl} />
             <div className="mt-2 flex justify-center">
               <QrCode value={matchUrl} size={96} />
             </div>
@@ -83,7 +83,7 @@ export const StreamSharePanel: React.FC<StreamSharePanelProps> = React.memo(
 
           {/* OBS Overlay URL + QR */}
           <div className="rounded-xl border border-slate-200 bg-white/70 px-3 py-2.5 shadow-sm">
-            <CopyField label="OBS Overlay URL" value={overlayUrl} href={overlayUrl} />
+            <CopyField label="OBSオーバーレイURL" value={overlayUrl} href={overlayUrl} />
             <div className="mt-2 flex justify-center">
               <QrCode value={overlayUrl} size={96} />
             </div>
@@ -91,7 +91,7 @@ export const StreamSharePanel: React.FC<StreamSharePanelProps> = React.memo(
 
           {/* Host match link — NO QR (private/sensitive) */}
           <div className="rounded-xl border border-slate-200 bg-white/70 px-3 py-2.5 shadow-sm">
-            <CopyField label="Host match（配信用）" value={hostMatchUrl} href={hostMatchUrl} />
+            <CopyField label="配信操作リンク（ホスト）" value={hostMatchUrl} href={hostMatchUrl} />
             <div className="mt-1 text-[11px] text-amber-600">
               配信画面にQRを映さないでください（操作権限付きリンク）
             </div>
@@ -99,8 +99,8 @@ export const StreamSharePanel: React.FC<StreamSharePanelProps> = React.memo(
 
           {/* Additional URLs */}
           <div className="rounded-xl border border-slate-200 bg-white/70 px-3 py-2.5 shadow-sm space-y-2">
-            <CopyField label="Overlay（transparent）" value={overlayTransparentUrl} href={overlayTransparentUrl} />
-            <CopyField label="Replay（broadcast）" value={replayBroadcastUrl} href={replayBroadcastUrl} />
+            <CopyField label="オーバーレイ（透明）" value={overlayTransparentUrl} href={overlayTransparentUrl} />
+            <CopyField label="リプレイ（配信用）" value={replayBroadcastUrl} href={replayBroadcastUrl} />
           </div>
         </div>
 
@@ -127,7 +127,7 @@ export const StreamSharePanel: React.FC<StreamSharePanelProps> = React.memo(
           <div className="rounded-xl border border-sky-200 bg-sky-50/60 px-4 py-3">
             <div className="flex items-center justify-between gap-2">
               <div className="text-xs font-semibold text-sky-800">
-                クイックコマンド {typeof turn === "number" ? `(turn ${turn + 1})` : ""}
+                クイックコマンド {typeof turn === "number" ? `(手 ${turn + 1})` : ""}
               </div>
             </div>
             <div className="mt-2 flex flex-wrap gap-1.5">

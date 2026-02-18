@@ -112,10 +112,10 @@ export function EventsPage() {
   const themed = React.useCallback((to: string) => appendThemeToPath(to, theme), [theme]);
   const quickActions = React.useMemo<Array<{ to: string; label: string; subtitle: string; icon: MintIconName }>>(
     () => [
-      { to: themed("/arena"), label: "対戦 (Arena)", subtitle: "対戦モード", icon: "arena" },
-      { to: themed("/decks"), label: "デッキ (Decks)", subtitle: "デッキ構築", icon: "decks" },
-      { to: themed("/replay"), label: "リプレイ (Replay)", subtitle: "対戦を振り返る", icon: "replay" },
-      { to: themed("/stream"), label: "配信 (Stream)", subtitle: "配信ツール", icon: "stream" },
+      { to: themed("/arena"), label: "アリーナ", subtitle: "対戦モード", icon: "arena" },
+      { to: themed("/decks"), label: "デッキ", subtitle: "デッキ構築", icon: "decks" },
+      { to: themed("/replay"), label: "リプレイ", subtitle: "対戦を振り返る", icon: "replay" },
+      { to: themed("/stream"), label: "配信", subtitle: "配信ツール", icon: "stream" },
     ],
     [themed],
   );

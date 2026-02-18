@@ -547,7 +547,7 @@ export function MatchPage() {
   const handleEngineRendererInitError = React.useCallback((message: string) => {
     setEngineRendererFailed(true);
     setEngineRendererError(message);
-    toast.warn("Pixi renderer unavailable", "Switched to Mint fallback board");
+    toast.warn("Pixiレンダラーを初期化できませんでした", "Mint盤面に切り替えました");
   }, [toast]);
   const handleRetryEngineRenderer = React.useCallback(() => {
     setEngineRendererFailed(false);
@@ -765,7 +765,7 @@ export function MatchPage() {
       memo: `${aiDifficulty} / ${rulesetKey}`,
     });
     setGuestDeckSaved(true);
-    toast.success("デッキを保存しました", "Decks ページで確認できます。");
+    toast.success("デッキを保存しました", "デッキ画面で確認できます。");
   };
 
   React.useEffect(() => {
@@ -1026,8 +1026,8 @@ export function MatchPage() {
     : null;
   const classicOpenLabel = classicOpenCardIndices
     ? classicOpenCardIndices.mode === "all_open"
-      ? "Classic Open: all cards revealed"
-      : `Classic Three Open: A[${formatClassicOpenSlots(classicOpenCardIndices.playerA)}] / B[${formatClassicOpenSlots(classicOpenCardIndices.playerB)}]`
+      ? "classic 公開: すべて公開"
+      : `classic 3枚公開: A[${formatClassicOpenSlots(classicOpenCardIndices.playerA)}] / B[${formatClassicOpenSlots(classicOpenCardIndices.playerB)}]`
     : null;
   const activeClassicRuleTags = React.useMemo(() => {
     if (ruleset.version !== 2) return [];
@@ -1052,11 +1052,11 @@ export function MatchPage() {
     const commitA = deriveRevealCommitHex(commitRevealSaltParam, commitRevealAParam);
     const commitB = deriveRevealCommitHex(commitRevealSaltParam, commitRevealBParam);
     if (!commitA || !commitB) {
-      toast.warn("Commit derive failed", "matchSalt/revealA/revealB must be bytes32 hex.");
+      toast.warn("コミット生成に失敗しました", "matchSalt/revealA/revealB は bytes32 hex で指定してください。");
       return;
     }
     setParams({ fca: commitA, fcb: commitB });
-    toast.success("Commits derived", "commitA/commitB updated from reveals.");
+    toast.success("コミットを生成しました", "reveal から commitA/commitB を更新しました。");
   };
 
   const handleRandomizeCommittedMutualChoice = () => {
@@ -1083,11 +1083,11 @@ export function MatchPage() {
       nonce: committedMutualNonceBParam,
     });
     if (!commitA || !commitB) {
-      toast.warn("Commit derive failed", "matchSalt/player/choice/nonce values must be valid.");
+      toast.warn("コミット生成に失敗しました", "matchSalt/player/choice/nonce の値を確認してください。");
       return;
     }
     setParams({ fcoa: commitA, fcob: commitB });
-    toast.success("Commits derived", "Committed mutual choice commits were updated.");
+    toast.success("コミットを生成しました", "先攻選択コミットを更新しました。");
   };
 
   const handleRandomizeSeedResolution = () => {
@@ -1110,9 +1110,9 @@ export function MatchPage() {
       setOwners(null);
       setPlayerA("0x0000000000000000000000000000000000000001" as `0x${string}`);
       setPlayerB("0x0000000000000000000000000000000000000002" as `0x${string}`);
-      setError(`Game Index の読み込みに失敗したため、フォールバックのゲストデッキを使用しました。(${reason})`);
+      setError(`カードインデックスの読み込みに失敗したため、フォールバックのゲストデッキを使用しました。(${reason})`);
       setStatus(`ゲストモード: フォールバックデッキを読み込みました（${fallback.cardsByTokenId.size}枚）`);
-      toast.warn("Game Index利用不可", "フォールバックのゲストカードを読み込みました。");
+      toast.warn("カードインデックス利用不可", "フォールバックのゲストカードを読み込みました。");
     };
 
     try {
@@ -1122,7 +1122,7 @@ export function MatchPage() {
           applyGuestFallback("index unavailable");
           return;
         }
-        setError("Game Index が利用できません。Verified モードをお試しください。");
+        setError("カードインデックスが利用できません。RPC読み込みをお試しください。");
         return;
       }
 
@@ -1140,7 +1140,7 @@ export function MatchPage() {
         setOwners(null);
         setPlayerA("0x0000000000000000000000000000000000000001" as `0x${string}`);
         setPlayerB("0x0000000000000000000000000000000000000002" as `0x${string}`);
-        setStatus(`ゲストモード: game index から ${cardMap.size} 枚読み込みました`);
+        setStatus(`ゲストモード: カードインデックスから ${cardMap.size} 枚読み込みました`);
       } else {
         // Fast mode for normal play
         const allTokenIds = [...deckATokens, ...deckBTokens].map((t) => t.toString());
@@ -1148,7 +1148,7 @@ export function MatchPage() {
 
         if (cardMap.size < allTokenIds.length) {
           const missing = allTokenIds.filter((id) => !cardMap.has(BigInt(id)));
-          setError(`Game Index に tokenId が不足しています: ${missing.join(", ")}。Verified モードをお試しください。`);
+          setError(`カードインデックスに tokenId が不足しています: ${missing.join(", ")}。RPC読み込みをお試しください。`);
           return;
         }
 
@@ -1165,7 +1165,7 @@ export function MatchPage() {
 
         setCards(cardMap);
         setOwners(null);
-        setStatus(`Fast モード: game index から ${cardMap.size} 枚読み込みました`);
+        setStatus(`高速読み込み: カードインデックスから ${cardMap.size} 枚読み込みました`);
       }
     } catch (e: unknown) {
       const msg = errorMessage(e);
@@ -1173,7 +1173,7 @@ export function MatchPage() {
         applyGuestFallback(msg);
         return;
       }
-      setError(`Game Index 読み込み失敗: ${msg}`);
+      setError(`カードインデックス読み込み失敗: ${msg}`);
     } finally {
       setLoading(false);
     }
@@ -1231,7 +1231,7 @@ export function MatchPage() {
       if (a0 !== undefined) setPlayerA(ownersByTokenId.get(a0) ?? playerA);
       if (b0 !== undefined) setPlayerB(ownersByTokenId.get(b0) ?? playerB);
 
-      setStatus(`Verified: mainnet から ${bundles.size} 枚読み込みました`);
+      setStatus(`RPC読み込み: mainnet から ${bundles.size} 枚読み込みました`);
       rpcStatusRef.current = { ok: true, timestampMs: Date.now() };
     } catch (e: unknown) {
       const msg = errorMessage(e);
@@ -1522,34 +1522,34 @@ export function MatchPage() {
       setStatus(null);
 
       if (turns.length >= 9) {
-        setError("All 9 turns are already committed. Reset the match to continue.");
+        setError("9手すべて確定済みです。対戦をリセットして続けてください。");
         telemetry.recordInvalidAction();
         return;
       }
 
       if (next.cell < 0 || next.cell > 8) {
-        setError("cell must be in range 0..8.");
+        setError("セル番号は 0..8 の範囲で指定してください。");
         telemetry.recordInvalidAction();
         return;
       }
       if (used.cells.has(next.cell)) {
-        setError(`cell ${next.cell} is already used.`);
+        setError(`セル ${next.cell} はすでに使用されています。`);
         telemetry.recordInvalidAction();
         return;
       }
 
       if (next.cardIndex < 0 || next.cardIndex > 4) {
-        setError("cardIndex は 0..4 の範囲で指定してください。");
+        setError("カード番号は 0..4 の範囲で指定してください。");
         telemetry.recordInvalidAction();
         return;
       }
       if (classicForcedCardIndex !== null && next.cardIndex !== classicForcedCardIndex) {
-        setError(`このターンは cardIndex ${classicForcedCardIndex} を選ぶ必要があります。`);
+        setError(`このターンはカード番号 ${classicForcedCardIndex} を選ぶ必要があります。`);
         telemetry.recordInvalidAction();
         return;
       }
       if (currentUsed.has(next.cardIndex)) {
-        setError(`cardIndex ${next.cardIndex} はすでに使用済みです。`);
+        setError(`カード番号 ${next.cardIndex} はすでに使用済みです。`);
         telemetry.recordInvalidAction();
         return;
       }
@@ -1561,17 +1561,17 @@ export function MatchPage() {
           return;
         }
         if (next.warningMarkCell === next.cell) {
-          setError("warningMarkCell は配置セルと同じにできません。");
+          setError("警告マスは配置セルと同じにできません。");
           telemetry.recordInvalidAction();
           return;
         }
         if (next.warningMarkCell < 0 || next.warningMarkCell > 8) {
-          setError("warningMarkCell は 0..8 の範囲で指定してください。");
+          setError("警告マスは 0..8 の範囲で指定してください。");
           telemetry.recordInvalidAction();
           return;
         }
         if (used.cells.has(next.warningMarkCell)) {
-          setError(`warningMarkCell ${next.warningMarkCell} はすでに埋まっています。`);
+          setError(`警告マス ${next.warningMarkCell} はすでに埋まっています。`);
           telemetry.recordInvalidAction();
           return;
         }
@@ -1596,7 +1596,7 @@ export function MatchPage() {
     };
 
     if (isStageFocusRoute) {
-      pushStageActionFeedback("Move committed", "success");
+      pushStageActionFeedback("手を確定しました (Move committed)", "success");
     }
 
     // Card flight animation (mint / engine mode)
@@ -1630,12 +1630,12 @@ export function MatchPage() {
     if (isAiTurn) return;
 
     if (draftCell === null) {
-      setError("Choose a cell before committing the move.");
+      setError("先にセルを選択してから手を確定してください。");
       telemetry.recordInvalidAction();
       return;
     }
     if (draftCardIndex === null) {
-      setError("card を選択してください");
+      setError("カードを選択してください");
       telemetry.recordInvalidAction();
       return;
     }
@@ -1711,7 +1711,7 @@ export function MatchPage() {
     setDraftWarningMarkCell(null);
     setSelectedTurnIndex((x) => Math.max(0, Math.min(x, Math.max(0, turns.length - 2))));
     if (isStageFocusRoute) {
-      pushStageActionFeedback("Move undone", "info");
+      pushStageActionFeedback("1手取り消しました (Move undone)", "info");
     }
   }, [isStageFocusRoute, pushStageActionFeedback, turns.length]);
 
@@ -1805,7 +1805,7 @@ export function MatchPage() {
           warningMarkCell: typeof wm === "number" ? wm : undefined,
         });
 
-        toast.success("Stream move", `cell ${cmd.move.cell} · cardIndex ${resolvedCardIndex}`);
+        toast.success("配信操作", `セル ${cmd.move.cell} ・ カード ${resolvedCardIndex}`);
       } catch {
         // ignore
       }
@@ -1823,9 +1823,9 @@ export function MatchPage() {
     try {
       const json = stringifyWithBigInt(sim.transcript, 2);
       await copyToClipboard(json);
-      toast.success("Copied", "transcript JSON");
+      toast.success("コピーしました", "対局ログJSON");
     } catch (e: unknown) {
-      toast.error("Copy failed", errorMessage(e));
+      toast.error("コピー失敗", errorMessage(e));
     }
   };
 
@@ -1856,9 +1856,9 @@ export function MatchPage() {
     setError(null);
     try {
       const url = buildReplayUrl(true);
-      if (!url) { toast.warn("Share", "Match not ready - play 9 turns first"); return; }
+      if (!url) { toast.warn("共有", "対戦が未完了です。9手まで進めてください。"); return; }
       await copyToClipboard(url);
-      toast.success("コピーしました", "Share URL をクリップボードへコピーしました。");
+      toast.success("コピーしました", "共有URLをクリップボードへコピーしました。");
     } catch (e: unknown) {
       toast.error("共有に失敗しました", errorMessage(e));
     }
@@ -1869,7 +1869,7 @@ export function MatchPage() {
     setStatus(null);
     try {
       const url = buildReplayUrl(false);
-      if (!url) { toast.warn("Replay", "Match が未完了です。9手まで進めてください。"); return; }
+      if (!url) { toast.warn("リプレイ", "対戦が未完了です。9手まで進めてください。"); return; }
       // SPA navigation via react-router (popup-safe, preserves client state)
       navigate(url);
     } catch (e: unknown) {
@@ -1878,7 +1878,7 @@ export function MatchPage() {
   }, [buildReplayUrl, navigate, toast]);
 
   const toggleStageControlsWithFeedback = React.useCallback(() => {
-    pushStageActionFeedback(showStageControls ? "Controls hidden" : "Controls shown");
+    pushStageActionFeedback(showStageControls ? "操作を隠しました (Controls hidden)" : "操作を表示しました (Controls shown)");
     playMatchUiSfx("card_place");
     toggleStageControls();
   }, [playMatchUiSfx, pushStageActionFeedback, showStageControls, toggleStageControls]);
@@ -1887,7 +1887,7 @@ export function MatchPage() {
     setShowStageAssist((prev) => {
       const next = !prev;
       if (isStageFocusRoute) {
-        pushStageActionFeedback(next ? "HUD shown" : "HUD hidden");
+        pushStageActionFeedback(next ? "HUDを表示しました (HUD shown)" : "HUDを隠しました (HUD hidden)");
         playMatchUiSfx("card_place");
       }
       return next;
@@ -1901,19 +1901,19 @@ export function MatchPage() {
   }, [isStageFullscreen, playMatchUiSfx, pushStageActionFeedback, toggleStageFullscreen]);
 
   const exitFocusModeWithFeedback = React.useCallback(() => {
-    pushStageActionFeedback("Exiting focus mode", "warn");
+    pushStageActionFeedback("フォーカスを終了します (Exiting focus mode)", "warn");
     playMatchUiSfx("flip");
     setFocusMode(false);
   }, [playMatchUiSfx, pushStageActionFeedback, setFocusMode]);
 
   const openReplayWithFeedback = React.useCallback(() => {
-    pushStageActionFeedback("Opening replay");
+    pushStageActionFeedback("リプレイを開きます (Opening replay)");
     playMatchUiSfx("card_place");
     void openReplay();
   }, [openReplay, playMatchUiSfx, pushStageActionFeedback]);
 
   const doAiMoveWithFeedback = React.useCallback(() => {
-    pushStageActionFeedback("Nyano move requested");
+    pushStageActionFeedback("Nyanoの手をリクエストしました (Nyano move requested)");
     playMatchUiSfx("card_place");
     doAiMove();
   }, [doAiMove, playMatchUiSfx, pushStageActionFeedback]);
@@ -2283,7 +2283,7 @@ export function MatchPage() {
                   aria-live="polite"
                   aria-label="Battle focus action feedback"
                 >
-                  {stageActionFeedback || "準備完了"}
+                  {stageActionFeedback || "操作を選択してください"}
                 </span>
               ) : null}
               {isStageFocusRoute ? (
@@ -2310,7 +2310,7 @@ export function MatchPage() {
                         sfxMuted && "mint-sfx-toggle--muted",
                       ].filter(Boolean).join(" ")}
                       onClick={handleSfxToggle}
-                      title={sfxMuted ? "Sound ON" : "Sound OFF"}
+                      title={sfxMuted ? "サウンド ON (Sound ON)" : "サウンド OFF (Sound OFF)"}
                       aria-label={sfxMuted ? "Unmute sound effects" : "Mute sound effects"}
                     >
                       {sfxMuted ? "🔇" : "🔊"}
@@ -2319,11 +2319,19 @@ export function MatchPage() {
                   <button className="btn btn-sm" onClick={toggleStageFullscreenWithFeedback}>
                     {isStageFullscreen ? "全画面解除" : "全画面"}
                   </button>
-                  <button className="btn btn-sm" onClick={toggleStageControlsWithFeedback}>
-                    {showStageControls ? "Hide Controls" : "Show Controls"}
+                  <button
+                    className="btn btn-sm"
+                    onClick={toggleStageControlsWithFeedback}
+                    aria-label={showStageControls ? "Hide Controls" : "Show Controls"}
+                  >
+                    {showStageControls ? "操作を隠す (Hide Controls)" : "操作を表示 (Show Controls)"}
                   </button>
-                  <button className="btn btn-sm" onClick={toggleStageAssistWithFeedback}>
-                    {showStageAssist ? "Hide HUD" : "Show HUD"}
+                  <button
+                    className="btn btn-sm"
+                    onClick={toggleStageAssistWithFeedback}
+                    aria-label={showStageAssist ? "Hide HUD" : "Show HUD"}
+                  >
+                    {showStageAssist ? "HUDを隠す (Hide HUD)" : "HUDを表示 (Show HUD)"}
                   </button>
                 </>
               ) : null}
@@ -2361,7 +2369,7 @@ export function MatchPage() {
         <section className="card">
           <div className="card-hd flex flex-wrap items-center justify-between gap-2">
             <div>
-              <div className="text-base font-semibold">Event: {event.title}</div>
+              <div className="text-base font-semibold">イベント (Event): {event.title}</div>
               <div className="text-xs text-slate-500">
                 状態: <span className="font-medium">{eventStatus}</span> · ルール={event.rulesetKey} · AI={event.aiDifficulty}
               </div>
@@ -2386,9 +2394,9 @@ export function MatchPage() {
           <div className="flex items-center gap-3">
             <NyanoAvatar size={48} expression="playful" />
             <div>
-              <div className="font-semibold text-nyano-800">ゲスト対戦 (Guest Quick Play)</div>
+              <div className="font-semibold text-nyano-800">ゲスト対戦</div>
               <div className="text-xs text-nyano-600">
-                ゲストモードでランダムデッキを使用中です。自分のデッキで遊ぶ場合は <Link className="font-medium underline" to="/decks">Decks</Link> で作成してください。
+                ゲストモードでランダムデッキを使用中です。自分のデッキで遊ぶ場合は <Link className="font-medium underline" to="/decks">デッキ画面</Link> で作成してください。
               </div>
             </div>
           </div>
@@ -2541,7 +2549,7 @@ export function MatchPage() {
                 ) : isGuestMode ? (
                   <button className="btn btn-primary" onClick={() => void loadCardsFromIndex()}>ゲスト対戦を開始</button>
                 ) : (
-                  <>Match Setup でデッキを選択し、<strong>カードを読み込む</strong>を押してください。</>
+                  <>対戦設定でデッキを選択し、<strong>カードを読み込む</strong>を押してください。</>
                 )}
               </div>
             ) : (
@@ -2623,7 +2631,7 @@ export function MatchPage() {
                                 sfxMuted && "mint-sfx-toggle--muted",
                               ].filter(Boolean).join(" ")}
                               onClick={handleSfxToggle}
-                              title={sfxMuted ? "Sound ON" : "Sound OFF"}
+                              title={sfxMuted ? "サウンド ON (Sound ON)" : "サウンド OFF (Sound OFF)"}
                               aria-label={sfxMuted ? "Unmute sound effects" : "Mute sound effects"}
                             >
                               {sfxMuted ? "🔇" : "🔊"}
@@ -2659,7 +2667,7 @@ export function MatchPage() {
                                 sfxMuted && "mint-sfx-toggle--muted",
                               ].filter(Boolean).join(" ")}
                               onClick={handleSfxToggle}
-                              title={sfxMuted ? "Sound ON" : "Sound OFF"}
+                              title={sfxMuted ? "サウンド ON (Sound ON)" : "サウンド OFF (Sound OFF)"}
                               aria-label={sfxMuted ? "Unmute sound effects" : "Mute sound effects"}
                             >
                               {sfxMuted ? "🔇" : "🔊"}
@@ -2685,7 +2693,7 @@ export function MatchPage() {
                       <div className="mint-ai-notice" role="status" aria-live="polite">
                         {aiAutoPlay ? (
                           <span>
-                            <span className="font-semibold animate-pulse">考え中… (Nyano is thinking...)</span>
+                            <span className="font-semibold animate-pulse">考え中…</span>
                             {aiCountdownMs !== null ? ` ${Math.max(0.1, aiCountdownMs / 1000).toFixed(1)}s` : ""}
                           </span>
                         ) : (
@@ -2694,7 +2702,7 @@ export function MatchPage() {
                       </div>
                     ) : (
                       <div className="mint-ai-notice mint-ai-notice--placeholder" aria-hidden="true">
-                        考え中… (Nyano is thinking...)
+                        考え中…
                       </div>
                     )}
                   </div>
@@ -2702,7 +2710,7 @@ export function MatchPage() {
                   <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900">
                     {aiAutoPlay ? (
                       <span>
-                        <span className="font-semibold animate-pulse">考え中… (Nyano is thinking...)</span>
+                        <span className="font-semibold animate-pulse">考え中…</span>
                         {aiCountdownMs !== null ? ` ${Math.max(0.1, aiCountdownMs / 1000).toFixed(1)}s` : ""}
                       </span>
                     ) : (
@@ -2937,7 +2945,7 @@ export function MatchPage() {
                         disabled={turns.length >= 9 || isAiTurn || draftCell === null || draftCardIndex === null}
                         aria-label="Quick commit move"
                       >
-                        Commit move
+                        確定 (Commit)
                       </button>
                       <button
                         className="btn h-10 px-4"
@@ -2988,9 +2996,9 @@ export function MatchPage() {
                     ].filter(Boolean).join(" ")}
                   >
                     <div className="flex items-center justify-between gap-2">
-                      <div className="text-[11px] font-semibold text-slate-700">手札ドック (Hand Dock)</div>
+                      <div className="text-[11px] font-semibold text-slate-700">手札ドック</div>
                       <div className="text-[10px] text-slate-500">
-                        {isAiTurn ? "考え中… (Nyano is thinking...)" : `${draftCardIndex !== null ? `カード ${draftCardIndex + 1}` : "カード選択"} → ${draftCell !== null ? `セル ${draftCell}` : "セルをタップ"}`}
+                        {isAiTurn ? "考え中…" : `${draftCardIndex !== null ? `カード ${draftCardIndex + 1}` : "カード選択"} → ${draftCell !== null ? `セル ${draftCell}` : "セルをタップ"}`}
                       </div>
                     </div>
 
@@ -3205,7 +3213,7 @@ export function MatchPage() {
                           disabled={turns.length >= 9 || isAiTurn || draftCell === null || draftCardIndex === null}
                           aria-label="Commit move"
                         >
-                          Commit move
+                          確定 (Commit)
                         </button>
                         <button
                           className={isRpg ? "rpg-result__btn" : ["btn", isStageFocusRoute ? "h-10 px-4" : ""].join(" ").trim()}
@@ -3294,7 +3302,7 @@ export function MatchPage() {
                       <div className="flex flex-wrap items-center gap-2">
                         <button className="btn" onClick={copyTranscriptJson} disabled={!sim.ok}>JSONをコピー</button>
                         <button className="btn" onClick={copyShareUrl} disabled={!canFinalize}>共有URL</button>
-                        <button className="btn" onClick={openReplay} disabled={!canFinalize}>リプレイ (Replay)</button>
+                        <button className="btn" onClick={openReplay} disabled={!canFinalize}>リプレイ</button>
                       </div>
                     </div>
 
@@ -3361,7 +3369,7 @@ export function MatchPage() {
                       共有URL
                     </button>
                     <button className={isRpg ? "rpg-result__btn" : "btn"} onClick={openReplay} disabled={!canFinalize}>
-                      リプレイ (Replay)
+                      リプレイ
                     </button>
                   </div>
                 </div>
@@ -3394,7 +3402,7 @@ export function MatchPage() {
                         <button className="btn text-xs" onClick={async () => {
                           try {
                             const url = buildReplayUrl(true);
-                            if (!url) { toast.warn("共有", "Match が未準備です"); return; }
+                            if (!url) { toast.warn("共有", "対戦が未準備です"); return; }
                             const msg = `Nyano Triad 対戦共有\n${url}`;
                             await copyToClipboard(msg);
                             toast.success("コピーしました", "共有テンプレート");
@@ -3405,12 +3413,12 @@ export function MatchPage() {
                           共有テンプレート
                         </button>
                         <button className="btn text-xs" onClick={openReplay} disabled={!canFinalize}>
-                          リプレイ (Replay)
+                          リプレイ
                         </button>
                       </div>
                       {canFinalize && (
                         <details className="text-xs">
-                          <summary className="cursor-pointer text-sky-600 hover:text-sky-700 font-medium">QRコード (QR Code)</summary>
+                          <summary className="cursor-pointer text-sky-600 hover:text-sky-700 font-medium">QRコード</summary>
                           <div className="mt-2 flex justify-center">
                             <ShareQrCode
                               sim={sim}

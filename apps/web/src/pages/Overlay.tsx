@@ -474,7 +474,7 @@ export function OverlayPage() {
           <div className="mb-4 flex flex-col gap-2 rounded-2xl border border-slate-200 bg-white/70 px-4 py-3 shadow-sm md:flex-row md:items-center md:justify-between">
             <div className="min-w-0">
               <div className="text-xs font-semibold text-slate-800">
-                🎥 Overlay · <span className="text-rose-600">{title}</span> {modeBadge}
+                🎥 オーバーレイ · <span className="text-rose-600">{title}</span> {modeBadge}
               </div>
               <div className="text-[11px] text-slate-500">
                 {state?.updatedAtMs ? `更新: ${ageLabel(state.updatedAtMs)} · ` : null}
@@ -491,10 +491,10 @@ export function OverlayPage() {
                 配信スタジオ
               </Link>
               <Link className="btn btn-sm no-underline" to="/match?ui=mint">
-                Match
+                対戦
               </Link>
               <Link className="btn btn-sm no-underline" to="/replay">
-                Replay
+                リプレイ
               </Link>
             </div>
           </div>
@@ -503,7 +503,7 @@ export function OverlayPage() {
         {/* Stale data warning banner (Phase 0 stability) */}
         {state?.updatedAtMs && (Date.now() - state.updatedAtMs > 10_000) ? (
           <div className="mb-3 rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-xs font-semibold text-amber-700 animate-pulse">
-            ⚠ Data stale ({ageLabel(state.updatedAtMs)}) - Match タブの接続を確認してください
+            ⚠ データ更新停止 ({ageLabel(state.updatedAtMs)}) - Matchタブの接続を確認してください
           </div>
         ) : null}
 
@@ -660,7 +660,7 @@ export function OverlayPage() {
                   ) : (
                     <NyanoAvatar size={controls ? 28 : avatarSize} expression="calm" />
                   )}
-                  <div className={controls ? "text-xs font-semibold text-slate-800" : "text-sm font-semibold text-slate-800"}>対戦中 (Now Playing)</div>
+                  <div className={controls ? "text-xs font-semibold text-slate-800" : "text-sm font-semibold text-slate-800"}>対戦中</div>
                 </div>
                 <div className="flex items-center gap-2">
                   {reactionInput ? <NyanoReactionBadge input={reactionInput} turnIndex={typeof state?.turn === "number" ? state.turn : 0} /> : null}
@@ -678,7 +678,7 @@ export function OverlayPage() {
               </div>
               {overlayClassicOpen ? (
                 <div className={controls ? "mt-1 text-xs text-slate-500" : "mt-1 ol-detail-text text-slate-300"}>
-                  Classic Open:{" "}
+                  classic 公開:{" "}
                   <span className="font-mono">
                     {overlayClassicOpen.mode === "all_open"
                       ? "全カード公開"
@@ -688,7 +688,7 @@ export function OverlayPage() {
               ) : null}
               {overlayClassic?.swap ? (
                 <div className={controls ? "mt-1 text-xs text-slate-500" : "mt-1 ol-detail-text text-slate-300"}>
-                  Classic Swap: <span className="font-mono">{formatClassicSwapSlots(overlayClassic.swap.aIndex, overlayClassic.swap.bIndex)}</span>
+                  Classic 入れ替え: <span className="font-mono">{formatClassicSwapSlots(overlayClassic.swap.aIndex, overlayClassic.swap.bIndex)}</span>
                 </div>
               ) : null}
 
@@ -757,9 +757,9 @@ export function OverlayPage() {
                 <div className="flex items-center justify-between gap-2">
                   <div className={controls ? "text-xs font-semibold text-slate-800" : "text-sm font-semibold text-slate-800"}>投票状況 (Chat voting)</div>
                   {voteState?.status === "open" ? (
-                    <span className={controls ? "badge badge-emerald" : "badge badge-lg badge-emerald"}>OPEN</span>
+                    <span className={controls ? "badge badge-emerald" : "badge badge-lg badge-emerald"} aria-label="OPEN">受付中</span>
                   ) : (
-                    <span className="badge">CLOSED</span>
+                    <span className="badge" aria-label="CLOSED">受付終了</span>
                   )}
                 </div>
 
@@ -776,9 +776,9 @@ export function OverlayPage() {
                     }
                     style={controls ? undefined : { fontSize: "var(--ol-countdown, 28px)" }}
                     aria-live="polite"
-                    aria-label={`残り ${voteRemainingSec} seconds remaining`}
+                    aria-label={`残り ${voteRemainingSec}秒`}
                   >
-                    残り {voteRemainingSec}s remaining
+                    残り {voteRemainingSec}秒
                   </div>
                 ) : null}
 
@@ -795,8 +795,8 @@ export function OverlayPage() {
                 {/* Sync badges */}
                 {voteState?.status === "open" ? (
                   <div className="mt-2 flex flex-wrap items-center gap-2 text-xs">
-                    {voteTurnOk === true ? <span className="badge badge-slate">ターン一致</span> : voteTurnOk === false ? <span className="badge badge-rose">TURN MISMATCH</span> : <span className="badge">ターン?</span>}
-                    {voteSideOk === true ? <span className="badge badge-slate">操作側一致</span> : voteSideOk === false ? <span className="badge badge-rose">SIDE MISMATCH</span> : <span className="badge">操作側?</span>}
+                    {voteTurnOk === true ? <span className="badge badge-slate">ターン一致</span> : voteTurnOk === false ? <span className="badge badge-rose">ターン不一致</span> : <span className="badge">ターン?</span>}
+                    {voteSideOk === true ? <span className="badge badge-slate">操作側一致</span> : voteSideOk === false ? <span className="badge badge-rose">操作側不一致</span> : <span className="badge">操作側?</span>}
                     {strictAllowed ? (
                       <span className="badge badge-slate" title={strictAllowed.hash}>
                         strictAllowed {strictAllowed.count} · {strictAllowed.hash}
@@ -874,7 +874,7 @@ export function OverlayPage() {
               <div className="callout callout-error opacity-80">
                 <div className="flex items-center gap-2">
                   <div className="h-2 w-2 shrink-0 rounded-full bg-amber-500" />
-                  <div className="text-xs font-semibold">直近エラー (Last Error)</div>
+                  <div className="text-xs font-semibold">直近エラー</div>
                 </div>
                 <div className="mt-1 text-sm">{stickyError}</div>
               </div>
@@ -915,7 +915,7 @@ export function OverlayPage() {
 
             {!state ? (
               <div className="callout callout-muted">
-                <div className="text-xs font-semibold">信号待ち (No signal yet)</div>
+                <div className="text-xs font-semibold">信号待ち</div>
                 <div className="mt-1 text-sm text-slate-700">
                   <span className="font-mono">{matchPath}</span> または <span className="font-mono">{replayPath}</span> を開き、overlayへ状態を送信してください。
                   <br />
@@ -928,7 +928,7 @@ export function OverlayPage() {
               <div className="space-y-3">
                 {/* Theme picker */}
                 <div className="rounded-2xl border border-slate-200 bg-white/70 px-4 py-3 shadow-sm">
-                  <div className="text-xs font-semibold text-slate-800">テーマ (Theme)</div>
+                  <div className="text-xs font-semibold text-slate-800">テーマ</div>
                   <div className="mt-2 flex flex-wrap gap-1.5">
                     {OVERLAY_THEMES.map((t) => (
                       <button
@@ -939,7 +939,7 @@ export function OverlayPage() {
                             : "border-slate-200 bg-white text-slate-600 hover:border-slate-300"
                         }`}
                         onClick={() => handleThemeChange(t)}
-                        aria-label={`Theme: ${THEME_LABELS[t]}`}
+                        aria-label={`テーマ: ${THEME_LABELS[t]}`}
                         aria-current={theme === t ? "true" : undefined}
                       >
                         {THEME_LABELS[t]}
@@ -955,7 +955,7 @@ export function OverlayPage() {
                   ヒント:
                   <ul className="mt-1 list-disc pl-4">
                     <li>
-                      OBS BrowserSource は <span className="font-mono">{themedObsUrl}</span> を使用（必要なら{" "}
+                      OBSブラウザソースは <span className="font-mono">{themedObsUrl}</span> を使用（必要なら{" "}
                       <span className="font-mono">bg=transparent</span>）。
                     </li>
                     <li>
@@ -976,23 +976,23 @@ export function OverlayPage() {
                     <div>
                       <div className="font-semibold text-slate-700">720p配信 (1280x720)</div>
                       <ul className="list-disc pl-4 mt-1 space-y-0.5">
-                        <li>Theme: <code className="font-mono bg-slate-100 px-1 rounded">720p-standard</code> または <code className="font-mono bg-slate-100 px-1 rounded">720p-minimal</code></li>
-                        <li>Browser Source: 400x720（右側）</li>
+                        <li>テーマ: <code className="font-mono bg-slate-100 px-1 rounded">720p-standard</code> または <code className="font-mono bg-slate-100 px-1 rounded">720p-minimal</code></li>
+                        <li>ブラウザソース: 400x720（右側）</li>
                         <li>URL: <code className="font-mono bg-slate-100 px-1 rounded text-[10px]">{obs720pUrl}</code></li>
                       </ul>
                     </div>
                     <div>
                       <div className="font-semibold text-slate-700">1080p配信 (1920x1080)</div>
                       <ul className="list-disc pl-4 mt-1 space-y-0.5">
-                        <li>Theme: <code className="font-mono bg-slate-100 px-1 rounded">1080p-standard</code> または <code className="font-mono bg-slate-100 px-1 rounded">1080p-full</code></li>
-                        <li>Browser Source: 500x1080（右側）</li>
+                        <li>テーマ: <code className="font-mono bg-slate-100 px-1 rounded">1080p-standard</code> または <code className="font-mono bg-slate-100 px-1 rounded">1080p-full</code></li>
+                        <li>ブラウザソース: 500x1080（右側）</li>
                         <li>URL: <code className="font-mono bg-slate-100 px-1 rounded text-[10px]">{obs1080pUrl}</code></li>
                       </ul>
                     </div>
                     <div>
-                      <div className="font-semibold text-slate-700">フルスクリーン Overlay</div>
+                      <div className="font-semibold text-slate-700">フルスクリーンオーバーレイ</div>
                       <ul className="list-disc pl-4 mt-1 space-y-0.5">
-                        <li>Browser Source: 1920x1080</li>
+                        <li>ブラウザソース: 1920x1080</li>
                         <li>URL: <code className="font-mono bg-slate-100 px-1 rounded text-[10px]">{obsFullUrl}</code></li>
                       </ul>
                     </div>

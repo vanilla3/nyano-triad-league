@@ -20,11 +20,11 @@ describe("MatchSetupPanelMint helpers", () => {
     });
 
     expect(line).toContain("Starter A");
-    expect(line).toContain("Deck B: event fixed");
-    expect(line).toContain("v2 shadow+tactics");
+    expect(line).toContain("デッキB: イベント固定");
+    expect(line).toContain("v2（shadow+tactics）");
     expect(line).toContain("Nyano AI");
-    expect(line).toContain("first=manual");
-    expect(line).toContain("board=mint");
+    expect(line).toContain("先攻: 手動");
+    expect(line).toContain("盤面: mint");
   });
 
   it("opens advanced setup when stream mode is enabled or mode is non-manual", () => {
@@ -35,8 +35,8 @@ describe("MatchSetupPanelMint helpers", () => {
   });
 
   it("keeps stable labels for ruleset and first-player mode", () => {
-    expect(describeRulesetKey("classic_three_open")).toBe("classic three open");
-    expect(describeRulesetKey("classic_reverse")).toBe("classic reverse");
-    expect(describeFirstPlayerMode("committed_mutual_choice")).toBe("committed mutual");
+    expect(describeRulesetKey("classic_three_open")).toBe("classic（three open）");
+    expect(describeRulesetKey("classic_reverse")).toBe("classic（reverse）");
+    expect(describeFirstPlayerMode("committed_mutual_choice")).toBe("相互コミット");
   });
 });

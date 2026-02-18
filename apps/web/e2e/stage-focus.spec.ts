@@ -70,6 +70,17 @@ async function readHorizontalOverflowPx(page: import("@playwright/test").Page): 
   });
 }
 
+function replayLoadButton(page: import("@playwright/test").Page) {
+  return page.getByRole("button", { name: /Load replay|リプレイを読み込む|読み込み中/ }).first();
+}
+
+async function clickReplayLoadIfReady(page: import("@playwright/test").Page): Promise<void> {
+  const button = replayLoadButton(page);
+  if (!await button.isVisible().catch(() => false)) return;
+  if (!await button.isEnabled().catch(() => false)) return;
+  await button.click();
+}
+
 test.describe("stage routes", () => {
   let pageErrors: string[];
 
@@ -91,7 +102,7 @@ test.describe("stage routes", () => {
     await expect.poll(() => new URL(page.url()).searchParams.get("focus")).toBe("1");
     await expect.poll(() => new URL(page.url()).searchParams.has("layout")).toBe(false);
 
-    await expect(page.getByText("Hand Dock")).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByText(/Hand Dock|手札ドック/)).toBeVisible({ timeout: 10_000 });
     await expect(page.getByLabel("Commit move from focus hand dock")).toBeVisible({ timeout: 10_000 });
   });
 
@@ -201,7 +212,7 @@ test.describe("stage routes", () => {
     await expect.poll(() => new URL(page.url()).searchParams.get("focus")).toBe("1");
     await expect.poll(() => new URL(page.url()).searchParams.has("layout")).toBe(false);
 
-    await expect(page.getByText("Pixi focus needs a loaded replay")).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByText(/Pixi focus needs a loaded replay|Pixiフォーカスはリプレイ読込後に利用できます/)).toBeVisible({ timeout: 10_000 });
   });
 
   test("/replay-stage keeps top transport actions visible on desktop", async ({ page }) => {
@@ -209,10 +220,7 @@ test.describe("stage routes", () => {
     const zParam = encodeTranscriptZ(REPLAY_TRANSCRIPT_JSON);
     await page.goto(`/replay-stage?ui=engine&focus=1&mode=v2&z=${zParam}`);
 
-    const loadReplayButton = page.getByRole("button", { name: "Load replay" });
-    if (await loadReplayButton.count()) {
-      await loadReplayButton.first().click();
-    }
+    await clickReplayLoadIfReady(page);
 
     const toolbarPlayButton = page.getByLabel("Play replay from focus toolbar");
     await expect(toolbarPlayButton).toBeVisible({ timeout: 10_000 });
@@ -230,10 +238,7 @@ test.describe("stage routes", () => {
     const zParam = encodeTranscriptZ(REPLAY_TRANSCRIPT_JSON);
     await page.goto(`/replay-stage?ui=engine&focus=1&mode=v2&z=${zParam}`);
 
-    const loadReplayButton = page.getByRole("button", { name: "Load replay" });
-    if (await loadReplayButton.count()) {
-      await loadReplayButton.first().click();
-    }
+    await clickReplayLoadIfReady(page);
 
     await page.evaluate(() => {
       window.scrollTo(0, document.documentElement.scrollHeight);
@@ -249,20 +254,17 @@ test.describe("stage routes", () => {
     const zParam = encodeTranscriptZ(REPLAY_TRANSCRIPT_JSON);
     await page.goto(`/replay-stage?ui=engine&focus=1&mode=v2&z=${zParam}`);
 
-    const loadReplayButton = page.getByRole("button", { name: "Load replay" });
-    if (await loadReplayButton.count()) {
-      await loadReplayButton.first().click();
-    }
+    await clickReplayLoadIfReady(page);
     const actionFeedback = page.getByLabel("Replay focus action feedback");
 
-    await expect(page.getByRole("button", { name: "Hide controls" })).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByRole("button", { name: /Hide controls|操作を隠す/ })).toBeVisible({ timeout: 10_000 });
     await page.keyboard.press("c");
-    await expect(page.getByRole("button", { name: "Show controls" })).toBeVisible({ timeout: 10_000 });
-    await expect(actionFeedback).toContainText("Controls hidden");
+    await expect(page.getByRole("button", { name: /Show controls|操作を表示/ })).toBeVisible({ timeout: 10_000 });
+    await expect(actionFeedback).toContainText(/Controls hidden|操作を隠しました/);
 
     await page.keyboard.press("s");
-    await expect(page.getByText("Replay from transcript")).toBeVisible({ timeout: 10_000 });
-    await expect(actionFeedback).toContainText("Setup shown");
+    await expect(page.getByText(/Replay from transcript|リプレイ読込/)).toBeVisible({ timeout: 10_000 });
+    await expect(actionFeedback).toContainText(/Setup shown|設定を表示しました/);
 
     await page.keyboard.press("Escape");
     await expect.poll(() => new URL(page.url()).pathname).toBe("/replay");
@@ -275,10 +277,7 @@ test.describe("stage routes", () => {
     const zParam = encodeTranscriptZ(REPLAY_TRANSCRIPT_JSON);
     await page.goto(`/replay-stage?ui=engine&focus=1&mode=v2&z=${zParam}`);
 
-    const loadReplayButton = page.getByRole("button", { name: "Load replay" });
-    if (await loadReplayButton.count()) {
-      await loadReplayButton.first().click();
-    }
+    await clickReplayLoadIfReady(page);
 
     await expect(page.getByText(/Pixi renderer is unavailable\./).first()).toBeVisible({ timeout: 15_000 });
     await expect(page.getByLabel("Retry Pixi renderer in replay")).toBeVisible({ timeout: 10_000 });
@@ -289,8 +288,8 @@ test.describe("stage routes", () => {
     const zParam = encodeTranscriptZ(REPLAY_TRANSCRIPT_JSON);
     await page.goto(`/replay-stage?ui=engine&focus=1&z=${zParam}`);
 
-    await expect(page.getByText("Replay controls are hidden for board focus.")).toBeVisible({ timeout: 10_000 });
-    await page.getByRole("button", { name: "Show controls" }).click();
+    await expect(page.getByText(/Replay controls are hidden for board focus\.|盤面フォーカス中はリプレイ操作を非表示にしています。/)).toBeVisible({ timeout: 10_000 });
+    await page.getByRole("button", { name: /Show controls|操作を表示/ }).click();
     await expect(page.getByLabel("Replay speed")).toBeVisible({ timeout: 10_000 });
   });
 
@@ -323,31 +322,11 @@ test.describe("stage routes", () => {
   });
 
   test("/replay-stage keeps recovery controls when replay load fails", async ({ page }) => {
-    await page.addInitScript(() => {
-      try {
-        localStorage.removeItem("nyano.gameIndex.v1");
-        localStorage.removeItem("nytl.rpc.user");
-        localStorage.removeItem("nytl.rpc.lastOk");
-      } catch {
-        // ignore
-      }
-    });
-    await page.route("**/game/index.v1.json", (route) => route.abort());
-    await page.route("**/*publicnode*", (route) => route.abort());
-    await page.route("**/*ankr*", (route) => route.abort());
-    await page.route("**/*llamarpc*", (route) => route.abort());
-    await page.route("**/*cloudflare*", (route) => route.abort());
+    await page.goto("/replay-stage?ui=engine&focus=1&t=invalid");
 
-    const zParam = encodeTranscriptZ(REPLAY_TRANSCRIPT_JSON);
-    await page.goto(`/replay-stage?ui=engine&focus=1&z=${zParam}`);
-
-    const loadReplayButton = page.getByRole("button", { name: "Load replay" });
-    await expect(loadReplayButton).toBeVisible({ timeout: 10_000 });
-    await loadReplayButton.click();
-
-    await expect(page.getByText("Error:").first()).toBeVisible({ timeout: 30_000 });
-    await expect(page.getByRole("button", { name: "Retry load" })).toBeVisible({ timeout: 10_000 });
-    await expect(page.getByRole("button", { name: "Clear share params" })).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByText(/Error:|エラー\s*\/\s*Error:/).first()).toBeVisible({ timeout: 30_000 });
+    await expect(page.getByRole("button", { name: /Retry load|再読込する/ })).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByRole("button", { name: /Clear share params|共有パラメータをクリア/ })).toBeVisible({ timeout: 10_000 });
   });
 
   test("/battle-stage guest mode falls back when game index load fails", async ({ page }) => {

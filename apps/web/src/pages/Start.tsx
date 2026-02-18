@@ -2,7 +2,6 @@ import React from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import {
   ONBOARDING_STEPS,
-  isOnboardingCompleted,
   markOnboardingStepDone,
   readOnboardingProgress,
 } from "@/lib/onboarding";
@@ -25,7 +24,6 @@ export function StartPage() {
   const theme = resolveAppTheme(searchParams);
   const themed = React.useCallback((path: string) => appendThemeToPath(path, theme), [theme]);
   const [progress, setProgress] = React.useState(() => readOnboardingProgress());
-  const isDone = isOnboardingCompleted(progress);
 
   const steps: StartStep[] = [
     {
@@ -41,13 +39,6 @@ export function StartPage() {
       icon: "arena",
       to: themed("/match?mode=guest&opp=vs_nyano_ai&ai=normal&rk=v2&ui=mint"),
       action: "今すぐ対戦",
-    },
-    {
-      id: "commit_first_move",
-      title: "3) 慣れたら最初の手を確定する",
-      icon: "match",
-      to: themed("/match?mode=guest&opp=vs_nyano_ai&ai=normal&rk=v2&ui=mint"),
-      action: "Matchへ",
     },
   ];
 
@@ -103,12 +94,10 @@ export function StartPage() {
             </MintPressable>
           </div>
           <div className="mint-start-footer__state">
-            {isDone
-              ? "準備完了。Decks / Arena で遊べます。"
-              : "まずは 1→2 の順で進めると、すぐに対戦を始められます。3 は任意です。"}
+            まずは 1→2 の順で進めると、すぐに対戦を始められます。
           </div>
           <Link to={themed("/")} className="mint-start-footer__back">
-            Homeへ戻る
+            ホームへ戻る
           </Link>
         </GlassPanel>
       </section>

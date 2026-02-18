@@ -29,12 +29,12 @@ test.describe("Page smoke tests", () => {
 
   test("/decks loads", async ({ page }) => {
     await page.goto("/decks?theme=mint");
-    await expect(page.getByText("Deck Builder")).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByText(/Deck Builder|デッキビルダー/)).toBeVisible({ timeout: 10_000 });
   });
 
   test("/replay loads", async ({ page }) => {
     await page.goto("/replay");
-    await expect(page.getByText("Replay from transcript")).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByText(/Replay from transcript|リプレイ読込/)).toBeVisible({ timeout: 10_000 });
   });
 
   test("/rulesets loads", async ({ page }) => {
@@ -44,9 +44,9 @@ test.describe("Page smoke tests", () => {
 
   test("/overlay?controls=0 loads", async ({ page }) => {
     await page.goto("/overlay?controls=0");
-    // Overlay in no-controls mode shows "No signal yet" and/or "Now Playing"
+    // Overlay in no-controls mode shows "No signal yet/信号待ち" and/or "Now Playing/対戦中"
     await expect(
-      page.getByText("No signal yet").or(page.getByText("Now Playing")).first(),
+      page.getByText(/No signal yet|信号待ち/).or(page.getByText(/Now Playing|対戦中/)).first(),
     ).toBeVisible({ timeout: 10_000 });
   });
 

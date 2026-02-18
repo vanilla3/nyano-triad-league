@@ -1,0 +1,61 @@
+{
+  "version": 3,
+  "defaults": {
+    "model": "gemini-3-pro-image-preview",
+    "aspect": "1:1",
+    "size": "1K",
+    "responseModalities": ["Image"],
+    "alsoWebp": false
+  },
+  "jobs": [
+    {
+      "id": "bg_cloud_corners_16x9",
+      "out": "apps/web/public/assets/gen/bg_cloud_corners_16x9_v3.png",
+      "aspect": "16:9",
+      "size": "2K",
+      "prompt": "soft pastel sky gradient background with fluffy white clouds in the corners, subtle sparkles, very light bokeh, no characters, no text, cute mobile game UI background, 16:9"
+    },
+    {
+      "id": "bg_paw_tile",
+      "out": "apps/web/public/assets/gen/bg_paw_tile_512_v1.png",
+      "aspect": "1:1",
+      "size": "1K",
+      "prompt": "seamless tileable paw print pattern, very subtle pastel outlines, low contrast, transparent background, no text"
+    },
+    {
+      "id": "fx_sparkle_tile",
+      "out": "apps/web/public/assets/gen/fx_sparkle_tile_512_v1.png",
+      "aspect": "1:1",
+      "size": "1K",
+      "prompt": "seamless tileable sparkle + tiny star + bokeh overlay texture, pastel, very subtle, transparent background, no text"
+    },
+    {
+      "id": "tx_noise_tile",
+      "out": "apps/web/public/assets/gen/tx_noise_256_v1.png",
+      "aspect": "1:1",
+      "size": "1K",
+      "prompt": "seamless tileable subtle grain noise texture, monochrome gray, very fine film grain, transparent background, no text"
+    },
+    {
+      "id": "ui_glass_sheen",
+      "out": "apps/web/public/assets/gen/ui_glass_sheen_512x256_v1.png",
+      "aspect": "2:1",
+      "size": "1K",
+      "prompt": "soft diagonal glass sheen overlay, subtle highlight streaks, pastel white, transparent background, no text"
+    },
+    {
+      "id": "slot_inner_shadow",
+      "out": "apps/web/public/assets/gen/slot_inner_shadow_256_v1.png",
+      "aspect": "1:1",
+      "size": "1K",
+      "prompt": "square inner shadow overlay for a recessed slot, soft rounded corners, subtle dark gradient around edges, transparent center, transparent background, no text"
+    },
+    {
+      "id": "board_tray_tex",
+      "out": "apps/web/public/assets/gen/board_tray_tex_1024_v1.png",
+      "aspect": "1:1",
+      "size": "1K",
+      "prompt": "seamless toy board tray texture, soft pastel mint and cyan plastic grain, very subtle low-contrast pattern, no text"
+    }
+  ]
+}

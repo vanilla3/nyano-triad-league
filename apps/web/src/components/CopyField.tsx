@@ -27,9 +27,9 @@ export function CopyField(props: {
   const doCopy = async () => {
     try {
       await writeClipboardText(copyText);
-      toast.success("Copied", props.label);
+      toast.success("コピーしました", props.label);
     } catch {
-      toast.error("Copy failed", "Clipboard unavailable");
+      toast.error("コピー失敗", "クリップボードが利用できません");
     }
   };
 
@@ -52,17 +52,17 @@ export function CopyField(props: {
         <div className="flex shrink-0 flex-wrap items-center gap-2">
           {isLong ? (
             <button className="btn btn-sm" onClick={() => setExpanded((x) => !x)}>
-              {expanded ? "Fold" : "Expand"}
+              {expanded ? "折りたたむ" : "展開"}
             </button>
           ) : null}
 
           <button className="btn btn-sm" onClick={doCopy}>
-            Copy
+            コピー
           </button>
 
           {props.href ? (
             <a className="btn btn-sm no-underline" href={props.href} target="_blank" rel="noreferrer noopener">
-              Open
+              開く
             </a>
           ) : null}
         </div>

@@ -47,9 +47,9 @@ export function PlayerSidePanelMint({
         className="mint-player-panel__remaining"
         role="status"
         aria-live="polite"
-        aria-label={`${playerLabel} remaining cards ${clampedRemaining}`}
+        aria-label={`${playerLabel} の残りカード ${clampedRemaining}`}
       >
-        <span className="mint-player-panel__remaining-label">Remaining cards</span>
+        <span className="mint-player-panel__remaining-label">残りカード</span>
         <span className="mint-player-panel__remaining-value">{clampedRemaining}</span>
       </div>
 

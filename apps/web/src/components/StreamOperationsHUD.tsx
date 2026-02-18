@@ -327,7 +327,7 @@ export function StreamOperationsHUD({
                 ? timeLeft !== null
                   ? `${timeLeft}s`
                   : "…"
-                : "CLOSED"
+                : "受付終了"
             }
             secondary={
               voteOpen ? (
@@ -336,7 +336,7 @@ export function StreamOperationsHUD({
                   {voteTurn ?? "?"}
                 </span>
               ) : (
-                "Start vote で開始"
+                "投票開始で受付"
               )
             }
             accentColor={voteOpen ? "nyano" : "surface"}
@@ -400,7 +400,7 @@ export function StreamOperationsHUD({
                 });
                 void writeClipboardText(lines.join("\n"));
               }}
-              title="Copy ops log to clipboard"
+              title="運用ログをクリップボードへコピー"
             >
               ログ出力
             </button>

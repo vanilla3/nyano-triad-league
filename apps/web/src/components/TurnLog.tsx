@@ -135,7 +135,7 @@ export function TurnLog(props: {
           >
             <div className="flex items-center justify-between gap-3">
               <div className="flex items-center gap-2 font-medium">
-                <span>Turn {t.turnIndex + 1} · {t.player === 0 ? "A" : "B"} · {cellCoord(t.cell)} (cell {t.cell}) · card {t.cardIndex + 1}</span>
+                <span>手 {t.turnIndex + 1} · {t.player === 0 ? "A" : "B"} · {cellCoord(t.cell)} (セル {t.cell}) · カード {t.cardIndex + 1}</span>
                 {annotation && (
                   <span
                     className={`rounded-md border px-1.5 py-0.5 text-[10px] font-medium ${QUALITY_DISPLAY[annotation.quality].color}`}
@@ -157,22 +157,22 @@ export function TurnLog(props: {
 
               {d ? (
                 <>
-                  <span className="badge">placed: {d.placedCell === null ? "—" : cellCoord(d.placedCell)}</span>
-                  <span className="badge badge-amber">flipped: {formatCells(d.flippedCells)}</span>
+                  <span className="badge">配置: {d.placedCell === null ? "—" : cellCoord(d.placedCell)}</span>
+                  <span className="badge badge-amber">反転: {formatCells(d.flippedCells)}</span>
                 </>
               ) : null}
 
-              <span className="badge">comboCount: {t.comboCount}</span>
-              <span className="badge">combo: {t.comboEffect}</span>
+              <span className="badge">コンボ数: {t.comboCount}</span>
+              <span className="badge">コンボ: {t.comboEffect}</span>
               <span className="badge">+triad: {t.appliedBonus.triadPlus}</span>
-              <span className="badge">ignoreWarning: {t.appliedBonus.ignoreWarningMark ? "yes" : "no"}</span>
+              <span className="badge">warning無視: {t.appliedBonus.ignoreWarningMark ? "あり" : "なし"}</span>
 
               {t.warningPlaced !== null ? (
-                <span className="rounded-md border border-slate-200 bg-slate-50 px-2 py-0.5">placed mark: {t.warningPlaced}</span>
+                <span className="rounded-md border border-slate-200 bg-slate-50 px-2 py-0.5">mark設置: {t.warningPlaced}</span>
               ) : null}
 
               {t.warningTriggered ? (
-                <span className="badge badge-amber">stepped on warning</span>
+                <span className="badge badge-amber">warning踏み込み</span>
               ) : null}
             </div>
 
@@ -197,11 +197,11 @@ export function TurnLog(props: {
                     <div className="font-medium">Δ (board diff)</div>
                     <div className="mt-1 grid gap-1 font-mono">
                       <div>
-                        placed: {d.placedCell === null ? "—" : `${cellCoord(d.placedCell)} (cell ${d.placedCell})`} {" "}
+                        配置: {d.placedCell === null ? "—" : `${cellCoord(d.placedCell)} (cell ${d.placedCell})`} {" "}
                         {d.placedTokenId !== null ? `(#${d.placedTokenId.toString()})` : ""}{" "}
-                        {d.placedOwner !== null ? `by ${ownerLabel(d.placedOwner)}` : ""}
+                        {d.placedOwner !== null ? `プレイヤー${ownerLabel(d.placedOwner)}` : ""}
                       </div>
-                      <div>flipped: {d.flipped.length}</div>
+                      <div>反転: {d.flipped.length}</div>
 
                       {d.flipped.length ? (
                         <div className="mt-1 grid gap-1">

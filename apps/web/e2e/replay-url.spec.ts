@@ -44,9 +44,9 @@ function encodeTranscriptT(json: string): string {
 
 test("Replay page shows form and keyboard legend", async ({ page }) => {
   await page.goto("/replay");
-  await expect(page.getByText("Replay from transcript")).toBeVisible({ timeout: 10_000 });
+  await expect(page.getByText(/Replay from transcript|リプレイ読込/)).toBeVisible({ timeout: 10_000 });
   // Keyboard legend is always visible
-  await expect(page.getByText("play/pause")).toBeVisible();
+  await expect(page.getByText(/play\/pause|再生\/停止/)).toBeVisible();
   // Textarea for transcript JSON input should be present
   await expect(page.locator("textarea")).toBeVisible();
 });
@@ -73,7 +73,7 @@ test("Replay loads and decodes z= parameter correctly", async ({ page }) => {
 
   // Navigate with the z= parameter
   await page.goto(`/replay?z=${zParam}`);
-  await expect(page.getByText("Replay from transcript")).toBeVisible({ timeout: 10_000 });
+  await expect(page.getByText(/Replay from transcript|リプレイ読込/)).toBeVisible({ timeout: 10_000 });
 
   // The textarea should contain the decoded transcript JSON
   const textarea = page.locator("textarea");
@@ -88,7 +88,7 @@ test("Replay loads and decodes t= parameter correctly", async ({ page }) => {
   const tParam = encodeTranscriptT(TRANSCRIPT_JSON);
 
   await page.goto(`/replay?t=${tParam}`);
-  await expect(page.getByText("Replay from transcript")).toBeVisible({ timeout: 10_000 });
+  await expect(page.getByText(/Replay from transcript|リプレイ読込/)).toBeVisible({ timeout: 10_000 });
 
   // The textarea should contain the decoded transcript JSON
   const textarea = page.locator("textarea");
@@ -119,7 +119,7 @@ test("Replay shows error on RPC failure gracefully", async ({ page }) => {
   await page.goto(`/replay?z=${zParam}`);
 
   // Click "Load & replay"
-  const loadBtn = page.getByRole("button", { name: /Load/i });
+  const loadBtn = page.getByRole("button", { name: /Load|読み込む/i });
   await expect(loadBtn).toBeVisible({ timeout: 10_000 });
   await loadBtn.click();
 
@@ -128,7 +128,7 @@ test("Replay shows error on RPC failure gracefully", async ({ page }) => {
   await expect(page.locator(".text-rose-700").first()).toBeVisible({ timeout: 30_000 });
 
   // Verify page is still functional (form is still there)
-  await expect(page.getByText("Replay from transcript")).toBeVisible();
+  await expect(page.getByText(/Replay from transcript|リプレイ読込/)).toBeVisible();
 });
 
 test("Replay decodes z= without fatal JS errors", async ({ page }) => {

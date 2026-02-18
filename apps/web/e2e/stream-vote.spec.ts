@@ -14,9 +14,9 @@ test.describe("Stream vote flow", () => {
     await expect(page.getByText("Nyano Stream Studio")).toBeVisible({ timeout: 10_000 });
 
     // Verify the voting section exists
-    await expect(page.getByText("Nyano vs Chat (prototype)")).toBeVisible();
-    await expect(page.getByText("Vote control")).toBeVisible();
-    await expect(page.getByText("Simulated chat input")).toBeVisible();
+    await expect(page.getByText(/Nyano vs Chat \(prototype\)|Nyano vs チャット投票/)).toBeVisible();
+    await expect(page.getByText(/Vote control|投票操作/)).toBeVisible();
+    await expect(page.getByText(/Simulated chat input|模擬チャット入力/)).toBeVisible();
   });
 
   test("viewer command guide is visible", async ({ page }) => {
@@ -24,8 +24,8 @@ test.describe("Stream vote flow", () => {
     await expect(page.getByText("Nyano Stream Studio")).toBeVisible({ timeout: 10_000 });
 
     // RM06-020: Verify the help callout is present
-    await expect(page.getByText("Viewer Command Guide")).toBeVisible();
-    await expect(page.getByText("Common mistakes")).toBeVisible();
+    await expect(page.getByText(/Viewer Command Guide|視聴者コマンド案内/)).toBeVisible();
+    await expect(page.getByText(/Common mistakes|よくあるミス/)).toBeVisible();
   });
 
   test("copy viewer instructions button works", async ({ page, context }) => {
@@ -34,7 +34,7 @@ test.describe("Stream vote flow", () => {
     await expect(page.getByText("Nyano Stream Studio")).toBeVisible({ timeout: 10_000 });
 
     // Click "Copy Viewer Instructions"
-    const copyBtn = page.getByRole("button", { name: "Copy Viewer Instructions" });
+    const copyBtn = page.getByRole("button", { name: /Copy Viewer Instructions|視聴者向け案内をコピー/ });
     await expect(copyBtn).toBeVisible();
     await copyBtn.click();
 
@@ -53,13 +53,13 @@ test.describe("Stream vote flow", () => {
     await chatInput.fill("#triad A2->B2");
 
     // Should show valid indicator
-    await expect(page.getByText("Valid:")).toBeVisible({ timeout: 3_000 });
+    await expect(page.getByText(/Valid:|有効:/)).toBeVisible({ timeout: 3_000 });
 
     // Enter an invalid command
     await chatInput.fill("invalid command");
 
     // Should show invalid indicator
-    await expect(page.getByText("Invalid command")).toBeVisible({ timeout: 3_000 });
+    await expect(page.getByText(/Invalid command|コマンド形式が不正/)).toBeVisible({ timeout: 3_000 });
   });
 
   test("vote controls are present and interactive", async ({ page }) => {
@@ -75,11 +75,11 @@ test.describe("Stream vote flow", () => {
     await expect(secondsInput).toBeVisible();
 
     // Start vote button (should be disabled without live state)
-    const startBtn = page.getByRole("button", { name: "Start vote" });
+    const startBtn = page.getByRole("button", { name: /Start vote|投票開始/ });
     await expect(startBtn).toBeVisible();
     await expect(startBtn).toBeDisabled();
 
     // CLOSED badge should be visible (use .first() as multiple elements may match)
-    await expect(page.getByText("CLOSED").first()).toBeVisible();
+    await expect(page.getByText(/CLOSED|受付終了/).first()).toBeVisible();
   });
 });

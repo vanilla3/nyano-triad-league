@@ -32,6 +32,21 @@ function encodeTranscriptZ(json: string): string {
   return compressed.toString("base64url");
 }
 
+async function expectCommitControlVisible(page: Page): Promise<void> {
+  const legacyCommit = page.getByRole("button", { name: "Commit move", exact: true });
+  const dockCommit = page.getByRole("button", { name: "Commit move from focus hand dock", exact: true });
+  const quickCommit = page.getByRole("button", { name: "Quick commit move", exact: true });
+
+  await expect
+    .poll(async () => {
+      const legacyVisible = (await legacyCommit.count()) > 0 && await legacyCommit.isVisible().catch(() => false);
+      const dockVisible = (await dockCommit.count()) > 0 && await dockCommit.isVisible().catch(() => false);
+      const quickVisible = (await quickCommit.count()) > 0 && await quickCommit.isVisible().catch(() => false);
+      return legacyVisible || dockVisible || quickVisible;
+    })
+    .toBe(true);
+}
+
 async function assertNoHorizontalOverflow(page: Page, maxPx = 2): Promise<void> {
   const details = await page.evaluate(() => {
     const doc = document.documentElement;
@@ -112,7 +127,26 @@ test.describe("Mint app screen guardrails", () => {
 
     await page.goto("/decks?theme=mint");
     await expect(page.locator(".mint-decks-layout")).toBeVisible({ timeout: 10_000 });
+    await expect(page.locator(".mint-card-browser__filters")).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByRole("combobox").first()).toBeVisible();
+    await expect(page.getByPlaceholder("tokenId または 手札タイプ")).toBeVisible();
     await assertNoHorizontalOverflow(page);
+  });
+
+  test("Decks mint browser updates chips when filters change", async ({ page }) => {
+    await page.setViewportSize({ width: 1024, height: 768 });
+    await page.goto("/decks?theme=mint");
+
+    const filters = page.locator(".mint-card-browser__filters").first();
+    await expect(filters).toBeVisible({ timeout: 10_000 });
+
+    const handSelect = page.getByRole("combobox").first();
+    await handSelect.selectOption({ label: "パー" });
+    await expect(page.getByText("手札: パー").first()).toBeVisible();
+
+    const queryInput = page.getByPlaceholder("tokenId または 手札タイプ");
+    await queryInput.fill("1");
+    await expect(page.getByText("検索: 1").first()).toBeVisible();
   });
 
   test("390px: Match mint screen remains interactive", async ({ page }) => {
@@ -140,6 +174,36 @@ test.describe("Mint app screen guardrails", () => {
 
     await page.goto("/decks?theme=mint");
     await expect(page.locator(".mint-decks-summary")).toBeVisible({ timeout: 10_000 });
+  });
+
+  test("390/768/1200: / /arena /decks /match?ui=mint stay reachable", async ({ page }) => {
+    const checkpoints = [
+      { width: 390, height: 844 },
+      { width: 768, height: 1024 },
+      { width: 1200, height: 900 },
+    ];
+
+    for (const viewport of checkpoints) {
+      await page.setViewportSize(viewport);
+
+      await page.goto("/?theme=mint");
+      await expect(page.locator(".mint-home-menu-grid")).toBeVisible({ timeout: 10_000 });
+      await assertNoHorizontalOverflow(page);
+
+      await page.goto("/arena?theme=mint");
+      await expect(page.locator(".mint-arena-layout")).toBeVisible({ timeout: 10_000 });
+      await assertNoHorizontalOverflow(page);
+
+      await page.goto("/decks?theme=mint");
+      await expect(page.locator(".mint-decks-layout")).toBeVisible({ timeout: 10_000 });
+      await expect(page.locator(".mint-card-browser__filters")).toBeVisible({ timeout: 10_000 });
+      await assertNoHorizontalOverflow(page);
+
+      await page.goto("/match?theme=mint&mode=guest&opp=vs_nyano_ai&ai=normal&rk=v2&ui=mint&auto=0");
+      await expect(page.locator(".mint-board-frame").first()).toBeVisible({ timeout: 15_000 });
+      await expectCommitControlVisible(page);
+      await assertNoHorizontalOverflow(page);
+    }
   });
 
   test("390px: Events/Replay/Stream pages keep mint layout reachable", async ({ page }) => {

@@ -17,7 +17,6 @@ import {
   type UxTargetStatus,
 } from "@/lib/telemetry";
 import {
-  isOnboardingCompleted,
   markOnboardingStepDone,
   readOnboardingProgress,
 } from "@/lib/onboarding";
@@ -75,23 +74,18 @@ export function HomePage() {
   const [uxSnapshotHistory, setUxSnapshotHistory] = React.useState(() =>
     readUxTelemetrySnapshotHistory(5),
   );
-  const onboardingAllDone = React.useMemo(
-    () => isOnboardingCompleted(onboardingProgress),
-    [onboardingProgress],
-  );
   const showDevTools = React.useMemo(() => isDebugMode(), []);
   const uxTargetChecks = React.useMemo(() => evaluateUxTargets(uxStats), [uxStats]);
 
   const themed = React.useCallback((to: string) => appendThemeToPath(to, theme), [theme]);
   const quickPlayUrl = themed(`/match?mode=guest&opp=vs_nyano_ai&ai=${difficulty}&rk=v2&ui=mint`);
-  const quickCommitUrl = themed("/match?mode=guest&opp=vs_nyano_ai&ai=normal&rk=v2&ui=mint");
 
   const menuItems = React.useMemo<MenuItem[]>(
     () => [
-      { to: themed("/arena"), title: "Arena", subtitle: "対戦モードへ", icon: "arena" },
-      { to: themed("/decks"), title: "Decks", subtitle: "デッキ編集", icon: "decks" },
-      { to: themed("/replay"), title: "Replay", subtitle: "対戦を振り返る", icon: "replay" },
-      { to: themed("/stream"), title: "Stream", subtitle: "配信ツールへ", icon: "stream" },
+      { to: themed("/arena"), title: "アリーナ", subtitle: "対戦モードへ", icon: "arena" },
+      { to: themed("/decks"), title: "デッキ", subtitle: "デッキ編集", icon: "decks" },
+      { to: themed("/replay"), title: "リプレイ", subtitle: "対戦を振り返る", icon: "replay" },
+      { to: themed("/stream"), title: "配信", subtitle: "配信ツールへ", icon: "stream" },
     ],
     [themed],
   );
@@ -131,7 +125,7 @@ export function HomePage() {
       await writeClipboardText(formatUxTelemetrySnapshotMarkdown(snapshot));
       toast.success("スナップショットをコピーしました", "docs/ux/PLAYTEST_LOG.md に貼り付けてください。");
     } catch (e) {
-      toast.error("コピーに失敗しました", `${errorMessage(e)}（ローカル保存は完了）`);
+      toast.error("コピーに失敗しました", `${errorMessage(e)}（ローカル保存は実施済み）`);
     }
   }, [toast, uxStats]);
 
@@ -215,7 +209,7 @@ export function HomePage() {
       <section className="mint-home-quickplay">
         <GlassPanel variant="panel" className="mint-home-quickplay__panel">
           <div className="mint-home-quickplay__head">
-            <MintLabel>クイック対戦 (Quick Play)</MintLabel>
+            <MintLabel>クイック対戦</MintLabel>
             <div className="mint-home-quickplay__difficulty">
               {DIFFICULTIES.map((item) => (
                 <button
@@ -252,7 +246,7 @@ export function HomePage() {
           </MintTitleText>
         </div>
         <p className="mint-home-onboarding__note">
-          ゲスト対戦は 2 までで開始できます。3 は慣れてきたら進める任意ステップです。
+          はじめてでも、ルール確認とゲスト対戦の2ステップで開始できます。
         </p>
 
         <div className="mint-home-onboarding__grid">
@@ -271,23 +265,12 @@ export function HomePage() {
               今すぐ対戦
             </MintPressable>
           </GlassPanel>
-
-          <GlassPanel variant="card" className="mint-home-step">
-            <div className="mint-home-step__index">3</div>
-            <MintTitleText as="h3" className="mint-home-step__title">慣れたら最初の手を確定</MintTitleText>
-            <MintPressable to={quickCommitUrl} tone="soft">
-              Matchを開く
-            </MintPressable>
-          </GlassPanel>
         </div>
 
         <div className="mint-home-onboarding__footer">
           <MintPressable to={themed("/start")} tone="soft">
             1分スタート画面へ
           </MintPressable>
-          {onboardingAllDone ? (
-            <span className="mint-home-onboarding__done">遊ぶ準備が整いました。好きなモードを選んで始めましょう。</span>
-          ) : null}
         </div>
       </section>
 
@@ -406,7 +389,7 @@ export function HomePage() {
                 閉じる
               </MintPressable>
               <Link className="mint-home-modal__link" to={themed("/rulesets")}>
-                Rulesetsを見る
+                ルール一覧を見る
               </Link>
             </div>
           </GlassPanel>
