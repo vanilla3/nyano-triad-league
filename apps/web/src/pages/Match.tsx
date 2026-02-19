@@ -2,52 +2,40 @@ import React from "react";
 import { useToast } from "@/components/Toast";
 import { Link, useLocation, useNavigate, useSearchParams } from "react-router-dom";
 
-import type { BoardState, CardData, FlipTraceV1, MatchResultWithHistory, PlayerIndex, RulesetConfig, TranscriptV1, Turn, TurnSummary } from "@nyano/triad-engine";
+import type { BoardState, CardData, MatchResultWithHistory, PlayerIndex, RulesetConfig, TranscriptV1, Turn, TurnSummary } from "@nyano/triad-engine";
 import {
   computeRulesetId,
-  DEFAULT_RULESET_CONFIG_V2,
   resolveClassicForcedCardIndex,
   resolveClassicOpenCardIndices,
   resolveClassicSwapIndices,
   simulateMatchV1WithHistory,
 } from "@nyano/triad-engine";
-import { parseRulesetKeyOrDefault, resolveRulesetOrThrow, type RulesetKey } from "@/lib/ruleset_registry";
-import { parseDeckRestriction, validateDeckAgainstRestriction } from "@/lib/deck_restriction";
+import { type RulesetKey } from "@/lib/ruleset_registry";
 
 import { BoardView } from "@/components/BoardView";
-import { BoardViewRPG, HandDisplayRPG, GameResultOverlayRPG, TurnLogRPG } from "@/components/BoardViewRPG";
-import type { TurnLogEntry } from "@/components/BoardViewRPG";
+import { BoardViewRPG, GameResultOverlayRPG } from "@/components/BoardViewRPG";
 import { BoardViewMint } from "@/components/BoardViewMint";
 import { DuelStageMint } from "@/components/DuelStageMint";
 import { BattleHudMint } from "@/components/BattleHudMint";
 import { BattleTopHudMint } from "@/components/BattleTopHudMint";
-import { HandDisplayMint } from "@/components/HandDisplayMint";
 import { GameResultOverlayMint } from "@/components/GameResultOverlayMint";
 import { PlayerSidePanelMint } from "@/components/PlayerSidePanelMint";
 import { ClassicRulesRibbonMint } from "@/components/ClassicRulesRibbonMint";
 import { ClassicOpenHandMiniMint } from "@/components/ClassicOpenHandMiniMint";
 import { ScoreBar } from "@/components/ScoreBar";
-import { LastMoveFeedback, useBoardFlipAnimation } from "@/components/BoardFlipAnimator";
+import { useBoardFlipAnimation } from "@/components/BoardFlipAnimator";
 import { CardFlight } from "@/components/CardFlight";
 import { useCardFlight } from "@/hooks/useCardFlight";
 import { NyanoImage } from "@/components/NyanoImage";
 import { CardMini } from "@/components/CardMini";
 import { HiddenDeckPreviewCard } from "@/components/HiddenDeckPreviewCard";
-import { TurnLog } from "@/components/TurnLog";
 import { GameResultOverlay, type GameResult } from "@/components/GameResultOverlay";
 import {
-  pickReactionKind,
-  resolveReactionCutInImpact,
   type NyanoReactionInput,
 } from "@/components/NyanoReaction";
 import { NyanoReactionSlot } from "@/components/NyanoReactionSlot";
-import { flipTracesSummary } from "@/components/flipTraceDescribe";
-import { base64UrlEncodeUtf8, tryGzipCompressUtf8ToBase64Url } from "@/lib/base64url";
-import { getDeck, listDecks, upsertDeck, type DeckV1 } from "@/lib/deck_store";
+import { getDeck, listDecks, upsertDeck } from "@/lib/deck_store";
 import { getEventById, getEventStatus, type EventV1 } from "@/lib/events";
-import { stringifyWithBigInt } from "@/lib/json";
-import { buildReplayBundleV2, stringifyReplayBundle } from "@/lib/replay_bundle";
-import { fetchMintedTokenIds, fetchNyanoCards } from "@/lib/nyano_rpc";
 import { publishOverlayState, subscribeStreamCommand, type StreamCommandV1 } from "@/lib/streamer_bus";
 import { pickAiMove as pickAiMoveNew, type AiDifficulty, type AiReasonCode } from "@/lib/ai/nyano_ai";
 import { computeAiAutoMoveDelayMs } from "@/lib/ai/turn_timing";
@@ -56,52 +44,132 @@ import { assessBoardAdvantage } from "@/lib/ai/board_advantage";
 import { annotateReplayMoves } from "@/lib/ai/replay_annotations";
 import { errorMessage } from "@/lib/errorMessage";
 import { AiNotesList } from "@/components/AiReasonDisplay";
-import { NyanoAvatar } from "@/components/NyanoAvatar";
 import { MiniTutorial } from "@/components/MiniTutorial";
-import { SkeletonBoard, SkeletonHand } from "@/components/Skeleton";
-import { fetchGameIndex } from "@/lib/nyano/gameIndex";
-import {
-  buildCardDataFromIndex,
-  buildEmergencyGuestFallbackData,
-  generateBalancedDemoPair,
-} from "@/lib/demo_decks";
 import { markOnboardingStepDone } from "@/lib/onboarding";
-import { QrCode } from "@/components/QrCode";
 import { createTelemetryTracker } from "@/lib/telemetry";
 import { createSfxEngine, type SfxEngine, type SfxName } from "@/lib/sfx";
 import { readUiDensity, readVfxQuality, writeUiDensity, writeVfxQuality, type UiDensity, type VfxPreference } from "@/lib/local_settings";
 import type { FlipTraceArrow } from "@/components/FlipArrowOverlay";
-import { MatchDrawerMint, DrawerToggleButton } from "@/components/MatchDrawerMint";
 import { MatchSetupPanelMint } from "@/components/match/MatchSetupPanelMint";
 import { getClassicOpenModeLabel, getPlayerDisplayLabel } from "@/components/match/classicRulesUi";
 import { writeClipboardText } from "@/lib/clipboard";
-import { appAbsoluteUrl, buildReplayShareUrl } from "@/lib/appUrl";
-import { computeStageBoardSizing, shouldShowStageSecondaryControls } from "@/lib/stage_layout";
+import { appAbsoluteUrl } from "@/lib/appUrl";
 import { BattleStageEngine } from "@/engine/components/BattleStageEngine";
 import { applyVfxQualityToDocument, resolveVfxQuality, type VfxQuality } from "@/lib/visual/visualSettings";
-import { MAX_CHAIN_CAP_PER_TURN, parseChainCapPerTurnParam } from "@/lib/ruleset_meta";
+import { MAX_CHAIN_CAP_PER_TURN } from "@/lib/ruleset_meta";
 import {
   decodeClassicRulesMask,
   encodeClassicRulesMask,
-  listClassicRuleTags,
-  normalizeClassicRulesConfig,
 } from "@/lib/classic_rules_param";
 import {
-  deriveChoiceCommitHex,
-  deriveRevealCommitHex,
-  parseFirstPlayerResolutionMode,
-  randomBytes32Hex,
-  resolveFirstPlayer,
   type FirstPlayerResolutionMode,
 } from "@/lib/first_player_resolve";
 import {
   applySearchParamPatch,
-  buildFirstPlayerModeCanonicalParamPatch,
 } from "@/lib/first_player_params";
-
-type OpponentMode = "pvp" | "vs_nyano_ai";
-type DataMode = "fast" | "verified";
-type MatchBoardUi = "mint" | "engine" | "rpg";
+import {
+  parseMatchSearchParams,
+  resolveClassicMaskParamPatch,
+  type MatchBoardUi,
+  type MatchDataMode,
+  type OpponentMode,
+} from "@/features/match/urlParams";
+import { useMatchSearchMutators } from "@/features/match/useMatchSearchMutators";
+import {
+  withMatchBoardUi,
+  withMatchFocusMode,
+  withoutMatchEvent,
+} from "@/features/match/matchUrlParams";
+import {
+  resolveEffectiveFirstPlayer,
+  resolveMatchFirstPlayer,
+} from "@/features/match/matchFirstPlayerParams";
+import {
+  buildRandomizeCommitRevealPatch,
+  buildRandomizeCommittedMutualChoicePatch,
+  buildRandomizeSeedResolutionPatch,
+  deriveCommitRevealCommits,
+  deriveCommittedMutualChoiceCommits,
+} from "@/features/match/matchFirstPlayerMutations";
+import {
+  resolveActiveClassicMask,
+  resolveActiveClassicRuleTags,
+  resolveBaseMatchRuleset,
+  resolveClassicCustomConfig,
+  resolveClassicForcedRuleLabel,
+  resolveMatchRuleset,
+} from "@/features/match/matchRulesetParams";
+import {
+  computeUsed,
+  countWarningMarks,
+  fillTurns,
+  parseDeckTokenIds,
+  turnPlayer,
+} from "@/features/match/matchTurnUtils";
+import {
+  formatClassicOpenSlots,
+  resolveAvailableCells,
+  resolveClassicOpenLabel,
+  resolveClassicOpenPresentation,
+  resolveClassicSwapLabel,
+  resolveCurrentWarnRemaining,
+  resolveEffectiveUsedCardIndices,
+  resolveGuestOpponentVisibleCardIndices,
+  resolveSelectableCells,
+} from "@/features/match/matchBoardDerived";
+import { MatchShareQrCode } from "@/features/match/MatchShareQrCode";
+import { resolveStreamCommitTurnFromCommand } from "@/features/match/matchStreamCommands";
+import {
+  buildClassicMaskChangeParamPatch,
+  buildFirstPlayerModeChangeParamPatch,
+  buildRulesetKeyChangeParamPatch,
+} from "@/features/match/matchSetupParamPatches";
+import {
+  useMatchStageActionFeedback,
+} from "@/features/match/useMatchStageActionFeedback";
+import { useMatchStageActionCallbacks } from "@/features/match/useMatchStageActionCallbacks";
+import { useMatchReplayActions } from "@/features/match/useMatchReplayActions";
+import { useMatchStageSfxEffects } from "@/features/match/useMatchStageSfxEffects";
+import { useMatchShareClipboardActions } from "@/features/match/useMatchShareClipboardActions";
+import {
+  resolveMatchLastFlipSummaryText,
+  resolveMatchLastFlipTraces,
+  resolveMatchRpgLogEntries,
+} from "@/features/match/matchTurnLogDerived";
+import {
+  resolveBoardImpactBurstDurationMs,
+  resolveBoardImpactBurstState,
+  resolveMatchNyanoReactionImpact,
+  resolveMatchNyanoReactionInput,
+  resolveStageImpactBurstDurationMs,
+  shouldTriggerStageImpactBurst,
+} from "@/features/match/matchStageReaction";
+import { resolveMatchStageEngineBoardSizing } from "@/features/match/matchStageEngineBoardSizing";
+import {
+  useMatchStageFocusShortcuts,
+} from "@/features/match/useMatchStageFocusShortcuts";
+import { resolveMatchStagePresentationState } from "@/features/match/matchStagePresentationState";
+import { resolveMatchStageLayoutClasses } from "@/features/match/matchStageLayoutClasses";
+import { useMatchStageUi } from "@/features/match/useMatchStageUi";
+import { useMatchStageFullscreen } from "@/features/match/useMatchStageFullscreen";
+import { useMatchStageBoardSizing } from "@/features/match/useMatchStageBoardSizing";
+import { useMatchStageRouteState } from "@/features/match/matchStageRouteState";
+import { useMatchCardLoadActions } from "@/features/match/useMatchCardLoadActions";
+import { useMatchGuestAutoLoad } from "@/features/match/useMatchGuestAutoLoad";
+import {
+  resolveCanLoadCards,
+  resolveMatchCardLoadEmptyState,
+} from "@/features/match/matchCardLoadUiState";
+import { resolveMatchCardLoadSetupState } from "@/features/match/matchCardLoadSetupState";
+import { MatchCardLoadEmptyStatePanel } from "@/features/match/MatchCardLoadEmptyStatePanel";
+import { MatchEventPanel } from "@/features/match/MatchEventPanel";
+import { MatchGuestModeIntro } from "@/features/match/MatchGuestModeIntro";
+import { MatchFocusHandDock } from "@/features/match/MatchFocusHandDock";
+import { MatchQuickCommitBar } from "@/features/match/MatchQuickCommitBar";
+import { MatchErrorPanel } from "@/features/match/MatchErrorPanel";
+import { MatchHandInteractionArea } from "@/features/match/MatchHandInteractionArea";
+import { MatchBoardFeedbackPanels } from "@/features/match/MatchBoardFeedbackPanels";
+import { MatchInfoColumn } from "@/features/match/MatchInfoColumn";
 
 const STAGE_VFX_OPTIONS: ReadonlyArray<{ value: VfxPreference; label: string }> = [
   { value: "auto", label: "auto" },
@@ -141,182 +209,11 @@ function randomSalt(): `0x${string}` {
   return toHexBytes32(b);
 }
 
-function turnPlayer(firstPlayer: PlayerIndex, turnIndex: number): PlayerIndex {
-  return ((firstPlayer + (turnIndex % 2)) % 2) as PlayerIndex;
-}
-
-function looksLikeRpcError(message: string): boolean {
-  const m = message.toLowerCase();
-  return m.includes("failed to fetch") || m.includes("http request failed") || m.includes("rpc") || m.includes("cors") || m.includes("429");
-}
-
-function parseDeckTokenIds(d: DeckV1 | null): bigint[] {
-  if (!d) return [];
-  return d.tokenIds.map((x) => BigInt(x));
-}
-
-function computeUsed(turns: Turn[], firstPlayer: PlayerIndex): { cells: Set<number>; usedA: Set<number>; usedB: Set<number> } {
-  const cells = new Set<number>();
-  const usedA = new Set<number>();
-  const usedB = new Set<number>();
-  for (let i = 0; i < turns.length; i++) {
-    const t = turns[i];
-    cells.add(t.cell);
-    const p = turnPlayer(firstPlayer, i);
-    if (p === 0) usedA.add(t.cardIndex);
-    else usedB.add(t.cardIndex);
-  }
-  return { cells, usedA, usedB };
-}
-
-function countWarningMarks(turns: Turn[], firstPlayer: PlayerIndex): { A: number; B: number } {
-  let A = 0;
-  let B = 0;
-  for (let i = 0; i < turns.length; i++) {
-    const t = turns[i];
-    if (t.warningMarkCell === undefined) continue;
-    const p = turnPlayer(firstPlayer, i);
-    if (p === 0) A++;
-    else B++;
-  }
-  return { A, B };
-}
-
-function fillTurns(
-  partial: Turn[],
-  firstPlayer: PlayerIndex,
-  ruleset: RulesetConfig,
-  headerForClassic: Pick<TranscriptV1["header"], "salt" | "playerA" | "playerB" | "rulesetId">
-): Turn[] {
-  const { cells, usedA, usedB } = computeUsed(partial, firstPlayer);
-
-  const remainingCells: number[] = [];
-  for (let c = 0; c < 9; c++) if (!cells.has(c)) remainingCells.push(c);
-
-  const remainingA: number[] = [];
-  const remainingB: number[] = [];
-  for (let i = 0; i < 5; i++) {
-    if (!usedA.has(i)) remainingA.push(i);
-    if (!usedB.has(i)) remainingB.push(i);
-  }
-
-  const out: Turn[] = [...partial];
-
-  for (let i = partial.length; i < 9; i++) {
-    const p = turnPlayer(firstPlayer, i);
-    const cell = remainingCells.shift();
-    if (cell === undefined) throw new Error("no remaining cells (internal)");
-    const used = p === 0 ? usedA : usedB;
-    const forced = resolveClassicForcedCardIndex({
-      ruleset,
-      header: headerForClassic,
-      turnIndex: i,
-      player: p,
-      usedCardIndices: used,
-    });
-
-    let cardIndex: number | undefined;
-    if (forced !== null) {
-      cardIndex = forced;
-      if (used.has(cardIndex)) throw new Error(`no remaining forced cardIndex for player ${p}`);
-      if (p === 0) {
-        const idx = remainingA.indexOf(cardIndex);
-        if (idx >= 0) remainingA.splice(idx, 1);
-      } else {
-        const idx = remainingB.indexOf(cardIndex);
-        if (idx >= 0) remainingB.splice(idx, 1);
-      }
-    } else {
-      cardIndex = p === 0 ? remainingA.shift() : remainingB.shift();
-    }
-    if (cardIndex === undefined) throw new Error(`no remaining cardIndex for player ${p}`);
-    out.push({ cell, cardIndex });
-    used.add(cardIndex);
-  }
-
-  return out;
-}
-
 async function copyToClipboard(text: string): Promise<void> {
   await writeClipboardText(text);
 }
 
 // AI logic has been extracted to @/lib/ai/nyano_ai.ts
-
-function parseOpponentMode(v: string | null): OpponentMode {
-  if (!v) return "pvp";
-  if (v === "vs_nyano_ai" || v === "ai" || v === "nyano") return "vs_nyano_ai";
-  return "pvp";
-}
-
-function formatClassicOpenSlots(indices: readonly number[]): string {
-  return indices.map((idx) => String(idx + 1)).join(", ");
-}
-
-function parseAiDifficulty(v: string | null): AiDifficulty {
-  if (v === "easy") return "easy";
-  if (v === "hard") return "hard";
-  if (v === "expert") return "expert";
-  return "normal";
-}
-
-function parseFirstPlayer(v: string | null): PlayerIndex {
-  return v === "1" ? 1 : 0;
-}
-
-function parseSeason(v: string | null): number {
-  const n = Number(v);
-  return Number.isFinite(n) && n >= 1 ? Math.floor(n) : 1;
-}
-
-function parseBool01(v: string | null, defaultValue: boolean): boolean {
-  if (v === "1") return true;
-  if (v === "0") return false;
-  return defaultValue;
-}
-
-function parseFocusMode(v: string | null): boolean {
-  if (!v) return false;
-  const normalized = v.toLowerCase();
-  return normalized === "1" || normalized === "focus";
-}
-
-function parseMatchBoardUi(v: string | null): MatchBoardUi {
-  if (v === "engine") return "engine";
-  if (v === "rpg") return "rpg";
-  return "mint";
-}
-
-/** Lazy QR code for share URL - avoids computing gzip in render */
-function ShareQrCode(props: {
-  sim: SimState;
-  event: EventV1 | null;
-  ui?: string;
-  rulesetKey?: RulesetKey;
-  classicMask?: string;
-}) {
-  const { sim, event, ui, rulesetKey, classicMask } = props;
-  const [url, setUrl] = React.useState<string | null>(null);
-  React.useEffect(() => {
-    if (!sim.ok) return;
-    const json = stringifyWithBigInt(sim.transcript, 0);
-    const z = tryGzipCompressUtf8ToBase64Url(json);
-    setUrl(
-      buildReplayShareUrl({
-        data: z ? { key: "z", value: z } : { key: "t", value: base64UrlEncodeUtf8(json) },
-        step: 9,
-        eventId: event?.id,
-        ui,
-        rulesetKey,
-        classicMask,
-        absolute: true,
-      })
-    );
-  }, [sim, event, ui, rulesetKey, classicMask]);
-
-  if (!url) return <div className="text-xs text-slate-400">生成中...</div>;
-  return <QrCode value={url} size={160} />;
-}
 
 /* ==========================================================================
    MATCH PAGE
@@ -326,7 +223,46 @@ export function MatchPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
-  const ui = parseMatchBoardUi((searchParams.get("ui") || "").toLowerCase());
+  const parsedSearchParams = React.useMemo(
+    () => parseMatchSearchParams(searchParams),
+    [searchParams],
+  );
+  const {
+    ui,
+    isFocusMode,
+    isGuestMode,
+    dataModeParam,
+    eventId,
+    deckAId,
+    deckBId,
+    opponentModeParam,
+    aiDifficultyParam,
+    aiAutoPlay,
+    streamMode,
+    streamCtrlParam,
+    streamControlledSide,
+    rulesetKeyParam,
+    classicMaskParam,
+    chainCapRawParam,
+    chainCapPerTurnParam,
+    seasonIdParam,
+    firstPlayerModeParam,
+    manualFirstPlayerParam,
+    mutualChoiceAParam,
+    mutualChoiceBParam,
+    commitRevealSaltParam,
+    seedResolutionParam,
+    committedMutualPlayerAParam,
+    committedMutualPlayerBParam,
+    committedMutualNonceAParam,
+    committedMutualNonceBParam,
+    committedMutualCommitAParam,
+    committedMutualCommitBParam,
+    commitRevealAParam,
+    commitRevealBParam,
+    commitRevealCommitAParam,
+    commitRevealCommitBParam,
+  } = parsedSearchParams;
   const isRpg = ui === "rpg";
   const isMint = ui === "mint";
   const isEngine = ui === "engine";
@@ -334,48 +270,23 @@ export function MatchPage() {
   const [engineRendererError, setEngineRendererError] = React.useState<string | null>(null);
   const useEngineRenderer = isEngine && !engineRendererFailed;
   const useMintUi = isMint || isEngine;
-  const focusParam = searchParams.get("focus") ?? searchParams.get("layout");
-  const isFocusMode = parseFocusMode(focusParam);
   const isEngineFocus = isEngine && isFocusMode;
-  const stageMatchUrl = React.useMemo(() => {
-    const next = new URLSearchParams(searchParams);
-    next.set("ui", "engine");
-    next.set("focus", "1");
-    next.delete("layout");
-    const query = next.toString();
-    return query ? `/battle-stage?${query}` : "/battle-stage";
-  }, [searchParams]);
-  const isBattleStageRoute = /\/battle-stage$/.test(location.pathname);
-  const isStageFocusRoute = isBattleStageRoute && isEngineFocus;
+  const {
+    stageMatchUrl,
+    isBattleStageRoute,
+    isStageFocusRoute,
+  } = useMatchStageRouteState({
+    pathname: location.pathname,
+    searchParams,
+    isEngineFocus,
+  });
   const stageViewportRef = React.useRef<HTMLDivElement>(null);
-  const [stageBoardSizing, setStageBoardSizing] = React.useState(() =>
-    computeStageBoardSizing({
-      viewportWidthPx: typeof window === "undefined" ? 1366 : window.innerWidth,
-      viewportHeightPx: typeof window === "undefined" ? 900 : window.innerHeight,
-      kind: "battle",
-    })
-  );
+  const stageBoardSizing = useMatchStageBoardSizing({
+    isBattleStageRoute,
+  });
   const stageEngineBoardMaxWidthPxBase = isBattleStageRoute ? stageBoardSizing.maxWidthPx : undefined;
   const stageEngineBoardMinHeightPxBase = isBattleStageRoute ? stageBoardSizing.minHeightPx : undefined;
   const decks = React.useMemo(() => listDecks(), []);
-
-  React.useEffect(() => {
-    if (!isBattleStageRoute) return;
-
-    const updateSizing = () => {
-      setStageBoardSizing(
-        computeStageBoardSizing({
-          viewportWidthPx: window.innerWidth,
-          viewportHeightPx: window.innerHeight,
-          kind: "battle",
-        })
-      );
-    };
-
-    updateSizing();
-    window.addEventListener("resize", updateSizing);
-    return () => window.removeEventListener("resize", updateSizing);
-  }, [isBattleStageRoute]);
 
   React.useEffect(() => {
     if (isEngine) return;
@@ -383,13 +294,13 @@ export function MatchPage() {
     setEngineRendererError(null);
   }, [isEngine]);
 
-  // ── Telemetry (NIN-UX-003) ──
+  // 笏笏 Telemetry (NIN-UX-003) 笏笏
   const telemetry = React.useMemo(() => createTelemetryTracker(), []);
   React.useEffect(() => {
     return () => { telemetry.flush(); };
   }, [telemetry]);
 
-  // ── SFX Engine (NIN-UX-031) ──
+  // 笏笏 SFX Engine (NIN-UX-031) 笏笏
   const sfx = React.useMemo<SfxEngine | null>(() => (useMintUi ? createSfxEngine() : null), [useMintUi]);
   const [sfxMuted, setSfxMuted] = React.useState(() => sfx?.isMuted() ?? false);
   React.useEffect(() => {
@@ -407,11 +318,8 @@ export function MatchPage() {
     sfx?.play(name);
   }, [sfx]);
 
-  const isGuestMode = searchParams.get("mode") === "guest";
-  const dataModeParam = (searchParams.get("dm") ?? "fast") as DataMode;
-  const [dataMode, setDataMode] = React.useState<DataMode>(isGuestMode ? "fast" : dataModeParam);
+  const [dataMode, setDataMode] = React.useState<MatchDataMode>(isGuestMode ? "fast" : dataModeParam);
 
-  const eventId = searchParams.get("event") ?? "";
   const event: EventV1 | null = React.useMemo(() => (eventId ? getEventById(eventId) : null), [eventId]);
   const eventStatus = event ? getEventStatus(event) : null;
 
@@ -420,23 +328,10 @@ export function MatchPage() {
     setEventNyanoDeckOverride(null);
   }, [eventId]);
 
-  const deckAId = searchParams.get("a") ?? "";
-  const deckBId = searchParams.get("b") ?? "";
-
   const deckA = React.useMemo(() => (deckAId ? getDeck(deckAId) : null), [deckAId]);
   const deckB = React.useMemo(() => (deckBId ? getDeck(deckBId) : null), [deckBId]);
-
-  const opponentModeParam = parseOpponentMode(searchParams.get("opp"));
-  const aiDifficultyParam = parseAiDifficulty(searchParams.get("ai"));
-
-  const aiAutoPlay = parseBool01(searchParams.get("auto"), true);
-  const streamMode = parseBool01(searchParams.get("stream"), false);
-  const streamCtrlParam = (searchParams.get("ctrl") ?? "A").toUpperCase();
-  const streamControlledSide = (streamCtrlParam === "B" ? 1 : 0) as PlayerIndex;
   const uiParam: MatchBoardUi = ui;
 
-  const rulesetKeyParam = parseRulesetKeyOrDefault(searchParams.get("rk"), "v2");
-  const classicMaskParam = searchParams.get("cr");
   const classicCustomConfigParam = React.useMemo(
     () => decodeClassicRulesMask(classicMaskParam),
     [classicMaskParam],
@@ -445,25 +340,6 @@ export function MatchPage() {
     () => encodeClassicRulesMask(classicCustomConfigParam),
     [classicCustomConfigParam],
   );
-  const chainCapRawParam = searchParams.get("ccap");
-  const chainCapPerTurnParam = parseChainCapPerTurnParam(chainCapRawParam);
-  const seasonIdParam = parseSeason(searchParams.get("season"));
-  const firstPlayerModeParam = parseFirstPlayerResolutionMode(searchParams.get("fpm"));
-  const manualFirstPlayerParam = parseFirstPlayer(searchParams.get("fp"));
-  const mutualChoiceAParam = parseFirstPlayer(searchParams.get("fpa"));
-  const mutualChoiceBParam = parseFirstPlayer(searchParams.get("fpb"));
-  const commitRevealSaltParam = searchParams.get("fps") ?? "";
-  const seedResolutionParam = searchParams.get("fpsd") ?? "";
-  const committedMutualPlayerAParam = searchParams.get("fpoa") ?? "0xaAaAaAaaAaAaAaaAaAAAAAAAAaaaAaAaAaaAaaAa";
-  const committedMutualPlayerBParam = searchParams.get("fpob") ?? "0xbBbBBBBbbBBBbbbBbbBbbbbBBbBbbbbBbBbbBBbB";
-  const committedMutualNonceAParam = searchParams.get("fpna") ?? "";
-  const committedMutualNonceBParam = searchParams.get("fpnb") ?? "";
-  const committedMutualCommitAParam = searchParams.get("fcoa") ?? "";
-  const committedMutualCommitBParam = searchParams.get("fcob") ?? "";
-  const commitRevealAParam = searchParams.get("fra") ?? "";
-  const commitRevealBParam = searchParams.get("frb") ?? "";
-  const commitRevealCommitAParam = searchParams.get("fca") ?? "";
-  const commitRevealCommitBParam = searchParams.get("fcb") ?? "";
 
   const isEvent = Boolean(event);
   const opponentMode: OpponentMode = isEvent ? "vs_nyano_ai" : opponentModeParam;
@@ -476,33 +352,23 @@ export function MatchPage() {
   const firstPlayerMode = isEvent ? "manual" : firstPlayerModeParam;
   const firstPlayerResolution = React.useMemo(
     () =>
-      resolveFirstPlayer({
+      resolveMatchFirstPlayer({
         mode: firstPlayerMode,
-        manualFirstPlayer: manualFirstPlayerParam,
-        mutualChoiceA: mutualChoiceAParam,
-        mutualChoiceB: mutualChoiceBParam,
-        committedMutualChoice: {
-          matchSalt: commitRevealSaltParam,
-          playerA: committedMutualPlayerAParam,
-          playerB: committedMutualPlayerBParam,
-          choiceA: mutualChoiceAParam,
-          choiceB: mutualChoiceBParam,
-          nonceA: committedMutualNonceAParam,
-          nonceB: committedMutualNonceBParam,
-          commitA: committedMutualCommitAParam,
-          commitB: committedMutualCommitBParam,
-        },
-        commitReveal: {
-          matchSalt: commitRevealSaltParam,
-          revealA: commitRevealAParam,
-          revealB: commitRevealBParam,
-          commitA: commitRevealCommitAParam,
-          commitB: commitRevealCommitBParam,
-        },
-        seedResolution: {
-          matchSalt: commitRevealSaltParam,
-          seed: seedResolutionParam,
-        },
+        manualFirstPlayerParam,
+        mutualChoiceAParam,
+        mutualChoiceBParam,
+        commitRevealSaltParam,
+        seedResolutionParam,
+        committedMutualPlayerAParam,
+        committedMutualPlayerBParam,
+        committedMutualNonceAParam,
+        committedMutualNonceBParam,
+        committedMutualCommitAParam,
+        committedMutualCommitBParam,
+        commitRevealAParam,
+        commitRevealBParam,
+        commitRevealCommitAParam,
+        commitRevealCommitBParam,
       }),
     [
       firstPlayerMode,
@@ -523,7 +389,11 @@ export function MatchPage() {
       commitRevealCommitBParam,
     ],
   );
-  const firstPlayer: PlayerIndex = isEvent ? (event!.firstPlayer as PlayerIndex) : firstPlayerResolution.firstPlayer;
+  const firstPlayer: PlayerIndex = resolveEffectiveFirstPlayer({
+    isEvent,
+    eventFirstPlayer: event ? (event.firstPlayer as PlayerIndex) : null,
+    firstPlayerResolution,
+  });
 
   const [salt, setSalt] = React.useState<`0x${string}`>(() => randomSalt());
   const [deadline, setDeadline] = React.useState<number>(() => Math.floor(Date.now() / 1000) + 24 * 3600);
@@ -559,30 +429,11 @@ export function MatchPage() {
   const overlayUrl = React.useMemo(() => appAbsoluteUrl("overlay?controls=0"), []);
   const lastStreamCmdIdRef = React.useRef<string>("");
   const [error, setError] = React.useState<string | null>(null);
-  const [isStageFullscreen, setIsStageFullscreen] = React.useState(
-    () => typeof document !== "undefined" && Boolean(document.fullscreenElement),
-  );
-
-  React.useEffect(() => {
-    const handleFullscreenChange = () => setIsStageFullscreen(Boolean(document.fullscreenElement));
-    document.addEventListener("fullscreenchange", handleFullscreenChange);
-    return () => document.removeEventListener("fullscreenchange", handleFullscreenChange);
-  }, []);
-
-  const toggleStageFullscreen = React.useCallback(async () => {
-    if (!isStageFocusRoute) return;
-    try {
-      if (document.fullscreenElement) {
-        await document.exitFullscreen();
-        return;
-      }
-      const target = stageViewportRef.current;
-      if (!target) return;
-      await target.requestFullscreen();
-    } catch (e: unknown) {
-      toast.warn("Fullscreen", errorMessage(e));
-    }
-  }, [isStageFocusRoute, toast]);
+  const { isStageFullscreen, toggleStageFullscreen } = useMatchStageFullscreen({
+    isStageFocusRoute,
+    stageViewportRef,
+    onWarn: toast.warn,
+  });
 
   // RPC status tracking for overlay propagation (Phase 0 stability)
   const rpcStatusRef = React.useRef<{ ok: boolean; message?: string; timestampMs: number } | undefined>(undefined);
@@ -615,84 +466,22 @@ export function MatchPage() {
   }, []);
   const [vfxPreference, setVfxPreference] = React.useState<VfxPreference>(() => readVfxQuality("auto"));
   const [resolvedVfxQuality, setResolvedVfxQuality] = React.useState<VfxQuality>(() => resolveVfxQuality());
-  const [showStageAssist, setShowStageAssist] = React.useState(() => !isStageFocusRoute);
-  const showStageAssistUi = !isStageFocusRoute || showStageAssist;
-  const stageControlsManualOverrideRef = React.useRef(false);
-  const stageActionFeedbackTimerRef = React.useRef<number | null>(null);
-  const [stageActionFeedback, setStageActionFeedback] = React.useState("");
-  const [stageActionFeedbackTone, setStageActionFeedbackTone] = React.useState<"info" | "success" | "warn">("info");
-  const [showStageControls, setShowStageControls] = React.useState(() => {
-    if (!isStageFocusRoute) return true;
-    if (typeof window === "undefined") return true;
-    return shouldShowStageSecondaryControls(window.innerWidth);
+  const {
+    showStageAssist,
+    setShowStageAssist,
+    showStageAssistUi,
+    showStageControls,
+    toggleStageControls,
+  } = useMatchStageUi({
+    isStageFocusRoute,
   });
-
-  React.useEffect(() => {
-    if (!isStageFocusRoute) {
-      setShowStageAssist(true);
-      return;
-    }
-    setShowStageAssist(false);
-  }, [isStageFocusRoute]);
-
-  React.useEffect(() => {
-    stageControlsManualOverrideRef.current = false;
-    if (!isStageFocusRoute) {
-      setShowStageControls(true);
-      return;
-    }
-    if (typeof window === "undefined") {
-      setShowStageControls(true);
-      return;
-    }
-    setShowStageControls(shouldShowStageSecondaryControls(window.innerWidth));
-  }, [isStageFocusRoute]);
-
-  React.useEffect(() => {
-    if (!isStageFocusRoute || typeof window === "undefined") return;
-    const handleResize = () => {
-      if (stageControlsManualOverrideRef.current) return;
-      setShowStageControls(shouldShowStageSecondaryControls(window.innerWidth));
-    };
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
-  }, [isStageFocusRoute]);
-
-  const toggleStageControls = React.useCallback(() => {
-    stageControlsManualOverrideRef.current = true;
-    setShowStageControls((prev) => !prev);
-  }, []);
-
-  const pushStageActionFeedback = React.useCallback((message: string, tone: "info" | "success" | "warn" = "info") => {
-    if (!isStageFocusRoute) return;
-    setStageActionFeedback(message);
-    setStageActionFeedbackTone(tone);
-    if (typeof window === "undefined") return;
-    if (stageActionFeedbackTimerRef.current !== null) {
-      window.clearTimeout(stageActionFeedbackTimerRef.current);
-    }
-    stageActionFeedbackTimerRef.current = window.setTimeout(() => {
-      stageActionFeedbackTimerRef.current = null;
-      setStageActionFeedback("");
-      setStageActionFeedbackTone("info");
-    }, 1800);
-  }, [isStageFocusRoute]);
-
-  React.useEffect(() => {
-    if (isStageFocusRoute) return;
-    setStageActionFeedback("");
-    setStageActionFeedbackTone("info");
-    if (typeof window !== "undefined" && stageActionFeedbackTimerRef.current !== null) {
-      window.clearTimeout(stageActionFeedbackTimerRef.current);
-      stageActionFeedbackTimerRef.current = null;
-    }
-  }, [isStageFocusRoute]);
-
-  React.useEffect(() => () => {
-    if (typeof window !== "undefined" && stageActionFeedbackTimerRef.current !== null) {
-      window.clearTimeout(stageActionFeedbackTimerRef.current);
-    }
-  }, []);
+  const {
+    stageActionFeedback,
+    stageActionFeedbackTone,
+    pushStageActionFeedback,
+  } = useMatchStageActionFeedback({
+    isStageFocusRoute,
+  });
 
   const handleStageVfxChange = React.useCallback((nextPreference: VfxPreference) => {
     setVfxPreference(nextPreference);
@@ -758,7 +547,7 @@ export function MatchPage() {
     const ts = new Date();
     const datePart = ts.toLocaleDateString("ja-JP", { year: "numeric", month: "2-digit", day: "2-digit" });
     const timePart = ts.toLocaleTimeString("ja-JP", { hour: "2-digit", minute: "2-digit" });
-    const label = `ゲストデッキ ${datePart} ${timePart}`;
+    const label = `繧ｲ繧ｹ繝医ョ繝・く ${datePart} ${timePart}`;
     upsertDeck({
       name: label,
       tokenIds: guestDeckATokens,
@@ -800,7 +589,7 @@ export function MatchPage() {
 
   React.useEffect(() => {
     if (isEvent) return;
-    const patch = buildFirstPlayerModeCanonicalParamPatch(firstPlayerModeParam, searchParams, randomBytes32Hex);
+    const patch = buildFirstPlayerModeChangeParamPatch(firstPlayerModeParam, searchParams);
     const { next, changed } = applySearchParamPatch(searchParams, patch);
     if (changed) {
       setSearchParams(next, { replace: true });
@@ -808,15 +597,14 @@ export function MatchPage() {
   }, [isEvent, firstPlayerModeParam, searchParams, setSearchParams]);
 
   React.useEffect(() => {
-    if (isEvent) return;
-    if (rulesetKeyParam === "classic_custom") {
-      if (classicMaskParam === classicCustomMaskParam) return;
-      const { next, changed } = applySearchParamPatch(searchParams, { cr: classicCustomMaskParam });
-      if (changed) setSearchParams(next, { replace: true });
-      return;
-    }
-    if (classicMaskParam === null) return;
-    const { next, changed } = applySearchParamPatch(searchParams, { cr: undefined });
+    const patch = resolveClassicMaskParamPatch({
+      isEvent,
+      rulesetKeyParam,
+      classicMaskParam,
+      classicCustomMaskParam,
+    });
+    if (!patch) return;
+    const { next, changed } = applySearchParamPatch(searchParams, patch);
     if (changed) setSearchParams(next, { replace: true });
   }, [
     isEvent,
@@ -827,85 +615,41 @@ export function MatchPage() {
     setSearchParams,
   ]);
 
-  const setParam = (key: string, value: string) => {
-    const next = new URLSearchParams(searchParams);
-    if (!value) next.delete(key);
-    else next.set(key, value);
-    if (key === "rk") {
-      if (value === "classic_custom") {
-        if (!next.get("cr")) next.set("cr", "0");
-      } else {
-        next.delete("cr");
-      }
-    }
+  const { setParam, setParams, setFocusMode } = useMatchSearchMutators({
+    searchParams,
+    setSearchParams,
+    navigate,
+    isBattleStageRoute,
+  });
+
+  const handleBoardUiChange = React.useCallback((nextUi: MatchBoardUi) => {
+    const next = withMatchBoardUi(searchParams, nextUi);
+    if (next.toString() === searchParams.toString()) return;
     setSearchParams(next, { replace: true });
-  };
-
-  const setParams = (updates: Record<string, string | undefined>) => {
-    const { next, changed } = applySearchParamPatch(searchParams, updates);
-    if (changed) setSearchParams(next, { replace: true });
-  };
-
-  const setFocusMode = React.useCallback((enabled: boolean) => {
-    const { next, changed } = applySearchParamPatch(searchParams, {
-      focus: enabled ? "1" : undefined,
-      layout: undefined,
-    });
-    if (!enabled && isBattleStageRoute) {
-      const query = next.toString();
-      navigate(query ? `/match?${query}` : "/match", { replace: true });
-      return;
-    }
-    if (changed) setSearchParams(next, { replace: true });
-  }, [searchParams, setSearchParams, isBattleStageRoute, navigate]);
-
-  const handleBoardUiChange = (nextUi: MatchBoardUi) => {
-    if (nextUi === "engine") {
-      setParam("ui", nextUi);
-      return;
-    }
-    setParams({ ui: nextUi, focus: undefined, layout: undefined });
-  };
+  }, [searchParams, setSearchParams]);
 
   const handleRulesetKeyChange = React.useCallback((nextKey: RulesetKey) => {
-    if (nextKey === "classic_custom") {
-      setParams({ rk: nextKey, cr: classicCustomMaskParam });
-      return;
-    }
-    setParams({ rk: nextKey, cr: undefined });
+    setParams(buildRulesetKeyChangeParamPatch(nextKey, classicCustomMaskParam));
   }, [setParams, classicCustomMaskParam]);
 
   const handleClassicMaskChange = React.useCallback((nextMask: string) => {
-    setParams({ rk: "classic_custom", cr: nextMask });
+    setParams(buildClassicMaskChangeParamPatch(nextMask));
   }, [setParams]);
 
   const handleFirstPlayerModeChange = (nextMode: FirstPlayerResolutionMode) => {
-    setParams({
-      ...buildFirstPlayerModeCanonicalParamPatch(nextMode, searchParams, randomBytes32Hex),
-    });
-  };
-
-  const handleCopySetupLink = async () => {
-    const query = searchParams.toString();
-    const path = location.pathname.replace(/^\//, "");
-    const url = appAbsoluteUrl(query ? `${path}?${query}` : path);
-    const ok = await writeClipboardText(url);
-    if (ok) toast.success("コピーしました", "セットアップURLをコピーしました。");
-    else toast.warn("コピー失敗", "URLを手動でコピーしてください。");
+    setParams(buildFirstPlayerModeChangeParamPatch(nextMode, searchParams));
   };
 
   React.useEffect(() => {
     if (isEngine || !isFocusMode) return;
-    const { next, changed } = applySearchParamPatch(searchParams, {
-      focus: undefined,
-      layout: undefined,
-    });
-    if (changed) setSearchParams(next, { replace: true });
+    const next = withMatchFocusMode(searchParams, false);
+    if (next.toString() === searchParams.toString()) return;
+    setSearchParams(next, { replace: true });
   }, [isEngine, isFocusMode, searchParams, setSearchParams]);
 
   const clearEvent = () => {
-    const next = new URLSearchParams(searchParams);
-    next.delete("event");
+    const next = withoutMatchEvent(searchParams);
+    if (next.toString() === searchParams.toString()) return;
     setSearchParams(next, { replace: true });
   };
 
@@ -924,24 +668,14 @@ export function MatchPage() {
   const effectiveDeckBTokens = isGuestMode && guestDeckBTokens.length === 5 ? guestDeckBTokens : deckBTokens;
 
   const classicCustomConfig = React.useMemo(
-    () => normalizeClassicRulesConfig(classicCustomConfigParam),
+    () => resolveClassicCustomConfig(classicCustomConfigParam),
     [classicCustomConfigParam],
   );
   const baseRuleset = React.useMemo(() => {
-    if (rulesetKey === "classic_custom") {
-      return {
-        ...DEFAULT_RULESET_CONFIG_V2,
-        classic: { ...classicCustomConfig },
-      } as RulesetConfig;
-    }
-    return resolveRulesetOrThrow(rulesetKey);
+    return resolveBaseMatchRuleset(rulesetKey, classicCustomConfig);
   }, [rulesetKey, classicCustomConfig]);
   const ruleset: RulesetConfig = React.useMemo(() => {
-    const next = structuredClone(baseRuleset) as RulesetConfig;
-    if (chainCapPerTurnParam !== null) {
-      next.meta = { ...(next.meta ?? {}), chainCapPerTurn: chainCapPerTurnParam };
-    }
-    return next;
+    return resolveMatchRuleset(baseRuleset, chainCapPerTurnParam);
   }, [baseRuleset, chainCapPerTurnParam]);
   const rulesetId = React.useMemo(() => computeRulesetId(ruleset), [ruleset]);
 
@@ -981,19 +715,12 @@ export function MatchPage() {
     });
   }, [ruleset, salt, playerA, playerB, rulesetId]);
   const guestOpponentVisibleCardIndices = React.useMemo(() => {
-    if (!classicOpenCardIndices) return null;
-    return new Set<number>(classicOpenCardIndices.playerB);
+    return resolveGuestOpponentVisibleCardIndices(classicOpenCardIndices);
   }, [classicOpenCardIndices]);
   const effectiveUsedCardIndices = React.useMemo(() => {
-    const out = new Set<number>(currentUsed);
-    if (classicForcedCardIndex !== null) {
-      for (let i = 0; i < 5; i++) {
-        if (i !== classicForcedCardIndex) out.add(i);
-      }
-    }
-    return out;
+    return resolveEffectiveUsedCardIndices(currentUsed, classicForcedCardIndex);
   }, [currentUsed, classicForcedCardIndex]);
-  const currentWarnRemaining = currentPlayer === 0 ? Math.max(0, 3 - warnUsed.A) : Math.max(0, 3 - warnUsed.B);
+  const currentWarnRemaining = resolveCurrentWarnRemaining(currentPlayer, warnUsed);
   const currentHandCards: CardData[] = React.useMemo(() => {
     if (!cards) return [];
     return currentDeckTokens.map((tid) => cards.get(tid)).filter(Boolean) as CardData[];
@@ -1008,15 +735,17 @@ export function MatchPage() {
   }, [cards, effectiveDeckBTokens]);
 
   const availableCells = React.useMemo(() => {
-    const out: number[] = [];
-    for (let c = 0; c < 9; c++) if (!used.cells.has(c)) out.push(c);
-    return out;
+    return resolveAvailableCells(used.cells);
   }, [used.cells]);
 
   // P0-1: selectableCells for BoardView (only empty cells when it's not AI turn and game isn't over)
   const selectableCells = React.useMemo(() => {
-    if (!cards || turns.length >= 9 || isAiTurn) return new Set<number>();
-    return new Set(availableCells);
+    return resolveSelectableCells({
+      hasCards: Boolean(cards),
+      turnCount: turns.length,
+      isAiTurn,
+      availableCells,
+    });
   }, [cards, turns.length, isAiTurn, availableCells]);
 
   const _availableCardIndexes = React.useMemo(() => {
@@ -1030,276 +759,143 @@ export function MatchPage() {
     setDraftCardIndex(classicForcedCardIndex);
   }, [classicForcedCardIndex]);
 
-  const canLoad = isGuestMode || Boolean(deckA && deckATokens.length === 5 && deckBTokens.length === 5);
+  const canLoad = resolveCanLoadCards({
+    isGuestMode,
+    hasDeckA: Boolean(deckA),
+    deckATokensCount: deckATokens.length,
+    deckBTokensCount: deckBTokens.length,
+  });
+  const cardLoadEmptyState = resolveMatchCardLoadEmptyState({
+    isLoading: loading,
+    isGuestMode,
+  });
+  const cardLoadSetupState = resolveMatchCardLoadSetupState({
+    hasCards: Boolean(cards),
+    error,
+  });
 
-  const classicSwapLabel = classicSwapIndices
-    ? `Classic Swap: A${classicSwapIndices.aIndex + 1} / B${classicSwapIndices.bIndex + 1}`
-    : null;
-  const classicOpenLabel = classicOpenCardIndices
-    ? classicOpenCardIndices.mode === "all_open"
-      ? "Classic Open: all cards revealed"
-      : `Classic Three Open: A[${formatClassicOpenSlots(classicOpenCardIndices.playerA)}] / B[${formatClassicOpenSlots(classicOpenCardIndices.playerB)}]`
-    : null;
+  const classicSwapLabel = resolveClassicSwapLabel(classicSwapIndices);
+  const classicOpenLabel = resolveClassicOpenLabel(classicOpenCardIndices);
   const classicOpenPresentation = React.useMemo(() => {
-    if (!classicOpenCardIndices) return null;
-    const modeLabel = getClassicOpenModeLabel(classicOpenCardIndices.mode);
-    return {
-      modeLabel,
-      playerA: {
-        cards: deckACards,
-        openCardIndices: new Set<number>(classicOpenCardIndices.playerA),
-        usedCardIndices: used.usedA,
-      },
-      playerB: {
-        cards: deckBCards,
-        openCardIndices: new Set<number>(classicOpenCardIndices.playerB),
-        usedCardIndices: used.usedB,
-      },
-    };
+    return resolveClassicOpenPresentation({
+      classicOpenCardIndices,
+      deckACards,
+      deckBCards,
+      usedA: used.usedA,
+      usedB: used.usedB,
+    });
   }, [classicOpenCardIndices, deckACards, deckBCards, used.usedA, used.usedB]);
+  const classicOpenModeLabel = React.useMemo(
+    () => (classicOpenPresentation ? getClassicOpenModeLabel(classicOpenPresentation.mode) : ""),
+    [classicOpenPresentation],
+  );
   const activeClassicRuleTags = React.useMemo(() => {
-    if (ruleset.version !== 2) return [];
-    return listClassicRuleTags(ruleset.classic);
+    return resolveActiveClassicRuleTags(ruleset);
   }, [ruleset]);
   const classicForcedRuleLabel = React.useMemo(() => {
-    if (classicForcedCardIndex === null) return null;
-    if (activeClassicRuleTags.includes("order")) return "ORDER";
-    if (activeClassicRuleTags.includes("chaos")) return "CHAOS";
-    return "FIX";
+    return resolveClassicForcedRuleLabel(activeClassicRuleTags, classicForcedCardIndex);
   }, [activeClassicRuleTags, classicForcedCardIndex]);
   const activeClassicMask = React.useMemo(() => {
-    if (rulesetKey !== "classic_custom") return undefined;
-    return encodeClassicRulesMask(classicCustomConfig);
+    return resolveActiveClassicMask(rulesetKey, classicCustomConfig);
   }, [rulesetKey, classicCustomConfig]);
 
-  const handleRandomizeCommitReveal = () => {
-    setParams({
-      fps: randomBytes32Hex(),
-      fra: randomBytes32Hex(),
-      frb: randomBytes32Hex(),
-      fca: "",
-      fcb: "",
-    });
-  };
+  const handleRandomizeCommitReveal = React.useCallback(() => {
+    setParams(buildRandomizeCommitRevealPatch());
+  }, [setParams]);
 
-  const handleDeriveCommitRevealCommits = () => {
-    const commitA = deriveRevealCommitHex(commitRevealSaltParam, commitRevealAParam);
-    const commitB = deriveRevealCommitHex(commitRevealSaltParam, commitRevealBParam);
-    if (!commitA || !commitB) {
-      toast.warn("Commit導出失敗", "matchSalt/revealA/revealB は bytes32 hex 形式で入力してください。");
-      return;
-    }
-    setParams({ fca: commitA, fcb: commitB });
-    toast.success("Commit導出完了", "reveal 値から commitA/commitB を更新しました。");
-  };
-
-  const handleRandomizeCommittedMutualChoice = () => {
-    setParams({
-      fps: randomBytes32Hex(),
-      fpna: randomBytes32Hex(),
-      fpnb: randomBytes32Hex(),
-      fcoa: "",
-      fcob: "",
-    });
-  };
-
-  const handleDeriveCommittedMutualChoiceCommits = () => {
-    const commitA = deriveChoiceCommitHex({
+  const handleDeriveCommitRevealCommits = React.useCallback(() => {
+    const commits = deriveCommitRevealCommits({
       matchSalt: commitRevealSaltParam,
-      player: committedMutualPlayerAParam,
-      firstPlayer: mutualChoiceAParam,
-      nonce: committedMutualNonceAParam,
+      revealA: commitRevealAParam,
+      revealB: commitRevealBParam,
     });
-    const commitB = deriveChoiceCommitHex({
+    if (!commits) {
+      toast.warn("Commit 生成に失敗", "matchSalt/revealA/revealB は bytes32 hex 形式で入力してください。");
+      return;
+    }
+    setParams(commits);
+    toast.success("Commit を更新しました", "reveal 値から commitA/commitB を再計算しました。");
+  }, [
+    commitRevealAParam,
+    commitRevealBParam,
+    commitRevealSaltParam,
+    setParams,
+    toast,
+  ]);
+
+  const handleRandomizeCommittedMutualChoice = React.useCallback(() => {
+    setParams(buildRandomizeCommittedMutualChoicePatch());
+  }, [setParams]);
+
+  const handleDeriveCommittedMutualChoiceCommits = React.useCallback(() => {
+    const commits = deriveCommittedMutualChoiceCommits({
       matchSalt: commitRevealSaltParam,
-      player: committedMutualPlayerBParam,
-      firstPlayer: mutualChoiceBParam,
-      nonce: committedMutualNonceBParam,
+      playerA: committedMutualPlayerAParam,
+      playerB: committedMutualPlayerBParam,
+      firstPlayerA: mutualChoiceAParam,
+      firstPlayerB: mutualChoiceBParam,
+      nonceA: committedMutualNonceAParam,
+      nonceB: committedMutualNonceBParam,
     });
-    if (!commitA || !commitB) {
-      toast.warn("Commit導出失敗", "matchSalt/player/choice/nonce の入力を確認してください。");
+    if (!commits) {
+      toast.warn("Commit 生成に失敗", "matchSalt/player/choice/nonce を確認してください。");
       return;
     }
-    setParams({ fcoa: commitA, fcob: commitB });
-    toast.success("Commit導出完了", "コミット相互選択の commit 値を更新しました。");
-  };
+    setParams(commits);
+    toast.success("Commit を更新しました", "コミット選択値の commit を再計算しました。");
+  }, [
+    commitRevealSaltParam,
+    committedMutualNonceAParam,
+    committedMutualNonceBParam,
+    committedMutualPlayerAParam,
+    committedMutualPlayerBParam,
+    mutualChoiceAParam,
+    mutualChoiceBParam,
+    setParams,
+    toast,
+  ]);
 
-  const handleRandomizeSeedResolution = () => {
-    setParams({
-      fps: randomBytes32Hex(),
-      fpsd: randomBytes32Hex(),
-    });
-  };
+  const handleRandomizeSeedResolution = React.useCallback(() => {
+    setParams(buildRandomizeSeedResolutionPatch());
+  }, [setParams]);
 
-  const loadCardsFromIndex = async () => {
-    setError(null);
-    setStatus(null);
-    setLoading(true);
+  const {
+    loadCardsFromIndex,
+    loadCards,
+  } = useMatchCardLoadActions({
+    isGuestMode,
+    dataMode,
+    hasDeckA: Boolean(deckA),
+    deckATokens,
+    deckBTokens,
+    event,
+    eventNyanoDeckOverride,
+    playerA,
+    playerB,
+    setLoading,
+    setError,
+    setStatus,
+    setCards,
+    setOwners,
+    setPlayerA,
+    setPlayerB,
+    setGuestDeckATokens,
+    setGuestDeckBTokens,
+    setEventNyanoDeckOverride,
+    rpcStatusRef,
+    toast,
+  });
 
-    const applyGuestFallback = (reason: string) => {
-      const fallback = buildEmergencyGuestFallbackData();
-      setGuestDeckATokens(fallback.deckATokenIds);
-      setGuestDeckBTokens(fallback.deckBTokenIds);
-      setCards(fallback.cardsByTokenId);
-      setOwners(null);
-      setPlayerA("0x0000000000000000000000000000000000000001" as `0x${string}`);
-      setPlayerB("0x0000000000000000000000000000000000000002" as `0x${string}`);
-      setError(`Game Index の読み込みに失敗したため、フォールバックのゲストデッキを使用しました。(${reason})`);
-      setStatus(`ゲストモード: フォールバックデッキを読み込みました（${fallback.cardsByTokenId.size}枚）`);
-      toast.warn("Game Index利用不可", "フォールバックのゲストカードを読み込みました。");
-    };
-
-    try {
-      const index = await fetchGameIndex();
-      if (!index) {
-        if (isGuestMode) {
-          applyGuestFallback("index unavailable");
-          return;
-        }
-        setError("Game Index が利用できません。Verified モードをお試しください。");
-        return;
-      }
-
-      if (isGuestMode) {
-        // Generate balanced demo pair
-        const pair = generateBalancedDemoPair(index);
-        const aTokens = pair.deckA.tokenIds.map((x) => BigInt(x));
-        const bTokens = pair.deckB.tokenIds.map((x) => BigInt(x));
-        setGuestDeckATokens(aTokens);
-        setGuestDeckBTokens(bTokens);
-
-        const allTokenIds = [...pair.deckA.tokenIds, ...pair.deckB.tokenIds];
-        const cardMap = buildCardDataFromIndex(index, allTokenIds);
-        setCards(cardMap);
-        setOwners(null);
-        setPlayerA("0x0000000000000000000000000000000000000001" as `0x${string}`);
-        setPlayerB("0x0000000000000000000000000000000000000002" as `0x${string}`);
-        setStatus(`ゲストモード: game index から ${cardMap.size} 枚読み込みました`);
-      } else {
-        // Fast mode for normal play
-        const allTokenIds = [...deckATokens, ...deckBTokens].map((t) => t.toString());
-        const cardMap = buildCardDataFromIndex(index, allTokenIds);
-
-        if (cardMap.size < allTokenIds.length) {
-          const missing = allTokenIds.filter((id) => !cardMap.has(BigInt(id)));
-          setError(`Game Index に tokenId が不足しています: ${missing.join(", ")}。Verified モードをお試しください。`);
-          return;
-        }
-
-        // Deck restriction check (P2-DECK-RESTRICT)
-        if (event?.deckRestriction) {
-          const rule = parseDeckRestriction(event.deckRestriction);
-          const playerTokenIds = deckATokens.map((t) => t.toString());
-          const validation = validateDeckAgainstRestriction(playerTokenIds, rule);
-          if (!validation.valid) {
-            setError(`デッキ制限違反 (${rule.label}): ${validation.violations.join("; ")}`);
-            return;
-          }
-        }
-
-        setCards(cardMap);
-        setOwners(null);
-        setStatus(`Fast モード: game index から ${cardMap.size} 枚読み込みました`);
-      }
-    } catch (e: unknown) {
-      const msg = errorMessage(e);
-      if (isGuestMode) {
-        applyGuestFallback(msg);
-        return;
-      }
-      setError(`Game Index 読み込み失敗: ${msg}`);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const loadCardsFromRpc = async () => {
-    setError(null);
-    setStatus(null);
-
-    if (!deckA || deckATokens.length !== 5) {
-      setError("Deck A を選択してください（5枚）。");
-      return;
-    }
-    if (deckBTokens.length !== 5) {
-      setError("Deck B が不正です（5枚必要）。");
-      return;
-    }
-
-    setLoading(true);
-    try {
-      let deckBForLoad = deckBTokens;
-
-      if (event && !eventNyanoDeckOverride) {
-        const raw = event.nyanoDeckTokenIds.join(",");
-        const looksPlaceholder = raw === "1,2,3,4,5";
-
-        if (looksPlaceholder) {
-          const minted = await fetchMintedTokenIds(5, 0);
-          deckBForLoad = minted;
-          setEventNyanoDeckOverride(minted);
-
-          toast.success(
-            "Nyanoデッキを自動選択しました",
-            minted.map((t) => `#${t.toString()}`).join(", ")
-          );
-        }
-      }
-
-      const tokenIds = [...deckATokens, ...deckBForLoad];
-      const bundles = await fetchNyanoCards(tokenIds);
-
-      const cardsByTokenId = new Map<bigint, CardData>();
-      const ownersByTokenId = new Map<bigint, `0x${string}`>();
-
-      for (const [tid, b] of bundles.entries()) {
-        cardsByTokenId.set(tid, b.card);
-        ownersByTokenId.set(tid, b.owner);
-      }
-
-      setCards(cardsByTokenId);
-      setOwners(ownersByTokenId);
-
-      const a0 = deckATokens[0];
-      const b0 = deckBTokens[0];
-      if (a0 !== undefined) setPlayerA(ownersByTokenId.get(a0) ?? playerA);
-      if (b0 !== undefined) setPlayerB(ownersByTokenId.get(b0) ?? playerB);
-
-      setStatus(`Verified: mainnet から ${bundles.size} 枚読み込みました`);
-      rpcStatusRef.current = { ok: true, timestampMs: Date.now() };
-    } catch (e: unknown) {
-      const msg = errorMessage(e);
-      setError(msg);
-      rpcStatusRef.current = { ok: false, message: msg, timestampMs: Date.now() };
-
-      if (msg.includes("missing tokenid")) {
-        toast.warn("カード読込失敗", "不足している tokenId が見つかりました。/nyano で確認してください。");
-      } else if (looksLikeRpcError(msg)) {
-        toast.warn("カード読込失敗", "RPC リクエストに失敗しました。/nyano の RPC 設定を確認してください。");
-      }
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const loadCards = () => {
-    if (isGuestMode || dataMode === "fast") {
-      return loadCardsFromIndex();
-    }
-    return loadCardsFromRpc();
-  };
-
-  // Auto-load cards in guest mode
-  React.useEffect(() => {
-    if (isGuestMode && !cards && !loading) {
-      void loadCardsFromIndex();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isGuestMode]);
+  useMatchGuestAutoLoad({
+    isGuestMode,
+    hasCards: Boolean(cards),
+    isLoading: loading,
+    loadCardsFromIndex,
+  });
 
   const sim: SimState = React.useMemo(() => {
-    if (!cards) return { ok: false, error: "カードが未読込です。先に「カードを読み込む」を押してください。" };
-    if (effectiveDeckATokens.length !== 5 || effectiveDeckBTokens.length !== 5) return { ok: false, error: "Deck A/B はそれぞれ 5 枚必要です。" };
+    if (!cards) return { ok: false, error: "Cards are not loaded. Please load cards first." };
+    if (effectiveDeckATokens.length !== 5 || effectiveDeckBTokens.length !== 5) return { ok: false, error: "Deck A/B must each contain 5 cards." };
 
     try {
       const header = {
@@ -1332,6 +928,14 @@ export function MatchPage() {
       return { ok: false, error: errorMessage(e) };
     }
   }, [cards, effectiveDeckATokens, effectiveDeckBTokens, turns, firstPlayer, ruleset, rulesetId, seasonId, playerA, playerB, deadline, salt]);
+  const matchResultSummary = turns.length === 9 && sim.ok
+    ? {
+      winner: sim.full.winner,
+      tilesA: sim.full.tiles.A,
+      tilesB: sim.full.tiles.B,
+      matchId: sim.full.matchId,
+    }
+    : null;
 
   // P1-120: Move tip for BattleHudMint (same data shapes as publishOverlayState)
   const moveTip = React.useMemo(() => {
@@ -1556,56 +1160,56 @@ export function MatchPage() {
       setStatus(null);
 
       if (turns.length >= 9) {
-        setError("9手すべて確定済みです。続けるには対戦をリセットしてください。");
+        setError("No more moves available. The board already has 9 turns.");
         telemetry.recordInvalidAction();
         return;
       }
 
       if (next.cell < 0 || next.cell > 8) {
-        setError("セル番号は 0..8 の範囲で指定してください。");
+        setError("Cell must be in range 0..8.");
         telemetry.recordInvalidAction();
         return;
       }
       if (used.cells.has(next.cell)) {
-        setError(`セル ${next.cell} はすでに使用済みです。`);
+        setError(`Cell ${next.cell} is already occupied.`);
         telemetry.recordInvalidAction();
         return;
       }
 
       if (next.cardIndex < 0 || next.cardIndex > 4) {
-        setError("cardIndex は 0..4 の範囲で指定してください。");
+        setError("cardIndex must be in range 0..4.");
         telemetry.recordInvalidAction();
         return;
       }
       if (classicForcedCardIndex !== null && next.cardIndex !== classicForcedCardIndex) {
-        setError(`このターンは cardIndex ${classicForcedCardIndex} を選ぶ必要があります。`);
+        setError(`This turn requires cardIndex ${classicForcedCardIndex}.`);
         telemetry.recordInvalidAction();
         return;
       }
       if (currentUsed.has(next.cardIndex)) {
-        setError(`カードスロット ${next.cardIndex + 1} はすでに使用済みです。`);
+        setError(`Card slot ${next.cardIndex + 1} is already used.`);
         telemetry.recordInvalidAction();
         return;
       }
 
       if (next.warningMarkCell !== undefined) {
         if (currentWarnRemaining <= 0) {
-          setError("警告マークの残りがありません。");
+          setError("No warning mark remaining.");
           telemetry.recordInvalidAction();
           return;
         }
         if (next.warningMarkCell === next.cell) {
-          setError("warningMarkCell は配置セルと同じにできません。");
+          setError("warningMarkCell cannot be the same as cell.");
           telemetry.recordInvalidAction();
           return;
         }
         if (next.warningMarkCell < 0 || next.warningMarkCell > 8) {
-          setError("warningMarkCell は 0..8 の範囲で指定してください。");
+          setError("warningMarkCell must be in range 0..8.");
           telemetry.recordInvalidAction();
           return;
         }
         if (used.cells.has(next.warningMarkCell)) {
-          setError(`warningMarkCell ${next.warningMarkCell} はすでに埋まっています。`);
+          setError(`warningMarkCell ${next.warningMarkCell} is already occupied.`);
           telemetry.recordInvalidAction();
           return;
         }
@@ -1630,7 +1234,7 @@ export function MatchPage() {
     };
 
     if (isStageFocusRoute) {
-      pushStageActionFeedback("配置を確定しました", "success");
+      pushStageActionFeedback("驟咲ｽｮ繧堤｢ｺ螳壹＠縺ｾ縺励◆", "success");
     }
 
     // Card flight animation (mint / engine mode)
@@ -1664,12 +1268,12 @@ export function MatchPage() {
     if (isAiTurn) return;
 
     if (draftCell === null) {
-      setError("先に配置先のセルを選択してください。");
+      setError("Select a target cell first.");
       telemetry.recordInvalidAction();
       return;
     }
     if (draftCardIndex === null) {
-      setError("card を選択してください");
+      setError("card 繧帝∈謚槭＠縺ｦ縺上□縺輔＞");
       telemetry.recordInvalidAction();
       return;
     }
@@ -1706,7 +1310,7 @@ export function MatchPage() {
     if (!enableHandDragDrop || isAiTurn || turns.length >= 9) return;
     const resolvedCardIndex = classicForcedCardIndex ?? dragCardIndex ?? draftCardIndex;
     if (resolvedCardIndex === null) {
-      setError("先にカードを選択してください。");
+      setError("Select a card first.");
       telemetry.recordInvalidAction();
       return;
     }
@@ -1829,23 +1433,21 @@ export function MatchPage() {
         if (cmd.id === lastStreamCmdIdRef.current) return;
         lastStreamCmdIdRef.current = cmd.id;
 
-        if (cmd.type !== "commit_move_v1") return;
-        if (turns.length >= 9) return;
-
-        if (cmd.by !== streamControlledSide) return;
-        if (isVsNyanoAi && currentPlayer === aiPlayer) return;
-        if (cmd.forTurn !== turns.length) return;
-        if (cmd.by !== currentPlayer) return;
-
-        const wm = cmd.move.warningMarkCell;
-        const resolvedCardIndex = classicForcedCardIndex ?? cmd.move.cardIndex;
-        commitTurn({
-          cell: cmd.move.cell,
-          cardIndex: resolvedCardIndex,
-          warningMarkCell: typeof wm === "number" ? wm : undefined,
+        const resolved = resolveStreamCommitTurnFromCommand({
+          cmd,
+          turnCount: turns.length,
+          streamControlledSide,
+          isVsNyanoAi,
+          currentPlayer,
+          aiPlayer,
+          classicForcedCardIndex,
         });
+        if (!resolved) return;
 
-        toast.success("配信操作を反映", `セル ${cmd.move.cell} · カード ${resolvedCardIndex + 1}`);
+        commitTurn(resolved.turn);
+        const resolvedCardIndex = resolved.resolvedCardIndex;
+
+        toast.success("驟堺ｿ｡謫堺ｽ懊ｒ蜿肴丐", `繧ｻ繝ｫ ${cmd.move.cell} ﾂｷ 繧ｫ繝ｼ繝・${resolvedCardIndex + 1}`);
       } catch {
         // ignore
       }
@@ -1854,109 +1456,61 @@ export function MatchPage() {
 
   const canFinalize = turns.length === 9 && sim.ok;
 
-  const copyTranscriptJson = async () => {
-    setError(null);
-    if (!sim.ok) {
-      setError(sim.error);
-      return;
-    }
-    try {
-      const json = stringifyWithBigInt(sim.transcript, 2);
-      await copyToClipboard(json);
-      toast.success("コピーしました", "transcript JSON");
-    } catch (e: unknown) {
-      toast.error("コピーに失敗しました", errorMessage(e));
-    }
-  };
+  const {
+    handleCopySetupLink,
+    copyTranscriptJson,
+  } = useMatchShareClipboardActions({
+    pathname: location.pathname,
+    search: searchParams,
+    simOk: sim.ok,
+    simError: sim.ok ? "" : sim.error,
+    transcript: sim.ok ? sim.transcript : null,
+    setError,
+    toast,
+    copyToClipboard,
+    writeSetupClipboardText: writeClipboardText,
+    resolveErrorMessage: errorMessage,
+  });
 
-  /** Build replay URL (relative or absolute). Respects BASE_URL for subpath deployments.
-   *  v2: embeds card data in the payload so Replay can work without RPC/GameIndex.
-   *  Falls back to v1 (transcript-only) if cards haven't loaded yet. */
-  const buildReplayUrl = React.useCallback((absolute?: boolean): string | null => {
-    if (!sim.ok) return null;
-    // v2 when cards available; v1 fallback otherwise
-    const json = cards
-      ? stringifyReplayBundle(buildReplayBundleV2(sim.transcript, cards))
-      : stringifyWithBigInt(sim.transcript, 0);
-    const z = tryGzipCompressUtf8ToBase64Url(json);
-    const data: { key: "z" | "t"; value: string } =
-      z ? { key: "z", value: z } : { key: "t", value: base64UrlEncodeUtf8(json) };
-    return buildReplayShareUrl({
-      data,
-      step: 9,
-      eventId: event?.id,
-      ui: uiParam,
-      rulesetKey,
-      classicMask: activeClassicMask,
-      absolute,
-    });
-  }, [sim, event, cards, uiParam, rulesetKey, activeClassicMask]);
+  const {
+    copyShareUrl,
+    openReplay,
+    copyShareTemplate,
+  } = useMatchReplayActions({
+    transcript: sim.ok ? sim.transcript : null,
+    cards,
+    eventId: event?.id,
+    ui: uiParam,
+    rulesetKey,
+    classicMask: activeClassicMask,
+    setError,
+    setStatus,
+    navigate,
+    toast,
+    copyToClipboard,
+    resolveErrorMessage: errorMessage,
+  });
 
-  const copyShareUrl = async () => {
-    setError(null);
-    try {
-      const url = buildReplayUrl(true);
-      if (!url) { toast.warn("共有", "Match が未完了です。9手まで進めてください。"); return; }
-      await copyToClipboard(url);
-      toast.success("コピーしました", "Share URL をクリップボードへコピーしました。");
-    } catch (e: unknown) {
-      toast.error("共有に失敗しました", errorMessage(e));
-    }
-  };
-
-  const openReplay = React.useCallback(async () => {
-    setError(null);
-    setStatus(null);
-    try {
-      const url = buildReplayUrl(false);
-      if (!url) { toast.warn("Replay", "Match が未完了です。9手まで進めてください。"); return; }
-      // SPA navigation via react-router (popup-safe, preserves client state)
-      navigate(url);
-    } catch (e: unknown) {
-      toast.error("リプレイ遷移に失敗しました", errorMessage(e));
-    }
-  }, [buildReplayUrl, navigate, toast]);
-
-  const toggleStageControlsWithFeedback = React.useCallback(() => {
-    pushStageActionFeedback(showStageControls ? "Controls hidden" : "Controls shown");
-    playMatchUiSfx("card_place");
-    toggleStageControls();
-  }, [playMatchUiSfx, pushStageActionFeedback, showStageControls, toggleStageControls]);
-
-  const toggleStageAssistWithFeedback = React.useCallback(() => {
-    setShowStageAssist((prev) => {
-      const next = !prev;
-      if (isStageFocusRoute) {
-        pushStageActionFeedback(next ? "HUD shown" : "HUD hidden");
-        playMatchUiSfx("card_place");
-      }
-      return next;
-    });
-  }, [isStageFocusRoute, playMatchUiSfx, pushStageActionFeedback]);
-
-  const toggleStageFullscreenWithFeedback = React.useCallback(() => {
-    pushStageActionFeedback(isStageFullscreen ? "全画面を終了" : "全画面に切替");
-    playMatchUiSfx("card_place");
-    void toggleStageFullscreen();
-  }, [isStageFullscreen, playMatchUiSfx, pushStageActionFeedback, toggleStageFullscreen]);
-
-  const exitFocusModeWithFeedback = React.useCallback(() => {
-    pushStageActionFeedback("Exiting focus mode", "warn");
-    playMatchUiSfx("flip");
-    setFocusMode(false);
-  }, [playMatchUiSfx, pushStageActionFeedback, setFocusMode]);
-
-  const openReplayWithFeedback = React.useCallback(() => {
-    pushStageActionFeedback("Opening replay");
-    playMatchUiSfx("card_place");
-    void openReplay();
-  }, [openReplay, playMatchUiSfx, pushStageActionFeedback]);
-
-  const doAiMoveWithFeedback = React.useCallback(() => {
-    pushStageActionFeedback("Nyano move requested");
-    playMatchUiSfx("card_place");
-    doAiMove();
-  }, [doAiMove, playMatchUiSfx, pushStageActionFeedback]);
+  const {
+    toggleStageControlsWithFeedback,
+    toggleStageAssistWithFeedback,
+    toggleStageFullscreenWithFeedback,
+    exitFocusModeWithFeedback,
+    openReplayWithFeedback,
+    doAiMoveWithFeedback,
+  } = useMatchStageActionCallbacks({
+    showStageControls,
+    setShowStageAssist,
+    isStageFocusRoute,
+    isStageFullscreen,
+    pushStageActionFeedback,
+    playMatchUiSfx,
+    toggleStageControls,
+    toggleStageFullscreen,
+    setFocusMode,
+    openReplay,
+    doAiMove,
+  });
 
   // P0-1: Cell select handler for BoardView / BoardViewRPG
   const handleCellSelect = React.useCallback(
@@ -1970,229 +1524,170 @@ export function MatchPage() {
 
   // P1-2: Build NyanoReaction input from last turn
   const nyanoReactionInput: NyanoReactionInput | null = React.useMemo(() => {
-    if (!sim.ok) return null;
-
-    const lastIdx = turns.length - 1;
-    const lastSummary = lastIdx >= 0 ? sim.previewTurns[lastIdx] : null;
-
-    // Count current tiles
-    let tilesA = 0;
-    let tilesB = 0;
-    for (const cell of boardNow) {
-      if (!cell) continue;
-      if (cell.owner === 0) tilesA++;
-      else tilesB++;
-    }
-
-    return {
-      flipCount: lastSummary ? Number(lastSummary.flipCount ?? 0) : 0,
-      hasChain: lastSummary?.flipTraces ? lastSummary.flipTraces.some((t) => t.isChain) : false,
-      comboEffect: lastSummary?.comboEffect ?? "none",
-      warningTriggered: Boolean(lastSummary?.warningTriggered),
-      tilesA,
-      tilesB,
+    return resolveMatchNyanoReactionInput({
+      simOk: sim.ok,
+      previewTurns: sim.ok ? sim.previewTurns : [],
+      winner: sim.ok ? sim.full.winner : null,
+      turnCount: turns.length,
+      boardNow,
       perspective: 0 as PlayerIndex,
-      finished: turns.length >= 9,
-      winner: turns.length >= 9 ? sim.full.winner : null,
-    };
+    });
   }, [sim, turns.length, boardNow]);
   const currentAiReasonCode = React.useMemo(
     () => (turns.length > 0 ? aiNotes[turns.length - 1]?.reasonCode : undefined),
     [aiNotes, turns.length],
   );
   const nyanoReactionImpact = React.useMemo(() => {
-    if (!nyanoReactionInput) return "low" as const;
-    const kind = pickReactionKind(nyanoReactionInput);
-    return resolveReactionCutInImpact(kind, currentAiReasonCode);
+    return resolveMatchNyanoReactionImpact({
+      nyanoReactionInput,
+      currentAiReasonCode,
+    });
   }, [nyanoReactionInput, currentAiReasonCode]);
   const [stageImpactBurst, setStageImpactBurst] = React.useState(false);
+  const [boardImpactBurst, setBoardImpactBurst] = React.useState(false);
+  const lastBoardImpactAtRef = React.useRef(0);
 
   React.useEffect(() => {
-    if (!isEngineFocus || !nyanoReactionInput) {
-      setStageImpactBurst(false);
-      return;
-    }
-    if (nyanoReactionImpact === "low") {
+    if (!shouldTriggerStageImpactBurst({
+      isEngineFocus,
+      nyanoReactionInput,
+      nyanoReactionImpact,
+    })) {
       setStageImpactBurst(false);
       return;
     }
     setStageImpactBurst(true);
-    const burstMs = nyanoReactionImpact === "high" ? 960 : 760;
+    const burstMs = resolveStageImpactBurstDurationMs(nyanoReactionImpact);
     const timer = window.setTimeout(() => setStageImpactBurst(false), burstMs);
     return () => window.clearTimeout(timer);
   }, [isEngineFocus, nyanoReactionInput, nyanoReactionImpact, turns.length]);
 
+  React.useEffect(() => {
+    const burstState = resolveBoardImpactBurstState({
+      useMintUi,
+      boardAnimIsAnimating: boardAnim.isAnimating,
+      flippedCellCount: boardAnim.flippedCells.length,
+      nowMs: Date.now(),
+      lastBoardImpactAtMs: lastBoardImpactAtRef.current,
+    });
+    if (!burstState.trigger) return;
+    lastBoardImpactAtRef.current = burstState.nextLastBoardImpactAtMs;
+    setBoardImpactBurst(true);
+    const timer = window.setTimeout(
+      () => setBoardImpactBurst(false),
+      resolveBoardImpactBurstDurationMs(),
+    );
+    return () => window.clearTimeout(timer);
+  }, [useMintUi, boardAnim.isAnimating, boardAnim.flippedCells.length, turns.length]);
+
   // P1-1: flipTraces summary for last turn
   const lastFlipSummaryText: string | null = React.useMemo(() => {
-    if (!sim.ok || turns.length === 0) return null;
-    const lastSummary = sim.previewTurns[turns.length - 1];
-    if (!lastSummary?.flipTraces || lastSummary.flipTraces.length === 0) return null;
-    return flipTracesSummary(lastSummary.flipTraces);
+    return resolveMatchLastFlipSummaryText({
+      simOk: sim.ok,
+      previewTurns: sim.ok ? sim.previewTurns : [],
+      turnCount: turns.length,
+    });
   }, [sim, turns.length]);
 
   // D-1/D-2: Extract FlipTraceArrow[] for Mint arrow overlay
   const lastFlipTraces: readonly FlipTraceArrow[] | null = React.useMemo(() => {
-    if (!useMintUi || !sim.ok || turns.length === 0) return null;
-    const lastSummary = sim.previewTurns[turns.length - 1];
-    if (!lastSummary?.flipTraces || lastSummary.flipTraces.length === 0) return null;
-    return lastSummary.flipTraces.map((f: FlipTraceV1) => ({
-      from: Number(f.from),
-      to: Number(f.to),
-      isChain: Boolean(f.isChain),
-      kind: f.kind === "diag" ? "diag" as const : "ortho" as const,
-      aVal: Number(f.aVal ?? 0),
-      dVal: Number(f.dVal ?? 0),
-      tieBreak: Boolean(f.tieBreak),
-    }));
+    return resolveMatchLastFlipTraces({
+      useMintUi,
+      simOk: sim.ok,
+      previewTurns: sim.ok ? sim.previewTurns : [],
+      turnCount: turns.length,
+    });
   }, [useMintUi, sim, turns.length]);
 
-  // D-3: SFX trigger on board animation changes
-  const prevFlipCountRef = React.useRef(0);
-  React.useEffect(() => {
-    if (!sfx || !boardAnim.isAnimating) return;
-    const flipCount = boardAnim.flippedCells.length;
-    if (boardAnim.placedCell !== null && prevFlipCountRef.current === 0) {
-      sfx.play("card_place");
-    }
-    if (flipCount > 0 && flipCount !== prevFlipCountRef.current) {
-      const hasChain = lastFlipTraces?.some((t) => t.isChain) ?? false;
-      sfx.play(hasChain ? "chain_flip" : "flip");
-    }
-    prevFlipCountRef.current = flipCount;
-  }, [sfx, boardAnim.isAnimating, boardAnim.placedCell, boardAnim.flippedCells.length, lastFlipTraces]);
-
-  // D-3: SFX on game end
-  React.useEffect(() => {
-    if (!sfx || turns.length < 9 || !sim.ok) return;
-    const winner = sim.full.winner;
-    if (winner === "draw") return; // no fanfare for draw
-    // Perspective = player A: victory if A wins, defeat if B wins
-    if (winner === 0) sfx.play("victory_fanfare");
-    else sfx.play("defeat_sad");
-  }, [sfx, turns.length, sim]);
-
-  // D-3: SFX error buzz on validation error
-  React.useEffect(() => {
-    if (!sfx || !error) return;
-    sfx.play("error_buzz");
-  }, [sfx, error]);
+  useMatchStageSfxEffects({
+    sfx,
+    boardAnimIsAnimating: boardAnim.isAnimating,
+    boardAnimPlacedCell: boardAnim.placedCell,
+    boardAnimFlippedCellCount: boardAnim.flippedCells.length,
+    hasChainFlipTrace: lastFlipTraces?.some((trace) => trace.isChain) ?? false,
+    turnCount: turns.length,
+    simOk: sim.ok,
+    winner: sim.ok ? sim.full.winner : null,
+    error,
+  });
 
   // P0-2: Build TurnLogRPG entries from sim
-  const rpgLogEntries: TurnLogEntry[] = React.useMemo(() => {
-    if (!sim.ok) return [];
-    return sim.previewTurns.map((t) => ({
-      turnIndex: t.turnIndex,
-      player: t.player,
-      cell: t.cell,
-      janken: cards?.get(t.tokenId)?.jankenHand ?? 0,
-      flipCount: t.flipCount,
-    }));
+  const rpgLogEntries = React.useMemo(() => {
+    return resolveMatchRpgLogEntries({
+      simOk: sim.ok,
+      previewTurns: sim.ok ? sim.previewTurns : [],
+      cards,
+    });
   }, [sim, cards]);
 
   const useMintPixiParity = isMint && !isRpg;
   const usePixiPresentation = isEngine || useMintPixiParity;
   const mintHudTone: "mint" | "pixi" = usePixiPresentation ? "pixi" : "mint";
-  const showFocusHandDock = useMintUi
-    && !isRpg
-    && turns.length < 9
-    && currentDeckTokens.length > 0;
-  const showMintTopHud = isMint && showStageAssistUi && sim.ok && !showFocusHandDock && !useMintPixiParity;
-  const showMintDetailHud = useMintUi && showStageAssistUi && sim.ok && (usePixiPresentation || density !== "minimal");
-  const showMintPlayerPanels = isMint && !isStageFocusRoute && !showFocusHandDock && !useMintPixiParity;
-  const showDesktopQuickCommit = useMintUi
-    && !isRpg
-    && !isAiTurn
-    && turns.length < 9
-    && (draftCardIndex !== null || draftCell !== null)
-    && !showFocusHandDock
-    && !isStageFocusRoute;
-  const showStageFocusHandDock = isStageFocusRoute && showFocusHandDock;
-  const stageFocusEngineBoardMaxWidthCapPx =
-    isStageFocusRoute && showStageFocusHandDock
-      ? Math.max(306, Math.round(stageBoardSizing.minHeightPx - 58))
-      : undefined;
-  const engineBoardMaxWidthPx =
-    stageEngineBoardMaxWidthPxBase === undefined
-      ? undefined
-      : stageFocusEngineBoardMaxWidthCapPx === undefined
-        ? stageEngineBoardMaxWidthPxBase
-        : Math.min(stageEngineBoardMaxWidthPxBase, stageFocusEngineBoardMaxWidthCapPx);
-  const engineBoardMinHeightPx =
-    stageEngineBoardMinHeightPxBase === undefined
-      ? undefined
-      : stageFocusEngineBoardMaxWidthCapPx === undefined
-        ? stageEngineBoardMinHeightPxBase
-        : Math.min(stageEngineBoardMinHeightPxBase, Math.round(stageFocusEngineBoardMaxWidthCapPx * 0.84));
-  const showFocusToolbarActions = isStageFocusRoute && !showStageFocusHandDock && showStageControls;
-  const showMintStatusSummarySlot = showStageAssistUi
-    && useMintUi;
-  const showLegacyStatusSummary = showStageAssistUi
-    && !useMintUi
-    && Boolean(lastFlipSummaryText);
-  const canCommitFromFocusToolbar = !isAiTurn && draftCell !== null && draftCardIndex !== null;
-  const canUndoFromFocusToolbar = !isAiTurn && turns.length > 0;
-  const canManualAiMoveFromFocusToolbar = isVsNyanoAi && !aiAutoPlay && isAiTurn;
-
-  React.useEffect(() => {
-    if (!isStageFocusRoute || typeof window === "undefined") return;
-    const onKey = (e: KeyboardEvent) => {
-      const target = e.target as HTMLElement | null;
-      const tag = target?.tagName;
-      if (tag === "TEXTAREA" || tag === "INPUT" || tag === "SELECT" || target?.isContentEditable) return;
-      if (e.altKey || e.ctrlKey || e.metaKey) return;
-
-      const lower = e.key.toLowerCase();
-      if (e.key === "Escape") {
-        e.preventDefault();
-        exitFocusModeWithFeedback();
-        return;
-      }
-      if (lower === "f") {
-        e.preventDefault();
-        toggleStageFullscreenWithFeedback();
-        return;
-      }
-      if (lower === "c") {
-        e.preventDefault();
-        toggleStageControlsWithFeedback();
-        return;
-      }
-      if (lower === "h") {
-        e.preventDefault();
-        toggleStageAssistWithFeedback();
-        return;
-      }
-      if (lower === "r" && canFinalize) {
-        e.preventDefault();
-        openReplayWithFeedback();
-        return;
-      }
-      if (e.key === "Enter" && canCommitFromFocusToolbar) {
-        e.preventDefault();
-        commitMove();
-        return;
-      }
-      if (e.key === "Backspace" && canUndoFromFocusToolbar) {
-        e.preventDefault();
-        undoMove();
-      }
-    };
-
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [
+  const {
+    showFocusHandDock,
+    showMintTopHud,
+    showMintDetailHud,
+    showMintPlayerPanels,
+    showDesktopQuickCommit,
+    showStageFocusHandDock,
+    showFocusToolbarActions,
+    showMintStatusSummarySlot,
+    showLegacyStatusSummary,
+    canCommitFromFocusToolbar,
+    canUndoFromFocusToolbar,
+    canManualAiMoveFromFocusToolbar,
+  } = resolveMatchStagePresentationState({
+    useMintUi,
+    isRpg,
+    turnCount: turns.length,
+    currentDeckTokenCount: currentDeckTokens.length,
+    isMint,
+    showStageAssistUi,
+    simOk: sim.ok,
+    useMintPixiParity,
+    usePixiPresentation,
+    density,
     isStageFocusRoute,
+    isAiTurn,
+    draftCardIndex,
+    draftCell,
+    showStageControls,
+    lastFlipSummaryText,
+    isVsNyanoAi,
+    aiAutoPlay,
+  });
+  const stageLayoutClasses = resolveMatchStageLayoutClasses({
+    isStageFocusRoute,
+    showStageFocusHandDock,
+    isEngineFocus,
+    isRpg,
+    useMintUi,
+    showMintPlayerPanels,
+  });
+  const {
+    engineBoardMaxWidthPx,
+    engineBoardMinHeightPx,
+  } = resolveMatchStageEngineBoardSizing({
+    isStageFocusRoute,
+    showStageFocusHandDock,
+    stageBoardMinHeightPx: stageBoardSizing.minHeightPx,
+    stageEngineBoardMaxWidthPxBase,
+    stageEngineBoardMinHeightPxBase,
+  });
+
+  useMatchStageFocusShortcuts({
+    isStageFocusRoute,
+    canFinalize,
+    canCommitFromFocusToolbar,
+    canUndoFromFocusToolbar,
     exitFocusModeWithFeedback,
     toggleStageFullscreenWithFeedback,
     toggleStageControlsWithFeedback,
     toggleStageAssistWithFeedback,
-    canFinalize,
     openReplayWithFeedback,
-    canCommitFromFocusToolbar,
     commitMove,
-    canUndoFromFocusToolbar,
     undoMove,
-  ]);
+  });
 
   /* ======================================================================
      RENDER
@@ -2201,18 +1696,9 @@ export function MatchPage() {
   return (
     <div
       ref={stageViewportRef}
-      className={
-        isStageFocusRoute
-          ? [
-            "stage-focus-root",
-            showStageFocusHandDock ? "stage-focus-root--with-hand-dock" : "",
-          ].filter(Boolean).join(" ")
-          : isEngineFocus
-            ? "grid gap-4"
-            : "grid gap-6"
-      }
+      className={stageLayoutClasses.rootClassName}
     >
-      {/* ── Result Overlay ── */}
+      {/* 笏笏 Result Overlay 笏笏 */}
       {gameResult && (
         useMintUi ? (
           <GameResultOverlayMint
@@ -2247,29 +1733,25 @@ export function MatchPage() {
 
       {isEngineFocus && (
         <section
-          className={[
-            "rounded-2xl border px-3 py-2",
-            isStageFocusRoute ? "stage-focus-toolbar" : "",
-          ].filter(Boolean).join(" ")}
-          aria-label={isStageFocusRoute ? "Stage focus toolbar" : "Engine focus toolbar"}
+          className={stageLayoutClasses.focusToolbarClassName}
+          aria-label={stageLayoutClasses.focusToolbarAriaLabel}
           style={{ background: "var(--mint-surface, #fff)", borderColor: "var(--mint-accent-muted, #A7F3D0)" }}
         >
           <div className="flex flex-wrap items-center justify-between gap-2">
             <div className="text-xs font-semibold" style={{ color: "var(--mint-text-secondary, #4B5563)" }}>
-              Pixiフォーカスモード · {currentTurnIndex}/9 手 · 警告残り {currentWarnRemaining}
+              Pixi繝輔か繝ｼ繧ｫ繧ｹ繝｢繝ｼ繝・ﾂｷ {currentTurnIndex}/9 謇・ﾂｷ 隴ｦ蜻頑ｮ九ｊ {currentWarnRemaining}
             </div>
             <div className="flex flex-wrap items-center gap-2">
               {showFocusToolbarActions ? (
                 <div className="stage-focus-toolbar-actions">
                   <span className="stage-focus-toolbar-status">
-                    {draftCardIndex !== null ? `カード ${draftCardIndex + 1}` : "カード選択"} | {draftCell !== null ? `セル ${draftCell}` : "セル選択"}
+                    {draftCardIndex !== null ? `Card ${draftCardIndex + 1}` : "Card not selected"} | {draftCell !== null ? `Cell ${draftCell}` : "Cell not selected"}
                   </span>
                   <span className="stage-focus-toolbar-hint" aria-label="Battle focus toolbar hint">
-                    タップ/ドラッグで配置準備 → 確定 · Enter/Backspace · F/C/H/R/Esc
+                    繧ｿ繝・・/繝峨Λ繝・げ縺ｧ驟咲ｽｮ貅門ｙ 竊・遒ｺ螳・ﾂｷ Enter/Backspace ﾂｷ F/C/H/R/Esc
                   </span>
                   <label className="stage-focus-toolbar-speed">
-                    警告
-                    <select
+                    隴ｦ蜻・                    <select
                       className="stage-focus-toolbar-speed-select"
                       value={draftWarningMarkCell === null ? "" : String(draftWarningMarkCell)}
                       onChange={(e) => {
@@ -2279,11 +1761,11 @@ export function MatchPage() {
                       disabled={isAiTurn || turns.length >= 9 || currentWarnRemaining <= 0}
                       aria-label="Warning mark from focus toolbar"
                     >
-                      <option value="">なし</option>
+                      <option value="">None</option>
                       {availableCells
                         .filter((c) => c !== draftCell)
                         .map((c) => (
-                          <option key={`focus-toolbar-w-${c}`} value={String(c)}>セル {c}</option>
+                          <option key={`focus-toolbar-w-${c}`} value={String(c)}>繧ｻ繝ｫ {c}</option>
                         ))}
                     </select>
                   </label>
@@ -2293,15 +1775,14 @@ export function MatchPage() {
                     disabled={!canCommitFromFocusToolbar}
                     aria-label="Commit move from focus toolbar"
                   >
-                    確定
-                  </button>
+                    遒ｺ螳・                  </button>
                   <button
                     className="btn btn-sm"
                     onClick={undoMove}
                     disabled={!canUndoFromFocusToolbar}
                     aria-label="Undo move from focus toolbar"
                   >
-                    取り消し
+                    蜿悶ｊ豸医＠
                   </button>
                   {canManualAiMoveFromFocusToolbar ? (
                     <button
@@ -2309,7 +1790,7 @@ export function MatchPage() {
                       onClick={doAiMoveWithFeedback}
                       aria-label="Nyano AI move from focus toolbar"
                     >
-                      にゃーの手番
+                      縺ｫ繧・・縺ｮ謇狗分
                     </button>
                   ) : null}
                 </div>
@@ -2324,7 +1805,7 @@ export function MatchPage() {
                   aria-live="polite"
                   aria-label="Battle focus action feedback"
                 >
-                  {stageActionFeedback || "準備完了"}
+                  {stageActionFeedback || "Ready"}
                 </span>
               ) : null}
               {isStageFocusRoute ? (
@@ -2354,11 +1835,11 @@ export function MatchPage() {
                       title={sfxMuted ? "Sound ON" : "Sound OFF"}
                       aria-label={sfxMuted ? "Unmute sound effects" : "Mute sound effects"}
                     >
-                      {sfxMuted ? "🔇" : "🔊"}
+                      {sfxMuted ? "這" : "矧"}
                     </button>
                   ) : null}
                   <button className="btn btn-sm" onClick={toggleStageFullscreenWithFeedback}>
-                    {isStageFullscreen ? "全画面解除" : "全画面"}
+                    {isStageFullscreen ? "蜈ｨ逕ｻ髱｢隗｣髯､" : "蜈ｨ逕ｻ髱｢"}
                   </button>
                   <button className="btn btn-sm" onClick={toggleStageControlsWithFeedback}>
                     {showStageControls ? "Hide Controls" : "Show Controls"}
@@ -2369,80 +1850,54 @@ export function MatchPage() {
                 </>
               ) : null}
               <button className="btn btn-sm" onClick={exitFocusModeWithFeedback}>
-                フォーカス終了
-              </button>
+                繝輔か繝ｼ繧ｫ繧ｹ邨ゆｺ・              </button>
               <button className="btn btn-sm" onClick={openReplayWithFeedback} disabled={!canFinalize}>
-                リプレイ
+                繝ｪ繝励Ξ繧､
               </button>
             </div>
           </div>
         </section>
       )}
 
-      {/* ── Hero ── */}
+      {/* 笏笏 Hero 笏笏 */}
       {!isEngineFocus && (<section className="relative overflow-hidden rounded-2xl border border-slate-200 bg-white">
         <div className="flex flex-col items-start gap-4 p-4 md:flex-row md:items-center md:p-6">
           <NyanoImage size={96} className="shadow-sm" alt="Nyano" />
           <div className="min-w-0">
             <div className="text-xl font-semibold">Nyano Triad League</div>
             <div className="mt-1 text-sm text-slate-600">
-              Nyano NFTカードで対戦し、リプレイ共有や配信連携まで一気に楽しめます。
-            </div>
+              Nyano NFT繧ｫ繝ｼ繝峨〒蟇ｾ謌ｦ縺励√Μ繝励Ξ繧､蜈ｱ譛峨ｄ驟堺ｿ｡騾｣謳ｺ縺ｾ縺ｧ荳豌励↓讌ｽ縺励ａ縺ｾ縺吶・            </div>
             <div className="mt-3 flex flex-wrap gap-2 text-xs text-slate-500">
-              <span className="rounded-full border border-slate-200 bg-slate-50 px-2 py-1">ETHオンチェーン</span>
-              <span className="rounded-full border border-slate-200 bg-slate-50 px-2 py-1">リプレイ共有</span>
-              <span className="rounded-full border border-slate-200 bg-slate-50 px-2 py-1">配信投票</span>
+              <span className="rounded-full border border-slate-200 bg-slate-50 px-2 py-1">ETH繧ｪ繝ｳ繝√ぉ繝ｼ繝ｳ</span>
+              <span className="rounded-full border border-slate-200 bg-slate-50 px-2 py-1">Replay Share</span>
+              <span className="rounded-full border border-slate-200 bg-slate-50 px-2 py-1">驟堺ｿ｡謚慕･ｨ</span>
             </div>
           </div>
         </div>
       </section>)}
 
-      {/* ── Event ── */}
-      {!isEngineFocus && event ? (
-        <section className="card">
-          <div className="card-hd flex flex-wrap items-center justify-between gap-2">
-            <div>
-              <div className="text-base font-semibold">Event: {event.title}</div>
-              <div className="text-xs text-slate-500">
-                状態: <span className="font-medium">{eventStatus}</span> · ルール={event.rulesetKey} · AI={event.aiDifficulty}
-              </div>
-            </div>
-            <div className="flex flex-wrap items-center gap-2">
-              <Link className="btn no-underline" to="/events">イベント一覧</Link>
-              <button className="btn" onClick={clearEvent}>イベントを離脱</button>
-            </div>
-          </div>
-          <div className="card-bd grid gap-2 text-sm text-slate-700">
-            <p>{event.description}</p>
-            <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-700">
-              NyanoデッキのtokenIds: <span className="font-mono">{event.nyanoDeckTokenIds.join(", ")}</span>
-            </div>
-          </div>
-        </section>
-      ) : null}
+      {/* 笏笏 Event 笏笏 */}
+      <MatchEventPanel
+        isVisible={!isEngineFocus && Boolean(event)}
+        title={event?.title ?? ""}
+        description={event?.description ?? ""}
+        status={eventStatus ?? ""}
+        rulesetKey={event?.rulesetKey ?? ""}
+        aiDifficulty={event?.aiDifficulty ?? ""}
+        nyanoDeckTokenIds={event?.nyanoDeckTokenIds ?? []}
+        onClearEvent={clearEvent}
+      />
 
-      {/* ── Guest mode banner ── */}
-      {!isEngineFocus && isGuestMode && (
-        <section className="rounded-2xl border border-nyano-200 bg-nyano-50 p-4">
-          <div className="flex items-center gap-3">
-            <NyanoAvatar size={48} expression="playful" />
-            <div>
-              <div className="font-semibold text-nyano-800">ゲスト対戦 (Guest Quick Play)</div>
-              <div className="text-xs text-nyano-600">
-                ゲストモードでランダムデッキを使用中です。自分のデッキで遊ぶ場合は <Link className="font-medium underline" to="/decks">Decks</Link> で作成してください。
-              </div>
-            </div>
-          </div>
-        </section>
-      )}
-
-      {/* ── Mini Tutorial (guest mode, first visit only) ── */}
-      {!isEngineFocus && isGuestMode && <MiniTutorial />}
+      {/* 笏笏 Guest mode intro 笏笏 */}
+      <MatchGuestModeIntro
+        isVisible={!isEngineFocus && isGuestMode}
+        tutorial={<MiniTutorial />}
+      />
 
             {/* Match Setup */}
       {!isEngineFocus && !isGuestMode ? (
         <MatchSetupPanelMint
-          defaultOpen={!cards}
+          defaultOpen={cardLoadSetupState.defaultOpen}
           decks={decks}
           deckAId={deckAId}
           deckBId={deckBId}
@@ -2491,8 +1946,8 @@ export function MatchPage() {
           canLoad={canLoad}
           loading={loading}
           status={status}
-          error={!cards ? error : null}
-          showRpcSettingsCta={Boolean(!cards && error && looksLikeRpcError(error))}
+          error={cardLoadSetupState.error}
+          showRpcSettingsCta={cardLoadSetupState.showRpcSettingsCta}
           overlayUrl={overlayUrl}
           onSetParam={setParam}
           onSetFocusMode={setFocusMode}
@@ -2516,13 +1971,7 @@ export function MatchPage() {
          GAME ARENA - unified play section (P0-1 / P0-2)
          ================================================================== */}
       <section
-        className={
-          isEngineFocus
-            ? ["rounded-2xl border", isStageFocusRoute ? "stage-focus-arena-shell" : ""].filter(Boolean).join(" ")
-            : isRpg
-              ? "rounded-2xl"
-              : "card"
-        }
+        className={stageLayoutClasses.arenaSectionClassName}
         style={
           isRpg
             ? { background: "#0A0A0A" }
@@ -2535,16 +1984,15 @@ export function MatchPage() {
           <div className="card-hd flex flex-wrap items-start justify-between gap-2">
             <div>
             <div className="text-base font-semibold">
-              対戦中 · {currentTurnIndex}/9 手
-              {isAiTurn ? " · Nyano AI" : ` · プレイヤー${currentPlayer === 0 ? "A" : "B"}`}
+              蟇ｾ謌ｦ荳ｭ ﾂｷ {currentTurnIndex}/9 謇・              {isAiTurn ? " ﾂｷ Nyano AI" : ` ﾂｷ 繝励Ξ繧､繝､繝ｼ${currentPlayer === 0 ? "A" : "B"}`}
             </div>
             <div className="text-xs text-slate-500">
-              警告マーク残り: {currentWarnRemaining}
-              {streamMode ? " · 配信モードON" : ""}
-              {isGuestMode ? " · ゲスト" : ""}
+              隴ｦ蜻翫・繝ｼ繧ｯ谿九ｊ: {currentWarnRemaining}
+              {streamMode ? " ﾂｷ 驟堺ｿ｡繝｢繝ｼ繝碓N" : ""}
+              {isGuestMode ? " ﾂｷ guest" : ""}
               {!isGuestMode && (
                 <span className={`ml-1 rounded-full border px-1.5 py-0.5 text-[10px] font-medium ${dataMode === "fast" ? "border-amber-200 bg-amber-50 text-amber-700" : "border-emerald-200 bg-emerald-50 text-emerald-700"}`}>
-                  {dataMode === "fast" ? "高速 (index)" : "検証済み (on-chain)"}
+                  {dataMode === "fast" ? "鬮倬・(index)" : "讀懆ｨｼ貂医∩ (on-chain)"}
                 </span>
               )}
             </div>
@@ -2552,66 +2000,42 @@ export function MatchPage() {
             {isEngine ? (
               <div className="flex flex-wrap items-center gap-2">
                 <button className="btn btn-sm" onClick={() => setFocusMode(true)}>
-                  Pixiフォーカスへ
+                  Pixi繝輔か繝ｼ繧ｫ繧ｹ縺ｸ
                 </button>
                 <Link className="btn btn-sm no-underline" to={stageMatchUrl}>
-                  Stageページを開く
-                </Link>
+                  Stage繝壹・繧ｸ繧帝幕縺・                </Link>
               </div>
             ) : null}
           </div>
         )}
 
         <div
-          className={
-            isRpg
-              ? "p-4"
-              : isEngineFocus
-                ? ["p-2 md:p-3", isStageFocusRoute ? "stage-focus-arena-inner" : ""].filter(Boolean).join(" ")
-                : "card-bd"
-          }
+          className={stageLayoutClasses.arenaInnerClassName}
         >
           {!cards ? (
-            <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-8 text-center text-sm text-slate-600">
-              {loading ? (
-                  <div className="grid gap-4 py-4">
-                    <SkeletonBoard className="max-w-[280px] mx-auto" />
-                    <SkeletonHand className="max-w-[400px] mx-auto" />
-                    <div className="text-center text-xs text-surface-400">カードを読み込み中...</div>
-                  </div>
-                ) : isGuestMode ? (
-                  <button className="btn btn-primary" onClick={() => void loadCardsFromIndex()}>ゲスト対戦を開始</button>
-                ) : (
-                  <>Match Setup でデッキを選択し、<strong>カードを読み込む</strong>を押してください。</>
-                )}
-              </div>
+            <MatchCardLoadEmptyStatePanel
+              state={cardLoadEmptyState}
+              onLoadGuestCards={() => {
+                void loadCardsFromIndex();
+              }}
+            />
             ) : (
             <div
-              className={
-                useMintUi
-                  ? (isEngineFocus
-                    ? ["grid gap-4", isStageFocusRoute ? "stage-focus-columns" : ""].filter(Boolean).join(" ")
-                    : "grid gap-6")
-                  : "grid gap-6 lg:grid-cols-[1fr_300px]"
-              }
+              className={stageLayoutClasses.arenaGridClassName}
             >
-              {/* ── Left: Board + Hand ── */}
+              {/* 笏笏 Left: Board + Hand 笏笏 */}
               <div
-                className={[
-                  "grid gap-4",
-                  isStageFocusRoute ? "stage-focus-main-column" : "",
-                  showStageFocusHandDock ? "stage-focus-main-column--with-hand-dock" : "",
-                ].filter(Boolean).join(" ")}
+                className={stageLayoutClasses.mainColumnClassName}
               >
                 {/* Guest deck preview */}
                 {!isEngineFocus && isGuestMode && cards && (
                   <details open={turns.length === 0} className="rounded-lg border border-surface-200 bg-surface-50 p-3">
                     <summary className="cursor-pointer text-sm font-medium text-surface-700">
-                      デッキプレビュー (Deck Preview)
+                      繝・ャ繧ｭ繝励Ξ繝薙Η繝ｼ (Deck Preview)
                     </summary>
                     <div className="mt-2 grid gap-3 md:grid-cols-2">
                       <div>
-                        <div className="text-xs font-medium text-player-a-600 mb-1">あなたのデッキ (A)</div>
+                        <div className="text-xs font-medium text-player-a-600 mb-1">縺ゅ↑縺溘・繝・ャ繧ｭ (A)</div>
                         <div className="deck-preview-grid grid grid-cols-5 gap-2">
                           {guestDeckATokens.map((tid, i) => {
                             const c = cards.get(tid);
@@ -2620,12 +2044,12 @@ export function MatchPage() {
                         </div>
                       </div>
                       <div>
-                        <div className="text-xs font-medium text-player-b-600 mb-1">Nyanoデッキ (B)</div>
+                        <div className="text-xs font-medium text-player-b-600 mb-1">Nyano繝・ャ繧ｭ (B)</div>
                         {classicOpenCardIndices ? (
                           <div className="mb-1 text-[11px] text-slate-500">
                             {classicOpenCardIndices.mode === "all_open"
-                              ? "Openルール: 全カード公開"
-                              : `Openルール: スロット ${formatClassicOpenSlots(classicOpenCardIndices.playerB)} を公開`}
+                              ? "Open slots: all"
+                              : `Open slots: ${formatClassicOpenSlots(classicOpenCardIndices.playerB)}`}
                           </div>
                         ) : null}
                         <div className="deck-preview-grid grid grid-cols-5 gap-2">
@@ -2667,7 +2091,7 @@ export function MatchPage() {
                               title={sfxMuted ? "Sound ON" : "Sound OFF"}
                               aria-label={sfxMuted ? "Unmute sound effects" : "Mute sound effects"}
                             >
-                              {sfxMuted ? "🔇" : "🔊"}
+                              {sfxMuted ? "這" : "矧"}
                             </button>
                           )}
                         </div>
@@ -2690,14 +2114,14 @@ export function MatchPage() {
                             cards={classicOpenPresentation.playerA.cards}
                             openCardIndices={classicOpenPresentation.playerA.openCardIndices}
                             usedCardIndices={classicOpenPresentation.playerA.usedCardIndices}
-                            modeLabel={classicOpenPresentation.modeLabel}
+                            modeLabel={classicOpenModeLabel}
                           />
                           <ClassicOpenHandMiniMint
                             sideLabel={getPlayerDisplayLabel(1)}
                             cards={classicOpenPresentation.playerB.cards}
                             openCardIndices={classicOpenPresentation.playerB.openCardIndices}
                             usedCardIndices={classicOpenPresentation.playerB.usedCardIndices}
-                            modeLabel={classicOpenPresentation.modeLabel}
+                            modeLabel={classicOpenModeLabel}
                           />
                         </div>
                       )}
@@ -2732,7 +2156,7 @@ export function MatchPage() {
                               title={sfxMuted ? "Sound ON" : "Sound OFF"}
                               aria-label={sfxMuted ? "Unmute sound effects" : "Mute sound effects"}
                             >
-                              {sfxMuted ? "🔇" : "🔊"}
+                              {sfxMuted ? "這" : "矧"}
                             </button>
                           )}
                         </div>
@@ -2755,16 +2179,16 @@ export function MatchPage() {
                       <div className="mint-ai-notice" role="status" aria-live="polite">
                         {aiAutoPlay ? (
                           <span>
-                            <span className="font-semibold animate-pulse">考え中… (Nyano is thinking...)</span>
+                            <span className="font-semibold animate-pulse">閠・∴荳ｭ窶ｦ (Nyano is thinking...)</span>
                             {aiCountdownMs !== null ? ` ${Math.max(0.1, aiCountdownMs / 1000).toFixed(1)}s` : ""}
                           </span>
                         ) : (
-                          "Nyanoの番です。「にゃーの手番」を押してください。(Nyano turn. Press \"Nyano Move\".)"
+                          "Nyano縺ｮ逡ｪ縺ｧ縺吶ゅ後↓繧・・縺ｮ謇狗分縲阪ｒ謚ｼ縺励※縺上□縺輔＞縲・Nyano turn. Press \"Nyano Move\".)"
                         )}
                       </div>
                     ) : (
                       <div className="mint-ai-notice mint-ai-notice--placeholder" aria-hidden="true">
-                        考え中… (Nyano is thinking...)
+                        閠・∴荳ｭ窶ｦ (Nyano is thinking...)
                       </div>
                     )}
                   </div>
@@ -2772,27 +2196,27 @@ export function MatchPage() {
                   <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900">
                     {aiAutoPlay ? (
                       <span>
-                        <span className="font-semibold animate-pulse">考え中… (Nyano is thinking...)</span>
+                        <span className="font-semibold animate-pulse">閠・∴荳ｭ窶ｦ (Nyano is thinking...)</span>
                         {aiCountdownMs !== null ? ` ${Math.max(0.1, aiCountdownMs / 1000).toFixed(1)}s` : ""}
                       </span>
                     ) : (
-                      "Nyanoの番です。「にゃーの手番」を押してください。(Nyano turn. Press \"Nyano Move\".)"
+                      "Nyano縺ｮ逡ｪ縺ｧ縺吶ゅ後↓繧・・縺ｮ謇狗分縲阪ｒ謚ｼ縺励※縺上□縺輔＞縲・Nyano turn. Press \"Nyano Move\".)"
                     )}
                   </div>
                 ) : null}
 
                 {useMintUi && (showStageAssistUi || isStageFocusRoute) && (
-                  <div className={["mint-announcer-stack", isStageFocusRoute ? "stage-focus-announcer-stack" : ""].filter(Boolean).join(" ")}>
+                  <div className={stageLayoutClasses.announcerStackClassName}>
                     {/* Fixed status slot: always reserved to prevent layout shift */}
                     {showMintStatusSummarySlot ? (
                       <div className={["mint-status-summary-slot", !lastFlipSummaryText && "mint-status-summary-slot--idle"].filter(Boolean).join(" ")}>
                         {lastFlipSummaryText ? (
                           <div className="mint-status-summary" role="status" aria-live="polite">
-                            <span className="mint-status-summary__text">バトル: {lastFlipSummaryText}</span>
+                            <span className="mint-status-summary__text">繝舌ヨ繝ｫ: {lastFlipSummaryText}</span>
                           </div>
                         ) : (
                           <div className="mint-status-summary mint-status-summary--placeholder" aria-hidden="true">
-                            <span className="mint-status-summary__text">バトル状況</span>
+                            <span className="mint-status-summary__text">Battle status</span>
                           </div>
                         )}
                       </div>
@@ -2812,40 +2236,30 @@ export function MatchPage() {
                 )}
 
                 {isEngine && engineRendererFailed && (
-                  <div
-                    className={[
-                      "flex flex-wrap items-center justify-between gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900",
-                      isStageFocusRoute ? "fixed left-3 right-3 top-20 z-40 shadow-lg" : "",
-                    ].join(" ")}
-                  >
+                  <div className={stageLayoutClasses.engineFallbackBannerClassName}>
                     <span title={engineRendererError ?? undefined}>
-                      Pixi renderer is unavailable. Mintフォールバック盤面を表示します。
-                    </span>
+                      Pixi renderer is unavailable. Mint繝輔か繝ｼ繝ｫ繝舌ャ繧ｯ逶､髱｢繧定｡ｨ遉ｺ縺励∪縺吶・                    </span>
                     <button
                       type="button"
                       className="btn btn-sm"
                       onClick={handleRetryEngineRenderer}
                       aria-label="Retry Pixi renderer"
                     >
-                      Pixi再試行 (Retry Pixi)
+                      Pixi蜀崎ｩｦ陦・(Retry Pixi)
                     </button>
                   </div>
                 )}
 
-                {/* ────────────────────────────────────────────
+                {/* 笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏
                     P0-1: Interactive Board (unified input)
                     
                     BoardView / BoardViewRPG with:
                     - selectableCells = empty cells (when it's your turn)
                     - selectedCell = draftCell
                     - onCellSelect = handleCellSelect
-                    ──────────────────────────────────────────── */}
+                    笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏 */}
                 <div
-                  className={[
-                    isStageFocusRoute ? "stage-focus-board-shell" : "",
-                    useMintUi ? "mint-match-board-shell" : "",
-                    showMintPlayerPanels ? "mint-battle-layout" : "",
-                  ].filter(Boolean).join(" ")}
+                  className={stageLayoutClasses.boardShellClassName}
                 >
                   {showMintPlayerPanels && (
                     <PlayerSidePanelMint
@@ -2858,21 +2272,18 @@ export function MatchPage() {
                             cards: classicOpenPresentation.playerA.cards,
                             openCardIndices: classicOpenPresentation.playerA.openCardIndices,
                             usedCardIndices: classicOpenPresentation.playerA.usedCardIndices,
-                            modeLabel: classicOpenPresentation.modeLabel,
+                            modeLabel: classicOpenModeLabel,
                           }
                         : null}
                     />
                   )}
 
                   <div
-                    className={[
-                      showMintPlayerPanels ? "mint-battle-layout__board" : "",
-                      useMintUi ? "mint-match-board-center" : "",
-                    ].filter(Boolean).join(" ")}
+                    className={stageLayoutClasses.boardCenterClassName}
                   >
                     {sim.ok ? (
                       isMint || (isEngine && engineRendererFailed) ? (
-                        <DuelStageMint impact={nyanoReactionImpact} impactBurst={stageImpactBurst}>
+                        <DuelStageMint impact={nyanoReactionImpact} impactBurst={stageImpactBurst || boardImpactBurst}>
                           <BoardViewMint
                             board={boardNow}
                             selectedCell={draftCell}
@@ -2897,10 +2308,15 @@ export function MatchPage() {
                             dragDropEnabled={enableHandDragDrop && isHandDragging}
                             onCellDrop={handleBoardDrop}
                             onCellDragHover={handleBoardDragHover}
+                            selectedCardPreview={
+                              draftCardIndex !== null && cards
+                                ? cards.get(currentDeckTokens[draftCardIndex]) ?? null
+                                : null
+                            }
                           />
                         </DuelStageMint>
                       ) : useEngineRenderer ? (
-                        <DuelStageMint impact={nyanoReactionImpact} impactBurst={stageImpactBurst}>
+                        <DuelStageMint impact={nyanoReactionImpact} impactBurst={stageImpactBurst || boardImpactBurst}>
                           <BattleStageEngine
                             board={boardNow}
                             selectedCell={draftCell}
@@ -2956,9 +2372,9 @@ export function MatchPage() {
                         />
                       )
                     ) : (
-                      <div className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-xs text-rose-900">
-                        エンジンエラー: {!sim.ok ? sim.error : "unknown"}
-                      </div>
+                      <MatchErrorPanel>
+                        繧ｨ繝ｳ繧ｸ繝ｳ繧ｨ繝ｩ繝ｼ: {!sim.ok ? sim.error : "unknown"}
+                      </MatchErrorPanel>
                     )}
                   </div>
 
@@ -2973,7 +2389,7 @@ export function MatchPage() {
                             cards: classicOpenPresentation.playerB.cards,
                             openCardIndices: classicOpenPresentation.playerB.openCardIndices,
                             usedCardIndices: classicOpenPresentation.playerB.usedCardIndices,
-                            modeLabel: classicOpenPresentation.modeLabel,
+                            modeLabel: classicOpenModeLabel,
                           }
                         : null}
                     />
@@ -2981,574 +2397,158 @@ export function MatchPage() {
                 </div>
 
                 {showDesktopQuickCommit ? (
-                  <div
-                    className="mint-match-quick-commit hidden lg:flex flex-wrap items-center justify-between gap-3 rounded-xl border px-3 py-2"
-                  >
-                    <div className="grid gap-0.5 text-xs">
-                      <div className="mint-match-quick-commit__title font-semibold">
-                        クイック確定
-                      </div>
-                      <div className="mint-match-quick-commit__hint">
-                        カード {draftCardIndex !== null ? draftCardIndex + 1 : "-"} → セル {draftCell ?? "-"}
-                      </div>
-                    </div>
-
-                    <div className="flex flex-wrap items-center gap-2">
-                      <label
-                        className="inline-flex items-center gap-2 text-xs font-semibold"
-                        style={{ color: "var(--mint-text-secondary, #4B5563)" }}
-                      >
-                        警告
-                        <select
-                          className="input h-10 min-w-[170px]"
-                          value={draftWarningMarkCell === null ? "" : String(draftWarningMarkCell)}
-                          onChange={(e) => {
-                            const v = e.target.value;
-                            setDraftWarningMarkCell(v === "" ? null : Number(v));
-                          }}
-                          disabled={turns.length >= 9 || isAiTurn || currentWarnRemaining <= 0}
-                          aria-label="Quick warning mark cell"
-                        >
-                          <option value="">なし</option>
-                          {availableCells
-                            .filter((c) => c !== draftCell)
-                            .map((c) => (
-                              <option key={`quick-${c}`} value={String(c)}>セル {c}</option>
-                            ))}
-                        </select>
-                      </label>
-                      <button
-                        className="btn btn-primary h-10 px-4"
-                        onClick={commitMove}
-                        disabled={turns.length >= 9 || isAiTurn || draftCell === null || draftCardIndex === null}
-                        aria-label="Quick commit move"
-                      >
-                        配置を確定
-                      </button>
-                      <button
-                        className="btn h-10 px-4"
-                        onClick={undoMove}
-                        disabled={turns.length === 0}
-                        aria-label="Quick undo move"
-                      >
-                        1手戻す
-                      </button>
-                    </div>
-                  </div>
+                  <MatchQuickCommitBar
+                    draftCardIndex={draftCardIndex}
+                    draftCell={draftCell}
+                    draftWarningMarkCell={draftWarningMarkCell}
+                    onChangeDraftWarningMarkCell={setDraftWarningMarkCell}
+                    isBoardFull={turns.length >= 9}
+                    isAiTurn={isAiTurn}
+                    currentWarnRemaining={currentWarnRemaining}
+                    availableCells={availableCells}
+                    canCommit={!(turns.length >= 9 || isAiTurn || draftCell === null || draftCardIndex === null)}
+                    canUndo={turns.length > 0}
+                    onCommitMove={commitMove}
+                    onUndoMove={undoMove}
+                  />
                 ) : null}
 
                 {/* FLIGHT-0100: Card flight animation portal */}
                 {cardFlight.state && <CardFlight {...cardFlight.state} />}
 
-                {/* Last move feedback */}
-                {boardAnim.isAnimating && (
-                  <LastMoveFeedback
-                    placedCell={boardAnim.placedCell}
-                    flippedCells={boardAnim.flippedCells}
-                    turnPlayer={turns.length > 0 ? (turnPlayer(firstPlayer, turns.length - 1) === 0 ? "A" : "B") : "A"}
+                <MatchBoardFeedbackPanels
+                  isAnimating={boardAnim.isAnimating}
+                  placedCell={boardAnim.placedCell}
+                  flippedCells={boardAnim.flippedCells}
+                  turnPlayerLabel={turns.length > 0 ? (turnPlayer(firstPlayer, turns.length - 1) === 0 ? "A" : "B") : "A"}
+                  isStageFocusRoute={isStageFocusRoute}
+                  showLegacyStatusSummary={showLegacyStatusSummary}
+                  isRpg={isRpg}
+                  lastFlipSummaryText={lastFlipSummaryText}
+                />
+
+                {showFocusHandDock && (
+                  <MatchFocusHandDock
+                    isStageFocusRoute={isStageFocusRoute}
+                    headerLabel="謇区惆繝峨ャ繧ｯ (Hand Dock)"
+                    isAiTurn={isAiTurn}
+                    draftCardIndex={draftCardIndex}
+                    draftCell={draftCell}
+                    forcedCardIndex={classicForcedCardIndex}
+                    forcedRuleLabel={classicForcedRuleLabel}
+                    currentDeckTokens={currentDeckTokens}
+                    cardMap={cards}
+                    usedCardIndices={effectiveUsedCardIndices}
+                    isBoardFull={turns.length >= 9}
+                    enableHandDragDrop={enableHandDragDrop}
+                    currentPlayer={currentPlayer}
+                    onRecordInteraction={telemetry.recordInteraction}
+                    onSelectDraftCard={selectDraftCard}
+                    onHandCardDragStart={handleHandCardDragStart}
+                    onHandCardDragEnd={handleHandCardDragEnd}
+                    draftWarningMarkCell={draftWarningMarkCell}
+                    onChangeDraftWarningMarkCell={setDraftWarningMarkCell}
+                    currentWarnRemaining={currentWarnRemaining}
+                    availableCells={availableCells}
+                    canCommit={!(isAiTurn || draftCell === null || draftCardIndex === null)}
+                    canUndo={!(isAiTurn || turns.length === 0)}
+                    onCommitMove={commitMove}
+                    onUndoMove={undoMove}
                   />
                 )}
 
-                {/* Legacy (non-mint) status summary */}
-                {!isStageFocusRoute && showLegacyStatusSummary ? (
-                  <div className={
-                    isRpg
-                      ? "rounded-lg px-3 py-2 text-xs font-semibold"
-                      : "rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900"
-                  }
-                  style={
-                    isRpg ? { background: "rgba(245,166,35,0.15)", color: "#F5A623", border: "1px solid rgba(245,166,35,0.3)" }
-                    : undefined
-                  }
-                  >
-                    バトル: {lastFlipSummaryText}
-                  </div>
-                ) : null}
-
-                {showFocusHandDock && (
-                  <div
-                    className={[
-                      "mint-focus-hand-dock grid gap-2 rounded-2xl border p-2 shadow-xl backdrop-blur",
-                      isStageFocusRoute ? "mint-focus-hand-dock--stage" : "",
-                      !isStageFocusRoute ? "mint-focus-hand-dock--inline sticky bottom-2 z-20" : "",
-                    ].filter(Boolean).join(" ")}
-                  >
-                    <div className="flex items-center justify-between gap-2">
-                      <div className="text-[11px] font-semibold text-slate-700">手札ドック (Hand Dock)</div>
-                      <div className="text-[10px] text-slate-500">
-                        {isAiTurn ? "考え中… (Nyano is thinking...)" : `${draftCardIndex !== null ? `カード ${draftCardIndex + 1}` : "カード選択"} → ${draftCell !== null ? `セル ${draftCell}` : "セルをタップ"}`}
-                      </div>
-                    </div>
-
-                    {classicForcedCardIndex !== null && (
-                      <div className="mint-order-lock-badge" role="status" aria-live="polite">
-                        固定スロット ({classicForcedRuleLabel ?? "FIX"}): {classicForcedCardIndex + 1}
-                      </div>
-                    )}
-
-                    <div className="mint-focus-hand-row">
-                      {currentDeckTokens.map((tid, idx) => {
-                        const card = cards?.get(tid);
-                        const usedHere = effectiveUsedCardIndices.has(idx);
-                        const selected = draftCardIndex === idx;
-                        const forced = classicForcedCardIndex === idx;
-                        const dockDisabled = usedHere || isAiTurn || turns.length >= 9;
-                        const center = (currentDeckTokens.length - 1) / 2;
-                        const fanOffset = idx - center;
-                        const fanRotate = Math.max(-12, Math.min(12, fanOffset * 4));
-                        const fanDrop = Math.min(10, Math.abs(fanOffset) * 2.2);
-                        const fanStyle = {
-                          ["--focus-hand-rot" as const]: `${fanRotate}deg`,
-                          ["--focus-hand-drop" as const]: `${fanDrop}px`,
-                        } satisfies React.CSSProperties & Record<"--focus-hand-rot" | "--focus-hand-drop", string>;
-                        if (!card) {
-                          return (
-                            <button
-                              key={`focus-dock-loading-${idx}`}
-                              type="button"
-                              className={[
-                                "mint-focus-hand-card",
-                                "mint-focus-hand-card--loading",
-                                selected && "mint-focus-hand-card--selected",
-                                forced && "mint-focus-hand-card--forced",
-                                dockDisabled && "mint-focus-hand-card--used",
-                              ].join(" ")}
-                              style={fanStyle}
-                              aria-label={`Focus hand card ${idx + 1} loading`}
-                              disabled
-                            >
-                              <div className="text-[10px] font-semibold text-slate-500">#{tid.toString()}</div>
-                              <div className="mt-1 text-[10px] text-slate-400">読み込み中</div>
-                            </button>
-                          );
-                        }
-                        return (
-                          <button
-                            key={`focus-dock-${idx}`}
-                            type="button"
-                            className={[
-                              "mint-focus-hand-card",
-                              selected && "mint-focus-hand-card--selected",
-                              forced && "mint-focus-hand-card--forced",
-                              dockDisabled && "mint-focus-hand-card--used",
-                            ].join(" ")}
-                            style={fanStyle}
-                            aria-label={`Focus hand card ${idx + 1}${usedHere ? " (used)" : ""}${selected ? " (selected)" : ""}`}
-                            data-hand-card={idx}
-                            disabled={dockDisabled}
-                            draggable={enableHandDragDrop && !dockDisabled}
-                            onClick={() => {
-                              if (dockDisabled) return;
-                              telemetry.recordInteraction();
-                              selectDraftCard(idx);
-                            }}
-                            onDragStart={(e) => {
-                              if (!enableHandDragDrop || dockDisabled) {
-                                e.preventDefault();
-                                return;
-                              }
-                              e.dataTransfer.effectAllowed = "move";
-                              e.dataTransfer.setData("application/x-nytl-card-index", String(idx));
-                              e.dataTransfer.setData("text/plain", String(idx));
-                              handleHandCardDragStart(idx);
-                            }}
-                            onDragEnd={handleHandCardDragEnd}
-                          >
-                            {forced && (
-                              <span className="mint-focus-hand-card__fixed-badge" aria-hidden="true">
-                                FIX
-                              </span>
-                            )}
-                            <CardMini card={card} owner={currentPlayer} subtle={!selected} className="w-full" />
-                          </button>
-                        );
-                      })}
-                    </div>
-
-                    <div className="mint-focus-hand-actions flex flex-wrap items-center gap-2">
-                      <select
-                        className="input h-9 min-w-[150px] text-xs"
-                        value={draftWarningMarkCell === null ? "" : String(draftWarningMarkCell)}
-                        onChange={(e) => {
-                          const v = e.target.value;
-                          setDraftWarningMarkCell(v === "" ? null : Number(v));
-                        }}
-                        disabled={currentWarnRemaining <= 0 || isAiTurn}
-                        aria-label="Focus dock warning mark cell"
-                      >
-                        <option value="">警告: なし</option>
-                        {availableCells
-                          .filter((c) => c !== draftCell)
-                          .map((c) => (
-                            <option key={`focus-w-${c}`} value={String(c)}>警告 {c}</option>
-                          ))}
-                      </select>
-
-                      <button
-                        className="btn btn-primary h-9 px-3 text-xs"
-                        onClick={commitMove}
-                        disabled={isAiTurn || draftCell === null || draftCardIndex === null}
-                        aria-label="Commit move from focus hand dock"
-                      >
-                        確定
-                      </button>
-                      <button
-                        className="btn h-9 px-3 text-xs"
-                        onClick={undoMove}
-                        disabled={isAiTurn || turns.length === 0}
-                        aria-label="Undo move from focus hand dock"
-                      >
-                        取り消し
-                      </button>
-                    </div>
-                  </div>
-                )}
-
-                {/* ────────────────────────────────────────────
+                {/* 笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏
                     P0-2: Hand Display (RPG or standard)
-                    ──────────────────────────────────────────── */}
-                {(!isStageFocusRoute || showStageControls) && !showFocusHandDock ? (
-                  <div className="grid gap-3">
-                    <div className={
-                      useMintUi ? "text-xs font-semibold text-mint-text-secondary"
-                      : isRpg ? "text-xs font-bold uppercase tracking-wider"
-                      : "text-xs font-medium text-slate-600"
-                    }
-                      style={isRpg ? { fontFamily: "'Cinzel', serif", color: "var(--rpg-text-gold, #E8D48B)" } : undefined}
-                    >
-                      {currentPlayer === 0 ? "プレイヤーA" : "プレイヤーB"} の手札
-                      {draftCell !== null && <span className={isRpg ? "" : " text-slate-400"}> · セル {draftCell} に配置予定</span>}
-                      {isHandDragging && <span className={isRpg ? "" : " text-cyan-500"}> · 盤面にドロップで確定</span>}
-                      {useMintUi && classicForcedCardIndex !== null && (
-                        <span className="mint-order-lock-badge ml-2" role="status" aria-live="polite">
-                          固定スロット ({classicForcedRuleLabel ?? "FIX"}): {classicForcedCardIndex + 1}
-                        </span>
-                      )}
-                    </div>
-
-                    {useMintUi && currentHandCards.length > 0 ? (
-                      /* Mint Hand Display */
-                      <HandDisplayMint
-                        cards={currentHandCards}
-                        owner={currentPlayer}
-                        usedIndices={effectiveUsedCardIndices}
-                        selectedIndex={draftCardIndex}
-                        forcedIndex={classicForcedCardIndex}
-                        onSelect={(idx) => { telemetry.recordInteraction(); selectDraftCard(idx); }}
-                        disabled={turns.length >= 9 || isAiTurn}
-                        enableDragDrop={enableHandDragDrop}
-                        onCardDragStart={handleHandCardDragStart}
-                        onCardDragEnd={handleHandCardDragEnd}
-                      />
-                    ) : isRpg && currentHandCards.length > 0 ? (
-                      /* P0-2: RPG Hand Display */
-                      <HandDisplayRPG
-                        cards={currentHandCards}
-                        owner={currentPlayer}
-                        usedIndices={effectiveUsedCardIndices}
-                        selectedIndex={draftCardIndex}
-                        onSelect={(idx) => selectDraftCard(idx)}
-                        disabled={turns.length >= 9 || isAiTurn}
-                      />
-                    ) : (
-                      /* Standard card buttons */
-                      <div className="flex flex-wrap gap-2">
-                        {currentDeckTokens.map((tid, idx) => {
-                          const c = cards.get(tid);
-                          const usedHere = effectiveUsedCardIndices.has(idx);
-                          const selected = draftCardIndex === idx;
-                          return (
-                            <button
-                              key={idx}
-                              disabled={usedHere || turns.length >= 9 || isAiTurn}
-                              onClick={() => selectDraftCard(idx)}
-                              aria-label={`Card slot ${idx + 1}${usedHere ? " (used)" : ""}${selected ? " (selected)" : ""}`}
-                              className={[
-                                "w-[120px] rounded-xl border p-2",
-                                selected ? "border-slate-900 ring-2 ring-nyano-400/60" : "border-slate-200",
-                                usedHere || isAiTurn ? "bg-slate-50 opacity-50" : "bg-white hover:bg-slate-50",
-                              ].join(" ")}
-                            >
-                              {c ? <CardMini card={c} owner={currentPlayer} subtle={!selected} /> : <div className="text-xs text-slate-500 font-mono">#{tid.toString()}</div>}
-                              <div className="mt-1 text-[10px] text-slate-500">idx {idx}</div>
-                            </button>
-                          );
-                        })}
-                      </div>
-                    )}
-
-                    {/* Warning mark + Commit/Undo */}
-                    <div className="flex flex-wrap items-end gap-4">
-                      <div className="grid gap-1">
-                        <div className={isRpg ? "text-[10px] uppercase tracking-wider" : "text-[11px] text-slate-600"}
-                          style={isRpg ? { fontFamily: "'Cinzel', serif", color: "var(--rpg-text-dim, #8A7E6B)" } : undefined}
-                        >
-                          警告マーク（残り {currentWarnRemaining}）
-                        </div>
-                        <select
-                          className={["input", isStageFocusRoute ? "h-10 min-w-[180px]" : ""].join(" ").trim()}
-                          value={draftWarningMarkCell === null ? "" : String(draftWarningMarkCell)}
-                          onChange={(e) => {
-                            const v = e.target.value;
-                            setDraftWarningMarkCell(v === "" ? null : Number(v));
-                          }}
-                          disabled={turns.length >= 9 || isAiTurn || currentWarnRemaining <= 0}
-                          aria-label="Warning mark cell"
-                        >
-                          <option value="">なし</option>
-                          {availableCells
-                            .filter((c) => c !== draftCell)
-                            .map((c) => (
-                              <option key={c} value={String(c)}>セル {c}</option>
-                            ))}
-                        </select>
-                      </div>
-
-                      <div className="flex flex-wrap items-center gap-2">
-                        <button
-                          className={isRpg ? "rpg-result__btn rpg-result__btn--primary" : ["btn btn-primary", isStageFocusRoute ? "h-10 px-4" : ""].join(" ").trim()}
-                          onClick={commitMove}
-                          disabled={turns.length >= 9 || isAiTurn || draftCell === null || draftCardIndex === null}
-                          aria-label="Commit move"
-                        >
-                          配置を確定
-                        </button>
-                        <button
-                          className={isRpg ? "rpg-result__btn" : ["btn", isStageFocusRoute ? "h-10 px-4" : ""].join(" ").trim()}
-                          onClick={undoMove}
-                          disabled={turns.length === 0}
-                          aria-label="Undo last move"
-                        >
-                          1手戻す
-                        </button>
-                        {isVsNyanoAi && !aiAutoPlay && isAiTurn ? (
-                          <button className={isRpg ? "rpg-result__btn rpg-result__btn--primary" : ["btn btn-primary", isStageFocusRoute ? "h-10 px-4" : ""].join(" ").trim()} onClick={doAiMove} aria-label="Nyano AI move">
-                            にゃーの手番
-                          </button>
-                        ) : null}
-                      </div>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600">
-                    盤面フォーカス中のため操作UIを非表示にしています。
-                    {draftCardIndex !== null || draftCell !== null ? (
-                      <span className="ml-1">
-                        （選択中: カード {draftCardIndex !== null ? draftCardIndex + 1 : "-"} → セル {draftCell ?? "-"}）
-                      </span>
-                    ) : null}
-                  </div>
-                )}
+                    笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏 */}
+                <MatchHandInteractionArea
+                  isStageFocusRoute={isStageFocusRoute}
+                  showStageControls={showStageControls}
+                  showFocusHandDock={showFocusHandDock}
+                  isMintUi={useMintUi}
+                  isRpg={isRpg}
+                  currentPlayer={currentPlayer}
+                  draftCell={draftCell}
+                  isHandDragging={isHandDragging}
+                  classicForcedCardIndex={classicForcedCardIndex}
+                  classicForcedRuleLabel={classicForcedRuleLabel}
+                  currentHandCards={currentHandCards}
+                  usedCardIndices={effectiveUsedCardIndices}
+                  draftCardIndex={draftCardIndex}
+                  deckTokenIds={currentDeckTokens}
+                  cardMap={cards}
+                  isAiTurn={isAiTurn}
+                  isBoardFull={turns.length >= 9}
+                  turnsCount={turns.length}
+                  enableHandDragDrop={enableHandDragDrop}
+                  onRecordInteraction={telemetry.recordInteraction}
+                  onSelectDraftCard={selectDraftCard}
+                  onHandCardDragStart={handleHandCardDragStart}
+                  onHandCardDragEnd={handleHandCardDragEnd}
+                  currentWarnRemaining={currentWarnRemaining}
+                  availableCells={availableCells}
+                  draftWarningMarkCell={draftWarningMarkCell}
+                  isVsNyanoAi={isVsNyanoAi}
+                  aiAutoPlay={aiAutoPlay}
+                  onChangeDraftWarningMarkCell={setDraftWarningMarkCell}
+                  onCommitMove={commitMove}
+                  onUndoMove={undoMove}
+                  onAiMove={doAiMove}
+                />
 
                 {/* Error display */}
                 {error && cards ? (
-                  <div className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-xs text-rose-900">{error}</div>
+                  <MatchErrorPanel>{error}</MatchErrorPanel>
                 ) : null}
               </div>
 
-              {/* ── Right: Turn Log + Info ── */}
+              {/* 笏笏 Right: Turn Log + Info 笏笏 */}
               {/* Mint mode: content lives in slide-out drawer */}
-              {useMintUi ? (
-                <>
-                  {!drawerOpen && <DrawerToggleButton onClick={openDrawer} />}
-                  <MatchDrawerMint open={drawerOpen} onClose={closeDrawer}>
-                    {/* F-2: Density toggle */}
-                    <div className="flex items-center gap-1 rounded-xl p-1" style={{ background: "var(--mint-surface-dim)" }}>
-                      {(["minimal", "standard", "full"] as const).map((d) => (
-                        <button
-                          key={d}
-                          className="flex-1 rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors"
-                          style={{
-                            background: density === d ? "var(--mint-accent)" : "transparent",
-                            color: density === d ? "white" : "var(--mint-text-secondary)",
-                          }}
-                          onClick={() => handleDensityChange(d)}
-                        >
-                          {d === "minimal" ? "簡易" : d === "standard" ? "標準" : "詳細"}
-                        </button>
-                      ))}
-                    </div>
-
-                    {/* TurnLog */}
-                    {sim.ok ? (
-                      <TurnLog
-                        turns={sim.previewTurns}
-                        boardHistory={sim.previewHistory}
-                        selectedTurnIndex={Math.min(selectedTurnIndex, Math.max(0, sim.previewTurns.length - 1))}
-                        onSelect={(i) => setSelectedTurnIndex(i)}
-                        annotations={replayAnnotations}
-                        boardAdvantages={boardAdvantages}
-                      />
-                    ) : (
-                      <div className="text-xs" style={{ color: "var(--mint-text-hint)" }}>ターンログを見るにはカードを読み込んでください。</div>
-                    )}
-
-                    {/* Winner / Match info */}
-                    {turns.length === 9 && sim.ok ? (
-                      <div className="rounded-xl border p-3 text-xs" style={{ background: "var(--mint-surface-dim)", borderColor: "var(--mint-accent-muted)", color: "var(--mint-text-primary)" }}>
-                        <div>勝者: <span className="font-medium">{sim.full.winner}</span>（タイル A/B = {sim.full.tiles.A}/{sim.full.tiles.B}）</div>
-                        <div className="font-mono mt-1 truncate" style={{ color: "var(--mint-text-secondary)" }}>matchId: {sim.full.matchId}</div>
-                      </div>
-                    ) : (
-                      <div className="rounded-xl border px-3 py-2 text-xs" style={{ background: "var(--mint-surface-dim)", borderColor: "var(--mint-accent-muted)", color: "var(--mint-text-secondary)" }}>
-                        勝者情報は 9 手終了後に表示されます。
-                      </div>
-                    )}
-
-                    {/* Share buttons */}
-                    <div className="grid gap-2">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <button className="btn" onClick={copyTranscriptJson} disabled={!sim.ok}>JSONをコピー</button>
-                        <button className="btn" onClick={copyShareUrl} disabled={!canFinalize}>共有URL</button>
-                        <button className="btn" onClick={openReplay} disabled={!canFinalize}>リプレイ (Replay)</button>
-                      </div>
-                    </div>
-
-                    {/* AI debug notes */}
-                    {Object.keys(aiNotes).length > 0 && (
-                      <details className="rounded-xl border p-3 text-xs" style={{ background: "var(--mint-surface)", borderColor: "var(--mint-accent-muted)", color: "var(--mint-text-primary)" }}>
-                        <summary className="cursor-pointer font-medium">Nyano AI ({Object.keys(aiNotes).length})</summary>
-                        <div className="mt-2">
-                          <AiNotesList notes={aiNotes} />
-                        </div>
-                      </details>
-                    )}
-                  </MatchDrawerMint>
-                </>
-              ) : (
-              <div className={["grid gap-4 content-start", isStageFocusRoute ? "stage-focus-side-column" : ""].filter(Boolean).join(" ")}>
-                {/* P0-2: RPG or standard Turn Log */}
-                {isRpg ? (
-                  <TurnLogRPG entries={rpgLogEntries} />
-                ) : (
-                  sim.ok ? (
-                    <TurnLog
-                      turns={sim.previewTurns}
-                      boardHistory={sim.previewHistory}
-                      selectedTurnIndex={Math.min(selectedTurnIndex, Math.max(0, sim.previewTurns.length - 1))}
-                      onSelect={(i) => setSelectedTurnIndex(i)}
-                    />
-                  ) : (
-                    <div className="text-xs text-slate-600">ターンログを見るにはカードを読み込んでください。</div>
-                  )
+              <MatchInfoColumn
+                isMintUi={useMintUi}
+                drawerOpen={drawerOpen}
+                onOpenDrawer={openDrawer}
+                onCloseDrawer={closeDrawer}
+                density={density}
+                onChangeDensity={handleDensityChange}
+                simOk={sim.ok}
+                previewTurns={sim.ok ? sim.previewTurns : []}
+                previewHistory={sim.ok ? sim.previewHistory : []}
+                selectedTurnIndex={selectedTurnIndex}
+                onSelectTurn={setSelectedTurnIndex}
+                annotations={replayAnnotations}
+                boardAdvantages={boardAdvantages}
+                resultSummary={matchResultSummary}
+                pendingMessage="蜍晁・ュ蝣ｱ縺ｯ 9 謇狗ｵゆｺ・ｾ後↓陦ｨ遉ｺ縺輔ｌ縺ｾ縺吶・"
+                canFinalize={canFinalize}
+                onCopyTranscriptJson={copyTranscriptJson}
+                onCopyShareUrl={copyShareUrl}
+                onOpenReplay={openReplay}
+                aiNoteCount={Object.keys(aiNotes).length}
+                aiNotesContent={<AiNotesList notes={aiNotes} />}
+                sideColumnClassName={stageLayoutClasses.nonMintSideColumnClassName}
+                isRpg={isRpg}
+                isStageFocusRoute={isStageFocusRoute}
+                rpgLogEntries={rpgLogEntries}
+                isGuestPostGameVisible={isGuestMode && turns.length >= 9}
+                guestDeckSaved={guestDeckSaved}
+                onRematch={handleRematch}
+                onLoadNewGuestDeck={() => {
+                  resetMatch();
+                  void loadCardsFromIndex();
+                }}
+                onSaveGuestDeck={handleSaveGuestDeck}
+                onCopyShareTemplate={copyShareTemplate}
+                guestQrCode={(
+                  <MatchShareQrCode
+                    transcript={sim.ok ? sim.transcript : null}
+                    cards={cards}
+                    eventId={event?.id}
+                    ui={uiParam}
+                    rulesetKey={rulesetKey}
+                    classicMask={activeClassicMask}
+                  />
                 )}
-
-                {/* Winner / Match info */}
-                {turns.length === 9 && sim.ok ? (
-                  <div className={
-                    isRpg
-                      ? "rounded-lg p-3 text-xs"
-                      : ["rounded-lg border border-slate-200 bg-white p-3 text-xs text-slate-700", isStageFocusRoute ? "stage-focus-side-panel" : ""].filter(Boolean).join(" ")
-                  }
-                  style={isRpg ? { background: "rgba(0,0,0,0.4)", color: "#F5F0E1", border: "1px solid rgba(201,168,76,0.2)" } : undefined}
-                  >
-                    <div>勝者: <span className="font-medium">{sim.full.winner}</span>（タイル A/B = {sim.full.tiles.A}/{sim.full.tiles.B}）</div>
-                    <div className="font-mono mt-1 truncate">matchId: {sim.full.matchId}</div>
-                  </div>
-                ) : (
-                  <div className={
-                    isRpg
-                      ? "rounded-lg p-3 text-xs"
-                      : ["rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600", isStageFocusRoute ? "stage-focus-side-panel stage-focus-side-panel--muted" : ""].filter(Boolean).join(" ")
-                  }
-                  style={isRpg ? { background: "rgba(0,0,0,0.3)", color: "var(--rpg-text-dim, #8A7E6B)" } : undefined}
-                  >
-                    勝者情報は 9 手終了後に表示されます。
-                  </div>
-                )}
-
-                {/* Share buttons */}
-                <div className="grid gap-2">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <button className={isRpg ? "rpg-result__btn" : "btn"} onClick={copyTranscriptJson} disabled={!sim.ok}>
-                      JSONをコピー
-                    </button>
-                    <button className={isRpg ? "rpg-result__btn" : "btn"} onClick={copyShareUrl} disabled={!canFinalize}>
-                      共有URL
-                    </button>
-                    <button className={isRpg ? "rpg-result__btn" : "btn"} onClick={openReplay} disabled={!canFinalize}>
-                      リプレイ (Replay)
-                    </button>
-                  </div>
-                </div>
-
-                {/* Guest mode post-game CTA */}
-                {isGuestMode && turns.length >= 9 && (
-                  <div className={["grid gap-2 rounded-lg border border-nyano-200 bg-nyano-50 p-3", isStageFocusRoute ? "stage-focus-side-panel" : ""].filter(Boolean).join(" ")}>
-                    <div className="text-sm font-medium text-nyano-800">本番デッキで遊んでみますか？</div>
-                    <div className="flex flex-wrap gap-2">
-                      <Link className="btn btn-primary no-underline text-xs" to="/decks">自分のデッキを作る</Link>
-                      <button className="btn btn-primary text-xs" onClick={handleRematch}>
-                        再戦（同じデッキ）
-                      </button>
-                      <button className="btn text-xs" onClick={() => { resetMatch(); void loadCardsFromIndex(); }}>
-                        新しいデッキ
-                      </button>
-                      <button
-                        className="btn text-xs"
-                        onClick={handleSaveGuestDeck}
-                        disabled={guestDeckSaved}
-                      >
-                        {guestDeckSaved ? "保存済み" : "デッキを保存"}
-                      </button>
-                    </div>
-                    <div className="grid gap-2 border-t border-nyano-200 pt-2">
-                      <div className="flex flex-wrap gap-2">
-                        <button className="btn text-xs" onClick={copyShareUrl} disabled={!canFinalize}>
-                          共有URL
-                        </button>
-                        <button className="btn text-xs" onClick={async () => {
-                          try {
-                            const url = buildReplayUrl(true);
-                            if (!url) { toast.warn("共有", "Match が未準備です"); return; }
-                            const msg = `Nyano Triad 対戦共有\n${url}`;
-                            await copyToClipboard(msg);
-                            toast.success("コピーしました", "共有テンプレート");
-                          } catch (e: unknown) {
-                            toast.error("共有に失敗しました", errorMessage(e));
-                          }
-                        }} disabled={!canFinalize}>
-                          共有テンプレート
-                        </button>
-                        <button className="btn text-xs" onClick={openReplay} disabled={!canFinalize}>
-                          リプレイ (Replay)
-                        </button>
-                      </div>
-                      {canFinalize && (
-                        <details className="text-xs">
-                          <summary className="cursor-pointer text-sky-600 hover:text-sky-700 font-medium">QRコード (QR Code)</summary>
-                          <div className="mt-2 flex justify-center">
-                            <ShareQrCode
-                              sim={sim}
-                              event={event}
-                              ui={uiParam}
-                              rulesetKey={rulesetKey}
-                              classicMask={activeClassicMask}
-                            />
-                          </div>
-                        </details>
-                      )}
-                    </div>
-                  </div>
-                )}
-
-                {/* AI debug notes (collapsed) */}
-                {Object.keys(aiNotes).length > 0 && (
-                  <details className={
-                    isRpg
-                      ? "rounded-lg p-2 text-xs"
-                      : ["rounded-lg border border-slate-200 bg-white p-3 text-xs text-slate-700", isStageFocusRoute ? "stage-focus-side-panel" : ""].filter(Boolean).join(" ")
-                  }
-                  style={isRpg ? { background: "rgba(0,0,0,0.3)", color: "var(--rpg-text-dim, #8A7E6B)" } : undefined}
-                  >
-                    <summary className="cursor-pointer font-medium">Nyano AI ({Object.keys(aiNotes).length})</summary>
-                    <div className="mt-2">
-                      <AiNotesList notes={aiNotes} />
-                    </div>
-                  </details>
-                )}
-              </div>
-              )}
+              />
             </div>
           )}
         </div>
@@ -3556,3 +2556,5 @@ export function MatchPage() {
     </div>
   );
 }
+
+

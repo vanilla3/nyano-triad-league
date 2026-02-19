@@ -1,158 +1,158 @@
-# Nyano Triad League â€Eé–‹ç™ºTODOEE1EE
+# Nyano Triad League ?????TODO??1??
 
-ã“ãEãƒ•ã‚¡ã‚¤ãƒ«ã¯ã€Œä»Šãªã«ã‚’ä½œã£ã¦ãE‚‹ã‹ã€ã€Œæ¬¡ã«ãªã«ã‚’ä½œã‚‹ã‹ã€ã‚’ã€ã‚³ãƒŸãƒ¥ãƒ‹ãƒ†ã‚£ã¨å…±æœ‰ã™ã‚‹ãŸã‚ãEå®Ÿè£EODOã§ã™ã€E
+?????????????????????????????????????????????????????????????????????????????????ODO??????
 
 ---
 
-## âœEDone
+## ??Done
 
-- âœECommit0001: åˆæœŸã‚»ãƒEƒˆã‚¢ãƒEEEEocsé››å½¢ã€triad-engine skeletonEE
-- âœECommit0002: ãƒˆãƒ©ãƒ³ã‚¹ã‚¯ãƒªãƒ—ãƒˆv1EEIP-712 / matchIdæ–¹é‡ï¼E ruleset config specEˆæ¦‚å¿µEE
-- âœECommit0003: ã‚ªãƒ¼ãƒˆãƒŽãƒŸãEè¦–ç‚¹Eˆé‹å–¶ä¸åœ¨ã§ã‚‚å›žã‚‹ä»•çµE¿E‰ãEãƒ­ãƒ¼ãƒ‰ãEãƒEEè‰æ¡E+ ERC-6551 / stakingæ¤œè¨Žãƒ¡ãƒ¢
-- âœECommit0004: triad-engine Layer2EEarning mark / combo bonus / second-player balanceE‰å®Ÿè£E+ ã‚´ãƒ¼ãƒ«ãƒEƒ³ãƒE‚¹ãƒE
-- âœECommit0005: triad-engine Layer3EEraitåŠ¹æžEv1E‰å®Ÿè£E+ ä»•æ§˜æ›´æ–°
-- âœECommit0006: Nyano Peace ã‚ªãƒ³ãƒã‚§ãƒ¼ãƒ³ Trait â†Eã‚²ãƒ¼ãƒ å†ETraitType ã®å°ŽåEEE1EE
-  - `synergy.traitDerivation` ã‚Eruleset ã«è¿½åŠ 
-  - TSãƒ˜ãƒ«ãƒ‘ï¼EmakeCardDataFromNyano` / `deriveTraitTypeFromNyanoTraitV1`EE
-  - `TRAIT_DERIVATION_SPEC` è¿½åŠ 
+- ??Commit0001: ???????????????ocs??????riad-engine skeleton??
+- ??Commit0002: ??????????????v1??IP-712 / matchId?????? ruleset config spec????????
+- ??Commit0003: ??????????????????????????????????????????????????+ ERC-6551 / staking???????
+- ??Commit0004: triad-engine Layer2??arning mark / combo bonus / second-player balance??????+ ??????????????
+- ??Commit0005: triad-engine Layer3??rait????v1??????+ ???????
+- ??Commit0006: Nyano Peace ??????????? Trait ??????????TraitType ???????1??
+  - `synergy.traitDerivation` ??ruleset ??????
+  - TS???????makeCardDataFromNyano` / `deriveTraitTypeFromNyanoTraitV1`??
+  - `TRAIT_DERIVATION_SPEC` ????
 
   - Shadow / Forest / Earth / Thunder / Light
   - Cosmic / Metal / Flame / Aqua / Wind
-  - `TRAIT_EFFECTS_SPEC` è¿½åŠ ã€æ—¢å­˜ä»•æ§˜ï¼Euleset/transcriptE‰ã‚’å®Ÿè£E«è¿½å¾E
+  - `TRAIT_EFFECTS_SPEC` ???????????????uleset/transcript????????????
 
 ---
 
-- âœECommit0007: Formation bonusesEEayer3æ‹¡å¼µE‰v1 å®Ÿè£E+ ä»•æ§˜è¿½åŠ 
-  - äº”è¡Œèª¿å’Œï¼Eive Elements HarmonyE‰ï¼šcomboBonus ã® triadPlus ã‚’å€çŽ‡é©ç”¨
-  - æ—¥é£Ÿï¼EclipseE‰ï¼šLight+Shadow ã®ã‚¯ãƒ­ã‚¹EEightãŒè­¦æˆ’ç„¡åŠ¹EShadowãŒLightå…‰æºï¼E
-  - MatchResult ã« `formations` ã‚’è¿½åŠ EEI/è§£æžãŒ â€œé‹å–¶ãªã—â€Eã§ã‚‚ä½œã‚Šã‚E™ãE¼E
-  - `FORMATION_BONUS_SPEC` è¿½åŠ ã€ruleset/transcript è¿½å¾E
+- ??Commit0007: Formation bonuses??ayer3??????1 ????+ ????????
+  - ??????????ive Elements Harmony????omboBonus ?? triadPlus ?????????
+  - ??????clipse????ight+Shadow ??????????ight???????????hadow??ight??????
+  - MatchResult ?? `formations` ????????I/????? ?????????????????????????
+  - `FORMATION_BONUS_SPEC` ??????uleset/transcript ????
 
 
-- âœECommit0008: rulesetId å‚çEå®Ÿè£E¼ˆå›ºå®šABIã‚¨ãƒ³ã‚³ãƒ¼ãƒ‰ï¼E RULESET_ID_SPEC + ãƒE‚¹ãƒˆãEã‚¯ã‚¿
-  - ç„¡åŠ¹åŒ–ã‚»ã‚¯ã‚·ãƒ§ãƒ³ã‚’æ­£è¦åŒ–EˆåŒæŒ™å‹•ã§IDãŒåEè£‚ã—ãªãE¼E
-  - äº”è¡Œèª¿å’ŒãE requiredElements ã‚’é›†åˆæ‰±ãE¼ˆé Eºã‚’ç„¡è¦–ï¼E
-  - `computeRulesetIdV1(ruleset)` ã‚’è¿½åŠ EESå‚çEå®Ÿè£E¼E
-- âœESprint UX: Homeã€Œã™ãéŠã¶ã€âEåˆæ‰‹é…ç½®ã¾ã§ã®æ™‚é–“è¨ˆæ¸¬ã‚’è¿½åŠ EEquickplay_to_first_place_ms`EE
-- âœESprint UX: Home LCP ã®ãƒ­ãƒ¼ã‚«ãƒ«è¨ˆæ¸¬ã‚’è¿½åŠ EEhome_lcp_ms`EE
-- âœESprint UX: Home Settings ã« UXç›®æ¨™ãE PASS/FAIL åˆ¤å®šã‚’è¿½åŠ EE-1/B-1/B-4/G-3EE
-- âœESprint UX: `Copy Snapshot` ã¨ `PLAYTEST_LOG.md` ã‚’è¿½åŠ ã—ã€è¨ˆæ¸¬ãƒ­ã‚°é‹ç”¨ã‚’å›ºå®E
-- âœESprint UX: web lint warning 2ä»¶ã‚’è§£æ¶ˆï¼Epnpm -C apps/web lint` warning 0EE
-- âœESprint UX: Snapshotã«ç’°å¢E‚³ãƒ³ãƒE‚­ã‚¹ãƒˆï¼Eoute/viewport/language/UAE‰ã‚’å«ã‚ã€æ¯”è¼Eƒ­ã‚°ç²¾åº¦ã‚’å‘ä¸E
-- âœESprint UX: NyanoCardArt ã®å¤±æ•—æ™‚ã« Retry å°Žç·šã‚’è¿½åŠ EEetry nonce ä»˜ãå†èª­è¾¼EE
-- âœECommit0104: ã€Œã‚·ãƒ¼ã‚ºãƒ³ã®è­°ä¼šã€æœ€å°ãEãƒ­ãƒˆã‚³ãƒ«EEroposal / vote / adoptE‰ã‚’ TS å‚çEå®Ÿè£E
-  - `season_council.ts` ã‚’è¿½åŠ EEroposalId / vote hash / EIP-712 vote verify / tally / adoptEE
-  - æ±ºå®šè«–ãƒ«ãƒ¼ãƒ«ã‚’å›ºå®šï¼ˆå€™è£œé›†åEcanonicalizeã€åŒä¸€voterã¯æœ€å¤§nonceæŽ¡ç”¨ã€åŒçŽEE rulesetId æ˜E E¼E
-  - ä»•æ§˜æ›¸ `SEASON_COUNCIL_SPEC` ã‚’è¿½åŠ 
-- âœECommit0105: permissionless ladder format v1EEranscript + settled event + ä¸¡ç½²åï¼‰ã‚’ TS å‚çEå®Ÿè£E
-  - `ladder.ts` ã‚’è¿½åŠ EEIP-712 attestation / record verify / deterministic standingsEE
-  - indexer éžä¾å­˜ãE tie-break ã‚’å›ºå®šï¼Eoints â†Ewins â†EtileDiff â†Elosses â†EaddressEE
-  - ä»•æ§˜æ›¸ `LADDER_FORMAT_SPEC` ã‚’è¿½åŠ 
-- âœECommit0106: Phase 3 hardeningEError tracking + release runbookE‰ã‚’æœ€å°å®Ÿè£E
-  - `apps/web/src/lib/error_tracking.ts` ã‚’è¿½åŠ EElobal error / unhandledrejection ã®åŽé›†EE
-  - sink ã‚’åEæ›¿å¯èƒ½åŒ–ï¼Eocal / console / remote, envè¨­å®šï¼E
-  - `docs/99_dev/RELEASE_RUNBOOK_v1_ja.md` ã‚’è¿½åŠ EEersioning/changelog/rollback/feature flagEE
-  - `pnpm run release:check` ã‚’è¿½åŠ EˆåEè·å‰ãƒã‚§ãƒE‚¯ã®æ¨™æº–åŒ–EE
-- âœECommit0107: æ–°è¦å‚åŠ è€E‘ãEquickstart å°Žç·šï¼Eã‚¹ãƒEƒƒãƒ—é€²æ—ï¼‰ã‚’å®Ÿè£E
-  - `apps/web/src/lib/onboarding.ts` ã‚’è¿½åŠ EEocalStorageæ°¸ç¶šåŒ–ãƒ»é€²æ—é›†è¨ˆãEãƒªã‚»ãƒEƒˆEE
-  - Home ã«ã€ŒãEã˜ã‚ã¦ã®1åˆE‚¹ã‚¿ãƒ¼ãƒˆã€ãƒã‚§ãƒE‚¯ãƒªã‚¹ãƒˆã¨1åˆEƒ«ãƒ¼ãƒ«ãƒ¢ãƒ¼ãƒ€ãƒ«ã‚’è¿½åŠ 
-  - Match ã®ã‚²ã‚¹ãƒˆå¯¾æˆ¦å°Žç·šã§ `start_first_match` / `commit_first_move` ã‚’èEå‹•æ›´æ–°
-  - `onboarding.test.ts` ã‚’è¿½åŠ Eˆæ—¢å®šå€¤ã€æ°¸ç¶šåŒ–ã€ç•°å¸¸å€¤fallbackã€resetEE
-- âœECommit0108: /stream ãƒ¢ãƒEƒ¬ãƒ¼ã‚·ãƒ§ãƒ³EEGãƒ¯ãƒ¼ãƒE/ BAN / slow modeE‰ã‚’å®Ÿè£E
-  - `stream_moderation.ts` ã‚’è¿½åŠ Eˆåˆ¤å®šãƒ­ã‚¸ãƒE‚¯ã‚Epure function åŒ–ï¼E
-  - VoteControlPanel ã« moderation è¨­å®šUIEElow modeç§’æ•° / banned users / blocked wordsE‰ã‚’è¿½åŠ 
-  - æŠ•ç¥¨å—ç†å‰ã« BAN / NGãƒ¯ãƒ¼ãƒE/ slow mode ã‚’é©ç”¨ã—ã€audit ã« reject çE”±ã‚’è¨˜éŒ²
-  - `local_settings` ã« moderation æ°¸ç¶šåŒ–ã‚­ãƒ¼ã‚’è¿½åŠ EEoundtrip test ä»˜ãEE
-- âœECommit0109: /events ã« Season ArchiveEEocalE‰ã‚’è¿½åŠ 
-  - `season_archive.ts` ã‚’è¿½åŠ EEeason/eventå˜ä½ãEé›E¨ˆã‚’ pure function åŒ–ï¼E
-  - Events ã« season åˆE›¿ãƒ»å‹çŽ‡/æŒ‘æˆ¦æ•°ã‚µãƒžãƒªãƒ¼ãƒ»æœ€æ–°Replayå°Žç·šãEMarkdownã‚³ãƒ”ãEã‚’è¿½åŠ 
-  - `event_attempts` ã«å…¨ä»¶å–å¾Eå…¨æ¶ˆåŽ» API ã‚’è¿½åŠ Eˆãƒ­ãƒ¼ã‚«ãƒ«é‹ç”¨ã®ä¿å®ˆæ€§å‘ä¸Šï¼E
-  - `season_archive.test.ts` / `event_attempts.test.ts` ã§é›E¨ˆã¨ storage API ã‚’æ¤œè¨¼
-- âœEWO005-A follow-up: Stage route queryæ­£è¦åŒ– + Stage E2Eã‚¹ãƒ¢ãƒ¼ã‚¯ã‚’è¿½åŠ 
-  - `normalizeStageFocusParams` ã‚’å°ŽåEã—ã€`ui=engine` + `focus=1` + `layout`é™¤åŽ»ã‚’åEé€šåŒ–
-  - `/battle-stage` `/replay-stage` å‘ã‘ `stage-focus.spec.ts` ã‚’è¿½åŠ ã—ã€URLæ­£è¦åŒ–ã¨ä¸»è¦UIå‡ºç¾ã‚’æ¤œè¨¼
-- âœEWO005-B follow-up: Stageè£œåŠ©ã‚³ãƒ³ãƒˆãƒ­ãƒ¼ãƒ«ã®ãƒ¬ã‚¹ãƒãƒ³ã‚·ãƒ–è¿½å¾“ã‚’å¼·åŒE
-  - `shouldShowStageSecondaryControls` ã‚’å°ŽåEã—ã€ã‚¹ãƒEEã‚¸è£œåŠ©UIã®è¡¨ç¤ºé–¾å€¤ã‚’åEé€šåŒ–
-  - Match/Replay ã® stage route ã§ resize è¿½å¾E+ æ‰‹å‹•ãƒˆã‚°ãƒ«å„ªå…ˆï¼Eanual overrideE‰ã‚’å®Ÿè£E
-  - mobile replay-stage ã§ transport éžè¡¨ç¤ºãƒEƒ•ã‚©ãƒ«ãƒE+ Show controls å¾©å¸°ã‚EE2E ã§æ¤œè¨¼
-- âœEWO005-C follow-up: 375pxå¹E§ Commit å°Žç·šãEå¯è¦–æ€§ã‚’E2Eå›ºå®E
-  - battle-stage focus æ‰‹æœ­ãƒ‰ãƒƒã‚¯ã® Commit ãƒœã‚¿ãƒ³ãEviewport å†E«åŽã¾ã‚‹ã“ã¨ã‚’æ¤œè¨¼
-  - æ¨ªæ–¹å‘ã‚ªãƒ¼ãƒãEãƒ•ãƒ­ãƒ¼EEscrollWidth - clientWidth`E‰ãŒç™ºç”Ÿã—ãªãE“ã¨ã‚’æ¤œè¨¼
-- âœEWO005-D follow-up: replay-stage ã®å¤±æ•—æ™‚ãƒªã‚«ãƒãƒªå°Žç·šã‚’E2Eå›ºå®E
-  - game index / RPC å¤±æ•—æ™‚ã§ã‚Ereplay-stage ã® `Load replay` å°Žç·šãŒæ®‹ã‚‹ã“ã¨ã‚’æ¤œè¨¼
-  - `Retry load` ã¨ `Clear share params` ãŒè¡¨ç¤ºã•ã‚Œã€åEè©¦è¡Œå¯èƒ½ã§ã‚ã‚‹ã“ã¨ã‚’æ¤œè¨¼
-- âœEWO005-E follow-up: Nyano AI ã®æ€è€E¾E©Ÿãƒ†ãƒ³ãƒã‚’èª¿æ•´
-  - `computeAiAutoMoveDelayMs` ã®åŸºæº–å€¤/é›£æ˜“åº¦ä¿‚æ•°/ã‚¸ãƒE‚¿ãƒ¼ã‚’è¦‹ç›´ã—ã€å³æ‰“ã¡æ„Ÿã‚’æŠ‘åˆ¶
-  - `turn_timing.test.ts` ã®å¢E•Œãƒ»ä¸Šé™æœŸå¾E€¤ã‚’æ›´æ–°ã—ã€æ±ºå®šè«–ã‚’ç¶­æŒE
-- âœEWO005-F follow-up: Nyano cut-in ã‚Ereduced-motion / low-vfx ã§è»½é‡åŒ–
-  - `NyanoReaction` ã® cut-in timing ã‚E`reduced-motion` ã¨ `data-vfx` ã§æ®µéšŽåˆ¶å¾¡
-  - `vfx=off/low` æ™‚ã« burst æ¼”åEã‚’æŠ‘åˆ¶ã—ã€è¡¨ç¤ºæ™‚é–“ã‚’çŸ­ç¸®
-  - `NyanoReaction.timing.test.ts` ã‚’è¿½åŠ ã—ã€æŒ™å‹•ã‚’ãƒ¦ãƒ‹ãƒƒãƒˆæ¤œè¨¼
-- âœEWO005-G follow-up: Game Index å¤±æ•—æ™‚ã® guest battle ãƒ•ã‚©ãƒ¼ãƒ«ãƒãƒƒã‚¯ã‚’è¿½åŠ 
-  - Game Index èª­è¾¼å¤±æ•—æ™‚ã« guest mode ã§ç·Šæ€¥ãƒEƒƒã‚­ã¸è‡ªå‹•ãƒ•ã‚©ãƒ¼ãƒ«ãƒãƒƒã‚¯
-  - stage battle ãŒç¶™ç¶šå¯èƒ½Eˆã‚«ãƒ¼ãƒ‰ãƒ­ãƒ¼ãƒ‰å¤±æ•—ã§è©°ã¾ã‚‰ãªãE¼‰ã“ã¨ã‚EE2E ã§æ¤œè¨¼
-- âœECommit0110: /events ã« Local Season PointsEˆãƒ©ãƒ³ã‚­ãƒ³ã‚°/å ±é…¬å°Žç·šï¼‰ã‚’è¿½åŠ 
-  - `season_progress.ts` ã‚’è¿½åŠ EEointsç®—åEãƒ»tieråˆ¤å®šãEeventåˆ¥ãƒ©ãƒ³ã‚­ãƒ³ã‚°ã‚Epure function åŒ–ï¼E
-  - Events ã« `Local season points (provisional)` ãƒ‘ãƒãƒ«EEier/æ¬¡Tierã¾ã§/é€²æ—ãƒãƒ¼E‰ã‚’è¿½åŠ 
-  - `Season points board` ã¨ markdown å‡ºåŠ›ï¼Erchive + progressE‰ã‚’è¿½åŠ 
-  - `season_progress.test.ts` ã‚’è¿½åŠ EEoints/tier/tie-break/markdownEE
-- âœECommit0111: /events ã® season points ã‚EpointsDelta æ®µéšŽé€£æºã¸æ‹¡å¼µ
-  - Replay URL ã® `pda`EEointsDeltaAE‰ã‚’ Event attempt ã«ä¿å­˜å¯èƒ½åŒE
-  - `season_archive.ts` ã« pointsDelta åˆè¨Eã‚«ãƒãƒ¬ãƒE‚¸é›E¨ˆã‚’è¿½åŠ 
-  - `season_progress.ts` ã§ã€Œeventå†EEå…¨attemptã« pointsDelta ãŒã‚ã‚‹å ´åˆãEã¿ã€pointsDeltaæŽ¡ç”¨Eˆæœªå…E¶³ã¯ provisional ç¶­æŒE¼E
-  - Events UI ã¨ markdown ã« source mixEEointsDelta/provisionalE‰è¡¨ç¤ºã‚’è¿½åŠ 
-- âœECommit0112: /events ã« settled event JSON å–ã‚Šè¾¼ã¿ã‚’è¿½åŠ Eˆãƒ­ãƒ¼ã‚«ãƒ« pointsDelta åæ˜ EE
-  - `settled_points_import.ts` ã‚’è¿½åŠ EEchemaå¯¾å¿œãEsettled eventæ¤œè¨¼ãƒ»winner/tilesæ•´åˆãƒã‚§ãƒE‚¯EE
-  - Events ã« `Settled points import (local)` UI ã‚’è¿½åŠ Eˆè²¼ã‚Šä»˜ã‘â†’é©ç”¨â†’é›†è¨ˆçµæžœè¡¨ç¤ºEE
-  - matchId ä¸€è‡´ã‹ã¤çµæžœæ•´åˆãE local attempt ã« `pointsDeltaA` / `pointsDeltaSource=settled_attested` ã‚’åæ˜ 
-- âœECommit0113: /events ã® settled import ã‚’ã€Œå–å¾—èEå‹•åŒ– + ç½²åæ¤œè¨¼ãƒ¢ãƒ¼ãƒ‰ã€ã«æ‹¡å¼µ
-  - `parseVerifiedLadderRecordsImportJson` ã‚’è¿½åŠ EE{domain, records}` ã‚E`verifyLadderMatchRecordV1` ã§æ¤œè¨¼EE
-  - import UI ã« mode åˆE›¿EEsettled events` / `verified records`E‰ã‚’è¿½åŠ 
-  - `/game/settled_events.json` è‡ªå‹•èª­è¾¼ãƒœã‚¿ãƒ³ã‚’è¿½åŠ 
-  - verified import ã®å¤±æ•—ç†ç”±EEattestation_invalid`E‰ã‚’ issue ã«é›E´E
-## ðŸš§ Doing (now)
+- ??Commit0008: rulesetId ????????????BI???????????? RULESET_ID_SPEC + ??????????
+  - ??????????????????????????????ID????????????
+  - ????????? requiredElements ?????????????????????
+  - `computeRulesetIdV1(ruleset)` ????????S?????????
+- ??Sprint UX: Home???????????????????????????????????????quickplay_to_first_place_ms`??
+- ??Sprint UX: Home LCP ??????????????????????home_lcp_ms`??
+- ??Sprint UX: Home Settings ?? UX????? PASS/FAIL ???????????-1/B-1/B-4/G-3??
+- ??Sprint UX: `Copy Snapshot` ?? `PLAYTEST_LOG.md` ??????????????????????????
+- ??Sprint UX: web lint warning 2??????????pnpm -C apps/web lint` warning 0??
+- ??Sprint UX: Snapshot??????????????????oute/viewport/language/UA?????????????????????????
+- ??Sprint UX: NyanoCardArt ????????? Retry ???????????etry nonce ???????????
+- ??Commit0104: ??????????????????????????????roposal / vote / adopt??? TS ???????
+  - `season_council.ts` ????????roposalId / vote hash / EIP-712 vote verify / tally / adopt??
+  - ?????????????????????????canonicalize?????voter??????nonce?????????? rulesetId ??????
+  - ????? `SEASON_COUNCIL_SPEC` ??????
+- ??Commit0105: permissionless ladder format v1??ranscript + settled event + ????????? TS ???????
+  - `ladder.ts` ????????IP-712 attestation / record verify / deterministic standings??
+  - indexer ??????? tie-break ???????oints ??wins ??tileDiff ??losses ??address??
+  - ????? `LADDER_FORMAT_SPEC` ??????
+- ??Commit0106: Phase 3 hardening??rror tracking + release runbook???????????
+  - `apps/web/src/lib/error_tracking.ts` ????????lobal error / unhandledrejection ???????
+  - sink ?????????????ocal / console / remote, env??????
+  - `docs/99_dev/RELEASE_RUNBOOK_v1_ja.md` ????????ersioning/changelog/rollback/feature flag??
+  - `pnpm run release:check` ????????????????????????????
+- ??Commit0107: ????????????quickstart ????????????????????????
+  - `apps/web/src/lib/onboarding.ts` ????????ocalStorage????????????????????????
+  - Home ????????????1????????????????????????1?????????????????????
+  - Match ????????????????? `start_first_match` / `commit_first_move` ????????
+  - `onboarding.test.ts` ???????????????????????????fallback??eset??
+- ??Commit0108: /stream ???????????????G??????/ BAN / slow mode???????
+  - `stream_moderation.ts` ???????????????????pure function ????
+  - VoteControlPanel ?? moderation ????I??low mode??? / banned users / blocked words???????
+  - ?????????? BAN / NG??????/ slow mode ?????????udit ?? reject ????????
+  - `local_settings` ?? moderation ?????????????????oundtrip test ?????
+- ??Commit0109: /events ?? Season Archive??ocal???????
+  - `season_archive.ts` ????????eason/event?????????? pure function ????
+  - Events ?? season ????????/??????????????????Replay?????Markdown???????????
+  - `event_attempts` ??????????????? API ????????????????????????????????
+  - `season_archive.test.ts` / `event_attempts.test.ts` ??????? storage API ??????
+- ??WO005-A follow-up: Stage route query????? + Stage E2E??????????????
+  - `normalizeStageFocusParams` ?????????ui=engine` + `focus=1` + `layout`??????????
+  - `/battle-stage` `/replay-stage` ??? `stage-focus.spec.ts` ??????????RL???????????I??????????
+- ??WO005-B follow-up: Stage????????????????????????????????????
+  - `shouldShowStageSecondaryControls` ??????????????????UI????????????????
+  - Match/Replay ?? stage route ?? resize ????+ ??????????????anual override???????
+  - mobile replay-stage ?? transport ???????????????+ Show controls ??????E2E ??????
+- ??WO005-C follow-up: 375px??? Commit ?????????????2E????
+  - battle-stage focus ?????????? Commit ???????viewport ?????????????????
+  - ???????????????????scrollWidth - clientWidth`?????????????????????
+- ??WO005-D follow-up: replay-stage ???????????????????E2E????
+  - game index / RPC ?????????replay-stage ?? `Load replay` ?????????????????
+  - `Retry load` ?? `Clear share params` ?????????????????????????????????
+- ??WO005-E follow-up: Nyano AI ????????????????????
+  - `computeAiAutoMoveDelayMs` ????????/?????????/??????????????????????????
+  - `turn_timing.test.ts` ????????????????????????????????????
+- ??WO005-F follow-up: Nyano cut-in ??reduced-motion / low-vfx ???????
+  - `NyanoReaction` ?? cut-in timing ??`reduced-motion` ?? `data-vfx` ?????????
+  - `vfx=off/low` ??? burst ????????????????????????
+  - `NyanoReaction.timing.test.ts` ?????????????????????????
+- ??WO005-G follow-up: Game Index ??????? guest battle ??????????????????
+  - Game Index ??????????? guest mode ?????????????????????????????
+  - stage battle ??????????????????????????????????????????E2E ??????
+- ??Commit0110: /events ?? Local Season Points???????????/???????????????
+  - `season_progress.ts` ????????oints?????tier?????event??????????????pure function ????
+  - Events ?? `Local season points (provisional)` ???????ier/??Tier????/??????????????
+  - `Season points board` ?? markdown ??????rchive + progress???????
+  - `season_progress.test.ts` ????????oints/tier/tie-break/markdown??
+- ??Commit0111: /events ?? season points ??pointsDelta ??????????????
+  - Replay URL ?? `pda`??ointsDeltaA??? Event attempt ???????????
+  - `season_archive.ts` ?? pointsDelta ?????????????????????
+  - `season_progress.ts` ????vent?????attempt?? pointsDelta ??????????????ointsDelta????????????? provisional ??????
+  - Events UI ?? markdown ?? source mix??ointsDelta/provisional????????????
+- ??Commit0112: /events ?? settled event JSON ?????????????????????? pointsDelta ?????
+  - `settled_points_import.ts` ????????chema?????settled event??????winner/tiles????????????
+  - Events ?? `Settled points import (local)` UI ??????????????????????????????????
+  - matchId ??????????????? local attempt ?? `pointsDeltaA` / `pointsDeltaSource=settled_attested` ?????
+- ??Commit0113: /events ?? settled import ??????????? + ?????????????????????
+  - `parseVerifiedLadderRecordsImportJson` ????????{domain, records}` ??`verifyLadderMatchRecordV1` ????????
+  - import UI ?? mode ?????settled events` / `verified records`???????
+  - `/game/settled_events.json` ???????????????????
+  - verified import ???????????attestation_invalid`??? issue ??????
+## ?? Doing (now)
 
-- ðŸ”§ Phase 4 ã®é‹ç”¨é¢Eˆãƒ©ãƒ³ã‚­ãƒ³ã‚° / å ±é…¬å°Žç·šï¼‰ã‚’ pointsDelta é€£æºã¸æ®µéšŽæ‹¡å¼µã™ã‚‹Eˆæ‰‹å‹•å–ã‚Šè¾¼ã¿/æ¤œè¨¼UIã¾ã§å®ŒäºE€‚æ¬¡ã¯ãƒãƒƒã‚¯ã‚¨ãƒ³ãƒ‰çµŒç”±ã®è‡ªå‹•ä¾›çµ¦ã¨å®šæœŸåŒæœŸEE
-- ðŸ”§ WO005EEtage UI/UXåŸºç›¤EE `/battle-stage` `/replay-stage` ã®ä½Žé€Eå¤±æ•—æ™‚ä½“é¨“ã¨å°Žç·šæ¤œè¨¼ã‚’ç¶™ç¶šã™ã‚E
+- ?? Phase 4 ?????????????????? / ??????????? pointsDelta ????????????????????????????/????UI????????????????????????????????????????????????
+- ?? WO005??tage UI/UX?????? `/battle-stage` `/replay-stage` ?????????????????????????????????
 
-## ðŸ§© Next (high priority)
+## ??? Next (high priority)
 
 
-### A. ãƒ«ãƒ¼ãƒ«ãƒ»ãƒ—ãƒ­ãƒˆã‚³ãƒ«ã®å®‰å®šåŒ–
-- [x] å…¬å¼æˆ¦å‘ã‘EšSolidityå´ã®Transcriptæ¤œè¨¼EE1 ABI-encode hashEE
-- [x] RulesetRegistryEEermissionlessE‰æœ€å°å®Ÿè£E¼šrulesetId -> config hash / metadata ã‚’ç™»éŒ²ã§ãã‚‹
-- [x] ã€ŒWindEˆåEæ”»/å¾Œæ”»é¸æŠžï¼‰ã€ãEå…¬å¹³ãªè¡¨ç¾EEommit-reveal / seed / ä¸¡è€Eˆæ„ãªã©EE
+### A. ???????????????????????
+- [x] ??????????olidity????Transcript??????1 ABI-encode hash??
+- [x] RulesetRegistry??ermissionless???????????ulesetId -> config hash / metadata ??????????
+- [x] ??ind?????/????????????????????????ommit-reveal / seed / ????????????
 
-### B. ã‚²ãƒ¼ãƒ ã®â€œé¢ç™½ã•â€ã‚’ç©ã¿å¢—ã™EˆãŸã ã—æ±ºå®šè«–ã§EE
-- [x] ãƒ¡ã‚¿EEayer4E‰ãEå°ã•ãªå¯å¤‰ï¼ˆä¾‹ï¼šcorner boost / center locked / chain capE‰ã‚’1ã¤è¿½åŠ 
-  - `meta.chainCapPerTurn` ã‚ETSå‚çEã‚¨ãƒ³ã‚¸ãƒ³ã«è¿½åŠ EEã‚¿ãƒ¼ãƒ³ã®æˆåŠŸãƒ•ãƒªãƒEEæ•°ã‚’ä¸Šé™åŒ–å¯èƒ½EE
-  - v1ã§ã¯ engine-onlyEEulesetId canonicalization ã«ã¯æœªåæ˜ EE
+### B. ????????????????????????????????????????
+- [x] ??????ayer4??????????????????orner boost / center locked / chain cap???1??????
+  - `meta.chainCapPerTurn` ??TS??????????????????????????????????????????????????
+  - v1???? engine-only??ulesetId canonicalization ???????????
 
-### C. è‡ªèµ°ã™ã‚‹ã‚³ãƒŸãƒ¥ãƒ‹ãƒ†ã‚£è¨­è¨ˆï¼ˆé‹å–¶ãŒæ¶ˆãˆã¦ã‚‚å›žã‚‹ï¼E
-- [x] ã€Œã‚·ãƒ¼ã‚ºãƒ³ã®è­°ä¼šã€ï¼šruleset proposal / vote / adopt ã®æœ€å°ãEãƒ­ãƒˆã‚³ãƒ«
-- [x] ãƒ©ãƒ€ãƒ¼Eˆãƒ©ãƒ³ã‚­ãƒ³ã‚°E‰ã‚’â€œè¨±å¯ä¸è¦â€ã§ç¬¬ä¸‰è€EŒé‹ç”¨ã§ãã‚‹ãƒ•ã‚©ãƒ¼ãƒžãƒƒãƒE
-  - transcript + settled event + EIP-712 attestation ã§å†è¨ˆç®—å¯èƒ½
-  - indexer éžä¾å­˜ãEå›ºå®Etie-break ã‚’å®Ÿè£E¼EbuildLadderStandingsV1`EE
+### C. ????????????????????????????????????????
+- [x] ???????????????????uleset proposal / vote / adopt ??????????????
+- [x] ??????????????????????????????????????????????????????????
+  - transcript + settled event + EIP-712 attestation ???????????
+  - indexer ???????????tie-break ????????buildLadderStandingsV1`??
 
 ---
 
-## ðŸ”¬ Research / Optional
+## ?? Research / Optional
 
-- [ ] ERC-6551EEyanoãƒˆãEã‚¯ãƒ³å¢E•Œã®ã‚¢ã‚«ã‚¦ãƒ³ãƒˆï¼‰ã‚’ä½¿ã£ãŸã€Œãƒãƒ¼ãƒ /ã‚®ãƒ«ãƒ‰ã€E
-- [ ] NFTã‚¹ãƒEEã‚­ãƒ³ã‚°ã§ Season Pass / ãƒ«ãƒ¼ãƒ«æŠ•ç¥¨æ¨© / å‚åŠ æž EEybilå¯¾ç­–ï¼‰ã‚’æä¾›ã™ã‚‹è¨­è¨E
-- [ ] äº’æ›æ€§EšéŽåŽ»ã®Oasysã‚¨ã‚³ã‚·ã‚¹ãƒEƒ ã‹ã‚‰ã®è³E”£ç§»è¡Œæ–¹é‡ï¼ˆå¿E¦ãªã‚‰ï¼E
+- [ ] ERC-6551??yano??????????????????????????????????????/????????
+- [ ] NFT????????????? Season Pass / ???????????? / ???????ybil??????????????????
+- [ ] ????????????Oasys?????????????????????????????????????
 - Sprint UX: Home Settings now keeps local UX snapshot history (save on copy, view recent 5, clear history).
-- âœEWO005-H follow-up: Pixi card-art texture failure guidance + manual retry
-  - `BattleStageEngine` ã« card-art ã®èª­ã¿è¾¼ã¿çŠ¶æ…Eå¤±æ•—çŠ¶æ…‹ã‚’è¡¨ç¤ºã—ã€`Retry card art` ã‚’è¿½åŠ 
-  - `TextureResolver` ã« failed/pending çŠ¶æ…‹ç®¡çE¨ status event ã‚’è¿½åŠ ã—ã¦ã€å¤±æ•—æ™‚ã®ç„¡é™åEè©¦è¡Œã‚’é˜²æ­¢
-  - `textureResolverPreload.test.ts` ã« failed->retry success ã®æ¤œè¨¼ã‚’è¿½åŠ 
-- âœEWO005-I follow-up: Pixi/WebGL init failure auto fallback
-  - `ui=engine` ã§ Pixi åˆæœŸåŒ–å¤±æ•—æ™‚ã« `BoardViewMint` ã¸è‡ªå‹•ãƒ•ã‚©ãƒ¼ãƒ«ãƒãƒƒã‚¯ã—ã¦é€²è¡Œç¶™ç¶E
-  - `/battle-stage` `/replay-stage` ã« `Retry Pixi` å°Žç·šã‚’è¿½åŠ 
-  - stage-focus E2E ã« WebGL unavailable ã‚±ãƒ¼ã‚¹ã‚’è¿½åŠ ã—ã¦å›žå¸°é˜²æ­¢
-- ? WO005-J follow-up: replay-stage WebGL fallback ‚Ì E2E‰ñ‹A–hŽ~‚ð’Ç‰Á
-  - `/replay-stage` ‚Ì WebGL unavailable Žž‚É Mint fallback + retry“±ü‚ð stage-focus E2E‚ÅŒÅ’è
-  - 375px commit‰ÂŽ‹«ƒeƒXƒg‚ð fallback ƒ‚[ƒh‚à‹–—e‚·‚é”»’è‚Ö‹­‰»
+- ??WO005-H follow-up: Pixi card-art texture failure guidance + manual retry
+  - `BattleStageEngine` ?? card-art ??????????????????????????????Retry card art` ??????
+  - `TextureResolver` ?? failed/pending ????????? status event ????????????????????????????????
+  - `textureResolverPreload.test.ts` ?? failed->retry success ????????????
+- ??WO005-I follow-up: Pixi/WebGL init failure auto fallback
+  - `ui=engine` ?? Pixi ???????????? `BoardViewMint` ?????????????????????????????
+  - `/battle-stage` `/replay-stage` ?? `Retry Pixi` ?????????
+  - stage-focus E2E ?? WebGL unavailable ???????????????????????
+- ? WO005-J follow-up: replay-stage WebGL fallback ? E2E???????
+  - `/replay-stage` ? WebGL unavailable ?? Mint fallback + retry??? stage-focus E2E???
+  - 375px commit??????? fallback ?????????????
 
 - [x] 2026-02-14 WO006/WO007 Classic Rules implemented (engine + web): RulesetConfigV2, classic RNG, Order/Chaos/Swap/Reverse/AceKiller/Plus/Same/Type Ascend/Descend, Match UI integration, and classic test coverage.
 - [x] Follow-up: update stream strict allowlist for Order/Chaos in `apps/web/src/lib/triad_vote_utils.ts` if Classic is enabled in stream voting mode.
@@ -165,69 +165,69 @@
 - [x] Follow-up: hide Replay owners mapping under Three Open by default, and reveal it together with the hidden-slot toggle.
 - [x] Follow-up: extract hidden deck-slot UI into shared `HiddenDeckPreviewCard` component and reuse in Match/Replay.
 - [x] Follow-up: show resolved Classic Open metadata in Stream live status (from `protocolV1.header` + ruleset registry).
-- [x] Follow-up: show resolved Classic Open metadata in Overlay gNow Playingh panel for operator/OBS visibility.
+- [x] Follow-up: show resolved Classic Open metadata in Overlay ?Now Playing? panel for operator/OBS visibility.
 - [x] Follow-up: add additive Classic metadata (`classic.open` / `classic.swap`) to `/stream` `state_json v1` and ai_prompt context for nyano-warudo/operator parity.
-- [x] Follow-up: show deterministic Classic Swap mapping in Stream live status and Overlay gNow Playingh.
+- [x] Follow-up: show deterministic Classic Swap mapping in Stream live status and Overlay ?Now Playing?.
 - [x] Follow-up: update `state_json v1` sample/spec docs to include additive optional `classic` metadata.
 - [x] Follow-up: sync `triad_league_snapshot_request_sample_v1.json` embedded `content` with latest `state_json` sample.
 - [x] Follow-up: refactor duplicated Classic Open/Swap resolution into shared `apps/web/src/lib/classic_ruleset_visibility.ts` with unit tests.
 - [x] Follow-up: harden Classic metadata resolver to return null (not throw) on malformed `protocolV1.header`.
 - [x] Follow-up: sync `triad_league_ai_prompt_sample_v1.txt` and Bridge spec with optional `classic_open` / `classic_swap` ai_prompt lines.
-- [x] 2026-02-14 WO006: NyanoReaction slot‚ð `Match/Replay` ‚É“±“ü‚µAƒRƒƒ“ƒg•\Ž¦Žž‚ÌƒŒƒCƒAƒEƒgƒVƒtƒg‚ð—}Ž~i2sƒNƒ‰ƒ“ƒv + unit test•t‚«jB
-- [x] 2026-02-14 WO007: Mint”Õ–Ê/ƒXƒe[ƒW‚ÌŽ¿Š´‚ð–‚«ž‚Ýiboard sheen, stage rim/atmo, warning-modeŽ‹Šo‹­’², vfx/reduced-motion•ªŠò, mobileÅ“K‰»jB
-- [x] 2026-02-14 WO008: Match Setup ‚ð MatchSetupPanelMint ‚Ö•ª—£‚µAPrimary/Secondary/Advanced \¬E1sƒTƒ}ƒŠESetup URLƒRƒs[“±ü‚ð’Ç‰ÁBURLƒpƒ‰ƒ[ƒ^ŒÝŠ·‚ðˆÛŽB
-- [x] 2026-02-14 WO009: Rulesets‰æ–Ê‚Éw‚¨‚·‚·‚ßxw—v–ñxw‚±‚Ìƒ‹[ƒ‹‚Å‘Îíx“±ü‚ð’Ç‰Á‚µA/match ‚Ö‚Ì‘JˆÚ‚ð–¾Šm‰»B
-- [x] 2026-02-15 WO010: `apps/web/e2e/ux-guardrails.spec.ts` ‚ðˆÀ’è‰»itutorial‰ñ”ðEselector‹­‰»Equick commit fallbackjB`pnpm.cmd -C apps/web e2e -- e2e/ux-guardrails.spec.ts` ‚Å 2 passed ‚ðŠm”FB
-- [x] 2026-02-15 WO010‰^—p: `apps/web/package.json` ‚É `e2e:ux` ‚ð’Ç‰Á‚µA`.github/workflows/ci.yml` ‚É `E2E UX guardrails` ƒXƒeƒbƒv‚ð’Ç‰Áifull E2E ‘O‚ÉÅ¬UXƒK[ƒh‚ðæsŒŸØjB
-- [x] 2026-02-15 WO007’Ç•â: `apps/web/e2e/mint-stage-visual-guardrails.spec.ts` ‚ð’Ç‰Á‚µAmanualŠm”F€–Úivfx=off / reduced-motion / 390pxj‚ðE2E‰»B`pnpm.cmd -C apps/web e2e:ux` ‚Å 5 passed ‚ðŠm”FB
-- [x] 2026-02-15 WO009’Ç•â: `apps/web/e2e/rulesets-ux-guardrails.spec.ts` ‚ð’Ç‰Á‚µARulesets“±üi‚¨‚·‚·‚ß•\Ž¦ + ‚±‚Ìƒ‹[ƒ‹‚Å‘Îí‘JˆÚ + rk•ÛŽj‚ðE2E‰»B`pnpm.cmd -C apps/web e2e:ux` ‚Å 7 passed ‚ðŠm”FB
-- [x] 2026-02-15 WO008’Ç•â: `apps/web/e2e/match-setup-ux-guardrails.spec.ts` ‚ð’Ç‰Á‚µAMatch Setup“±üi1sƒTƒ}ƒŠ“¯Šú + AdvancedŽ©“®“WŠJ + ccap URL“¯Šúj‚ðE2E‰»B`pnpm.cmd -C apps/web e2e:ux` ‚Å 9 passed ‚ðŠm”FB
-- [x] 2026-02-15 WO011: Mint gamefeel”wŒi‚ðŽÀ‘•ipastel gradient + paw pattern + sparkle/bokehj‚µA`prefers-reduced-motion` / `data-vfx` •ªŠò‚Å‰‰o‹­“x‚ð§ŒäB`DuelStageMint` ‚Í `mint-stage--gamefeel` ‚É“ˆêB
-- [x] 2026-02-15 WO012: Mint Top HUDi¶ƒƒS/’†‰›A-BƒXƒRƒA/‰ETURNj‚ð `ui=mint` Œü‚¯‚É’Ç‰ÁB`density=minimal` ‚Í Top HUD—DæA`standard/full` ‚ÍŠù‘¶ `BattleHudMint` •¹—p‚É®—B
-- [x] 2026-02-15 WO013: Mint”Õ–Ê‚Ì¶‰E‚ÉƒvƒŒƒCƒ„[ƒpƒlƒ‹iAvatar/Label/Remainingj‚ð’Ç‰ÁBDesktop‚Í `panel|board|panel`Amobile‚Íƒpƒlƒ‹”ñ•\Ž¦‚Å”Õ–Ê—DæB
-- [x] 2026-02-15 WO014: MintŽèŽD‚ðƒKƒ‰ƒX’²ƒgƒŒƒC + Œy‚¢d‚È‚è‚ÖXV‚µAActionPrompt‚ð“ñ’iƒsƒ‹‰»B`mint-prompt-slot` ‚Å•\Ž¦—h‚ê‚ð—}§B
-- [x] 2026-02-15 WO015: NyanoReaction slot‚ð fixed-height + absolute overlay ‰»‚µA`kind=idle` Žž‚à placeholder ‚ðˆÛŽBLayoutShift API ‚ð `ux-guardrails` ‚É’Ç‰Á‚µ‚ÄCLS‰ñ‹A‚ðŒy—ÊŠÄŽ‹B
-- [x] 2026-02-15 WO016: `mint-pressable` ‚ð“±“ü‚µAboard cell / hand card / result button ‚Ì‰Ÿ‰º•¶–@ihover/active/focus-visiblej‚ð“ˆêBreduced-motion / data-vfx —}§•ªŠò‚ð’Ç‰ÁB
-- [x] 2026-02-15 WO016/WO010’Ç•â: `ux-guardrails` ‚ÉƒL[ƒ{[ƒhEnter‘I‘ð‚Æ reduced-motion Žž‚Ì pressable transition —}§ƒeƒXƒg‚ð’Ç‰Ái4 passedjB
-- [x] 2026-02-15 Match UXC³: NyanoƒRƒƒ“ƒg˜A“®‚Ì”Õ–ÊƒYƒŒ—vˆö‚¾‚Á‚½ stage impact ‚Ì transformƒAƒjƒ‚ð”ñˆÊ’u•Ï‰»Œ^‚Ö’uŠ·B‚ ‚í‚¹‚ÄuƒJ[ƒh‚ð‘I‚ñ‚Å‚­‚¾‚³‚¢v‚Ì•¶ŽšƒTƒCƒY‚ðk¬B
-- [x] 2026-02-15 Match UX’Ç•â: ó‹µŽÀ‹µƒeƒLƒXƒg‹Nˆö‚Ì”Õ–ÊƒYƒŒ‚ð—}§iHUD/AI notice‚ÌŒÅ’èƒXƒƒbƒg‰»jB‡‚í‚¹‚Ä”Õ–Ê‚ðŠg‘å‚µA¶‰EƒvƒŒƒCƒ„[ƒpƒlƒ‹‚ðk¬B
-- [x] 2026-02-15 Match UXC³: ƒoƒgƒ‹‰æ–ÊuÚ×î•ñvƒhƒƒ[‚Ì ~ ‚Å•Â‚¶‚È‚¢–â‘è‚ðC³iclose“`”d§Œä + ŠJ‚¢‚Ä‚¢‚éŠÔ‚ÍƒgƒOƒ‹”ñ•\Ž¦jB
-- [x] 2026-02-15 Match UXC³: ó‹µ•\Ž¦ƒeƒLƒXƒgiBattle summaryj‚ðŒÅ’èƒXƒƒbƒg‰»‚µA•\Ž¦/”ñ•\Ž¦‚Å”Õ–ÊˆÊ’u‚ª‚¸‚ê‚È‚¢‚æ‚¤‰ü‘PB
-- [x] 2026-02-15 Battle Stage focus UX‰ü‘P: ŽèŽDƒhƒbƒN‚ð‰º•”ŒÅ’è‰»‚µAd•¡ƒc[ƒ‹ƒo[‘€ì‚ð®—B”Õ–ÊƒTƒCƒYŽZo‚ðŠg‘åŠñ‚è‚É’²®‚µ‚ÄA`ui=engine&focus=1` ‚ÅƒXƒNƒ[ƒ‹‘O’ñ‚É‚È‚è‚É‚­‚¢“±ü‚Ö‰ü‘PB`stage-focus` / `ux-guardrails` E2E‚Å‰ñ‹AŠm”FÏ‚ÝB
-- [x] 2026-02-15 Battle Stage UX’Ç•â: stage focus ‚Ìuó‹µ•\Ž¦ + NyanoƒRƒƒ“ƒgv‚ð”Õ–Êã•”‚ÌŒÅ’èƒXƒƒbƒg‚ÖˆÚÝB‰º‘¤iŽèŽD“±ü‹ß–Tj‚Ì•\Ž¦‚ðŽ~‚ßAŽ‹ü“±ü‚ÆƒŒƒCƒAƒEƒgˆÀ’è«‚ð‰ü‘PB
-- [x] 2026-02-15 Battle Stage UX’Ç•â: stage-focus E2E‚ÉuƒRƒƒ“ƒg/ó‹µ•\Ž¦‚ª”Õ–ÊEŽèŽDƒhƒbƒN‚æ‚èã‚É‚ ‚évƒK[ƒhƒŒ[ƒ‹‚ð’Ç‰ÁB
-- [x] 2026-02-15 Battle Stage UX’Ç•â: ŽèŽDƒhƒbƒN‚ª”Õ–Ê‚É”í‚é–â‘è‚ðC³ifixedŠî€‚Ì¥³ + stageƒhƒbƒNcˆ³k + boardè—L•â³jB`stage-focus` / `ux-guardrails` E2E‚Å‰ñ‹AŠm”FÏ‚ÝB
-- [x] 2026-02-15 Match/Stage UX’Ç•â: `/match?ui=mint` ‚Ì NyanoƒRƒƒ“ƒg+ó‹µ•\Ž¦‚ð”Õ–Êã•”ŒÅ’èƒXƒ^ƒbƒN‚Ö“ˆê‚µA•\Ž¦ON/OFF‚Å‚ÌˆÊ’u‚¸‚ê‚ð—}§BPrompt•¶Žš‚ðk¬BDetails `~` ‚Ì•Â‚¶‚é“±ü‚ðˆÀ’è‰»iÄƒI[ƒvƒ“—}Ž~ŠÜ‚ÞjBstage focus ‚Ì Pixi”Õ–Ê/ŽèŽDƒhƒbƒN‚ðÄƒoƒ‰ƒ“ƒX‚µAŽèŽD‰ÂŽ‹«‚ð‰ñ•œ‚µ‚Â‚Â board-dock ”ñd‚È‚è‚ðˆÛŽistage-focus 15 passed / ux-guardrails 7 passedjB
-- [x] 2026-02-15 WO017: `MintGameShell` / `MintAppChrome` ‚ð’Ç‰Á‚µAMintƒe[ƒ}Žž‚Ì App chrome ‚ðƒQ[ƒ€UI‰»B`focusRoute`i`/battle-stage` `/replay-stage` / `focus=1`j‚ÍŠù‘¶‹““®‚ðˆÛŽB
-- [x] 2026-02-15 WO018: Home ‚ð MintƒƒCƒ“ƒƒjƒ…[\¬‚ÖXViArena/Decks/Replay/Stream ‚Ì4‘åƒ{ƒ^ƒ“A3ƒXƒeƒbƒv“±üA‰º•”ƒCƒ“ƒtƒHƒo[ATools/Settings Ü‚è‚½‚½‚ÝjB
-- [x] 2026-02-15 WO019: Arena ‚ðƒ‚[ƒh‘I‘ðUI‚ÖXVi¶ƒTƒCƒhƒiƒrA’†‰›ƒoƒi[A‰EQuick PlayA‰º•”“ïˆÕ“xƒJ[ƒh + `difficulty` ƒNƒGƒŠ•ÛŽjB
-- [x] 2026-02-15 WO020: Decks ‚ð Deck Builder 3ƒJƒ‰ƒ€‚ÖXViDeck Stats/FilterACard BrowserA’†‰›ƒtƒH[ƒ€A‰EDeck Summary + Save DeckjB
-- [x] 2026-02-15 WO021: `/start` ƒy[ƒW‚ð’Ç‰Á‚µAOnboarding 3ƒJ[ƒh + DONEi’» pill ‚ðŽÀ‘•BHome ‚©‚ç‘JˆÚ“±ü‚ð’Ç‰ÁB
-- [x] 2026-02-15 WO022: Mint UIƒvƒŠƒ~ƒeƒBƒu‚ð’Ç‰Ái`GlassPanel` `MintPressable` `MintIcon` `MintBigButton` `MintTabNav` `MintTypography`j‚µAŽå—v‰æ–Ê‚É“K—pB
-- [x] 2026-02-15 WO023: Gemini‰æ‘œ¶¬ƒpƒCƒvƒ‰ƒCƒ“‚ðŠm”FE®”õi`scripts/gemini_image_gen.mjs` / `scripts/asset_prompts/nytl_ui_assets.v1.json` / `docs/01_design/NYTL_ASSET_GEN_GEMINI_NANO_BANANA_PRO_v1_ja.md` / `apps/web/public/assets/gen/.gitkeep`jB
-- [x] 2026-02-15 WO024: e2e/visual guardrails ‚ð’Ç‰Ái`e2e/mint-app-screens-guardrails.spec.ts`j‚µAHome/DecksŒnŠù‘¶e2eŠú‘Ò’l‚ðMint UI‚É’Ç]XVB
-- [x] 2026-02-15 Follow-up: `MintPressable` ‚Ì–¢Žg—p•Ï”lintŒx‚ð‰ðÁ‚µA`MatchSetupPanelMint` ‚Ì helper ‚ð `MatchSetupPanelMint.helpers.ts` ‚Ö•ª—£‚µ‚Ä Fast Refresh Œx‚ð‰ðÁB
-- [x] 2026-02-15 Follow-up: `src/lib/theme.ts` ‚Ì‰ñ‹A–hŽ~‚Æ‚µ‚Ä `src/lib/__tests__/theme.test.ts` ‚ð’Ç‰Áitheme‰ðŒˆ—Dæ‡ˆÊ / URL query+hash ŒÝŠ·‚ðŒÅ’èjB
-- [x] 2026-02-15 Follow-up: `e2e/mint-app-screens-guardrails.spec.ts` ‚ðŠg’£‚µAMint App Chrome ‚Ì `theme` ƒNƒGƒŠ•ÛŽiTab‘JˆÚŽžj‚Æ `focusRoute`i`/match?focus=1` `/battle-stage`j‚Å‚Ì chrome ”ñ•\Ž¦ŒÝŠ·‚ð‰ñ‹AƒeƒXƒg‰»B
-- [x] 2026-02-15 Follow-up: Events/Replay/Stream ‚ð Mint“ñŽŸ‰æ–Êƒg[ƒ“‚Ö‘µ‚¦AReplay ‚Ì 390px ‰¡ƒXƒNƒ[ƒ‹‰ñ‹A‚ðC³i’·‚¢ `rulesetId`/`matchId` Ü•Ô‚µ + debug pre ‚Ì•S‘©jB`mint-app-screens-guardrails` ‚Å 390px “ž’B«‚ðŒÅ’è‰»B
-- [x] 2026-02-15 Follow-up: Events/Replay/Stream ‚É‹¤’Ê Mint ƒNƒCƒbƒNƒiƒr“±ü‚ð’Ç‰Á‚µA`theme` “`”d‚ð‹­‰»B‚ ‚í‚¹‚Ä Match ”Õ–Ê‚É `mint-match-board-shell` / `mint-match-quick-commit` ‚ÌŒ©‚½–Ú‹­‰»ƒNƒ‰ƒX‚ð’Ç‰Á‚µAsecondary screen ‚Æ board ‚ÌƒQ[ƒ€UIƒg[ƒ“‚ð“ˆêB
-- [x] 2026-02-15 Follow-up: Events/Replay/Stream ‚Ìæ“ª‚É—v–ñƒXƒe[ƒ^ƒX‘Ñioverview pillsj‚ð’Ç‰Á‚µAd—vî•ñ‚Ì—Dæ‡ˆÊ‚ð‰ÂŽ‹‰»B‚ ‚í‚¹‚Ä quicknav ‚ÌƒAƒCƒRƒ“Ž‹”F«EƒeƒLƒXƒg‰Â“Ç«E—]”’‚ð‰ü‘P‚µ‚ÄuŒ©‚â‚·‚­‚í‚©‚è‚â‚·‚¢v“±ü‚Ö’²®B
-- [x] 2026-02-17 Arena follow-up: `MintPageGuide` / difficulty hint ‚Ì–¢ŽÀ‘•CSS‚ð `mint-theme.css` ‚É’Ç‰Á‚µA`Arena.tsx` ‚Ì UTF-8 BOM ‚ðœ‹ŽB‡‚í‚¹‚Ä“ïˆÕ“xƒ{ƒ^ƒ“‚É `type="button"` ‚ð’Ç‰ÁB
-- [x] 2026-02-17 Mint guide rollout: `MINT_PAGE_GUIDES` ‚Ì `events/replay/stream` ‚ðŠeƒy[ƒW‚ÉÚ‘±‚µAMintƒe[ƒ}Žž‚Ì‹¤’ÊƒKƒCƒh“±ü‚ð“ˆêiReplay‚Í `!isStageFocus` ðŒ‚ðˆÛŽjB
-- [x] 2026-02-17 Mint guide rollout follow-up: `e2e/mint-app-screens-guardrails.spec.ts` ‚É `.mint-page-guide` ‰ÂŽ‹ƒAƒT[ƒVƒ‡ƒ“‚ð’Ç‰Á‚µAArena/Events/Replay/Stream ‚ÌƒKƒCƒh“±ü‰ñ‹A‚ð–hŽ~B
-- [x] 2026-02-17 CI follow-up: `/battle-stage` ‚Ì board/dock d‚È‚è‚ð desktop ðŒ‚Å‰ðÁi`.mint-focus-hand-dock--stage` •â³jB‚ ‚í‚¹‚Ä `ux-guardrails` ‚Ì quick commit ƒNƒŠƒbƒN‚ðƒtƒH[ƒ‹ƒoƒbƒN•t‚«‚É‚µ‚Ä flaky ‚ð’áŒ¸B
-- [x] 2026-02-17 ui=mint Pixi parity follow-up: /match ‚Å hand dock + HUD/commentary tone ‚ð PixiŠñ‚¹‚É“ˆê‚µAmintê—pTop HUD/side panel‚ð—}Ž~B‚ ‚í‚¹‚Ä ux-guardrails ‚ð hand dock “±ü‘Î‰ž‚ÖXV‚µAreduced-motion Žž‚Ì dock card transition —}§‚ð’Ç‰Áipnpm.cmd -C apps/web e2e -- e2e/ux-guardrails.spec.ts 7 passed / pnpm.cmd -C apps/web e2e -- e2e/stage-focus.spec.ts 15 passedjB
-- [x] 2026-02-17 e2e:ux follow-up: mint-stage-visual-guardrails ‚Ì commit control ”»’è‚ð hand dock/quick commit ŒÝŠ·‚ÉXV‚µAui=mint V“±ü‚Å‚ÌCIŽ¸”s‚ð‰ðÁipnpm.cmd -C apps/web e2e:ux 14 passedjB
-- [x] 2026-02-17 copy cleanup follow-up: Home/Start/Stream ‚Ì“à•”Œü‚¯•¶Œ¾iƒtƒF[ƒY/ƒ}ƒCƒ‹ƒXƒg[ƒ“/“±ü/Žb’è/DONE-TODOj‚ðƒ†[ƒU[Œü‚¯•\Œ»‚Ö’uŠ·‚µAŒöŠJUI‚©‚çŠJ”­i’»à–¾‚ªŒ©‚¦‚È‚¢‚æ‚¤’²®B
-- [x] 2026-02-17 i18n UX follow-up: Replay’†S‚É Arena/Decks/Rulesets/Events ‚Ì‰pŒêUI•¶Œ¾‚ð“ú–{Œêƒx[ƒX‚Ö’²®iƒeƒXƒgˆË‘¶‚Ì‰pŒêƒ‰ƒxƒ‹‚ÍŒÝŠ·ˆÛŽjB`replay_timeline`/`replay_highlights` •¶Œ¾‚à“ú–{Œê‰»‚µA`e2e/replay-ruleset-fallback-guardrails.spec.ts` ‚ð“ú‰pŒÝŠ·ƒAƒT[ƒVƒ‡ƒ“‚ÖXVB`pnpm -C apps/web test` / `typecheck` / `build` / `pnpm.cmd -C apps/web e2e:ux` ‚Å‰ñ‹AŠm”FB
+- [x] 2026-02-14 WO006: NyanoReaction slot? `Match/Replay` ?????????????????????????2????? + unit test????
+- [x] 2026-02-14 WO007: Mint??/?????????????board sheen, stage rim/atmo, warning-mode????, vfx/reduced-motion??, mobile?????
+- [x] 2026-02-14 WO008: Match Setup ? MatchSetupPanelMint ?????Primary/Secondary/Advanced ???1?????Setup URL?????????URL???????????
+- [x] 2026-02-14 WO009: Rulesets??????????????????????????????/match ?????????
+- [x] 2026-02-15 WO010: `apps/web/e2e/ux-guardrails.spec.ts` ?????tutorial???selector???quick commit fallback??`pnpm.cmd -C apps/web e2e -- e2e/ux-guardrails.spec.ts` ? 2 passed ????
+- [x] 2026-02-15 WO010??: `apps/web/package.json` ? `e2e:ux` ?????`.github/workflows/ci.yml` ? `E2E UX guardrails` ????????full E2E ????UX??????????
+- [x] 2026-02-15 WO007??: `apps/web/e2e/mint-stage-visual-guardrails.spec.ts` ?????manual?????vfx=off / reduced-motion / 390px??E2E??`pnpm.cmd -C apps/web e2e:ux` ? 5 passed ????
+- [x] 2026-02-15 WO009??: `apps/web/e2e/rulesets-ux-guardrails.spec.ts` ?????Rulesets????????? + ?????????? + rk????E2E??`pnpm.cmd -C apps/web e2e:ux` ? 7 passed ????
+- [x] 2026-02-15 WO008??: `apps/web/e2e/match-setup-ux-guardrails.spec.ts` ?????Match Setup???1?????? + Advanced???? + ccap URL????E2E??`pnpm.cmd -C apps/web e2e:ux` ? 9 passed ????
+- [x] 2026-02-15 WO011: Mint gamefeel??????pastel gradient + paw pattern + sparkle/bokeh???`prefers-reduced-motion` / `data-vfx` ???????????`DuelStageMint` ? `mint-stage--gamefeel` ????
+- [x] 2026-02-15 WO012: Mint Top HUD????/??A-B???/?TURN?? `ui=mint` ??????`density=minimal` ? Top HUD???`standard/full` ??? `BattleHudMint` ??????
+- [x] 2026-02-15 WO013: Mint???????????????Avatar/Label/Remaining?????Desktop? `panel|board|panel`?mobile?????????????
+- [x] 2026-02-15 WO014: Mint?????????? + ??????????ActionPrompt???????`mint-prompt-slot` ?????????
+- [x] 2026-02-15 WO015: NyanoReaction slot? fixed-height + absolute overlay ???`kind=idle` ?? placeholder ????LayoutShift API ? `ux-guardrails` ?????CLS????????
+- [x] 2026-02-15 WO016: `mint-pressable` ?????board cell / hand card / result button ??????hover/active/focus-visible?????reduced-motion / data-vfx ????????
+- [x] 2026-02-15 WO016/WO010??: `ux-guardrails` ??????Enter??? reduced-motion ?? pressable transition ?????????4 passed??
+- [x] 2026-02-15 Match UX??: Nyano???????????????? stage impact ? transform?????????????????????????????????????????
+- [x] 2026-02-15 Match UX??: ???????????????????HUD/AI notice???????????????????????????????????
+- [x] 2026-02-15 Match UX??: ???????????????? ? ???????????close???? + ???????????????
+- [x] 2026-02-15 Match UX??: ?????????Battle summary?????????????/??????????????????
+- [x] 2026-02-15 Battle Stage focus UX??: ????????????????????????????????????????????`ui=engine&focus=1` ????????????????????`stage-focus` / `ux-guardrails` E2E????????
+- [x] 2026-02-15 Battle Stage UX??: stage focus ?????? + Nyano???????????????????????????????????????????????????????
+- [x] 2026-02-15 Battle Stage UX??: stage-focus E2E??????/??????????????????????????????
+- [x] 2026-02-15 Battle Stage UX??: ?????????????????fixed????? + stage?????? + board??????`stage-focus` / `ux-guardrails` E2E????????
+- [x] 2026-02-15 Match/Stage UX??: `/match?ui=mint` ? Nyano????+??????????????????????ON/OFF??????????Prompt??????Details `?` ??????????????????????stage focus ? Pixi??/???????????????????????? board-dock ????????stage-focus 15 passed / ux-guardrails 7 passed??
+- [x] 2026-02-15 WO017: `MintGameShell` / `MintAppChrome` ?????Mint????? App chrome ????UI??`focusRoute`?`/battle-stage` `/replay-stage` / `focus=1`??????????
+- [x] 2026-02-15 WO018: Home ? Mint?????????????Arena/Decks/Replay/Stream ?4?????3????????????????Tools/Settings ???????
+- [x] 2026-02-15 WO019: Arena ??????UI??????????????????Quick Play????????? + `difficulty` ???????
+- [x] 2026-02-15 WO020: Decks ? Deck Builder 3???????Deck Stats/Filter?Card Browser?????????Deck Summary + Save Deck??
+- [x] 2026-02-15 WO021: `/start` ????????Onboarding 3??? + DONE?? pill ????Home ??????????
+- [x] 2026-02-15 WO022: Mint UI??????????`GlassPanel` `MintPressable` `MintIcon` `MintBigButton` `MintTabNav` `MintTypography`???????????
+- [x] 2026-02-15 WO023: Gemini?????????????????`scripts/gemini_image_gen.mjs` / `scripts/asset_prompts/nytl_ui_assets.v1.json` / `docs/01_design/NYTL_ASSET_GEN_GEMINI_NANO_BANANA_PRO_v1_ja.md` / `apps/web/public/assets/gen/.gitkeep`??
+- [x] 2026-02-15 WO024: e2e/visual guardrails ????`e2e/mint-app-screens-guardrails.spec.ts`???Home/Decks???e2e????Mint UI??????
+- [x] 2026-02-15 Follow-up: `MintPressable` ??????lint???????`MatchSetupPanelMint` ? helper ? `MatchSetupPanelMint.helpers.ts` ????? Fast Refresh ??????
+- [x] 2026-02-15 Follow-up: `src/lib/theme.ts` ???????? `src/lib/__tests__/theme.test.ts` ????theme?????? / URL query+hash ???????
+- [x] 2026-02-15 Follow-up: `e2e/mint-app-screens-guardrails.spec.ts` ?????Mint App Chrome ? `theme` ??????Tab????? `focusRoute`?`/match?focus=1` `/battle-stage`??? chrome ?????????????
+- [x] 2026-02-15 Follow-up: Events/Replay/Stream ? Mint???????????Replay ? 390px ?????????????? `rulesetId`/`matchId` ??? + debug pre ??????`mint-app-screens-guardrails` ? 390px ????????
+- [x] 2026-02-15 Follow-up: Events/Replay/Stream ??? Mint ?????????????`theme` ?????????? Match ??? `mint-match-board-shell` / `mint-match-quick-commit` ??????????????secondary screen ? board ????UI???????
+- [x] 2026-02-15 Follow-up: Events/Replay/Stream ?????????????overview pills???????????????????????? quicknav ??????????????????????????????????????????
+- [x] 2026-02-17 Arena follow-up: `MintPageGuide` / difficulty hint ????CSS? `mint-theme.css` ?????`Arena.tsx` ? UTF-8 BOM ??????????????? `type="button"` ????
+- [x] 2026-02-17 Mint guide rollout: `MINT_PAGE_GUIDES` ? `events/replay/stream` ??????????Mint????????????????Replay? `!isStageFocus` ???????
+- [x] 2026-02-17 Mint guide rollout follow-up: `e2e/mint-app-screens-guardrails.spec.ts` ? `.mint-page-guide` ?????????????Arena/Events/Replay/Stream ????????????
+- [x] 2026-02-17 CI follow-up: `/battle-stage` ? board/dock ???? desktop ??????`.mint-focus-hand-dock--stage` ???????? `ux-guardrails` ? quick commit ????????????????? flaky ????
+- [x] 2026-02-17 ui=mint Pixi parity follow-up: /match ? hand dock + HUD/commentary tone ? Pixi???????mint??Top HUD/side panel???????? ux-guardrails ? hand dock ?????????reduced-motion ?? dock card transition ??????pnpm.cmd -C apps/web e2e -- e2e/ux-guardrails.spec.ts 7 passed / pnpm.cmd -C apps/web e2e -- e2e/stage-focus.spec.ts 15 passed??
+- [x] 2026-02-17 e2e:ux follow-up: mint-stage-visual-guardrails ? commit control ??? hand dock/quick commit ???????ui=mint ?????CI??????pnpm.cmd -C apps/web e2e:ux 14 passed??
+- [x] 2026-02-17 copy cleanup follow-up: Home/Start/Stream ????????????/???????/??/??/DONE-TODO?????????????????UI??????????????????
+- [x] 2026-02-17 i18n UX follow-up: Replay??? Arena/Decks/Rulesets/Events ???UI???????????????????????????????`replay_timeline`/`replay_highlights` ?????????`e2e/replay-ruleset-fallback-guardrails.spec.ts` ???????????????`pnpm -C apps/web test` / `typecheck` / `build` / `pnpm.cmd -C apps/web e2e:ux` ??????
 
 ---
 
 ## Next (Planned)
 
-- [ ] 2026-02-17 WO025: Classic Rules ƒvƒŠƒZƒbƒgŠg[ireverse / aceKiller / typeAscend / typeDescend / plus / samej+ UI ‚©‚ç‘I‘ð‰Â”\‚ÉB
-- [ ] 2026-02-17 WO026: Classic Rules ƒJƒXƒ^ƒ€ƒrƒ‹ƒ_[i•¡”‘g‚Ý‡‚í‚¹j+ Share/Replay ŒÝŠ·iURL param `cr` bitmaskjB
-- [ ] 2026-02-17 WO027: ƒ‹[ƒ‹Ý’è UI ‚ð gG‚ê‚Î•ª‚©‚éh Nintendo •iŽ¿‚ÖiMintRulesetPickerjB
+- [ ] 2026-02-17 WO025: Classic Rules ????????reverse / aceKiller / typeAscend / typeDescend / plus / same?+ UI ????????
+- [ ] 2026-02-17 WO026: Classic Rules ?????????????????+ Share/Replay ???URL param `cr` bitmask??
+- [ ] 2026-02-17 WO027: ????? UI ? ???????? Nintendo ????MintRulesetPicker??
 
 
 ## Update 2026-02-17 (WO025/WO026/WO027)
@@ -255,16 +255,16 @@
   - Validates rk/cr fallback + mismatch warning visibility.
 - [x] Integrated replay fallback guardrail into pnpm -C apps/web e2e:ux.
 - [x] Hardened UX E2E commit helper for dock/toolbar/legacy commit paths to reduce flaky failures.
-- [x] 2026-02-17 Stream copy follow-up: Stream/HUD/Warudo/Share ‚Ì•â••¶Œ¾‚Æƒg[ƒXƒg‚ð“ú–{Œêƒx[ƒX‚É“ˆê‚µA`_design/Home` ‚ÌuŒ»Ý‚ÌƒtƒF[ƒY/ŽŸ‚Ìƒ}ƒCƒ‹ƒXƒg[ƒ“v‚ðƒ†[ƒU[Œü‚¯•¶Œ¾‚Ö’uŠ·B`pnpm -C apps/web test` / `typecheck` / `build` / `pnpm.cmd -C apps/web e2e:ux` ‚Å‰ñ‹AŠm”FB
-- [x] 2026-02-17 Overlay copy follow-up: Overlay‚ÌŽå—v•\Ž¦iã•”ƒXƒe[ƒ^ƒX/“Š•[/ƒGƒ‰[/OBSƒeƒ“ƒvƒŒj‚ð“ú–{Œêƒx[ƒX‚Ö’²®‚µA`Now Playing`/`Chat voting`/`No signal yet`/`remaining` “™‚ÌE2EˆË‘¶Œê‚Í•¹‹L‚ÅŒÝŠ·ˆÛŽB`pnpm -C apps/web test` / `typecheck` / `build` / `pnpm.cmd -C apps/web e2e:ux` ‚ð’Ê‰ßB
-- [x] 2026-02-17 App chrome copy follow-up: ƒwƒbƒ_[Œ©o‚µ‚Æƒtƒbƒ^[ƒŠƒ“ƒN/ƒ^ƒOƒ‰ƒCƒ“‚ð“ú–{Œêƒx[ƒX‚Ö’²®iURL\‘¢‚Í•s•ÏjB`pnpm -C apps/web test` / `typecheck` / `build` / `pnpm.cmd -C apps/web e2e:ux` ‚ð’Ê‰ßB
+- [x] 2026-02-17 Stream copy follow-up: Stream/HUD/Warudo/Share ??????????????????????`_design/Home` ?????????/???????????????????????`pnpm -C apps/web test` / `typecheck` / `build` / `pnpm.cmd -C apps/web e2e:ux` ??????
+- [x] 2026-02-17 Overlay copy follow-up: Overlay?????????????/??/???/OBS?????????????????`Now Playing`/`Chat voting`/`No signal yet`/`remaining` ??E2E????????????`pnpm -C apps/web test` / `typecheck` / `build` / `pnpm.cmd -C apps/web e2e:ux` ????
+- [x] 2026-02-17 App chrome copy follow-up: ???????????????/????????????????URL???????`pnpm -C apps/web test` / `typecheck` / `build` / `pnpm.cmd -C apps/web e2e:ux` ????
 
-- [x] 2026-02-17 i18n follow-up: Home/Playground ‚ÌŽå—v•\Ž¦•¶Œ¾‚ð“ú–{Œêƒx[ƒX‚Ö’²®‚µAE2EˆË‘¶ŒêiTools / Settings / Copy Snapshot / Reset Metrics / Nyano Labj‚Í•¹‹L‚ÅŒÝŠ·ˆÛŽBpnpm -C apps/web test / typecheck / build ‚Í’Ê‰ßA’Ç‰ÁE2EŒÂ•ÊŽÀs‚Í spawn EPERM ‚Å–¢Š®—¹B
+- [x] 2026-02-17 i18n follow-up: Home/Playground ???????????????????E2E????Tools / Settings / Copy Snapshot / Reset Metrics / Nyano Lab??????????pnpm -C apps/web test / typecheck / build ??????E2E????? spawn EPERM ?????
 
-- [x] 2026-02-18 i18n follow-up: Events/Decks/Replay ‚ÌŽc‰pŒêUI‚ð“ú–{Œêƒx[ƒX‚Ö’²®iE2EˆË‘¶Œê‚Ì Save Deck / Replay from transcript / Load replay / Show controls “™‚ÍŒÝŠ·ˆÛŽjBpnpm -C apps/web test / typecheck / build ‚ð’Ê‰ßB
-- [x] 2026-02-18 i18n follow-up verify: pnpm.cmd -C apps/web e2e:ux 15 passedB
+- [x] 2026-02-18 i18n follow-up: Events/Decks/Replay ????UI???????????E2E???? Save Deck / Replay from transcript / Load replay / Show controls ????????pnpm -C apps/web test / typecheck / build ????
+- [x] 2026-02-18 i18n follow-up verify: pnpm.cmd -C apps/web e2e:ux 15 passed?
 
-- [x] 2026-02-18 i18n/e2e follow-up: Match ‚Æ Decks ‚Ì•¶Œ¾‚ð“ú–{Œêƒx[ƒX‚Ö’²®‚µ‚Â‚Â‰pŒêƒg[ƒNƒ“ŒÝŠ·‚ðˆÛŽBpps/web/e2e/guest-game.spec.ts ‚ðŒ»sUI‚Ö’Ç]C³Bpnpm -C apps/web test / typecheck / build / pnpm.cmd -C apps/web e2e:ux / Žå—v3spec ‚ð’Ê‰ßB
+- [x] 2026-02-18 i18n/e2e follow-up: Match ? Decks ????????????????????????????pps/web/e2e/guest-game.spec.ts ???UI??????pnpm -C apps/web test / typecheck / build / pnpm.cmd -C apps/web e2e:ux / ??3spec ????
 - [x] 2026-02-17 i18n follow-up: Home/Events/Match/Replay copy was adjusted to Japanese-first player-facing text; stage-focus compatibility labels were preserved (`Replay from transcript`, `Load replay`, `Error:`, `Retry load`, `Clear share params`). Verified with `pnpm -C apps/web test`, `pnpm.cmd -C apps/web typecheck`, `pnpm -C apps/web build`, and targeted Playwright (`stage-focus`, `ux-guardrails`, `mint-stage-visual-guardrails`).
 - [x] 2026-02-18 Arena follow-up: difficulty card click in /arena now starts guest match immediately (no extra quick-play click). Added e2e guardrail in apps/web/e2e/quick-play.spec.ts. Verified with test/typecheck/build and targeted e2e.
 - [x] 2026-02-18 copy cleanup follow-up: Overlay/Replay/Playground ? user-visible "debug" ???????????????Arena ????????????????????quick-play e2e + test/typecheck/build ???
@@ -287,19 +287,203 @@
 - [x] 2026-02-18 i18n follow-up: Replay summary/details copy was polished to Japanese-first wording (mode display, step-sync labels, JSON copy labels) while preserving compatibility tokens.
 - [x] 2026-02-18 i18n follow-up: Rulesets list meta labels and placeholder were polished to Japanese-first wording.
 - [x] 2026-02-18 E2E hardening follow-up: rulesets UX heading assertion now accepts JP/EN copy.
-- [x] 2026-02-18 i18n follow-up: Replay focus transport toggle became Japanese-first (`æ“ä½œã‚’éš ã™/è¡¨ç¤º`) while preserving `Hide/Show controls` compatibility tokens and E2E selectors were updated to JP/EN dual-match.
+- [x] 2026-02-18 i18n follow-up: Replay focus transport toggle became Japanese-first (`?????????????`) while preserving `Hide/Show controls` compatibility tokens and E2E selectors were updated to JP/EN dual-match.
 - [x] 2026-02-18 Decks filter follow-up: switched Decks to CardBrowserMint and replaced abstract presets with game-relevant hand/edge presets; verified with test/typecheck/build.
 - [x] 2026-02-18 Decks follow-up: added df URL-sync guardrail test and stable filter testids (`decks-filter-*`).
 - [x] 2026-02-18 Decks follow-up: added legacy df id normalization (attacker/defender/other) and canonical URL rewrite.
 - [x] 2026-02-18 Decks follow-up: hardened df normalization for case/space variants and added tests.
 - [x] 2026-02-18 Replay follow-up: mismatch warning pill now has stable testid (`replay-ruleset-mismatch-warning`) and fallback guardrail test uses it.
 - [x] 2026-02-18 Residual follow-up closure: dedicated Replay mismatch warning guardrail is implemented and tracked.
-- [x] 2026-02-18 Match Setup rules picker follow-up: `MintRulesetPicker` ‚ð mint-theme ƒg[ƒNƒ“/ƒNƒ‰ƒX‚É®—‚µA•¶Œ¾‚ð“ú–{Œêƒx[ƒX‚Ö’²®B`data-testid` / `aria-pressed` ‚ðˆÛŽ‚µ‚Ä E2E ŒÝŠ·‚ðŠm•ÛB`pnpm -C apps/web test` / `typecheck` / `build` ‚Í’Ê‰ßA‘ÎÛ E2E ‚Íƒ[ƒJƒ‹ `spawn EPERM` ‚Å–¢ŽÀsB
-- [x] 2026-02-18 validation note update: ‚±‚ÌŠÂ‹«‚Å‚Í `pnpm -C apps/web typecheck` / `pnpm -C apps/web build` ‚ÍŽÀs‰Â”\B–¢ŽÀs‚ÌŽåˆö‚Í Playwright worker `spawn EPERM`iE2Ej‚Ì‚ÝB
-- [x] 2026-02-18 Events copy cleanup: ƒ†[ƒU[Œü‚¯•\Ž¦‚Ì `Žb’è` ‚ð `ŽQl’l` ‚É“ˆêiˆÓ–¡‚ÍˆÛŽA•¶Œ¾‚Ì‚ÝjB`pnpm -C apps/web test` / `typecheck` / `build` ’Ê‰ßB
-- [x] 2026-02-18 Match Setup test follow-up: `MintRulesetPicker.test.tsx` ‚ð’Ç‰Á‚µAƒ‹[ƒ‹ƒsƒbƒJ[‚Ì•\Ž¦Eƒ‰ƒxƒ‹Etestid ‚Ì‰ñ‹A‚ð static markup ‚ÅŒŸØB
-- [x] 2026-02-18 Stream/Overlay copy follow-up: RPC/ŠO•”˜AŒg‚ÌƒtƒH[ƒ‹ƒoƒbƒNƒGƒ‰[•¶Œ¾‚ð“ú–{Œêƒx[ƒX‚Ö’²®iŒÝŠ·ƒg[ƒNƒ“‚ð•¹‹LjB`pnpm -C apps/web test` / `typecheck` / `build` ’Ê‰ßB
+- [x] 2026-02-18 Match Setup rules picker follow-up: `MintRulesetPicker` ? mint-theme ????/?????????????????????`data-testid` / `aria-pressed` ????? E2E ??????`pnpm -C apps/web test` / `typecheck` / `build` ?????? E2E ????? `spawn EPERM` ?????
+- [x] 2026-02-18 validation note update: ?????? `pnpm -C apps/web typecheck` / `pnpm -C apps/web build` ????????????? Playwright worker `spawn EPERM`?E2E????
+- [x] 2026-02-18 Events copy cleanup: ????????? `??` ? `???` ????????????????`pnpm -C apps/web test` / `typecheck` / `build` ???
+- [x] 2026-02-18 Match Setup test follow-up: `MintRulesetPicker.test.tsx` ????????????????????testid ???? static markup ????
+- [x] 2026-02-18 Stream/Overlay copy follow-up: RPC/???????????????????????????????????????`pnpm -C apps/web test` / `typecheck` / `build` ???
 
 - [x] 2026-02-18 E2E follow-up: stream-vote/stage-focus selector resilience. Updated stream vote assertions to JP/EN dual-match selectors and made replay-stage failure recovery test robust for both manual-load and auto-load flows. Verified with pnpm.cmd test/typecheck/build and targeted playwright runs.
 
 - [x] 2026-02-18 E2E follow-up: replay-url selector hardening. Replay URL spec now uses JP/EN resilient selectors and disambiguated load button targeting; verified with pnpm.cmd test/typecheck/build and pnpm.cmd e2e (74 passed).
+- [x] 2026-02-18 WO032-036 follow-up: Match board gamefeel polish (press depth / hover ghost / place&flip FX), Home/Arena classic quick presets, and in-match rules help were added with URL compatibility preserved.
+- [x] 2026-02-18 WO036 follow-up: root package-lock.json removed (pnpm-only lock policy).
+- [x] 2026-02-18 verification note: lint/typecheck passed. build/e2e are currently blocked in this local environment by spawn EPERM (esbuild/playwright child process spawn).
+- [x] 2026-02-18 follow-up: Added optional `qp` preset restore for Home/Arena quick play (`qp` absent => standard), keeping existing match/replay URL compatibility.
+- [x] 2026-02-18 follow-up: Added unit test for classic quick presets normalization and URL generation.
+- [x] 2026-02-18 follow-up #2: Home?Arena and Arena?Pixi Stage now preserve selected quick preset intent (standard/classic), including classic custom mask propagation.
+- [x] 2026-02-18 WO037-step1: Match/Replay URL parser utilities were extracted to `features/match/urlParams.ts` (behavior unchanged, shared parser path established).
+- [x] 2026-02-18 WO037-step2: Rulesets -> Match links now preserve `theme` and `classic_custom` mask (`cr`) for better URL continuity.
+- [x] 2026-02-19 WO037-step3: `Match.tsx` ? URL ???????? `features/match/urlParams.ts` ? `parseMatchSearchParams` ??????????????????URL???????
+- [x] 2026-02-19 WO037-step3: `urlParams.test.ts` ? match ???????????????????
+- [x] 2026-02-19 WO035-follow-up: Home/Arena ??????? URL ???????`buildQuickGuestMatchPath` / `buildQuickGuestStagePath`???preset????????????
+- [x] 2026-02-19 WO035-follow-up: `classic_quick_presets.test.ts` ???/???????? URL ???????????
+- [x] 2026-02-19 WO037-step4: `Match.tsx` ?? `rk/cr` ????????? `features/match/urlParams.ts` ????`withMatchParamCompatibility` / `resolveClassicMaskParamPatch`??
+- [x] 2026-02-19 WO037-step4: `urlParams.test.ts` ? URL?????????????????????
+- [x] 2026-02-19 WO037-step5: Match URL ????????? `useMatchSearchMutators` hook ???????????????
+- [x] 2026-02-19 WO037-step6: `Replay.tsx` ? URL ??/??? `features/match/replayUrlParams.ts` ???????????????????
+- [x] 2026-02-19 WO037-step6: `replayUrlParams.test.ts` ?????UI/focus/step-mode ? URL ??????
+- [x] 2026-02-19 WO037-step7: Replay ? mode/step/int32 ??? `features/match/replayModeParams.ts` ?????`Replay.tsx` ???????????URL????????????
+- [x] 2026-02-19 WO037-step7: `replayModeParams.test.ts` ?????mode/step/int32/display ???????
+- [x] 2026-02-19 WO037-step8: Replay ruleset URL fallback/auto mode ??? `features/match/replayRulesetParams.ts` ?????`Replay.tsx` ??????????URL???????
+- [x] 2026-02-19 WO037-step8: `replayRulesetParams.test.ts` ?????fallback/mode ?????????
+- [x] 2026-02-19 WO037-step8 follow-up: Replay mode ??????????????
+- [x] 2026-02-19 WO037-step9: Match URL helper (`matchUrlParams.ts`) ?????`Match.tsx` / `useMatchSearchMutators.ts` ? URL????????stage/focus/board-ui/event??
+- [x] 2026-02-19 WO037-step9: `matchUrlParams.test.ts` ???? URL helper ???????
+- [x] 2026-02-19 WO037-step10: Match ?????????? `matchTurnUtils.ts` ?????`Match.tsx` ???????
+- [x] 2026-02-19 WO037-step10: `matchTurnUtils.test.ts` ????? turn/use/warning/fill ???????
+- [x] 2026-02-19 WO037-step11: first-player ?? helper ? `matchFirstPlayerParams.ts` ?????`Match.tsx` ? payload ????????
+- [x] 2026-02-19 WO037-step11: `matchFirstPlayerParams.test.ts` ????? manual/mutual/event?????????
+- [x] 2026-02-19 WO037-step12: ruleset ?? helper ? `matchRulesetParams.ts` ?????`Match.tsx` ? classic/ruleset ????????
+- [x] 2026-02-19 WO037-step12: `matchRulesetParams.test.ts` ????? classic_custom/chainCap/label/mask ???????
+
+- [x] 2026-02-19 WO037-step13: consolidated board/hand derived helpers into apps/web/src/features/match/matchBoardDerived.ts and reduced Match.tsx duplication for selectable/effective-used/classic labels.
+- [x] 2026-02-19 WO037-step13: added apps/web/src/features/match/__tests__/matchBoardDerived.test.ts coverage for available/selectable/warn/open/swap derivations.
+- [x] 2026-02-19 WO037-step14: extracted first-player commit/reveal helper mutations to apps/web/src/features/match/matchFirstPlayerMutations.ts (randomize patches + commit derivation) and simplified Match.tsx handlers.
+- [x] 2026-02-19 WO037-step14: added apps/web/src/features/match/__tests__/matchFirstPlayerMutations.test.ts and verified pnpm -C apps/web lint/test/typecheck/build plus pnpm.cmd -C apps/web e2e:ux.
+- [x] 2026-02-19 WO037-step15: extracted Classic Open presentation builder to apps/web/src/features/match/matchBoardDerived.ts and replaced Match.tsx inline object assembly.
+- [x] 2026-02-19 WO037-step15: expanded apps/web/src/features/match/__tests__/matchBoardDerived.test.ts for presentation shape and re-verified lint/test/typecheck/build + e2e:ux.
+
+- [x] 2026-02-19 WO037-step16: extracted Match card-loading logic (index/guest fallback/verified rpc) to apps/web/src/features/match/matchCardLoaders.ts and reduced Match.tsx responsibility.
+- [x] 2026-02-19 WO037-step16: added apps/web/src/features/match/__tests__/matchCardLoaders.test.ts to lock loading branches and RPC toast classification.
+- [x] 2026-02-19 WO037-step16: verified pnpm -C apps/web lint/test/typecheck/build plus pnpm.cmd -C apps/web e2e:ux (15 passed).
+- [x] 2026-02-19 WO037-step17: replay share URL/QR composition moved to `apps/web/src/features/match/matchReplayShare.ts` and wired into `Match.tsx` (URL compatibility unchanged).
+- [x] 2026-02-19 WO037-step17: added `apps/web/src/features/match/__tests__/matchReplayShare.test.ts` (gzip fallback + replay bundle/transcript payload + URL params).
+- [x] 2026-02-19 recovery follow-up: fixed strict TS test typing in `matchReplayShare.test.ts` and re-verified `pnpm -C apps/web lint/test/typecheck/build`.
+- [x] 2026-02-19 WO037-step17 verify follow-up: `pnpm.cmd -C apps/web e2e:ux` passed (15 passed).
+- [x] 2026-02-19 WO037-step18: stream command commit gating/resolution moved to `apps/web/src/features/match/matchStreamCommands.ts` and wired into `Match.tsx`.
+- [x] 2026-02-19 WO037-step18: added `apps/web/src/features/match/__tests__/matchStreamCommands.test.ts` (gating + forced-card override coverage).
+- [x] 2026-02-19 WO037-step18: re-verified `pnpm -C apps/web lint/test/typecheck/build`.
+- [x] 2026-02-19 WO037-step18 verify follow-up: `pnpm.cmd -C apps/web e2e:ux` passed (15 passed).
+- [x] 2026-02-19 WO037-step19: setup/replay share link builder logic moved to `apps/web/src/features/match/matchShareLinks.ts` and wired into `Match.tsx`.
+- [x] 2026-02-19 WO037-step19: added `apps/web/src/features/match/__tests__/matchShareLinks.test.ts` (setup URL / replay URL / share template coverage).
+- [x] 2026-02-19 WO037-step19: re-verified `pnpm -C apps/web lint/test/typecheck/build` and `pnpm.cmd -C apps/web e2e:ux` (15 passed).
+- [x] 2026-02-19 WO037-step20: setup param patch builders moved to `apps/web/src/features/match/matchSetupParamPatches.ts` and wired into `Match.tsx`.
+- [x] 2026-02-19 WO037-step20: added `apps/web/src/features/match/__tests__/matchSetupParamPatches.test.ts` (ruleset/classic-mask/first-player patch coverage).
+- [x] 2026-02-19 WO037-step20: re-verified `pnpm -C apps/web lint/test/typecheck/build` and `pnpm.cmd -C apps/web e2e:ux` (15 passed).
+
+- [x] 2026-02-19 WO037-step21: stage/focus action callback runners moved to apps/web/src/features/match/matchStageActionCallbacks.ts and wired into Match.tsx (controls/assist/fullscreen/focus-exit/replay/ai-move).
+- [x] 2026-02-19 WO037-step21: added apps/web/src/features/match/__tests__/matchStageActionCallbacks.test.ts for feedback ordering + focus-route gating coverage.
+- [x] 2026-02-19 WO037-step21: re-verified pnpm -C apps/web lint, pnpm.cmd -C apps/web test -- matchStageActionCallbacks, pnpm.cmd -C apps/web test, pnpm.cmd -C apps/web typecheck, pnpm.cmd -C apps/web build, pnpm.cmd -C apps/web e2e:ux (15 passed).
+- [x] 2026-02-19 WO037-step22: stage feedback timer/state helper module added at `apps/web/src/features/match/matchStageFeedback.ts` and wired into `Match.tsx`.
+- [x] 2026-02-19 WO037-step22: added `apps/web/src/features/match/__tests__/matchStageFeedback.test.ts` (focus guard / timeout reset / timer replacement / reset-clear helpers).
+- [x] 2026-02-19 WO037-step22: re-verified `pnpm.cmd -C apps/web lint`, `pnpm.cmd -C apps/web test -- matchStageFeedback`, `pnpm.cmd -C apps/web test -- matchStageActionCallbacks`, `pnpm.cmd -C apps/web test`, `pnpm.cmd -C apps/web typecheck`, `pnpm.cmd -C apps/web build`, `pnpm.cmd -C apps/web e2e:ux` (15 passed).
+- [x] 2026-02-19 WO037-step23: added `apps/web/src/features/match/useMatchStageUi.ts` and moved stage assist/control route+resize sync logic out of Match.tsx.
+- [x] 2026-02-19 WO037-step23: added `apps/web/src/features/match/__tests__/useMatchStageUi.test.ts` (assist/control visibility helper coverage).
+- [x] 2026-02-19 WO037-step23: re-verified `pnpm.cmd -C apps/web test -- useMatchStageUi`, `pnpm.cmd -C apps/web test -- matchStageFeedback`, `pnpm.cmd -C apps/web lint`, `pnpm.cmd -C apps/web typecheck`, `pnpm.cmd -C apps/web test`, `pnpm.cmd -C apps/web build`, `pnpm.cmd -C apps/web e2e:ux` (15 passed).
+- [x] 2026-02-19 WO037-step24: added `apps/web/src/features/match/useMatchStageFullscreen.ts` and moved stage fullscreen state/toggle logic out of Match.tsx.
+- [x] 2026-02-19 WO037-step24: added `apps/web/src/features/match/__tests__/useMatchStageFullscreen.test.ts` (fullscreen state + toggle core branch coverage).
+- [x] 2026-02-19 WO037-step24: re-verified `pnpm.cmd -C apps/web test -- useMatchStageFullscreen`, `pnpm.cmd -C apps/web test -- useMatchStageUi`, `pnpm.cmd -C apps/web lint`, `pnpm.cmd -C apps/web typecheck`, `pnpm.cmd -C apps/web test`, `pnpm.cmd -C apps/web build`, `pnpm.cmd -C apps/web e2e:ux` (15 passed).
+- [x] 2026-02-19 WO037-step25: added `apps/web/src/features/match/useMatchStageBoardSizing.ts` and moved Match battle-stage board sizing + resize sync out of `Match.tsx`.
+- [x] 2026-02-19 WO037-step25: added `apps/web/src/features/match/__tests__/useMatchStageBoardSizing.test.ts` (default viewport / provided viewport / battle profile coverage).
+- [x] 2026-02-19 WO037-step25: re-verified `pnpm.cmd -C apps/web test -- useMatchStageBoardSizing`, `pnpm.cmd -C apps/web lint`, `pnpm.cmd -C apps/web typecheck`, `pnpm.cmd -C apps/web test`, `pnpm.cmd -C apps/web build`, `pnpm.cmd -C apps/web e2e:ux` (15 passed).
+- [x] 2026-02-19 WO037-step26: added `apps/web/src/features/match/matchStageRouteState.ts` and moved stage route-derived state (`stageMatchUrl` / `isBattleStageRoute` / `isStageFocusRoute`) out of `Match.tsx`.
+- [x] 2026-02-19 WO037-step26: added `apps/web/src/features/match/__tests__/matchStageRouteState.test.ts` (route predicate compatibility + derived state coverage).
+- [x] 2026-02-19 WO037-step26: re-verified `pnpm.cmd -C apps/web test -- matchStageRouteState`, `pnpm.cmd -C apps/web lint`, `pnpm.cmd -C apps/web typecheck`, `pnpm.cmd -C apps/web test`, `pnpm.cmd -C apps/web build`, `pnpm.cmd -C apps/web e2e:ux` (15 passed).
+- [x] 2026-02-19 WO037-step27: added `apps/web/src/features/match/matchStageEngineBoardSizing.ts` and moved stage-focus engine board cap/max/min sizing derivation out of `Match.tsx`.
+- [x] 2026-02-19 WO037-step27: added `apps/web/src/features/match/__tests__/matchStageEngineBoardSizing.test.ts` (cap activation/floor, capped sizing, undefined base passthrough coverage).
+- [x] 2026-02-19 WO037-step27: re-verified `pnpm.cmd -C apps/web test -- matchStageEngineBoardSizing`, `pnpm.cmd -C apps/web lint`, `pnpm.cmd -C apps/web typecheck`, `pnpm.cmd test` (`apps/web`), `pnpm.cmd build` (`apps/web`), `pnpm.cmd -C apps/web e2e:ux` (15 passed).
+- [x] 2026-02-19 WO037-step28: added `apps/web/src/features/match/matchStageFocusShortcuts.ts` and moved stage-focus keyboard shortcut resolution/dispatch logic out of `Match.tsx`.
+- [x] 2026-02-19 WO037-step28: added `apps/web/src/features/match/__tests__/matchStageFocusShortcuts.test.ts` (editable/modifier ignore, guarded shortcut resolution, action dispatch coverage).
+- [x] 2026-02-19 WO037-step28: re-verified `pnpm.cmd -C apps/web test -- matchStageFocusShortcuts`, `pnpm.cmd -C apps/web lint`, `pnpm.cmd -C apps/web typecheck`, `pnpm.cmd test` (`apps/web`), `pnpm.cmd build` (`apps/web`), `pnpm.cmd -C apps/web e2e:ux` (15 passed).
+- [x] 2026-02-19 WO037-step29: added `apps/web/src/features/match/matchStagePresentationState.ts` and moved stage-focus/mint presentation boolean derivation out of `Match.tsx`.
+- [x] 2026-02-19 WO037-step29: added `apps/web/src/features/match/__tests__/matchStagePresentationState.test.ts` (hand-dock/HUD/quick-commit/focus-toolbar/status-slot/manual-ai gating coverage).
+- [x] 2026-02-19 WO037-step29: re-verified `pnpm.cmd -C apps/web test -- matchStagePresentationState`, `pnpm.cmd -C apps/web lint`, `pnpm.cmd -C apps/web typecheck`, `pnpm.cmd test` (`apps/web`), `pnpm.cmd build` (`apps/web`), `pnpm.cmd -C apps/web e2e:ux` (15 passed).
+- [x] 2026-02-19 WO037-step30: added `apps/web/src/features/match/useMatchStageFocusShortcuts.ts` and moved stage-focus keyboard shortcut listener wiring out of `Match.tsx`.
+- [x] 2026-02-19 WO037-step30: added `apps/web/src/features/match/__tests__/useMatchStageFocusShortcuts.test.ts` (keydown dispatch/replay-guard/editable-ignore/commit-undo routing coverage).
+- [x] 2026-02-19 WO037-step30: re-verified `pnpm.cmd -C apps/web test -- useMatchStageFocusShortcuts`, `pnpm.cmd -C apps/web lint`, `pnpm.cmd -C apps/web typecheck`, `pnpm.cmd test` (`apps/web`), `pnpm.cmd build` (`apps/web`), `pnpm.cmd -C apps/web e2e:ux` (15 passed).
+- [x] 2026-02-19 WO037-step31: added `apps/web/src/features/match/useMatchStageActionFeedback.ts` and moved stage-action feedback state/timer lifecycle out of `Match.tsx`.
+- [x] 2026-02-19 WO037-step31: added `apps/web/src/features/match/__tests__/useMatchStageActionFeedback.test.ts` (route-gated push + timeout reset flow coverage with injected timer API).
+- [x] 2026-02-19 WO037-step31: re-verified `pnpm.cmd -C apps/web test -- useMatchStageActionFeedback`, `pnpm.cmd -C apps/web lint`, `pnpm.cmd -C apps/web typecheck`, `pnpm.cmd test` (`apps/web`), `pnpm.cmd build` (`apps/web`), `pnpm.cmd -C apps/web e2e:ux` (15 passed).
+- [x] 2026-02-19 WO037-step32: added `apps/web/src/features/match/matchStageLayoutClasses.ts` and moved stage-focus layout className derivation out of `Match.tsx`.
+- [x] 2026-02-19 WO037-step32: added `apps/web/src/features/match/__tests__/matchStageLayoutClasses.test.ts` (focus/non-focus root+toolbar, arena/layout, board shell/center, announcer/fallback class coverage).
+- [x] 2026-02-19 WO037-step32: re-verified `pnpm.cmd -C apps/web test -- matchStageLayoutClasses`, `pnpm.cmd -C apps/web lint`, `pnpm.cmd -C apps/web typecheck`, `pnpm.cmd test` (`apps/web`), `pnpm.cmd build` (`apps/web`), `pnpm.cmd -C apps/web e2e:ux` (15 passed).
+- [x] 2026-02-19 WO037-step33: added `apps/web/src/features/match/useMatchStageActionCallbacks.ts` and moved stage-action callback wiring (controls/assist/fullscreen/focus-exit/replay/ai) out of `Match.tsx`.
+- [x] 2026-02-19 WO037-step33: added `apps/web/src/features/match/__tests__/useMatchStageActionCallbacks.test.ts` (assist state toggle + callback side-effect wiring coverage).
+- [x] 2026-02-19 WO037-step33: re-verified `pnpm.cmd -C apps/web test -- useMatchStageActionCallbacks`, `pnpm.cmd -C apps/web lint`, `pnpm.cmd -C apps/web typecheck`, `pnpm.cmd test` (`apps/web`), `pnpm.cmd build` (`apps/web`), `pnpm.cmd -C apps/web e2e:ux` (15 passed).
+- [x] 2026-02-19 WO037-step34: added `apps/web/src/features/match/useMatchReplayActions.ts` and moved replay/share callback wiring (`buildReplayUrl` / `copyShareUrl` / `openReplay` / `copyShareTemplate`) out of `Match.tsx`.
+- [x] 2026-02-19 WO037-step34: added `apps/web/src/features/match/__tests__/useMatchReplayActions.test.ts` (replay URL forwarding + copy/open/template side-effect coverage).
+- [x] 2026-02-19 WO037-step34: re-verified `pnpm.cmd -C apps/web test -- useMatchReplayActions`, `pnpm.cmd -C apps/web lint`, `pnpm.cmd -C apps/web typecheck`, `pnpm.cmd test` (`apps/web`), `pnpm.cmd build` (`apps/web`), `pnpm.cmd -C apps/web e2e:ux` (15 passed).
+- [x] 2026-02-19 WO037-step35: added `apps/web/src/features/match/matchStageReaction.ts` and moved Nyano reaction input/impact derivation + stage/board impact burst gating logic out of `Match.tsx`.
+- [x] 2026-02-19 WO037-step35: added `apps/web/src/features/match/__tests__/matchStageReaction.test.ts` (reaction input composition, impact/burst gating, board burst cooldown coverage).
+- [x] 2026-02-19 WO037-step35: re-verified `pnpm.cmd -C apps/web test -- matchStageReaction`, `pnpm.cmd -C apps/web lint`, `pnpm.cmd -C apps/web typecheck`, `pnpm.cmd test` (`apps/web`), `pnpm.cmd build` (`apps/web`), `pnpm.cmd -C apps/web e2e:ux` (15 passed).
+- [x] 2026-02-19 WO037-step36: added `apps/web/src/features/match/useMatchStageSfxEffects.ts` and moved SFX side-effect wiring (board animation flip/place, game-end fanfare, validation-error buzz) out of `Match.tsx`.
+- [x] 2026-02-19 WO037-step36: added `apps/web/src/features/match/__tests__/useMatchStageSfxEffects.test.ts` (board animation SFX update, game-end SFX, error-buzz resolver coverage).
+- [x] 2026-02-19 WO037-step36: re-verified `pnpm.cmd -C apps/web test -- useMatchStageSfxEffects`, `pnpm.cmd -C apps/web lint`, `pnpm.cmd -C apps/web typecheck`, `pnpm.cmd test` (`apps/web`), `pnpm.cmd build` (`apps/web`), `pnpm.cmd -C apps/web e2e:ux` (15 passed).
+- [x] 2026-02-19 WO037-step37: added `apps/web/src/features/match/matchTurnLogDerived.ts` and moved flip-summary/flip-trace/RPG-turn-log derivation logic out of `Match.tsx`.
+- [x] 2026-02-19 WO037-step37: added `apps/web/src/features/match/__tests__/matchTurnLogDerived.test.ts` (last-turn summary + flip-trace mapping + RPG log janken fallback coverage).
+- [x] 2026-02-19 WO037-step37: re-verified `pnpm.cmd -C apps/web test -- matchTurnLogDerived`, `pnpm.cmd -C apps/web lint`, `pnpm.cmd -C apps/web typecheck`, `pnpm.cmd test` (`apps/web`), `pnpm.cmd build` (`apps/web`), `pnpm.cmd -C apps/web e2e:ux` (15 passed).
+- [x] 2026-02-19 WO037-step38: added `apps/web/src/features/match/useMatchShareClipboardActions.ts` and moved setup-link copy / transcript JSON copy callback wiring out of `Match.tsx`.
+- [x] 2026-02-19 WO037-step38: added `apps/web/src/features/match/__tests__/useMatchShareClipboardActions.test.ts` (setup URL copy success/warn branches + transcript copy error/success coverage).
+- [x] 2026-02-19 WO037-step38: re-verified `pnpm.cmd -C apps/web test -- useMatchShareClipboardActions`, `pnpm.cmd -C apps/web lint`, `pnpm.cmd -C apps/web typecheck`, `pnpm.cmd -C apps/web test`, `pnpm.cmd -C apps/web build`, `pnpm.cmd -C apps/web e2e:ux` (15 passed).
+- [x] 2026-02-19 WO037-step39: added `apps/web/src/features/match/matchShareQr.ts` and `apps/web/src/features/match/MatchShareQrCode.tsx`, and moved replay-share QR URL derivation out of `Match.tsx` (page now delegates to feature component).
+- [x] 2026-02-19 WO037-step39: added `apps/web/src/features/match/__tests__/matchShareQrCode.test.ts` (null transcript guard + replay-share URL argument forwarding coverage).
+- [x] 2026-02-19 WO037-step39 recovery: repaired broken string literals / JSX closing tags in `Match.tsx` and revalidated page compile path after crash-time file corruption.
+- [x] 2026-02-19 WO037-step39: re-verified `pnpm.cmd -C apps/web test -- matchShareQrCode`, `pnpm.cmd -C apps/web lint`, `pnpm.cmd -C apps/web typecheck`, `pnpm.cmd -C apps/web test`, `pnpm.cmd -C apps/web build`, `pnpm.cmd -C apps/web e2e:ux` (15 passed).
+- [x] 2026-02-19 WO037-step40: removed the in-page `ShareQrCode` wrapper from `Match.tsx` and switched guest post-game QR rendering to direct `MatchShareQrCode` usage (feature boundary cleanup, no behavior change).
+- [x] 2026-02-19 WO037-step40: re-verified `pnpm.cmd -C apps/web test -- matchShareQrCode`, `pnpm.cmd -C apps/web lint`, `pnpm.cmd -C apps/web typecheck`, `pnpm.cmd -C apps/web test`, `pnpm.cmd -C apps/web build`, `pnpm.cmd -C apps/web e2e:ux` (15 passed).
+- [x] 2026-02-19 WO037-step41: removed `Match.tsx` local RPC error predicate and switched `showRpcSettingsCta` to `resolveRpcLoadErrorToastKind(error) === "rpc"` from `features/match/matchCardLoaders.ts` (feature helper reuse, behavior maintained).
+- [x] 2026-02-19 WO037-step41: re-verified `pnpm.cmd -C apps/web lint`, `pnpm.cmd -C apps/web typecheck`, `pnpm.cmd -C apps/web test`, `pnpm.cmd -C apps/web build`, `pnpm.cmd -C apps/web e2e:ux` (15 passed).
+- [x] 2026-02-19 WO037-step42: added `resolveRpcLoadErrorToastMessage` + `RpcLoadErrorToastKind` in `apps/web/src/features/match/matchCardLoaders.ts` and replaced `Match.tsx` inline RPC toast message branching with feature-helper delegation.
+- [x] 2026-02-19 WO037-step42: added toast-message helper coverage in `apps/web/src/features/match/__tests__/matchCardLoaders.test.ts` and re-verified `pnpm.cmd -C apps/web test -- matchCardLoaders`, `pnpm.cmd -C apps/web lint`, `pnpm.cmd -C apps/web typecheck`, `pnpm.cmd -C apps/web test`, `pnpm.cmd -C apps/web build`, `pnpm.cmd -C apps/web e2e:ux` (15 passed).
+- [x] 2026-02-19 WO037-step43: added `apps/web/src/features/match/useMatchCardLoadActions.ts` and moved Match card-load action wiring (`loadCardsFromIndex` / `loadCardsFromRpc` / `loadCards`) out of `Match.tsx` while preserving RPC status propagation and guest fallback behavior.
+- [x] 2026-02-19 WO037-step43: added `apps/web/src/features/match/__tests__/useMatchCardLoadActions.test.ts` (index guest fallback apply, RPC validation/success/error apply, mode-based loader routing coverage) and re-verified `pnpm.cmd -C apps/web test -- useMatchCardLoadActions`, `pnpm.cmd -C apps/web test -- matchCardLoaders`, `pnpm.cmd -C apps/web lint`, `pnpm.cmd -C apps/web typecheck`, `pnpm.cmd -C apps/web test`, `pnpm.cmd -C apps/web build`, `pnpm.cmd -C apps/web e2e:ux` (15 passed).
+- [x] 2026-02-19 WO037-step44: added `apps/web/src/features/match/useMatchGuestAutoLoad.ts` and moved Match guest auto-load effect (`isGuestMode && !cards && !loading`) out of `Match.tsx` while keeping trigger timing compatible (`isGuestMode` transition-based).
+- [x] 2026-02-19 WO037-step44: added `apps/web/src/features/match/__tests__/useMatchGuestAutoLoad.test.ts` (auto-load predicate coverage for guest/non-guest + loaded + loading branches) and re-verified `pnpm.cmd -C apps/web test -- useMatchGuestAutoLoad`, `pnpm.cmd -C apps/web test -- useMatchCardLoadActions`, `pnpm.cmd -C apps/web lint`, `pnpm.cmd -C apps/web typecheck`, `pnpm.cmd -C apps/web test`, `pnpm.cmd -C apps/web build`, `pnpm.cmd -C apps/web e2e:ux` (15 passed).
+- [x] 2026-02-19 WO037-step45: added `apps/web/src/features/match/matchCardLoadUiState.ts` and moved Match card-load availability/empty-state branching (`canLoad`, loading-vs-guest-vs-setup prompt) out of `Match.tsx` via helper functions.
+- [x] 2026-02-19 WO037-step45: added `apps/web/src/features/match/__tests__/matchCardLoadUiState.test.ts` (guest/non-guest canLoad and empty-state resolver branch coverage) and re-verified `pnpm.cmd -C apps/web test -- matchCardLoadUiState`, `pnpm.cmd -C apps/web test -- useMatchGuestAutoLoad`, `pnpm.cmd -C apps/web lint`, `pnpm.cmd -C apps/web typecheck`, `pnpm.cmd -C apps/web test`, `pnpm.cmd -C apps/web build`, `pnpm.cmd -C apps/web e2e:ux` (15 passed).
+- [x] 2026-02-19 WO037-step46: added `apps/web/src/features/match/matchCardLoadSetupState.ts` and moved Match setup-panel load presentation derivation (`defaultOpen`, setup error visibility, RPC settings CTA gating) out of `Match.tsx`.
+- [x] 2026-02-19 WO037-step46: added `apps/web/src/features/match/__tests__/matchCardLoadSetupState.test.ts` (cards-loaded hide branch, rpc/non-rpc error branch, no-error branch) and re-verified `pnpm.cmd -C apps/web test -- matchCardLoadSetupState`, `pnpm.cmd -C apps/web test -- matchCardLoadUiState`, `pnpm.cmd -C apps/web lint`, `pnpm.cmd -C apps/web typecheck`, `pnpm.cmd -C apps/web test`, `pnpm.cmd -C apps/web build`, `pnpm.cmd -C apps/web e2e:ux` (15 passed).
+- [x] 2026-02-19 WO037-step47: added `apps/web/src/features/match/MatchCardLoadEmptyStatePanel.tsx` and moved Match `!cards` empty-state panel rendering (loading skeleton / guest load button / setup prompt) out of `Match.tsx`.
+- [x] 2026-02-19 WO037-step47: added `apps/web/src/features/match/__tests__/MatchCardLoadEmptyStatePanel.test.tsx` (loading skeleton markup + guest button callback + setup prompt copy) and re-verified `pnpm.cmd -C apps/web lint`, `pnpm.cmd -C apps/web typecheck`, `pnpm.cmd -C apps/web test`, `pnpm.cmd -C apps/web build`, `pnpm.cmd -C apps/web e2e:ux` (15 passed).
+- [x] 2026-02-19 WO037-step48: added `apps/web/src/features/match/MatchResultSummaryPanel.tsx` and moved Match winner/match-info rendering (winner tiles + matchId / pre-finish message branch) out of `Match.tsx`.
+- [x] 2026-02-19 WO037-step48: added `apps/web/src/features/match/__tests__/MatchResultSummaryPanel.test.tsx` (winner summary branch, stage-focus muted pending branch, RPG style branch) and re-verified `pnpm.cmd -C apps/web test -- MatchResultSummaryPanel MatchCardLoadEmptyStatePanel`, `pnpm.cmd -C apps/web lint`, `pnpm.cmd -C apps/web typecheck`, `pnpm.cmd -C apps/web test`, `pnpm.cmd -C apps/web build`, `pnpm.cmd -C apps/web e2e:ux` (15 passed).
+- [x] 2026-02-19 WO037-step49: added `apps/web/src/features/match/MatchGuestPostGamePanel.tsx` and moved Match guest post-game CTA block (guest rematch/load/save + share/replay/template + QR details) out of `Match.tsx`.
+- [x] 2026-02-19 WO037-step49: added `apps/web/src/features/match/__tests__/MatchGuestPostGamePanel.test.tsx` (hidden branch, saved-label/state branch, action callback wiring + QR details branch) and re-verified `pnpm.cmd -C apps/web test -- MatchGuestPostGamePanel`, `pnpm.cmd -C apps/web lint`, `pnpm.cmd -C apps/web typecheck`, `pnpm.cmd -C apps/web test`, `pnpm.cmd -C apps/web build`, `pnpm.cmd -C apps/web e2e:ux` (15 passed).
+- [x] 2026-02-19 WO037-step50: added `apps/web/src/features/match/MatchAiNotesPanel.tsx` and moved the non-mint side-column collapsed AI debug notes block out of `Match.tsx`.
+- [x] 2026-02-19 WO037-step50: added `apps/web/src/features/match/__tests__/MatchAiNotesPanel.test.tsx` (hidden branch, standard/stage-focus branch, RPG style branch) and re-verified `pnpm.cmd -C apps/web test -- MatchAiNotesPanel MatchGuestPostGamePanel`, `pnpm.cmd -C apps/web lint`, `pnpm.cmd -C apps/web typecheck`, `pnpm.cmd -C apps/web test`, `pnpm.cmd -C apps/web build`, `pnpm.cmd -C apps/web e2e:ux` (15 passed).
+- [x] 2026-02-19 WO037-step51: added `apps/web/src/features/match/MatchEventPanel.tsx` and moved Match Event section (event summary/status + ruleset/ai labels + events link + clear action + Nyano tokenIds display) out of `Match.tsx`.
+- [x] 2026-02-19 WO037-step51: added `apps/web/src/features/match/__tests__/MatchEventPanel.test.tsx` (hidden branch, rendered event details, clear button callback wiring) and re-verified `pnpm.cmd -C apps/web test -- MatchEventPanel MatchAiNotesPanel`, `pnpm.cmd -C apps/web lint`, `pnpm.cmd -C apps/web typecheck`, `pnpm.cmd -C apps/web test`, `pnpm.cmd -C apps/web build`, `pnpm.cmd -C apps/web e2e:ux` (15 passed).
+- [x] 2026-02-19 WO037-step52: added `apps/web/src/features/match/MatchGuestModeIntro.tsx` and moved Match guest-mode intro area (guest quick-play banner + mini tutorial slot) out of `Match.tsx`.
+- [x] 2026-02-19 WO037-step52: added `apps/web/src/features/match/__tests__/MatchGuestModeIntro.test.tsx` (hidden branch, guest banner/decks link copy, tutorial slot rendering) and re-verified `pnpm.cmd -C apps/web test -- MatchGuestModeIntro MatchEventPanel`, `pnpm.cmd -C apps/web lint`, `pnpm.cmd -C apps/web typecheck`, `pnpm.cmd -C apps/web test`, `pnpm.cmd -C apps/web build`, `pnpm.cmd -C apps/web e2e:ux` (15 passed).
+- [x] 2026-02-19 WO037-step53: added `apps/web/src/features/match/MatchShareActionsRow.tsx` and moved non-mint side-column share buttons (JSON copy / share URL / replay) out of `Match.tsx`.
+- [x] 2026-02-19 WO037-step53: added `apps/web/src/features/match/__tests__/MatchShareActionsRow.test.tsx` (default/RPG class branch, disabled gating, callback wiring) and re-verified `pnpm.cmd -C apps/web test -- MatchShareActionsRow`, `pnpm.cmd -C apps/web lint`, `pnpm.cmd -C apps/web typecheck`, `pnpm.cmd -C apps/web test`, `pnpm.cmd -C apps/web build`, `pnpm.cmd -C apps/web e2e:ux` (15 passed).
+- [x] 2026-02-19 WO037-step54: switched Mint drawer share buttons in `apps/web/src/pages/Match.tsx` to the extracted `MatchShareActionsRow` component so share-action rendering is unified between Mint and non-mint views.
+- [x] 2026-02-19 WO037-step54: re-verified `pnpm.cmd -C apps/web test -- MatchShareActionsRow`, `pnpm.cmd -C apps/web lint`, `pnpm.cmd -C apps/web typecheck`, `pnpm.cmd -C apps/web test`, `pnpm.cmd -C apps/web build`, `pnpm.cmd -C apps/web e2e:ux` (15 passed).
+- [x] 2026-02-19 WO037-step55: added `apps/web/src/features/match/MatchMintAiNotesPanel.tsx` and moved Mint drawer AI debug notes details block out of `Match.tsx`.
+- [x] 2026-02-19 WO037-step55: added `apps/web/src/features/match/__tests__/MatchMintAiNotesPanel.test.tsx` (hidden branch, summary/children rendering, mint shell class/style coverage) and re-verified `pnpm.cmd -C apps/web test -- MatchMintAiNotesPanel`, `pnpm.cmd -C apps/web lint`, `pnpm.cmd -C apps/web typecheck`, `pnpm.cmd -C apps/web test`, `pnpm.cmd -C apps/web build`, `pnpm.cmd -C apps/web e2e:ux` (15 passed).
+- [x] 2026-02-19 WO037-step56: added `apps/web/src/features/match/MatchMintDensityToggle.tsx` and moved the Mint drawer density toggle block (`minimal/standard/full`) out of `Match.tsx`.
+- [x] 2026-02-19 WO037-step56: added `apps/web/src/features/match/__tests__/MatchMintDensityToggle.test.tsx` (option rendering, active style branch, onChange callback wiring) and re-verified `pnpm.cmd -C apps/web test -- MatchMintDensityToggle`, `pnpm.cmd -C apps/web lint`, `pnpm.cmd -C apps/web typecheck`, `pnpm.cmd -C apps/web test`, `pnpm.cmd -C apps/web build`, `pnpm.cmd -C apps/web e2e:ux` (15 passed).
+- [x] 2026-02-19 WO037-step57: added `apps/web/src/features/match/MatchMintResultSummaryPanel.tsx` and moved Mint drawer winner/match-info block out of `Match.tsx` while reusing `matchResultSummary`.
+- [x] 2026-02-19 WO037-step57: added `apps/web/src/features/match/__tests__/MatchMintResultSummaryPanel.test.tsx` (winner branch rendering, pending branch rendering, mint style variable coverage) and re-verified `pnpm.cmd -C apps/web test -- MatchMintResultSummaryPanel`, `pnpm.cmd -C apps/web lint`, `pnpm.cmd -C apps/web typecheck`, `pnpm.cmd -C apps/web test`, `pnpm.cmd -C apps/web build`, `pnpm.cmd -C apps/web e2e:ux` (15 passed).
+- [x] 2026-02-19 WO037-step58: added `apps/web/src/features/match/MatchMintTurnLogPanel.tsx` and moved Mint drawer TurnLog ready/fallback branching (`sim.ok` + selected index clamp) out of `Match.tsx`.
+- [x] 2026-02-19 WO037-step58: added `apps/web/src/features/match/__tests__/MatchMintTurnLogPanel.test.tsx` (fallback label branch, TurnLog prop forwarding + selected-index clamp, custom empty label branch) and re-verified `pnpm.cmd -C apps/web test -- MatchMintTurnLogPanel`, `pnpm.cmd -C apps/web lint`, `pnpm.cmd -C apps/web typecheck`, `pnpm.cmd -C apps/web test`, `pnpm.cmd -C apps/web build`, `pnpm.cmd -C apps/web e2e:ux` (15 passed).
+- [x] 2026-02-19 WO037-step59: added `apps/web/src/features/match/MatchSideTurnLogPanel.tsx` and moved non-mint side-column turn log branching (RPG/standard + `sim.ok` fallback + selected index clamp) out of `Match.tsx`.
+- [x] 2026-02-19 WO037-step59: added `apps/web/src/features/match/__tests__/MatchSideTurnLogPanel.test.tsx` (RPG branch, standard fallback branch, standard TurnLog forwarding + selected-index clamp) and re-verified `pnpm.cmd -C apps/web test -- MatchSideTurnLogPanel`, `pnpm.cmd -C apps/web lint`, `pnpm.cmd -C apps/web typecheck`, `pnpm.cmd -C apps/web test`, `pnpm.cmd -C apps/web build`, `pnpm.cmd -C apps/web e2e:ux` (15 passed).
+- [x] 2026-02-19 WO037-step60: added `apps/web/src/features/match/MatchSideColumnPanels.tsx` and moved non-mint side-column composition wiring (turn log, result summary, share actions, guest post-game panel, AI notes panel) out of `Match.tsx`.
+- [x] 2026-02-19 WO037-step60: added `apps/web/src/features/match/__tests__/MatchSideColumnPanels.test.tsx` (composition order, guest/share callback forwarding, AI visibility derivation) and re-verified `pnpm.cmd -C apps/web test -- MatchSideColumnPanels`, `pnpm.cmd -C apps/web lint`, `pnpm.cmd -C apps/web typecheck`, `pnpm.cmd -C apps/web test`, `pnpm.cmd -C apps/web build`, `pnpm.cmd -C apps/web e2e:ux` (15 passed).
+- [x] 2026-02-19 WO037-step61: added `apps/web/src/features/match/MatchMintDrawerPanels.tsx` and moved Mint drawer composition wiring (density toggle, turn log, winner summary, share actions, AI notes) out of `Match.tsx`.
+- [x] 2026-02-19 WO037-step61: added `apps/web/src/features/match/__tests__/MatchMintDrawerPanels.test.tsx` (composition order, density/share callback forwarding, AI visibility derivation) and re-verified `pnpm.cmd -C apps/web test -- MatchMintDrawerPanels`, `pnpm.cmd -C apps/web lint`, `pnpm.cmd -C apps/web typecheck`, `pnpm.cmd -C apps/web test`, `pnpm.cmd -C apps/web build`, `pnpm.cmd -C apps/web e2e:ux` (15 passed).
+- [x] 2026-02-19 WO037-step62: added `apps/web/src/features/match/MatchMintDrawerShell.tsx` and moved Mint drawer shell wiring (toggle button visibility + drawer open/close shell) out of `Match.tsx`.
+- [x] 2026-02-19 WO037-step62: added `apps/web/src/features/match/__tests__/MatchMintDrawerShell.test.tsx` (closed/open branch rendering, callback/children forwarding) and re-verified `pnpm.cmd -C apps/web test -- MatchMintDrawerShell`, `pnpm.cmd -C apps/web lint`, `pnpm.cmd -C apps/web typecheck`, `pnpm.cmd -C apps/web test`, `pnpm.cmd -C apps/web build`, `pnpm.cmd -C apps/web e2e:ux` (15 passed).
+- [x] 2026-02-19 WO037-step63: added `apps/web/src/features/match/MatchHandStatusHeader.tsx` and moved hand-status header rendering (mint/rpg/standard class branch, selected-cell/drag hint, mint forced-order badge) out of `Match.tsx`.
+- [x] 2026-02-19 WO037-step63: added `apps/web/src/features/match/__tests__/MatchHandStatusHeader.test.tsx` (mint forced badge branch, rpg style branch, standard style branch) and re-verified `pnpm.cmd -C apps/web test -- MatchHandStatusHeader`, `pnpm.cmd -C apps/web lint`, `pnpm.cmd -C apps/web typecheck`, `pnpm.cmd -C apps/web test`, `pnpm.cmd -C apps/web build`, `pnpm.cmd -C apps/web e2e:ux` (15 passed).
+- [x] 2026-02-19 WO037-step64: added `apps/web/src/features/match/MatchHandCardsPanel.tsx` and moved hand-card panel branching (Mint `HandDisplayMint`, RPG `HandDisplayRPG`, standard card-button fallback) out of `Match.tsx`.
+- [x] 2026-02-19 WO037-step64: added `apps/web/src/features/match/__tests__/MatchHandCardsPanel.test.tsx` (mint branch callback forwarding, rpg branch routing, standard fallback button behavior) and re-verified `pnpm.cmd -C apps/web test -- MatchHandCardsPanel`, `pnpm.cmd -C apps/web lint`, `pnpm.cmd -C apps/web typecheck`, `pnpm.cmd -C apps/web test`, `pnpm.cmd -C apps/web build`, `pnpm.cmd -C apps/web e2e:ux` (15 passed).
+- [x] 2026-02-19 WO037-step65: added `apps/web/src/features/match/MatchTurnActionPanel.tsx` and moved hand-area action controls (warning-mark selector + commit/undo + conditional AI move button) out of `Match.tsx`.
+- [x] 2026-02-19 WO037-step65: added `apps/web/src/features/match/__tests__/MatchTurnActionPanel.test.tsx` (warning option filtering/focus class, callback forwarding + disabled states, rpg class branch + AI visibility) and re-verified `pnpm.cmd -C apps/web test -- MatchTurnActionPanel`, `pnpm.cmd -C apps/web lint`, `pnpm.cmd -C apps/web typecheck`, `pnpm.cmd -C apps/web test`, `pnpm.cmd -C apps/web build`, `pnpm.cmd -C apps/web e2e:ux` (15 passed).
+- [x] 2026-02-19 WO037-step66: added `apps/web/src/features/match/MatchHandCompactHintPanel.tsx` and `apps/web/src/features/match/MatchErrorPanel.tsx`, then moved hand-area compact hint and rose error-shell rendering out of `Match.tsx` (including simulation-error fallback in board section).
+- [x] 2026-02-19 WO037-step66: added `apps/web/src/features/match/__tests__/MatchHandCompactHintPanel.test.tsx` and `apps/web/src/features/match/__tests__/MatchErrorPanel.test.tsx` (hint summary visibility and error-shell rendering) and re-verified `pnpm.cmd -C apps/web test -- MatchHandCompactHintPanel MatchErrorPanel`, `pnpm.cmd -C apps/web lint`, `pnpm.cmd -C apps/web typecheck`, `pnpm.cmd -C apps/web test`, `pnpm.cmd -C apps/web build`, `pnpm.cmd -C apps/web e2e:ux` (15 passed).
+- [x] 2026-02-19 WO037-step67: added `apps/web/src/features/match/MatchFocusHandDockActions.tsx` and moved the stage-focus hand-dock action row (warning mark selector + commit/undo controls) out of `Match.tsx` while preserving mint focus behavior and disabled gating.
+- [x] 2026-02-19 WO037-step67: added `apps/web/src/features/match/__tests__/MatchFocusHandDockActions.test.tsx` (warning-option filtering, callback/disabled forwarding, selector disable conditions) and re-verified `pnpm.cmd -C apps/web test -- MatchFocusHandDockActions`, `pnpm.cmd -C apps/web lint`, `pnpm.cmd -C apps/web typecheck`, `pnpm.cmd -C apps/web test`, `pnpm.cmd -C apps/web build`, `pnpm.cmd -C apps/web e2e:ux` (15 passed).
+- [x] 2026-02-19 WO037-step68: added `apps/web/src/features/match/MatchFocusHandDockCards.tsx` and moved the stage-focus hand-dock card row rendering (loading shell, fan style vars, selected/forced/used classes, drag-drop wiring) out of `Match.tsx`.
+- [x] 2026-02-19 WO037-step68: added `apps/web/src/features/match/__tests__/MatchFocusHandDockCards.test.tsx` (loading shell branch, click/drag callback forwarding, disabled drag/click guard) and re-verified `pnpm.cmd -C apps/web test -- MatchFocusHandDockCards`, `pnpm.cmd -C apps/web lint`, `pnpm.cmd -C apps/web typecheck`, `pnpm.cmd -C apps/web test`, `pnpm.cmd -C apps/web build`, `pnpm.cmd -C apps/web e2e:ux` (15 passed).
+- [x] 2026-02-19 WO037-step69: added `apps/web/src/features/match/MatchFocusHandDockHeaderRow.tsx` and moved the stage-focus hand-dock header row status rendering (`Thinking...` / selected card+cell status) out of `Match.tsx` while preserving existing label and forced-rule badge wiring.
+- [x] 2026-02-19 WO037-step69: added `apps/web/src/features/match/__tests__/MatchFocusHandDockHeaderRow.test.tsx` (AI thinking branch, selected card/cell branch, null placeholder branch) and re-verified `pnpm.cmd -C apps/web test -- MatchFocusHandDockHeaderRow`, `pnpm.cmd -C apps/web lint`, `pnpm.cmd -C apps/web typecheck`, `pnpm.cmd -C apps/web test`, `pnpm.cmd -C apps/web build`, `pnpm.cmd -C apps/web e2e:ux` (15 passed).
+- [x] 2026-02-19 WO037-step70: added `apps/web/src/features/match/MatchFocusHandDock.tsx` and moved stage-focus hand-dock shell composition (dock class branch, forced-order badge, header/cards/actions wiring) out of `Match.tsx`.
+- [x] 2026-02-19 WO037-step70: added `apps/web/src/features/match/__tests__/MatchFocusHandDock.test.tsx` (stage/inline class branch, forced-badge visibility, child-prop forwarding) and re-verified `pnpm.cmd -C apps/web test -- MatchFocusHandDock`, `pnpm.cmd -C apps/web lint`, `pnpm.cmd -C apps/web typecheck`, `pnpm.cmd -C apps/web test`, `pnpm.cmd -C apps/web build`, `pnpm.cmd -C apps/web e2e:ux` (15 passed).
+- [x] 2026-02-19 WO037-step71: added `apps/web/src/features/match/MatchHandInteractionArea.tsx` and moved hand-area interaction branch composition (`MatchHandStatusHeader` / `MatchHandCardsPanel` / `MatchTurnActionPanel` vs `MatchHandCompactHintPanel`) out of `Match.tsx`.
+- [x] 2026-02-19 WO037-step71: added `apps/web/src/features/match/__tests__/MatchHandInteractionArea.test.tsx` (visible-controls branch, compact-hint branch, mint-select telemetry forwarding + undo availability) and re-verified `pnpm.cmd -C apps/web test -- MatchHandInteractionArea`, `pnpm.cmd -C apps/web lint`, `pnpm.cmd -C apps/web typecheck`, `pnpm.cmd -C apps/web test`, `pnpm.cmd -C apps/web build`, `pnpm.cmd -C apps/web e2e:ux` (15 passed).
+- [x] 2026-02-19 WO037-step72: added `apps/web/src/features/match/MatchQuickCommitBar.tsx` and moved the Mint desktop quick-commit toolbar (draft summary, warning mark selector, quick commit/undo actions) out of `Match.tsx`.
+- [x] 2026-02-19 WO037-step72: added `apps/web/src/features/match/__tests__/MatchQuickCommitBar.test.tsx` (warning option filtering, callback/action forwarding, disabled gating) and re-verified `pnpm.cmd -C apps/web test -- MatchQuickCommitBar`, `pnpm.cmd -C apps/web lint`, `pnpm.cmd -C apps/web typecheck`, `pnpm.cmd -C apps/web test`, `pnpm.cmd -C apps/web build`, `pnpm.cmd -C apps/web e2e:ux` (15 passed).
+- [x] 2026-02-19 WO037-step73: added `apps/web/src/features/match/MatchBoardFeedbackPanels.tsx` and moved post-board feedback rendering (last-move feedback + non-mint legacy status summary) out of `Match.tsx`.
+- [x] 2026-02-19 WO037-step73: added `apps/web/src/features/match/__tests__/MatchBoardFeedbackPanels.test.tsx` (animation feedback branch, standard summary branch, stage-focus summary suppression) and re-verified `pnpm.cmd -C apps/web test -- MatchBoardFeedbackPanels`, `pnpm.cmd -C apps/web lint`, `pnpm.cmd -C apps/web typecheck`, `pnpm.cmd -C apps/web test`, `pnpm.cmd -C apps/web build`, `pnpm.cmd -C apps/web e2e:ux` (15 passed).
+- [x] 2026-02-19 WO037-step74: added `apps/web/src/features/match/MatchInfoColumn.tsx` and moved right-column composition branching (Mint drawer shell/panels vs non-mint side-column panels) out of `Match.tsx` while preserving existing callback wiring and URL/share invariants.
+- [x] 2026-02-19 WO037-step74: added `apps/web/src/features/match/__tests__/MatchInfoColumn.test.tsx` (Mint/non-mint branch routing, drawer props forwarding, side-column prop forwarding) and re-verified `pnpm.cmd -C apps/web test -- MatchInfoColumn`, `pnpm.cmd -C apps/web lint`, `pnpm.cmd -C apps/web typecheck`, `pnpm.cmd -C apps/web test`, `pnpm.cmd -C apps/web build`, `pnpm.cmd -C apps/web e2e:ux` (15 passed).
