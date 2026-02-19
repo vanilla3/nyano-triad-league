@@ -244,7 +244,7 @@
   - Kept existing select[data-testid=match-setup-ruleset] for compatibility while moving primary UX to picker.
 
 ### Residual follow-ups
-- [ ] Add dedicated Replay UX test for rulesetId mismatch warning pill (rk/cr fallback mismatch case).
+- [x] Add dedicated Replay UX test for rulesetId mismatch warning pill (rk/cr fallback mismatch case).
 - [ ] Consider splitting MintRulesetPicker visual primitives into mint theme CSS tokens if further polish is required.
 
 

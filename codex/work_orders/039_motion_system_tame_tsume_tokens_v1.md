@@ -84,12 +84,12 @@
 
 ## Acceptance Criteria
 
-- [ ] 同じ種類の操作（押下/出現/閉じる）のテンポが **画面ごとにズレない**
-- [ ] 入場は `ease-out`、退出は `ease-in` が基本になっている
-- [ ] カード出現が “ぷにっ” と見える（**1回だけ**オーバーシュート）
-- [ ] `prefers-reduced-motion: reduce` で overshoot / loop が止まり、静的差で状態が分かる
-- [ ] `data-vfx=off` / `low` で “うるささ” が抑制される
-- [ ] Match のゲームロジック・勝敗・turn 進行に影響しない（UIのみ）
+- [x] 同じ種類の操作（押下/出現/閉じる）のテンポが **画面ごとにズレない**
+- [x] 入場は `ease-out`、退出は `ease-in` が基本になっている
+- [x] カード出現が “ぷにっ” と見える（**1回だけ**オーバーシュート）
+- [x] `prefers-reduced-motion: reduce` で overshoot / loop が止まり、静的差で状態が分かる
+- [x] `data-vfx=off` / `low` で “うるささ” が抑制される
+- [x] Match のゲームロジック・勝敗・turn 進行に影響しない（UIのみ）
 
 ---
 
