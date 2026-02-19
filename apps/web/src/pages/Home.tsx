@@ -30,6 +30,7 @@ import { MintTitleText, MintLabel } from "@/components/mint/MintTypography";
 import { MintIcon } from "@/components/mint/icons/MintIcon";
 import { appendThemeToPath, resolveAppTheme } from "@/lib/theme";
 import { isDebugMode } from "@/lib/debug";
+import { useIdle } from "@/hooks/useIdle";
 import {
   CLASSIC_QUICK_PRESETS,
   buildQuickGuestMatchPath,
@@ -113,6 +114,10 @@ export function HomePage() {
     [quickRulesPreset],
   );
   const arenaQuickUrl = themed(arenaQuickPath);
+  const isQuickPlayIdle = useIdle({
+    timeoutMs: 4200,
+    disabled: showQuickGuide,
+  });
 
   const handleQuickPresetSelect = React.useCallback(
     (preset: "standard" | ClassicQuickPresetId) => {
@@ -303,7 +308,12 @@ export function HomePage() {
             </div>
           </div>
           <div className="mint-home-quickplay__actions">
-            <MintPressable to={quickPlayUrl} tone="primary" onClick={handleQuickPlayStart}>
+            <MintPressable
+              to={quickPlayUrl}
+              tone="primary"
+              className={isQuickPlayIdle ? "mint-idle-guide mint-idle-guide--primary" : ""}
+              onClick={handleQuickPlayStart}
+            >
               <MintIcon name="match" size={18} />
               <span>すぐ遊ぶ</span>
             </MintPressable>

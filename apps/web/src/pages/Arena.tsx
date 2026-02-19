@@ -7,6 +7,7 @@ import { MintTitleText } from "@/components/mint/MintTypography";
 import { MintIcon } from "@/components/mint/icons/MintIcon";
 import { MINT_PAGE_GUIDES } from "@/lib/mint_page_guides";
 import { appendThemeToPath, resolveAppTheme } from "@/lib/theme";
+import { useIdle } from "@/hooks/useIdle";
 import {
   CLASSIC_QUICK_PRESETS,
   buildQuickGuestMatchPath,
@@ -57,6 +58,7 @@ export function ArenaPage() {
     if (quickRulesPreset === "standard") return "標準ルール";
     return CLASSIC_QUICK_PRESETS.find((preset) => preset.id === quickRulesPreset)?.summary ?? "";
   }, [quickRulesPreset]);
+  const isQuickPlayIdle = useIdle({ timeoutMs: 4200 });
 
   const handleDifficultySelect = (next: DifficultyKey) => {
     const params = new URLSearchParams(searchParams);
@@ -139,7 +141,13 @@ export function ArenaPage() {
             ))}
           </div>
           <p className="mint-arena-quickplay__rules-summary">{quickRulesSummary}</p>
-          <MintPressable to={quickPlayUrl} tone="primary" size="lg" fullWidth>
+          <MintPressable
+            to={quickPlayUrl}
+            tone="primary"
+            size="lg"
+            fullWidth
+            className={isQuickPlayIdle ? "mint-idle-guide mint-idle-guide--primary" : ""}
+          >
             今すぐ遊ぶ
           </MintPressable>
           <MintPressable to={quickStageUrl} tone="soft" fullWidth>

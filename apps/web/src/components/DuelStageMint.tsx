@@ -13,6 +13,7 @@ export interface DuelStageMintProps {
   className?: string;
   impact?: CutInImpact | null;
   impactBurst?: boolean;
+  impactBurstLevel?: "soft" | "medium" | "hard" | "win" | null;
 }
 
 export function DuelStageMint({
@@ -20,12 +21,14 @@ export function DuelStageMint({
   className = "",
   impact = null,
   impactBurst = false,
+  impactBurstLevel = null,
 }: DuelStageMintProps) {
   const stageClassName = [
     "mint-stage",
     "mint-stage--gamefeel",
     impact ? `mint-stage--impact-${impact}` : "",
     impactBurst ? "mint-stage--impact-burst" : "",
+    impactBurst && impactBurstLevel ? `mint-stage--burst-${impactBurstLevel}` : "",
     className,
   ].filter(Boolean).join(" ");
 
@@ -37,6 +40,7 @@ export function DuelStageMint({
 
       {/* Holo grid background (pure CSS, no image assets) */}
       <div className="mint-stage__holo" aria-hidden="true" />
+      <div className="mint-stage__burst-particles" aria-hidden="true" />
 
       {/* Ambient edge glows */}
       <div className="mint-stage__glow mint-stage__glow--top" aria-hidden="true" />

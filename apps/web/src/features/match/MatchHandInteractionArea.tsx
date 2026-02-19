@@ -34,6 +34,7 @@ export function MatchHandInteractionArea(input: {
   draftWarningMarkCell: number | null;
   isVsNyanoAi: boolean;
   aiAutoPlay: boolean;
+  idleGuideHand?: boolean;
   onChangeDraftWarningMarkCell: (value: number | null) => void;
   onCommitMove: () => void;
   onUndoMove: () => void;
@@ -68,6 +69,7 @@ export function MatchHandInteractionArea(input: {
     draftWarningMarkCell,
     isVsNyanoAi,
     aiAutoPlay,
+    idleGuideHand = false,
     onChangeDraftWarningMarkCell,
     onCommitMove,
     onUndoMove,
@@ -76,7 +78,7 @@ export function MatchHandInteractionArea(input: {
 
   if ((!isStageFocusRoute || showStageControls) && !showFocusHandDock) {
     return (
-      <div className="grid gap-3">
+      <div className={["grid gap-3", idleGuideHand && "mint-hand-area--idle-guide"].filter(Boolean).join(" ")}>
         <MatchHandStatusHeader
           isMintUi={isMintUi}
           isRpg={isRpg}

@@ -42,7 +42,7 @@ function sizeClassName(size: MintSize): string {
 
 function buildClasses(props: MintPressableCommonProps): string {
   return [
-    "mint-pressable mint-ui-pressable",
+    "mint-pressable mint-ui-pressable mint-hit",
     toneClassName(props.tone ?? "default"),
     sizeClassName(props.size ?? "md"),
     props.fullWidth ? "mint-ui-pressable--full" : "",

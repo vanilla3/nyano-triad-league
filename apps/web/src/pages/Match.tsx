@@ -26,6 +26,7 @@ import { ScoreBar } from "@/components/ScoreBar";
 import { useBoardFlipAnimation } from "@/components/BoardFlipAnimator";
 import { CardFlight } from "@/components/CardFlight";
 import { useCardFlight } from "@/hooks/useCardFlight";
+import { useIdle } from "@/hooks/useIdle";
 import { NyanoImage } from "@/components/NyanoImage";
 import { CardMini } from "@/components/CardMini";
 import { HiddenDeckPreviewCard } from "@/components/HiddenDeckPreviewCard";
@@ -747,6 +748,22 @@ export function MatchPage() {
       availableCells,
     });
   }, [cards, turns.length, isAiTurn, availableCells]);
+  const matchBoardPhase = React.useMemo<"game_over" | "ai_turn" | "select_cell" | "select_card">(() => {
+    if (turns.length >= 9) return "game_over";
+    if (isAiTurn) return "ai_turn";
+    if (draftCardIndex !== null) return "select_cell";
+    return "select_card";
+  }, [turns.length, isAiTurn, draftCardIndex]);
+  const isIdleGuidanceActive = useIdle({
+    timeoutMs: 4200,
+    disabled: !(useMintUi && !isAiTurn && turns.length < 9),
+  });
+  const idleGuideTarget = React.useMemo<"none" | "select_card" | "select_cell">(() => {
+    if (!isIdleGuidanceActive) return "none";
+    if (matchBoardPhase === "select_card") return "select_card";
+    if (matchBoardPhase === "select_cell") return "select_cell";
+    return "none";
+  }, [isIdleGuidanceActive, matchBoardPhase]);
 
   const _availableCardIndexes = React.useMemo(() => {
     const out: number[] = [];
@@ -1546,6 +1563,20 @@ export function MatchPage() {
   const [stageImpactBurst, setStageImpactBurst] = React.useState(false);
   const [boardImpactBurst, setBoardImpactBurst] = React.useState(false);
   const lastBoardImpactAtRef = React.useRef(0);
+  const stageImpactBurstLevel = React.useMemo<"soft" | "medium" | "hard" | "win" | null>(() => {
+    if (sim.ok && turns.length >= 9 && sim.full.winner !== "draw") return "win";
+    if (stageImpactBurst) return nyanoReactionImpact === "high" ? "hard" : "medium";
+    if (!boardImpactBurst) return null;
+    return boardAnim.flippedCells.length >= 4 ? "hard" : "soft";
+  }, [
+    sim,
+    turns.length,
+    stageImpactBurst,
+    boardImpactBurst,
+    nyanoReactionImpact,
+    boardAnim.flippedCells.length,
+  ]);
+  const stageImpactBurstActive = stageImpactBurst || boardImpactBurst || stageImpactBurstLevel === "win";
 
   React.useEffect(() => {
     if (!shouldTriggerStageImpactBurst({
@@ -2283,7 +2314,11 @@ export function MatchPage() {
                   >
                     {sim.ok ? (
                       isMint || (isEngine && engineRendererFailed) ? (
-                        <DuelStageMint impact={nyanoReactionImpact} impactBurst={stageImpactBurst || boardImpactBurst}>
+                        <DuelStageMint
+                          impact={nyanoReactionImpact}
+                          impactBurst={stageImpactBurstActive}
+                          impactBurstLevel={stageImpactBurstLevel}
+                        >
                           <BoardViewMint
                             board={boardNow}
                             selectedCell={draftCell}
@@ -2294,13 +2329,11 @@ export function MatchPage() {
                             currentPlayer={currentPlayer}
                             showCoordinates
                             showActionPrompt
-                            className="mint-board-view mint-board-view--match"
-                            gamePhase={
-                              turns.length >= 9 ? "game_over"
-                                : isAiTurn ? "ai_turn"
-                                : draftCardIndex !== null ? "select_cell"
-                                : "select_card"
-                            }
+                            className={[
+                              "mint-board-view mint-board-view--match",
+                              idleGuideTarget === "select_cell" && "mint-board-view--idle-guide",
+                            ].filter(Boolean).join(" ")}
+                            gamePhase={matchBoardPhase}
                             inlineError={error}
                             onDismissError={() => setError(null)}
                             flipTraces={showStageAssistUi && density !== "minimal" ? lastFlipTraces : null}
@@ -2308,6 +2341,7 @@ export function MatchPage() {
                             dragDropEnabled={enableHandDragDrop && isHandDragging}
                             onCellDrop={handleBoardDrop}
                             onCellDragHover={handleBoardDragHover}
+                            idleGuideSelectables={idleGuideTarget === "select_cell"}
                             selectedCardPreview={
                               draftCardIndex !== null && cards
                                 ? cards.get(currentDeckTokens[draftCardIndex]) ?? null
@@ -2316,7 +2350,11 @@ export function MatchPage() {
                           />
                         </DuelStageMint>
                       ) : useEngineRenderer ? (
-                        <DuelStageMint impact={nyanoReactionImpact} impactBurst={stageImpactBurst || boardImpactBurst}>
+                        <DuelStageMint
+                          impact={nyanoReactionImpact}
+                          impactBurst={stageImpactBurstActive}
+                          impactBurstLevel={stageImpactBurstLevel}
+                        >
                           <BattleStageEngine
                             board={boardNow}
                             selectedCell={draftCell}
@@ -2330,12 +2368,7 @@ export function MatchPage() {
                             flippedCells={boardAnim.flippedCells}
                             vfxQuality={resolvedVfxQuality}
                             showActionPrompt={showStageAssistUi}
-                            gamePhase={
-                              turns.length >= 9 ? "game_over"
-                                : isAiTurn ? "ai_turn"
-                                : draftCardIndex !== null ? "select_cell"
-                                : "select_card"
-                            }
+                            gamePhase={matchBoardPhase}
                             inlineError={error}
                             onDismissError={() => setError(null)}
                             flipTraces={showStageAssistUi && density !== "minimal" ? lastFlipTraces : null}
@@ -2489,6 +2522,7 @@ export function MatchPage() {
                   draftWarningMarkCell={draftWarningMarkCell}
                   isVsNyanoAi={isVsNyanoAi}
                   aiAutoPlay={aiAutoPlay}
+                  idleGuideHand={idleGuideTarget === "select_card"}
                   onChangeDraftWarningMarkCell={setDraftWarningMarkCell}
                   onCommitMove={commitMove}
                   onUndoMove={undoMove}
@@ -2556,5 +2590,4 @@ export function MatchPage() {
     </div>
   );
 }
-
 

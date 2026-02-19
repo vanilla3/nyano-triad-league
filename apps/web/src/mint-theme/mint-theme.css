@@ -64,12 +64,32 @@
   --mint-prompt-bg: rgba(239, 249, 255, 0.95);
   --mint-prompt-border: rgba(125, 211, 252, 0.6);
 
+  /* Motion system tokens (WO-039) */
+  --mint-motion-4f: 67ms;
+  --mint-motion-6f: 100ms;
+  --mint-motion-8f: 133ms;
+  --mint-motion-10f: 167ms;
+  --mint-motion-12f: 200ms;
+  --mint-motion-15f: 250ms;
+  --mint-motion-18f: 300ms;
+  --mint-motion-24f: 400ms;
+  --mint-motion-ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --mint-motion-ease-in: cubic-bezier(0.32, 0, 0.67, 0);
+  --mint-motion-ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --mint-motion-ease-out-back: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --mint-motion-pop-scale: 1.015;
+  --mint-motion-press-y: 1px;
+  --mint-motion-hover-y: -2px;
+
   /* Pressable microinteraction */
-  --mint-press-transition: 180ms cubic-bezier(0.22, 1, 0.36, 1);
-  --mint-press-hover-transform: translateY(-2px) scale(1.01);
-  --mint-press-active-transform: translateY(0) scale(0.985);
+  --mint-press-transition: var(--mint-motion-10f) var(--mint-motion-ease-out);
+  --mint-press-hover-transform: translateY(var(--mint-motion-hover-y)) scale(var(--mint-motion-pop-scale));
+  --mint-press-active-transform: translateY(var(--mint-motion-press-y)) scale(0.985);
   --mint-press-focus-color: var(--mint-accent);
   --mint-press-focus-shadow: 0 10px 18px -12px rgba(15, 23, 42, 0.42);
+  --mint-bg-grid-opacity: 0.2;
+  --mint-bg-noise-opacity: 0.18;
+  --mint-bg-scroll-speed: 38s;
 
   /* Gamefeel background tokens (reference image approximation) */
   --mint-gamefeel-bg-mint: #C1E4E6;
@@ -140,6 +160,39 @@
 @keyframes mint-fade-in {
   0% { opacity: 0; }
   100% { opacity: 1; }
+}
+
+@keyframes mint-motion-enter {
+  0% {
+    opacity: 0;
+    transform: translate3d(0, 8px, 0);
+  }
+  100% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@keyframes mint-motion-exit {
+  0% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+  100% {
+    opacity: 0;
+    transform: translate3d(0, 6px, 0);
+  }
+}
+
+@keyframes mint-motion-pop {
+  0% {
+    opacity: 0.84;
+    transform: scale(0.97);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
 }
 
 @keyframes mint-board-sheen {
@@ -237,6 +290,23 @@
 .mint-pressable--pill {
   --mint-press-hover-transform: translateY(-1px) scale(1.01);
   --mint-press-active-transform: translateY(0) scale(0.985);
+}
+
+.mint-motion-enter {
+  animation: mint-motion-enter var(--mint-motion-12f) var(--mint-motion-ease-out) both;
+}
+
+.mint-motion-exit {
+  animation: mint-motion-exit var(--mint-motion-10f) var(--mint-motion-ease-in) both;
+}
+
+.mint-motion-pop {
+  animation: mint-motion-pop var(--mint-motion-10f) var(--mint-motion-ease-out-back) both;
+}
+
+.mint-hit {
+  min-width: 44px;
+  min-height: 44px;
 }
 
 /* ── Board Frame ─────────────────────────────────────────────────────── */
@@ -565,6 +635,28 @@
   box-shadow:
     0 0 0 2px rgba(125, 211, 252, 0.34),
     0 12px 20px -14px rgba(14, 116, 144, 0.5);
+}
+
+@keyframes mint-idle-cell-focus {
+  0%,
+  100% {
+    transform: translateY(-1px) scale(1);
+    box-shadow:
+      0 0 0 2px rgba(56, 189, 248, 0.2),
+      0 8px 18px -14px rgba(14, 116, 144, 0.38);
+  }
+  50% {
+    transform: translateY(-2px) scale(1.012);
+    box-shadow:
+      0 0 0 3px rgba(56, 189, 248, 0.34),
+      0 0 18px rgba(56, 189, 248, 0.26),
+      0 12px 22px -16px rgba(14, 116, 144, 0.5);
+  }
+}
+
+.mint-cell--idle-guide:not(.mint-cell--selected):not(.mint-cell--placed):not(.mint-cell--flipped) {
+  border-color: rgba(56, 189, 248, 0.78);
+  animation: mint-idle-cell-focus 2.8s var(--mint-motion-ease-in-out) infinite !important;
 }
 
 /* Placed (just placed) — dramatic slam with ripple ring */
@@ -1710,6 +1802,41 @@
       transparent 28px
     );
   opacity: 0.4;
+}
+
+@keyframes mint-idle-hand-glow {
+  0%,
+  100% {
+    box-shadow:
+      0 16px 28px -22px rgba(14, 116, 144, 0.78),
+      0 10px 18px rgba(15, 23, 42, 0.08),
+      inset 0 1px 0 rgba(255, 255, 255, 0.76);
+  }
+  50% {
+    box-shadow:
+      0 0 0 2px rgba(56, 189, 248, 0.2),
+      0 18px 30px -22px rgba(14, 116, 144, 0.82),
+      0 0 20px rgba(56, 189, 248, 0.2),
+      inset 0 1px 0 rgba(255, 255, 255, 0.84);
+  }
+}
+
+@keyframes mint-idle-hand-card {
+  0%,
+  100% {
+    transform: translateY(0) scale(1);
+  }
+  50% {
+    transform: translateY(-3px) scale(1.01);
+  }
+}
+
+.mint-hand-area--idle-guide .mint-hand-tray {
+  animation: mint-idle-hand-glow 2.8s var(--mint-motion-ease-in-out) infinite;
+}
+
+.mint-hand-area--idle-guide .mint-hand-card:not(.mint-hand-card--used):not(.mint-hand-card--selected) {
+  animation: mint-idle-hand-card 2.8s var(--mint-motion-ease-in-out) infinite;
 }
 
 .mint-hand {
@@ -3826,6 +3953,76 @@
   animation: mint-stage-sparkle-float 14s ease-in-out infinite;
 }
 
+@keyframes mint-stage-particle-burst {
+  0% {
+    opacity: 0;
+    transform: translate3d(0, 8px, 0) scale(0.92);
+  }
+  30% {
+    opacity: 0.74;
+    transform: translate3d(0, -2px, 0) scale(1.02);
+  }
+  100% {
+    opacity: 0;
+    transform: translate3d(0, -12px, 0) scale(1.08);
+  }
+}
+
+@keyframes mint-stage-confetti-burst {
+  0% {
+    opacity: 0;
+    transform: translate3d(0, -10px, 0) scale(0.96);
+    background-position: center;
+  }
+  35% {
+    opacity: 0.64;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translate3d(0, 26px, 0) scale(1.02);
+    background-position: center 20px;
+  }
+}
+
+.mint-stage__burst-particles {
+  position: absolute;
+  inset: -8%;
+  pointer-events: none;
+  z-index: 3;
+  opacity: 0;
+  overflow: hidden;
+}
+
+.mint-stage__burst-particles::before,
+.mint-stage__burst-particles::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0;
+}
+
+.mint-stage__burst-particles::before {
+  background-image:
+    radial-gradient(4px 4px at 12% 74%, rgba(125, 211, 252, 0.9) 0%, transparent 70%),
+    radial-gradient(3px 3px at 22% 62%, rgba(56, 189, 248, 0.85) 0%, transparent 72%),
+    radial-gradient(5px 5px at 34% 72%, rgba(186, 230, 253, 0.9) 0%, transparent 74%),
+    radial-gradient(4px 4px at 46% 60%, rgba(250, 204, 21, 0.82) 0%, transparent 74%),
+    radial-gradient(5px 5px at 58% 70%, rgba(244, 114, 182, 0.82) 0%, transparent 74%),
+    radial-gradient(3px 3px at 70% 66%, rgba(59, 130, 246, 0.85) 0%, transparent 72%),
+    radial-gradient(4px 4px at 82% 73%, rgba(99, 102, 241, 0.82) 0%, transparent 74%);
+}
+
+.mint-stage__burst-particles::after {
+  background-image:
+    radial-gradient(5px 5px at 20% 18%, rgba(253, 224, 71, 0.8) 0%, transparent 72%),
+    radial-gradient(4px 4px at 35% 24%, rgba(56, 189, 248, 0.75) 0%, transparent 72%),
+    radial-gradient(5px 5px at 48% 15%, rgba(34, 197, 94, 0.74) 0%, transparent 72%),
+    radial-gradient(4px 4px at 62% 26%, rgba(251, 113, 133, 0.76) 0%, transparent 72%),
+    radial-gradient(5px 5px at 76% 16%, rgba(167, 139, 250, 0.76) 0%, transparent 72%);
+}
+
 /* ── Edge Glows — softer, wider ── */
 .mint-stage__glow {
   position: absolute;
@@ -3975,6 +4172,62 @@
 .mint-stage--impact-high.mint-stage--impact-burst .mint-stage__board > *,
 .mint-stage--impact-high.mint-stage--impact-burst .mint-stage__glow {
   animation-duration: 960ms;
+}
+
+@keyframes mint-stage-shake-medium {
+  0%, 100% { transform: translate3d(0, 0, 0); }
+  20% { transform: translate3d(-1px, 0, 0); }
+  40% { transform: translate3d(1px, -1px, 0); }
+  60% { transform: translate3d(-1px, 1px, 0); }
+  80% { transform: translate3d(1px, 0, 0); }
+}
+
+@keyframes mint-stage-shake-hard {
+  0%, 100% { transform: translate3d(0, 0, 0); }
+  16% { transform: translate3d(-2px, 1px, 0); }
+  32% { transform: translate3d(2px, -1px, 0); }
+  48% { transform: translate3d(-1px, -2px, 0); }
+  64% { transform: translate3d(2px, 1px, 0); }
+  80% { transform: translate3d(-1px, 1px, 0); }
+}
+
+.mint-stage--burst-soft .mint-stage__burst-particles,
+.mint-stage--burst-medium .mint-stage__burst-particles,
+.mint-stage--burst-hard .mint-stage__burst-particles,
+.mint-stage--burst-win .mint-stage__burst-particles {
+  opacity: 1;
+}
+
+.mint-stage--burst-soft .mint-stage__burst-particles::before {
+  animation: mint-stage-particle-burst var(--mint-motion-18f) var(--mint-motion-ease-out) both;
+}
+
+.mint-stage--burst-medium .mint-stage__burst-particles::before {
+  animation: mint-stage-particle-burst var(--mint-motion-24f) var(--mint-motion-ease-out) both;
+}
+
+.mint-stage--burst-medium .mint-stage__board {
+  animation: mint-stage-shake-medium var(--mint-motion-10f) var(--mint-motion-ease-out) both;
+}
+
+.mint-stage--burst-hard .mint-stage__board {
+  animation: mint-stage-shake-hard var(--mint-motion-12f) var(--mint-motion-ease-out) both;
+}
+
+.mint-stage--burst-hard .mint-stage__burst-particles::before {
+  animation: mint-stage-particle-burst var(--mint-motion-24f) var(--mint-motion-ease-out) both;
+}
+
+.mint-stage--burst-win .mint-stage__board {
+  animation: mint-stage-shake-medium var(--mint-motion-15f) var(--mint-motion-ease-out) both;
+}
+
+.mint-stage--burst-win .mint-stage__burst-particles::before {
+  animation: mint-stage-particle-burst calc(var(--mint-motion-24f) + 140ms) var(--mint-motion-ease-out) both;
+}
+
+.mint-stage--burst-win .mint-stage__burst-particles::after {
+  animation: mint-stage-confetti-burst 720ms var(--mint-motion-ease-out) both;
 }
 
 @keyframes mint-stage-impact-shell {
@@ -4569,6 +4822,16 @@
   .mint-stage--impact-burst .mint-stage__holo,
   .mint-stage--impact-burst .mint-stage__glow,
   .mint-stage--impact-burst .mint-stage__board > *,
+  .mint-stage--burst-medium .mint-stage__board,
+  .mint-stage--burst-hard .mint-stage__board,
+  .mint-stage--burst-win .mint-stage__board,
+  .mint-stage__burst-particles,
+  .mint-stage__burst-particles::before,
+  .mint-stage__burst-particles::after,
+  .mint-idle-guide,
+  .mint-cell--idle-guide,
+  .mint-hand-area--idle-guide .mint-hand-tray,
+  .mint-hand-area--idle-guide .mint-hand-card,
   .engine-drop-grid--active .engine-drop-grid__cell--droppable {
     animation: none !important;
     transition-duration: 0s !important;
@@ -4584,7 +4847,11 @@
   .mint-stage,
   .mint-stage::before,
   .mint-stage::after,
-  .mint-stage__atmo {
+  .mint-stage__atmo,
+  .mint-app-shell__bg,
+  .mint-app-shell__grid,
+  .mint-app-shell__noise,
+  .mint-app-shell__sparkles {
     animation: none !important;
   }
 
@@ -5090,12 +5357,28 @@
 [data-vfx="off"] .mint-pressable                     { transition-duration: 0s !important; }
 [data-vfx="off"] .mint-pressable:hover,
 [data-vfx="off"] .mint-pressable:active              { transform: none !important; }
+[data-vfx="off"] .mint-idle-guide,
+[data-vfx="off"] .mint-cell--idle-guide,
+[data-vfx="off"] .mint-hand-area--idle-guide .mint-hand-tray,
+[data-vfx="off"] .mint-hand-area--idle-guide .mint-hand-card {
+  animation: none !important;
+}
 [data-vfx="off"] .mint-ui-pressable::after           { animation: none !important; opacity: 0.12 !important; }
 [data-vfx="off"] .mint-stage--impact-burst           { animation: none !important; filter: none !important; }
 [data-vfx="off"] .mint-stage--impact-burst .mint-stage__holo,
 [data-vfx="off"] .mint-stage--impact-burst .mint-stage__glow,
 [data-vfx="off"] .mint-stage--impact-burst .mint-stage__board > * {
   animation: none !important;
+}
+[data-vfx="off"] .mint-stage--burst-medium .mint-stage__board,
+[data-vfx="off"] .mint-stage--burst-hard .mint-stage__board,
+[data-vfx="off"] .mint-stage--burst-win .mint-stage__board {
+  animation: none !important;
+}
+[data-vfx="off"] .mint-stage__burst-particles,
+[data-vfx="off"] .mint-stage__burst-particles::before,
+[data-vfx="off"] .mint-stage__burst-particles::after {
+  display: none !important;
 }
 
 /* ── LOW: Minimal — no foil/sparkle, shortened placement ────────────── */
@@ -5123,12 +5406,26 @@
 [data-vfx="low"] .mint-top-hud__turn-value            { animation: none !important; }
 [data-vfx="low"] .mint-nyano-reaction__burst-banner   { animation-duration: 420ms !important; }
 [data-vfx="low"] .mint-pressable                      { transition-duration: 120ms !important; }
+[data-vfx="low"] .mint-idle-guide,
+[data-vfx="low"] .mint-cell--idle-guide,
+[data-vfx="low"] .mint-hand-area--idle-guide .mint-hand-tray,
+[data-vfx="low"] .mint-hand-area--idle-guide .mint-hand-card {
+  animation: none !important;
+}
 [data-vfx="low"] .mint-ui-pressable::after            { animation-duration: 12s !important; opacity: 0.2 !important; }
 [data-vfx="low"] .mint-stage--impact-burst            { animation-duration: 280ms !important; }
 [data-vfx="low"] .mint-stage--impact-burst .mint-stage__holo,
 [data-vfx="low"] .mint-stage--impact-burst .mint-stage__glow,
 [data-vfx="low"] .mint-stage--impact-burst .mint-stage__board > * {
   animation: none !important;
+}
+[data-vfx="low"] .mint-stage--burst-medium .mint-stage__board,
+[data-vfx="low"] .mint-stage--burst-hard .mint-stage__board,
+[data-vfx="low"] .mint-stage--burst-win .mint-stage__board {
+  animation: none !important;
+}
+[data-vfx="low"] .mint-stage__burst-particles::after {
+  display: none !important;
 }
 
 /* ── MEDIUM: Standard — sparkle hidden, slower foils/glow ───────────── */
@@ -5141,6 +5438,9 @@
 [data-vfx="medium"] .mint-cell--selected              { animation-duration: 3s !important; }
 [data-vfx="medium"] .mint-top-hud::before             { animation-duration: 12s !important; opacity: 0.28; }
 [data-vfx="medium"] .mint-stage--impact-burst         { animation-duration: 520ms !important; }
+[data-vfx="medium"] .mint-stage__burst-particles::after {
+  animation-duration: 560ms !important;
+}
 
 /* ── HIGH: Full effects (current defaults). Sparkle re-enabled ──────── */
 [data-vfx="high"] .mint-stage__atmo                  { opacity: 0.42; }
@@ -5176,6 +5476,16 @@
   }
 }
 
+@keyframes mint-app-grid-pan {
+  0% { background-position: 0 0, 0 0; }
+  100% { background-position: 28px 22px, -22px -18px; }
+}
+
+@keyframes mint-app-noise-pan {
+  0% { background-position: 0 0, center; }
+  100% { background-position: 96px 72px, center; }
+}
+
 .mint-app-shell {
   position: relative;
   min-height: 100dvh;
@@ -5183,6 +5493,8 @@
 }
 
 .mint-app-shell__bg,
+.mint-app-shell__grid,
+.mint-app-shell__noise,
 .mint-app-shell__sparkles {
   position: fixed;
   inset: 0;
@@ -5190,14 +5502,37 @@
 }
 
 .mint-app-shell__bg {
-  z-index: -2;
+  z-index: -4;
   background:
     radial-gradient(circle at 14% 8%, rgba(255, 255, 255, 0.52), transparent 34%),
     radial-gradient(circle at 88% 18%, rgba(224, 231, 255, 0.38), transparent 36%),
     radial-gradient(circle at 16% 88%, rgba(221, 214, 254, 0.34), transparent 34%),
     linear-gradient(145deg, #bff0df 0%, #c6ebf5 42%, #d7caf5 74%, #c6e8ef 100%);
   background-size: 120% 120%, 120% 120%, 130% 130%, 100% 100%;
-  animation: mint-app-bg-pan 28s ease-in-out infinite alternate;
+  animation: mint-app-bg-pan var(--mint-bg-scroll-speed) ease-in-out infinite alternate;
+}
+
+.mint-app-shell__grid {
+  z-index: -3;
+  opacity: var(--mint-bg-grid-opacity);
+  background-image:
+    linear-gradient(to right, rgba(255, 255, 255, 0.26) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(125, 211, 252, 0.22) 1px, transparent 1px);
+  background-size: 48px 48px, 48px 48px;
+  mix-blend-mode: soft-light;
+  animation: mint-app-grid-pan calc(var(--mint-bg-scroll-speed) * 0.84) linear infinite;
+}
+
+.mint-app-shell__noise {
+  z-index: -2;
+  opacity: var(--mint-bg-noise-opacity);
+  background-image:
+    var(--mint-material-noise-url),
+    var(--mint-material-noise-fallback);
+  background-size: 256px 256px, auto;
+  background-repeat: repeat;
+  mix-blend-mode: overlay;
+  animation: mint-app-noise-pan calc(var(--mint-bg-scroll-speed) * 0.52) linear infinite;
 }
 
 .mint-app-shell__sparkles {
@@ -5407,10 +5742,17 @@
   cursor: pointer;
   color: #334155;
   text-shadow: 0 1px 0 rgba(255, 255, 255, 0.56);
+  min-width: 44px;
+  min-height: 44px;
   background: linear-gradient(160deg, rgba(255, 255, 255, 0.78), rgba(229, 244, 255, 0.62));
   box-shadow:
     0 16px 28px -24px rgba(15, 23, 42, 0.86),
     inset 0 1px 0 rgba(255, 255, 255, 0.84);
+  transition:
+    transform var(--mint-press-transition),
+    box-shadow var(--mint-press-transition),
+    border-color var(--mint-press-transition),
+    filter var(--mint-press-transition);
 }
 
 .mint-ui-pressable::before,
@@ -5527,6 +5869,33 @@
 .mint-ui-pressable--disabled {
   opacity: 0.55;
   cursor: not-allowed;
+}
+
+@keyframes mint-idle-guide-pulse {
+  0%,
+  100% {
+    transform: translateY(0) scale(1);
+    box-shadow:
+      0 14px 24px -22px rgba(14, 116, 144, 0.42),
+      0 0 0 0 rgba(56, 189, 248, 0);
+  }
+  50% {
+    transform: translateY(-1px) scale(1.012);
+    box-shadow:
+      0 18px 28px -20px rgba(14, 116, 144, 0.58),
+      0 0 0 3px rgba(56, 189, 248, 0.2);
+  }
+}
+
+.mint-idle-guide {
+  animation: mint-idle-guide-pulse 2.8s var(--mint-motion-ease-in-out) infinite;
+}
+
+.mint-idle-guide--primary {
+  border-color: rgba(125, 211, 252, 0.82);
+  box-shadow:
+    0 18px 28px -22px rgba(14, 116, 144, 0.56),
+    0 0 0 2px rgba(125, 211, 252, 0.2);
 }
 
 @keyframes mint-ui-pressable-sheen {
@@ -5701,13 +6070,37 @@
 
 @media (prefers-reduced-motion: reduce) {
   .mint-app-shell__bg,
+  .mint-app-shell__grid,
+  .mint-app-shell__noise,
   .mint-app-shell__sparkles {
     animation: none !important;
   }
 }
 
+[data-vfx="off"] .mint-app-shell__bg,
+[data-vfx="off"] .mint-app-shell__grid,
+[data-vfx="off"] .mint-app-shell__noise,
+[data-vfx="off"] .mint-app-shell__sparkles {
+  animation: none !important;
+}
+
+[data-vfx="off"] .mint-app-shell__grid,
 [data-vfx="off"] .mint-app-shell__sparkles {
   display: none !important;
+}
+
+[data-vfx="off"] .mint-app-shell__noise {
+  opacity: 0.1;
+}
+
+[data-vfx="low"] .mint-app-shell__grid {
+  opacity: calc(var(--mint-bg-grid-opacity) * 0.65);
+  animation-duration: calc(var(--mint-bg-scroll-speed) * 1.2);
+}
+
+[data-vfx="low"] .mint-app-shell__noise {
+  opacity: calc(var(--mint-bg-noise-opacity) * 0.72);
+  animation-duration: calc(var(--mint-bg-scroll-speed) * 0.84);
 }
 
 /* ── App Screens: Home / Arena / Decks / Start ───────────────────────── */
@@ -5793,6 +6186,7 @@
   font-size: 12px;
   color: #475569;
   font-weight: 700;
+  min-height: 1.4em;
 }
 
 .mint-home-difficulty {
@@ -7219,6 +7613,13 @@
   border-color: rgba(191, 219, 254, 0.62);
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.94), rgba(219, 234, 254, 0.82));
+}
+
+[data-theme="mint"] .mint-board-view--idle-guide .mint-prompt {
+  border-color: rgba(56, 189, 248, 0.72);
+  box-shadow:
+    0 0 0 2px rgba(125, 211, 252, 0.16),
+    0 10px 18px -16px rgba(14, 116, 144, 0.42);
 }
 
 [data-theme="mint"] .events-page .btn,

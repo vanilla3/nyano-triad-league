@@ -1,0 +1,38 @@
+{
+  "defaults": {
+    "model": "gemini-3-pro-image-preview",
+    "size": "1K",
+    "aspect": "1:1",
+    "safety": "low"
+  },
+  "jobs": [
+    {
+      "id": "BG-001",
+      "out": "apps/web/public/assets/gen/bg_bokeh_soft_1024_v1.png",
+      "prompt": "soft pastel bokeh background texture, very subtle light blobs, airy, cute mobile game UI style, no text, no characters, seamless tile feel but can be non-tile, gentle gradient, low contrast"
+    },
+    {
+      "id": "BG-002",
+      "out": "apps/web/public/assets/gen/bg_sparkle_tile_512_v1.png",
+      "prompt": "very subtle sparkle dust tile texture, pastel white sparkles, low density, transparent background, seamless tile, cute mobile game UI style, no text, no characters"
+    },
+    {
+      "id": "FX-001",
+      "out": "apps/web/public/assets/gen/fx_particle_star_512_v1.png",
+      "size": "512",
+      "prompt": "single cute star particle sprite, pastel gradient fill, thick outline, glossy, transparent background, no text, simple, high readability, mobile game VFX sprite"
+    },
+    {
+      "id": "FX-002",
+      "out": "apps/web/public/assets/gen/fx_particle_heart_512_v1.png",
+      "size": "512",
+      "prompt": "single cute heart particle sprite, pastel gradient fill, thick outline, glossy, transparent background, no text, simple, high readability, mobile game VFX sprite"
+    },
+    {
+      "id": "FX-003",
+      "out": "apps/web/public/assets/gen/fx_confetti_strip_512_v1.png",
+      "aspect": "2:1",
+      "prompt": "confetti strip sprite sheet, multiple small rounded confetti pieces arranged neatly, pastel colors, thick outline, glossy, transparent background, no text, mobile game VFX sprite"
+    }
+  ]
+}

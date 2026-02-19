@@ -58,6 +58,8 @@ export interface BoardViewMintProps {
   onCellDragHover?: (cell: number | null) => void;
   /** Optional selected-card preview for mouse hover ghost placement hint */
   selectedCardPreview?: CardData | null;
+  /** Idle-only hint for selectable cells */
+  idleGuideSelectables?: boolean;
 }
 
 // ── Helpers ────────────────────────────────────────────────────────────
@@ -125,6 +127,7 @@ interface MintCellProps {
   onHoverEnd?: () => void;
   ghostCard?: CardData | null;
   ghostOwner?: PlayerIndex | null;
+  idleGuide?: boolean;
 }
 
 function MintCell({
@@ -152,6 +155,7 @@ function MintCell({
   onHoverEnd,
   ghostCard,
   ghostOwner,
+  idleGuide,
 }: MintCellProps) {
   const hasCard = !!cell?.card;
   const owner = hasCard ? (cell.owner as PlayerIndex) : null;
@@ -172,6 +176,7 @@ function MintCell({
   if (isSelected && !hasCard) classes.push("mint-cell--selected");
   if (isPressed && !hasCard) classes.push("mint-cell--pressed");
   if (ghostCard && isSelectable && !hasCard) classes.push("mint-cell--hover-ghost");
+  if (idleGuide && isSelectable && !hasCard) classes.push("mint-cell--idle-guide");
   if (dragDropEnabled && !hasCard && isSelectable) classes.push("mint-cell--drop-ready");
   if (isPlaced) classes.push("mint-cell--placed");
   if (isFlipped) {
@@ -359,6 +364,7 @@ export function BoardViewMint({
   onCellDrop,
   onCellDragHover,
   selectedCardPreview = null,
+  idleGuideSelectables = false,
 }: BoardViewMintProps) {
   const gridRef = React.useRef<HTMLDivElement>(null);
   const [pressedCell, setPressedCell] = React.useState<number | null>(null);
@@ -464,6 +470,7 @@ export function BoardViewMint({
                   onHoverEnd={() => setHoveredCell((prev) => (prev === idx ? null : prev))}
                   ghostCard={hoveredCell === idx ? selectedCardPreview : null}
                   ghostOwner={typeof currentPlayer === "number" ? currentPlayer : 0}
+                  idleGuide={idleGuideSelectables}
                 />
               );
             })}
