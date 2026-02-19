@@ -245,7 +245,7 @@
 
 ### Residual follow-ups
 - [x] Add dedicated Replay UX test for rulesetId mismatch warning pill (rk/cr fallback mismatch case).
-- [ ] Consider splitting MintRulesetPicker visual primitives into mint theme CSS tokens if further polish is required.
+- [x] Consider splitting MintRulesetPicker visual primitives into mint theme CSS tokens if further polish is required.
 
 
 ## Update 2026-02-17 (follow-up)

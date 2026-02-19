@@ -6706,20 +6706,58 @@
 
 /* Match setup: rules picker (WO027 follow-up) */
 .mint-ruleset-picker {
+  --mint-ruleset-panel-border: rgba(191, 219, 254, 0.72);
+  --mint-ruleset-panel-bg:
+    radial-gradient(circle at 8% -20%, rgba(167, 243, 208, 0.25), transparent 54%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(239, 246, 255, 0.84));
+  --mint-ruleset-title-color: #334155;
+  --mint-ruleset-text-strong: #1f2937;
+  --mint-ruleset-text: #475569;
+  --mint-ruleset-text-soft: #64748b;
+  --mint-ruleset-summary-border: rgba(148, 163, 184, 0.3);
+  --mint-ruleset-summary-bg: rgba(255, 255, 255, 0.86);
+  --mint-ruleset-classic-border: rgba(148, 163, 184, 0.25);
+  --mint-ruleset-classic-bg: rgba(255, 255, 255, 0.9);
+  --mint-ruleset-family-border: rgba(148, 163, 184, 0.26);
+  --mint-ruleset-family-bg: rgba(255, 255, 255, 0.8);
+  --mint-ruleset-family-button-border: rgba(148, 163, 184, 0.35);
+  --mint-ruleset-family-button-bg: linear-gradient(180deg, rgba(255, 255, 255, 0.95), rgba(241, 245, 249, 0.8));
+  --mint-ruleset-family-button-active-border: rgba(16, 185, 129, 0.6);
+  --mint-ruleset-family-button-active-bg: linear-gradient(180deg, rgba(220, 252, 231, 0.95), rgba(167, 243, 208, 0.78));
+  --mint-ruleset-family-button-active-shadow:
+    0 0 0 2px rgba(16, 185, 129, 0.2),
+    0 8px 16px -14px rgba(5, 150, 105, 0.75);
+  --mint-ruleset-family-button-text: #334155;
+  --mint-ruleset-family-button-active-text: #065f46;
+  --mint-ruleset-chip-border: rgba(148, 163, 184, 0.36);
+  --mint-ruleset-chip-bg: rgba(255, 255, 255, 0.9);
+  --mint-ruleset-chip-active-border: rgba(56, 189, 248, 0.62);
+  --mint-ruleset-chip-active-bg: linear-gradient(180deg, rgba(224, 242, 254, 0.95), rgba(186, 230, 253, 0.82));
+  --mint-ruleset-chip-active-shadow: 0 0 0 2px rgba(56, 189, 248, 0.16);
+  --mint-ruleset-chip-text: #334155;
+  --mint-ruleset-chip-active-text: #0c4a6e;
+  --mint-ruleset-accent-color: #0ea5e9;
+  --mint-ruleset-toggle-border: rgba(148, 163, 184, 0.32);
+  --mint-ruleset-toggle-bg: rgba(248, 250, 252, 0.84);
+  --mint-ruleset-toggle-text: #334155;
+  --mint-ruleset-help-border: rgba(186, 230, 253, 0.8);
+  --mint-ruleset-help-bg: rgba(240, 249, 255, 0.8);
+  --mint-ruleset-help-title: #0f766e;
+  --mint-ruleset-help-text: #475569;
+  --mint-ruleset-disabled-opacity: 0.55;
+  --mint-ruleset-vfx-off-bg: rgba(255, 255, 255, 0.94);
   display: grid;
   gap: 10px;
   border-radius: 16px;
-  border: 1px solid rgba(191, 219, 254, 0.72);
-  background:
-    radial-gradient(circle at 8% -20%, rgba(167, 243, 208, 0.25), transparent 54%),
-    linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(239, 246, 255, 0.84));
+  border: 1px solid var(--mint-ruleset-panel-border);
+  background: var(--mint-ruleset-panel-bg);
   padding: 10px;
 }
 
 .mint-ruleset-picker__title {
   font-size: 12px;
   font-weight: 800;
-  color: #334155;
+  color: var(--mint-ruleset-title-color);
 }
 
 .mint-ruleset-picker__family {
@@ -6728,58 +6766,56 @@
   flex-wrap: wrap;
   gap: 6px;
   border-radius: 14px;
-  border: 1px solid rgba(148, 163, 184, 0.26);
-  background: rgba(255, 255, 255, 0.8);
+  border: 1px solid var(--mint-ruleset-family-border);
+  background: var(--mint-ruleset-family-bg);
   padding: 6px;
 }
 
 .mint-ruleset-picker__family-btn {
   min-height: 40px;
   border-radius: 10px;
-  border: 1px solid rgba(148, 163, 184, 0.35);
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.95), rgba(241, 245, 249, 0.8));
+  border: 1px solid var(--mint-ruleset-family-button-border);
+  background: var(--mint-ruleset-family-button-bg);
   padding: 9px 12px;
   font-size: 12px;
   font-weight: 800;
-  color: #334155;
+  color: var(--mint-ruleset-family-button-text);
 }
 
 .mint-ruleset-picker__family-btn.is-active {
-  border-color: rgba(16, 185, 129, 0.6);
-  color: #065f46;
-  background: linear-gradient(180deg, rgba(220, 252, 231, 0.95), rgba(167, 243, 208, 0.78));
-  box-shadow:
-    0 0 0 2px rgba(16, 185, 129, 0.2),
-    0 8px 16px -14px rgba(5, 150, 105, 0.75);
+  border-color: var(--mint-ruleset-family-button-active-border);
+  color: var(--mint-ruleset-family-button-active-text);
+  background: var(--mint-ruleset-family-button-active-bg);
+  box-shadow: var(--mint-ruleset-family-button-active-shadow);
 }
 
 .mint-ruleset-picker__family-btn:disabled,
 .mint-ruleset-picker__chip:disabled,
 .mint-ruleset-picker__toggle input:disabled {
-  opacity: 0.55;
+  opacity: var(--mint-ruleset-disabled-opacity);
   cursor: not-allowed;
 }
 
 .mint-ruleset-picker__summary {
   border-radius: 12px;
-  border: 1px solid rgba(148, 163, 184, 0.3);
-  background: rgba(255, 255, 255, 0.86);
+  border: 1px solid var(--mint-ruleset-summary-border);
+  background: var(--mint-ruleset-summary-bg);
   padding: 8px 10px;
   font-size: 12px;
-  color: #475569;
+  color: var(--mint-ruleset-text);
 }
 
 .mint-ruleset-picker__summary-label {
   font-weight: 800;
-  color: #1f2937;
+  color: var(--mint-ruleset-text-strong);
 }
 
 .mint-ruleset-picker__classic {
   display: grid;
   gap: 10px;
   border-radius: 14px;
-  border: 1px solid rgba(148, 163, 184, 0.25);
-  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid var(--mint-ruleset-classic-border);
+  background: var(--mint-ruleset-classic-bg);
   padding: 10px;
 }
 
@@ -6795,19 +6831,19 @@
 .mint-ruleset-picker__chip {
   min-height: 36px;
   border-radius: 999px;
-  border: 1px solid rgba(148, 163, 184, 0.36);
-  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid var(--mint-ruleset-chip-border);
+  background: var(--mint-ruleset-chip-bg);
   padding: 7px 12px;
   font-size: 12px;
   font-weight: 700;
-  color: #334155;
+  color: var(--mint-ruleset-chip-text);
 }
 
 .mint-ruleset-picker__chip.is-active {
-  border-color: rgba(56, 189, 248, 0.62);
-  color: #0c4a6e;
-  background: linear-gradient(180deg, rgba(224, 242, 254, 0.95), rgba(186, 230, 253, 0.82));
-  box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.16);
+  border-color: var(--mint-ruleset-chip-active-border);
+  color: var(--mint-ruleset-chip-active-text);
+  background: var(--mint-ruleset-chip-active-bg);
+  box-shadow: var(--mint-ruleset-chip-active-shadow);
 }
 
 .mint-ruleset-picker__preset-grid .mint-ruleset-picker__chip {
@@ -6823,7 +6859,7 @@
   font-size: 10px;
   font-weight: 700;
   line-height: 1.25;
-  color: #64748b;
+  color: var(--mint-ruleset-text-soft);
 }
 
 .mint-ruleset-picker__custom-grid {
@@ -6840,7 +6876,7 @@
   font-size: 11px;
   font-weight: 800;
   letter-spacing: 0.04em;
-  color: #64748b;
+  color: var(--mint-ruleset-text-soft);
   text-transform: uppercase;
 }
 
@@ -6850,21 +6886,21 @@
   gap: 6px;
   min-height: 34px;
   border-radius: 10px;
-  border: 1px solid rgba(148, 163, 184, 0.32);
-  background: rgba(248, 250, 252, 0.84);
+  border: 1px solid var(--mint-ruleset-toggle-border);
+  background: var(--mint-ruleset-toggle-bg);
   padding: 6px 10px;
   font-size: 12px;
-  color: #334155;
+  color: var(--mint-ruleset-toggle-text);
 }
 
 .mint-ruleset-picker__toggle input {
-  accent-color: #0ea5e9;
+  accent-color: var(--mint-ruleset-accent-color);
 }
 
 .mint-ruleset-picker__help {
   border-radius: 12px;
-  border: 1px solid rgba(186, 230, 253, 0.8);
-  background: rgba(240, 249, 255, 0.8);
+  border: 1px solid var(--mint-ruleset-help-border);
+  background: var(--mint-ruleset-help-bg);
   padding: 8px 10px;
 }
 
@@ -6872,13 +6908,13 @@
   cursor: pointer;
   font-size: 12px;
   font-weight: 700;
-  color: #0f766e;
+  color: var(--mint-ruleset-help-title);
 }
 
 .mint-ruleset-picker__help-body {
   margin-top: 6px;
   font-size: 12px;
-  color: #475569;
+  color: var(--mint-ruleset-help-text);
   line-height: 1.45;
 }
 
@@ -6886,10 +6922,10 @@
 .mint-ruleset-picker__chip,
 .mint-ruleset-picker__toggle {
   transition:
-    transform 140ms ease,
-    border-color 140ms ease,
-    box-shadow 180ms ease,
-    background-color 140ms ease;
+    transform var(--mint-motion-8f) var(--mint-motion-ease-out),
+    border-color var(--mint-motion-8f) var(--mint-motion-ease-out),
+    box-shadow var(--mint-motion-10f) var(--mint-motion-ease-out),
+    background-color var(--mint-motion-8f) var(--mint-motion-ease-out);
 }
 
 [data-vfx="off"] .mint-ruleset-picker,
@@ -6897,7 +6933,7 @@
 [data-vfx="off"] .mint-ruleset-picker__summary,
 [data-vfx="off"] .mint-ruleset-picker__family-btn,
 [data-vfx="off"] .mint-ruleset-picker__chip {
-  background: rgba(255, 255, 255, 0.94);
+  background: var(--mint-ruleset-vfx-off-bg);
 }
 
 @media (prefers-reduced-motion: reduce) {
