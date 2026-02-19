@@ -1,98 +1,31 @@
 {
-  "version": 2,
-  "defaults": {
-    "model": "gemini-3-pro-image-preview",
-    "aspect": "1:1",
-    "size": "1K",
-    "responseModalities": ["Image"],
-    "alsoWebp": false
-  },
-  "jobs": [
+  "model": "gemini-3-pro-image-preview",
+  "size": "1024x1024",
+  "output_dir": "apps/web/public/assets/gen",
+  "files": [
     {
-      "id": "icon_arena_swords",
-      "out": "apps/web/public/assets/gen/icon_arena_swords_v2.png",
-      "prompt": "soft pastel line icon of crossed swords, cute mobile game UI icon, thick outline, subtle gradient fill, no text, centered, transparent background"
+      "name": "ui_sheen_soft_512_v1.png",
+      "size": "512x512",
+      "prompt": "A soft glossy specular highlight overlay (alpha-friendly) for pastel glass UI buttons. Transparent background, only the sheen. Diagonal gentle gradient from top-left to center with subtle bloom. No text. No icons. Clean, minimal, cute mobile game UI style.",
+      "notes": "Used as ::after overlay on mint buttons/pills. Prefer semi-transparent white sheen, smooth edges."
     },
     {
-      "id": "icon_decks_cards",
-      "out": "apps/web/public/assets/gen/icon_decks_cards_v2.png",
-      "prompt": "soft pastel line icon of a small stack of playing cards, cute mobile game UI icon, thick outline, subtle gradient fill, no text, centered, transparent background"
+      "name": "ui_rim_highlight_512_v1.png",
+      "size": "512x512",
+      "prompt": "A rim highlight ring overlay (alpha-friendly) for rounded rectangle buttons. Transparent background, only the rim highlight. Subtle bright edge on top and softer darker edge on bottom, like a puffy glass button. No text. No icons. Cute pastel mobile game UI.",
+      "notes": "Used as ::before overlay on mint buttons/panels to sell thickness."
     },
     {
-      "id": "icon_replay_video",
-      "out": "apps/web/public/assets/gen/icon_replay_video_v2.png",
-      "prompt": "soft pastel line icon of a film strip / replay symbol, cute mobile game UI icon, thick outline, subtle gradient fill, no text, centered, transparent background"
+      "name": "fx_ripple_ring_512_v1.png",
+      "size": "512x512",
+      "prompt": "A circular ripple ring effect sprite (alpha-friendly). Transparent background, thin soft ring with gentle glow, suitable for a placement shockwave on a board cell. Pastel light cyan/white glow. No text.",
+      "notes": "Optional. Can be replaced by pure CSS radial-gradient."
     },
     {
-      "id": "icon_stream_tv",
-      "out": "apps/web/public/assets/gen/icon_stream_tv_v2.png",
-      "prompt": "soft pastel line icon of a small TV with antenna, cute mobile game UI icon, thick outline, subtle gradient fill, no text, centered, transparent background"
-    },
-    {
-      "id": "sticker_crown",
-      "out": "apps/web/public/assets/gen/sticker_crown_v1.png",
-      "prompt": "cute pastel crown sticker, thick outline, subtle shine, no text, centered, transparent background"
-    },
-    {
-      "id": "sticker_paw",
-      "out": "apps/web/public/assets/gen/sticker_paw_v1.png",
-      "prompt": "cute pastel paw print sticker, thick outline, subtle shine, no text, centered, transparent background"
-    },
-    {
-      "id": "badge_done",
-      "out": "apps/web/public/assets/gen/badge_done_v2.png",
-      "aspect": "2:1",
-      "size": "1K",
-      "prompt": "small capsule badge (no text), pastel green glass badge, thick outline, subtle shine, cute mobile game UI, centered, transparent background"
-    },
-    {
-      "id": "badge_beta",
-      "out": "apps/web/public/assets/gen/badge_beta_v1.png",
-      "aspect": "2:1",
-      "size": "1K",
-      "prompt": "small capsule badge (no text), pastel purple glass badge, thick outline, subtle shine, cute mobile game UI, centered, transparent background"
-    },
-    {
-      "id": "bg_cloud_corners_16x9",
-      "out": "apps/web/public/assets/gen/bg_cloud_corners_16x9_v2.png",
-      "aspect": "16:9",
-      "size": "2K",
-      "prompt": "soft pastel sky gradient background with fluffy white clouds in the corners, subtle sparkles, very light paw print pattern, cute mobile game UI background, no text, 16:9"
-    },
-    {
-      "id": "paw_pattern_tile",
-      "out": "apps/web/public/assets/gen/paw_pattern_tile_512_v1.png",
-      "aspect": "1:1",
-      "size": "1K",
-      "prompt": "seamless tileable paw print pattern, very subtle pastel outlines, low contrast, transparent background, no text"
-    },
-    {
-      "id": "sparkle_bokeh_tile",
-      "out": "apps/web/public/assets/gen/sparkle_bokeh_tile_1024_v1.png",
-      "aspect": "1:1",
-      "size": "1K",
-      "prompt": "sparkle bokeh overlay texture, pastel, subtle, transparent background, no text, tileable"
-    },
-    {
-      "id": "board_tray",
-      "out": "apps/web/public/assets/gen/match_board_tray_v1.png",
-      "aspect": "4:3",
-      "size": "2K",
-      "prompt": "glass tray panel background for a 3x3 card board, cute pastel mobile game UI, rounded corners, inner highlight, subtle shadow, no text, mostly empty center area, transparent background"
-    },
-    {
-      "id": "cell_frame",
-      "out": "apps/web/public/assets/gen/match_cell_frame_v1.png",
-      "aspect": "1:1",
-      "size": "1K",
-      "prompt": "single square cell frame for a card slot, glassmorphism, pastel gradient border, inner bevel, subtle shine, no text, centered, transparent background"
-    },
-    {
-      "id": "prompt_bubble",
-      "out": "apps/web/public/assets/gen/match_prompt_bubble_v1.png",
-      "aspect": "4:1",
-      "size": "2K",
-      "prompt": "rounded pill prompt bubble background, glassmorphism, pastel gradient border, inner highlight, subtle shine, no text, centered, transparent background"
+      "name": "fx_burst_star_512_v1.png",
+      "size": "512x512",
+      "prompt": "A small starburst / sparkle burst effect sprite (alpha-friendly). Transparent background, cute pastel star-shaped burst with soft glow. No text.",
+      "notes": "Optional. Used for flip burst accents."
     }
   ]
 }

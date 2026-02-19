@@ -4,7 +4,9 @@
     "model": "gemini-3-pro-image-preview",
     "aspect": "1:1",
     "size": "1K",
-    "responseModalities": ["Image"],
+    "responseModalities": [
+      "Image"
+    ],
     "alsoWebp": false
   },
   "jobs": [
@@ -47,5 +49,6 @@
       "size": "2K",
       "prompt": "soft pastel sky gradient background with fluffy white clouds in the corners, subtle sparkles, very light paw print pattern, cute mobile game UI background, no text, 16:9"
     }
-  ]
+  ],
+  "model": "gemini-3-pro-image-preview"
 }
