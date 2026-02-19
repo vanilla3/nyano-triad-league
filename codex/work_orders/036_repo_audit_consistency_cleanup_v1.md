@@ -63,7 +63,7 @@ Codexはローカルで以下を実行して、落ちるところを修正する
 - `pnpm -w install`
 - `pnpm -C apps/web lint`
 - `pnpm -C apps/web build`
-- `pnpm -C apps/web test:e2e`
+- `pnpm -C apps/web e2e`
 
 ## 受け入れ基準
 

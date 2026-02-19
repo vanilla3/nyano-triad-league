@@ -72,7 +72,7 @@ Codexが迷わず改善を進められるように「作業単位（Work Order�
   - `pnpm -C apps/web lint`
   - `pnpm -C apps/web build`
 - E2E
-  - `pnpm -C apps/web test:e2e`
+  - `pnpm -C apps/web e2e`
 - 手動チェック（最低限）
   - `Home → Arena → Match` の遷移が破綻しない
   - Matchでカード選択→配置→めくりが気持ちよく、情報が読み取れる

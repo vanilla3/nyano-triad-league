@@ -8,7 +8,7 @@
 
 ## 前提
 
-- 既に Playwright のE2Eが存在する（`pnpm -C apps/web test:e2e`）
+- 既に Playwright のE2Eが存在する（`pnpm -C apps/web e2e`）
 - ここでの目的は「UIが大きく崩れていない」ことの検知
 
 ## 実装タスク
@@ -38,7 +38,7 @@
 
 ## 受け入れ基準
 
-- CI/ローカルで `pnpm -C apps/web test:e2e` が通る
+- CI/ローカルで `pnpm -C apps/web e2e` が通る
 - 盤面の大きな崩れを検知できる
 - 更新フローがREADMEに追記されている（必要なら）
 
