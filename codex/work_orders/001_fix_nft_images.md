@@ -1,4 +1,4 @@
-# Work Order: 001 Fix NFT image non-display (DOM/Pixi consistency)
+﻿# Work Order: 001 Fix NFT image non-display (DOM/Pixi consistency)
 
 ## 1) 背景 / 目的
 現象：
@@ -10,10 +10,10 @@
 - URL解決ロジックを共有し、再発を防ぐ
 
 ## 2) 成果物
-- [ ] 画像URL解決の共有関数（単一ソース）
-- [ ] DOM/Pixiの両方が同じ解決結果になる
-- [ ] 既存テスト更新 + 追加テスト
-- [ ] 失敗時UI（説明・再試行）を維持/強化
+- [x] 画像URL解決の共有関数（単一ソース）
+- [x] DOM/Pixiの両方が同じ解決結果になる
+- [x] 既存テスト更新 + 追加テスト
+- [x] 失敗時UI（説明・再試行）を維持/強化
 
 ## 3) 要件
 ### MUST
@@ -56,11 +56,11 @@
 - 既存の `tokenImageUrls.ts` / `useNyanoTokenMetadata` はラッパー化して重複排除
 
 ## 8) タスク
-- [ ] 001-A: URL解決純関数 `resolveNyanoImageUrl()` を追加
-- [ ] 001-B: NyanoCardArt を新関数へ切替
-- [ ] 001-C: textureResolver を新関数へ切替
-- [ ] 001-D: テスト追加（DOM/Pixi一致、edge tokenId、cache）
-- [ ] 001-E: 低回線を想定したリトライ/プリロード制御（必要最小限）
+- [x] 001-A: URL解決純関数 `resolveNyanoImageUrl()` を追加
+- [x] 001-B: NyanoCardArt を新関数へ切替
+- [x] 001-C: textureResolver を新関数へ切替
+- [x] 001-D: テスト追加（DOM/Pixi一致、edge tokenId、cache）
+- [x] 001-E: 低回線を想定したリトライ/プリロード制御（必要最小限）
 
 ## 9) 検証
 - `pnpm lint`
