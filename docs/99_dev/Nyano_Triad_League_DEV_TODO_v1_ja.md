@@ -497,3 +497,4 @@
 - [x] 2026-02-19 WO039-043 validation refresh: `pnpm.cmd -C apps/web lint` / `pnpm.cmd -C apps/web typecheck` / `pnpm.cmd -C apps/web test --` / `pnpm.cmd -C apps/web build` / `pnpm.cmd -C apps/web e2e:ux` all passed (Vitest 173 files/1584 tests, Playwright UX 15 tests).
 - [x] 2026-02-19 WO001 status sync: `codex/work_orders/001_fix_nft_images.md` の成果物/タスクを実装実態に合わせて完了化（shared resolver + DOM/Pixi統一 + retry/preload + tests）。
 - [x] 2026-02-19 WO002 status sync: `codex/work_orders/002_fix_replay_share.md` の成果物/タスクを実装実態に合わせて完了化（BASE_URL対応 share URL + Replay復旧導線 + replay bundle versioning + tests）。
+- [x] 2026-02-19 WO003-A scaffold: added Pixi asset scaffold directories (`apps/web/public/assets/engine/{board,cell,card,fx}`) plus BASE_URL-aware manifest helper (`apps/web/src/engine/renderers/pixi/engineAssetManifest.ts`) and unit test (`apps/web/src/engine/__tests__/engineAssetManifest.test.ts`).
