@@ -1,7 +1,7 @@
 import React from "react";
 import { Link, type LinkProps } from "react-router-dom";
 
-type MintTone = "default" | "primary" | "soft" | "ghost";
+type MintTone = "default" | "primary" | "soft" | "ghost" | "danger";
 type MintSize = "sm" | "md" | "lg";
 
 type MintPressableCommonProps = {
@@ -30,6 +30,7 @@ function toneClassName(tone: MintTone): string {
   if (tone === "primary") return "mint-ui-pressable--primary";
   if (tone === "soft") return "mint-ui-pressable--soft";
   if (tone === "ghost") return "mint-ui-pressable--ghost";
+  if (tone === "danger") return "mint-ui-pressable--danger";
   return "mint-ui-pressable--default";
 }
 
@@ -50,9 +51,39 @@ function buildClasses(props: MintPressableCommonProps): string {
 }
 
 export function MintPressable(props: MintPressableProps) {
+  const [pressed, setPressed] = React.useState(false);
   const classes = buildClasses(props);
+  const pressAttrs = {
+    "data-pressed": pressed ? "true" : undefined,
+    onPointerDown: () => setPressed(true),
+    onPointerUp: () => setPressed(false),
+    onPointerCancel: () => setPressed(false),
+    onPointerLeave: () => setPressed(false),
+    onKeyDown: (event: React.KeyboardEvent) => {
+      if (event.key === " " || event.key === "Enter") setPressed(true);
+    },
+    onKeyUp: () => setPressed(false),
+    onBlur: () => setPressed(false),
+  } as const;
+
   if ("to" in props && props.to !== undefined) {
-    const { to, replace, state, target, rel, onClick, disabled, children } = props;
+    const {
+      to,
+      replace,
+      state,
+      target,
+      rel,
+      onClick,
+      disabled,
+      onPointerDown,
+      onPointerUp,
+      onPointerCancel,
+      onPointerLeave,
+      onKeyDown,
+      onKeyUp,
+      onBlur,
+      children,
+    } = props;
     if (disabled) {
       return (
         <span aria-disabled="true" className={`${classes} mint-ui-pressable--disabled`}>
@@ -69,15 +100,92 @@ export function MintPressable(props: MintPressableProps) {
         rel={rel}
         onClick={onClick}
         className={classes}
+        data-pressed={pressAttrs["data-pressed"]}
+        onPointerDown={(event) => {
+          onPointerDown?.(event);
+          pressAttrs.onPointerDown();
+        }}
+        onPointerUp={(event) => {
+          onPointerUp?.(event);
+          pressAttrs.onPointerUp();
+        }}
+        onPointerCancel={(event) => {
+          onPointerCancel?.(event);
+          pressAttrs.onPointerCancel();
+        }}
+        onPointerLeave={(event) => {
+          onPointerLeave?.(event);
+          pressAttrs.onPointerLeave();
+        }}
+        onKeyDown={(event) => {
+          onKeyDown?.(event);
+          pressAttrs.onKeyDown(event);
+        }}
+        onKeyUp={(event) => {
+          onKeyUp?.(event);
+          pressAttrs.onKeyUp();
+        }}
+        onBlur={(event) => {
+          onBlur?.(event);
+          pressAttrs.onBlur();
+        }}
       >
         {children}
       </Link>
     );
   }
 
-  const { type, children, tone: _tone, size: _size, fullWidth: _fullWidth, className: _className, ...buttonProps } = props;
+  const {
+    type,
+    children,
+    tone: _tone,
+    size: _size,
+    fullWidth: _fullWidth,
+    className: _className,
+    onPointerDown,
+    onPointerUp,
+    onPointerCancel,
+    onPointerLeave,
+    onKeyDown,
+    onKeyUp,
+    onBlur,
+    ...buttonProps
+  } = props;
   return (
-    <button type={type ?? "button"} {...buttonProps} className={classes}>
+    <button
+      type={type ?? "button"}
+      {...buttonProps}
+      className={classes}
+      data-pressed={pressAttrs["data-pressed"]}
+      onPointerDown={(event) => {
+        onPointerDown?.(event);
+        pressAttrs.onPointerDown();
+      }}
+      onPointerUp={(event) => {
+        onPointerUp?.(event);
+        pressAttrs.onPointerUp();
+      }}
+      onPointerCancel={(event) => {
+        onPointerCancel?.(event);
+        pressAttrs.onPointerCancel();
+      }}
+      onPointerLeave={(event) => {
+        onPointerLeave?.(event);
+        pressAttrs.onPointerLeave();
+      }}
+      onKeyDown={(event) => {
+        onKeyDown?.(event);
+        pressAttrs.onKeyDown(event);
+      }}
+      onKeyUp={(event) => {
+        onKeyUp?.(event);
+        pressAttrs.onKeyUp();
+      }}
+      onBlur={(event) => {
+        onBlur?.(event);
+        pressAttrs.onBlur();
+      }}
+    >
       {children}
     </button>
   );

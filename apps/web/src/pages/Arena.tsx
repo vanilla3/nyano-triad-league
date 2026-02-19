@@ -7,6 +7,13 @@ import { MintTitleText } from "@/components/mint/MintTypography";
 import { MintIcon } from "@/components/mint/icons/MintIcon";
 import { MINT_PAGE_GUIDES } from "@/lib/mint_page_guides";
 import { appendThemeToPath, resolveAppTheme } from "@/lib/theme";
+import {
+  CLASSIC_QUICK_PRESETS,
+  buildQuickGuestMatchPath,
+  buildQuickGuestStagePath,
+  normalizeClassicQuickPresetId,
+  type ClassicQuickPresetId,
+} from "@/lib/classic_quick_presets";
 
 const DIFFICULTIES = [
   { key: "easy", ja: "はじめて", en: "Easy", hint: "基本を学ぶ", icon: "rules" as const },
@@ -27,17 +34,48 @@ export function ArenaPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const theme = resolveAppTheme(searchParams);
   const difficulty = parseDifficulty(searchParams.get("difficulty"));
+  const quickPresetParam = normalizeClassicQuickPresetId(searchParams.get("qp"));
+  const quickRulesPreset: "standard" | ClassicQuickPresetId = quickPresetParam ?? "standard";
 
   const themed = React.useCallback((path: string) => appendThemeToPath(path, theme), [theme]);
-  const quickPlayUrl = themed(`/match?mode=guest&opp=vs_nyano_ai&ai=${difficulty}&rk=v2&ui=mint`);
-  const quickStageUrl = themed(`/battle-stage?mode=guest&opp=vs_nyano_ai&ai=${difficulty}&rk=v2`);
+  const quickPlayPath = React.useMemo(() => {
+    return buildQuickGuestMatchPath({
+      preset: quickRulesPreset,
+      ai: difficulty,
+      ui: "mint",
+    });
+  }, [difficulty, quickRulesPreset]);
+  const quickStagePath = React.useMemo(() => {
+    return buildQuickGuestStagePath({
+      preset: quickRulesPreset,
+      ai: difficulty,
+    });
+  }, [difficulty, quickRulesPreset]);
+  const quickPlayUrl = themed(quickPlayPath);
+  const quickStageUrl = themed(quickStagePath);
+  const quickRulesSummary = React.useMemo(() => {
+    if (quickRulesPreset === "standard") return "標準ルール";
+    return CLASSIC_QUICK_PRESETS.find((preset) => preset.id === quickRulesPreset)?.summary ?? "";
+  }, [quickRulesPreset]);
 
   const handleDifficultySelect = (next: DifficultyKey) => {
     const params = new URLSearchParams(searchParams);
     params.set("difficulty", next);
     setSearchParams(params, { replace: true });
-    navigate(themed(`/match?mode=guest&opp=vs_nyano_ai&ai=${next}&rk=v2&ui=mint`));
+    const nextPath = buildQuickGuestMatchPath({
+      preset: quickRulesPreset,
+      ai: next,
+      ui: "mint",
+    });
+    navigate(themed(nextPath));
   };
+
+  const handleQuickPresetSelect = React.useCallback((preset: "standard" | ClassicQuickPresetId) => {
+    const params = new URLSearchParams(searchParams);
+    if (preset === "standard") params.delete("qp");
+    else params.set("qp", preset);
+    setSearchParams(params, { replace: true });
+  }, [searchParams, setSearchParams]);
 
   const sideItems = [
     { to: themed("/decks"), label: "デッキ", icon: "decks" as const },
@@ -72,6 +110,35 @@ export function ArenaPage() {
 
         <GlassPanel as="section" variant="panel" className="mint-arena-quickplay">
           <div className="mint-arena-quickplay__header">クイック対戦</div>
+          <div className="mint-arena-quickplay__rules" role="group" aria-label="Quick play rules preset">
+            <button
+              type="button"
+              className={[
+                "mint-pressable mint-arena-rules-chip",
+                quickRulesPreset === "standard" ? "mint-arena-rules-chip--active" : "",
+              ].join(" ")}
+              aria-pressed={quickRulesPreset === "standard"}
+              onClick={() => handleQuickPresetSelect("standard")}
+            >
+              Standard
+            </button>
+            {CLASSIC_QUICK_PRESETS.map((preset) => (
+              <button
+                key={preset.id}
+                type="button"
+                className={[
+                  "mint-pressable mint-arena-rules-chip",
+                  quickRulesPreset === preset.id ? "mint-arena-rules-chip--active" : "",
+                ].join(" ")}
+                aria-pressed={quickRulesPreset === preset.id}
+                title={preset.summary}
+                onClick={() => handleQuickPresetSelect(preset.id)}
+              >
+                {preset.label}
+              </button>
+            ))}
+          </div>
+          <p className="mint-arena-quickplay__rules-summary">{quickRulesSummary}</p>
           <MintPressable to={quickPlayUrl} tone="primary" size="lg" fullWidth>
             今すぐ遊ぶ
           </MintPressable>

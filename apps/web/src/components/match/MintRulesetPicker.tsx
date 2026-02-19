@@ -17,20 +17,15 @@ type MintRulesetPickerProps = {
   onSetClassicMask: (nextMask: string) => void;
 };
 
-const CLASSIC_PRESETS: Array<{ key: Exclude<RulesetKey, "v1" | "v2" | "full">; label: string }> = [
-  { key: "classic_plus_same", label: "Plus+Same" },
-  { key: "classic_plus", label: "Plus" },
-  { key: "classic_same", label: "Same" },
-  { key: "classic_reverse", label: "反転 (Reverse)" },
-  { key: "classic_ace_killer", label: "1が10に勝つ (Ace Killer)" },
-  { key: "classic_order", label: "順番固定 (Order)" },
-  { key: "classic_chaos", label: "ランダム (Chaos)" },
-  { key: "classic_swap", label: "入替 (Swap)" },
-  { key: "classic_all_open", label: "全公開 (All Open)" },
-  { key: "classic_three_open", label: "3枚公開 (Three Open)" },
-  { key: "classic_type_ascend", label: "タイプ強化 (Type Ascend)" },
-  { key: "classic_type_descend", label: "タイプ弱化 (Type Descend)" },
-  { key: "classic_custom", label: "カスタム (Custom)" },
+const CLASSIC_PRESETS: Array<{
+  key: Exclude<RulesetKey, "v1" | "v2" | "full" | "classic_custom">;
+  label: string;
+  summary: string;
+}> = [
+  { key: "classic_plus_same", label: "Plus + Same", summary: "連鎖が起きやすい定番クラシック。" },
+  { key: "classic_reverse", label: "Reverse", summary: "数値の強弱を反転して読み合う。" },
+  { key: "classic_chaos", label: "Chaos", summary: "毎ターンの使用カードがランダム。" },
+  { key: "classic_type_ascend", label: "Type Ascend", summary: "同タイプの継続配置が強くなる。" },
 ];
 
 type RulesetFamily = "v1" | "v2" | "full" | "classic";
@@ -147,7 +142,7 @@ export function MintRulesetPicker(props: MintRulesetPickerProps) {
 
           {!isClassicCustom ? (
             <div className="mint-ruleset-picker__preset-grid">
-              {CLASSIC_PRESETS.filter((item) => item.key !== "classic_custom").map((item) => (
+              {CLASSIC_PRESETS.map((item) => (
                 <button
                   key={item.key}
                   type="button"
@@ -155,8 +150,10 @@ export function MintRulesetPicker(props: MintRulesetPickerProps) {
                   disabled={disabled}
                   onClick={() => onSelectRulesetKey(item.key)}
                   data-testid={`mint-ruleset-preset-${item.key}`}
+                  title={item.summary}
                 >
-                  {item.label}
+                  <span>{item.label}</span>
+                  <small>{item.summary}</small>
                 </button>
               ))}
             </div>

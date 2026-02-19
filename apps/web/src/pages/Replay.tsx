@@ -1,4 +1,4 @@
-﻿import React from "react";
+import React from "react";
 import { useToast } from "@/components/Toast";
 import { Disclosure } from "@/components/Disclosure";
 import { Link, useLocation, useNavigate, useSearchParams } from "react-router-dom";
@@ -10,7 +10,6 @@ import { MintIcon, type MintIconName } from "@/components/mint/icons/MintIcon";
 import type { BoardCell, CardData, MatchResultWithHistory, RulesetConfig, TranscriptV1, TurnSummary } from "@nyano/triad-engine";
 import {
   computeRulesetId,
-  DEFAULT_RULESET_CONFIG_V2,
   resolveClassicOpenCardIndices,
   resolveClassicSwapIndices,
   simulateMatchV1WithHistory,
@@ -18,8 +17,6 @@ import {
   ONCHAIN_CORE_TACTICS_RULESET_CONFIG_V1,
   ONCHAIN_CORE_TACTICS_SHADOW_RULESET_CONFIG_V2,
 } from "@nyano/triad-engine";
-
-import OFFICIAL from "@root/rulesets/official_onchain_rulesets.json";
 
 import { BoardView } from "@/components/BoardView";
 import { BoardViewMint } from "@/components/BoardViewMint";
@@ -54,7 +51,7 @@ import { parseReplayPayload } from "@/lib/replay_bundle";
 import { annotateReplayMoves } from "@/lib/ai/replay_annotations";
 import { assessBoardAdvantage, type BoardAdvantage } from "@/lib/ai/board_advantage";
 import { AdvantageBadge } from "@/components/AdvantageBadge";
-import { resolveRuleset, resolveRulesetById } from "@/lib/ruleset_registry";
+import { resolveRulesetById } from "@/lib/ruleset_registry";
 import { writeClipboardText } from "@/lib/clipboard";
 import { appAbsoluteUrl, appPath, buildReplayShareUrl } from "@/lib/appUrl";
 import { computeStageBoardSizing, shouldShowStageSecondaryControls } from "@/lib/stage_layout";
@@ -80,9 +77,31 @@ import {
 } from "@/lib/replay_timeline";
 import { MINT_PAGE_GUIDES } from "@/lib/mint_page_guides";
 import { appendThemeToPath, resolveAppTheme } from "@/lib/theme";
-import { decodeClassicRulesMask, listClassicRuleTags, normalizeClassicRulesConfig } from "@/lib/classic_rules_param";
+import { listClassicRuleTags } from "@/lib/classic_rules_param";
+import { parseFocusMode } from "@/features/match/urlParams";
+import {
+  buildReplayStageUrl,
+  parseReplayBoardUi,
+  toMatchBoardUi,
+  type ReplayBoardUi,
+  withReplayBoardUi,
+  withReplayFocusMode,
+  withReplayStepMode,
+} from "@/features/match/replayUrlParams";
+import {
+  parseReplayMode,
+  parseReplayStepParam,
+  parseSignedInt32Param,
+  replayModeDisplay,
+  type ReplayMode,
+} from "@/features/match/replayModeParams";
+import {
+  pickDefaultReplayMode,
+  resolveReplayRulesetFromParams,
+  shouldAutoCompareByRulesetId,
+} from "@/features/match/replayRulesetParams";
 
-type Mode = "auto" | "v1" | "v2" | "compare";
+type Mode = ReplayMode;
 
 type SimState =
   | { ok: false; error: string }
@@ -104,35 +123,12 @@ function clampInt(n: number, min: number, max: number): number {
   return Math.max(min, Math.min(max, n));
 }
 
-function parseInt32Param(v: string | null): number | null {
-  if (!v) return null;
-  if (!/^-?\d+$/.test(v)) return null;
-  const n = Number(v);
-  if (!Number.isInteger(n)) return null;
-  if (n < -2147483648 || n > 2147483647) return null;
-  return n;
-}
-
 
 function turnPlayer(firstPlayer: 0 | 1, turnIndex: number): 0 | 1 {
   return ((firstPlayer + (turnIndex % 2)) % 2) as 0 | 1;
 }
 
 
-function parseMode(v: string | null): Mode {
-  if (v === "auto" || v === "v1" || v === "v2" || v === "compare") return v;
-  return "auto";
-}
-
-function replayModeDisplay(mode: Mode): string {
-  if (mode === "auto") return "自動 (auto)";
-  if (mode === "v1") return "エンジン v1 (engine v1)";
-  if (mode === "v2") return "エンジン v2 (engine v2)";
-  return "比較 (compare)";
-}
-
-type ReplayBoardUi = "classic" | "rpg" | "engine";
-type MatchBoardUi = "mint" | "rpg" | "engine";
 const STAGE_VFX_OPTIONS: ReadonlyArray<{ value: VfxPreference; label: string }> = [
   { value: "auto", label: "auto" },
   { value: "off", label: "off" },
@@ -144,23 +140,6 @@ const STAGE_VFX_OPTIONS: ReadonlyArray<{ value: VfxPreference; label: string }> 
 function formatStageVfxLabel(pref: VfxPreference, resolved: VfxQuality): string {
   if (pref === "auto") return `auto (${resolved})`;
   return pref;
-}
-
-function parseReplayBoardUi(v: string | null): ReplayBoardUi {
-  if (v === "rpg") return "rpg";
-  if (v === "engine") return "engine";
-  return "classic";
-}
-
-function parseFocusMode(v: string | null): boolean {
-  if (!v) return false;
-  const normalized = v.toLowerCase();
-  return normalized === "1" || normalized === "focus";
-}
-
-function toMatchBoardUi(v: ReplayBoardUi): MatchBoardUi {
-  if (v === "classic") return "mint";
-  return v;
 }
 
 function boardEquals(a: ReadonlyArray<BoardCell | null>, b: ReadonlyArray<BoardCell | null>): boolean {
@@ -251,34 +230,6 @@ function rulesetLabelFromUrlFallback(cfg: RulesetConfig): string {
   return `URL fallback（classic: ${tags.join(", ")}）`;
 }
 
-function resolveReplayRulesetFromParams(rulesetKeyParam: string | null, classicMaskParam: string | null): RulesetConfig | null {
-  if (!rulesetKeyParam) return null;
-  if (rulesetKeyParam === "classic_custom") {
-    const classic = normalizeClassicRulesConfig(decodeClassicRulesMask(classicMaskParam));
-    return {
-      ...DEFAULT_RULESET_CONFIG_V2,
-      classic: { ...classic },
-    };
-  }
-  return resolveRuleset(rulesetKeyParam);
-}
-
-function pickDefaultMode(rulesetId: string): Mode {
-  try {
-    const rulesets = (OFFICIAL as { rulesets: Array<{ rulesetId: string; engineId: number }> }).rulesets;
-    const hit = rulesets.find((r) => r.rulesetId.toLowerCase() === rulesetId.toLowerCase());
-    if (!hit) return "compare";
-    return hit.engineId === 2 ? "v2" : "v1";
-  } catch {
-    return "compare";
-  }
-}
-
-function shouldAutoCompareByRulesetId(rulesetId: string): boolean {
-  if (resolveRulesetById(rulesetId)) return false;
-  return pickDefaultMode(rulesetId) === "compare";
-}
-
 function formatClassicOpenSlots(indices: readonly number[]): string {
   return indices.map((idx) => String(idx + 1)).join(", ");
 }
@@ -301,12 +252,7 @@ export function ReplayPage() {
   const isFocusMode = parseFocusMode(focusParam);
   const isEngineFocus = isEngine && isFocusMode;
   const stageReplayUrl = React.useMemo(() => {
-    const next = new URLSearchParams(searchParams);
-    next.set("ui", "engine");
-    next.set("focus", "1");
-    next.delete("layout");
-    const query = next.toString();
-    return query ? `/replay-stage?${query}` : "/replay-stage";
+    return buildReplayStageUrl(searchParams);
   }, [searchParams]);
   const replayQuickActions = React.useMemo<Array<{ to: string; label: string; subtitle: string; icon: MintIconName }>>(
     () => [
@@ -351,7 +297,7 @@ export function ReplayPage() {
   const eventId = searchParams.get("event") ?? "";
   const event = React.useMemo(() => (eventId ? getEventById(eventId) : null), [eventId]);
   const eventStatus = event ? getEventStatus(event) : null;
-  const pointsDeltaA = React.useMemo(() => parseInt32Param(searchParams.get("pda")), [searchParams]);
+  const pointsDeltaA = React.useMemo(() => parseSignedInt32Param(searchParams.get("pda")), [searchParams]);
 
 
   // Initial values from shareable URL
@@ -369,8 +315,8 @@ export function ReplayPage() {
     : "";
   const hasSharePayload = hasReplaySharePayload(searchParams);
 
-  const initialMode = parseMode(searchParams.get("mode"));
-  const initialStep = clampInt(Number(searchParams.get("step") ?? "0"), 0, 9);
+  const initialMode = parseReplayMode(searchParams.get("mode"));
+  const initialStep = parseReplayStepParam(searchParams.get("step"));
 
   const [mode, setMode] = React.useState<Mode>(initialMode);
   const [text, setText] = React.useState<string>(initialZ ? "" : initialTextFromT);
@@ -570,26 +516,19 @@ export function ReplayPage() {
   }, [isStageFocus, toast]);
 
   const setReplayBoardUi = React.useCallback((nextUi: ReplayBoardUi) => {
-    const next = new URLSearchParams(searchParams);
-    if (nextUi === "classic") next.delete("ui");
-    else next.set("ui", nextUi);
-    if (nextUi !== "engine") {
-      next.delete("focus");
-      next.delete("layout");
-    }
+    const next = withReplayBoardUi(searchParams, nextUi);
+    if (next.toString() === searchParams.toString()) return;
     setSearchParams(next, { replace: true });
   }, [searchParams, setSearchParams]);
 
   const setFocusMode = React.useCallback((enabled: boolean) => {
-    const next = new URLSearchParams(searchParams);
-    if (enabled) next.set("focus", "1");
-    else next.delete("focus");
-    next.delete("layout");
+    const next = withReplayFocusMode(searchParams, enabled);
     if (!enabled && isReplayStageRoute) {
       const query = next.toString();
       navigate(query ? `/replay?${query}` : "/replay", { replace: true });
       return;
     }
+    if (next.toString() === searchParams.toString()) return;
     setSearchParams(next, { replace: true });
   }, [searchParams, setSearchParams, isReplayStageRoute, navigate]);
 
@@ -636,9 +575,8 @@ export function ReplayPage() {
 
   React.useEffect(() => {
     if (isEngine || !isFocusMode) return;
-    const next = new URLSearchParams(searchParams);
-    next.delete("focus");
-    next.delete("layout");
+    const next = withReplayFocusMode(searchParams, false);
+    if (next.toString() === searchParams.toString()) return;
     setSearchParams(next, { replace: true });
   }, [isEngine, isFocusMode, searchParams, setSearchParams]);
 
@@ -805,7 +743,7 @@ protocolV1: {
       const rulesetById = resolveRulesetById(transcript.header.rulesetId);
       const resolvedReplayRuleset = rulesetById ?? fallbackRulesetFromParams;
       const useResolvedRuleset = mode0 === "auto" && resolvedReplayRuleset !== null;
-      const effectiveMode: Mode = mode0 === "auto" ? pickDefaultMode(transcript.header.rulesetId) : mode0;
+      const effectiveMode: Mode = mode0 === "auto" ? pickDefaultReplayMode(transcript.header.rulesetId) : mode0;
       const rulesetIdMismatchWarning = !rulesetById && fallbackRulesetFromParams
         && computeRulesetId(fallbackRulesetFromParams).toLowerCase() !== transcript.header.rulesetId.toLowerCase()
         ? "URL の classic 設定が transcript rulesetId と一致しません。URL fallback ルールで再生しています。"
@@ -926,9 +864,7 @@ protocolV1: {
 
     if (curMode === nextMode && curStep === nextStep) return;
 
-    const next = new URLSearchParams(searchParams);
-    next.set("mode", nextMode);
-    next.set("step", nextStep);
+    const next = withReplayStepMode(searchParams, nextMode, step);
     setSearchParams(next, { replace: true });
   }, [mode, step, searchParams, setSearchParams]);
 
@@ -1750,7 +1686,7 @@ protocolV1: {
 
               <div className="flex flex-wrap items-center gap-2 text-xs text-slate-600">
                 <span>モード</span>
-                <select className="select w-48" value={mode} onChange={(e) => setMode(parseMode(e.target.value))}>
+                <select className="select w-48" value={mode} onChange={(e) => setMode(parseReplayMode(e.target.value))}>
                   <option value="auto">自動（登録済み rulesetId / official）</option>
                   <option value="v1">エンジン v1 (engine v1)</option>
                   <option value="v2">エンジン v2 (engine v2)</option>

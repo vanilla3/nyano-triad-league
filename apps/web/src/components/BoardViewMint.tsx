@@ -1,5 +1,5 @@
 import React from "react";
-import type { BoardCell, BoardState, PlayerIndex } from "@nyano/triad-engine";
+import type { BoardCell, BoardState, CardData, PlayerIndex } from "@nyano/triad-engine";
 import { CardNyanoDuel } from "./CardNyanoDuel";
 import { CardPreviewPanel } from "./CardPreviewPanel";
 import { useCardPreview } from "@/hooks/useCardPreview";
@@ -56,6 +56,8 @@ export interface BoardViewMintProps {
   onCellDrop?: (cell: number) => void;
   /** Called when dragging over a cell (or null when leaving) */
   onCellDragHover?: (cell: number | null) => void;
+  /** Optional selected-card preview for mouse hover ghost placement hint */
+  selectedCardPreview?: CardData | null;
 }
 
 // ── Helpers ────────────────────────────────────────────────────────────
@@ -119,6 +121,10 @@ interface MintCellProps {
   dragDropEnabled: boolean;
   onDropCard?: (cell: number) => void;
   onDragHover?: (cell: number | null) => void;
+  onHoverStart?: (cell: number) => void;
+  onHoverEnd?: () => void;
+  ghostCard?: CardData | null;
+  ghostOwner?: PlayerIndex | null;
 }
 
 function MintCell({
@@ -142,6 +148,10 @@ function MintCell({
   dragDropEnabled,
   onDropCard,
   onDragHover,
+  onHoverStart,
+  onHoverEnd,
+  ghostCard,
+  ghostOwner,
 }: MintCellProps) {
   const hasCard = !!cell?.card;
   const owner = hasCard ? (cell.owner as PlayerIndex) : null;
@@ -161,6 +171,7 @@ function MintCell({
 
   if (isSelected && !hasCard) classes.push("mint-cell--selected");
   if (isPressed && !hasCard) classes.push("mint-cell--pressed");
+  if (ghostCard && isSelectable && !hasCard) classes.push("mint-cell--hover-ghost");
   if (dragDropEnabled && !hasCard && isSelectable) classes.push("mint-cell--drop-ready");
   if (isPlaced) classes.push("mint-cell--placed");
   if (isFlipped) {
@@ -215,6 +226,12 @@ function MintCell({
       }}
       onPointerLeave={() => {
         onPressEnd?.();
+        onHoverEnd?.();
+      }}
+      onPointerEnter={(e) => {
+        if (!isInteractive) return;
+        if (e.pointerType !== "mouse") return;
+        onHoverStart?.(index);
       }}
       onDrop={(e) => {
         if (!dragDropEnabled || hasCard || !isSelectable) return;
@@ -250,11 +267,21 @@ function MintCell({
           isPlaced={isPlaced}
           isFlipped={isFlipped}
         />
+      ) : ghostCard && isSelectable ? (
+        <div className="mint-cell__ghost" aria-hidden="true">
+          <CardNyanoDuel
+            card={ghostCard}
+            owner={ghostOwner ?? 0}
+          />
+        </div>
       ) : (
         <div className="mint-cell__empty-label">
           {isSelectable ? (isWarningMode ? "⚠" : "＋") : ""}
         </div>
       )}
+
+      {isPlaced ? <span className="mint-cell__ripple" aria-hidden="true" /> : null}
+      {isFlipped ? <span className="mint-cell__burst" aria-hidden="true" /> : null}
     </div>
   );
 }
@@ -331,9 +358,11 @@ export function BoardViewMint({
   dragDropEnabled = false,
   onCellDrop,
   onCellDragHover,
+  selectedCardPreview = null,
 }: BoardViewMintProps) {
   const gridRef = React.useRef<HTMLDivElement>(null);
   const [pressedCell, setPressedCell] = React.useState<number | null>(null);
+  const [hoveredCell, setHoveredCell] = React.useState<number | null>(null);
   const selectableSet = toSelectableSet(selectableCells);
   const score = calcScore(board);
   const inspect = useCardPreview();
@@ -360,6 +389,10 @@ export function BoardViewMint({
   React.useEffect(() => {
     if (disabled) setPressedCell(null);
   }, [disabled]);
+
+  React.useEffect(() => {
+    if (disabled || !selectedCardPreview) setHoveredCell(null);
+  }, [disabled, selectedCardPreview]);
 
   return (
     <div className={["grid gap-3", className].join(" ")}>
@@ -427,6 +460,10 @@ export function BoardViewMint({
                   dragDropEnabled={dragDropEnabled}
                   onDropCard={onCellDrop}
                   onDragHover={onCellDragHover}
+                  onHoverStart={setHoveredCell}
+                  onHoverEnd={() => setHoveredCell((prev) => (prev === idx ? null : prev))}
+                  ghostCard={hoveredCell === idx ? selectedCardPreview : null}
+                  ghostOwner={typeof currentPlayer === "number" ? currentPlayer : 0}
                 />
               );
             })}

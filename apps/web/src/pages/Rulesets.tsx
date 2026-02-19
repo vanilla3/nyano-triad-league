@@ -1,4 +1,4 @@
-﻿import React from "react";
+import React from "react";
 import { Link, useSearchParams } from "react-router-dom";
 
 import OFFICIAL_RAW from "@root/rulesets/official_onchain_rulesets.json";
@@ -67,6 +67,8 @@ function sortByRecommendedOrder(a: RulesetListRow, b: RulesetListRow): number {
 export function RulesetsPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const q = searchParams.get("q") ?? "";
+  const themeParam = searchParams.get("theme");
+  const classicMaskParam = searchParams.get("cr");
   const selectedParam = searchParams.get("rk");
   const selectedRulesetKey: RulesetKey | null =
     selectedParam && isValidRulesetKey(selectedParam) ? selectedParam : null;
@@ -123,6 +125,15 @@ export function RulesetsPage() {
       else toast.warn("コピー失敗", label);
     },
     [toast],
+  );
+
+  const toMatchRulesetUrl = React.useCallback(
+    (key: RulesetKey) =>
+      buildMatchRulesetUrl(key, {
+        theme: themeParam,
+        classicMask: key === "classic_custom" ? classicMaskParam : undefined,
+      }),
+    [themeParam, classicMaskParam],
   );
 
   return (
@@ -232,7 +243,7 @@ export function RulesetsPage() {
                   <div className="mt-3 flex flex-wrap gap-2">
                     <Link
                       className="btn btn-sm no-underline"
-                      to={buildMatchRulesetUrl(row.key)}
+                      to={toMatchRulesetUrl(row.key)}
                       data-testid={`rulesets-recommended-play-cta-${row.key}`}
                     >
                       このルールで対戦
@@ -295,7 +306,7 @@ export function RulesetsPage() {
                   </div>
 
                   <div className="mt-3 flex flex-wrap gap-2">
-                    <Link className="btn btn-sm no-underline" to={buildMatchRulesetUrl(key)}>
+                    <Link className="btn btn-sm no-underline" to={toMatchRulesetUrl(key)}>
                       このルールで対戦
                     </Link>
                     <button className="btn btn-sm" onClick={() => setParam("rk", key)}>
@@ -366,7 +377,7 @@ export function RulesetsPage() {
                         {row.key ? (
                           <Link
                             className="btn btn-sm no-underline"
-                            to={buildMatchRulesetUrl(row.key)}
+                            to={toMatchRulesetUrl(row.key)}
                             data-testid={`rulesets-list-play-cta-${row.key}`}
                           >
                             このルールで対戦

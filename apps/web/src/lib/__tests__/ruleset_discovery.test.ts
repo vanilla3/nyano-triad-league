@@ -28,5 +28,6 @@ describe("ruleset_discovery", () => {
 
   it("builds match link with rk and ui params", () => {
     expect(buildMatchRulesetUrl("v2")).toBe("/match?ui=mint&rk=v2");
+    expect(buildMatchRulesetUrl("classic_custom", { classicMask: "abc" })).toBe("/match?ui=mint&rk=classic_custom&cr=abc");
   });
 });

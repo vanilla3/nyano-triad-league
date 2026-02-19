@@ -1,4 +1,4 @@
-﻿import React from "react";
+import React from "react";
 import { useSearchParams } from "react-router-dom";
 import { useToast } from "@/components/Toast";
 import { Disclosure } from "@/components/Disclosure";
