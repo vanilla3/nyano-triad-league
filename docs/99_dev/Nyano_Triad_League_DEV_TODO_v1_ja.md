@@ -532,3 +532,5 @@
 - [x] 2026-02-20 WO037-step90: Replay autoplay timer/step-advance logic was extracted to useReplayAutoplay with tested pure interval/advance helpers.
 
 - [x] 2026-02-20 WO037-step91: Replay stage impact burst logic (impact resolve + burst plan + timeout effect) was extracted to useReplayStageImpactBurst.
+
+- [x] 2026-02-20 WO037-step92: Replay compare-mode/diverged-state derivation was extracted to replayCompareState helpers with tests.

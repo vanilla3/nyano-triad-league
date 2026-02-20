@@ -94,6 +94,10 @@ import {
   shouldAutoCompareByRulesetId,
 } from "@/features/match/replayRulesetParams";
 import {
+  resolveReplayCompareDiverged,
+  resolveReplayCompareMode,
+} from "@/features/match/replayCompareState";
+import {
   formatReplayToolbarHighlightStatus,
   resolveNextReplayHighlightStep,
   resolvePrevReplayHighlightStep,
@@ -955,13 +959,19 @@ protocolV1: {
     setIsPlaying,
   });
 
-  const compare = sim.ok && (
-    mode === "compare"
-    || (mode === "auto"
-      && sim.resolvedRuleset === null
-      && shouldAutoCompareByRulesetId(sim.transcript.header.rulesetId))
-  );
-  const diverged = sim.ok ? !boardEquals(sim.v1.boardHistory[step], sim.v2.boardHistory[step]) : false;
+  const compare = resolveReplayCompareMode({
+    simOk: sim.ok,
+    mode,
+    resolvedRuleset: sim.ok ? sim.resolvedRuleset : null,
+    rulesetId: sim.ok ? sim.transcript.header.rulesetId : null,
+    shouldAutoCompareByRulesetId,
+  });
+  const diverged = resolveReplayCompareDiverged({
+    simOk: sim.ok,
+    v1Board: sim.ok ? (sim.v1.boardHistory[step] ?? null) : null,
+    v2Board: sim.ok ? (sim.v2.boardHistory[step] ?? null) : null,
+    boardEquals,
+  });
   const replayNyanoReactionInput = React.useMemo(
     () => (sim.ok ? buildNyanoReactionInput(sim.current, step) : null),
     [sim, step],
