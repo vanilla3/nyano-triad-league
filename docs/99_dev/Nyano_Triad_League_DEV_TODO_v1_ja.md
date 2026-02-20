@@ -599,3 +599,7 @@
 - [x] 2026-02-20 WO037-step113: Replay stage-panel visibility state sync (showStagePanels / showStageSetup) was extracted to apps/web/src/features/match/useReplayStagePanelVisibility.ts, and Replay.tsx now consumes the hook instead of duplicated focus-route effects.
 
 - [x] 2026-02-20 WO037-step113: added apps/web/src/features/match/__tests__/useReplayStagePanelVisibility.test.ts and re-verified pnpm.cmd -C apps/web test -- useReplayStagePanelVisibility useReplayStageActionCallbacks replayActionRunners replayUiActions replayLoadRecovery replayLoadAction replaySimState, pnpm.cmd -C apps/web lint, pnpm.cmd -C apps/web typecheck, pnpm.cmd -C apps/web build.
+
+- [x] 2026-02-20 WO037-step114: Replay share-link builders were extracted to apps/web/src/features/match/replayShareLinkBuilders.ts (buildReplayCanonicalShareLink / buildReplayCurrentShareLink), and Replay.tsx now reuses shared base input + helper calls for canonical/current URL composition.
+
+- [x] 2026-02-20 WO037-step114: added apps/web/src/features/match/__tests__/replayShareLinkBuilders.test.ts and re-verified pnpm.cmd -C apps/web test -- replayShareLinkBuilders replayShareLinks replayActionRunners replayEventAttempts replayLoadAction replayLoadRecovery replaySimState replayUiActions, pnpm.cmd -C apps/web lint, pnpm.cmd -C apps/web typecheck, pnpm.cmd -C apps/web build.

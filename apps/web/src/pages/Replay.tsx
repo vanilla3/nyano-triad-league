@@ -82,7 +82,7 @@ import {
   resolveReplayBoardDelta,
   resolveReplayNyanoReactionInput,
 } from "@/features/match/replayDerivedState";
-import { buildReplayShareLink } from "@/features/match/replayShareLinks";
+import { buildReplayCanonicalShareLink, buildReplayCurrentShareLink } from "@/features/match/replayShareLinkBuilders";
 import { assertReplayAttemptCanBeSaved, buildReplayEventAttempt } from "@/features/match/replayEventAttempts";
 import { runReplayOverlayPublishAction } from "@/features/match/replayOverlayActions";
 import { runReplayCopyAction, runReplaySaveAttemptAction, runReplayShareCopyAction } from "@/features/match/replayActionRunners";
@@ -848,19 +848,21 @@ export function ReplayPage() {
   };
 
   
+  const replayShareBaseInput = {
+    text,
+    transcript: sim.ok ? sim.transcript : null,
+    eventId: eventId || undefined,
+    pointsDeltaA: pointsDeltaA ?? undefined,
+    ui: uiParam,
+    rulesetKey: searchParams.get("rk") ?? undefined,
+    classicMask: searchParams.get("cr") ?? undefined,
+    absolute: true,
+  };
+
   const buildCanonicalReplayLink = (): string => {
-    return buildReplayShareLink({
-      text,
-      transcript: sim.ok ? sim.transcript : null,
+    return buildReplayCanonicalShareLink({
+      ...replayShareBaseInput,
       emptyError: "transcript JSON が空です",
-      eventId: eventId || undefined,
-      pointsDeltaA: pointsDeltaA ?? undefined,
-      mode: "auto",
-      ui: uiParam,
-      rulesetKey: searchParams.get("rk") ?? undefined,
-      classicMask: searchParams.get("cr") ?? undefined,
-      step: 9,
-      absolute: true,
     });
   };
 
@@ -892,18 +894,11 @@ export function ReplayPage() {
   };
 
   const buildShareLink = (): string => {
-    return buildReplayShareLink({
-      text,
-      transcript: sim.ok ? sim.transcript : null,
+    return buildReplayCurrentShareLink({
+      ...replayShareBaseInput,
       emptyError: "transcript JSON が空です。先に transcript を貼り付けるか、共有リンクを読み込んでください。",
-      eventId: eventId || undefined,
-      pointsDeltaA: pointsDeltaA ?? undefined,
       mode,
-      ui: uiParam,
-      rulesetKey: searchParams.get("rk") ?? undefined,
-      classicMask: searchParams.get("cr") ?? undefined,
       step,
-      absolute: true,
     });
   };
   const showReplaySetupPanel = !isStageFocus || !sim.ok || showStageSetup;
