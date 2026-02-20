@@ -631,3 +631,11 @@
 - [x] 2026-02-20 WO044-step1: Match周辺の文字衛生(P0)として mojibake / control-char / PUA 汚染を除去。対象: `apps/web/src/pages/Match.tsx` と `apps/web/src/features/match/*` の該当UI文言、および `useMatchCardLoadActions` と対応テスト期待値。
 
 - [x] 2026-02-20 WO044-step1: `scripts/check_text_hygiene.mjs` を整理し、既定スキャン範囲を `apps/web/src` に固定（広域チェックは `--root` 指定で実行）。再検証: `pnpm.cmd lint:text` / `pnpm.cmd -C apps/web test --` / `pnpm.cmd -C apps/web lint` / `pnpm.cmd -C apps/web typecheck` / `pnpm.cmd -C apps/web build`。
+- [x] 2026-02-20 WO045-step2: Mint shell background layers were upgraded with cloud-corners + paw-pattern channels (`MintGameShell` + `mint-theme.css`), with asset-first and CSS-fallback composition so placeholder PNGs do not break visual quality.
+
+- [x] 2026-02-20 WO046-step1: Match share action row received micro-delight and guidance polish (`MatchShareActionsRow` + Mint theme styles): pressable hit area, explicit share action labels, and pre-finalize hint copy. Verified with `pnpm.cmd -C apps/web test -- MatchShareActionsRow MatchGuestPostGamePanel`.
+
+- [x] 2026-02-20 WO045/046-step2 verification: `pnpm.cmd lint:text`, `pnpm.cmd -C apps/web lint`, `pnpm.cmd -C apps/web typecheck`, `pnpm.cmd -C apps/web build` all passed.
+- [x] 2026-02-20 WO045-step3: replaced placeholder material assets with production-sized textures in `apps/web/public/assets/gen` (`tx_noise_256_v1.png`, `slot_inner_shadow_256_v1.png`, `fx_sparkle_tile_512_v1.png`, `board_tray_tex_1024_v1.png`, `bg_paw_tile_512_v1.png`, `bg_cloud_corners_16x9_v3.png`).
+
+- [x] 2026-02-20 WO045/046-step3 verification: re-ran full web checks after asset replacement: `pnpm.cmd lint:text`, `pnpm.cmd -C apps/web lint`, `pnpm.cmd -C apps/web typecheck`, `pnpm.cmd -C apps/web test --` (218 files / 1746 tests), `pnpm.cmd -C apps/web build` all passed.

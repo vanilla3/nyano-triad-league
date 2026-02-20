@@ -29,7 +29,7 @@ describe("features/match/MatchShareActionsRow", () => {
     });
     const buttons = collectButtons(tree);
     expect(buttons).toHaveLength(3);
-    expect(buttons[0]?.props.className).toBe("btn");
+    expect(buttons[0]?.props.className).toContain("btn");
     expect(buttons[0]?.props.disabled).toBe(true);
     expect(buttons[1]?.props.disabled).toBe(true);
     expect(buttons[2]?.props.disabled).toBe(true);

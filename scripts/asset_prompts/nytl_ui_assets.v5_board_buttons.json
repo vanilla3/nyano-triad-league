@@ -1,0 +1,50 @@
+{
+  "defaults": {
+    "model": "gemini-3-pro-image-preview",
+    "size": "1K",
+    "aspect": "1:1",
+    "safety": "low"
+  },
+  "jobs": [
+    {
+      "id": "TX-001",
+      "out": "apps/web/public/assets/gen/tx_noise_256_v1.png",
+      "prompt": "seamless monochrome fine film grain noise tile, extremely subtle, no large blobs, no pattern, no banding, no text, transparent not required, high quality, suitable for cute mobile game UI overlay"
+    },
+    {
+      "id": "TX-002",
+      "out": "apps/web/public/assets/gen/slot_inner_shadow_256_v1.png",
+      "prompt": "seamless soft inner shadow tile texture for rounded UI panels, very subtle vignette towards edges, pastel cool tone, low contrast, no text, no characters, high quality, used as mask/overlay"
+    },
+    {
+      "id": "FX-001",
+      "out": "apps/web/public/assets/gen/fx_sparkle_tile_512_v1.png",
+      "prompt": "seamless sparkle dust tile texture, very low density tiny star glints, pastel white and mint, transparent background, no text, no characters, cute mobile game UI effect"
+    },
+    {
+      "id": "BD-001",
+      "out": "apps/web/public/assets/gen/board_tray_tex_1024_v1.png",
+      "prompt": "seamless cute mobile card game board tray texture, pastel mint to lavender gradient, very subtle glitter and grain, soft bokeh hints, high end glassy feel, no text, no characters, low contrast"
+    },
+    {
+      "id": "BG-001",
+      "out": "apps/web/public/assets/gen/bg_paw_tile_512_v1.png",
+      "prompt": "seamless paw print pattern tile, very low density, pastel white / very light lavender, transparent background, cute mobile game UI style, no text, no characters"
+    },
+    {
+      "id": "BG-002",
+      "out": "apps/web/public/assets/gen/bg_cloud_corners_16x9_v3.png",
+      "prompt": "soft fluffy cloud frame corners overlay for 16:9 background, pastel white clouds, transparent background, gentle, cute, airy, no text, no characters, subtle"
+    },
+    {
+      "id": "UI-001",
+      "out": "apps/web/public/assets/gen/ui_sheen_soft_512_v1.png",
+      "prompt": "soft glossy sheen highlight texture, transparent background, gentle diagonal light sweep shape, very subtle, cute mobile game UI, no text, no characters"
+    },
+    {
+      "id": "UI-002",
+      "out": "apps/web/public/assets/gen/ui_rim_highlight_512_v1.png",
+      "prompt": "rim highlight texture for rounded glass UI panels, transparent background, thin soft edge glow, pastel mint and lavender, no text, no characters, high quality"
+    }
+  ]
+}
