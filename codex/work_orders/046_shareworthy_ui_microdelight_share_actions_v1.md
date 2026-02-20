@@ -87,5 +87,7 @@
   - Full frontend checks passed after integration: `pnpm.cmd lint:text` / `pnpm.cmd -C apps/web lint` / `pnpm.cmd -C apps/web typecheck` / `pnpm.cmd -C apps/web test --` / `pnpm.cmd -C apps/web build`.
   - Follow-up: `MatchGuestPostGamePanel` share controls were aligned to the same mint micro-delight spec (`mint-share-actions` / `mint-share-action__btn`, `mint-pressable`, `mint-hit`, aria labels, and non-finalize hint), with `isRpg` passthrough from `MatchSideColumnPanels`.
   - Follow-up verification: `pnpm.cmd -C apps/web test -- MatchGuestPostGamePanel MatchSideColumnPanels MatchShareActionsRow`, then full suite (`lint:text`, `lint`, `typecheck`, `test --`, `build`) all passed.
+  - Follow-up (consistency sweep): unified Match focus-toolbar replay action copy/a11y with share rows (`Open replay` + `aria-label` + `title`) in `apps/web/src/pages/Match.tsx`.
+  - Follow-up verification: `pnpm.cmd lint:text`, `pnpm.cmd -C apps/web test -- matchStageActionCallbacks MatchGuestPostGamePanel MatchSideColumnPanels MatchShareActionsRow`, and full suite (`lint`, `typecheck`, `test --`, `build`) all passed.
 - Remaining:
   - None for WO-046 v1 (further share entry-point polish can be tracked as follow-up WO if needed).

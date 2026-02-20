@@ -643,3 +643,7 @@
 - [x] 2026-02-20 WO046-step2: `MatchGuestPostGamePanel` を `MatchShareActionsRow` と同系統の micro-delight に統一。share row に `mint-share-actions*` を適用し、共有ボタンへ `mint-pressable` / `mint-hit` / a11y label を追加、未確定時ヒントを表示。
 
 - [x] 2026-02-20 WO046-step2 verification: `pnpm.cmd -C apps/web test -- MatchGuestPostGamePanel MatchSideColumnPanels MatchShareActionsRow`、`pnpm.cmd lint:text`、`pnpm.cmd -C apps/web lint`、`pnpm.cmd -C apps/web typecheck`、`pnpm.cmd -C apps/web test --`、`pnpm.cmd -C apps/web build` all passed.
+
+- [x] 2026-02-20 WO046-step3: Match focus toolbar の `Open Replay` 表記を share actions と同一の `Open replay` に統一し、`aria-label` / `title` を付与して a11y を揃えた（`apps/web/src/pages/Match.tsx`）。
+
+- [x] 2026-02-20 WO046-step3 verification: `pnpm.cmd lint:text`、`pnpm.cmd -C apps/web test -- matchStageActionCallbacks MatchGuestPostGamePanel MatchSideColumnPanels MatchShareActionsRow`、`pnpm.cmd -C apps/web lint`、`pnpm.cmd -C apps/web typecheck`、`pnpm.cmd -C apps/web test --`、`pnpm.cmd -C apps/web build` all passed.

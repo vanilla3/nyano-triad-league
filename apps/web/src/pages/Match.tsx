@@ -1860,8 +1860,14 @@ export function MatchPage() {
               ) : null}
               <button className="btn btn-sm" onClick={exitFocusModeWithFeedback}>
                 Exit Focus</button>
-              <button className="btn btn-sm" onClick={openReplayWithFeedback} disabled={!canFinalize}>
-                Open Replay
+              <button
+                className="btn btn-sm"
+                onClick={openReplayWithFeedback}
+                disabled={!canFinalize}
+                aria-label="Open replay"
+                title="Open replay"
+              >
+                Open replay
               </button>
             </div>
           </div>
