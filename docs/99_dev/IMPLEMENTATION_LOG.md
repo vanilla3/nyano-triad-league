@@ -3696,3 +3696,6 @@
 
 - 2026-02-20 WO037-step103: extracted Replay share-link composition from apps/web/src/pages/Replay.tsx into apps/web/src/features/match/replayShareLinks.ts (resolveReplayShareJson + buildReplayShareLink), consolidating text/transcript fallback and data payload/url assembly.
 - 2026-02-20 WO037-step103 tests/verification: added apps/web/src/features/match/__tests__/replayShareLinks.test.ts and verified pnpm.cmd -C apps/web test -- replayShareLinks replayCardLoaders / pnpm.cmd -C apps/web lint / pnpm.cmd -C apps/web typecheck / pnpm.cmd -C apps/web build OK (sandboxed vitest failed once with spawn EPERM; rerun outside sandbox passed).
+
+- 2026-02-20 WO037-step104: extracted Replay event-attempt save logic from apps/web/src/pages/Replay.tsx into apps/web/src/features/match/replayEventAttempts.ts (assertReplayAttemptCanBeSaved + buildReplayEventAttempt), preserving existing save preconditions and EventAttemptV1 shape.
+- 2026-02-20 WO037-step104 tests/verification: added apps/web/src/features/match/__tests__/replayEventAttempts.test.ts and verified pnpm.cmd -C apps/web test -- replayEventAttempts replayShareLinks replayCardLoaders / pnpm.cmd -C apps/web lint / pnpm.cmd -C apps/web typecheck / pnpm.cmd -C apps/web build OK (sandboxed vitest failed once with spawn EPERM; rerun outside sandbox passed).

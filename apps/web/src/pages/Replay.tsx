@@ -35,7 +35,7 @@ import { reactionToExpression } from "@/lib/expression_map";
 import { errorMessage } from "@/lib/errorMessage";
 import { stringifyWithBigInt } from "@/lib/json";
 import { formatEventPeriod, getEventById, getEventStatus } from "@/lib/events";
-import { hasEventAttempt, upsertEventAttempt, type EventAttemptV1 } from "@/lib/event_attempts";
+import { hasEventAttempt, upsertEventAttempt } from "@/lib/event_attempts";
 import { publishOverlayState } from "@/lib/streamer_bus";
 import { parseReplayPayload } from "@/lib/replay_bundle";
 import { annotateReplayMoves } from "@/lib/ai/replay_annotations";
@@ -103,6 +103,7 @@ import { resolveReplayRulesetContext } from "@/features/match/replayRulesetConte
 import { resolveReplayCurrentResult } from "@/features/match/replayResultSelection";
 import { resolveReplayCardsFromPayload } from "@/features/match/replayCardLoaders";
 import { buildReplayShareLink } from "@/features/match/replayShareLinks";
+import { assertReplayAttemptCanBeSaved, buildReplayEventAttempt } from "@/features/match/replayEventAttempts";
 import {
   resolveReplayOverlayLastMove,
   resolveReplayOverlayLastTurnSummary,
@@ -980,17 +981,17 @@ export function ReplayPage() {
   };
 
   const saveToMyAttempts = async () => {
-    if (!eventId) throw new Error("eventId がありません");
-    if (!sim.ok) throw new Error("replay が未準備です");
-    if (sim.current.winner !== 0 && sim.current.winner !== 1) {
-      throw new Error("引き分けは event attempts の対象外です");
-    }
+    assertReplayAttemptCanBeSaved({
+      eventId,
+      replayReady: sim.ok,
+      winner: sim.ok ? sim.current.winner : -1,
+    });
+    if (!sim.ok || (sim.current.winner !== 0 && sim.current.winner !== 1)) return;
 
     const replayUrl = buildCanonicalReplayLink();
 
-    const a: EventAttemptV1 = {
-      id: sim.current.matchId,
-      createdAt: new Date().toISOString(),
+    const a = buildReplayEventAttempt({
+      createdAtIso: new Date().toISOString(),
       eventId,
       replayUrl,
       matchId: sim.current.matchId,
@@ -998,15 +999,10 @@ export function ReplayPage() {
       tilesA: Number(sim.current.tiles.A),
       tilesB: Number(sim.current.tiles.B),
       rulesetLabel: sim.currentRulesetLabel,
-      deckA: sim.transcript.header.deckA.map((x) => x.toString()),
-      deckB: sim.transcript.header.deckB.map((x) => x.toString()),
-      ...(pointsDeltaA !== null
-        ? {
-            pointsDeltaA,
-            pointsDeltaSource: "settled_attested" as const,
-          }
-        : {}),
-    };
+      deckA: sim.transcript.header.deckA,
+      deckB: sim.transcript.header.deckB,
+      pointsDeltaA,
+    });
 
     upsertEventAttempt(a);
   };
