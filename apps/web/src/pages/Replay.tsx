@@ -105,6 +105,7 @@ import {
   rulesetLabelFromUrlFallback,
 } from "@/features/match/replayRulesetLabel";
 import { resolveReplayRulesetContext } from "@/features/match/replayRulesetContext";
+import { resolveReplayCurrentResult } from "@/features/match/replayResultSelection";
 import {
   formatReplayToolbarHighlightStatus,
   resolveNextReplayHighlightStep,
@@ -573,25 +574,23 @@ protocolV1: {
         ? simulateMatchV1WithHistory(transcript, cards, resolvedReplayRuleset)
         : null;
 
-      let current: MatchResultWithHistory = v1;
-      let label = rulesetLabelFromConfig(ONCHAIN_CORE_TACTICS_RULESET_CONFIG_V1);
-
-      if (useResolvedRuleset && byResolvedRuleset && resolvedReplayRuleset) {
-        current = byResolvedRuleset;
-        label = rulesetById
-          ? rulesetLabelFromRegistryConfig(rulesetById)
-          : rulesetLabelFromUrlFallback(resolvedReplayRuleset);
-      } else if (effectiveMode === "v2") {
-        current = v2;
-        label = rulesetLabelFromConfig(ONCHAIN_CORE_TACTICS_SHADOW_RULESET_CONFIG_V2);
-      } else if (effectiveMode === "compare") {
-        // pick one as "current" for right-side panels; keep label explicit
-        current = v1;
-        label = "比較表示 v1 vs v2";
-      } else if (effectiveMode === "v1") {
-        current = v1;
-        label = rulesetLabelFromConfig(ONCHAIN_CORE_TACTICS_RULESET_CONFIG_V1);
-      }
+      const {
+        current,
+        currentRulesetLabel: label,
+      } = resolveReplayCurrentResult({
+        useResolvedRuleset,
+        byResolvedRuleset,
+        resolvedReplayRuleset,
+        rulesetById,
+        effectiveMode,
+        v1,
+        v2,
+        v1Label: rulesetLabelFromConfig(ONCHAIN_CORE_TACTICS_RULESET_CONFIG_V1),
+        v2Label: rulesetLabelFromConfig(ONCHAIN_CORE_TACTICS_SHADOW_RULESET_CONFIG_V2),
+        compareLabel: "比較表示 v1 vs v2",
+        rulesetLabelFromRegistryConfigFn: rulesetLabelFromRegistryConfig,
+        rulesetLabelFromUrlFallbackFn: rulesetLabelFromUrlFallback,
+      });
 
       setSim({
         ok: true,

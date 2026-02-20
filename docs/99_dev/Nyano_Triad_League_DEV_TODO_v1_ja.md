@@ -546,3 +546,5 @@
 - [x] 2026-02-20 WO037-step97: Replay ruleset label formatters were moved to replayRulesetLabel helpers and Replay.tsx now consumes the shared helper module.
 
 - [x] 2026-02-20 WO037-step98: Replay ruleset context derivation (effective mode / resolved ruleset usage / rulesetId mismatch warning) was extracted to replayRulesetContext and Replay.tsx now reuses it.
+
+- [x] 2026-02-20 WO037-step99: Replay current-result selection (v1/v2/compare/resolved ruleset + label) was extracted to replayResultSelection and Replay.tsx now uses the helper.
