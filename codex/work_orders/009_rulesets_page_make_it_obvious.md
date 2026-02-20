@@ -10,10 +10,10 @@ Rulesets 画面はルールセットの確認/編集に便利ですが、
 
 ## 2) 成果物（Deliverables）
 
-- [ ] Rulesets に “おすすめ” セクション（3〜5個）を追加
-- [ ] 各 ruleset に短い要約（1行）と “このルールで対戦” 導線を追加
-- [ ] ルール内容のプレビューを読みやすく（視覚階層/用語）
-- [ ] 既存 URL/挙動は維持（/rulesets のルーティングや query param）
+- [x] Rulesets に “おすすめ” セクション（3〜5個）を追加
+- [x] 各 ruleset に短い要約（1行）と “このルールで対戦” 導線を追加
+- [x] ルール内容のプレビューを読みやすく（視覚階層/用語）
+- [x] 既存 URL/挙動は維持（/rulesets のルーティングや query param）
 
 ## 3) 要件（Requirements）
 
@@ -64,11 +64,11 @@ Rulesets 画面はルールセットの確認/編集に便利ですが、
 
 ## 8) タスクリスト（細分化）
 
-- [ ] ruleset を分類する最小データ（recommended / category）をどこで持つか決める
-- [ ] Rulesets 画面の上部に Recommended セクションを追加
-- [ ] 各 ruleset のカードに “このルールで対戦” ボタン
-- [ ] 詳細パネルのタイポ/階層を整理
-- [ ] テスト 1 本（リンク生成の妥当性 or recommended が表示されること）
+- [x] ruleset を分類する最小データ（recommended / category）をどこで持つか決める
+- [x] Rulesets 画面の上部に Recommended セクションを追加
+- [x] 各 ruleset のカードに “このルールで対戦” ボタン
+- [x] 詳細パネルのタイポ/階層を整理
+- [x] テスト 1 本（リンク生成の妥当性 or recommended が表示されること）
 
 ## 9) 検証（Verification）
 
