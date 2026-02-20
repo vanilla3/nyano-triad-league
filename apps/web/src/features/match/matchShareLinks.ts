@@ -42,6 +42,5 @@ export function buildMatchReplayLink(
 }
 
 export function buildMatchShareTemplateMessage(url: string): string {
-  return `Nyano Triad 対戦共有\n${url}`;
+  return `Nyano Triad Replay\n${url}`;
 }
-

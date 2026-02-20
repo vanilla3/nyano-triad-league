@@ -96,8 +96,7 @@ describe("features/match/matchShareLinks", () => {
 
   it("builds share template text", () => {
     expect(buildMatchShareTemplateMessage("https://example.invalid/replay")).toBe(
-      "Nyano Triad 対戦共有\nhttps://example.invalid/replay",
+      "Nyano Triad Replay\nhttps://example.invalid/replay",
     );
   });
 });
-

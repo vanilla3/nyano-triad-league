@@ -6,7 +6,7 @@ type NativeShareNavigator = {
 };
 
 type TryNativeShareInput = {
-  url: string;
+  url?: string;
   title?: string;
   text?: string;
   navigatorOverride?: NativeShareNavigator | null;
@@ -28,9 +28,12 @@ export async function tryNativeShare(input: TryNativeShareInput): Promise<Native
   const nav = resolveNavigator(input.navigatorOverride);
   if (!nav?.share) return "unsupported";
 
-  const payload: ShareData = {
-    url: input.url,
-  };
+  if (!input.url && !input.text) {
+    return "unsupported";
+  }
+
+  const payload: ShareData = {};
+  if (input.url) payload.url = input.url;
   if (input.title) payload.title = input.title;
   if (input.text) payload.text = input.text;
 

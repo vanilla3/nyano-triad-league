@@ -68,10 +68,10 @@ export function MatchGuestPostGamePanel(input: {
             className={shareButtonClassName}
             onClick={onCopyShareTemplate}
             disabled={!canFinalize}
-            aria-label="Copy share template"
-            title="Copy share template"
+            aria-label="Share template"
+            title="Share template"
           >
-            Copy share template
+            Share template
           </button>
           <button
             className={shareButtonClassName}

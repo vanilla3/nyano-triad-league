@@ -239,6 +239,7 @@ describe("features/match/useMatchReplayActions", () => {
       {
         buildReplayLink: () => "https://example.invalid/replay",
         buildShareTemplateMessage: (url) => `share:${url}`,
+        shareTemplateWithNative: async () => "unsupported",
       },
     );
 
@@ -247,5 +248,57 @@ describe("features/match/useMatchReplayActions", () => {
     expect(deps.calls).toEqual([
       { type: "success", title: "Copied", message: "Share template copied to clipboard." },
     ]);
+  });
+
+  it("uses native share for share template when available", async () => {
+    const deps = createDeps();
+    const actions = createMatchReplayActions(
+      {
+        transcript: makeTranscript(),
+        cards: null,
+        setError: deps.setError,
+        setStatus: deps.setStatus,
+        navigate: deps.navigate,
+        toast: deps.toast,
+        copyToClipboard: deps.copyToClipboard,
+        resolveErrorMessage: () => "failed",
+      },
+      {
+        buildReplayLink: () => "https://example.invalid/replay",
+        buildShareTemplateMessage: (url) => `share:${url}`,
+        shareTemplateWithNative: async () => "shared",
+      },
+    );
+
+    await actions.copyShareTemplate();
+    expect(deps.copyToClipboard).not.toHaveBeenCalled();
+    expect(deps.calls).toEqual([
+      { type: "success", title: "Shared", message: "Share template opened in native share sheet." },
+    ]);
+  });
+
+  it("does not copy share template when native share is cancelled", async () => {
+    const deps = createDeps();
+    const actions = createMatchReplayActions(
+      {
+        transcript: makeTranscript(),
+        cards: null,
+        setError: deps.setError,
+        setStatus: deps.setStatus,
+        navigate: deps.navigate,
+        toast: deps.toast,
+        copyToClipboard: deps.copyToClipboard,
+        resolveErrorMessage: () => "failed",
+      },
+      {
+        buildReplayLink: () => "https://example.invalid/replay",
+        buildShareTemplateMessage: (url) => `share:${url}`,
+        shareTemplateWithNative: async () => "cancelled",
+      },
+    );
+
+    await actions.copyShareTemplate();
+    expect(deps.copyToClipboard).not.toHaveBeenCalled();
+    expect(deps.calls).toEqual([]);
   });
 });

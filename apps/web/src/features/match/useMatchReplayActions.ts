@@ -29,6 +29,7 @@ type CreateMatchReplayActionsDeps = {
   buildReplayLink?: typeof buildMatchReplayLink;
   buildShareTemplateMessage?: typeof buildMatchShareTemplateMessage;
   shareUrlWithNative?: (url: string) => Promise<NativeShareResult>;
+  shareTemplateWithNative?: (message: string, url: string) => Promise<NativeShareResult>;
 };
 
 type MatchReplayActions = {
@@ -51,6 +52,14 @@ export function createMatchReplayActions(
         url,
         title: "Nyano Triad League",
         text: "Replay share link",
+      }));
+  const shareTemplateWithNative =
+    deps?.shareTemplateWithNative ??
+    ((message: string, url: string) =>
+      tryNativeShare({
+        url,
+        title: "Nyano Triad League",
+        text: message,
       }));
 
   const buildReplayUrl = (absolute?: boolean): string | null =>
@@ -116,6 +125,20 @@ export function createMatchReplayActions(
         return;
       }
       const message = buildShareTemplateMessage(url);
+
+      try {
+        const nativeResult = await shareTemplateWithNative(message, url);
+        if (nativeResult === "shared") {
+          input.toast.success("Shared", "Share template opened in native share sheet.");
+          return;
+        }
+        if (nativeResult === "cancelled") {
+          return;
+        }
+      } catch {
+        // Native share failed. Fall through to clipboard copy.
+      }
+
       await input.copyToClipboard(message);
       input.toast.success("Copied", "Share template copied to clipboard.");
     } catch (error: unknown) {

@@ -43,6 +43,34 @@ describe("lib/webShare", () => {
     });
   });
 
+  it("shares text-only payload when URL is omitted", async () => {
+    const share = vi.fn().mockResolvedValue(undefined);
+    const result = await tryNativeShare({
+      text: "Replay summary",
+      navigatorOverride: {
+        share,
+      },
+    });
+
+    expect(result).toBe("shared");
+    expect(share).toHaveBeenCalledWith({
+      text: "Replay summary",
+    });
+  });
+
+  it("returns unsupported when URL and text are both missing", async () => {
+    const share = vi.fn().mockResolvedValue(undefined);
+    const result = await tryNativeShare({
+      title: "Replay",
+      navigatorOverride: {
+        share,
+      },
+    });
+
+    expect(result).toBe("unsupported");
+    expect(share).not.toHaveBeenCalled();
+  });
+
   it("returns cancelled on AbortError", async () => {
     const share = vi.fn().mockRejectedValue({ name: "AbortError" });
     const result = await tryNativeShare({
