@@ -69,6 +69,7 @@ describe("features/match/matchStageLayoutClasses", () => {
   it("resolves announcer and renderer fallback banner class toggles", () => {
     const focus = resolveLayout({ isStageFocusRoute: true });
     expect(focus.announcerStackClassName).toContain("stage-focus-announcer-stack");
+    expect(focus.announcerStackClassName).toContain("min-h-[1px]");
     expect(focus.engineFallbackBannerClassName).toContain("fixed left-3 right-3 top-20 z-40 shadow-lg");
 
     const normal = resolveLayout({ isStageFocusRoute: false });
