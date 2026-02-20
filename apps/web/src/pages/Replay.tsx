@@ -72,7 +72,6 @@ import {
 } from "@/lib/replay_timeline";
 import { MINT_PAGE_GUIDES } from "@/lib/mint_page_guides";
 import { appendThemeToPath, resolveAppTheme } from "@/lib/theme";
-import { listClassicRuleTags } from "@/lib/classic_rules_param";
 import { parseFocusMode } from "@/features/match/urlParams";
 import { turnPlayer } from "@/features/match/matchTurnUtils";
 import {
@@ -102,6 +101,11 @@ import {
   resolveReplayBoardDelta,
   resolveReplayNyanoReactionInput,
 } from "@/features/match/replayDerivedState";
+import {
+  rulesetLabelFromConfig,
+  rulesetLabelFromRegistryConfig,
+  rulesetLabelFromUrlFallback,
+} from "@/features/match/replayRulesetLabel";
 import {
   formatReplayToolbarHighlightStatus,
   resolveNextReplayHighlightStep,
@@ -142,27 +146,6 @@ type SimState =
       v1: MatchResultWithHistory;
       v2: MatchResultWithHistory;
     };
-
-function rulesetLabelFromConfig(cfg: RulesetConfig): string {
-  if (cfg === ONCHAIN_CORE_TACTICS_SHADOW_RULESET_CONFIG_V2) return "エンジン v2（shadow: warning無視）";
-  return "エンジン v1（core+tactics）";
-}
-
-function rulesetLabelFromRegistryConfig(cfg: RulesetConfig): string {
-  if (cfg.version === 2) {
-    const tags = listClassicRuleTags(cfg.classic);
-    if (tags.length > 0) return `rulesetId登録（classic: ${tags.join(", ")}）`;
-    return "rulesetId登録（v2）";
-  }
-  return "rulesetId登録（v1）";
-}
-
-function rulesetLabelFromUrlFallback(cfg: RulesetConfig): string {
-  if (cfg.version !== 2) return "URL fallback（v1）";
-  const tags = listClassicRuleTags(cfg.classic);
-  if (tags.length === 0) return "URL fallback（classic custom: なし）";
-  return `URL fallback（classic: ${tags.join(", ")}）`;
-}
 
 const HIGHLIGHT_KIND_ORDER: ReplayHighlightKind[] = ["big_flip", "chain", "combo", "warning"];
 const REPLAY_INPUT_PROMPT_ERROR = "transcript JSON を貼り付けて読み込んでください。";

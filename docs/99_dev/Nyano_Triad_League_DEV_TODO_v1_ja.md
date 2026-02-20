@@ -542,3 +542,5 @@
 - [x] 2026-02-20 WO037-step95: Replay board compare/delta and Nyano reaction input derivation were extracted to replayDerivedState helpers and Replay.tsx now reuses them (including shared turnPlayer import).
 
 - [x] 2026-02-20 WO037-step96: Replay stage VFX option/label and step clamp helpers were extracted to replayUiHelpers and Replay.tsx now reuses shared helpers.
+
+- [x] 2026-02-20 WO037-step97: Replay ruleset label formatters were moved to replayRulesetLabel helpers and Replay.tsx now consumes the shared helper module.
