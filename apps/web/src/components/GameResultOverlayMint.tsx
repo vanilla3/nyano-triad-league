@@ -1,20 +1,44 @@
-import React from "react";
+﻿import React from "react";
 import { NyanoAvatar } from "./NyanoAvatar";
 import type { ExpressionName } from "@/lib/expression_map";
 import type { GameResultOverlayProps } from "./GameResultOverlay";
 import { type MoveAnnotation, QUALITY_DISPLAY } from "@/lib/ai/replay_annotations";
 
-/* ═══════════════════════════════════════════════════════════════════════════
-   GAME RESULT OVERLAY MINT — Soft, Nintendo-feel result screen
-
-   Uses same props as GameResultOverlay for seamless swapping.
-   Visual: white frosted glass, soft shadows, NyanoAvatar reaction.
-   ═══════════════════════════════════════════════════════════════════════════ */
-
 interface GameResultOverlayMintProps extends GameResultOverlayProps {
-  /** P1-150: AI move quality annotations for post-game summary */
   annotations?: MoveAnnotation[];
 }
+
+type OverlayState = "victory" | "defeat" | "draw" | "neutral";
+
+const OVERLAY_COPY: Record<Exclude<OverlayState, "neutral">, {
+  titleJa: string;
+  titleEn: string;
+  subtitleJa: string;
+  expression: ExpressionName;
+  titleClass: string;
+}> = {
+  victory: {
+    titleJa: "勝利！",
+    titleEn: "Victory!",
+    subtitleJa: "おめでとう！",
+    expression: "happy",
+    titleClass: "mint-result__title--victory",
+  },
+  defeat: {
+    titleJa: "敗北",
+    titleEn: "Defeat",
+    subtitleJa: "次は勝てるよ。",
+    expression: "sadTears",
+    titleClass: "mint-result__title--defeat",
+  },
+  draw: {
+    titleJa: "引き分け",
+    titleEn: "Draw!",
+    subtitleJa: "いい勝負だったね。",
+    expression: "calm",
+    titleClass: "mint-result__title--draw",
+  },
+};
 
 export function GameResultOverlayMint({
   result,
@@ -29,12 +53,12 @@ export function GameResultOverlayMint({
   const [visible, setVisible] = React.useState(false);
 
   React.useEffect(() => {
-    if (show) {
-      const t = setTimeout(() => setVisible(true), 50);
-      return () => clearTimeout(t);
-    } else {
+    if (!show) {
       setVisible(false);
+      return;
     }
+    const timer = setTimeout(() => setVisible(true), 50);
+    return () => clearTimeout(timer);
   }, [show]);
 
   if (!show) return null;
@@ -45,87 +69,50 @@ export function GameResultOverlayMint({
     perspective !== null && result.winner !== "draw" && result.winner !== perspective;
   const isDraw = result.winner === "draw";
 
-  const state = isWinner ? "victory" : isLoser ? "defeat" : isDraw ? "draw" : "neutral";
-
-  const config: Record<string, {
-    titleJa: string;
-    titleEn: string;
-    subtitleJa: string;
-    expression: ExpressionName;
-    titleClass: string;
-  }> = {
-    victory: {
-      titleJa: "勝利！",
-      titleEn: "Victory!",
-      subtitleJa: "おめでとう！",
-      expression: "happy",
-      titleClass: "mint-result__title--victory",
-    },
-    defeat: {
-      titleJa: "惜敗…",
-      titleEn: "Defeat",
-      subtitleJa: "また挑戦しよう！",
-      expression: "sadTears",
-      titleClass: "mint-result__title--defeat",
-    },
-    draw: {
-      titleJa: "引き分け",
-      titleEn: "Draw!",
-      subtitleJa: "いい勝負！",
-      expression: "calm",
-      titleClass: "mint-result__title--draw",
-    },
-    neutral: {
-      titleJa: result.winner === "draw"
-        ? "引き分け"
-        : `プレイヤー${result.winner === 0 ? "A" : "B"}の勝ち！`,
-      titleEn: result.winner === "draw"
-        ? "Draw!"
-        : `Player ${result.winner === 0 ? "A" : "B"} Wins!`,
+  const state: OverlayState = isWinner ? "victory" : isLoser ? "defeat" : isDraw ? "draw" : "neutral";
+  const neutralWinnerLabel = result.winner === 0 ? "A" : "B";
+  const copy = state === "neutral"
+    ? {
+      titleJa: result.winner === "draw" ? "引き分け" : `プレイヤー${neutralWinnerLabel}の勝ち！`,
+      titleEn: result.winner === "draw" ? "Draw!" : `Player ${neutralWinnerLabel} Wins!`,
       subtitleJa: "Game Over",
-      expression: "playful",
+      expression: "playful" as const,
       titleClass: result.winner === 0
         ? "mint-result__title--victory"
         : result.winner === 1
           ? "mint-result__title--defeat"
           : "mint-result__title--draw",
-    },
-  };
-
-  const c = config[state];
+    }
+    : OVERLAY_COPY[state];
 
   return (
     <div
       className={[
         "mint-result-overlay",
+        "transition-opacity duration-300 ease-out",
         visible ? "opacity-100" : "opacity-0",
       ].join(" ")}
-      style={{ transition: "opacity var(--transition-slow)" }}
       onClick={onDismiss}
     >
       <div
         className={[
           "mint-result-panel",
-          onShare ? "mint-result-panel--shareworthy" : "",
+          "transition-transform duration-500 ease-out",
           visible ? "scale-100" : "scale-95",
         ].join(" ")}
-        style={{ transition: "transform var(--transition-bounce)" }}
-        onClick={(e) => e.stopPropagation()}
+        onClick={(event) => event.stopPropagation()}
       >
-        {/* Nyano mascot */}
-        <div className="flex justify-center mb-4">
-          <NyanoAvatar expression={c.expression} size={88} />
+        <div className="mb-4 flex justify-center">
+          <NyanoAvatar expression={copy.expression} size={88} />
         </div>
 
-        {/* Title */}
-        <div className={["mint-result__title", c.titleClass].join(" ")}>
-          {c.titleJa}
+        <div className={["mint-result__title", copy.titleClass].join(" ")}>
+          {copy.titleJa}
         </div>
         <div className="mint-result__subtitle">
-          {c.titleEn} — {c.subtitleJa}
+          {copy.titleEn} - {copy.subtitleJa}
         </div>
 
-        {/* Scores */}
         <div className="mint-result__scores">
           <div>
             <div className="mint-result__score-val mint-result__score-val--a">
@@ -148,7 +135,6 @@ export function GameResultOverlayMint({
           </div>
         </div>
 
-        {/* Post-game summary (P1-150) */}
         {annotations && annotations.length > 0 && (() => {
           const best = annotations.reduce((a, b) => b.delta > a.delta ? b : a);
           const worst = annotations.reduce((a, b) => b.delta < a.delta ? b : a);
@@ -178,22 +164,15 @@ export function GameResultOverlayMint({
           );
         })()}
 
-        {onShare ? (
-          <div className="mint-result__share-cue" role="note">
-            Capture this panel now for the best share.
-          </div>
-        ) : null}
-
-        {/* Actions */}
         <div className="mint-result__actions">
           {onRematch && (
             <button className="mint-result__btn" onClick={onRematch}>
-              🔄 もう一回
+              🔁 もう一戦
             </button>
           )}
           {onReplay && (
             <button className="mint-result__btn" onClick={onReplay}>
-              📼 リプレイ
+              ▶️ リプレイ
             </button>
           )}
           {onShare && (
