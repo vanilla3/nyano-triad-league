@@ -108,12 +108,15 @@ import { useReplaySearchMutators } from "@/features/match/useReplaySearchMutator
 import { useReplayStepModeUrlSync } from "@/features/match/useReplayStepModeUrlSync";
 import { useReplayEngineFocusGuard } from "@/features/match/useReplayEngineFocusGuard";
 import { useReplayBroadcastToggle } from "@/features/match/useReplayBroadcastToggle";
-import { resolveReplayClearShareParamsMutation } from "@/features/match/replayShareParamActions";
 import { useReplayAutoplay } from "@/features/match/useReplayAutoplay";
 import { resolveReplayNyanoReactionImpact, useReplayStageImpactBurst } from "@/features/match/useReplayStageImpactBurst";
 import { useReplayTransportActionCallbacks } from "@/features/match/useReplayTransportActionCallbacks";
 import { STAGE_VFX_OPTIONS, formatStageVfxLabel } from "@/features/match/replayUiHelpers";
-import { runReplayInitialAutoLoadFlow, runReplayRetryLoadFlow } from "@/features/match/replayLoadRecovery";
+import {
+  runReplayClearShareParamsFlow,
+  runReplayInitialAutoLoadFlow,
+  runReplayRetryLoadFlow,
+} from "@/features/match/replayLoadRecovery";
 import {
   REPLAY_INPUT_PROMPT_ERROR,
   buildReplaySimErrorState,
@@ -434,9 +437,12 @@ export function ReplayPage() {
   };
 
   const handleClearShareParams = () => {
-    const next = resolveReplayClearShareParamsMutation(searchParams);
-    if (next) setSearchParams(next, { replace: true });
-    setSim(buildReplaySimErrorState(REPLAY_INPUT_PROMPT_ERROR));
+    runReplayClearShareParamsFlow({
+      searchParams,
+      setSearchParams,
+      setReplayError,
+      replayInputPromptError: REPLAY_INPUT_PROMPT_ERROR,
+    });
   };
 
   // If this page is opened via a share link (?t=... or ?z=...), auto-load once.

@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import {
+  runReplayClearShareParamsFlow,
   runReplayInitialAutoLoadFlow,
   runReplayRetryLoadFlow,
 } from "@/features/match/replayLoadRecovery";
@@ -125,5 +126,41 @@ describe("features/match/replayLoadRecovery", () => {
     expect(setText).toHaveBeenCalledWith("{\"seed\":1}");
     expect(load).toHaveBeenCalledWith({ text: "{\"seed\":1}", mode: "v1", step: 7 });
     expect(setReplayError).not.toHaveBeenCalled();
+  });
+
+  it("clear share params flow resets search params and replay error prompt", () => {
+    const setSearchParams = vi.fn();
+    const setReplayError = vi.fn();
+
+    const didMutate = runReplayClearShareParamsFlow({
+      searchParams: new URLSearchParams("t=abc&mode=v2&step=2"),
+      setSearchParams,
+      setReplayError,
+      replayInputPromptError: "input prompt",
+    });
+
+    expect(didMutate).toBe(true);
+    expect(setSearchParams).toHaveBeenCalledOnce();
+    const [nextParams, opts] = setSearchParams.mock.calls[0] as [URLSearchParams, { replace?: boolean }];
+    expect(nextParams.get("t")).toBeNull();
+    expect(nextParams.get("z")).toBeNull();
+    expect(opts).toEqual({ replace: true });
+    expect(setReplayError).toHaveBeenCalledWith("input prompt");
+  });
+
+  it("clear share params flow still resets replay error when no share params exist", () => {
+    const setSearchParams = vi.fn();
+    const setReplayError = vi.fn();
+
+    const didMutate = runReplayClearShareParamsFlow({
+      searchParams: new URLSearchParams("ui=engine"),
+      setSearchParams,
+      setReplayError,
+      replayInputPromptError: "input prompt",
+    });
+
+    expect(didMutate).toBe(false);
+    expect(setSearchParams).not.toHaveBeenCalled();
+    expect(setReplayError).toHaveBeenCalledWith("input prompt");
   });
 });

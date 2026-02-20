@@ -1,5 +1,8 @@
 import type { ReplaySharePayloadDecodeResult } from "@/lib/replay_share_params";
-import { resolveReplayRetryPayload } from "@/features/match/replayShareParamActions";
+import {
+  resolveReplayClearShareParamsMutation,
+  resolveReplayRetryPayload,
+} from "@/features/match/replayShareParamActions";
 import type { ReplayMode } from "@/features/match/replayModeParams";
 
 export type ReplayLoadFn = (override?: { text?: string; mode?: ReplayMode; step?: number }) => Promise<void>;
@@ -50,4 +53,18 @@ export async function runReplayInitialAutoLoadFlow(
     step: input.initialStep,
   });
   return "loaded";
+}
+
+export function runReplayClearShareParamsFlow(
+  input: {
+    searchParams: URLSearchParams;
+    setSearchParams: (nextInit: URLSearchParams, navigateOpts?: { replace?: boolean }) => void;
+    setReplayError: (error: string) => void;
+    replayInputPromptError: string;
+  },
+): boolean {
+  const next = resolveReplayClearShareParamsMutation(input.searchParams);
+  if (next) input.setSearchParams(next, { replace: true });
+  input.setReplayError(input.replayInputPromptError);
+  return next !== null;
 }

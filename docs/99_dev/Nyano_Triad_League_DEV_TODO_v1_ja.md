@@ -607,3 +607,7 @@
 - [x] 2026-02-20 WO037-step115: Replay transport action callbacks (start/prev/play-toggle/next/end/highlight prev-next) were extracted to apps/web/src/features/match/useReplayTransportActionCallbacks.ts, and Replay.tsx now delegates shortcut/toolbar actions via the shared callback hook.
 
 - [x] 2026-02-20 WO037-step115: added apps/web/src/features/match/__tests__/useReplayTransportActionCallbacks.test.ts and re-verified pnpm.cmd -C apps/web test -- useReplayTransportActionCallbacks useReplayStageFocusShortcuts replayTransportState replayShareLinkBuilders replayActionRunners replayLoadRecovery replayLoadAction replaySimState, pnpm.cmd -C apps/web lint, pnpm.cmd -C apps/web typecheck, pnpm.cmd -C apps/web build.
+
+- [x] 2026-02-20 WO037-step116: Replay clear-share-params action flow was extracted to apps/web/src/features/match/replayLoadRecovery.ts (runReplayClearShareParamsFlow), and Replay.tsx now delegates URL mutation + prompt reset through the shared recovery helper.
+
+- [x] 2026-02-20 WO037-step116: expanded apps/web/src/features/match/__tests__/replayLoadRecovery.test.ts and re-verified pnpm.cmd -C apps/web test -- replayLoadRecovery replayShareParamActions replayLoadAction replaySimState useReplayTransportActionCallbacks replayShareLinkBuilders replayActionRunners, pnpm.cmd -C apps/web lint, pnpm.cmd -C apps/web typecheck, pnpm.cmd -C apps/web build.
