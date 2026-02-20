@@ -100,7 +100,7 @@ export function GameResultOverlayMint({
         "mint-result-overlay",
         visible ? "opacity-100" : "opacity-0",
       ].join(" ")}
-      style={{ transition: "opacity 0.3s ease" }}
+      style={{ transition: "opacity var(--transition-slow)" }}
       onClick={onDismiss}
     >
       <div
@@ -108,7 +108,7 @@ export function GameResultOverlayMint({
           "mint-result-panel",
           visible ? "scale-100" : "scale-95",
         ].join(" ")}
-        style={{ transition: "transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)" }}
+        style={{ transition: "transform var(--transition-bounce)" }}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Nyano mascot */}

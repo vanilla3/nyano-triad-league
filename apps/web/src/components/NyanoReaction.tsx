@@ -358,7 +358,7 @@ export function NyanoReaction({
           boxShadow: `0 0 12px ${cfg.glow}`,
           opacity: visible ? 1 : 0,
           transform: visible ? "translateY(0)" : "translateY(8px)",
-          transition: "opacity 0.3s, transform 0.3s",
+          transition: "opacity var(--transition-slow), transform var(--transition-slow)",
           fontFamily: "'Nunito', system-ui, sans-serif",
         }}
       >
