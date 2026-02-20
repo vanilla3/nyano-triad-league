@@ -80,7 +80,6 @@ import { appendThemeToPath, resolveAppTheme } from "@/lib/theme";
 import { listClassicRuleTags } from "@/lib/classic_rules_param";
 import { parseFocusMode } from "@/features/match/urlParams";
 import {
-  buildReplayStageUrl,
   parseReplayBoardUi,
   toMatchBoardUi,
   type ReplayBoardUi,
@@ -107,6 +106,7 @@ import { useMatchStageUi } from "@/features/match/useMatchStageUi";
 import { useReplayStageFocusShortcuts } from "@/features/match/useReplayStageFocusShortcuts";
 import { useReplayStageBoardSizing } from "@/features/match/useReplayStageBoardSizing";
 import { useReplayStageActionCallbacks } from "@/features/match/useReplayStageActionCallbacks";
+import { useReplayStageRouteState } from "@/features/match/replayStageRouteState";
 
 type Mode = ReplayMode;
 
@@ -258,9 +258,15 @@ export function ReplayPage() {
   const focusParam = searchParams.get("focus") ?? searchParams.get("layout");
   const isFocusMode = parseFocusMode(focusParam);
   const isEngineFocus = isEngine && isFocusMode;
-  const stageReplayUrl = React.useMemo(() => {
-    return buildReplayStageUrl(searchParams);
-  }, [searchParams]);
+  const {
+    stageReplayUrl,
+    isReplayStageRoute,
+    isStageFocusRoute: isStageFocus,
+  } = useReplayStageRouteState({
+    pathname: location.pathname,
+    searchParams,
+    isEngineFocus,
+  });
   const replayQuickActions = React.useMemo<Array<{ to: string; label: string; subtitle: string; icon: MintIconName }>>(
     () => [
       { to: themed("/match?ui=mint"), label: "対戦 (Match)", subtitle: "新しい対戦を開始", icon: "match" },
@@ -270,8 +276,6 @@ export function ReplayPage() {
     ],
     [stageReplayUrl, themed],
   );
-  const isReplayStageRoute = /\/replay-stage$/.test(location.pathname);
-  const isStageFocus = isEngineFocus && isReplayStageRoute;
   const stageViewportRef = React.useRef<HTMLDivElement>(null);
   const stageBoardSizing = useReplayStageBoardSizing({
     isReplayStageRoute,
