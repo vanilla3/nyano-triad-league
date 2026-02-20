@@ -29,6 +29,14 @@ type ReplayCopyToast = {
   error: (title: string, message: string) => void;
 };
 
+type ReplayCopyWithToastDeps = {
+  copyReplayValueWithToast: typeof copyReplayValueWithToast;
+};
+
+const DEFAULT_COPY_WITH_TOAST_DEPS: ReplayCopyWithToastDeps = {
+  copyReplayValueWithToast,
+};
+
 export function resolveReplayVerifyStatus(ok: boolean): Exclude<ReplayVerifyStatus, "idle"> {
   return ok ? "ok" : "mismatch";
 }
@@ -61,6 +69,22 @@ export function runReplayVerifyAction(
   input.setVerifyStatus(resolveReplayVerifyStatus(result.ok));
   input.playReplaySfx(resolveReplayVerifySfx(result.ok));
   return true;
+}
+
+export function createReplayCopyWithToast(
+  input: {
+    toast: ReplayCopyToast;
+  },
+  depsPartial?: Partial<ReplayCopyWithToastDeps>,
+): (label: string, value: string) => Promise<void> {
+  const deps: ReplayCopyWithToastDeps = { ...DEFAULT_COPY_WITH_TOAST_DEPS, ...(depsPartial ?? {}) };
+  return async (label: string, value: string) => {
+    await deps.copyReplayValueWithToast({
+      label,
+      value,
+      toast: input.toast,
+    });
+  };
 }
 
 export async function copyReplayValueWithToast(

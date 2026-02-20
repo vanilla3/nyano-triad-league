@@ -611,3 +611,7 @@
 - [x] 2026-02-20 WO037-step116: Replay clear-share-params action flow was extracted to apps/web/src/features/match/replayLoadRecovery.ts (runReplayClearShareParamsFlow), and Replay.tsx now delegates URL mutation + prompt reset through the shared recovery helper.
 
 - [x] 2026-02-20 WO037-step116: expanded apps/web/src/features/match/__tests__/replayLoadRecovery.test.ts and re-verified pnpm.cmd -C apps/web test -- replayLoadRecovery replayShareParamActions replayLoadAction replaySimState useReplayTransportActionCallbacks replayShareLinkBuilders replayActionRunners, pnpm.cmd -C apps/web lint, pnpm.cmd -C apps/web typecheck, pnpm.cmd -C apps/web build.
+
+- [x] 2026-02-20 WO037-step117: Replay copy-toast wrapper creation was extracted to apps/web/src/features/match/replayUiActions.ts (createReplayCopyWithToast), and Replay.tsx now reuses the shared helper instead of defining a local async wrapper.
+
+- [x] 2026-02-20 WO037-step117: expanded apps/web/src/features/match/__tests__/replayUiActions.test.ts and re-verified pnpm.cmd -C apps/web test -- replayUiActions replayActionRunners replayLoadRecovery replayShareLinkBuilders useReplayTransportActionCallbacks replayLoadAction replaySimState, pnpm.cmd -C apps/web lint, pnpm.cmd -C apps/web typecheck, pnpm.cmd -C apps/web build.

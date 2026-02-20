@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import type { CardData, TranscriptV1 } from "@nyano/triad-engine";
 import {
+  createReplayCopyWithToast,
   copyReplayValueWithToast,
   resolveReplayVerifySfx,
   resolveReplayVerifyStatus,
@@ -144,5 +145,24 @@ describe("features/match/replayUiActions", () => {
 
     expect(toast.success).not.toHaveBeenCalled();
     expect(toast.error).toHaveBeenCalledWith("コピー失敗", "copy failed");
+  });
+  it("creates copy helper that forwards label/value/toast", async () => {
+    const toast = {
+      success: vi.fn(),
+      error: vi.fn(),
+    };
+    const copyReplayValueWithToastSpy = vi.fn().mockResolvedValue(undefined);
+
+    const copyWithToast = createReplayCopyWithToast(
+      { toast },
+      { copyReplayValueWithToast: copyReplayValueWithToastSpy as never },
+    );
+    await copyWithToast("label", "value");
+
+    expect(copyReplayValueWithToastSpy).toHaveBeenCalledWith({
+      label: "label",
+      value: "value",
+      toast,
+    });
   });
 });

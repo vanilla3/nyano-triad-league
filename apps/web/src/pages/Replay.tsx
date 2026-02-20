@@ -86,7 +86,7 @@ import { buildReplayCanonicalShareLink, buildReplayCurrentShareLink } from "@/fe
 import { assertReplayAttemptCanBeSaved, buildReplayEventAttempt } from "@/features/match/replayEventAttempts";
 import { runReplayOverlayPublishAction } from "@/features/match/replayOverlayActions";
 import { runReplayCopyAction, runReplaySaveAttemptAction, runReplayShareCopyAction } from "@/features/match/replayActionRunners";
-import { copyReplayValueWithToast, runReplayVerifyAction } from "@/features/match/replayUiActions";
+import { createReplayCopyWithToast, runReplayVerifyAction } from "@/features/match/replayUiActions";
 import { runReplayLoadAction } from "@/features/match/replayLoadAction";
 import {
   formatReplayToolbarHighlightStatus,
@@ -289,16 +289,16 @@ export function ReplayPage() {
     });
   }, [playReplaySfx, sim]);
 
-  const copyWithToast = async (label: string, v: string) => {
-    await copyReplayValueWithToast({
-      label,
-      value: v,
-      toast: {
-        success: toast.success,
-        error: toast.error,
-      },
-    });
-  };
+  const copyWithToast = React.useMemo(
+    () =>
+      createReplayCopyWithToast({
+        toast: {
+          success: toast.success,
+          error: toast.error,
+        },
+      }),
+    [toast.error, toast.success],
+  );
 
 
   const { setReplayBoardUi, setFocusMode } = useReplaySearchMutators({
