@@ -603,3 +603,7 @@
 - [x] 2026-02-20 WO037-step114: Replay share-link builders were extracted to apps/web/src/features/match/replayShareLinkBuilders.ts (buildReplayCanonicalShareLink / buildReplayCurrentShareLink), and Replay.tsx now reuses shared base input + helper calls for canonical/current URL composition.
 
 - [x] 2026-02-20 WO037-step114: added apps/web/src/features/match/__tests__/replayShareLinkBuilders.test.ts and re-verified pnpm.cmd -C apps/web test -- replayShareLinkBuilders replayShareLinks replayActionRunners replayEventAttempts replayLoadAction replayLoadRecovery replaySimState replayUiActions, pnpm.cmd -C apps/web lint, pnpm.cmd -C apps/web typecheck, pnpm.cmd -C apps/web build.
+
+- [x] 2026-02-20 WO037-step115: Replay transport action callbacks (start/prev/play-toggle/next/end/highlight prev-next) were extracted to apps/web/src/features/match/useReplayTransportActionCallbacks.ts, and Replay.tsx now delegates shortcut/toolbar actions via the shared callback hook.
+
+- [x] 2026-02-20 WO037-step115: added apps/web/src/features/match/__tests__/useReplayTransportActionCallbacks.test.ts and re-verified pnpm.cmd -C apps/web test -- useReplayTransportActionCallbacks useReplayStageFocusShortcuts replayTransportState replayShareLinkBuilders replayActionRunners replayLoadRecovery replayLoadAction replaySimState, pnpm.cmd -C apps/web lint, pnpm.cmd -C apps/web typecheck, pnpm.cmd -C apps/web build.

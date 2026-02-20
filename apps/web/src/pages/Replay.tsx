@@ -111,6 +111,7 @@ import { useReplayBroadcastToggle } from "@/features/match/useReplayBroadcastTog
 import { resolveReplayClearShareParamsMutation } from "@/features/match/replayShareParamActions";
 import { useReplayAutoplay } from "@/features/match/useReplayAutoplay";
 import { resolveReplayNyanoReactionImpact, useReplayStageImpactBurst } from "@/features/match/useReplayStageImpactBurst";
+import { useReplayTransportActionCallbacks } from "@/features/match/useReplayTransportActionCallbacks";
 import { STAGE_VFX_OPTIONS, formatStageVfxLabel } from "@/features/match/replayUiHelpers";
 import { runReplayInitialAutoLoadFlow, runReplayRetryLoadFlow } from "@/features/match/replayLoadRecovery";
 import {
@@ -551,69 +552,35 @@ export function ReplayPage() {
     });
   }, [highlights.length, currentHighlightIdx]);
 
-  const jumpToStartWithFeedback = React.useCallback(() => {
-    setIsPlaying(false);
-    setStep(0);
-    playReplaySfx("card_place");
-    if (isStageFocus) {
-      pushStageActionFeedback("Jumped to start", "success");
-    }
-  }, [isStageFocus, playReplaySfx, pushStageActionFeedback]);
-
-  const jumpToPrevStepWithFeedback = React.useCallback(() => {
-    setIsPlaying(false);
-    setStep((s) => Math.max(0, s - 1));
-    playReplaySfx("flip");
-    if (isStageFocus) {
-      pushStageActionFeedback("1手戻る");
-    }
-  }, [isStageFocus, playReplaySfx, pushStageActionFeedback]);
-
-  const toggleReplayPlayWithFeedback = React.useCallback(() => {
-    if (!canPlay) return;
-    const nextIsPlaying = !isPlaying;
-    setIsPlaying(nextIsPlaying);
-    playReplaySfx(nextIsPlaying ? "card_place" : "flip");
-    if (isStageFocus) {
-      pushStageActionFeedback(nextIsPlaying ? "再生開始" : "再生停止", nextIsPlaying ? "success" : "info");
-    }
-  }, [canPlay, isPlaying, isStageFocus, playReplaySfx, pushStageActionFeedback]);
-
-  const jumpToNextStepWithFeedback = React.useCallback(() => {
-    setIsPlaying(false);
-    setStep((s) => Math.min(stepMax, s + 1));
-    playReplaySfx("flip");
-    if (isStageFocus) {
-      pushStageActionFeedback("1手進む");
-    }
-  }, [isStageFocus, playReplaySfx, pushStageActionFeedback, stepMax]);
-
-  const jumpToEndWithFeedback = React.useCallback(() => {
-    setIsPlaying(false);
-    setStep(stepMax);
-    playReplaySfx("card_place");
-    if (isStageFocus) {
-      pushStageActionFeedback("末尾へ移動");
-    }
-  }, [isStageFocus, playReplaySfx, pushStageActionFeedback, stepMax]);
-
-  const jumpToPrevHighlightWithFeedback = React.useCallback(() => {
-    if (highlights.length === 0) return;
-    jumpToPrevHighlight();
-    playReplaySfx("chain_flip");
-    if (isStageFocus) {
-      pushStageActionFeedback("前の見どころへ移動", "success");
-    }
-  }, [highlights.length, isStageFocus, jumpToPrevHighlight, playReplaySfx, pushStageActionFeedback]);
-
-  const jumpToNextHighlightWithFeedback = React.useCallback(() => {
-    if (highlights.length === 0) return;
-    jumpToNextHighlight();
-    playReplaySfx("chain_flip");
-    if (isStageFocus) {
-      pushStageActionFeedback("次の見どころへ移動", "success");
-    }
-  }, [highlights.length, isStageFocus, jumpToNextHighlight, playReplaySfx, pushStageActionFeedback]);
+  const {
+    jumpToStartWithFeedback,
+    jumpToPrevStepWithFeedback,
+    toggleReplayPlayWithFeedback,
+    jumpToNextStepWithFeedback,
+    jumpToEndWithFeedback,
+    jumpToPrevHighlightWithFeedback,
+    jumpToNextHighlightWithFeedback,
+  } = useReplayTransportActionCallbacks({
+    canPlay,
+    isPlaying,
+    isStageFocus,
+    stepMax,
+    highlightsCount: highlights.length,
+    setIsPlaying,
+    setStep,
+    jumpToPrevHighlight,
+    jumpToNextHighlight,
+    playReplaySfx,
+    pushStageActionFeedback,
+    jumpedToStartMessage: "Jumped to start",
+    stepBackMessage: "1手戻る",
+    playStartMessage: "再生開始",
+    playStopMessage: "再生停止",
+    stepForwardMessage: "1手進む",
+    jumpToEndMessage: "末尾へ移動",
+    prevHighlightMessage: "前の見どころへ移動",
+    nextHighlightMessage: "次の見どころへ移動",
+  });
 
   useReplayStageFocusShortcuts({
     isStageFocus,
