@@ -8,12 +8,6 @@ import { MintPressable } from "@/components/mint/MintPressable";
 import { MintIcon, type MintIconName } from "@/components/mint/icons/MintIcon";
 
 import type { CardData, MatchResultWithHistory, RulesetConfig, TranscriptV1 } from "@nyano/triad-engine";
-import {
-  simulateMatchV1WithHistory,
-  ONCHAIN_CORE_TACTICS_RULESET_CONFIG_V1,
-  ONCHAIN_CORE_TACTICS_SHADOW_RULESET_CONFIG_V2,
-} from "@nyano/triad-engine";
-
 import { BoardView } from "@/components/BoardView";
 import { BoardViewMint } from "@/components/BoardViewMint";
 import { BoardViewRPG } from "@/components/BoardViewRPG";
@@ -91,18 +85,12 @@ import {
   resolveReplayBoardDelta,
   resolveReplayNyanoReactionInput,
 } from "@/features/match/replayDerivedState";
-import {
-  rulesetLabelFromConfig,
-  rulesetLabelFromRegistryConfig,
-  rulesetLabelFromUrlFallback,
-} from "@/features/match/replayRulesetLabel";
-import { resolveReplayRulesetContext } from "@/features/match/replayRulesetContext";
-import { resolveReplayCurrentResult } from "@/features/match/replayResultSelection";
 import { resolveReplayCardsFromPayload } from "@/features/match/replayCardLoaders";
 import { buildReplayShareLink } from "@/features/match/replayShareLinks";
 import { assertReplayAttemptCanBeSaved, buildReplayEventAttempt } from "@/features/match/replayEventAttempts";
 import { runReplayOverlayPublishAction } from "@/features/match/replayOverlayActions";
 import { copyReplayValueWithToast, runReplayVerifyAction } from "@/features/match/replayUiActions";
+import { resolveReplaySimulationState } from "@/features/match/replaySimulationState";
 import {
   formatReplayToolbarHighlightStatus,
   resolveNextReplayHighlightStep,
@@ -427,45 +415,23 @@ export function ReplayPage() {
       );
       const rulesetById = resolveRulesetById(transcript.header.rulesetId);
       const {
-        resolvedReplayRuleset,
-        useResolvedRuleset,
-        effectiveMode,
-        rulesetIdMismatchWarning,
-      } = resolveReplayRulesetContext({
-        mode: mode0,
-        transcriptRulesetId: transcript.header.rulesetId,
-        rulesetById,
-        fallbackRulesetFromParams,
-      });
-
-      const {
         cards,
         owners,
       } = await resolveReplayCardsFromPayload({ parsed });
 
-      // Always compute both (cheap compared to RPC reads)
-      const v1 = simulateMatchV1WithHistory(transcript, cards, ONCHAIN_CORE_TACTICS_RULESET_CONFIG_V1);
-      const v2 = simulateMatchV1WithHistory(transcript, cards, ONCHAIN_CORE_TACTICS_SHADOW_RULESET_CONFIG_V2);
-      const byResolvedRuleset = resolvedReplayRuleset
-        ? simulateMatchV1WithHistory(transcript, cards, resolvedReplayRuleset)
-        : null;
-
       const {
-        current,
         currentRulesetLabel: label,
-      } = resolveReplayCurrentResult({
-        useResolvedRuleset,
-        byResolvedRuleset,
-        resolvedReplayRuleset,
-        rulesetById,
-        effectiveMode,
+        resolvedRuleset: resolvedReplayRuleset,
+        rulesetIdMismatchWarning,
+        current,
         v1,
         v2,
-        v1Label: rulesetLabelFromConfig(ONCHAIN_CORE_TACTICS_RULESET_CONFIG_V1),
-        v2Label: rulesetLabelFromConfig(ONCHAIN_CORE_TACTICS_SHADOW_RULESET_CONFIG_V2),
-        compareLabel: "比較表示 v1 vs v2",
-        rulesetLabelFromRegistryConfigFn: rulesetLabelFromRegistryConfig,
-        rulesetLabelFromUrlFallbackFn: rulesetLabelFromUrlFallback,
+      } = resolveReplaySimulationState({
+        transcript,
+        cards,
+        mode: mode0,
+        rulesetById,
+        fallbackRulesetFromParams,
       });
 
       setSim({

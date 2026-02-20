@@ -572,3 +572,7 @@
 - [x] 2026-02-20 WO037-step106: Replay verify/copy UI actions were extracted to apps/web/src/features/match/replayUiActions.ts (runReplayVerifyAction / copyReplayValueWithToast + status/sfx resolvers), and Replay.tsx now delegates those side-effect branches.
 
 - [x] 2026-02-20 WO037-step106: added apps/web/src/features/match/__tests__/replayUiActions.test.ts and re-verified pnpm.cmd -C apps/web test -- replayUiActions replayOverlayActions replayEventAttempts replayShareLinks replayCardLoaders replayOverlayState replayOverlaySummary, pnpm.cmd -C apps/web lint, pnpm.cmd -C apps/web typecheck, pnpm.cmd -C apps/web build.
+
+- [x] 2026-02-20 WO037-step107: Replay simulation selection block (ruleset context + v1/v2/resolved simulation + current label/result choose) was extracted to apps/web/src/features/match/replaySimulationState.ts, and Replay.tsx load flow now delegates this derivation.
+
+- [x] 2026-02-20 WO037-step107: added apps/web/src/features/match/__tests__/replaySimulationState.test.ts and re-verified pnpm.cmd -C apps/web test -- replaySimulationState replayUiActions replayOverlayActions replayEventAttempts replayShareLinks replayCardLoaders replayOverlayState replayOverlaySummary, pnpm.cmd -C apps/web lint, pnpm.cmd -C apps/web typecheck, pnpm.cmd -C apps/web build.
