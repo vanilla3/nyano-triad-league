@@ -526,3 +526,5 @@
 - [x] 2026-02-20 WO037-step87: Replay error-panel actions (retry decode/load + clear share params) were extracted into replayShareParamActions helpers and bound via dedicated handlers in Replay.tsx.
 
 - [x] 2026-02-20 WO037-step88: Replay highlight navigation math/status formatting was extracted to replayHighlightNavigation helpers and wired back into Replay callbacks/memos.
+
+- [x] 2026-02-20 WO037-step89: Replay transport derived state (playability/step edges/focus toolbar visibility/button classes) was extracted to replayTransportState helper with tests.

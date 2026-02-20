@@ -101,6 +101,7 @@ import {
   resolvePrevReplayHighlightStep,
   resolveReplayCurrentHighlightIndex,
 } from "@/features/match/replayHighlightNavigation";
+import { resolveReplayTransportState } from "@/features/match/replayTransportState";
 import { useEngineRendererFallback } from "@/features/match/useEngineRendererFallback";
 import { useMatchStageActionFeedback } from "@/features/match/useMatchStageActionFeedback";
 import { useMatchStageFullscreen } from "@/features/match/useMatchStageFullscreen";
@@ -782,13 +783,27 @@ protocolV1: {
     [highlights, step],
   );
   const stepProgress = replayStepProgress(step, stepMax);
-  const canStepBack = step > 0;
-  const canStepForward = step < stepMax;
-  const canPlay = sim.ok && stepMax > 0;
-  const showStageToolbarTransport = isStageFocus
-    && sim.ok
-    && showStageTransport
-    && (typeof window === "undefined" || shouldShowStageSecondaryControls(window.innerWidth));
+  const {
+    canStepBack,
+    canStepForward,
+    canPlay,
+    showStageToolbarTransport,
+    replayTransportButtonClass,
+    replayTransportPrimaryButtonClass,
+    replaySpeedSelectClass,
+  } = React.useMemo(
+    () =>
+      resolveReplayTransportState({
+        step,
+        stepMax,
+        simOk: sim.ok,
+        isStageFocus,
+        showStageTransport,
+        viewportWidth: typeof window === "undefined" ? null : window.innerWidth,
+        resolveShouldShowStageSecondaryControls: shouldShowStageSecondaryControls,
+      }),
+    [step, stepMax, sim.ok, isStageFocus, showStageTransport],
+  );
   const phaseInfo: ReplayPhaseInfo = React.useMemo(() => replayPhaseInfo(step, stepMax), [step, stepMax]);
   const stepStatusText = replayStepStatusText(step);
   const replayClassicSwap = React.useMemo(() => {
@@ -818,11 +833,6 @@ protocolV1: {
     return new Set<number>(replayClassicOpen.playerB);
   }, [replayClassicOpen]);
   const shouldMaskReplayDeckSlots = replayClassicOpen?.mode === "three_open" && !replayRevealHiddenSlots;
-  const replayTransportButtonClass = isStageFocus ? "btn h-10 px-4" : "btn btn-sm";
-  const replayTransportPrimaryButtonClass = isStageFocus ? "btn btn-primary h-10 px-4" : "btn btn-sm btn-primary";
-  const replaySpeedSelectClass = isStageFocus
-    ? "rounded-md border border-surface-300 bg-white h-10 px-2 text-sm"
-    : "rounded-md border border-surface-300 bg-white px-2 py-1 text-xs";
 
   React.useEffect(() => {
     if (canPlay || !isPlaying) return;
