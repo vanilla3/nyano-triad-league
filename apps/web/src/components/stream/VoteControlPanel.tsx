@@ -130,10 +130,10 @@ export const VoteControlPanel: React.FC<VoteControlPanelProps> = React.memo(func
       {/* ── Vote control + Live status ── */}
       <div className="mt-3 grid gap-3 md:grid-cols-2">
         <div className="rounded-xl border border-slate-200 bg-white px-3 py-2">
-          <div className="text-[11px] font-semibold text-slate-700">投票操作 (Vote control)</div>
+          <div className="text-[11px] font-semibold text-slate-700">Vote control</div>
 
           <div className="mt-2 grid gap-2">
-            <label className="text-[11px] text-slate-600">操作側</label>
+            <label className="text-[11px] text-slate-600">Controlled side</label>
 
             <select
               className="rounded-lg border border-slate-200 bg-white px-2 py-1 text-xs"
@@ -146,7 +146,7 @@ export const VoteControlPanel: React.FC<VoteControlPanelProps> = React.memo(func
               <option value="1">B</option>
             </select>
 
-            <label className="text-[11px] text-slate-600">投票秒数</label>
+            <label className="text-[11px] text-slate-600">Vote seconds</label>
             <input
               className="rounded-lg border border-slate-200 bg-white px-2 py-1 text-xs"
               type="number"
@@ -158,10 +158,10 @@ export const VoteControlPanel: React.FC<VoteControlPanelProps> = React.memo(func
               aria-label="Vote seconds"
             />
 
-            <label className="text-[11px] text-slate-600">各ターン自動開始</label>
+            <label className="text-[11px] text-slate-600">Auto start each turn</label>
             <label className="flex items-center gap-2 text-xs text-slate-700">
               <input type="checkbox" checked={autoStartEachTurn} onChange={(e) => onChangeAutoStartEachTurn(e.target.checked)} disabled={settingsLocked} aria-label="Auto start each turn" />
-              有効
+              enable
             </label>
           </div>
 
@@ -170,10 +170,10 @@ export const VoteControlPanel: React.FC<VoteControlPanelProps> = React.memo(func
               Start vote
             </button>
             <button className="btn btn-sm" onClick={onFinalizeVote} disabled={!voteOpen} aria-label="End vote and send">
-              投票終了して送信
+              End & send
             </button>
             <button className="btn btn-sm" onClick={onResetVotes} aria-label="Clear votes">
-              票をクリア
+              Clear votes
             </button>
             {voteOpen ? (
               <span className="badge badge-emerald" role="status" aria-live="polite">OPEN · {timeLeft ?? "?"}s</span>
@@ -183,15 +183,15 @@ export const VoteControlPanel: React.FC<VoteControlPanelProps> = React.memo(func
           </div>
 
           <div className="mt-2 text-[11px] text-slate-500">
-            補足: ホスト視点は <span className="font-mono">{hostMatchPath}</span> を開いてください。
+            Note: open host view with <span className="font-mono">{hostMatchPath}</span>.
           </div>
 
           {/* Anti-spam settings (P2-SPAM) */}
           <details className="mt-3">
-            <summary className="cursor-pointer text-[11px] font-semibold text-slate-600">スパム対策 (Anti-Spam)</summary>
+            <summary className="cursor-pointer text-[11px] font-semibold text-slate-600">Anti-Spam</summary>
             <div className="mt-2 grid gap-2">
               <label className="text-[11px] text-slate-600">
-                レート制限(ms): <span className="font-mono">{antiSpamRateLimitMs}</span>
+                Rate limit (ms): <span className="font-mono">{antiSpamRateLimitMs}</span>
               </label>
               <input
                 type="range"
@@ -203,7 +203,7 @@ export const VoteControlPanel: React.FC<VoteControlPanelProps> = React.memo(func
                 disabled={settingsLocked}
                 aria-label="Anti-spam rate limit ms"
               />
-              <label className="text-[11px] text-slate-600">1ラウンド内の票変更上限 (0=無制限)</label>
+              <label className="text-[11px] text-slate-600">Max vote changes per round (0=unlimited)</label>
               <input
                 className="rounded-lg border border-slate-200 bg-white px-2 py-1 text-xs"
                 type="number"
@@ -218,9 +218,9 @@ export const VoteControlPanel: React.FC<VoteControlPanelProps> = React.memo(func
           </details>
 
           <details className="mt-3">
-            <summary className="cursor-pointer text-[11px] font-semibold text-slate-600">モデレーション (Moderation)</summary>
+            <summary className="cursor-pointer text-[11px] font-semibold text-slate-600">Moderation</summary>
             <div className="mt-2 grid gap-2">
-              <label className="text-[11px] text-slate-600">スローモード（ユーザーごとの秒数, 0=OFF）</label>
+              <label className="text-[11px] text-slate-600">Slow mode (seconds per user, 0=off)</label>
               <input
                 className="rounded-lg border border-slate-200 bg-white px-2 py-1 text-xs"
                 type="number"
@@ -232,7 +232,7 @@ export const VoteControlPanel: React.FC<VoteControlPanelProps> = React.memo(func
                 aria-label="Slow mode seconds"
               />
               <label className="text-[11px] text-slate-600">
-                BANユーザー ({moderationBannedUsersCount})
+                Banned users ({moderationBannedUsersCount})
               </label>
               <textarea
                 className="min-h-16 rounded-lg border border-slate-200 bg-white px-2 py-1 text-xs font-mono"
@@ -243,7 +243,7 @@ export const VoteControlPanel: React.FC<VoteControlPanelProps> = React.memo(func
                 aria-label="Banned users list"
               />
               <label className="text-[11px] text-slate-600">
-                NGワード ({moderationBlockedWordsCount})
+                NG words ({moderationBlockedWordsCount})
               </label>
               <textarea
                 className="min-h-16 rounded-lg border border-slate-200 bg-white px-2 py-1 text-xs font-mono"
@@ -254,7 +254,7 @@ export const VoteControlPanel: React.FC<VoteControlPanelProps> = React.memo(func
                 aria-label="Blocked words list"
               />
               <div className="text-[10px] text-slate-500">
-                リスト形式: カンマ区切りまたは改行区切り。照合は大文字小文字を区別しません。
+                List format: comma or newline delimited. Matching is case-insensitive.
               </div>
             </div>
           </details>
@@ -264,7 +264,7 @@ export const VoteControlPanel: React.FC<VoteControlPanelProps> = React.memo(func
       {/* ── Viewer command help callout ── */}
       <div className="mt-3 rounded-xl border border-emerald-200 bg-emerald-50/60 px-4 py-3">
         <div className="flex items-center justify-between gap-2">
-          <div className="text-xs font-semibold text-emerald-800">視聴者コマンド案内 (Viewer Command Guide)</div>
+          <div className="text-xs font-semibold text-emerald-800">Viewer Command Guide</div>
           <button
             className="btn btn-sm"
             onClick={onCopyViewerInstructions}
@@ -275,23 +275,23 @@ export const VoteControlPanel: React.FC<VoteControlPanelProps> = React.memo(func
         <div className="mt-2 grid gap-1.5 text-xs text-emerald-700">
           <div>
             <span className="font-mono font-semibold">#triad {sideLabel}2-&gt;B2</span>{" "}
-            — スロット2のカードをセルB2へ
+            — Card slot 2 to cell B2
           </div>
           <div>
             <span className="font-mono font-semibold">#triad {sideLabel}3-&gt;C1 wm=A1</span>{" "}
-            — スロット3のカードをセルC1へ、warning mark はA1
+            — Card slot 3 to cell C1, warning mark on A1
           </div>
         </div>
         <div className="mt-2 text-[11px] text-emerald-600">
           <span className="font-semibold">Common mistakes:</span>{" "}
-          側の記号違い（{sideLabel}を使用） · スロット範囲外（1-5） · 既に埋まっているセル指定 · <span className="font-mono">#triad</span> プレフィックス不足
+          Wrong side letter (use {sideLabel}) · Slot out of range (1-5) · Cell already occupied · Missing <span className="font-mono">#triad</span> prefix
         </div>
       </div>
 
       {/* ── Simulated chat input + Top votes ── */}
       <div className="mt-3 grid gap-3 md:grid-cols-2">
         <div className="rounded-xl border border-slate-200 bg-white px-3 py-2">
-          <div className="text-[11px] font-semibold text-slate-700">模擬チャット入力 (Simulated chat input)</div>
+          <div className="text-[11px] font-semibold text-slate-700">Simulated chat input</div>
           <div className="mt-2 grid grid-cols-3 gap-2">
             <input
               className="rounded-lg border border-slate-200 bg-white px-2 py-1 text-xs"
@@ -330,16 +330,16 @@ export const VoteControlPanel: React.FC<VoteControlPanelProps> = React.memo(func
 
           <div className="mt-2 flex items-center gap-2">
             <button className="btn btn-sm btn-primary" onClick={onAddVoteFromChat} disabled={!voteOpen} aria-label="Add vote from chat">
-              票を追加
+              Add vote
             </button>
-            <div className="text-[11px] text-slate-500">例: <span className="font-mono">{"#triad A2->B2"}</span> / <span className="font-mono">{"#triad A3->C1 wm=A1"}</span></div>
+            <div className="text-[11px] text-slate-500">example: <span className="font-mono">{"#triad A2->B2"}</span> / <span className="font-mono">{"#triad A3->C1 wm=A1"}</span></div>
           </div>
         </div>
 
         <div className="rounded-xl border border-slate-200 bg-white px-3 py-2">
-          <div className="text-[11px] font-semibold text-slate-700">上位投票</div>
+          <div className="text-[11px] font-semibold text-slate-700">Top votes</div>
           {counts.length === 0 ? (
-            <div className="mt-2 text-xs text-slate-500">まだ投票はありません。</div>
+            <div className="mt-2 text-xs text-slate-500">No votes yet.</div>
           ) : (
             <div className="mt-2 space-y-1">
               {counts.slice(0, 5).map((x, i) => (
@@ -351,11 +351,11 @@ export const VoteControlPanel: React.FC<VoteControlPanelProps> = React.memo(func
             </div>
           )}
           <div className="mt-2 text-[11px] text-slate-500">
-            タイブレーク: cell→cardIndex→wm（小さい方が優先）
+            tie-break: cell→cardIndex→wm（小さい方が勝ち）
           </div>
           {voteAudit.attempts > 0 && (
             <div className="mt-1 text-[10px] text-slate-400" role="status" aria-live="polite">
-              {voteAudit.attempts} 試行 · {voteAudit.accepted} 採用 · {voteAudit.duplicates} 重複 · {voteAudit.rateLimited} 制限 · {voteAudit.illegal} 非合法{voteAudit.usernameRejected > 0 ? ` · ${voteAudit.usernameRejected} ユーザー名NG` : ""}{voteAudit.changeExceeded > 0 ? ` · ${voteAudit.changeExceeded} 変更上限` : ""}{bannedUserRejected > 0 ? ` · ${bannedUserRejected} BAN` : ""}{blockedWordRejected > 0 ? ` · ${blockedWordRejected} NGワード` : ""}{slowModeRejected > 0 ? ` · ${slowModeRejected} スローモード` : ""}
+              {voteAudit.attempts} attempts · {voteAudit.accepted} accepted · {voteAudit.duplicates} dup · {voteAudit.rateLimited} rate-lim · {voteAudit.illegal} illegal{voteAudit.usernameRejected > 0 ? ` · ${voteAudit.usernameRejected} bad-name` : ""}{voteAudit.changeExceeded > 0 ? ` · ${voteAudit.changeExceeded} chg-limit` : ""}{bannedUserRejected > 0 ? ` · ${bannedUserRejected} banned` : ""}{blockedWordRejected > 0 ? ` · ${blockedWordRejected} ng-word` : ""}{slowModeRejected > 0 ? ` · ${slowModeRejected} slow` : ""}
             </div>
           )}
         </div>

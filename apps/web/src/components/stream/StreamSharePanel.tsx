@@ -66,7 +66,7 @@ export const StreamSharePanel: React.FC<StreamSharePanelProps> = React.memo(
 
     const copyInstructions = () => {
       void writeClipboardText(instructions);
-      toast.success("コピーしました", "視聴者向け案内をクリップボードへコピーしました");
+      toast.success("Copied", "Viewer instructions copied to clipboard");
     };
 
     return (
@@ -75,7 +75,7 @@ export const StreamSharePanel: React.FC<StreamSharePanelProps> = React.memo(
         <div className="grid gap-3 md:grid-cols-2">
           {/* Viewer challenge link + QR */}
           <div className="rounded-xl border border-slate-200 bg-white/70 px-3 py-2.5 shadow-sm">
-            <CopyField label="Challenge link（視聴者向け）" value={matchUrl} href={matchUrl} />
+            <CopyField label="Challenge link (viewer)" value={matchUrl} href={matchUrl} />
             <div className="mt-2 flex justify-center">
               <QrCode value={matchUrl} size={96} />
             </div>
@@ -83,7 +83,7 @@ export const StreamSharePanel: React.FC<StreamSharePanelProps> = React.memo(
 
           {/* OBS Overlay URL + QR */}
           <div className="rounded-xl border border-slate-200 bg-white/70 px-3 py-2.5 shadow-sm">
-            <CopyField label="OBS Overlay URL" value={overlayUrl} href={overlayUrl} />
+            <CopyField label="OBS Overlay" value={overlayUrl} href={overlayUrl} />
             <div className="mt-2 flex justify-center">
               <QrCode value={overlayUrl} size={96} />
             </div>
@@ -91,7 +91,7 @@ export const StreamSharePanel: React.FC<StreamSharePanelProps> = React.memo(
 
           {/* Host match link — NO QR (private/sensitive) */}
           <div className="rounded-xl border border-slate-200 bg-white/70 px-3 py-2.5 shadow-sm">
-            <CopyField label="Host match（配信用）" value={hostMatchUrl} href={hostMatchUrl} />
+            <CopyField label="Host match (stream)" value={hostMatchUrl} href={hostMatchUrl} />
             <div className="mt-1 text-[11px] text-amber-600">
               配信画面にQRを映さないでください（操作権限付きリンク）
             </div>
@@ -99,8 +99,8 @@ export const StreamSharePanel: React.FC<StreamSharePanelProps> = React.memo(
 
           {/* Additional URLs */}
           <div className="rounded-xl border border-slate-200 bg-white/70 px-3 py-2.5 shadow-sm space-y-2">
-            <CopyField label="Overlay（transparent）" value={overlayTransparentUrl} href={overlayTransparentUrl} />
-            <CopyField label="Replay（broadcast）" value={replayBroadcastUrl} href={replayBroadcastUrl} />
+            <CopyField label="Overlay (transparent)" value={overlayTransparentUrl} href={overlayTransparentUrl} />
+            <CopyField label="Replay (broadcast)" value={replayBroadcastUrl} href={replayBroadcastUrl} />
           </div>
         </div>
 
@@ -108,13 +108,13 @@ export const StreamSharePanel: React.FC<StreamSharePanelProps> = React.memo(
         <div className="rounded-xl border border-emerald-200 bg-emerald-50/60 px-4 py-3">
           <div className="flex items-center justify-between gap-2">
             <div className="text-xs font-semibold text-emerald-800">
-              視聴者向け案内（Viewer Instructions preview）
+              Viewer Instructions (preview)
             </div>
             <button
               className="rounded-lg border border-emerald-300 bg-white px-3 py-1 text-xs font-semibold text-emerald-700 hover:bg-emerald-50 transition-colors"
               onClick={copyInstructions}
             >
-              コピー
+              Copy
             </button>
           </div>
           <pre className="mt-2 whitespace-pre-wrap text-xs text-emerald-700 font-mono bg-white/50 rounded-lg px-3 py-2 border border-emerald-100">
@@ -127,7 +127,7 @@ export const StreamSharePanel: React.FC<StreamSharePanelProps> = React.memo(
           <div className="rounded-xl border border-sky-200 bg-sky-50/60 px-4 py-3">
             <div className="flex items-center justify-between gap-2">
               <div className="text-xs font-semibold text-sky-800">
-                クイックコマンド {typeof turn === "number" ? `(turn ${turn + 1})` : ""}
+                Quick Commands {typeof turn === "number" ? `(turn ${turn + 1})` : ""}
               </div>
             </div>
             <div className="mt-2 flex flex-wrap gap-1.5">
@@ -137,7 +137,7 @@ export const StreamSharePanel: React.FC<StreamSharePanelProps> = React.memo(
                   className="rounded-lg border border-sky-300 bg-white px-2.5 py-1 text-xs font-mono text-sky-700 hover:bg-sky-50 transition-colors"
                   onClick={() => {
                     void writeClipboardText(cmd);
-                    toast.success("コピーしました", cmd);
+                    toast.success("Copied", cmd);
                   }}
                 >
                   {cmd}
@@ -150,15 +150,15 @@ export const StreamSharePanel: React.FC<StreamSharePanelProps> = React.memo(
         {/* Nightbot Template */}
         <div className="rounded-xl border border-slate-200 bg-slate-50/60 px-4 py-3">
           <div className="flex items-center justify-between gap-2">
-            <div className="text-xs font-semibold text-slate-700">Nightbot テンプレート</div>
+            <div className="text-xs font-semibold text-slate-700">Nightbot Template</div>
             <button
               className="rounded-lg border border-slate-300 bg-white px-3 py-1 text-xs font-semibold text-slate-600 hover:bg-slate-50 transition-colors"
               onClick={() => {
                 void writeClipboardText(nightbotTemplate);
-                toast.success("コピーしました", "Nightbotテンプレートをコピーしました");
+                toast.success("Copied", "Nightbot template copied");
               }}
             >
-              コピー
+              Copy
             </button>
           </div>
           <div className="mt-1.5 text-xs text-slate-500 font-mono truncate">

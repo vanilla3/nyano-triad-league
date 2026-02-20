@@ -44,23 +44,23 @@ describe("animDurationsForQuality", () => {
 
   it("low → condensed durations", () => {
     const d = animDurationsForQuality("low");
-    expect(d.placeMs).toBe(220);
-    expect(d.flipMs).toBe(220);
-    expect(d.flipStaggerMs).toBe(90);
+    expect(d.placeMs).toBe(250);
+    expect(d.flipMs).toBe(250);
+    expect(d.flipStaggerMs).toBe(100);
   });
 
   it("medium → standard durations", () => {
     const d = animDurationsForQuality("medium");
-    expect(d.placeMs).toBe(360);
-    expect(d.flipMs).toBe(440);
-    expect(d.flipStaggerMs).toBe(120);
+    expect(d.placeMs).toBe(500);
+    expect(d.flipMs).toBe(600);
+    expect(d.flipStaggerMs).toBe(200);
   });
 
   it("high → same as medium (future: particles)", () => {
     const d = animDurationsForQuality("high");
-    expect(d.placeMs).toBe(360);
-    expect(d.flipMs).toBe(440);
-    expect(d.flipStaggerMs).toBe(120);
+    expect(d.placeMs).toBe(500);
+    expect(d.flipMs).toBe(600);
+    expect(d.flipStaggerMs).toBe(200);
   });
 });
 
@@ -169,12 +169,12 @@ describe("easeFlip", () => {
 describe("interpolatePlacement", () => {
   const cellH = 100;
 
-  it("at t=0: scale=0.78, alpha=0, offset=-10", () => {
+  it("at t=0: scale=0.5, alpha=0, offset=-16", () => {
     const f = interpolatePlacement(0, cellH);
-    expect(f.scaleX).toBe(0.78);
-    expect(f.scaleY).toBe(0.78);
+    expect(f.scaleX).toBe(0.5);
+    expect(f.scaleY).toBe(0.5);
     expect(f.alpha).toBe(0);
-    expect(f.offsetY).toBe(-10);
+    expect(f.offsetY).toBe(-16);
     expect(f.brightness).toBe(1);
   });
 
@@ -187,22 +187,22 @@ describe("interpolatePlacement", () => {
     expect(f.brightness).toBe(1);
   });
 
-  it("at t=0.3: scale≈1.05, alpha=1, brightness≈1.16 (bounce peak)", () => {
+  it("at t=0.3: scale≈1.12, alpha=1, brightness≈1.4 (bounce peak)", () => {
     const f = interpolatePlacement(0.3, cellH);
-    expect(f.scaleX).toBeCloseTo(1.05, 1);
+    expect(f.scaleX).toBeCloseTo(1.12, 1);
     expect(f.alpha).toBeCloseTo(1, 1);
-    expect(f.brightness).toBeCloseTo(1.16, 1);
+    expect(f.brightness).toBeCloseTo(1.4, 1);
   });
 
-  it("at t=0.5: scale≈0.98, brightness≈1.06 (rebound dip)", () => {
+  it("at t=0.5: scale≈0.96, brightness≈1.1 (rebound dip)", () => {
     const f = interpolatePlacement(0.5, cellH);
-    expect(f.scaleX).toBeCloseTo(0.98, 1);
-    expect(f.brightness).toBeCloseTo(1.06, 1);
+    expect(f.scaleX).toBeCloseTo(0.96, 1);
+    expect(f.brightness).toBeCloseTo(1.1, 1);
   });
 
-  it("at t=0.7: scale≈1.01, brightness≈1 (second peak)", () => {
+  it("at t=0.7: scale≈1.04, brightness≈1 (second peak)", () => {
     const f = interpolatePlacement(0.7, cellH);
-    expect(f.scaleX).toBeCloseTo(1.01, 1);
+    expect(f.scaleX).toBeCloseTo(1.04, 1);
     expect(f.brightness).toBeCloseTo(1, 1);
   });
 });
@@ -226,25 +226,25 @@ describe("interpolateFlip", () => {
     expect(f.brightness).toBe(1);
   });
 
-  it("at t=0.25: scaleX≈0 (edge-on), brightness≈0.84", () => {
+  it("at t=0.25: scaleX≈0 (edge-on), brightness≈0.7", () => {
     const f = interpolateFlip(0.25);
     expect(f.scaleX).toBeCloseTo(0, 1);
-    expect(f.scaleY).toBeCloseTo(1.03, 1);
-    expect(f.brightness).toBeCloseTo(0.84, 1);
+    expect(f.scaleY).toBeCloseTo(1.06, 1);
+    expect(f.brightness).toBeCloseTo(0.7, 1);
   });
 
-  it("at t=0.5: scaleX≈-1 (back face), brightness≈1.28", () => {
+  it("at t=0.5: scaleX≈-1 (back face), brightness≈1.5", () => {
     const f = interpolateFlip(0.5);
     expect(f.scaleX).toBeCloseTo(-1, 1);
-    expect(f.scaleY).toBeCloseTo(1.05, 1);
-    expect(f.brightness).toBeCloseTo(1.28, 1);
+    expect(f.scaleY).toBeCloseTo(1.08, 1);
+    expect(f.brightness).toBeCloseTo(1.5, 1);
   });
 
-  it("at t=0.75: scaleX≈0 (edge-on), brightness≈1.08", () => {
+  it("at t=0.75: scaleX≈0 (edge-on), brightness≈1.2", () => {
     const f = interpolateFlip(0.75);
     expect(f.scaleX).toBeCloseTo(0, 1);
-    expect(f.scaleY).toBeCloseTo(1.03, 1);
-    expect(f.brightness).toBeCloseTo(1.08, 1);
+    expect(f.scaleY).toBeCloseTo(1.04, 1);
+    expect(f.brightness).toBeCloseTo(1.2, 1);
   });
 });
 

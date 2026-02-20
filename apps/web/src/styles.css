@@ -694,19 +694,6 @@ a {
   scroll-behavior: smooth;
 }
 
-.replay-page,
-.replay-page__main,
-.replay-page__setup-card,
-.replay-page__board-card,
-.replay-page__turnlog-card,
-.replay-page__deck-card {
-  min-width: 0;
-}
-
-.replay-page pre {
-  max-width: 100%;
-}
-
 @media (min-width: 1024px) {
   .replay-header-grid {
     grid-template-columns: minmax(0, 1fr) auto;

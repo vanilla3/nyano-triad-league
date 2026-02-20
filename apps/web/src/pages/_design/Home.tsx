@@ -266,38 +266,38 @@ export function HomePage() {
       {/* Info Section */}
       <section className="max-w-5xl mx-auto px-4 py-12">
         <div className="grid gap-6 md:grid-cols-2">
-          {/* Current Focus */}
+          {/* Current Phase */}
           <div className="card">
             <div className="card-hd">
-              <h3 className="text-base font-bold font-display text-surface-800">📍 現在の注目ポイント</h3>
+              <h3 className="text-base font-bold font-display text-surface-800">📍 現在のフェーズ</h3>
             </div>
             <div className="card-bd">
               <div className="flex items-start gap-3">
                 <div className="w-2 h-2 rounded-full bg-emerald-500 mt-2 animate-pulse" />
                 <div>
-                  <div className="font-semibold text-surface-800">すぐ遊べる流れを強化中</div>
+                  <div className="font-semibold text-surface-800">検証・共有フェーズ</div>
                   <p className="text-sm text-surface-600 mt-1">
-                    Arena / Decks / Replay / Stream を短い操作で行き来できる構成にし、
-                    初見ユーザーでも迷わず遊べる体験を整えています。
+                    リプレイ共有、ルール検証、コミュニティフィードバックの収集を行っています。
+                    配信連携機能も実験中です。
                   </p>
                 </div>
               </div>
             </div>
           </div>
 
-          {/* Recommended Track */}
+          {/* Next Phase */}
           <div className="card">
             <div className="card-hd">
-              <h3 className="text-base font-bold font-display text-surface-800">🎯 おすすめの進め方</h3>
+              <h3 className="text-base font-bold font-display text-surface-800">🎯 次のマイルストーン</h3>
             </div>
             <div className="card-bd">
               <div className="flex items-start gap-3">
                 <div className="w-2 h-2 rounded-full bg-nyano-500 mt-2" />
                 <div>
-                  <div className="font-semibold text-surface-800">デッキ作成から配信連携まで</div>
+                  <div className="font-semibold text-surface-800">運営品質のゲーム体験</div>
                   <p className="text-sm text-surface-600 mt-1">
-                    まず Decks で5枚を編成し、Arena で対戦、Replay で振り返り、
-                    必要に応じて Stream で共有する流れがおすすめです。
+                    デッキ構築→対戦→結果共有→ランキング化の一連フローを、
+                    ハイクオリティなUIで提供します。
                   </p>
                 </div>
               </div>

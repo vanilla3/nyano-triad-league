@@ -31,6 +31,7 @@ export interface BoardViewMintProps {
   onCellSelect?: (cell: number) => void;
   onClickCell?: (cell: number) => void;
   selectableCells?: Set<number> | readonly number[] | null;
+  idleGuideSelectables?: boolean | Set<number> | readonly number[] | null;
   currentPlayer?: PlayerIndex | null;
   disabled?: boolean;
   size?: "sm" | "md" | "lg";
@@ -56,10 +57,7 @@ export interface BoardViewMintProps {
   onCellDrop?: (cell: number) => void;
   /** Called when dragging over a cell (or null when leaving) */
   onCellDragHover?: (cell: number | null) => void;
-  /** Optional selected-card preview for mouse hover ghost placement hint */
   selectedCardPreview?: CardData | null;
-  /** Idle-only hint for selectable cells */
-  idleGuideSelectables?: boolean;
 }
 
 // ── Helpers ────────────────────────────────────────────────────────────
@@ -101,7 +99,6 @@ interface MintCellProps {
   index: number;
   coord: string;
   isSelected: boolean;
-  isPressed: boolean;
   isPlaced: boolean;
   isFlipped: boolean;
   flipDelayClass?: string;
@@ -109,8 +106,6 @@ interface MintCellProps {
   isSelectable: boolean;
   warningMark?: PlayerIndex | null;
   onSelect?: () => void;
-  onPressStart?: () => void;
-  onPressEnd?: () => void;
   /** Long-press / right-click inspect handlers for cards on board */
   inspectHandlers?: {
     onTouchStart: (e: React.TouchEvent) => void;
@@ -123,11 +118,6 @@ interface MintCellProps {
   dragDropEnabled: boolean;
   onDropCard?: (cell: number) => void;
   onDragHover?: (cell: number | null) => void;
-  onHoverStart?: (cell: number) => void;
-  onHoverEnd?: () => void;
-  ghostCard?: CardData | null;
-  ghostOwner?: PlayerIndex | null;
-  idleGuide?: boolean;
 }
 
 function MintCell({
@@ -135,7 +125,6 @@ function MintCell({
   index,
   coord,
   isSelected,
-  isPressed,
   isPlaced,
   isFlipped,
   flipDelayClass,
@@ -143,23 +132,15 @@ function MintCell({
   isSelectable,
   warningMark,
   onSelect,
-  onPressStart,
-  onPressEnd,
   inspectHandlers,
   showCoordinates,
   isWarningMode,
   dragDropEnabled,
   onDropCard,
   onDragHover,
-  onHoverStart,
-  onHoverEnd,
-  ghostCard,
-  ghostOwner,
-  idleGuide,
 }: MintCellProps) {
   const hasCard = !!cell?.card;
   const owner = hasCard ? (cell.owner as PlayerIndex) : null;
-  const isInteractive = isSelectable && !hasCard;
 
   const classes = ["mint-cell"];
 
@@ -167,16 +148,12 @@ function MintCell({
     classes.push(owner === 0 ? "mint-cell--owner-a" : "mint-cell--owner-b");
   } else if (isSelectable) {
     classes.push("mint-cell--selectable");
-    classes.push("mint-pressable", "mint-pressable--cell");
     if (isWarningMode) classes.push("mint-cell--warning-mode");
   } else {
     classes.push("mint-cell--flat");
   }
 
   if (isSelected && !hasCard) classes.push("mint-cell--selected");
-  if (isPressed && !hasCard) classes.push("mint-cell--pressed");
-  if (ghostCard && isSelectable && !hasCard) classes.push("mint-cell--hover-ghost");
-  if (idleGuide && isSelectable && !hasCard) classes.push("mint-cell--idle-guide");
   if (dragDropEnabled && !hasCard && isSelectable) classes.push("mint-cell--drop-ready");
   if (isPlaced) classes.push("mint-cell--placed");
   if (isFlipped) {
@@ -194,16 +171,9 @@ function MintCell({
       role="gridcell"
       aria-label={cellLabel}
       aria-selected={isSelected || undefined}
-      tabIndex={isInteractive ? 0 : undefined}
       className={classes.join(" ")}
       data-board-cell={index}
       onClick={isSelectable && !hasCard ? onSelect : undefined}
-      onKeyDown={(e) => {
-        if (!isInteractive || !onSelect) return;
-        if (e.key !== "Enter" && e.key !== " ") return;
-        e.preventDefault();
-        onSelect();
-      }}
       onDragEnter={(e) => {
         if (!dragDropEnabled || hasCard || !isSelectable) return;
         e.preventDefault();
@@ -218,25 +188,6 @@ function MintCell({
       onDragLeave={() => {
         if (!dragDropEnabled) return;
         onDragHover?.(null);
-      }}
-      onPointerDown={() => {
-        if (!isInteractive) return;
-        onPressStart?.();
-      }}
-      onPointerUp={() => {
-        onPressEnd?.();
-      }}
-      onPointerCancel={() => {
-        onPressEnd?.();
-      }}
-      onPointerLeave={() => {
-        onPressEnd?.();
-        onHoverEnd?.();
-      }}
-      onPointerEnter={(e) => {
-        if (!isInteractive) return;
-        if (e.pointerType !== "mouse") return;
-        onHoverStart?.(index);
       }}
       onDrop={(e) => {
         if (!dragDropEnabled || hasCard || !isSelectable) return;
@@ -272,21 +223,11 @@ function MintCell({
           isPlaced={isPlaced}
           isFlipped={isFlipped}
         />
-      ) : ghostCard && isSelectable ? (
-        <div className="mint-cell__ghost" aria-hidden="true">
-          <CardNyanoDuel
-            card={ghostCard}
-            owner={ghostOwner ?? 0}
-          />
-        </div>
       ) : (
         <div className="mint-cell__empty-label">
           {isSelectable ? (isWarningMode ? "⚠" : "＋") : ""}
         </div>
       )}
-
-      {isPlaced ? <span className="mint-cell__ripple" aria-hidden="true" /> : null}
-      {isFlipped ? <span className="mint-cell__burst" aria-hidden="true" /> : null}
     </div>
   );
 }
@@ -304,12 +245,10 @@ function ActionPrompt({
   const isAi = gamePhase === "ai_turn";
 
   return (
-    <div className={["mint-prompt", isWarningMode && "mint-prompt--warning"].filter(Boolean).join(" ")} role="status" aria-live="polite">
-      <div className={["mint-prompt__ja", isAi && "mint-prompt__ja--ai"].filter(Boolean).join(" ")}>
+    <div className={["mint-prompt", isWarningMode && "mint-prompt--warning"].filter(Boolean).join(" ")}>
+      <div className={["mint-prompt__text", isAi && "mint-prompt__text--ai"].filter(Boolean).join(" ")}>
         {prompt.ja}
-      </div>
-      <div className={["mint-prompt__en", isAi && "mint-prompt__en--ai"].filter(Boolean).join(" ")}>
-        {prompt.en}
+        <span style={{ marginLeft: 8, fontSize: 12, opacity: 0.6 }}>{prompt.en}</span>
       </div>
     </div>
   );
@@ -348,6 +287,7 @@ export function BoardViewMint({
   flippedCells = [],
   warningMarks = [],
   selectableCells,
+  idleGuideSelectables,
   onCellSelect,
   onClickCell,
   currentPlayer,
@@ -363,13 +303,16 @@ export function BoardViewMint({
   dragDropEnabled = false,
   onCellDrop,
   onCellDragHover,
-  selectedCardPreview = null,
-  idleGuideSelectables = false,
 }: BoardViewMintProps) {
   const gridRef = React.useRef<HTMLDivElement>(null);
-  const [pressedCell, setPressedCell] = React.useState<number | null>(null);
-  const [hoveredCell, setHoveredCell] = React.useState<number | null>(null);
-  const selectableSet = toSelectableSet(selectableCells);
+  const selectableSet = new Set<number>([
+    ...toSelectableSet(selectableCells),
+    ...(idleGuideSelectables === true
+      ? toSelectableSet(selectableCells)
+      : idleGuideSelectables
+        ? toSelectableSet(idleGuideSelectables)
+        : []),
+  ]);
   const score = calcScore(board);
   const inspect = useCardPreview();
 
@@ -387,18 +330,9 @@ export function BoardViewMint({
 
   const handleSelect = (cell: number) => {
     if (disabled) return;
-    setPressedCell(null);
     const fn = onCellSelect ?? onClickCell;
     if (fn) fn(cell);
   };
-
-  React.useEffect(() => {
-    if (disabled) setPressedCell(null);
-  }, [disabled]);
-
-  React.useEffect(() => {
-    if (disabled || !selectedCardPreview) setHoveredCell(null);
-  }, [disabled, selectedCardPreview]);
 
   return (
     <div className={["grid gap-3", className].join(" ")}>
@@ -450,7 +384,6 @@ export function BoardViewMint({
                   index={idx}
                   coord={coord}
                   isSelected={!!isSel}
-                  isPressed={pressedCell === idx}
                   isPlaced={!!isPlaced}
                   isFlipped={!!isFlipped}
                   flipDelayClass={flipDelay}
@@ -458,19 +391,12 @@ export function BoardViewMint({
                   isSelectable={isSelectable}
                   warningMark={warning}
                   onSelect={() => handleSelect(idx)}
-                  onPressStart={() => setPressedCell(idx)}
-                  onPressEnd={() => setPressedCell((prev) => (prev === idx ? null : prev))}
                   inspectHandlers={cellInspect}
                   showCoordinates={showCoordinates}
                   isWarningMode={isWarningMode}
                   dragDropEnabled={dragDropEnabled}
                   onDropCard={onCellDrop}
                   onDragHover={onCellDragHover}
-                  onHoverStart={setHoveredCell}
-                  onHoverEnd={() => setHoveredCell((prev) => (prev === idx ? null : prev))}
-                  ghostCard={hoveredCell === idx ? selectedCardPreview : null}
-                  ghostOwner={typeof currentPlayer === "number" ? currentPlayer : 0}
-                  idleGuide={idleGuideSelectables}
                 />
               );
             })}
@@ -488,11 +414,9 @@ export function BoardViewMint({
       </div>
 
       {/* ── Action Prompt (NIN-UX-011) ── */}
-      <div className={["mint-prompt-slot", !showActionPrompt && "mint-prompt-slot--hidden"].filter(Boolean).join(" ")}>
-        {showActionPrompt && (
-          <ActionPrompt gamePhase={gamePhase} isWarningMode={isWarningMode} />
-        )}
-      </div>
+      {showActionPrompt && (
+        <ActionPrompt gamePhase={gamePhase} isWarningMode={isWarningMode} />
+      )}
 
       {/* ── Inline Error (NIN-UX-012) ── */}
       {inlineError && (

@@ -42,115 +42,83 @@ export function HandDisplayMint({
   onCardDragEnd,
 }: HandDisplayMintProps) {
   const preview = useCardPreview();
-  const [pressedIndex, setPressedIndex] = React.useState<number | null>(null);
-  const playerSuffix = owner === 0 ? "A" : "B";
-  const handAriaLabel = `プレイヤー${playerSuffix}手札 (Player ${playerSuffix} hand)`;
-  const handTrayAriaLabel = `プレイヤー${playerSuffix}手札トレイ (Player ${playerSuffix} hand tray)`;
-
-  React.useEffect(() => {
-    if (!disabled) return;
-    setPressedIndex(null);
-  }, [disabled]);
 
   return (
-    <div className="mint-hand-tray" aria-label={handTrayAriaLabel}>
-      <div className="mint-hand mint-hand-tray__rail" role="listbox" aria-label={handAriaLabel}>
-        {cards.map((card, idx) => {
-          const isUsed = usedIndices.has(idx);
-          const isSelected = selectedIndex === idx;
-          const isForced = forcedIndex === idx && !isUsed;
-          const isDisabled = isUsed || disabled;
+    <div className="mint-hand" role="listbox" aria-label={`Player ${owner === 0 ? "A" : "B"} hand`}>
+      {cards.map((card, idx) => {
+        const isUsed = usedIndices.has(idx);
+        const isSelected = selectedIndex === idx;
+        const isForcedMismatch = forcedIndex !== null && idx !== forcedIndex;
+        const isDisabled = isUsed || disabled || isForcedMismatch;
 
-          const classes = [
-            "mint-hand-card",
-            "mint-pressable",
-            "mint-pressable--card",
-            idx > 0 && "mint-hand-card--stacked",
-            owner === 0 ? "mint-hand-card--a" : "mint-hand-card--b",
-            isSelected && "mint-hand-card--selected",
-            isForced && "mint-hand-card--forced",
-            pressedIndex === idx && "mint-hand-card--pressed",
-            isUsed && "mint-hand-card--used",
-            enableDragDrop && !isDisabled && "mint-hand-card--draggable",
-          ].filter(Boolean).join(" ");
+        const classes = [
+          "mint-hand-card",
+          owner === 0 ? "mint-hand-card--a" : "mint-hand-card--b",
+          isSelected && "mint-hand-card--selected",
+          isUsed && "mint-hand-card--used",
+          enableDragDrop && !isDisabled && "mint-hand-card--draggable",
+        ].filter(Boolean).join(" ");
 
-          const lp = !isUsed ? preview.longPressHandlers(card, owner) : undefined;
+        const lp = !isUsed ? preview.longPressHandlers(card, owner) : undefined;
 
-          return (
-            <button
-              key={idx}
-              role="option"
-              aria-selected={isSelected}
-              aria-disabled={isDisabled}
-              aria-label={`Card ${idx + 1}: edges ${card.edges.up}/${card.edges.right}/${card.edges.down}/${card.edges.left}${isUsed ? " (used)" : ""}${isForced ? " (fixed slot)" : ""}`}
-              className={classes}
-              style={{ zIndex: isSelected ? 20 : cards.length - idx }}
-              disabled={isDisabled}
-              draggable={enableDragDrop && !isDisabled}
-              data-hand-card={idx}
-              onClick={() => { if (!isDisabled) onSelect?.(idx); }}
-              onDragStart={(e) => {
-                if (!enableDragDrop || isDisabled) {
-                  e.preventDefault();
-                  return;
-                }
-                e.dataTransfer.effectAllowed = "move";
-                e.dataTransfer.setData("application/x-nytl-card-index", String(idx));
-                e.dataTransfer.setData("text/plain", String(idx));
-                onCardDragStart?.(idx);
-              }}
-              onDragEnd={() => {
-                if (!enableDragDrop) return;
-                onCardDragEnd?.();
-              }}
-              onPointerEnter={(e) => { if (!isUsed) preview.show(card, owner, e.currentTarget); }}
-              onPointerLeave={() => {
-                preview.hide();
-                setPressedIndex((prev) => (prev === idx ? null : prev));
-              }}
-              onPointerDown={() => {
-                if (isDisabled) return;
-                setPressedIndex(idx);
-              }}
-              onPointerUp={() => setPressedIndex((prev) => (prev === idx ? null : prev))}
-              onPointerCancel={() => setPressedIndex((prev) => (prev === idx ? null : prev))}
-              onTouchStart={lp?.onTouchStart}
-              onTouchEnd={lp?.onTouchEnd}
-              onTouchMove={lp?.onTouchMove}
-              onContextMenu={lp?.onContextMenu}
+        return (
+          <button
+            key={idx}
+            role="option"
+            aria-selected={isSelected}
+            aria-disabled={isDisabled}
+            aria-label={`Card ${idx + 1}: edges ${card.edges.up}/${card.edges.right}/${card.edges.down}/${card.edges.left}${isUsed ? " (used)" : ""}`}
+            className={classes}
+            disabled={isDisabled}
+            draggable={enableDragDrop && !isDisabled}
+            data-hand-card={idx}
+            onClick={() => { if (!isDisabled) onSelect?.(idx); }}
+            onDragStart={(e) => {
+              if (!enableDragDrop || isDisabled) {
+                e.preventDefault();
+                return;
+              }
+              e.dataTransfer.effectAllowed = "move";
+              e.dataTransfer.setData("application/x-nytl-card-index", String(idx));
+              e.dataTransfer.setData("text/plain", String(idx));
+              onCardDragStart?.(idx);
+            }}
+            onDragEnd={() => {
+              if (!enableDragDrop) return;
+              onCardDragEnd?.();
+            }}
+            onPointerEnter={(e) => { if (!isUsed) preview.show(card, owner, e.currentTarget); }}
+            onPointerLeave={() => preview.hide()}
+            onTouchStart={lp?.onTouchStart}
+            onTouchEnd={lp?.onTouchEnd}
+            onTouchMove={lp?.onTouchMove}
+            onContextMenu={lp?.onContextMenu}
+          >
+            {/* Slot number badge */}
+            <div
+              className={[
+                "mint-hand-card__slot",
+                owner === 0 ? "mint-hand-card__slot--a" : "mint-hand-card__slot--b",
+              ].join(" ")}
             >
-              {/* Slot number badge */}
+              {idx + 1}
+            </div>
+
+            {/* Card content */}
+            <CardNyanoDuel card={card} owner={owner} className={!isSelected ? "opacity-80" : ""} />
+
+            {/* Used overlay */}
+            {isUsed && (
               <div
-                className={[
-                  "mint-hand-card__slot",
-                  owner === 0 ? "mint-hand-card__slot--a" : "mint-hand-card__slot--b",
-                ].join(" ")}
+                className="absolute inset-0 flex items-center justify-center rounded-xl"
+                style={{ background: "rgba(255,255,255,0.5)" }}
               >
-                {idx + 1}
+                <span className="text-lg text-surface-400">✓</span>
               </div>
-
-              {isForced && (
-                <div className="mint-hand-card__fixed-badge" aria-hidden="true">
-                  FIX
-                </div>
-              )}
-
-              {/* Card content */}
-              <CardNyanoDuel card={card} owner={owner} className={!isSelected ? "opacity-80" : ""} />
-
-              {/* Used overlay */}
-              {isUsed && (
-                <div
-                  className="absolute inset-0 flex items-center justify-center rounded-xl"
-                  style={{ background: "rgba(255,255,255,0.5)" }}
-                >
-                  <span className="text-lg text-surface-400">✓</span>
-                </div>
-              )}
-            </button>
-          );
-        })}
-      </div>
+            )}
+          </button>
+        );
+      })}
 
       {/* Card preview popover (PREV-0501) */}
       {preview.state.visible && preview.state.card && preview.state.anchorRect && (

@@ -36,9 +36,9 @@ type SimState = SimOk | { ok: false; error: string };
 function rulesetLabel(key: VectorKey): string {
   switch (key) {
     case "core_tactics_v1":
-      return "Core + Tactics（オンチェーン準拠）· v1";
+      return "Core + Tactics (on-chain subset) · v1";
     case "core_tactics_shadow_v2":
-      return "Core + Tactics + Shadow（warning無視）· v2";
+      return "Core + Tactics + Shadow(ignore warning) · v2";
     default:
       return key;
   }
@@ -181,7 +181,7 @@ export function PlaygroundPage() {
 
   const copyWithToast = async (label: string, text: string) => {
     await copy(text);
-    toast.success("コピーしました", label);
+    toast.success("Copied", label);
   };
 
   const buildReplayLink = (): string => {
@@ -221,7 +221,7 @@ export function PlaygroundPage() {
         <div className="flex items-center justify-between">
           <div className="text-sm font-semibold">{label}</div>
           <div className="text-xs text-slate-500">
-            勝者: {res.winner === 0 ? "A" : "B"} · タイル A:{res.tiles.A}/B:{res.tiles.B}
+            winner: {res.winner === 0 ? "A" : "B"} · tiles A:{res.tiles.A}/B:{res.tiles.B}
           </div>
         </div>
 
@@ -235,14 +235,14 @@ export function PlaygroundPage() {
         {step > 0 ? (
           <div className="flex flex-wrap gap-2 text-xs text-slate-600">
             <span className="rounded-md border border-slate-200 bg-slate-50 px-2 py-0.5">
-              配置: {placedCell !== null ? placedCell : "—"}
+              placed: {placedCell !== null ? placedCell : "—"}
             </span>
             <span className="rounded-md border border-amber-200 bg-amber-50 px-2 py-0.5">
-              反転: {flippedCells.length}
+              flipped: {flippedCells.length}
             </span>
           </div>
         ) : (
-          <div className="text-xs text-slate-500">初期盤面</div>
+          <div className="text-xs text-slate-500">initial board</div>
         )}
       </div>
     );
@@ -255,7 +255,7 @@ export function PlaygroundPage() {
     <div className="grid gap-6">
       <section className="card">
         <div className="card-hd">
-          <div className="text-base font-semibold">Nyano Lab（検証）🧪</div>
+          <div className="text-base font-semibold">Nyano Lab 🧪</div>
           <div className="text-xs text-slate-500">
             テストベクタからケースを選び、決定論エンジンで再現し、盤面をリプレイします。議論しやすいよう URL 共有を前提にしています。
           </div>
@@ -263,7 +263,7 @@ export function PlaygroundPage() {
 
         <div className="card-bd grid gap-4 md:grid-cols-3">
           <div className="grid gap-2">
-            <div className="text-xs font-medium text-slate-600">ベクタセット</div>
+            <div className="text-xs font-medium text-slate-600">Vector set</div>
             <select
               className="select"
               value={vectorKey}
@@ -276,10 +276,10 @@ export function PlaygroundPage() {
 
           <div className="grid gap-2 md:col-span-2">
             <div className="flex items-center justify-between">
-              <div className="text-xs font-medium text-slate-600">ケース</div>
+              <div className="text-xs font-medium text-slate-600">Case</div>
               <label className="flex items-center gap-2 text-xs text-slate-600">
                 <input type="checkbox" checked={compareMode} onChange={(e) => setCompareMode(e.target.checked)} />
-                v1 と v2 を比較（compare v1 vs v2）
+                compare v1 vs v2
               </label>
             </div>
             <select className="select" value={caseIndex} onChange={(e) => setCaseIndex(Number(e.target.value))}>
@@ -299,7 +299,7 @@ export function PlaygroundPage() {
 
             {(() => {
               const notes = vf.notes;
-              if (notes.length === 0) return <div className="mt-2 text-xs text-slate-500">メモなし</div>;
+              if (notes.length === 0) return <div className="mt-2 text-xs text-slate-500">no notes</div>;
               return (
                 <ul className="mt-2 list-disc pl-6 text-xs text-slate-600">
                   {notes.map((n, i) => (
@@ -312,13 +312,13 @@ export function PlaygroundPage() {
 
           <div className="md:col-span-3 flex flex-wrap items-center justify-between gap-2">
             <div className="text-xs text-slate-500">
-              共有URL: <span className="kbd">?vec</span> <span className="kbd">case</span> <span className="kbd">step</span>{" "}
+              Share: <span className="kbd">?vec</span> <span className="kbd">case</span> <span className="kbd">step</span>{" "}
               {compareMode ? <span className="kbd">cmp</span> : null}
             </div>
 
             <div className="flex flex-wrap items-center gap-2">
               <button className="btn btn-soft" onClick={() => copyWithToast("link", window.location.href)}>
-                共有リンクをコピー
+                Copy share link
               </button>
               
             </div>
@@ -332,8 +332,8 @@ export function PlaygroundPage() {
             <div className="card">
               <div className="card-hd flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="text-base font-semibold">リプレイ</div>
-                  <div className="text-xs text-slate-500">手順 {step}/{stepMax}</div>
+                  <div className="text-base font-semibold">Replay</div>
+                  <div className="text-xs text-slate-500">step {step}/{stepMax}</div>
                   {compareMode ? (
                     <span
                       className={[
@@ -341,7 +341,7 @@ export function PlaygroundPage() {
                         compareDiverged ? "border-amber-300 bg-amber-50 text-amber-800" : "border-slate-200 bg-slate-50 text-slate-600",
                       ].join(" ")}
                     >
-                      {compareDiverged ? "差分あり" : "一致"}
+                      {compareDiverged ? "diverged" : "same"}
                     </span>
                   ) : null}
                 </div>
@@ -372,17 +372,17 @@ export function PlaygroundPage() {
                   <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-slate-600">
                     <div>
                       {step === 0 ? (
-                        <span className="rounded-md border border-slate-200 bg-white px-2 py-0.5">初期</span>
+                        <span className="rounded-md border border-slate-200 bg-white px-2 py-0.5">initial</span>
                       ) : (
                         <span className="rounded-md border border-slate-200 bg-white px-2 py-0.5">
-                          {step}手目の後
+                          after turn {step}
                         </span>
                       )}
                     </div>
 
                     <div className="flex items-center gap-2">
                       <button className="btn" onClick={() => setStep(0)} disabled={step === 0}>
-                        先頭
+                        reset
                       </button>
                       <button className="btn" onClick={() => setStep((s) => Math.max(0, s - 1))} disabled={step === 0}>
                         ←
@@ -398,7 +398,7 @@ export function PlaygroundPage() {
                   </div>
 
                   <div className="mt-3">
-                    <Disclosure title={<span>詳細JSONを表示</span>}>
+                    <Disclosure title={<span>Show raw JSON (debug)</span>}>
                       <div className="grid gap-3">
                         <div>
                           <div className="text-xs font-medium text-slate-600">transcript</div>
@@ -418,7 +418,7 @@ export function PlaygroundPage() {
                 <div className="rounded-lg border border-slate-200 bg-white p-3 text-sm">
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <div className="font-medium">
-                      現在の勝者: {sim.current.winner === 0 ? "A" : "B"} · タイル A:{sim.current.tiles.A} / B:{sim.current.tiles.B}
+                      current winner: {sim.current.winner === 0 ? "A" : "B"} · tiles A:{sim.current.tiles.A} / B:{sim.current.tiles.B}
                     </div>
                     <div className="text-xs text-slate-500">tieBreak: {sim.current.tieBreak}</div>
                   </div>
@@ -434,10 +434,10 @@ export function PlaygroundPage() {
 
                   <div className="mt-3 flex flex-wrap items-center gap-2">
                     <button className="btn" onClick={() => copyWithToast("transcript", stringifyWithBigInt(sim.transcript))}>
-                      transcript JSONをコピー
+                      Copy transcript JSON
                     </button>
                     <button className="btn" onClick={() => copyWithToast("result", stringifyWithBigInt(sim.current))}>
-                      result JSONをコピー
+                      Copy result JSON
                     </button>
                     <button
                       className="btn"
@@ -453,7 +453,7 @@ export function PlaygroundPage() {
                       }}
                       title="Replayはオンチェーン属性で再現します（Playgroundのベクタと結果が変わる可能性があります）"
                     >
-                      replayリンクをコピー（on-chain）
+                      Copy replay link (on-chain)
                     </button>
                   </div>
                 </div>
@@ -468,7 +468,7 @@ export function PlaygroundPage() {
 
             <div className="card">
               <div className="card-hd">
-                <div className="text-base font-semibold">ターンログ</div>
+                <div className="text-base font-semibold">Turn log</div>
                 <div className="text-xs text-slate-500">クリックするとそのターンへジャンプします。</div>
               </div>
               <div className="card-bd">
@@ -484,13 +484,13 @@ export function PlaygroundPage() {
 
           <section className="card">
             <div className="card-hd">
-              <div className="text-base font-semibold">デッキ確認</div>
+              <div className="text-base font-semibold">Deck inspector</div>
               <div className="text-xs text-slate-500">“なぜこの結果になったか”を議論しやすくするため、カード情報を並べます。</div>
             </div>
 
             <div className="card-bd grid gap-6 md:grid-cols-2">
               <div className="grid gap-2">
-                <div className="text-xs font-medium text-slate-600">プレイヤーA deck</div>
+                <div className="text-xs font-medium text-slate-600">playerA deck</div>
                 <div className="deck-preview-grid grid grid-cols-5 gap-2">
                   {sim.transcript.header.deckA.map((tid) => {
                     const card = sim.cards.get(tid);
@@ -500,7 +500,7 @@ export function PlaygroundPage() {
               </div>
 
               <div className="grid gap-2">
-                <div className="text-xs font-medium text-slate-600">プレイヤーB deck</div>
+                <div className="text-xs font-medium text-slate-600">playerB deck</div>
                 <div className="deck-preview-grid grid grid-cols-5 gap-2">
                   {sim.transcript.header.deckB.map((tid) => {
                     const card = sim.cards.get(tid);
@@ -521,7 +521,7 @@ export function PlaygroundPage() {
 
             <div className="card-bd grid gap-4 md:grid-cols-2">
               <div className="grid gap-1 text-sm">
-                <div className="text-xs text-slate-500">プレイヤー</div>
+                <div className="text-xs text-slate-500">players</div>
                 <div className="rounded-lg border border-slate-200 bg-white p-3">
                   <div className="text-xs text-slate-500">A</div>
                   <code className="text-xs">{sim.transcript.header.playerA}</code>
@@ -531,7 +531,7 @@ export function PlaygroundPage() {
               </div>
 
               <div className="grid gap-1 text-sm">
-                <div className="text-xs text-slate-500">デッキ</div>
+                <div className="text-xs text-slate-500">decks</div>
                 <div className="rounded-lg border border-slate-200 bg-white p-3 text-xs">
                   <div className="text-slate-500">deckA</div>
                   <div className="font-mono">{sim.transcript.header.deckA.map(String).join(", ")}</div>
@@ -541,7 +541,7 @@ export function PlaygroundPage() {
               </div>
 
               <div className="md:col-span-2 grid gap-1 text-sm">
-                <div className="text-xs text-slate-500">ターン</div>
+                <div className="text-xs text-slate-500">turns</div>
                 <div className="rounded-lg border border-slate-200 bg-white p-3 text-xs">
                   <div className="text-slate-500">
                     moves/warningMarks/earthBoostEdges は packed bytes を decode して turn 配列に展開しています。
@@ -557,7 +557,7 @@ export function PlaygroundPage() {
       ) : (
         <section className="card">
           <div className="card-hd">
-            <div className="text-base font-semibold">エラー</div>
+            <div className="text-base font-semibold">Error</div>
           </div>
           <div className="card-bd text-sm text-slate-700">{sim.error}</div>
         </section>

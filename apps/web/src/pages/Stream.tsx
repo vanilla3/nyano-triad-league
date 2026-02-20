@@ -1,13 +1,9 @@
 import React from "react";
-import { Link, useSearchParams } from "react-router-dom";
+import { Link } from "react-router-dom";
 
 import { StreamOperationsHUD, computeConnectionHealth, type ExternalResult, type OpsLogEntry } from "@/components/StreamOperationsHUD";
 
 import { NyanoImage } from "@/components/NyanoImage";
-import { GlassPanel } from "@/components/mint/GlassPanel";
-import { MintPageGuide } from "@/components/mint/MintPageGuide";
-import { MintPressable } from "@/components/mint/MintPressable";
-import { MintIcon, type MintIconName } from "@/components/mint/icons/MintIcon";
 import { useToast } from "@/components/Toast";
 import { EVENTS, fetchEventConfig, getEventStatus, type EventV1 } from "@/lib/events";
 import { executeRecovery, recoveryActionLabel } from "@/lib/stream_recovery";
@@ -51,7 +47,6 @@ import { postNyanoWarudoSnapshot } from "@/lib/nyano_warudo_bridge";
 import { errorMessage } from "@/lib/errorMessage";
 import { writeClipboardText } from "@/lib/clipboard";
 import { formatViewerMoveText, parseChatMoveLoose, parseViewerMoveText } from "@/lib/triad_viewer_command";
-import { resolveClassicMetadataFromOverlayState, type ClassicResolvedMetadata } from "@/lib/classic_ruleset_visibility";
 import {
   cellIndexToCoord,
   computeEmptyCells,
@@ -64,8 +59,6 @@ import {
   type ViewerMove,
 } from "@/lib/triad_vote_utils";
 import { publishOverlayState, publishStreamCommand, makeStreamCommandId, publishStreamVoteState, readStoredOverlayState, subscribeOverlayState, type OverlayStateV1 } from "@/lib/streamer_bus";
-import { MINT_PAGE_GUIDES } from "@/lib/mint_page_guides";
-import { appendThemeToPath, resolveAppTheme } from "@/lib/theme";
 
 function pickDefaultEvent(events: EventV1[]): string {
   const now = Date.now();
@@ -80,10 +73,10 @@ function ageLabel(updatedAtMs?: number): string {
   if (!updatedAtMs) return "—";
   const delta = Math.max(0, Date.now() - updatedAtMs);
   const s = Math.floor(delta / 1000);
-  if (s < 1) return "たった今";
-  if (s < 60) return `${s}秒前`;
+  if (s < 1) return "just now";
+  if (s < 60) return `${s}s ago`;
   const m = Math.floor(s / 60);
-  return `${m}分前`;
+  return `${m}m ago`;
 }
 
 
@@ -102,58 +95,9 @@ function moveDisplay(m: ViewerMove, side: 0 | 1): string {
   });
 }
 
-function formatClassicOpenSlots(indices: readonly number[]): string {
-  return indices.map((idx) => String(idx + 1)).join(", ");
-}
-
-function formatClassicSwapSlots(aIndex: number, bIndex: number): string {
-  return `A${aIndex + 1} <-> B${bIndex + 1}`;
-}
-
-type ClassicStateJsonOpen = {
-  mode: "all_open" | "three_open";
-  playerA: number[];
-  playerB: number[];
-};
-
-type ClassicStateJsonSwap = {
-  playerA: number;
-  playerB: number;
-};
-
-type ClassicStateJson = {
-  rulesetId: string;
-  open: ClassicStateJsonOpen | null;
-  swap: ClassicStateJsonSwap | null;
-};
-
-function toClassicStateJson(classic: ClassicResolvedMetadata | null): ClassicStateJson | null {
-  if (!classic) return null;
-  return {
-    rulesetId: classic.rulesetId,
-    open: classic.open
-      ? {
-          mode: classic.open.mode,
-          playerA: [...classic.open.playerA],
-          playerB: [...classic.open.playerB],
-        }
-      : null,
-    swap: classic.swap
-      ? {
-          playerA: classic.swap.aIndex,
-          playerB: classic.swap.bIndex,
-        }
-      : null,
-  };
-}
-
 
 export function StreamPage() {
   const toast = useToast();
-  const [searchParams] = useSearchParams();
-  const theme = resolveAppTheme(searchParams);
-  const isMintTheme = theme === "mint";
-  const themed = React.useCallback((path: string) => appendThemeToPath(path, theme), [theme]);
 
   const [events, setEvents] = React.useState<EventV1[]>(EVENTS);
   const [eventId, setEventId] = React.useState<string>(() => {
@@ -187,35 +131,6 @@ export function StreamPage() {
     overlayTransparentUrl,
     replayBroadcastUrl,
   } = React.useMemo(() => buildStreamUrls(e?.id), [e?.id]);
-  const appendThemeToAbsoluteUrl = React.useCallback((rawUrl: string): string => {
-    try {
-      const parsed = new URL(rawUrl);
-      if (!parsed.searchParams.has("theme")) parsed.searchParams.set("theme", theme);
-      return parsed.toString();
-    } catch {
-      return rawUrl;
-    }
-  }, [theme]);
-  const themedMatchUrl = React.useMemo(() => appendThemeToAbsoluteUrl(matchUrl), [appendThemeToAbsoluteUrl, matchUrl]);
-  const themedHostMatchUrl = React.useMemo(() => appendThemeToAbsoluteUrl(hostMatchUrl), [appendThemeToAbsoluteUrl, hostMatchUrl]);
-  const themedOverlayUrl = React.useMemo(() => appendThemeToAbsoluteUrl(overlayUrl), [appendThemeToAbsoluteUrl, overlayUrl]);
-  const themedOverlayTransparentUrl = React.useMemo(
-    () => appendThemeToAbsoluteUrl(overlayTransparentUrl),
-    [appendThemeToAbsoluteUrl, overlayTransparentUrl],
-  );
-  const themedReplayBroadcastUrl = React.useMemo(
-    () => appendThemeToAbsoluteUrl(replayBroadcastUrl),
-    [appendThemeToAbsoluteUrl, replayBroadcastUrl],
-  );
-  const streamQuickActions = React.useMemo<Array<{ to: string; label: string; subtitle: string; icon: MintIconName }>>(
-    () => [
-      { to: themed(`/match?event=${encodeURIComponent(eventId)}&ui=mint`), label: "対戦 (Match)", subtitle: "配信対戦", icon: "match" },
-      { to: themed("/overlay?controls=0"), label: "オーバーレイ (Overlay)", subtitle: "OBS表示", icon: "stream" },
-      { to: themed("/replay?broadcast=1"), label: "リプレイ (Replay)", subtitle: "配信モード", icon: "replay" },
-      { to: themed("/events"), label: "イベント (Events)", subtitle: "シーズン一覧", icon: "events" },
-    ],
-    [eventId, themed],
-  );
   const matchPath = React.useMemo(() => appPath("match"), []);
   const replayPath = React.useMemo(() => appPath("replay"), []);
   const overlayPath = React.useMemo(() => appPath("overlay"), []);
@@ -224,7 +139,7 @@ export function StreamPage() {
 
   const copy = async (label: string, v: string) => {
     await writeClipboardText(v);
-    toast.success("コピーしました", label);
+    toast.success("Copied", label);
   };
 
 
@@ -240,7 +155,7 @@ function downloadTextFile(filename: string, content: string, mime: string) {
     a.remove();
     URL.revokeObjectURL(url);
   } catch (err: unknown) {
-    toast.error("ダウンロード失敗", errorMessage(err));
+    toast.error("Download failed", errorMessage(err));
   }
 }
 
@@ -269,10 +184,10 @@ function safeFileStem(): string {
   React.useEffect(() => {
     if (!live) return;
     if (live.rpcStatus && !live.rpcStatus.ok) {
-      setLastError({ message: live.rpcStatus.message ?? "RPC接続エラー (RPC connection failed)", timestampMs: live.rpcStatus.timestampMs });
+      setLastError({ message: live.rpcStatus.message ?? "RPC connection failed", timestampMs: live.rpcStatus.timestampMs });
     }
     if (live.externalStatus && live.externalStatus.lastOk === false) {
-      setLastError({ message: live.externalStatus.lastMessage ?? "外部連携エラー (External integration error)", timestampMs: live.externalStatus.lastTimestampMs ?? Date.now() });
+      setLastError({ message: live.externalStatus.lastMessage ?? "External integration error", timestampMs: live.externalStatus.lastTimestampMs ?? Date.now() });
     }
   }, [live?.rpcStatus, live?.externalStatus]); // eslint-disable-line react-hooks/exhaustive-deps -- only re-run on status change
 
@@ -416,7 +331,6 @@ interface StateJsonContent {
   legalMoves: LegalMoveEntry[];
   strictAllowed: { allowlist: string[]; hash: string } | null;
   warningMark: { used: number; remaining: number; candidates: string[] } | null;
-  classic: ClassicStateJson | null;
 }
 
 function buildStateJsonContent(state: OverlayStateV1 | null, controlled: 0 | 1): StateJsonContent {
@@ -441,7 +355,6 @@ function buildStateJsonContent(state: OverlayStateV1 | null, controlled: 0 | 1):
   const usedB = computeRemainingCardIndices(state, 1);
   const remainA = new Set(usedA);
   const remainB = new Set(usedB);
-  const classic = toClassicStateJson(resolveClassicMetadataFromOverlayState(state));
 
   return {
     protocol: "triad_league_state_json_v1",
@@ -479,7 +392,6 @@ function buildStateJsonContent(state: OverlayStateV1 | null, controlled: 0 | 1):
     warningMark: strict
       ? { used: strict.warningMark.used, remaining: strict.warningMark.remaining, candidates: strict.warningMark.candidates }
       : null,
-    classic,
   };
 }
 
@@ -487,27 +399,16 @@ function buildAiPrompt(state: OverlayStateV1 | null, controlled: 0 | 1): string 
   const turn = typeof state?.turn === "number" ? Number(state!.turn) : null;
   const toPlay = computeToPlay(state);
 
-  const strict = computeStrictAllowed(state);
+  const _strict = computeStrictAllowed(state);
   const emptyCells = computeEmptyCells(state);
   const remain = toPlay !== null ? computeRemainingCardIndices(state, toPlay) : [];
   const wUsed = toPlay !== null ? computeWarningMarksUsed(state, toPlay) : 0;
   const wRemain = toPlay !== null ? computeWarningMarksRemaining(state, toPlay) : 0;
 
   const boardMini = bestEffortBoardToProtocolBoard(state);
-  const classic = resolveClassicMetadataFromOverlayState(state);
 
   const lines: string[] = [];
   lines.push("Nyano Triad League snapshot (ai_prompt)");
-  if (classic?.open) {
-    if (classic.open.mode === "all_open") {
-      lines.push("classic_open: all_open");
-    } else {
-      lines.push(`classic_open: three_open A[${formatClassicOpenSlots(classic.open.playerA)}] / B[${formatClassicOpenSlots(classic.open.playerB)}]`);
-    }
-  }
-  if (classic?.swap) {
-    lines.push(`classic_swap: A${classic.swap.aIndex + 1} <-> B${classic.swap.bIndex + 1}`);
-  }
   lines.push(`event: ${state?.eventTitle ?? state?.eventId ?? "—"}`);
   lines.push(`mode: ${state?.mode ?? "—"}  turn: ${turn ?? "—"}/9`);
   lines.push(`to_play: ${toPlay === 0 ? "A" : toPlay === 1 ? "B" : "—"}  controlled: ${controlled === 0 ? "A" : "B"}`);
@@ -534,22 +435,21 @@ function buildAiPrompt(state: OverlayStateV1 | null, controlled: 0 | 1): string 
   lines.push("");
   lines.push(`Empty cells: ${emptyCells.map(cellIndexToCoord).join(", ")}`);
   lines.push(`Remaining hand slots for to_play: ${remain.map((i) => `A${i + 1}`).join(", ") || "—"}`);
-  lines.push(
-    `WarningMark: remaining=${wRemain} (used=${wUsed}) candidates=${
-      wRemain > 0 ? (strict?.warningMark.candidates.join(", ") ?? emptyCells.map(cellIndexToCoord).join(", ")) : "—"
-    }`
-  );
+  lines.push(`WarningMark: remaining=${wRemain} (used=${wUsed}) candidates=${wRemain > 0 ? emptyCells.map(cellIndexToCoord).join(", ") : "—"}`);
   lines.push("");
   lines.push("Legal moves (cell+slot):");
   // Print up to 30 moves to keep prompt readable
   const max = 30;
-  const legalMoves = strict?.allowlist ?? [];
-  if (legalMoves.length === 0) {
-    lines.push("- (none)");
-  } else {
-    for (const move of legalMoves.slice(0, max)) lines.push(`- ${move}`);
-    if (legalMoves.length > max) lines.push(`... (${legalMoves.length} total)`);
+  let printed = 0;
+  for (const cell of emptyCells) {
+    for (const cardIndex of remain) {
+      if (printed >= max) break;
+      lines.push(`- ${formatViewerMoveText({ side: 0, slot: cardIndex + 1, cell })}`);
+      printed += 1;
+    }
+    if (printed >= max) break;
   }
+  if (emptyCells.length * remain.length > max) lines.push(`... (${emptyCells.length * remain.length} total)`);
   lines.push("");
   lines.push("Return format: ONLY one line, e.g. '#triad A2->B2' or '#triad A2->B2 wm=C1'");
 
@@ -560,7 +460,7 @@ const sendNyanoWarudo = React.useCallback(
   async (kind: "ai_prompt" | "state_json", opts?: { silent?: boolean }) => {
     const state = live;
     if (!state) {
-      const msg = `ライブ状態がありません（${matchPath} または ${replayBroadcastPath} を開いてください）。`;
+      const msg = `No live state yet (open ${matchPath} or ${replayBroadcastPath}).`;
       setLastBridgeResult(msg);
       if (!opts?.silent) toast.warn("Nyano Warudo", msg);
       return;
@@ -584,12 +484,12 @@ const sendNyanoWarudo = React.useCallback(
     setLastExternalResult({
       kind: "warudo",
       ok: res.ok,
-      message: res.ok ? `${kind} を送信しました` : `${kind} の送信に失敗しました (${res.status})`,
+      message: res.ok ? `${kind} sent` : `${kind} failed (${res.status})`,
       timestampMs: Date.now(),
     });
     // Track persistent error for HUD (P0-ERR)
     if (!res.ok) {
-      setLastError({ message: `Warudo ${kind} の送信に失敗しました (${res.status})`, timestampMs: Date.now() });
+      setLastError({ message: `Warudo ${kind} failed (${res.status})`, timestampMs: Date.now() });
     }
     // Propagate warudo errors to overlay state so /overlay can display them
     if (!res.ok) {
@@ -599,7 +499,7 @@ const sendNyanoWarudo = React.useCallback(
           ...current,
           externalStatus: {
             lastOk: false,
-            lastMessage: `Warudo ${kind} の送信に失敗しました (${res.status})`,
+            lastMessage: `Warudo ${kind} failed (${res.status})`,
             lastTimestampMs: Date.now(),
           },
         });
@@ -607,8 +507,8 @@ const sendNyanoWarudo = React.useCallback(
     }
     appendOpsLog(res.ok ? "info" : "error", "warudo", res.ok ? `Sent ${kind}` : `Failed ${kind} (${res.status})`);
     if (!opts?.silent) {
-      if (res.ok) toast.success("Nyano Warudo", `${kind} を送信しました`);
-      else toast.error("Nyano Warudo", `${kind} の送信に失敗しました`);
+      if (res.ok) toast.success("Nyano Warudo", `Sent ${kind}`);
+      else toast.error("Nyano Warudo", `Failed to send ${kind}`);
     }
   },
   // eslint-disable-next-line react-hooks/exhaustive-deps -- buildAiPrompt/buildStateJsonContent are stable module-level fns
@@ -619,7 +519,7 @@ const sendNyanoWarudo = React.useCallback(
 const downloadStateJson = React.useCallback(() => {
   const state = live;
   if (!state) {
-    toast.warn("ダウンロード", "ライブ状態がありません。");
+    toast.warn("Download", "No live state yet.");
     return;
   }
   const contentObj = buildStateJsonContent(state, controlledSide);
@@ -632,7 +532,7 @@ const downloadStateJson = React.useCallback(() => {
 const downloadTranscript = React.useCallback(() => {
   const state = live;
   if (!state) {
-    toast.warn("ダウンロード", "ライブ状態がありません。");
+    toast.warn("Download", "No live state yet.");
     return;
   }
   const protocolV1 = state?.protocolV1 ?? null;
@@ -656,7 +556,7 @@ const downloadTranscript = React.useCallback(() => {
 const downloadAiPrompt = React.useCallback(() => {
   const state = live;
   if (!state) {
-    toast.warn("ダウンロード", "ライブ状態がありません。");
+    toast.warn("Download", "No live state yet.");
     return;
   }
   const content = buildAiPrompt(state, controlledSide);
@@ -675,8 +575,6 @@ const downloadAiPrompt = React.useCallback(() => {
 
   const liveTurn = typeof live?.turn === "number" ? live.turn : null;
   const liveCurrent = computeToPlay(live);
-  const liveClassic = React.useMemo(() => resolveClassicMetadataFromOverlayState(live), [live]);
-  const liveClassicOpen = liveClassic?.open ?? null;
 
 const canVoteNow =
   live?.mode === "live" &&
@@ -1124,7 +1022,7 @@ React.useEffect(() => {
     endsAtMs: voteEndsAtMs ?? undefined,
     totalVotes,
     top,
-    note: canVoteNow ? "投票受付中 (Voting…)" : "ホスト待機中 (Waiting for host…)",
+    note: canVoteNow ? "Voting…" : "Waiting for the host to be ready…",
   });
 }, [voteOpen, voteEndsAtMs, voteTurn, votesByUser, counts, controlledSide, live?.eventId, live?.eventTitle, liveTurn, canVoteNow]);
 
@@ -1135,22 +1033,22 @@ function buildMoveText(cell: number, cardIndex: number, wm: number | null, side:
 
 const _applyPickerToChatText = React.useCallback(() => {
   if (pickCell === null || pickCardIndex === null) {
-    toast.warn("ピッカー", "先にセルとカードを選択してください。");
+    toast.warn("Picker", "Select a cell and a card first.");
     return;
   }
   const wm = pickWarningMarkCell;
   const txt = buildMoveText(pickCell, pickCardIndex, wm, controlledSide);
   setChatText(txt);
-  toast.success("ピッカー", "チャットコマンドを入力しました。");
+  toast.success("Picker", "Filled chat command");
 }, [pickCell, pickCardIndex, pickWarningMarkCell, controlledSide, toast]);
 
 const _addVoteFromPicker = React.useCallback(() => {
   if (!voteOpen) {
-    toast.warn("投票", "先に投票を開始してください。");
+    toast.warn("Vote", "Start vote first.");
     return;
   }
   if (pickCell === null || pickCardIndex === null) {
-    toast.warn("投票", "先にセルとカードを選択してください。");
+    toast.warn("Vote", "Select a cell and a card first.");
     return;
   }
   const u = userName.trim() || "viewer";
@@ -1158,7 +1056,7 @@ const _addVoteFromPicker = React.useCallback(() => {
     ...prev,
     [u]: { cell: pickCell, cardIndex: pickCardIndex, warningMarkCell: pickWarningMarkCell },
   }));
-  toast.success("投票", "ピッカーから投票を追加しました。");
+  toast.success("Vote", "Added vote from picker");
 }, [voteOpen, pickCell, pickCardIndex, pickWarningMarkCell, userName, toast]);
 
 const _clearPicker = React.useCallback(() => {
@@ -1183,64 +1081,11 @@ const copyViewerInstructions = React.useCallback(() => {
     `投票は制限時間内に1人1票。最多票の手が採用されます！`,
   ].join("\n");
   void writeClipboardText(instructions);
-  toast.success("コピーしました", "視聴者向け案内をクリップボードへコピーしました");
+  toast.success("Copied", "Viewer instructions copied to clipboard");
 }, [controlledSide, toast]);
 
 return (
-    <div className="stream-page space-y-6">
-      {isMintTheme ? (
-        <section className="mint-stream-quicknav" aria-label="Stream quick navigation">
-          {streamQuickActions.map((action) => (
-            <GlassPanel key={action.label} variant="card" className="mint-stream-quicknav__card">
-              <MintPressable to={action.to} className="mint-stream-quicknav__action" fullWidth>
-                <MintIcon name={action.icon} size={18} />
-                <span className="mint-stream-quicknav__label">{action.label}</span>
-                <span className="mint-stream-quicknav__sub">{action.subtitle}</span>
-              </MintPressable>
-            </GlassPanel>
-          ))}
-        </section>
-      ) : null}
-      {isMintTheme ? (
-        <section className="mint-stream-summary" aria-label="Stream overview">
-          <GlassPanel variant="pill" className="mint-stream-summary__item mint-stream-summary__item--wide">
-            <span className="mint-stream-summary__label">イベント</span>
-            <span className="mint-stream-summary__value">{e?.title ?? "イベント未選択"}</span>
-          </GlassPanel>
-          <GlassPanel variant="pill" className="mint-stream-summary__item">
-            <span className="mint-stream-summary__label">現在ターン</span>
-            <span className="mint-stream-summary__value">{liveTurn ?? "—"}</span>
-          </GlassPanel>
-          <GlassPanel variant="pill" className="mint-stream-summary__item">
-            <span className="mint-stream-summary__label">投票</span>
-            <span className="mint-stream-summary__value">
-              {voteOpen ? (timeLeft !== null ? `残り ${timeLeft}s` : "受付中") : "受付終了"}
-            </span>
-          </GlassPanel>
-          <GlassPanel variant="pill" className="mint-stream-summary__item">
-            <span className="mint-stream-summary__label">オーバーレイ</span>
-            <span className="mint-stream-summary__value">{connectionHealth.overlayConnected ? "接続中" : "待機中"}</span>
-          </GlassPanel>
-          <GlassPanel variant="pill" className="mint-stream-summary__item">
-            <span className="mint-stream-summary__label">対戦連携</span>
-            <span className="mint-stream-summary__value">{connectionHealth.matchConnected ? "接続中" : "待機中"}</span>
-          </GlassPanel>
-          <GlassPanel variant="pill" className="mint-stream-summary__item">
-            <span className="mint-stream-summary__label">Warudo</span>
-            <span className="mint-stream-summary__value">
-              {!connectionHealth.warudoConfigured
-                ? "未設定"
-                : connectionHealth.warudoLastOk === true
-                  ? "正常"
-                  : connectionHealth.warudoLastOk === false
-                    ? "エラー"
-                    : "不明"}
-            </span>
-          </GlassPanel>
-        </section>
-      ) : null}
-      {isMintTheme ? <MintPageGuide spec={MINT_PAGE_GUIDES.stream} className="mint-stream-guide" /> : null}
-
+    <div className="space-y-6">
       <StreamOperationsHUD
         live={live}
         controlledSide={controlledSide}
@@ -1255,10 +1100,10 @@ return (
         lastError={lastError}
         onDismissError={() => setLastError(null)}
       />
-      <div className="stream-page__lock-row flex items-center justify-end gap-3">
+      <div className="flex items-center justify-end gap-3">
         {settingsLocked && lockTimestamp > 0 && (
           <span className="text-xs text-slate-500">
-            ロック中 {ageLabel(lockTimestamp)}
+            Locked {ageLabel(lockTimestamp)}
           </span>
         )}
         <button
@@ -1271,28 +1116,28 @@ return (
           }}
           aria-label={settingsLocked ? "Unlock settings" : "Lock settings"}
         >
-          {settingsLocked ? "🔒 設定ロック中 (解除)" : "🔓 設定をロックする"}
+          {settingsLocked ? "🔒 設定ロック中 (解除)" : "🔓 設定をロック"}
         </button>
       </div>
-      <div className="card stream-page__studio-card">
+      <div className="card">
         <div className="card-hd">
           <div>
             <div className="flex items-center gap-3">
               <NyanoImage size={56} className="shrink-0" alt="Nyano" />
-              <div className="text-lg font-semibold">🎥 配信スタジオ (Nyano Stream Studio)</div>
+              <div className="text-lg font-semibold">🎥 Nyano Stream Studio</div>
             </div>
             <div className="text-sm text-slate-600">
-              OBSオーバーレイとチャット投票を使って、視聴者と一緒に対戦を進行できます。
+              Twitch配信に向けた「導線・見せ方・共有」を整えます。まずは OBS Overlay → その次に Chat voting。
             </div>
           </div>
         </div>
 
         <div className="card-bd space-y-4">
           {/* Step 1 · Event Selection */}
-          <div className="stream-page__step rounded-2xl border border-slate-200 bg-white/70 px-4 py-3 shadow-sm">
-            <div className="text-xs font-semibold text-slate-800">ステップ1 · 注目イベントを選ぶ</div>
+          <div className="rounded-2xl border border-slate-200 bg-white/70 px-4 py-3 shadow-sm">
+            <div className="text-xs font-semibold text-slate-800">Step 1 · Feature an Event</div>
             <div className="mt-2 flex flex-col gap-2">
-              <label className="text-xs text-slate-600">イベント</label>
+              <label className="text-xs text-slate-600">Event</label>
               <select
                 className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm"
                 value={eventId}
@@ -1312,11 +1157,11 @@ return (
 
           {/* Step 2 · Share & QR Codes (P2-310) */}
           <StreamSharePanel
-            matchUrl={themedMatchUrl}
-            hostMatchUrl={themedHostMatchUrl}
-            overlayUrl={themedOverlayUrl}
-            overlayTransparentUrl={themedOverlayTransparentUrl}
-            replayBroadcastUrl={themedReplayBroadcastUrl}
+            matchUrl={matchUrl}
+            hostMatchUrl={hostMatchUrl}
+            overlayUrl={overlayUrl}
+            overlayTransparentUrl={overlayTransparentUrl}
+            replayBroadcastUrl={replayBroadcastUrl}
             controlledSide={controlledSide}
             eventTitle={e?.title}
             emptyCells={_remainingCellsLive}
@@ -1324,27 +1169,27 @@ return (
             turn={liveTurn ?? undefined}
           />
 
-          <div className="callout callout-info stream-page__callout">
-            <div className="text-xs font-semibold">配信のおすすめ進行</div>
+          <div className="callout callout-info">
+            <div className="text-xs font-semibold">配信の“最短”の回し方（暫定）</div>
             <div className="mt-1 text-sm text-slate-800">
-              視聴者には <span className="font-mono">対戦リンク</span> を配り、勝ったリプレイURLをチャットに貼ってもらいます。
+              視聴者には <span className="font-mono">challenge link</span> を配り、勝ったリプレイURLをチャットに貼ってもらいます。
               <br />
-              配信側は <Link to={themed("/replay")}>リプレイ</Link> で回収して、解説や採点に活用します。
+              配信側は <Link to="/replay">Replay</Link> で拾って、解説・採点・ランキング化へ。
             </div>
           </div>
 
-          <div className="stream-page__step rounded-2xl border border-slate-200 bg-white/70 px-4 py-3 shadow-sm">
-            <div className="text-xs font-semibold text-slate-800">ステップ3 · リプレイを配信で確認</div>
+          <div className="rounded-2xl border border-slate-200 bg-white/70 px-4 py-3 shadow-sm">
+            <div className="text-xs font-semibold text-slate-800">Step 3 · Review replays on stream</div>
             <div className="mt-1 text-sm text-slate-700">
-              <span className="font-mono">{replayPath}</span> で共有URLを開き、<span className="font-semibold">Overlayへ配信 (Broadcast to overlay)</span> をONにすると、
-              オーバーレイが手順と一緒に追随します（解説しやすくなります）。
+              <span className="font-mono">{replayPath}</span> で共有URLを開き、<span className="font-semibold">Broadcast to overlay</span> をONにすると、
+              overlayが step と一緒に追随します（解説がしやすい）。
             </div>
             <div className="mt-3 flex flex-wrap items-center gap-2">
-              <button className="btn btn-sm btn-primary" onClick={() => copy("Replay (broadcast)", themedReplayBroadcastUrl)}>
-                リプレイURLをコピー (broadcast)
+              <button className="btn btn-sm btn-primary" onClick={() => copy("Replay (broadcast)", replayBroadcastUrl)}>
+                Copy replay (broadcast)
               </button>
-              <a className="btn btn-sm no-underline" href={themedReplayBroadcastUrl} target="_blank" rel="noreferrer noopener">
-                開く
+              <a className="btn btn-sm no-underline" href={replayBroadcastUrl} target="_blank" rel="noreferrer noopener">
+                Open
               </a>
             </div>
             <div className="mt-2 text-xs text-slate-500">
@@ -1352,48 +1197,33 @@ return (
             </div>
           </div>
 
-          <div className="stream-page__step rounded-2xl border border-slate-200 bg-white/70 px-4 py-3 shadow-sm">
+          <div className="rounded-2xl border border-slate-200 bg-white/70 px-4 py-3 shadow-sm">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <div>
-                <div className="text-xs font-semibold text-slate-800">ステップ4 · Nyano vs Chat（投票ベータ）</div>
+                <div className="text-xs font-semibold text-slate-800">Step 4 · Nyano vs Chat (prototype)</div>
                 <div className="mt-1 text-xs text-slate-600">
-                  Twitch連携の前段として、<span className="font-mono">{streamPath}</span> の投票集計を <span className="font-mono">{matchPath}</span> に反映する運用を行います。
+                  Twitch連携の前に、まずは <span className="font-mono">{streamPath}</span> で投票集計 → <span className="font-mono">{matchPath}</span> に反映する最小ループを作ります。
                 </div>
               </div>
 
               <div className="text-xs text-slate-500" role="status" aria-live="polite">
-                状態: <span className="font-mono">{live?.mode ?? "—"}</span> · 更新: <span className="font-mono">{ageLabel(live?.updatedAtMs)}</span>
+                live: <span className="font-mono">{live?.mode ?? "—"}</span> · updated: <span className="font-mono">{ageLabel(live?.updatedAtMs)}</span>
               </div>
             </div>
 
             <div className="mt-3 grid gap-3 md:grid-cols-2">
-              <div className="stream-page__live-status rounded-xl border border-slate-200 bg-white px-3 py-2">
-                <div className="text-[11px] font-semibold text-slate-700">ライブ状態（連携バス）</div>
+              <div className="rounded-xl border border-slate-200 bg-white px-3 py-2">
+                <div className="text-[11px] font-semibold text-slate-700">Live status (from overlay bus)</div>
                 <div className="mt-1 text-xs text-slate-700">
-                  イベント: <span className="font-mono">{live?.eventId ?? "—"}</span>
+                  Event: <span className="font-mono">{live?.eventId ?? "—"}</span>
                 </div>
                 <div className="mt-1 text-xs text-slate-700">
-                  ターン: <span className="font-mono">{typeof liveTurn === "number" ? liveTurn : "—"}</span> · 手番:{" "}
+                  Turn: <span className="font-mono">{typeof liveTurn === "number" ? liveTurn : "—"}</span> · to play:{" "}
                   <span className="font-mono">{liveCurrent === 0 ? "A" : liveCurrent === 1 ? "B" : "—"}</span>
                 </div>
-                {liveClassicOpen ? (
-                  <div className="mt-1 text-xs text-slate-700">
-                    クラシック Open:{" "}
-                    <span className="font-mono">
-                      {liveClassicOpen.mode === "all_open"
-                        ? "全カード公開"
-                        : `A[${formatClassicOpenSlots(liveClassicOpen.playerA)}] / B[${formatClassicOpenSlots(liveClassicOpen.playerB)}]`}
-                    </span>
-                  </div>
-                ) : null}
-                {liveClassic?.swap ? (
-                  <div className="mt-1 text-xs text-slate-700">
-                    クラシック Swap: <span className="font-mono">{formatClassicSwapSlots(liveClassic.swap.aIndex, liveClassic.swap.bIndex)}</span>
-                  </div>
-                ) : null}
                 {live?.lastMove ? (
                   <div className="mt-1 text-xs text-slate-700">
-                    直前: <span className="font-mono">{live.lastMove.by === 0 ? "A" : "B"}{" "}
+                    Last: <span className="font-mono">{live.lastMove.by === 0 ? "A" : "B"}{" "}
                     {moveDisplay({ cell: live.lastMove.cell, cardIndex: live.lastMove.cardIndex }, live.lastMove.by as 0 | 1)}</span>
                   </div>
                 ) : null}
@@ -1459,15 +1289,15 @@ return (
             />
 
             <div className="mt-3 text-[11px] text-slate-500">
-              現在のコマンド連携は、将来的に Twitch Bridge（EventSub/IRC）へ置き換えできる設計です。
+              ここで確立した「command bus」は、次の段階で Twitch Bridge（EventSub/IRC）に置き換え可能です。
             </div>
           </div>
         </div>
       </div>
 
       {/* ── Recovery / Troubleshooting (Phase 2 — one-click + guide) ── */}
-      <div className="card stream-page__recovery rounded-2xl border border-amber-200 bg-amber-50/50 px-4 py-3">
-        <div className="text-xs font-semibold text-amber-800 mb-2">復旧メニュー (Recovery)</div>
+      <div className="card rounded-2xl border border-amber-200 bg-amber-50/50 px-4 py-3">
+        <div className="text-xs font-semibold text-amber-800 mb-2">Recovery (リカバリー)</div>
         <div className="flex flex-wrap gap-2 mb-3">
           {(["clear_overlay", "clear_votes", "full_reset"] as const).map((action) => (
             <button
@@ -1478,7 +1308,7 @@ return (
                 const result = executeRecovery(action);
                 const label = recoveryActionLabel(action);
                 appendOpsLog("warn", "recovery", `${label}: cleared ${result.cleared.length} key(s)`);
-                toast.success(label, `${result.cleared.length} 件のキーをクリアしました`);
+                toast.success(label, `Cleared ${result.cleared.length} key(s)`);
                 if (action === "full_reset") {
                   setSettingsLocked(false);
                 }
@@ -1489,55 +1319,55 @@ return (
           ))}
         </div>
         <details>
-          <summary className="text-xs text-amber-700 cursor-pointer">トラブルシューティング</summary>
+          <summary className="text-xs text-amber-700 cursor-pointer">Troubleshooting guide</summary>
           <div className="mt-2 grid gap-3 text-xs text-amber-900">
             <div>
-              <div className="font-semibold">Overlay に &quot;Data stale&quot; が出る</div>
+              <div className="font-semibold">Overlay shows &quot;Data stale&quot;</div>
               <ol className="list-decimal pl-4 mt-1 space-y-0.5">
-                <li>Match タブが開いていて接続中か確認する</li>
-                <li>Match タブを再読み込みする（stateは localStorage から復元）</li>
-                <li>RPCエラーが続く場合は blockchain RPC endpoint を確認する</li>
+                <li>Check Match tab is still open and connected</li>
+                <li>Refresh Match tab (state auto-recovers from localStorage)</li>
+                <li>If RPC errors persist, check blockchain RPC endpoint</li>
               </ol>
             </div>
             <div>
-              <div className="font-semibold">投票結果が overlay に表示されない</div>
+              <div className="font-semibold">Vote not appearing in overlay</div>
               <ol className="list-decimal pl-4 mt-1 space-y-0.5">
-                <li>Stream タブと Overlay タブが同じ origin か確認する</li>
-                <li>ブラウザコンソールで BroadcastChannel エラーを確認する</li>
-                <li>両タブを再読み込みする（vote state はリセット）</li>
+                <li>Verify Stream tab and Overlay tab are on the same origin</li>
+                <li>Check browser console for BroadcastChannel errors</li>
+                <li>Refresh both tabs (vote state resets)</li>
               </ol>
             </div>
             <div>
-              <div className="font-semibold">Warudo bridge が応答しない</div>
+              <div className="font-semibold">Warudo bridge not responding</div>
               <ol className="list-decimal pl-4 mt-1 space-y-0.5">
-                <li>base URL が正しいか確認する（末尾の slash なし）</li>
-                <li>&quot;Send state&quot; を手動実行して疎通を確認する</li>
-                <li>nyano-warudo の server logs で CORS/timeout を確認する</li>
+                <li>Check base URL is correct (no trailing slash)</li>
+                <li>Click &quot;Send state&quot; manually to test connectivity</li>
+                <li>Check nyano-warudo server logs for CORS or timeout errors</li>
               </ol>
             </div>
           </div>
         </details>
       </div>
 
-      <div className="card stream-page__links">
+      <div className="card">
         <div className="card-hd">
           <div>
-            <div className="text-base font-semibold">リンク</div>
+            <div className="text-base font-semibold">Links</div>
             <div className="text-xs text-slate-600">便利リンク</div>
           </div>
         </div>
         <div className="card-bd flex flex-wrap items-center gap-2">
-          <Link className="btn no-underline" to={themed("/events")}>
-            イベント (Events)
+          <Link className="btn no-underline" to="/events">
+            Events
           </Link>
-          <Link className="btn no-underline" to={themed("/match?ui=mint")}>
-            対戦 (Match)
+          <Link className="btn no-underline" to="/match?ui=mint">
+            Match
           </Link>
-          <Link className="btn no-underline" to={themed("/replay")}>
-            リプレイ (Replay)
+          <Link className="btn no-underline" to="/replay">
+            Replay
           </Link>
-          <a className="btn no-underline" href={themedOverlayUrl} target="_blank" rel="noreferrer noopener">
-            オーバーレイ (Overlay)
+          <a className="btn no-underline" href={overlayUrl} target="_blank" rel="noreferrer noopener">
+            Overlay
           </a>
         </div>
       </div>

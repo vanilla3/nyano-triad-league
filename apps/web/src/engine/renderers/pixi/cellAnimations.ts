@@ -86,20 +86,20 @@ export const IDENTITY_FRAME: Readonly<CellAnimFrame> = {
  * Map VFX quality tier to animation durations.
  *
  *   off    → 0ms (no animation — identity frame always)
- *   low    → 220/220ms condensed
- *   medium → 360/440ms (short, event-focused)
- *   high   → 360/440ms (same timing as medium; renderer adds foil flash)
+ *   low    → 250ms condensed
+ *   medium → 500/600ms (matches CSS)
+ *   high   → 500/600ms (same timing as medium; renderer adds foil flash)
  */
 export function animDurationsForQuality(quality: VfxQuality): AnimDurations {
   switch (quality) {
     case "off":
       return { placeMs: 0, flipMs: 0, flipStaggerMs: 0 };
     case "low":
-      return { placeMs: 220, flipMs: 220, flipStaggerMs: 90 };
+      return { placeMs: 250, flipMs: 250, flipStaggerMs: 100 };
     case "medium":
-      return { placeMs: 360, flipMs: 440, flipStaggerMs: 120 };
+      return { placeMs: 500, flipMs: 600, flipStaggerMs: 200 };
     case "high":
-      return { placeMs: 360, flipMs: 440, flipStaggerMs: 120 };
+      return { placeMs: 500, flipMs: 600, flipStaggerMs: 200 };
   }
 }
 
@@ -204,18 +204,18 @@ function lerp(a: number, b: number, t: number): number {
 /**
  * Interpolate placement animation at progress t ∈ [0, 1].
  *
- * Refined "short + meaningful" place keyframes:
- *   0%:   scale(0.78) translateY(-10px) opacity(0) brightness(1)
- *   30%:  scale(1.05) translateY(0)     opacity(1) brightness(1.16)
- *   50%:  scale(0.98)                              brightness(1.06)
- *   70%:  scale(1.01)                              brightness(1)
+ * Reproduces mint-cell-place keyframes:
+ *   0%:   scale(0.5) translateY(-16px) opacity(0) brightness(1)
+ *   30%:  scale(1.12) translateY(0)    opacity(1) brightness(1.4)
+ *   50%:  scale(0.96)                             brightness(1.1)
+ *   70%:  scale(1.04)                             brightness(1)
  *   100%: scale(1)                                brightness(1)
  *
  * @param cellH  Cell height in px (for translateY scaling)
  */
 export function interpolatePlacement(t: number, _cellH: number): CellAnimFrame {
   if (t <= 0) {
-    return { scaleX: 0.78, scaleY: 0.78, alpha: 0, offsetY: -10, brightness: 1 };
+    return { scaleX: 0.5, scaleY: 0.5, alpha: 0, offsetY: -16, brightness: 1 };
   }
   if (t >= 1) {
     return { ...IDENTITY_FRAME };
@@ -226,40 +226,40 @@ export function interpolatePlacement(t: number, _cellH: number): CellAnimFrame {
     // 0% → 30%
     const p = t / 0.3;
     return {
-      scaleX: lerp(0.78, 1.05, p),
-      scaleY: lerp(0.78, 1.05, p),
+      scaleX: lerp(0.5, 1.12, p),
+      scaleY: lerp(0.5, 1.12, p),
       alpha: lerp(0, 1, p),
-      offsetY: lerp(-10, 0, p),
-      brightness: lerp(1, 1.16, p),
+      offsetY: lerp(-16, 0, p),
+      brightness: lerp(1, 1.4, p),
     };
   }
   if (t <= 0.5) {
     // 30% → 50%
     const p = (t - 0.3) / 0.2;
     return {
-      scaleX: lerp(1.05, 0.98, p),
-      scaleY: lerp(1.05, 0.98, p),
+      scaleX: lerp(1.12, 0.96, p),
+      scaleY: lerp(1.12, 0.96, p),
       alpha: 1,
       offsetY: 0,
-      brightness: lerp(1.16, 1.06, p),
+      brightness: lerp(1.4, 1.1, p),
     };
   }
   if (t <= 0.7) {
     // 50% → 70%
     const p = (t - 0.5) / 0.2;
     return {
-      scaleX: lerp(0.98, 1.01, p),
-      scaleY: lerp(0.98, 1.01, p),
+      scaleX: lerp(0.96, 1.04, p),
+      scaleY: lerp(0.96, 1.04, p),
       alpha: 1,
       offsetY: 0,
-      brightness: lerp(1.06, 1, p),
+      brightness: lerp(1.1, 1, p),
     };
   }
   // 70% → 100%
   const p = (t - 0.7) / 0.3;
   return {
-    scaleX: lerp(1.01, 1, p),
-    scaleY: lerp(1.01, 1, p),
+    scaleX: lerp(1.04, 1, p),
+    scaleY: lerp(1.04, 1, p),
     alpha: 1,
     offsetY: 0,
     brightness: lerp(1, 1, p),
@@ -271,9 +271,9 @@ export function interpolatePlacement(t: number, _cellH: number): CellAnimFrame {
  *
  * Simulates rotateY using scaleX (2D-only approach):
  *   0%:   scaleX(1)  scaleY(1)    brightness(1)
- *   25%:  scaleX(0)  scaleY(1.03) brightness(0.84)  ← edge-on
- *   50%:  scaleX(-1) scaleY(1.05) brightness(1.28)  ← "back face"
- *   75%:  scaleX(0)  scaleY(1.03) brightness(1.08)
+ *   25%:  scaleX(0)  scaleY(1.06) brightness(0.7)   ← edge-on
+ *   50%:  scaleX(-1) scaleY(1.08) brightness(1.5)   ← "back face"
+ *   75%:  scaleX(0)  scaleY(1.04) brightness(1.2)
  *   100%: scaleX(1)  scaleY(1)    brightness(1)
  */
 export function interpolateFlip(t: number): CellAnimFrame {
@@ -289,10 +289,10 @@ export function interpolateFlip(t: number): CellAnimFrame {
     const p = t / 0.25;
     return {
       scaleX: lerp(1, 0, p),
-      scaleY: lerp(1, 1.03, p),
+      scaleY: lerp(1, 1.06, p),
       alpha: 1,
       offsetY: 0,
-      brightness: lerp(1, 0.84, p),
+      brightness: lerp(1, 0.7, p),
     };
   }
   if (t <= 0.5) {
@@ -300,10 +300,10 @@ export function interpolateFlip(t: number): CellAnimFrame {
     const p = (t - 0.25) / 0.25;
     return {
       scaleX: lerp(0, -1, p),
-      scaleY: lerp(1.03, 1.05, p),
+      scaleY: lerp(1.06, 1.08, p),
       alpha: 1,
       offsetY: 0,
-      brightness: lerp(0.84, 1.28, p),
+      brightness: lerp(0.7, 1.5, p),
     };
   }
   if (t <= 0.75) {
@@ -311,20 +311,20 @@ export function interpolateFlip(t: number): CellAnimFrame {
     const p = (t - 0.5) / 0.25;
     return {
       scaleX: lerp(-1, 0, p),
-      scaleY: lerp(1.05, 1.03, p),
+      scaleY: lerp(1.08, 1.04, p),
       alpha: 1,
       offsetY: 0,
-      brightness: lerp(1.28, 1.08, p),
+      brightness: lerp(1.5, 1.2, p),
     };
   }
   // 75% → 100%
   const p = (t - 0.75) / 0.25;
   return {
     scaleX: lerp(0, 1, p),
-    scaleY: lerp(1.03, 1, p),
+    scaleY: lerp(1.04, 1, p),
     alpha: 1,
     offsetY: 0,
-    brightness: lerp(1.08, 1, p),
+    brightness: lerp(1.2, 1, p),
   };
 }
 
