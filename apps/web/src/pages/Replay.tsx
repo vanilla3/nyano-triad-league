@@ -100,6 +100,7 @@ import {
   resolveReplayRulesetFromParams,
   shouldAutoCompareByRulesetId,
 } from "@/features/match/replayRulesetParams";
+import { useEngineRendererFallback } from "@/features/match/useEngineRendererFallback";
 
 type Mode = ReplayMode;
 
@@ -329,9 +330,16 @@ export function ReplayPage() {
   const [replayRevealHiddenSlots, setReplayRevealHiddenSlots] = React.useState(false);
   const [playbackSpeed, setPlaybackSpeed] = React.useState<number>(1);
   const toast = useToast();
-  const [engineRendererFailed, setEngineRendererFailed] = React.useState(false);
-  const [engineRendererError, setEngineRendererError] = React.useState<string | null>(null);
-  const useEngineRenderer = isEngine && !engineRendererFailed;
+  const {
+    engineRendererFailed,
+    engineRendererError,
+    useEngineRenderer,
+    handleEngineRendererInitError,
+    handleRetryEngineRenderer,
+  } = useEngineRendererFallback({
+    isEngine,
+    onWarn: toast.warn,
+  });
   const initialBroadcast = searchParams.get("broadcast") === "1";
   const [broadcastOverlay, setBroadcastOverlay] = React.useState<boolean>(initialBroadcast);
   const sfx = React.useMemo<SfxEngine | null>(() => (isEngine ? createSfxEngine() : null), [isEngine]);
@@ -379,23 +387,6 @@ export function ReplayPage() {
     }
     setShowStagePanels(false);
   }, [isStageFocus]);
-
-  React.useEffect(() => {
-    if (isEngine) return;
-    setEngineRendererFailed(false);
-    setEngineRendererError(null);
-  }, [isEngine]);
-
-  const handleEngineRendererInitError = React.useCallback((message: string) => {
-    setEngineRendererFailed(true);
-    setEngineRendererError(message);
-    toast.warn("Pixi renderer unavailable", "Switched to Mint fallback board");
-  }, [toast]);
-
-  const handleRetryEngineRenderer = React.useCallback(() => {
-    setEngineRendererFailed(false);
-    setEngineRendererError(null);
-  }, []);
 
   React.useEffect(() => {
     if (!isStageFocus) {

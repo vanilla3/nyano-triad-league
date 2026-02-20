@@ -137,6 +137,7 @@ import {
   resolveMatchLastFlipTraces,
   resolveMatchRpgLogEntries,
 } from "@/features/match/matchTurnLogDerived";
+import { useEngineRendererFallback } from "@/features/match/useEngineRendererFallback";
 import {
   resolveBoardImpactBurstDurationMs,
   resolveBoardImpactBurstState,
@@ -267,9 +268,17 @@ export function MatchPage() {
   const isRpg = ui === "rpg";
   const isMint = ui === "mint";
   const isEngine = ui === "engine";
-  const [engineRendererFailed, setEngineRendererFailed] = React.useState(false);
-  const [engineRendererError, setEngineRendererError] = React.useState<string | null>(null);
-  const useEngineRenderer = isEngine && !engineRendererFailed;
+  const toast = useToast();
+  const {
+    engineRendererFailed,
+    engineRendererError,
+    useEngineRenderer,
+    handleEngineRendererInitError,
+    handleRetryEngineRenderer,
+  } = useEngineRendererFallback({
+    isEngine,
+    onWarn: toast.warn,
+  });
   const useMintUi = isMint || isEngine;
   const isEngineFocus = isEngine && isFocusMode;
   const {
@@ -288,12 +297,6 @@ export function MatchPage() {
   const stageEngineBoardMaxWidthPxBase = isBattleStageRoute ? stageBoardSizing.maxWidthPx : undefined;
   const stageEngineBoardMinHeightPxBase = isBattleStageRoute ? stageBoardSizing.minHeightPx : undefined;
   const decks = React.useMemo(() => listDecks(), []);
-
-  React.useEffect(() => {
-    if (isEngine) return;
-    setEngineRendererFailed(false);
-    setEngineRendererError(null);
-  }, [isEngine]);
 
   // 笏笏 Telemetry (NIN-UX-003) 笏笏
   const telemetry = React.useMemo(() => createTelemetryTracker(), []);
@@ -417,16 +420,6 @@ export function MatchPage() {
   const [selectedTurnIndex, setSelectedTurnIndex] = React.useState<number>(0);
 
   const [status, setStatus] = React.useState<string | null>(null);
-  const toast = useToast();
-  const handleEngineRendererInitError = React.useCallback((message: string) => {
-    setEngineRendererFailed(true);
-    setEngineRendererError(message);
-    toast.warn("Pixi renderer unavailable", "Switched to Mint fallback board");
-  }, [toast]);
-  const handleRetryEngineRenderer = React.useCallback(() => {
-    setEngineRendererFailed(false);
-    setEngineRendererError(null);
-  }, []);
   const overlayUrl = React.useMemo(() => appAbsoluteUrl("overlay?controls=0"), []);
   const lastStreamCmdIdRef = React.useRef<string>("");
   const [error, setError] = React.useState<string | null>(null);
@@ -2590,4 +2583,3 @@ export function MatchPage() {
     </div>
   );
 }
-
