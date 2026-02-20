@@ -564,3 +564,7 @@
 - [x] 2026-02-20 WO037-step104: Replay event-attempt save guards and payload builder were extracted to apps/web/src/features/match/replayEventAttempts.ts, and Replay.tsx saveToMyAttempts now delegates those checks/build steps.
 
 - [x] 2026-02-20 WO037-step104: added apps/web/src/features/match/__tests__/replayEventAttempts.test.ts and re-verified pnpm.cmd -C apps/web test -- replayEventAttempts replayShareLinks replayCardLoaders, pnpm.cmd -C apps/web lint, pnpm.cmd -C apps/web typecheck, pnpm.cmd -C apps/web build.
+
+- [x] 2026-02-20 WO037-step105: Replay overlay publish action flow was extracted to apps/web/src/features/match/replayOverlayActions.ts (runReplayOverlayPublishAction), and Replay.tsx now delegates overlay publish/error/silent toast branching.
+
+- [x] 2026-02-20 WO037-step105: added apps/web/src/features/match/__tests__/replayOverlayActions.test.ts and re-verified pnpm.cmd -C apps/web test -- replayOverlayActions replayEventAttempts replayShareLinks replayCardLoaders replayOverlayState replayOverlaySummary, pnpm.cmd -C apps/web lint, pnpm.cmd -C apps/web typecheck, pnpm.cmd -C apps/web build.

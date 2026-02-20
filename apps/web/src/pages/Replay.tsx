@@ -36,7 +36,6 @@ import { errorMessage } from "@/lib/errorMessage";
 import { stringifyWithBigInt } from "@/lib/json";
 import { formatEventPeriod, getEventById, getEventStatus } from "@/lib/events";
 import { hasEventAttempt, upsertEventAttempt } from "@/lib/event_attempts";
-import { publishOverlayState } from "@/lib/streamer_bus";
 import { parseReplayPayload } from "@/lib/replay_bundle";
 import { annotateReplayMoves } from "@/lib/ai/replay_annotations";
 import { assessBoardAdvantage, type BoardAdvantage } from "@/lib/ai/board_advantage";
@@ -104,14 +103,7 @@ import { resolveReplayCurrentResult } from "@/features/match/replayResultSelecti
 import { resolveReplayCardsFromPayload } from "@/features/match/replayCardLoaders";
 import { buildReplayShareLink } from "@/features/match/replayShareLinks";
 import { assertReplayAttemptCanBeSaved, buildReplayEventAttempt } from "@/features/match/replayEventAttempts";
-import {
-  resolveReplayOverlayLastMove,
-  resolveReplayOverlayLastTurnSummary,
-} from "@/features/match/replayOverlaySummary";
-import {
-  buildReplayOverlayErrorState,
-  buildReplayOverlayState,
-} from "@/features/match/replayOverlayState";
+import { runReplayOverlayPublishAction } from "@/features/match/replayOverlayActions";
 import {
   formatReplayToolbarHighlightStatus,
   resolveNextReplayHighlightStep,
@@ -383,52 +375,18 @@ export function ReplayPage() {
 
   const pushOverlay = React.useCallback(
     (opts?: { silent?: boolean }) => {
-      const updatedAtMs = Date.now();
-      try {
-        if (!sim.ok) {
-          publishOverlayState(buildReplayOverlayErrorState({
-            updatedAtMs,
-            eventId: event?.id ?? (eventId || undefined),
-            eventTitle: event?.title,
-            error: sim.error || "リプレイが未読込です",
-          }));
-          if (!opts?.silent) toast.warn("Overlay", "リプレイが未読込状態です");
-          return;
-        }
-
-        const res = sim.current;
-        const transcript = sim.transcript;
-
-        const lastIndex = step - 1;
-        const last = lastIndex >= 0 ? (res.turns[lastIndex] ?? null) : null;
-        const lastMove = resolveReplayOverlayLastMove({
-          last,
-          lastIndex,
-          firstPlayer: transcript.header.firstPlayer as 0 | 1,
-        });
-        const lastTurnSummary = resolveReplayOverlayLastTurnSummary(last);
-
-        publishOverlayState(buildReplayOverlayState({
-          updatedAtMs,
-          eventId: event?.id ?? (eventId || undefined),
-          eventTitle: event?.title,
-          step,
-          transcript,
-          result: res,
-          lastMove,
-          lastTurnSummary,
-        }));
-
-        if (!opts?.silent) toast.success("Overlay", "OBS overlay へ送信しました");
-      } catch (e: unknown) {
-        publishOverlayState(buildReplayOverlayErrorState({
-          updatedAtMs,
-          eventId: event?.id ?? (eventId || undefined),
-          eventTitle: event?.title,
-          error: errorMessage(e),
-        }));
-        if (!opts?.silent) toast.error("Overlay", errorMessage(e));
-      }
+      runReplayOverlayPublishAction({
+        sim,
+        step,
+        eventId: event?.id ?? (eventId || undefined),
+        eventTitle: event?.title,
+        silent: opts?.silent,
+        notify: {
+          success: (message) => toast.success("Overlay", message),
+          warn: (message) => toast.warn("Overlay", message),
+          error: (message) => toast.error("Overlay", message),
+        },
+      });
     },
     [sim, step, event?.id, event?.title, eventId, toast],
   );
