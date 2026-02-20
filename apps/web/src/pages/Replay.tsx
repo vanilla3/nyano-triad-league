@@ -104,6 +104,7 @@ import { useEngineRendererFallback } from "@/features/match/useEngineRendererFal
 import { useMatchStageActionFeedback } from "@/features/match/useMatchStageActionFeedback";
 import { useMatchStageFullscreen } from "@/features/match/useMatchStageFullscreen";
 import { useMatchStageUi } from "@/features/match/useMatchStageUi";
+import { useReplayStageFocusShortcuts } from "@/features/match/useReplayStageFocusShortcuts";
 
 type Mode = ReplayMode;
 
@@ -936,74 +937,9 @@ protocolV1: {
     }
   }, [highlights.length, isStageFocus, jumpToNextHighlight, playReplaySfx, pushStageActionFeedback]);
 
-  // keyboard
-  React.useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      const target = e.target as HTMLElement | null;
-      const tag = target?.tagName;
-      if (tag === "TEXTAREA" || tag === "INPUT" || tag === "SELECT" || target?.isContentEditable) return;
-      if (e.altKey || e.ctrlKey || e.metaKey) return;
-      const lower = e.key.toLowerCase();
-      if (isStageFocus && e.key === "Escape") {
-        e.preventDefault();
-        exitFocusModeWithFeedback();
-        return;
-      }
-
-      if (isStageFocus && lower === "f") {
-        e.preventDefault();
-        toggleStageFullscreenWithFeedback();
-        return;
-      }
-      if (isStageFocus && lower === "c") {
-        e.preventDefault();
-        toggleStageTransportWithFeedback();
-        return;
-      }
-      if (isStageFocus && lower === "s") {
-        e.preventDefault();
-        toggleStageSetupWithFeedback();
-        return;
-      }
-      if (isStageFocus && lower === "d") {
-        e.preventDefault();
-        toggleStagePanelsWithFeedback();
-        return;
-      }
-
-      if (e.key === "ArrowLeft") {
-        jumpToPrevStepWithFeedback();
-      }
-      if (e.key === "ArrowRight") {
-        jumpToNextStepWithFeedback();
-      }
-      if (e.key === " ") {
-        if (!canPlay) return;
-        e.preventDefault();
-        toggleReplayPlayWithFeedback();
-      }
-      if (e.key === "Home") {
-        e.preventDefault();
-        jumpToStartWithFeedback();
-      }
-      if (e.key === "End") {
-        e.preventDefault();
-        jumpToEndWithFeedback();
-      }
-      if (e.key === "[") {
-        e.preventDefault();
-        jumpToPrevHighlightWithFeedback();
-      }
-      if (e.key === "]") {
-        e.preventDefault();
-        jumpToNextHighlightWithFeedback();
-      }
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [
-    canPlay,
+  useReplayStageFocusShortcuts({
     isStageFocus,
+    canPlay,
     exitFocusModeWithFeedback,
     toggleStageFullscreenWithFeedback,
     toggleStageTransportWithFeedback,
@@ -1016,7 +952,7 @@ protocolV1: {
     jumpToEndWithFeedback,
     jumpToPrevHighlightWithFeedback,
     jumpToNextHighlightWithFeedback,
-  ]);
+  });
 
   // Autoplay timer
   React.useEffect(() => {
