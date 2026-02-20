@@ -97,6 +97,7 @@ import {
   resolveReplayCompareDiverged,
   resolveReplayCompareMode,
 } from "@/features/match/replayCompareState";
+import { resolveReplayPreloadTokenIds } from "@/features/match/replayPreloadTokenIds";
 import {
   formatReplayToolbarHighlightStatus,
   resolveNextReplayHighlightStep,
@@ -1007,15 +1008,10 @@ protocolV1: {
 
   const replayPreloadTokenIds = React.useMemo(() => {
     if (!sim.ok) return [] as bigint[];
-    const out: bigint[] = [];
-    const seen = new Set<string>();
-    for (const tid of [...sim.transcript.header.deckA, ...sim.transcript.header.deckB]) {
-      const key = tid.toString();
-      if (seen.has(key)) continue;
-      seen.add(key);
-      out.push(tid);
-    }
-    return out;
+    return resolveReplayPreloadTokenIds({
+      deckA: sim.transcript.header.deckA,
+      deckB: sim.transcript.header.deckB,
+    });
   }, [sim]);
   const replayFirstPlayer: 0 | 1 = sim.ok ? (sim.transcript.header.firstPlayer as 0 | 1) : 0;
 

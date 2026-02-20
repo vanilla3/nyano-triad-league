@@ -534,3 +534,5 @@
 - [x] 2026-02-20 WO037-step91: Replay stage impact burst logic (impact resolve + burst plan + timeout effect) was extracted to useReplayStageImpactBurst.
 
 - [x] 2026-02-20 WO037-step92: Replay compare-mode/diverged-state derivation was extracted to replayCompareState helpers with tests.
+
+- [x] 2026-02-20 WO037-step93: Replay preload token-id derivation was extracted to replayPreloadTokenIds helper with order-preserving dedupe tests.
