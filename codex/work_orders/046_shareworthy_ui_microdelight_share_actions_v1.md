@@ -89,5 +89,7 @@
   - Follow-up verification: `pnpm.cmd -C apps/web test -- MatchGuestPostGamePanel MatchSideColumnPanels MatchShareActionsRow`, then full suite (`lint:text`, `lint`, `typecheck`, `test --`, `build`) all passed.
   - Follow-up (consistency sweep): unified Match focus-toolbar replay action copy/a11y with share rows (`Open replay` + `aria-label` + `title`) in `apps/web/src/pages/Match.tsx`.
   - Follow-up verification: `pnpm.cmd lint:text`, `pnpm.cmd -C apps/web test -- matchStageActionCallbacks MatchGuestPostGamePanel MatchSideColumnPanels MatchShareActionsRow`, and full suite (`lint`, `typecheck`, `test --`, `build`) all passed.
+  - Follow-up (Replay parity): added `resolveReplayMintButtonClass` helper and aligned Replay share actions (`Copy share URL`) to Mint micro-delight classes (`mint-pressable`, `mint-hit`, `mint-share-action__btn`) with consistent `aria-label`/`title` on share buttons in focus/setup/result sections.
+  - Follow-up verification: `pnpm.cmd -C apps/web test -- replayUiHelpers replayUiActions replayShareLinkBuilders replayTransportState`, then full suite (`lint:text`, `lint`, `typecheck`, `test --`, `build`) all passed.
 - Remaining:
   - None for WO-046 v1 (further share entry-point polish can be tracked as follow-up WO if needed).

@@ -117,6 +117,7 @@ import {
   runReplayInitialAutoLoadFlow,
   runReplayRetryLoadFlow,
 } from "@/features/match/replayLoadRecovery";
+import { resolveReplayMintButtonClass } from "@/features/match/replayUiHelpers";
 import {
   REPLAY_INPUT_PROMPT_ERROR,
   buildReplaySimErrorState,
@@ -501,9 +502,26 @@ export function ReplayPage() {
         isStageFocus,
         showStageTransport,
         viewportWidth: typeof window === "undefined" ? null : window.innerWidth,
-        resolveShouldShowStageSecondaryControls: shouldShowStageSecondaryControls,
+      resolveShouldShowStageSecondaryControls: shouldShowStageSecondaryControls,
       }),
     [step, stepMax, sim.ok, isStageFocus, showStageTransport],
+  );
+  const replayShareButtonClass = React.useMemo(
+    () => resolveReplayMintButtonClass({ baseClassName: "btn", isMintTheme, isShareAction: true }),
+    [isMintTheme],
+  );
+  const replayShareButtonSmClass = React.useMemo(
+    () => resolveReplayMintButtonClass({ baseClassName: "btn btn-sm", isMintTheme, isShareAction: true }),
+    [isMintTheme],
+  );
+  const replaySharePrimaryButtonSmClass = React.useMemo(
+    () =>
+      resolveReplayMintButtonClass({
+        baseClassName: "btn btn-sm btn-primary",
+        isMintTheme,
+        isShareAction: true,
+      }),
+    [isMintTheme],
   );
   const phaseInfo: ReplayPhaseInfo = React.useMemo(() => replayPhaseInfo(step, stepMax), [step, stepMax]);
   const stepStatusText = replayStepStatusText(step);
@@ -1088,7 +1106,7 @@ export function ReplayPage() {
               </button>
               {sim.ok ? (
                 <button
-                  className="btn btn-sm"
+                  className={replayShareButtonSmClass}
                   onClick={() => {
                     void runReplayCopyAction({
                       label: "共有URL",
@@ -1097,6 +1115,8 @@ export function ReplayPage() {
                       onError: (e: unknown) => toast.error("共有失敗", errorMessage(e)),
                     });
                   }}
+                  aria-label="Copy share URL"
+                  title="Copy share URL"
                 >
                   共有URLコピー
                 </button>
@@ -1207,7 +1227,7 @@ export function ReplayPage() {
                 </button>
 
                 <button
-                  className="btn"
+                  className={replayShareButtonClass}
                   onClick={() => {
                     void runReplayShareCopyAction({
                       shareLabel: "共有URL",
@@ -1216,6 +1236,8 @@ export function ReplayPage() {
                       onError: (e: unknown) => setSim(buildReplaySimErrorState(errorMessage(e))),
                     });
                   }}
+                  aria-label="Copy share URL"
+                  title="Copy share URL"
                 >
                   共有URLをコピー
                 </button>
@@ -1422,7 +1444,7 @@ export function ReplayPage() {
                         対局ログをコピー (Transcript)
                       </button>
                       <button
-                        className="btn btn-sm btn-primary"
+                        className={replaySharePrimaryButtonSmClass}
                         onClick={() => {
                           void runReplayShareCopyAction({
                             shareLabel: "共有URL",
@@ -1431,6 +1453,8 @@ export function ReplayPage() {
                             onError: (e: unknown) => toast.error("共有失敗", errorMessage(e)),
                           });
                         }}
+                        aria-label="Copy share URL"
+                        title="Copy share URL"
                       >
                         共有
                       </button>

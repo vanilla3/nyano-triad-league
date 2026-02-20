@@ -647,3 +647,7 @@
 - [x] 2026-02-20 WO046-step3: Match focus toolbar の `Open Replay` 表記を share actions と同一の `Open replay` に統一し、`aria-label` / `title` を付与して a11y を揃えた（`apps/web/src/pages/Match.tsx`）。
 
 - [x] 2026-02-20 WO046-step3 verification: `pnpm.cmd lint:text`、`pnpm.cmd -C apps/web test -- matchStageActionCallbacks MatchGuestPostGamePanel MatchSideColumnPanels MatchShareActionsRow`、`pnpm.cmd -C apps/web lint`、`pnpm.cmd -C apps/web typecheck`、`pnpm.cmd -C apps/web test --`、`pnpm.cmd -C apps/web build` all passed.
+
+- [x] 2026-02-20 WO046-step4: Replay の share 導線を Mint 規格へ統一。`replayUiHelpers` に `resolveReplayMintButtonClass` を追加し、`Replay.tsx` の共有ボタン（focus toolbar / setup / result hero）へ `mint-pressable` / `mint-hit` / `mint-share-action__btn` と `aria-label` / `title` を適用。
+
+- [x] 2026-02-20 WO046-step4 verification: `pnpm.cmd -C apps/web test -- replayUiHelpers replayUiActions replayShareLinkBuilders replayTransportState`、`pnpm.cmd lint:text`、`pnpm.cmd -C apps/web lint`、`pnpm.cmd -C apps/web typecheck`、`pnpm.cmd -C apps/web test --`（218 files / 1748 tests）、`pnpm.cmd -C apps/web build` all passed.

@@ -3,6 +3,7 @@ import {
   STAGE_VFX_OPTIONS,
   clampInt,
   formatStageVfxLabel,
+  resolveReplayMintButtonClass,
   resolveStageVfxOptionLabel,
 } from "@/features/match/replayUiHelpers";
 
@@ -38,5 +39,31 @@ describe("features/match/replayUiHelpers", () => {
       "medium",
       "high",
     ]);
+  });
+
+  it("adds mint pressable classes for mint theme buttons", () => {
+    expect(
+      resolveReplayMintButtonClass({
+        baseClassName: "btn btn-sm",
+        isMintTheme: true,
+      }),
+    ).toBe("btn btn-sm mint-pressable mint-hit");
+  });
+
+  it("adds share-action class only when requested", () => {
+    expect(
+      resolveReplayMintButtonClass({
+        baseClassName: "btn",
+        isMintTheme: true,
+        isShareAction: true,
+      }),
+    ).toBe("btn mint-pressable mint-hit mint-share-action__btn");
+    expect(
+      resolveReplayMintButtonClass({
+        baseClassName: "btn",
+        isMintTheme: false,
+        isShareAction: true,
+      }),
+    ).toBe("btn");
   });
 });
