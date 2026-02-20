@@ -88,7 +88,7 @@ describe("features/match/useMatchReplayActions", () => {
     });
   });
 
-  it("copies share URL and emits success toast", async () => {
+  it("copies share URL and emits success toast when native share is unsupported", async () => {
     const deps = createDeps();
     const actions = createMatchReplayActions(
       {
@@ -101,7 +101,10 @@ describe("features/match/useMatchReplayActions", () => {
         copyToClipboard: deps.copyToClipboard,
         resolveErrorMessage: () => "failed",
       },
-      { buildReplayLink: () => "https://example.invalid/replay" },
+      {
+        buildReplayLink: () => "https://example.invalid/replay",
+        shareUrlWithNative: async () => "unsupported",
+      },
     );
 
     await actions.copyShareUrl();
@@ -110,10 +113,64 @@ describe("features/match/useMatchReplayActions", () => {
     expect(deps.calls).toEqual([
       {
         type: "success",
-        title: "コピーしました",
-        message: "Share URL をクリップボードへコピーしました。",
+        title: "Copied",
+        message: "Share URL copied to clipboard.",
       },
     ]);
+  });
+
+  it("uses native share and skips clipboard copy", async () => {
+    const deps = createDeps();
+    const actions = createMatchReplayActions(
+      {
+        transcript: makeTranscript(),
+        cards: null,
+        setError: deps.setError,
+        setStatus: deps.setStatus,
+        navigate: deps.navigate,
+        toast: deps.toast,
+        copyToClipboard: deps.copyToClipboard,
+        resolveErrorMessage: () => "failed",
+      },
+      {
+        buildReplayLink: () => "https://example.invalid/replay",
+        shareUrlWithNative: async () => "shared",
+      },
+    );
+
+    await actions.copyShareUrl();
+    expect(deps.copyToClipboard).not.toHaveBeenCalled();
+    expect(deps.calls).toEqual([
+      {
+        type: "success",
+        title: "Shared",
+        message: "Share URL opened in native share sheet.",
+      },
+    ]);
+  });
+
+  it("does not copy when native share is cancelled", async () => {
+    const deps = createDeps();
+    const actions = createMatchReplayActions(
+      {
+        transcript: makeTranscript(),
+        cards: null,
+        setError: deps.setError,
+        setStatus: deps.setStatus,
+        navigate: deps.navigate,
+        toast: deps.toast,
+        copyToClipboard: deps.copyToClipboard,
+        resolveErrorMessage: () => "failed",
+      },
+      {
+        buildReplayLink: () => "https://example.invalid/replay",
+        shareUrlWithNative: async () => "cancelled",
+      },
+    );
+
+    await actions.copyShareUrl();
+    expect(deps.copyToClipboard).not.toHaveBeenCalled();
+    expect(deps.calls).toEqual([]);
   });
 
   it("warns when share URL is unavailable", async () => {
@@ -137,8 +194,8 @@ describe("features/match/useMatchReplayActions", () => {
     expect(deps.calls).toEqual([
       {
         type: "warn",
-        title: "共有",
-        message: "Match が未完了です。9手まで進めてください。",
+        title: "Replay",
+        message: "Match result is not ready yet. Play to turn 9 first.",
       },
     ]);
   });
@@ -188,7 +245,7 @@ describe("features/match/useMatchReplayActions", () => {
     await actions.copyShareTemplate();
     expect(deps.copyToClipboard).toHaveBeenCalledWith("share:https://example.invalid/replay");
     expect(deps.calls).toEqual([
-      { type: "success", title: "コピーしました", message: "共有テンプレート" },
+      { type: "success", title: "Copied", message: "Share template copied to clipboard." },
     ]);
   });
 });

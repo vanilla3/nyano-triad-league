@@ -21,6 +21,43 @@ describe("features/match/replayActionRunners", () => {
     expect(onError).not.toHaveBeenCalled();
   });
 
+  it("uses native share when available and skips clipboard copy", async () => {
+    const copyWithToast = vi.fn().mockResolvedValue(undefined);
+    const onError = vi.fn();
+    const onShared = vi.fn();
+
+    const ok = await runReplayShareCopyAction({
+      shareLabel: "share-url",
+      buildShareLink: () => "https://example.invalid/replay",
+      copyWithToast,
+      onError,
+      shareWithNative: vi.fn().mockResolvedValue("shared"),
+      onShared,
+    });
+
+    expect(ok).toBe(true);
+    expect(copyWithToast).not.toHaveBeenCalled();
+    expect(onError).not.toHaveBeenCalled();
+    expect(onShared).toHaveBeenCalledOnce();
+  });
+
+  it("returns false when native share is cancelled", async () => {
+    const copyWithToast = vi.fn().mockResolvedValue(undefined);
+    const onError = vi.fn();
+
+    const ok = await runReplayShareCopyAction({
+      shareLabel: "share-url",
+      buildShareLink: () => "https://example.invalid/replay",
+      copyWithToast,
+      onError,
+      shareWithNative: vi.fn().mockResolvedValue("cancelled"),
+    });
+
+    expect(ok).toBe(false);
+    expect(copyWithToast).not.toHaveBeenCalled();
+    expect(onError).not.toHaveBeenCalled();
+  });
+
   it("runs share copy error path", async () => {
     const err = new Error("share failed");
     const copyWithToast = vi.fn().mockRejectedValue(err);

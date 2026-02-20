@@ -33,6 +33,7 @@ import { annotateReplayMoves } from "@/lib/ai/replay_annotations";
 import { assessBoardAdvantage, type BoardAdvantage } from "@/lib/ai/board_advantage";
 import { AdvantageBadge } from "@/components/AdvantageBadge";
 import { appAbsoluteUrl, appPath } from "@/lib/appUrl";
+import { tryNativeShare } from "@/lib/webShare";
 import { shouldShowStageSecondaryControls } from "@/lib/stage_layout";
 import { createSfxEngine, type SfxEngine, type SfxName } from "@/lib/sfx";
 import type { VfxPreference } from "@/lib/local_settings";
@@ -888,6 +889,15 @@ export function ReplayPage() {
       step,
     });
   };
+  const shareWithNative = React.useCallback(
+    (url: string) =>
+      tryNativeShare({
+        url,
+        title: "Nyano Triad League",
+        text: "Replay share link",
+      }),
+    [],
+  );
   const showReplaySetupPanel = !isStageFocus || !sim.ok || showStageSetup;
   const replayPageClassName = [
     "replay-page",
@@ -1108,11 +1118,13 @@ export function ReplayPage() {
                 <button
                   className={replayShareButtonSmClass}
                   onClick={() => {
-                    void runReplayCopyAction({
-                      label: "共有URL",
-                      resolveValue: buildShareLink,
+                    void runReplayShareCopyAction({
+                      shareLabel: "共有URL",
+                      buildShareLink,
                       copyWithToast,
                       onError: (e: unknown) => toast.error("共有失敗", errorMessage(e)),
+                      shareWithNative,
+                      onShared: () => toast.success("共有しました", "Share URL"),
                     });
                   }}
                   aria-label="Copy share URL"
@@ -1234,6 +1246,8 @@ export function ReplayPage() {
                       buildShareLink,
                       copyWithToast,
                       onError: (e: unknown) => setSim(buildReplaySimErrorState(errorMessage(e))),
+                      shareWithNative,
+                      onShared: () => toast.success("共有しました", "Share URL"),
                     });
                   }}
                   aria-label="Copy share URL"
@@ -1451,6 +1465,8 @@ export function ReplayPage() {
                             buildShareLink,
                             copyWithToast,
                             onError: (e: unknown) => toast.error("共有失敗", errorMessage(e)),
+                            shareWithNative,
+                            onShared: () => toast.success("共有しました", "Share URL"),
                           });
                         }}
                         aria-label="Copy share URL"

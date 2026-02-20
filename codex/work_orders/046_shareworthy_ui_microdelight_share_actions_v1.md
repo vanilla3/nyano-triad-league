@@ -93,3 +93,5 @@
   - Follow-up verification: `pnpm.cmd -C apps/web test -- replayUiHelpers replayUiActions replayShareLinkBuilders replayTransportState`, then full suite (`lint:text`, `lint`, `typecheck`, `test --`, `build`) all passed.
 - Remaining:
   - None for WO-046 v1 (further share entry-point polish can be tracked as follow-up WO if needed).
+- Follow-up (2026-02-20): Added Web Share API fallback integration for Match/Replay share actions via `apps/web/src/lib/webShare.ts`, `useMatchReplayActions`, and `replayActionRunners` so supported devices open native share while unsupported/cancel/error paths safely fall back to clipboard copy.
+- Follow-up verification (2026-02-20): `pnpm.cmd lint:text`, `pnpm.cmd -C apps/web test -- useMatchReplayActions replayActionRunners webShare replayUiHelpers`, `pnpm.cmd -C apps/web lint`, `pnpm.cmd -C apps/web typecheck`, `pnpm.cmd -C apps/web build` all passed (sandboxed vitest hit spawn EPERM once; rerun elevated passed).

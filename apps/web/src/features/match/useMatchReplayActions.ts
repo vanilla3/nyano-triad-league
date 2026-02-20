@@ -1,6 +1,7 @@
 import React from "react";
 import type { CardData, TranscriptV1 } from "@nyano/triad-engine";
 import type { RulesetKey } from "@/lib/ruleset_registry";
+import { tryNativeShare, type NativeShareResult } from "@/lib/webShare";
 import { buildMatchReplayLink, buildMatchShareTemplateMessage } from "@/features/match/matchShareLinks";
 
 type MatchReplayToast = {
@@ -27,6 +28,7 @@ type CreateMatchReplayActionsInput = {
 type CreateMatchReplayActionsDeps = {
   buildReplayLink?: typeof buildMatchReplayLink;
   buildShareTemplateMessage?: typeof buildMatchShareTemplateMessage;
+  shareUrlWithNative?: (url: string) => Promise<NativeShareResult>;
 };
 
 type MatchReplayActions = {
@@ -42,6 +44,14 @@ export function createMatchReplayActions(
 ): MatchReplayActions {
   const buildReplayLink = deps?.buildReplayLink ?? buildMatchReplayLink;
   const buildShareTemplateMessage = deps?.buildShareTemplateMessage ?? buildMatchShareTemplateMessage;
+  const shareUrlWithNative =
+    deps?.shareUrlWithNative ??
+    ((url: string) =>
+      tryNativeShare({
+        url,
+        title: "Nyano Triad League",
+        text: "Replay share link",
+      }));
 
   const buildReplayUrl = (absolute?: boolean): string | null =>
     buildReplayLink({
@@ -59,13 +69,27 @@ export function createMatchReplayActions(
     try {
       const url = buildReplayUrl(true);
       if (!url) {
-        input.toast.warn("共有", "Match が未完了です。9手まで進めてください。");
+        input.toast.warn("Replay", "Match result is not ready yet. Play to turn 9 first.");
         return;
       }
+
+      try {
+        const nativeResult = await shareUrlWithNative(url);
+        if (nativeResult === "shared") {
+          input.toast.success("Shared", "Share URL opened in native share sheet.");
+          return;
+        }
+        if (nativeResult === "cancelled") {
+          return;
+        }
+      } catch {
+        // Native share failed. Fall through to clipboard copy.
+      }
+
       await input.copyToClipboard(url);
-      input.toast.success("コピーしました", "Share URL をクリップボードへコピーしました。");
+      input.toast.success("Copied", "Share URL copied to clipboard.");
     } catch (error: unknown) {
-      input.toast.error("共有に失敗しました", input.resolveErrorMessage(error));
+      input.toast.error("Share failed", input.resolveErrorMessage(error));
     }
   };
 
@@ -75,12 +99,12 @@ export function createMatchReplayActions(
     try {
       const url = buildReplayUrl(false);
       if (!url) {
-        input.toast.warn("Replay", "Match が未完了です。9手まで進めてください。");
+        input.toast.warn("Replay", "Match result is not ready yet. Play to turn 9 first.");
         return;
       }
       input.navigate(url);
     } catch (error: unknown) {
-      input.toast.error("リプレイ遷移に失敗しました", input.resolveErrorMessage(error));
+      input.toast.error("Open replay failed", input.resolveErrorMessage(error));
     }
   };
 
@@ -88,14 +112,14 @@ export function createMatchReplayActions(
     try {
       const url = buildReplayUrl(true);
       if (!url) {
-        input.toast.warn("共有", "Match が未準備です");
+        input.toast.warn("Replay", "Match result is not ready yet.");
         return;
       }
       const message = buildShareTemplateMessage(url);
       await input.copyToClipboard(message);
-      input.toast.success("コピーしました", "共有テンプレート");
+      input.toast.success("Copied", "Share template copied to clipboard.");
     } catch (error: unknown) {
-      input.toast.error("共有に失敗しました", input.resolveErrorMessage(error));
+      input.toast.error("Share failed", input.resolveErrorMessage(error));
     }
   };
 
