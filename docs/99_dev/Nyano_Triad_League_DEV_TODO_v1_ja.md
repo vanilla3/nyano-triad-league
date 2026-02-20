@@ -516,3 +516,5 @@
 - [x] 2026-02-20 WO037-step82: Replay stage route derivation (/replay-stage detection + focus route + stage URL) was extracted to replayStageRouteState / useReplayStageRouteState.
 
 - [x] 2026-02-20 WO037-step83: Replay URL mutators (board-ui switch and focus-mode toggle) were extracted to useReplaySearchMutators with tested pure mutation helpers.
+
+- [x] 2026-02-20 WO037-step84: Replay share URL mode/step sync effect was extracted to useReplayStepModeUrlSync with tested pure mutation helper.

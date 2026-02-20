@@ -3636,3 +3636,6 @@
 
 - 2026-02-20 WO037-step83: extracted Replay search-param mutators from apps/web/src/pages/Replay.tsx into apps/web/src/features/match/useReplaySearchMutators.ts (setReplayBoardUi + setFocusMode) with pure helpers resolveReplayBoardUiMutation/resolveReplayFocusModeMutation.
 - 2026-02-20 WO037-step83 tests/verification: added apps/web/src/features/match/__tests__/useReplaySearchMutators.test.ts and verified pnpm.cmd -C apps/web test -- useReplaySearchMutators replayStageRouteState / pnpm.cmd -C apps/web lint / pnpm.cmd -C apps/web typecheck / pnpm.cmd -C apps/web build OK (sandboxed vitest failed once with spawn EPERM; rerun outside sandbox passed).
+
+- 2026-02-20 WO037-step84: extracted Replay share URL mode/step sync logic from apps/web/src/pages/Replay.tsx into apps/web/src/features/match/useReplayStepModeUrlSync.ts using resolveReplayStepModeSyncMutation + useReplayStepModeUrlSync.
+- 2026-02-20 WO037-step84 tests/verification: added apps/web/src/features/match/__tests__/useReplayStepModeUrlSync.test.ts and verified pnpm.cmd -C apps/web test -- useReplayStepModeUrlSync useReplaySearchMutators replayStageRouteState / pnpm.cmd -C apps/web lint / pnpm.cmd -C apps/web typecheck / pnpm.cmd -C apps/web build OK (sandboxed vitest failed once with spawn EPERM; rerun outside sandbox passed).

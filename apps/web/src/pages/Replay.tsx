@@ -83,7 +83,6 @@ import {
   parseReplayBoardUi,
   toMatchBoardUi,
   withReplayFocusMode,
-  withReplayStepMode,
 } from "@/features/match/replayUrlParams";
 import {
   parseReplayMode,
@@ -106,6 +105,7 @@ import { useReplayStageBoardSizing } from "@/features/match/useReplayStageBoardS
 import { useReplayStageActionCallbacks } from "@/features/match/useReplayStageActionCallbacks";
 import { useReplayStageRouteState } from "@/features/match/replayStageRouteState";
 import { useReplaySearchMutators } from "@/features/match/useReplaySearchMutators";
+import { useReplayStepModeUrlSync } from "@/features/match/useReplayStepModeUrlSync";
 
 type Mode = ReplayMode;
 
@@ -735,21 +735,12 @@ protocolV1: {
     if (step > stepMaxNow) setStep(stepMaxNow);
   }, [sim.ok, sim, step]);
 
-  // Keep URL step/mode in sync IF a share param exists (so links can point to a specific step).
-  React.useEffect(() => {
-    if (!hasReplaySharePayload(searchParams)) return;
-
-    const curMode = searchParams.get("mode") ?? "auto";
-    const curStep = searchParams.get("step") ?? "0";
-
-    const nextMode = mode;
-    const nextStep = String(step);
-
-    if (curMode === nextMode && curStep === nextStep) return;
-
-    const next = withReplayStepMode(searchParams, nextMode, step);
-    setSearchParams(next, { replace: true });
-  }, [mode, step, searchParams, setSearchParams]);
+  useReplayStepModeUrlSync({
+    searchParams,
+    mode,
+    step,
+    setSearchParams,
+  });
 
   const highlights = React.useMemo(
     () => (sim.ok ? detectReplayHighlights(sim.current) : []),
