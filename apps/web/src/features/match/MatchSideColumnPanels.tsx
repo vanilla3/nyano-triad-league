@@ -88,6 +88,7 @@ export function MatchSideColumnPanels(input: {
 
       <MatchGuestPostGamePanel
         isVisible={isGuestPostGameVisible}
+        isRpg={isRpg}
         isStageFocusRoute={isStageFocusRoute}
         guestDeckSaved={guestDeckSaved}
         canFinalize={canFinalize}

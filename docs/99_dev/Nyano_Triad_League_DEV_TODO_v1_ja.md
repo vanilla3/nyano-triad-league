@@ -639,3 +639,7 @@
 - [x] 2026-02-20 WO045-step3: replaced placeholder material assets with production-sized textures in `apps/web/public/assets/gen` (`tx_noise_256_v1.png`, `slot_inner_shadow_256_v1.png`, `fx_sparkle_tile_512_v1.png`, `board_tray_tex_1024_v1.png`, `bg_paw_tile_512_v1.png`, `bg_cloud_corners_16x9_v3.png`).
 
 - [x] 2026-02-20 WO045/046-step3 verification: re-ran full web checks after asset replacement: `pnpm.cmd lint:text`, `pnpm.cmd -C apps/web lint`, `pnpm.cmd -C apps/web typecheck`, `pnpm.cmd -C apps/web test --` (218 files / 1746 tests), `pnpm.cmd -C apps/web build` all passed.
+
+- [x] 2026-02-20 WO046-step2: `MatchGuestPostGamePanel` を `MatchShareActionsRow` と同系統の micro-delight に統一。share row に `mint-share-actions*` を適用し、共有ボタンへ `mint-pressable` / `mint-hit` / a11y label を追加、未確定時ヒントを表示。
+
+- [x] 2026-02-20 WO046-step2 verification: `pnpm.cmd -C apps/web test -- MatchGuestPostGamePanel MatchSideColumnPanels MatchShareActionsRow`、`pnpm.cmd lint:text`、`pnpm.cmd -C apps/web lint`、`pnpm.cmd -C apps/web typecheck`、`pnpm.cmd -C apps/web test --`、`pnpm.cmd -C apps/web build` all passed.

@@ -85,6 +85,7 @@ describe("features/match/MatchSideColumnPanels", () => {
     expect(share?.props.onCopyShareUrl).toBe(onCopyShareUrl);
     expect(share?.props.onOpenReplay).toBe(onOpenReplay);
     expect(guest?.props.isVisible).toBe(true);
+    expect(guest?.props.isRpg).toBe(false);
     expect(guest?.props.onRematch).toBe(onRematch);
     expect(guest?.props.onLoadNewGuestDeck).toBe(onLoadNewGuestDeck);
     expect(guest?.props.onSaveGuestDeck).toBe(onSaveGuestDeck);

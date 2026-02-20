@@ -17,10 +17,28 @@ function collectElementsByType(node: React.ReactNode, elementType: string): Reac
   return out;
 }
 
+function collectElementsByClass(node: React.ReactNode, className: string): React.ReactElement[] {
+  const out: React.ReactElement[] = [];
+  const walk = (value: React.ReactNode): void => {
+    if (Array.isArray(value)) {
+      value.forEach(walk);
+      return;
+    }
+    if (!React.isValidElement(value)) return;
+    if (typeof value.props.className === "string" && value.props.className.split(/\s+/).includes(className)) {
+      out.push(value);
+    }
+    walk(value.props.children as React.ReactNode);
+  };
+  walk(node);
+  return out;
+}
+
 describe("features/match/MatchGuestPostGamePanel", () => {
   it("returns null when hidden", () => {
     const tree = MatchGuestPostGamePanel({
       isVisible: false,
+      isRpg: false,
       isStageFocusRoute: false,
       guestDeckSaved: false,
       canFinalize: false,
@@ -38,6 +56,7 @@ describe("features/match/MatchGuestPostGamePanel", () => {
   it("renders CTA copy and save label states", () => {
     const tree = MatchGuestPostGamePanel({
       isVisible: true,
+      isRpg: false,
       isStageFocusRoute: true,
       guestDeckSaved: true,
       canFinalize: false,
@@ -59,6 +78,7 @@ describe("features/match/MatchGuestPostGamePanel", () => {
     const actionButtons = React.Children.toArray(actionRow.props.children)
       .filter((child): child is React.ReactElement => React.isValidElement(child) && child.type === "button");
     expect(actionButtons[2]?.props.children).toBe("Saved");
+    expect(collectElementsByClass(tree, "mint-share-actions__hint")).toHaveLength(1);
 
     expect(collectElementsByType(tree, "details")).toHaveLength(0);
   });
@@ -73,6 +93,7 @@ describe("features/match/MatchGuestPostGamePanel", () => {
 
     const tree = MatchGuestPostGamePanel({
       isVisible: true,
+      isRpg: false,
       isStageFocusRoute: false,
       guestDeckSaved: false,
       canFinalize: true,
@@ -116,5 +137,6 @@ describe("features/match/MatchGuestPostGamePanel", () => {
     expect(details).toHaveLength(1);
     const summary = collectElementsByType(details[0], "summary")[0];
     expect(summary.props.children).toContain("QR Code");
+    expect(collectElementsByClass(tree, "mint-share-actions__hint")).toHaveLength(0);
   });
 });
