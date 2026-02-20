@@ -63,6 +63,131 @@
   /* Prompt */
   --mint-prompt-bg: rgba(239, 249, 255, 0.95);
   --mint-prompt-border: rgba(125, 211, 252, 0.6);
+
+  /* Motion tokens (WO-006) */
+  --mint-motion-duration-fast: 120ms;
+  --mint-motion-duration-ui: 170ms;
+  --mint-motion-duration-md: 200ms;
+  --mint-motion-duration-pop: 260ms;
+  --mint-motion-ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
+  --mint-motion-ease-pop: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --mint-motion-press-scale: 0.98;
+  --mint-motion-hover-lift: -1px;
+}
+
+
+/* ── Pressable / Hit Target Utilities (WO-043, WO-006) ─────────────── */
+
+.mint-hit {
+  min-width: 44px;
+  min-height: 44px;
+}
+
+.mint-pressable {
+  transition-property: transform, box-shadow, border-color, background-color, color, opacity, filter;
+  transition-duration: var(--mint-motion-duration-ui);
+  transition-timing-function: var(--mint-motion-ease-standard);
+  transform: translateZ(0);
+  will-change: transform;
+}
+
+.mint-pressable:hover:not(:disabled):not([aria-disabled="true"]) {
+  transform: translateY(var(--mint-motion-hover-lift));
+}
+
+.mint-pressable:active:not(:disabled):not([aria-disabled="true"]),
+.mint-pressable[data-pressed="true"] {
+  transform: translateY(0) scale(var(--mint-motion-press-scale));
+  transition-duration: var(--mint-motion-duration-fast);
+}
+
+.mint-pressable:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.28), 0 0 0 1px rgba(125, 211, 252, 0.6);
+}
+
+.mint-pressable:disabled,
+.mint-pressable[aria-disabled="true"],
+.mint-ui-pressable--disabled {
+  pointer-events: none;
+  cursor: not-allowed;
+  opacity: 0.62;
+  transform: none;
+  filter: saturate(0.78);
+  box-shadow: none;
+}
+
+.mint-ui-pressable {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  border-radius: 12px;
+  border: 1px solid rgba(125, 211, 252, 0.5);
+  background: linear-gradient(160deg, rgba(255, 255, 255, 0.92), rgba(238, 250, 255, 0.76));
+  color: #0f4c6b;
+  font-family: "Nunito", system-ui, sans-serif;
+  font-weight: 700;
+  text-decoration: none;
+  box-shadow:
+    0 10px 20px -16px rgba(14, 116, 144, 0.7),
+    inset 0 1px 0 rgba(255, 255, 255, 0.7);
+}
+
+.mint-ui-pressable--sm {
+  padding: 0.45rem 0.72rem;
+  border-radius: 10px;
+  font-size: 0.75rem;
+  line-height: 1.1;
+}
+
+.mint-ui-pressable--md {
+  padding: 0.56rem 0.9rem;
+  font-size: 0.875rem;
+  line-height: 1.2;
+}
+
+.mint-ui-pressable--lg {
+  padding: 0.7rem 1.05rem;
+  border-radius: 14px;
+  font-size: 0.95rem;
+  line-height: 1.2;
+}
+
+.mint-ui-pressable--full {
+  width: 100%;
+}
+
+.mint-ui-pressable--default {
+  border-color: rgba(125, 211, 252, 0.52);
+  color: #0f4c6b;
+}
+
+.mint-ui-pressable--primary {
+  border-color: rgba(14, 165, 233, 0.55);
+  background: linear-gradient(160deg, rgba(56, 189, 248, 0.94), rgba(2, 132, 199, 0.9));
+  color: #f8fdff;
+}
+
+.mint-ui-pressable--soft {
+  border-color: rgba(125, 211, 252, 0.52);
+  background: linear-gradient(160deg, rgba(240, 249, 255, 0.96), rgba(232, 246, 255, 0.92));
+  color: #0f4c6b;
+}
+
+.mint-ui-pressable--ghost {
+  border-color: rgba(125, 211, 252, 0.36);
+  background: rgba(255, 255, 255, 0.55);
+  color: #0f4c6b;
+  box-shadow:
+    0 8px 16px -14px rgba(15, 23, 42, 0.38),
+    inset 0 1px 0 rgba(255, 255, 255, 0.55);
+}
+
+.mint-ui-pressable--danger {
+  border-color: rgba(244, 63, 94, 0.5);
+  background: linear-gradient(160deg, rgba(251, 113, 133, 0.94), rgba(225, 29, 72, 0.9));
+  color: #fff7fb;
 }
 
 
@@ -743,7 +868,11 @@
     0 10px 18px -12px rgba(15, 23, 42, 0.42),
     inset 0 1px 0 rgba(255, 255, 255, 0.64);
   scroll-snap-align: center;
-  transition: transform 170ms ease, box-shadow 170ms ease, border-color 170ms ease, opacity 170ms ease;
+  transition:
+    transform var(--mint-motion-duration-ui) var(--mint-motion-ease-standard),
+    box-shadow var(--mint-motion-duration-ui) var(--mint-motion-ease-standard),
+    border-color var(--mint-motion-duration-ui) var(--mint-motion-ease-standard),
+    opacity var(--mint-motion-duration-ui) var(--mint-motion-ease-standard);
 }
 
 .mint-focus-hand-card::before {
@@ -2343,7 +2472,10 @@
   border: 1.5px dashed rgba(56, 189, 248, 0.42);
   background: rgba(8, 47, 73, 0.16);
   box-shadow: inset 0 0 0 1px rgba(125, 211, 252, 0.22);
-  transition: border-color 120ms ease, background 120ms ease, box-shadow 120ms ease;
+  transition:
+    border-color var(--mint-motion-duration-fast) var(--mint-motion-ease-standard),
+    background var(--mint-motion-duration-fast) var(--mint-motion-ease-standard),
+    box-shadow var(--mint-motion-duration-fast) var(--mint-motion-ease-standard);
 }
 
 .engine-drop-grid--active .engine-drop-grid__cell--droppable:hover {
@@ -2910,6 +3042,7 @@
   .mint-prompt,
   .mint-error-pill,
   .mint-hand-card,
+  .mint-pressable,
   .mint-confirm-bar,
   .mint-result-overlay,
   .mint-result-panel,
