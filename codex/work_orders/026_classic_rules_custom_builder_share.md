@@ -5,12 +5,12 @@
 - 任意の組み合わせを UI から選べるようにし、さらに **共有 URL / Replay** で同じルールを再現できるようにする。
 
 ## 2) 成果物（Deliverables）
-- [ ] Match setup（Mint）に「Classic Custom」モードを追加
-- [ ] Classic ルールを複数選択できる UI（ラジオ/トグル）
-- [ ] ルール選択を URL param に保存（後方互換）
-- [ ] Replay が registry に存在しない rulesetId の場合でも、URL param から config を復元できる
-- [ ] rulesetId と復元 config の不一致を検知し、ユーザーに警告
-- [ ] テスト（URL encode/decode / share url）
+- [x] Match setup（Mint）に「Classic Custom」モードを追加
+- [x] Classic ルールを複数選択できる UI（ラジオ/トグル）
+- [x] ルール選択を URL param に保存（後方互換）
+- [x] Replay が registry に存在しない rulesetId の場合でも、URL param から config を復元できる
+- [x] rulesetId と復元 config の不一致を検知し、ユーザーに警告
+- [x] テスト（URL encode/decode / share url）
 
 ## 3) 要件（Requirements）
 ### MUST
@@ -76,23 +76,23 @@
 ※ 実装では `encode/decode` を 1 箇所に集約し、将来拡張できるようにする。
 
 ## 8) タスクリスト（細分化）
-- [ ] 026-1 `apps/web/src/lib/classic_rules_param.ts`（新規）
+- [x] 026-1 `apps/web/src/lib/classic_rules_param.ts`（新規）
   - `encodeClassicRulesMask(config): string`
   - `decodeClassicRulesMask(str): ClassicRulesConfigV1`
   - `normalizeClassicRulesConfig(...)`
-- [ ] 026-2 Match setup UI
+- [x] 026-2 Match setup UI
   - ルールの radio/toggle UI を追加
   - 選択状態を `URLSearchParams` に保存/復元
-- [ ] 026-3 Match の ruleset 解決
+- [x] 026-3 Match の ruleset 解決
   - `rk=classic_custom` の場合、base ruleset（v2）+ classic config で `RulesetConfigV2` を組み立てる
   - 組み立てた config から `rulesetId` を計算
-- [ ] 026-4 Replay の fallback
+- [x] 026-4 Replay の fallback
   - `resolveRulesetById` 失敗時、`rk`/`cr` から config を復元して simulate
   - `computedRulesetId !== transcript.header.rulesetId` の場合に警告表示
-- [ ] 026-5 Share URL
+- [x] 026-5 Share URL
   - Match からコピーする Replay URL に `rk`/`cr` を付与
   - `buildReplayShareUrl` にオプション追加する場合は後方互換で
-- [ ] 026-6 テスト
+- [x] 026-6 テスト
   - mask encode/decode のラウンドトリップ
   - `cr` が無い/壊れているときのデフォルト
 

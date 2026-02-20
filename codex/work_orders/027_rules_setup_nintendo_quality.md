@@ -6,11 +6,11 @@
 - 目指すのは、説明文を長くするのではなく **形・階層・強調**で理解できる UI。
 
 ## 2) 成果物（Deliverables）
-- [ ] Match setup（Mint）のルール選択部分を分かりやすく整理
-- [ ] “おすすめ” と “カスタム” の導線が迷わない
-- [ ] 選択中のルールが一目で分かる（タグ/アイコン/サマリ）
-- [ ] ヘルプ（短い説明）が必要なときだけ出る（popover/modal）
-- [ ] テスト（最低限: レンダリング/URL保存）
+- [x] Match setup（Mint）のルール選択部分を分かりやすく整理
+- [x] “おすすめ” と “カスタム” の導線が迷わない
+- [x] 選択中のルールが一目で分かる（タグ/アイコン/サマリ）
+- [x] ヘルプ（短い説明）が必要なときだけ出る（popover/modal）
+- [x] テスト（最低限: レンダリング/URL保存）
 
 ## 3) 要件（Requirements）
 ### MUST
@@ -56,15 +56,15 @@
 - 理由: Match setup の見通しが良くなり、他画面（Rulesets/Events）にも転用できる
 
 ## 8) タスクリスト（細分化）
-- [ ] 027-1 `MintRulesetPicker`（新規）を作る
+- [x] 027-1 `MintRulesetPicker`（新規）を作る
   - 大分類（engine v1/v2/classic）
   - classic: preset/custom
   - サマリピル
   - help popover（短文）
-- [ ] 027-2 `MatchSetupPanelMint` から呼び出す
-- [ ] 027-3 CSS（mint-theme）で “ゲーム UI の部品” に寄せる
+- [x] 027-2 `MatchSetupPanelMint` から呼び出す
+- [x] 027-3 CSS（mint-theme）で “ゲーム UI の部品” に寄せる
   - pill / tile / selected ring
-- [ ] 027-4 最低限のテスト
+- [x] 027-4 最低限のテスト
   - レンダリング
   - URL param が変化する
 

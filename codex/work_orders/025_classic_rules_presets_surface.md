@@ -6,11 +6,11 @@
 - 「追加したはずのルールが遊べない」状態は、機能の価値がユーザーに届かない。
 
 ## 2) 成果物（Deliverables）
-- [ ] Classic Rules の不足プリセットを `ruleset_registry` に追加
-- [ ] Match setup（Mint）で追加プリセットを選べるようにする
-- [ ] Rulesets ページ（または同等の導線）で Classic プリセットを発見できる
-- [ ] Replay で `rulesetId` から Classic プリセットが解決できる（registry に載る）
-- [ ] 最低限のテスト追加
+- [x] Classic Rules の不足プリセットを `ruleset_registry` に追加
+- [x] Match setup（Mint）で追加プリセットを選べるようにする
+- [x] Rulesets ページ（または同等の導線）で Classic プリセットを発見できる
+- [x] Replay で `rulesetId` から Classic プリセットが解決できる（registry に載る）
+- [x] 最低限のテスト追加
 
 ## 3) 要件（Requirements）
 ### MUST
@@ -58,17 +58,17 @@
 今回採用: **方針A**
 
 ## 8) タスクリスト（細分化）
-- [ ] 025-1 `ruleset_registry` に classic 単体プリセットを追加
+- [x] 025-1 `ruleset_registry` に classic 単体プリセットを追加
   - `classic_reverse`
   - `classic_ace_killer`
   - `classic_type_ascend`
   - `classic_type_descend`
   - (should) `classic_plus` / `classic_same`
-- [ ] 025-2 `RULESET_KEY_META` / discovery の表示情報を追加
-- [ ] 025-3 Match setup（Mint）で選択肢として表示
-- [ ] 025-4 Rulesets ページ（or Home/Arena）に Classic への導線を追加
+- [x] 025-2 `RULESET_KEY_META` / discovery の表示情報を追加
+- [x] 025-3 Match setup（Mint）で選択肢として表示
+- [x] 025-4 Rulesets ページ（or Home/Arena）に Classic への導線を追加
   - “まずここを触ればルールが選べる” を作る
-- [ ] 025-5 テスト追加
+- [x] 025-5 テスト追加
   - registry で key->id が安定
   - Match setup options に key が出る
 
