@@ -3,7 +3,7 @@
  * Text Hygiene Checker
  *
  * Detects:
- * - mojibake signature characters (common UTF-8/CP932 corruption artifacts)
+ * - mojibake signature strings (common UTF-8/CP932 corruption artifacts)
  * - control characters (C0 + C1 controls, excluding \n \r \t)
  * - Private Use Area characters (PUA) that rely on special fonts and often render as tofu
  *
@@ -34,13 +34,15 @@ const scanRoots = roots.length ? roots : ["apps/web/src"];
 const exts = new Set([".ts", ".tsx", ".css", ".md", ".json"]);
 
 const mojibakeSignatures = [
-  "繧",
-  "縺",
-  "繝",
   "郢ｧ",
   "邵ｺ",
-  "隨渉",
-  "陷茨",
+  "驛｢・ｧ",
+  "驍ｵ・ｺ",
+  "髫ｨ貂・",
+  "髯ｷ闌ｨ",
+  "蟇ｾ謌ｦ蜈ｱ譛",
+  "噂nhttps://",
+  "噂nhttp://",
 ];
 
 function isControl(codePoint) {

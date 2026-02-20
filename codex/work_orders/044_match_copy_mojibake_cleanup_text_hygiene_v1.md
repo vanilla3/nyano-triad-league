@@ -106,4 +106,5 @@ P1:
   - `pnpm.cmd -C apps/web test --`
   - `pnpm.cmd -C apps/web lint`
   - `pnpm.cmd -C apps/web typecheck`
-  - `pnpm.cmd -C apps/web build`
+  - `pnpm.cmd -C apps/web build`- Follow-up (2026-02-20, step2): strengthened mojibake detection signatures in `scripts/check_text_hygiene.mjs` (including the newly observed share-template corruption pattern) to prevent regressions from passing `lint:text`.
+- Follow-up verification (2026-02-20, step2): `pnpm.cmd lint:text` passed after checker rewrite, and downstream web checks (`pnpm.cmd -C apps/web test -- matchShareLinks useMatchReplayActions webShare MatchGuestPostGamePanel`, `pnpm.cmd -C apps/web lint`, `pnpm.cmd -C apps/web typecheck`, `pnpm.cmd -C apps/web build`) remained green.
