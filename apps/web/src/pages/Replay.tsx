@@ -10,7 +10,6 @@ import { MintIcon, type MintIconName } from "@/components/mint/icons/MintIcon";
 import type { CardData, MatchResultWithHistory, RulesetConfig, TranscriptV1 } from "@nyano/triad-engine";
 import {
   simulateMatchV1WithHistory,
-  verifyReplayV1,
   ONCHAIN_CORE_TACTICS_RULESET_CONFIG_V1,
   ONCHAIN_CORE_TACTICS_SHADOW_RULESET_CONFIG_V2,
 } from "@nyano/triad-engine";
@@ -41,7 +40,6 @@ import { annotateReplayMoves } from "@/lib/ai/replay_annotations";
 import { assessBoardAdvantage, type BoardAdvantage } from "@/lib/ai/board_advantage";
 import { AdvantageBadge } from "@/components/AdvantageBadge";
 import { resolveRulesetById } from "@/lib/ruleset_registry";
-import { writeClipboardText } from "@/lib/clipboard";
 import { appAbsoluteUrl, appPath } from "@/lib/appUrl";
 import { shouldShowStageSecondaryControls } from "@/lib/stage_layout";
 import { createSfxEngine, type SfxEngine, type SfxName } from "@/lib/sfx";
@@ -104,6 +102,7 @@ import { resolveReplayCardsFromPayload } from "@/features/match/replayCardLoader
 import { buildReplayShareLink } from "@/features/match/replayShareLinks";
 import { assertReplayAttemptCanBeSaved, buildReplayEventAttempt } from "@/features/match/replayEventAttempts";
 import { runReplayOverlayPublishAction } from "@/features/match/replayOverlayActions";
+import { copyReplayValueWithToast, runReplayVerifyAction } from "@/features/match/replayUiActions";
 import {
   formatReplayToolbarHighlightStatus,
   resolveNextReplayHighlightStep,
@@ -306,23 +305,28 @@ export function ReplayPage() {
   }, [playReplaySfx, pushStageActionFeedback]);
 
   const handleVerify = React.useCallback(() => {
-    if (!sim.ok) return;
-    const result = verifyReplayV1(sim.transcript, sim.cards, sim.current.matchId);
-    setVerifyStatus(result.ok ? "ok" : "mismatch");
-    playReplaySfx(result.ok ? "victory_fanfare" : "error_buzz");
+    runReplayVerifyAction({
+      payload: sim.ok
+        ? {
+            transcript: sim.transcript,
+            cards: sim.cards,
+            matchId: sim.current.matchId,
+          }
+        : null,
+      setVerifyStatus,
+      playReplaySfx,
+    });
   }, [playReplaySfx, sim]);
 
-  const copy = async (v: string) => {
-    await writeClipboardText(v);
-  };
-
   const copyWithToast = async (label: string, v: string) => {
-    try {
-      await copy(v);
-      toast.success("コピーしました", label);
-    } catch (e: unknown) {
-      toast.error("コピー失敗", errorMessage(e));
-    }
+    await copyReplayValueWithToast({
+      label,
+      value: v,
+      toast: {
+        success: toast.success,
+        error: toast.error,
+      },
+    });
   };
 
 

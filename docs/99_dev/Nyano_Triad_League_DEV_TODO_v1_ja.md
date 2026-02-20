@@ -568,3 +568,7 @@
 - [x] 2026-02-20 WO037-step105: Replay overlay publish action flow was extracted to apps/web/src/features/match/replayOverlayActions.ts (runReplayOverlayPublishAction), and Replay.tsx now delegates overlay publish/error/silent toast branching.
 
 - [x] 2026-02-20 WO037-step105: added apps/web/src/features/match/__tests__/replayOverlayActions.test.ts and re-verified pnpm.cmd -C apps/web test -- replayOverlayActions replayEventAttempts replayShareLinks replayCardLoaders replayOverlayState replayOverlaySummary, pnpm.cmd -C apps/web lint, pnpm.cmd -C apps/web typecheck, pnpm.cmd -C apps/web build.
+
+- [x] 2026-02-20 WO037-step106: Replay verify/copy UI actions were extracted to apps/web/src/features/match/replayUiActions.ts (runReplayVerifyAction / copyReplayValueWithToast + status/sfx resolvers), and Replay.tsx now delegates those side-effect branches.
+
+- [x] 2026-02-20 WO037-step106: added apps/web/src/features/match/__tests__/replayUiActions.test.ts and re-verified pnpm.cmd -C apps/web test -- replayUiActions replayOverlayActions replayEventAttempts replayShareLinks replayCardLoaders replayOverlayState replayOverlaySummary, pnpm.cmd -C apps/web lint, pnpm.cmd -C apps/web typecheck, pnpm.cmd -C apps/web build.
