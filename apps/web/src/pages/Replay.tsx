@@ -29,11 +29,9 @@ import { errorMessage } from "@/lib/errorMessage";
 import { stringifyWithBigInt } from "@/lib/json";
 import { formatEventPeriod, getEventById, getEventStatus } from "@/lib/events";
 import { hasEventAttempt, upsertEventAttempt } from "@/lib/event_attempts";
-import { parseReplayPayload } from "@/lib/replay_bundle";
 import { annotateReplayMoves } from "@/lib/ai/replay_annotations";
 import { assessBoardAdvantage, type BoardAdvantage } from "@/lib/ai/board_advantage";
 import { AdvantageBadge } from "@/components/AdvantageBadge";
-import { resolveRulesetById } from "@/lib/ruleset_registry";
 import { appAbsoluteUrl, appPath } from "@/lib/appUrl";
 import { shouldShowStageSecondaryControls } from "@/lib/stage_layout";
 import { createSfxEngine, type SfxEngine, type SfxName } from "@/lib/sfx";
@@ -71,7 +69,6 @@ import {
   type ReplayMode,
 } from "@/features/match/replayModeParams";
 import {
-  resolveReplayRulesetFromParams,
   shouldAutoCompareByRulesetId,
 } from "@/features/match/replayRulesetParams";
 import {
@@ -85,12 +82,11 @@ import {
   resolveReplayBoardDelta,
   resolveReplayNyanoReactionInput,
 } from "@/features/match/replayDerivedState";
-import { resolveReplayCardsFromPayload } from "@/features/match/replayCardLoaders";
 import { buildReplayShareLink } from "@/features/match/replayShareLinks";
 import { assertReplayAttemptCanBeSaved, buildReplayEventAttempt } from "@/features/match/replayEventAttempts";
 import { runReplayOverlayPublishAction } from "@/features/match/replayOverlayActions";
 import { copyReplayValueWithToast, runReplayVerifyAction } from "@/features/match/replayUiActions";
-import { resolveReplaySimulationState } from "@/features/match/replaySimulationState";
+import { runReplayLoadAction } from "@/features/match/replayLoadAction";
 import {
   formatReplayToolbarHighlightStatus,
   resolveNextReplayHighlightStep,
@@ -113,7 +109,7 @@ import { useReplayBroadcastToggle } from "@/features/match/useReplayBroadcastTog
 import { resolveReplayClearShareParamsMutation, resolveReplayRetryPayload } from "@/features/match/replayShareParamActions";
 import { useReplayAutoplay } from "@/features/match/useReplayAutoplay";
 import { resolveReplayNyanoReactionImpact, useReplayStageImpactBurst } from "@/features/match/useReplayStageImpactBurst";
-import { STAGE_VFX_OPTIONS, clampInt, formatStageVfxLabel } from "@/features/match/replayUiHelpers";
+import { STAGE_VFX_OPTIONS, formatStageVfxLabel } from "@/features/match/replayUiHelpers";
 
 type Mode = ReplayMode;
 
@@ -401,37 +397,22 @@ export function ReplayPage() {
     setSim({ ok: false, error: "" });
     setVerifyStatus("idle");
     try {
-      const inputText = (override?.text ?? text).trim();
-      if (!inputText) throw new Error("transcript JSON が空です");
-
-      const parsed = parseReplayPayload(inputText);
-      const transcript = parsed.transcript;
-
-      // Determine preferred mode from rulesetId if mode=auto.
-      const mode0 = override?.mode ?? mode;
-      const fallbackRulesetFromParams = resolveReplayRulesetFromParams(
-        searchParams.get("rk"),
-        searchParams.get("cr"),
-      );
-      const rulesetById = resolveRulesetById(transcript.header.rulesetId);
       const {
+        transcript,
         cards,
         owners,
-      } = await resolveReplayCardsFromPayload({ parsed });
-
-      const {
         currentRulesetLabel: label,
         resolvedRuleset: resolvedReplayRuleset,
         rulesetIdMismatchWarning,
         current,
         v1,
         v2,
-      } = resolveReplaySimulationState({
-        transcript,
-        cards,
-        mode: mode0,
-        rulesetById,
-        fallbackRulesetFromParams,
+        startStep,
+      } = await runReplayLoadAction({
+        text,
+        mode,
+        searchParams,
+        override,
       });
 
       setSim({
@@ -446,9 +427,6 @@ export function ReplayPage() {
         v1,
         v2,
       });
-
-      const stepMax = current.boardHistory.length - 1;
-      const startStep = clampInt(override?.step ?? 0, 0, stepMax);
       setStep(startStep);
     } catch (e: unknown) {
       setSim({ ok: false, error: errorMessage(e) });
