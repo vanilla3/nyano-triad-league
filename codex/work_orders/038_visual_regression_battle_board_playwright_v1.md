@@ -46,3 +46,24 @@
 
 - スクリーンショットの更新手順が分かる
 - 変更が無いのに落ち続けない
+
+## Implementation Update (2026-02-20)
+
+- [x] Added screenshot-based visual regression spec:
+  - `apps/web/e2e/engine-stage-visual-regression.spec.ts`
+  - captures `ui=engine&focus=1` board at 390x844 in two states:
+    - initial board
+    - after first committed placement
+- [x] Stabilized non-deterministic factors in spec:
+  - forces `prefers-reduced-motion: reduce`
+  - seeds localStorage `nytl.vfx.quality=off`
+  - uses deterministic URL params (`mode=guest`, `opp=pvp`, `fpm=manual`, `fp=0`)
+- [x] Added snapshot baselines:
+  - `apps/web/e2e/engine-stage-visual-regression.spec.ts-snapshots/engine-board-initial-chromium-win32.png`
+  - `apps/web/e2e/engine-stage-visual-regression.spec.ts-snapshots/engine-board-after-place-chromium-win32.png`
+- [x] Included the new spec in `apps/web/package.json` `e2e:ux` command.
+
+### Verification
+
+- [x] `pnpm.cmd -C apps/web exec -- playwright test e2e/engine-stage-visual-regression.spec.ts --update-snapshots`
+- [x] `pnpm.cmd -C apps/web exec -- playwright test e2e/engine-stage-visual-regression.spec.ts`
