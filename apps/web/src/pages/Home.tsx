@@ -512,9 +512,9 @@ export function HomePage() {
               </div>
               <div className="flex items-center gap-2">
                 {onboardingProgress.steps.read_quick_guide ? (
-                  <span className="text-[11px] font-semibold text-emerald-600">DONE</span>
+                  <span className="text-[11px] font-semibold text-emerald-600">完了</span>
                 ) : (
-                  <span className="text-[11px] font-semibold text-surface-400">TODO</span>
+                  <span className="text-[11px] font-semibold text-surface-400">未完了</span>
                 )}
                 <button className="btn text-xs" onClick={openQuickGuide}>
                   ルールを開く
@@ -529,9 +529,9 @@ export function HomePage() {
               </div>
               <div className="flex items-center gap-2">
                 {onboardingProgress.steps.start_first_match ? (
-                  <span className="text-[11px] font-semibold text-emerald-600">DONE</span>
+                  <span className="text-[11px] font-semibold text-emerald-600">完了</span>
                 ) : (
-                  <span className="text-[11px] font-semibold text-surface-400">TODO</span>
+                  <span className="text-[11px] font-semibold text-surface-400">未完了</span>
                 )}
                 <Link
                   to={quickPlayUrl}
@@ -549,9 +549,9 @@ export function HomePage() {
                 <span className="text-sm text-surface-700">Match で最初の手を確定する</span>
               </div>
               {onboardingProgress.steps.commit_first_move ? (
-                <span className="text-[11px] font-semibold text-emerald-600">DONE</span>
+                <span className="text-[11px] font-semibold text-emerald-600">完了</span>
               ) : (
-                <span className="text-[11px] font-semibold text-surface-400">AUTO (Matchで更新)</span>
+                <span className="text-[11px] font-semibold text-surface-400">自動 (Matchで更新)</span>
               )}
             </div>
           </div>
