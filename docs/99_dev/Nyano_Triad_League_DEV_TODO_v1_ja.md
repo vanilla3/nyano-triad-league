@@ -591,3 +591,7 @@
 - [x] 2026-02-20 WO037-step111: Replay share/save action runner helpers were extracted to apps/web/src/features/match/replayActionRunners.ts (runReplayShareCopyAction / runReplaySaveAttemptAction), and Replay.tsx now delegates duplicated setup/result-panel async handlers to these shared helpers.
 
 - [x] 2026-02-20 WO037-step111: added apps/web/src/features/match/__tests__/replayActionRunners.test.ts and re-verified pnpm.cmd -C apps/web test -- replayActionRunners replayUiActions replayEventAttempts replayLoadRecovery replayLoadAction replaySimState replayOverlayActions replayShareLinks, pnpm.cmd -C apps/web lint, pnpm.cmd -C apps/web typecheck, pnpm.cmd -C apps/web build.
+
+- [x] 2026-02-20 WO037-step112: Replay generic copy action runner was added to apps/web/src/features/match/replayActionRunners.ts (runReplayCopyAction), and Replay.tsx copy buttons now delegate via the runner to unify async copy handling and avoid inline floating promises.
+
+- [x] 2026-02-20 WO037-step112: expanded apps/web/src/features/match/__tests__/replayActionRunners.test.ts and re-verified pnpm.cmd -C apps/web test -- replayActionRunners replayUiActions replayEventAttempts replayLoadRecovery replayLoadAction replaySimState replayOverlayActions replayShareLinks, pnpm.cmd -C apps/web lint, pnpm.cmd -C apps/web typecheck, pnpm.cmd -C apps/web build.

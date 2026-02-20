@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import {
+  runReplayCopyAction,
   runReplaySaveAttemptAction,
   runReplayShareCopyAction,
 } from "@/features/match/replayActionRunners";
@@ -66,6 +67,57 @@ describe("features/match/replayActionRunners", () => {
 
     expect(ok).toBe(false);
     expect(onSuccess).not.toHaveBeenCalled();
+    expect(onError).toHaveBeenCalledWith(err);
+  });
+
+  it("runs generic copy success path", async () => {
+    const copyWithToast = vi.fn().mockResolvedValue(undefined);
+    const onError = vi.fn();
+
+    const ok = await runReplayCopyAction({
+      label: "transcript",
+      resolveValue: () => "payload",
+      copyWithToast,
+      onError,
+    });
+
+    expect(ok).toBe(true);
+    expect(copyWithToast).toHaveBeenCalledWith("transcript", "payload");
+    expect(onError).not.toHaveBeenCalled();
+  });
+
+  it("runs generic copy error path", async () => {
+    const err = new Error("copy failed");
+    const copyWithToast = vi.fn().mockRejectedValue(err);
+    const onError = vi.fn();
+
+    const ok = await runReplayCopyAction({
+      label: "transcript",
+      resolveValue: () => "payload",
+      copyWithToast,
+      onError,
+    });
+
+    expect(ok).toBe(false);
+    expect(onError).toHaveBeenCalledWith(err);
+  });
+
+  it("runs generic copy resolveValue error path", async () => {
+    const err = new Error("resolve failed");
+    const copyWithToast = vi.fn();
+    const onError = vi.fn();
+
+    const ok = await runReplayCopyAction({
+      label: "transcript",
+      resolveValue: () => {
+        throw err;
+      },
+      copyWithToast,
+      onError,
+    });
+
+    expect(ok).toBe(false);
+    expect(copyWithToast).not.toHaveBeenCalled();
     expect(onError).toHaveBeenCalledWith(err);
   });
 });

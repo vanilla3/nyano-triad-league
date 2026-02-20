@@ -14,6 +14,22 @@ export async function runReplayShareCopyAction(input: {
   }
 }
 
+export async function runReplayCopyAction(input: {
+  label: string;
+  resolveValue: () => string;
+  copyWithToast: (label: string, value: string) => Promise<void>;
+  onError?: (error: unknown) => void;
+}): Promise<boolean> {
+  try {
+    const value = input.resolveValue();
+    await input.copyWithToast(input.label, value);
+    return true;
+  } catch (error: unknown) {
+    input.onError?.(error);
+    return false;
+  }
+}
+
 export async function runReplaySaveAttemptAction(input: {
   saveToMyAttempts: () => Promise<void>;
   onSuccess: () => void;

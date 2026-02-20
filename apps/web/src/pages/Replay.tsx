@@ -85,7 +85,7 @@ import {
 import { buildReplayShareLink } from "@/features/match/replayShareLinks";
 import { assertReplayAttemptCanBeSaved, buildReplayEventAttempt } from "@/features/match/replayEventAttempts";
 import { runReplayOverlayPublishAction } from "@/features/match/replayOverlayActions";
-import { runReplaySaveAttemptAction, runReplayShareCopyAction } from "@/features/match/replayActionRunners";
+import { runReplayCopyAction, runReplaySaveAttemptAction, runReplayShareCopyAction } from "@/features/match/replayActionRunners";
 import { copyReplayValueWithToast, runReplayVerifyAction } from "@/features/match/replayUiActions";
 import { runReplayLoadAction } from "@/features/match/replayLoadAction";
 import {
@@ -1132,7 +1132,17 @@ export function ReplayPage() {
                 フォーカス終了
               </button>
               {sim.ok ? (
-                <button className="btn btn-sm" onClick={() => copyWithToast("共有URL", buildShareLink())}>
+                <button
+                  className="btn btn-sm"
+                  onClick={() => {
+                    void runReplayCopyAction({
+                      label: "共有URL",
+                      resolveValue: buildShareLink,
+                      copyWithToast,
+                      onError: (e: unknown) => toast.error("共有失敗", errorMessage(e)),
+                    });
+                  }}
+                >
                   共有URLコピー
                 </button>
               ) : null}
@@ -1321,7 +1331,12 @@ export function ReplayPage() {
                     <button
                       className="btn btn-sm"
                       onClick={() => {
-                        void copyWithToast("overlay URL", overlayUrl);
+                        void runReplayCopyAction({
+                          label: "overlay URL",
+                          resolveValue: () => overlayUrl,
+                          copyWithToast,
+                          onError: (e: unknown) => toast.error("コピー失敗", errorMessage(e)),
+                        });
                       }}
                     >
                       Overlay URLをコピー
@@ -1421,7 +1436,14 @@ export function ReplayPage() {
                     <div className="flex flex-wrap items-center gap-2">
                       <button
                         className="btn btn-sm"
-                        onClick={() => copyWithToast("matchId", sim.current.matchId)}
+                        onClick={() => {
+                          void runReplayCopyAction({
+                            label: "matchId",
+                            resolveValue: () => sim.current.matchId,
+                            copyWithToast,
+                            onError: (e: unknown) => toast.error("コピー失敗", errorMessage(e)),
+                          });
+                        }}
                       >
                         matchIdをコピー
                       </button>
@@ -1433,7 +1455,14 @@ export function ReplayPage() {
                       </button>
                       <button
                         className="btn btn-sm"
-                        onClick={() => copyWithToast("transcript", stringifyWithBigInt(sim.transcript))}
+                        onClick={() => {
+                          void runReplayCopyAction({
+                            label: "transcript",
+                            resolveValue: () => stringifyWithBigInt(sim.transcript),
+                            copyWithToast,
+                            onError: (e: unknown) => toast.error("コピー失敗", errorMessage(e)),
+                          });
+                        }}
                       >
                         対局ログをコピー (Transcript)
                       </button>
@@ -1754,10 +1783,30 @@ export function ReplayPage() {
                       </div>
 
                       <div className="mt-3 flex flex-wrap items-center gap-2">
-                        <button className="btn" onClick={() => copyWithToast("transcript", stringifyWithBigInt(sim.transcript))}>
+                        <button
+                          className="btn"
+                          onClick={() => {
+                            void runReplayCopyAction({
+                              label: "transcript",
+                              resolveValue: () => stringifyWithBigInt(sim.transcript),
+                              copyWithToast,
+                              onError: (e: unknown) => toast.error("コピー失敗", errorMessage(e)),
+                            });
+                          }}
+                        >
                           対局ログJSONをコピー (transcript JSON)
                         </button>
-                        <button className="btn" onClick={() => copyWithToast("result", stringifyWithBigInt(sim.current))}>
+                        <button
+                          className="btn"
+                          onClick={() => {
+                            void runReplayCopyAction({
+                              label: "result",
+                              resolveValue: () => stringifyWithBigInt(sim.current),
+                              copyWithToast,
+                              onError: (e: unknown) => toast.error("コピー失敗", errorMessage(e)),
+                            });
+                          }}
+                        >
                           結果JSONをコピー (result JSON)
                         </button>
                         <button
