@@ -109,12 +109,17 @@ P2（任意）
 
 ## Progress
 
-- [ ] WO-044
-- [ ] WO-045
-- [ ] WO-046
+- [x] WO-044
+- [x] WO-045
+- [x] WO-046
 
 ## Decision Log
-- TBD
+- 2026-02-20: WO-044 を先行し、Match copy の mojibake/control-char/PUA を先に除去してから演出系 polish を継続（品質事故を先に閉じる方針）。
+- 2026-02-20: 素材導入は CSS fallback-first を維持し、placeholder が残る環境でも UI が破綻しない構成を優先。
+- 2026-02-20: Share actions は native-share-first + clipboard fallback で統一し、端末差分を吸収。
+- 2026-02-20: stage-focus E2E 安定化として `stage-focus-announcer-stack` に `min-h-[1px]` を追加し、空状態の 0-height collapse を防止。
 
 ## Outcome
-- TBD
+- WO-044/045/046 の v1 scope は完了。
+- P0 の text hygiene は `lint:text` で再発防止ラインを確立し、Match/Replayshare copy を正規化。
+- 背景/素材/ボタン質感と share micro-delight は実装済みで、`apps/web` の lint/typecheck/test/build と stage-focus E2E が通過。
