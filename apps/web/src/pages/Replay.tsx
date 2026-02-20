@@ -32,10 +32,6 @@ import { NyanoReactionSlot } from "@/components/NyanoReactionSlot";
 import { NyanoAvatar } from "@/components/NyanoAvatar";
 import { BattleStageEngine } from "@/engine/components/BattleStageEngine";
 import { reactionToExpression } from "@/lib/expression_map";
-import {
-  base64UrlEncodeUtf8,
-  tryGzipCompressUtf8ToBase64Url,
-} from "@/lib/base64url";
 import { errorMessage } from "@/lib/errorMessage";
 import { stringifyWithBigInt } from "@/lib/json";
 import { formatEventPeriod, getEventById, getEventStatus } from "@/lib/events";
@@ -47,7 +43,7 @@ import { assessBoardAdvantage, type BoardAdvantage } from "@/lib/ai/board_advant
 import { AdvantageBadge } from "@/components/AdvantageBadge";
 import { resolveRulesetById } from "@/lib/ruleset_registry";
 import { writeClipboardText } from "@/lib/clipboard";
-import { appAbsoluteUrl, appPath, buildReplayShareUrl } from "@/lib/appUrl";
+import { appAbsoluteUrl, appPath } from "@/lib/appUrl";
 import { shouldShowStageSecondaryControls } from "@/lib/stage_layout";
 import { createSfxEngine, type SfxEngine, type SfxName } from "@/lib/sfx";
 import { readVfxQuality, writeVfxQuality, type VfxPreference } from "@/lib/local_settings";
@@ -106,6 +102,7 @@ import {
 import { resolveReplayRulesetContext } from "@/features/match/replayRulesetContext";
 import { resolveReplayCurrentResult } from "@/features/match/replayResultSelection";
 import { resolveReplayCardsFromPayload } from "@/features/match/replayCardLoaders";
+import { buildReplayShareLink } from "@/features/match/replayShareLinks";
 import {
   resolveReplayOverlayLastMove,
   resolveReplayOverlayLastTurnSummary,
@@ -967,12 +964,10 @@ export function ReplayPage() {
 
   
   const buildCanonicalReplayLink = (): string => {
-    const trimmed = text.trim() || (sim.ok ? stringifyWithBigInt(sim.transcript) : "");
-    if (!trimmed) throw new Error("transcript JSON が空です");
-
-    const z = tryGzipCompressUtf8ToBase64Url(trimmed);
-    return buildReplayShareUrl({
-      data: z ? { key: "z", value: z } : { key: "t", value: base64UrlEncodeUtf8(trimmed) },
+    return buildReplayShareLink({
+      text,
+      transcript: sim.ok ? sim.transcript : null,
+      emptyError: "transcript JSON が空です",
       eventId: eventId || undefined,
       pointsDeltaA: pointsDeltaA ?? undefined,
       mode: "auto",
@@ -1017,13 +1012,10 @@ export function ReplayPage() {
   };
 
   const buildShareLink = (): string => {
-    // Use sim transcript when text state is empty (e.g., loaded via ?z= share link)
-    const trimmed = text.trim() || (sim.ok ? stringifyWithBigInt(sim.transcript) : "");
-    if (!trimmed) throw new Error("transcript JSON が空です。先に transcript を貼り付けるか、共有リンクを読み込んでください。");
-
-    const z = tryGzipCompressUtf8ToBase64Url(trimmed);
-    return buildReplayShareUrl({
-      data: z ? { key: "z", value: z } : { key: "t", value: base64UrlEncodeUtf8(trimmed) },
+    return buildReplayShareLink({
+      text,
+      transcript: sim.ok ? sim.transcript : null,
+      emptyError: "transcript JSON が空です。先に transcript を貼り付けるか、共有リンクを読み込んでください。",
       eventId: eventId || undefined,
       pointsDeltaA: pointsDeltaA ?? undefined,
       mode,
