@@ -102,6 +102,7 @@ import {
 } from "@/features/match/replayRulesetParams";
 import { useEngineRendererFallback } from "@/features/match/useEngineRendererFallback";
 import { useMatchStageActionFeedback } from "@/features/match/useMatchStageActionFeedback";
+import { useMatchStageFullscreen } from "@/features/match/useMatchStageFullscreen";
 
 type Mode = ReplayMode;
 
@@ -381,9 +382,11 @@ export function ReplayPage() {
     if (typeof window === "undefined") return true;
     return shouldShowStageSecondaryControls(window.innerWidth);
   });
-  const [isStageFullscreen, setIsStageFullscreen] = React.useState(
-    () => typeof document !== "undefined" && Boolean(document.fullscreenElement),
-  );
+  const { isStageFullscreen, toggleStageFullscreen } = useMatchStageFullscreen({
+    isStageFocusRoute: isStageFocus,
+    stageViewportRef,
+    onWarn: toast.warn,
+  });
 
   React.useEffect(() => {
     if (!isStageFocus) {
@@ -439,12 +442,6 @@ export function ReplayPage() {
     pushStageActionFeedback(`VFX ${formatStageVfxLabel(nextPreference, nextResolved)}`, "info");
   }, [playReplaySfx, pushStageActionFeedback]);
 
-  React.useEffect(() => {
-    const handleFullscreenChange = () => setIsStageFullscreen(Boolean(document.fullscreenElement));
-    document.addEventListener("fullscreenchange", handleFullscreenChange);
-    return () => document.removeEventListener("fullscreenchange", handleFullscreenChange);
-  }, []);
-
   const handleVerify = React.useCallback(() => {
     if (!sim.ok) return;
     const result = verifyReplayV1(sim.transcript, sim.cards, sim.current.matchId);
@@ -465,20 +462,6 @@ export function ReplayPage() {
     }
   };
 
-  const toggleStageFullscreen = React.useCallback(async () => {
-    if (!isStageFocus) return;
-    try {
-      if (document.fullscreenElement) {
-        await document.exitFullscreen();
-        return;
-      }
-      const target = stageViewportRef.current;
-      if (!target) return;
-      await target.requestFullscreen();
-    } catch (e: unknown) {
-      toast.warn("全画面表示", errorMessage(e));
-    }
-  }, [isStageFocus, toast]);
 
   const setReplayBoardUi = React.useCallback((nextUi: ReplayBoardUi) => {
     const next = withReplayBoardUi(searchParams, nextUi);
