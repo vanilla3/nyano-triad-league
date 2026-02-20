@@ -95,6 +95,12 @@ import {
   resolveReplayRulesetFromParams,
   shouldAutoCompareByRulesetId,
 } from "@/features/match/replayRulesetParams";
+import {
+  formatReplayToolbarHighlightStatus,
+  resolveNextReplayHighlightStep,
+  resolvePrevReplayHighlightStep,
+  resolveReplayCurrentHighlightIndex,
+} from "@/features/match/replayHighlightNavigation";
 import { useEngineRendererFallback } from "@/features/match/useEngineRendererFallback";
 import { useMatchStageActionFeedback } from "@/features/match/useMatchStageActionFeedback";
 import { useMatchStageFullscreen } from "@/features/match/useMatchStageFullscreen";
@@ -825,27 +831,27 @@ protocolV1: {
 
   // Highlight jump helpers
   const jumpToNextHighlight = React.useCallback(() => {
-    if (highlights.length === 0) return;
-    const next = highlights.find((h) => h.step > step);
+    const nextStep = resolveNextReplayHighlightStep(highlights, step);
+    if (nextStep === null) return;
     setIsPlaying(false);
-    setStep(next ? next.step : highlights[0].step);
+    setStep(nextStep);
   }, [highlights, step]);
 
   const jumpToPrevHighlight = React.useCallback(() => {
-    if (highlights.length === 0) return;
-    const prev = [...highlights].reverse().find((h) => h.step < step);
+    const prevStep = resolvePrevReplayHighlightStep(highlights, step);
+    if (prevStep === null) return;
     setIsPlaying(false);
-    setStep(prev ? prev.step : highlights[highlights.length - 1].step);
+    setStep(prevStep);
   }, [highlights, step]);
 
   const currentHighlightIdx = React.useMemo(() => {
-    if (highlights.length === 0) return -1;
-    return highlights.findIndex((h) => h.step === step);
+    return resolveReplayCurrentHighlightIndex(highlights, step);
   }, [highlights, step]);
   const focusToolbarHighlightStatus = React.useMemo(() => {
-    if (highlights.length === 0) return "0 highlights";
-    if (currentHighlightIdx >= 0) return `${currentHighlightIdx + 1}/${highlights.length} highlights`;
-    return `${highlights.length} highlights`;
+    return formatReplayToolbarHighlightStatus({
+      highlightCount: highlights.length,
+      currentHighlightIdx,
+    });
   }, [highlights.length, currentHighlightIdx]);
 
   const jumpToStartWithFeedback = React.useCallback(() => {
