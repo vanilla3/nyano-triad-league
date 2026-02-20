@@ -85,6 +85,7 @@ import {
 import { buildReplayShareLink } from "@/features/match/replayShareLinks";
 import { assertReplayAttemptCanBeSaved, buildReplayEventAttempt } from "@/features/match/replayEventAttempts";
 import { runReplayOverlayPublishAction } from "@/features/match/replayOverlayActions";
+import { runReplaySaveAttemptAction, runReplayShareCopyAction } from "@/features/match/replayActionRunners";
 import { copyReplayValueWithToast, runReplayVerifyAction } from "@/features/match/replayUiActions";
 import { runReplayLoadAction } from "@/features/match/replayLoadAction";
 import {
@@ -1243,14 +1244,12 @@ export function ReplayPage() {
                 <button
                   className="btn"
                   onClick={() => {
-                    void (async () => {
-                      try {
-                        const link = buildShareLink();
-                        await copyWithToast("共有URL", link);
-                      } catch (e: unknown) {
-                        setSim(buildReplaySimErrorState(errorMessage(e)));
-                      }
-                    })();
+                    void runReplayShareCopyAction({
+                      shareLabel: "共有URL",
+                      buildShareLink,
+                      copyWithToast,
+                      onError: (e: unknown) => setSim(buildReplaySimErrorState(errorMessage(e))),
+                    });
                   }}
                 >
                   共有URLをコピー
@@ -1264,14 +1263,11 @@ export function ReplayPage() {
                         className="btn"
                         disabled={!sim.ok || saved}
                         onClick={() => {
-                          (async () => {
-                            try {
-                              await saveToMyAttempts();
-                              toast.success("保存しました", "My Attempts に追加しました");
-                            } catch (e: unknown) {
-                              setSim(buildReplaySimErrorState(errorMessage(e)));
-                            }
-                          })();
+                          void runReplaySaveAttemptAction({
+                            saveToMyAttempts,
+                            onSuccess: () => toast.success("保存しました", "My Attempts に追加しました"),
+                            onError: (e: unknown) => setSim(buildReplaySimErrorState(errorMessage(e))),
+                          });
                         }}
                       >
                         {saved ? "保存済み" : "保存"}
@@ -1444,14 +1440,12 @@ export function ReplayPage() {
                       <button
                         className="btn btn-sm btn-primary"
                         onClick={() => {
-                          void (async () => {
-                            try {
-                              const link = buildShareLink();
-                              await copyWithToast("共有URL", link);
-                            } catch (e: unknown) {
-                              toast.error("共有失敗", errorMessage(e));
-                            }
-                          })();
+                          void runReplayShareCopyAction({
+                            shareLabel: "共有URL",
+                            buildShareLink,
+                            copyWithToast,
+                            onError: (e: unknown) => toast.error("共有失敗", errorMessage(e)),
+                          });
                         }}
                       >
                         共有
@@ -1461,14 +1455,11 @@ export function ReplayPage() {
                           className="btn btn-sm"
                           disabled={hasEventAttempt(eventId, sim.current.matchId)}
                           onClick={() => {
-                            (async () => {
-                              try {
-                                await saveToMyAttempts();
-                                toast.success("保存しました", "My Attempts に追加しました");
-                              } catch (e: unknown) {
-                                setSim(buildReplaySimErrorState(errorMessage(e)));
-                              }
-                            })();
+                            void runReplaySaveAttemptAction({
+                              saveToMyAttempts,
+                              onSuccess: () => toast.success("保存しました", "My Attempts に追加しました"),
+                              onError: (e: unknown) => setSim(buildReplaySimErrorState(errorMessage(e))),
+                            });
                           }}
                         >
                           {hasEventAttempt(eventId, sim.current.matchId) ? "保存済み" : "保存"}
