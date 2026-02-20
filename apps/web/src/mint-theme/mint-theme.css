@@ -1298,6 +1298,86 @@
   margin-top: 2px;
 }
 
+.mint-announcer-stack {
+  display: grid;
+  gap: 10px;
+  min-height: 0;
+  align-content: start;
+}
+
+.stage-focus-announcer-stack {
+  position: relative;
+  z-index: 3;
+  gap: clamp(8px, 1.2vw, 12px);
+}
+
+.mint-status-summary-slot {
+  position: relative;
+  min-height: 28px;
+}
+
+.mint-status-summary {
+  display: flex;
+  align-items: center;
+  min-height: 28px;
+  width: 100%;
+  border-radius: 11px;
+  border: 1px solid rgba(125, 211, 252, 0.4);
+  background: linear-gradient(170deg, rgba(255, 255, 255, 0.84), rgba(236, 248, 255, 0.68));
+  padding: 4px 9px;
+  box-shadow:
+    0 10px 20px -16px rgba(14, 116, 144, 0.62),
+    inset 0 1px 0 rgba(255, 255, 255, 0.74);
+  transition:
+    opacity var(--mint-motion-duration-ui) var(--mint-motion-ease-standard),
+    transform var(--mint-motion-duration-ui) var(--mint-motion-ease-standard);
+}
+
+.mint-status-summary-slot--idle .mint-status-summary {
+  opacity: 0.74;
+}
+
+.mint-status-summary--placeholder {
+  opacity: 0.55;
+  color: rgba(71, 85, 105, 0.82);
+}
+
+.mint-status-summary__text {
+  display: block;
+  width: 100%;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  color: rgba(14, 116, 144, 0.95);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.mint-nyano-reaction-slot {
+  position: relative;
+  min-height: clamp(64px, 7.5vw, 86px);
+}
+
+.mint-nyano-reaction-slot--stage-focus {
+  min-height: clamp(72px, 8.8vw, 96px);
+}
+
+.mint-nyano-reaction-slot__placeholder {
+  display: block;
+  min-height: inherit;
+  width: 100%;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.mint-nyano-reaction-slot__content {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: flex-start;
+}
+
 @keyframes mint-stage-side-glint {
   0% {
     transform: translateX(-120%);
@@ -1479,6 +1559,27 @@
 }
 
 @media (max-width: 768px) {
+  .mint-announcer-stack {
+    gap: 6px;
+  }
+
+  .stage-focus-announcer-stack {
+    gap: 4px;
+  }
+
+  .mint-status-summary-slot {
+    min-height: 22px;
+  }
+
+  .mint-status-summary {
+    min-height: 22px;
+    padding: 3px 8px;
+  }
+
+  .mint-status-summary__text {
+    font-size: 10px;
+  }
+
   .mint-focus-hand-dock {
     border-radius: 14px;
   }
@@ -1490,6 +1591,14 @@
 
   .mint-focus-hand-card {
     width: 88px;
+  }
+
+  .mint-nyano-reaction-slot {
+    min-height: 0;
+  }
+
+  .mint-nyano-reaction-slot--stage-focus {
+    min-height: 0;
   }
 
   .stage-focus-toolbar-actions {
