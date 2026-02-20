@@ -1,8 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import type { TranscriptV1 } from "@nyano/triad-engine";
-import {
-  createMatchShareClipboardActions,
-} from "@/features/match/useMatchShareClipboardActions";
+import { createMatchShareClipboardActions } from "@/features/match/useMatchShareClipboardActions";
 
 function makeTranscript(): TranscriptV1 {
   return {
@@ -43,7 +41,7 @@ function createDeps() {
 }
 
 describe("features/match/useMatchShareClipboardActions", () => {
-  it("copies setup share URL and emits success toast", async () => {
+  it("copies setup share URL and emits success toast when native share is unsupported", async () => {
     const deps = createDeps();
     const actions = createMatchShareClipboardActions(
       {
@@ -60,35 +58,95 @@ describe("features/match/useMatchShareClipboardActions", () => {
       },
       {
         buildSetupShareUrl: () => "https://example.invalid/match?ui=mint",
+        shareSetupUrlWithNative: async () => "unsupported",
       },
     );
 
     await actions.handleCopySetupLink();
     expect(deps.writeSetupClipboardText).toHaveBeenCalledWith("https://example.invalid/match?ui=mint");
     expect(deps.calls).toEqual([
-      { type: "success", title: "コピーしました", message: "セットアップURLをコピーしました。" },
+      { type: "success", title: "Copied", message: "Setup share URL copied to clipboard." },
     ]);
+  });
+
+  it("uses native share and skips clipboard copy", async () => {
+    const deps = createDeps();
+    const actions = createMatchShareClipboardActions(
+      {
+        pathname: "/match",
+        search: new URLSearchParams("ui=mint"),
+        simOk: true,
+        simError: "",
+        transcript: makeTranscript(),
+        setError: deps.setError,
+        toast: deps.toast,
+        copyToClipboard: deps.copyToClipboard,
+        writeSetupClipboardText: deps.writeSetupClipboardText,
+        resolveErrorMessage: deps.resolveErrorMessage,
+      },
+      {
+        buildSetupShareUrl: () => "https://example.invalid/match?ui=mint",
+        shareSetupUrlWithNative: async () => "shared",
+      },
+    );
+
+    await actions.handleCopySetupLink();
+    expect(deps.writeSetupClipboardText).not.toHaveBeenCalled();
+    expect(deps.calls).toEqual([
+      { type: "success", title: "Shared", message: "Setup share URL opened in native share sheet." },
+    ]);
+  });
+
+  it("does not copy when native share is cancelled", async () => {
+    const deps = createDeps();
+    const actions = createMatchShareClipboardActions(
+      {
+        pathname: "/match",
+        search: new URLSearchParams("ui=mint"),
+        simOk: true,
+        simError: "",
+        transcript: makeTranscript(),
+        setError: deps.setError,
+        toast: deps.toast,
+        copyToClipboard: deps.copyToClipboard,
+        writeSetupClipboardText: deps.writeSetupClipboardText,
+        resolveErrorMessage: deps.resolveErrorMessage,
+      },
+      {
+        buildSetupShareUrl: () => "https://example.invalid/match?ui=mint",
+        shareSetupUrlWithNative: async () => "cancelled",
+      },
+    );
+
+    await actions.handleCopySetupLink();
+    expect(deps.writeSetupClipboardText).not.toHaveBeenCalled();
+    expect(deps.calls).toEqual([]);
   });
 
   it("warns when setup URL copy fails", async () => {
     const deps = createDeps();
     deps.writeSetupClipboardText.mockResolvedValue(false);
-    const actions = createMatchShareClipboardActions({
-      pathname: "/match",
-      search: new URLSearchParams(),
-      simOk: true,
-      simError: "",
-      transcript: makeTranscript(),
-      setError: deps.setError,
-      toast: deps.toast,
-      copyToClipboard: deps.copyToClipboard,
-      writeSetupClipboardText: deps.writeSetupClipboardText,
-      resolveErrorMessage: deps.resolveErrorMessage,
-    });
+    const actions = createMatchShareClipboardActions(
+      {
+        pathname: "/match",
+        search: new URLSearchParams(),
+        simOk: true,
+        simError: "",
+        transcript: makeTranscript(),
+        setError: deps.setError,
+        toast: deps.toast,
+        copyToClipboard: deps.copyToClipboard,
+        writeSetupClipboardText: deps.writeSetupClipboardText,
+        resolveErrorMessage: deps.resolveErrorMessage,
+      },
+      {
+        shareSetupUrlWithNative: async () => "unsupported",
+      },
+    );
 
     await actions.handleCopySetupLink();
     expect(deps.calls).toEqual([
-      { type: "warn", title: "コピー失敗", message: "URLを手動でコピーしてください。" },
+      { type: "warn", title: "Copy failed", message: "Could not copy URL to clipboard." },
     ]);
   });
 
@@ -113,7 +171,7 @@ describe("features/match/useMatchShareClipboardActions", () => {
     expect(deps.copyToClipboard).not.toHaveBeenCalled();
   });
 
-  it("copies transcript json and emits success toast", async () => {
+  it("copies transcript JSON and emits success toast", async () => {
     const deps = createDeps();
     const actions = createMatchShareClipboardActions(
       {
@@ -134,7 +192,7 @@ describe("features/match/useMatchShareClipboardActions", () => {
     await actions.copyTranscriptJson();
     expect(deps.copyToClipboard).toHaveBeenCalledWith("{\"ok\":true}");
     expect(deps.calls).toEqual([
-      { type: "success", title: "コピーしました", message: "transcript JSON" },
+      { type: "success", title: "Copied", message: "transcript JSON" },
     ]);
   });
 
@@ -159,7 +217,7 @@ describe("features/match/useMatchShareClipboardActions", () => {
 
     await actions.copyTranscriptJson();
     expect(deps.calls).toEqual([
-      { type: "error", title: "コピーに失敗しました", message: "failed" },
+      { type: "error", title: "Copy failed", message: "failed" },
     ]);
   });
 });
