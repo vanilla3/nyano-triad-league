@@ -120,7 +120,7 @@ describe("features/match/useMatchCardLoadActions", () => {
     expect(input.setLoading).toHaveBeenLastCalledWith(false);
     expect(input.setEventNyanoDeckOverride).toHaveBeenCalledWith([11n, 12n, 13n, 14n, 15n]);
     expect(input.toast.success).toHaveBeenCalledWith(
-      "Nyano繝・ャ繧ｭ繧定・蜍暮∈謚槭＠縺ｾ縺励◆",
+      "Nyano deck auto-picked",
       "#11, #12, #13, #14, #15",
     );
     expect(input.setCards).toHaveBeenCalledWith(cardsByTokenId);

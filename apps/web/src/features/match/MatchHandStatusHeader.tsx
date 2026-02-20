@@ -29,12 +29,12 @@ export function MatchHandStatusHeader(input: {
       }
       style={isRpg ? { fontFamily: "'Cinzel', serif", color: "var(--rpg-text-gold, #E8D48B)" } : undefined}
     >
-      {currentPlayer === 0 ? "繝励Ξ繧､繝､繝ｼA" : "繝励Ξ繧､繝､繝ｼB"} 縺ｮ謇区惆
-      {draftCell !== null && <span className={isRpg ? "" : " text-slate-400"}> ﾂｷ Cell {draftCell} selected</span>}
-      {isHandDragging && <span className={isRpg ? "" : " text-cyan-500"}> ﾂｷ Dragging to board</span>}
+      {currentPlayer === 0 ? "Player A" : "Player B"} turn
+      {draftCell !== null && <span className={isRpg ? "" : " text-slate-400"}> | Cell {draftCell} selected</span>}
+      {isHandDragging && <span className={isRpg ? "" : " text-cyan-500"}> | Dragging to board</span>}
       {isMintUi && classicForcedCardIndex !== null && (
         <span className="mint-order-lock-badge ml-2" role="status" aria-live="polite">
-          蝗ｺ螳壹せ繝ｭ繝・ヨ ({classicForcedRuleLabel ?? "FIX"}): {classicForcedCardIndex + 1}
+          Forced slot ({classicForcedRuleLabel ?? "FIX"}): {classicForcedCardIndex + 1}
         </span>
       )}
     </div>

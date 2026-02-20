@@ -35,10 +35,10 @@ export function MatchQuickCommitBar(input: {
     >
       <div className="grid gap-0.5 text-xs">
         <div className="mint-match-quick-commit__title font-semibold">
-          繧ｯ繧､繝・け遒ｺ螳・
+          Quick commit
         </div>
         <div className="mint-match-quick-commit__hint">
-          繧ｫ繝ｼ繝・{draftCardIndex !== null ? draftCardIndex + 1 : "-"} 竊・繧ｻ繝ｫ {draftCell ?? "-"}
+          Card {draftCardIndex !== null ? draftCardIndex + 1 : "-"} | Cell {draftCell ?? "-"}
         </div>
       </div>
 
@@ -47,7 +47,7 @@ export function MatchQuickCommitBar(input: {
           className="inline-flex items-center gap-2 text-xs font-semibold"
           style={{ color: "var(--mint-text-secondary, #4B5563)" }}
         >
-          隴ｦ蜻・
+          Warning mark
           <select
             className="input h-10 min-w-[170px]"
             value={draftWarningMarkCell === null ? "" : String(draftWarningMarkCell)}
@@ -62,7 +62,7 @@ export function MatchQuickCommitBar(input: {
             {availableCells
               .filter((c) => c !== draftCell)
               .map((c) => (
-                <option key={`quick-${c}`} value={String(c)}>繧ｻ繝ｫ {c}</option>
+                <option key={`quick-${c}`} value={String(c)}>Cell {c}</option>
               ))}
           </select>
         </label>
@@ -72,7 +72,7 @@ export function MatchQuickCommitBar(input: {
           disabled={!canCommit}
           aria-label="Quick commit move"
         >
-          驟咲ｽｮ繧堤｢ｺ螳・
+          Commit move
         </button>
         <button
           className="btn h-10 px-4"
@@ -80,7 +80,7 @@ export function MatchQuickCommitBar(input: {
           disabled={!canUndo}
           aria-label="Quick undo move"
         >
-          1謇区綾縺・
+          Undo 1 move
         </button>
       </div>
     </div>

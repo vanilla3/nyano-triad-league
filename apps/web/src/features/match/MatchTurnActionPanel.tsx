@@ -42,7 +42,7 @@ export function MatchTurnActionPanel(input: {
           className={isRpg ? "text-[10px] uppercase tracking-wider" : "text-[11px] text-slate-600"}
           style={isRpg ? { fontFamily: "'Cinzel', serif", color: "var(--rpg-text-dim, #8A7E6B)" } : undefined}
         >
-          隴ｦ蜻翫・繝ｼ繧ｯ・域ｮ九ｊ {currentWarnRemaining}・・
+          Warning mark (remaining {currentWarnRemaining})
         </div>
         <select
           className={["input", isStageFocusRoute ? "h-10 min-w-[180px]" : ""].join(" ").trim()}
@@ -58,7 +58,7 @@ export function MatchTurnActionPanel(input: {
           {availableCells
             .filter((cell) => cell !== draftCell)
             .map((cell) => (
-              <option key={cell} value={String(cell)}>繧ｻ繝ｫ {cell}</option>
+              <option key={cell} value={String(cell)}>Cell {cell}</option>
             ))}
         </select>
       </div>
@@ -70,7 +70,7 @@ export function MatchTurnActionPanel(input: {
           disabled={!canCommit}
           aria-label="Commit move"
         >
-          驟咲ｽｮ繧堤｢ｺ螳・
+          Commit move
         </button>
         <button
           className={isRpg ? "rpg-result__btn" : ["btn", isStageFocusRoute ? "h-10 px-4" : ""].join(" ").trim()}
@@ -78,7 +78,7 @@ export function MatchTurnActionPanel(input: {
           disabled={!canUndo}
           aria-label="Undo last move"
         >
-          1謇区綾縺・
+          Undo 1 move
         </button>
         {showAiMoveAction ? (
           <button
@@ -86,7 +86,7 @@ export function MatchTurnActionPanel(input: {
             onClick={onAiMove}
             aria-label="Nyano AI move"
           >
-            縺ｫ繧・・縺ｮ謇狗分
+            Nyano Move
           </button>
         ) : null}
       </div>

@@ -286,13 +286,13 @@ export function MatchPage() {
   const stageEngineBoardMinHeightPxBase = isBattleStageRoute ? stageBoardSizing.minHeightPx : undefined;
   const decks = React.useMemo(() => listDecks(), []);
 
-  // 笏笏 Telemetry (NIN-UX-003) 笏笏
+  // Telemetry (NIN-UX-003)
   const telemetry = React.useMemo(() => createTelemetryTracker(), []);
   React.useEffect(() => {
     return () => { telemetry.flush(); };
   }, [telemetry]);
 
-  // 笏笏 SFX Engine (NIN-UX-031) 笏笏
+  // SFX Engine (NIN-UX-031)
   const sfx = React.useMemo<SfxEngine | null>(() => (useMintUi ? createSfxEngine() : null), [useMintUi]);
   const [sfxMuted, setSfxMuted] = React.useState(() => sfx?.isMuted() ?? false);
   React.useEffect(() => {
@@ -525,7 +525,7 @@ export function MatchPage() {
     const ts = new Date();
     const datePart = ts.toLocaleDateString("ja-JP", { year: "numeric", month: "2-digit", day: "2-digit" });
     const timePart = ts.toLocaleTimeString("ja-JP", { hour: "2-digit", minute: "2-digit" });
-    const label = `繧ｲ繧ｹ繝医ョ繝・く ${datePart} ${timePart}`;
+    const label = `Guest Deck ${datePart} ${timePart}`;
     upsertDeck({
       name: label,
       tokenIds: guestDeckATokens,
@@ -535,7 +535,7 @@ export function MatchPage() {
       memo: `${aiDifficulty} / ${rulesetKey}`,
     });
     setGuestDeckSaved(true);
-    toast.success("デッキを保存しました", "Decks ページで確認できます。");
+    toast.success("Deck saved", "Saved to Decks page.");
   };
 
   React.useEffect(() => {
@@ -804,11 +804,11 @@ export function MatchPage() {
       revealB: commitRevealBParam,
     });
     if (!commits) {
-      toast.warn("Commit 生成に失敗", "matchSalt/revealA/revealB は bytes32 hex 形式で入力してください。");
+      toast.warn("Commit input error", "matchSalt/revealA/revealB must be bytes32 hex.");
       return;
     }
     setParams(commits);
-    toast.success("Commit を更新しました", "reveal 値から commitA/commitB を再計算しました。");
+    toast.success("Commit generated", "Derived commitA/commitB from reveal values.");
   }, [
     commitRevealAParam,
     commitRevealBParam,
@@ -832,11 +832,11 @@ export function MatchPage() {
       nonceB: committedMutualNonceBParam,
     });
     if (!commits) {
-      toast.warn("Commit 生成に失敗", "matchSalt/player/choice/nonce を確認してください。");
+      toast.warn("Commit input error", "Provide matchSalt/player/choice/nonce.");
       return;
     }
     setParams(commits);
-    toast.success("Commit を更新しました", "コミット選択値の commit を再計算しました。");
+    toast.success("Commit generated", "Derived commit values for committed mutual choice.");
   }, [
     commitRevealSaltParam,
     committedMutualNonceAParam,
@@ -1228,7 +1228,7 @@ export function MatchPage() {
     };
 
     if (isStageFocusRoute) {
-      pushStageActionFeedback("驟咲ｽｮ繧堤｢ｺ螳壹＠縺ｾ縺励◆", "success");
+      pushStageActionFeedback("Move committed", "success");
     }
 
     // Card flight animation (mint / engine mode)
@@ -1267,7 +1267,7 @@ export function MatchPage() {
       return;
     }
     if (draftCardIndex === null) {
-      setError("card 繧帝∈謚槭＠縺ｦ縺上□縺輔＞");
+      setError("Select a card first.");
       telemetry.recordInvalidAction();
       return;
     }
@@ -1441,7 +1441,7 @@ export function MatchPage() {
         commitTurn(resolved.turn);
         const resolvedCardIndex = resolved.resolvedCardIndex;
 
-        toast.success("驟堺ｿ｡謫堺ｽ懊ｒ蜿肴丐", `繧ｻ繝ｫ ${cmd.move.cell} ﾂｷ 繧ｫ繝ｼ繝・${resolvedCardIndex + 1}`);
+        toast.success("Applied stream move", `Cell ${cmd.move.cell} | Card ${resolvedCardIndex + 1}`);
       } catch {
         // ignore
       }
@@ -1706,7 +1706,7 @@ export function MatchPage() {
       ref={stageViewportRef}
       className={stageLayoutClasses.rootClassName}
     >
-      {/* 笏笏 Result Overlay 笏笏 */}
+      {/* Result Overlay */}
       {gameResult && (
         useMintUi ? (
           <GameResultOverlayMint
@@ -1747,7 +1747,7 @@ export function MatchPage() {
         >
           <div className="flex flex-wrap items-center justify-between gap-2">
             <div className="text-xs font-semibold" style={{ color: "var(--mint-text-secondary, #4B5563)" }}>
-              Pixi繝輔か繝ｼ繧ｫ繧ｹ繝｢繝ｼ繝・ﾂｷ {currentTurnIndex}/9 謇・ﾂｷ 隴ｦ蜻頑ｮ九ｊ {currentWarnRemaining}
+              Pixi focus mode | Turn {currentTurnIndex}/9 | Warning marks left {currentWarnRemaining}
             </div>
             <div className="flex flex-wrap items-center gap-2">
               {showFocusToolbarActions ? (
@@ -1756,10 +1756,11 @@ export function MatchPage() {
                     {draftCardIndex !== null ? `Card ${draftCardIndex + 1}` : "Card not selected"} | {draftCell !== null ? `Cell ${draftCell}` : "Cell not selected"}
                   </span>
                   <span className="stage-focus-toolbar-hint" aria-label="Battle focus toolbar hint">
-                    繧ｿ繝・・/繝峨Λ繝・げ縺ｧ驟咲ｽｮ貅門ｙ 竊・遒ｺ螳・ﾂｷ Enter/Backspace ﾂｷ F/C/H/R/Esc
+                    Select card/cell to commit | Enter/Backspace | F/C/H/R/Esc
                   </span>
                   <label className="stage-focus-toolbar-speed">
-                    隴ｦ蜻・                    <select
+                    Warning mark
+                    <select
                       className="stage-focus-toolbar-speed-select"
                       value={draftWarningMarkCell === null ? "" : String(draftWarningMarkCell)}
                       onChange={(e) => {
@@ -1773,7 +1774,7 @@ export function MatchPage() {
                       {availableCells
                         .filter((c) => c !== draftCell)
                         .map((c) => (
-                          <option key={`focus-toolbar-w-${c}`} value={String(c)}>繧ｻ繝ｫ {c}</option>
+                          <option key={`focus-toolbar-w-${c}`} value={String(c)}>Cell {c}</option>
                         ))}
                     </select>
                   </label>
@@ -1783,14 +1784,14 @@ export function MatchPage() {
                     disabled={!canCommitFromFocusToolbar}
                     aria-label="Commit move from focus toolbar"
                   >
-                    遒ｺ螳・                  </button>
+                    Commit</button>
                   <button
                     className="btn btn-sm"
                     onClick={undoMove}
                     disabled={!canUndoFromFocusToolbar}
                     aria-label="Undo move from focus toolbar"
                   >
-                    蜿悶ｊ豸医＠
+                    Undo
                   </button>
                   {canManualAiMoveFromFocusToolbar ? (
                     <button
@@ -1798,7 +1799,7 @@ export function MatchPage() {
                       onClick={doAiMoveWithFeedback}
                       aria-label="Nyano AI move from focus toolbar"
                     >
-                      縺ｫ繧・・縺ｮ謇狗分
+                      Nyano Move
                     </button>
                   ) : null}
                 </div>
@@ -1843,11 +1844,11 @@ export function MatchPage() {
                       title={sfxMuted ? "Sound ON" : "Sound OFF"}
                       aria-label={sfxMuted ? "Unmute sound effects" : "Mute sound effects"}
                     >
-                      {sfxMuted ? "這" : "矧"}
+                      {sfxMuted ? "SFX OFF" : "SFX ON"}
                     </button>
                   ) : null}
                   <button className="btn btn-sm" onClick={toggleStageFullscreenWithFeedback}>
-                    {isStageFullscreen ? "蜈ｨ逕ｻ髱｢隗｣髯､" : "蜈ｨ逕ｻ髱｢"}
+                    {isStageFullscreen ? "Exit Fullscreen" : "Fullscreen"}
                   </button>
                   <button className="btn btn-sm" onClick={toggleStageControlsWithFeedback}>
                     {showStageControls ? "Hide Controls" : "Show Controls"}
@@ -1858,33 +1859,33 @@ export function MatchPage() {
                 </>
               ) : null}
               <button className="btn btn-sm" onClick={exitFocusModeWithFeedback}>
-                繝輔か繝ｼ繧ｫ繧ｹ邨ゆｺ・              </button>
+                Exit Focus</button>
               <button className="btn btn-sm" onClick={openReplayWithFeedback} disabled={!canFinalize}>
-                繝ｪ繝励Ξ繧､
+                Open Replay
               </button>
             </div>
           </div>
         </section>
       )}
 
-      {/* 笏笏 Hero 笏笏 */}
+      {/* Hero */}
       {!isEngineFocus && (<section className="relative overflow-hidden rounded-2xl border border-slate-200 bg-white">
         <div className="flex flex-col items-start gap-4 p-4 md:flex-row md:items-center md:p-6">
           <NyanoImage size={96} className="shadow-sm" alt="Nyano" />
           <div className="min-w-0">
             <div className="text-xl font-semibold">Nyano Triad League</div>
             <div className="mt-1 text-sm text-slate-600">
-              Nyano NFT繧ｫ繝ｼ繝峨〒蟇ｾ謌ｦ縺励√Μ繝励Ξ繧､蜈ｱ譛峨ｄ驟堺ｿ｡騾｣謳ｺ縺ｾ縺ｧ荳豌励↓讌ｽ縺励ａ縺ｾ縺吶・            </div>
+              Use Nyano NFT cards for quick matches, replays, and share-ready battle logs.</div>
             <div className="mt-3 flex flex-wrap gap-2 text-xs text-slate-500">
-              <span className="rounded-full border border-slate-200 bg-slate-50 px-2 py-1">ETH繧ｪ繝ｳ繝√ぉ繝ｼ繝ｳ</span>
+              <span className="rounded-full border border-slate-200 bg-slate-50 px-2 py-1">ETH on-chain</span>
               <span className="rounded-full border border-slate-200 bg-slate-50 px-2 py-1">Replay Share</span>
-              <span className="rounded-full border border-slate-200 bg-slate-50 px-2 py-1">驟堺ｿ｡謚慕･ｨ</span>
+              <span className="rounded-full border border-slate-200 bg-slate-50 px-2 py-1">Action log + replay</span>
             </div>
           </div>
         </div>
       </section>)}
 
-      {/* 笏笏 Event 笏笏 */}
+      {/* Event */}
       <MatchEventPanel
         isVisible={!isEngineFocus && Boolean(event)}
         title={event?.title ?? ""}
@@ -1896,7 +1897,7 @@ export function MatchPage() {
         onClearEvent={clearEvent}
       />
 
-      {/* 笏笏 Guest mode intro 笏笏 */}
+      {/* Guest mode intro */}
       <MatchGuestModeIntro
         isVisible={!isEngineFocus && isGuestMode}
         tutorial={<MiniTutorial />}
@@ -1992,15 +1993,15 @@ export function MatchPage() {
           <div className="card-hd flex flex-wrap items-start justify-between gap-2">
             <div>
             <div className="text-base font-semibold">
-              蟇ｾ謌ｦ荳ｭ ﾂｷ {currentTurnIndex}/9 謇・              {isAiTurn ? " ﾂｷ Nyano AI" : ` ﾂｷ 繝励Ξ繧､繝､繝ｼ${currentPlayer === 0 ? "A" : "B"}`}
+              Match in progress | Turn {currentTurnIndex}/9{isAiTurn ? " | Nyano AI" : ` | Player ${currentPlayer === 0 ? "A" : "B"}`}
             </div>
             <div className="text-xs text-slate-500">
-              隴ｦ蜻翫・繝ｼ繧ｯ谿九ｊ: {currentWarnRemaining}
-              {streamMode ? " ﾂｷ 驟堺ｿ｡繝｢繝ｼ繝碓N" : ""}
-              {isGuestMode ? " ﾂｷ guest" : ""}
+              Warning marks left: {currentWarnRemaining}
+              {streamMode ? " | Stream mode" : ""}
+              {isGuestMode ? " | guest" : ""}
               {!isGuestMode && (
                 <span className={`ml-1 rounded-full border px-1.5 py-0.5 text-[10px] font-medium ${dataMode === "fast" ? "border-amber-200 bg-amber-50 text-amber-700" : "border-emerald-200 bg-emerald-50 text-emerald-700"}`}>
-                  {dataMode === "fast" ? "鬮倬・(index)" : "讀懆ｨｼ貂医∩ (on-chain)"}
+                  {dataMode === "fast" ? "Fast (index)" : "Verified (on-chain)"}
                 </span>
               )}
             </div>
@@ -2008,10 +2009,10 @@ export function MatchPage() {
             {isEngine ? (
               <div className="flex flex-wrap items-center gap-2">
                 <button className="btn btn-sm" onClick={() => setFocusMode(true)}>
-                  Pixi繝輔か繝ｼ繧ｫ繧ｹ縺ｸ
+                  Open Pixi focus
                 </button>
                 <Link className="btn btn-sm no-underline" to={stageMatchUrl}>
-                  Stage繝壹・繧ｸ繧帝幕縺・                </Link>
+                  Open Stage page                </Link>
               </div>
             ) : null}
           </div>
@@ -2031,7 +2032,7 @@ export function MatchPage() {
             <div
               className={stageLayoutClasses.arenaGridClassName}
             >
-              {/* 笏笏 Left: Board + Hand 笏笏 */}
+              {/* Left: Board + Hand */}
               <div
                 className={stageLayoutClasses.mainColumnClassName}
               >
@@ -2039,11 +2040,11 @@ export function MatchPage() {
                 {!isEngineFocus && isGuestMode && cards && (
                   <details open={turns.length === 0} className="rounded-lg border border-surface-200 bg-surface-50 p-3">
                     <summary className="cursor-pointer text-sm font-medium text-surface-700">
-                      繝・ャ繧ｭ繝励Ξ繝薙Η繝ｼ (Deck Preview)
+                      Deck Preview
                     </summary>
                     <div className="mt-2 grid gap-3 md:grid-cols-2">
                       <div>
-                        <div className="text-xs font-medium text-player-a-600 mb-1">縺ゅ↑縺溘・繝・ャ繧ｭ (A)</div>
+                        <div className="text-xs font-medium text-player-a-600 mb-1">Your deck (A)</div>
                         <div className="deck-preview-grid grid grid-cols-5 gap-2">
                           {guestDeckATokens.map((tid, i) => {
                             const c = cards.get(tid);
@@ -2052,7 +2053,7 @@ export function MatchPage() {
                         </div>
                       </div>
                       <div>
-                        <div className="text-xs font-medium text-player-b-600 mb-1">Nyano繝・ャ繧ｭ (B)</div>
+                        <div className="text-xs font-medium text-player-b-600 mb-1">Nyano deck (B)</div>
                         {classicOpenCardIndices ? (
                           <div className="mb-1 text-[11px] text-slate-500">
                             {classicOpenCardIndices.mode === "all_open"
@@ -2099,7 +2100,7 @@ export function MatchPage() {
                               title={sfxMuted ? "Sound ON" : "Sound OFF"}
                               aria-label={sfxMuted ? "Unmute sound effects" : "Mute sound effects"}
                             >
-                              {sfxMuted ? "這" : "矧"}
+                              {sfxMuted ? "SFX OFF" : "SFX ON"}
                             </button>
                           )}
                         </div>
@@ -2164,7 +2165,7 @@ export function MatchPage() {
                               title={sfxMuted ? "Sound ON" : "Sound OFF"}
                               aria-label={sfxMuted ? "Unmute sound effects" : "Mute sound effects"}
                             >
-                              {sfxMuted ? "這" : "矧"}
+                              {sfxMuted ? "SFX OFF" : "SFX ON"}
                             </button>
                           )}
                         </div>
@@ -2187,16 +2188,16 @@ export function MatchPage() {
                       <div className="mint-ai-notice" role="status" aria-live="polite">
                         {aiAutoPlay ? (
                           <span>
-                            <span className="font-semibold animate-pulse">閠・∴荳ｭ窶ｦ (Nyano is thinking...)</span>
+                            <span className="font-semibold animate-pulse">Nyano is thinking...</span>
                             {aiCountdownMs !== null ? ` ${Math.max(0.1, aiCountdownMs / 1000).toFixed(1)}s` : ""}
                           </span>
                         ) : (
-                          "Nyano縺ｮ逡ｪ縺ｧ縺吶ゅ後↓繧・・縺ｮ謇狗分縲阪ｒ謚ｼ縺励※縺上□縺輔＞縲・Nyano turn. Press \"Nyano Move\".)"
+                          "Nyano turn. Press \"Nyano Move\"."
                         )}
                       </div>
                     ) : (
                       <div className="mint-ai-notice mint-ai-notice--placeholder" aria-hidden="true">
-                        閠・∴荳ｭ窶ｦ (Nyano is thinking...)
+                        Nyano is thinking...
                       </div>
                     )}
                   </div>
@@ -2204,11 +2205,11 @@ export function MatchPage() {
                   <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900">
                     {aiAutoPlay ? (
                       <span>
-                        <span className="font-semibold animate-pulse">閠・∴荳ｭ窶ｦ (Nyano is thinking...)</span>
+                        <span className="font-semibold animate-pulse">Nyano is thinking...</span>
                         {aiCountdownMs !== null ? ` ${Math.max(0.1, aiCountdownMs / 1000).toFixed(1)}s` : ""}
                       </span>
                     ) : (
-                      "Nyano縺ｮ逡ｪ縺ｧ縺吶ゅ後↓繧・・縺ｮ謇狗分縲阪ｒ謚ｼ縺励※縺上□縺輔＞縲・Nyano turn. Press \"Nyano Move\".)"
+                      "Nyano turn. Press \"Nyano Move\"."
                     )}
                   </div>
                 ) : null}
@@ -2220,7 +2221,7 @@ export function MatchPage() {
                       <div className={["mint-status-summary-slot", !lastFlipSummaryText && "mint-status-summary-slot--idle"].filter(Boolean).join(" ")}>
                         {lastFlipSummaryText ? (
                           <div className="mint-status-summary" role="status" aria-live="polite">
-                            <span className="mint-status-summary__text">繝舌ヨ繝ｫ: {lastFlipSummaryText}</span>
+                            <span className="mint-status-summary__text">Battle: {lastFlipSummaryText}</span>
                           </div>
                         ) : (
                           <div className="mint-status-summary mint-status-summary--placeholder" aria-hidden="true">
@@ -2246,26 +2247,26 @@ export function MatchPage() {
                 {isEngine && engineRendererFailed && (
                   <div className={stageLayoutClasses.engineFallbackBannerClassName}>
                     <span title={engineRendererError ?? undefined}>
-                      Pixi renderer is unavailable. Mint繝輔か繝ｼ繝ｫ繝舌ャ繧ｯ逶､髱｢繧定｡ｨ遉ｺ縺励∪縺吶・                    </span>
+                      Pixi renderer is unavailable. Showing fallback board UI.                    </span>
                     <button
                       type="button"
                       className="btn btn-sm"
                       onClick={handleRetryEngineRenderer}
                       aria-label="Retry Pixi renderer"
                     >
-                      Pixi蜀崎ｩｦ陦・(Retry Pixi)
+                      Retry Pixi
                     </button>
                   </div>
                 )}
 
-                {/* 笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏
+                {/* ------------------------------------------------------------------------
                     P0-1: Interactive Board (unified input)
                     
                     BoardView / BoardViewRPG with:
                     - selectableCells = empty cells (when it's your turn)
                     - selectedCell = draftCell
                     - onCellSelect = handleCellSelect
-                    笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏 */}
+                    ------------------------------------------------------------------------ */}
                 <div
                   className={stageLayoutClasses.boardShellClassName}
                 >
@@ -2383,7 +2384,7 @@ export function MatchPage() {
                       )
                     ) : (
                       <MatchErrorPanel>
-                        繧ｨ繝ｳ繧ｸ繝ｳ繧ｨ繝ｩ繝ｼ: {!sim.ok ? sim.error : "unknown"}
+                        Engine error: {!sim.ok ? sim.error : "unknown"}
                       </MatchErrorPanel>
                     )}
                   </div>
@@ -2440,7 +2441,7 @@ export function MatchPage() {
                 {showFocusHandDock && (
                   <MatchFocusHandDock
                     isStageFocusRoute={isStageFocusRoute}
-                    headerLabel="謇区惆繝峨ャ繧ｯ (Hand Dock)"
+                    headerLabel="Hand Dock"
                     isAiTurn={isAiTurn}
                     draftCardIndex={draftCardIndex}
                     draftCell={draftCell}
@@ -2467,9 +2468,9 @@ export function MatchPage() {
                   />
                 )}
 
-                {/* 笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏
+                {/* ------------------------------------------------------------------------
                     P0-2: Hand Display (RPG or standard)
-                    笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏 */}
+                    ------------------------------------------------------------------------ */}
                 <MatchHandInteractionArea
                   isStageFocusRoute={isStageFocusRoute}
                   showStageControls={showStageControls}
@@ -2512,7 +2513,7 @@ export function MatchPage() {
                 ) : null}
               </div>
 
-              {/* 笏笏 Right: Turn Log + Info 笏笏 */}
+              {/* Right: Turn Log + Info */}
               {/* Mint mode: content lives in slide-out drawer */}
               <MatchInfoColumn
                 isMintUi={useMintUi}
@@ -2529,7 +2530,7 @@ export function MatchPage() {
                 annotations={replayAnnotations}
                 boardAdvantages={boardAdvantages}
                 resultSummary={matchResultSummary}
-                pendingMessage="蜍晁・ュ蝣ｱ縺ｯ 9 謇狗ｵゆｺ・ｾ後↓陦ｨ遉ｺ縺輔ｌ縺ｾ縺吶・"
+                pendingMessage="Result is shown after turn 9."
                 canFinalize={canFinalize}
                 onCopyTranscriptJson={copyTranscriptJson}
                 onCopyShareUrl={copyShareUrl}

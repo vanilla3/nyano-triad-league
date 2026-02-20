@@ -13,7 +13,7 @@ export function MatchCardLoadEmptyStatePanel(input: {
         <div className="grid gap-4 py-4">
           <SkeletonBoard className="max-w-[280px] mx-auto" />
           <SkeletonHand className="max-w-[400px] mx-auto" />
-          <div className="text-center text-xs text-surface-400">繧ｫ繝ｼ繝峨ｒ隱ｭ縺ｿ霎ｼ縺ｿ荳ｭ...</div>
+          <div className="text-center text-xs text-surface-400">Loading cards...</div>
         </div>
       ) : state === "guest_prompt" ? (
         <button className="btn btn-primary" onClick={onLoadGuestCards}>Load guest cards</button>

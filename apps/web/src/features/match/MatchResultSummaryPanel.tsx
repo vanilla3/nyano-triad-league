@@ -39,7 +39,7 @@ export function MatchResultSummaryPanel(input: {
       }
       style={isRpg ? { background: "rgba(0,0,0,0.3)", color: "var(--rpg-text-dim, #8A7E6B)" } : undefined}
     >
-      蜍晁・ュ蝣ｱ縺ｯ 9 謇狗ｵゆｺ・ｾ後↓陦ｨ遉ｺ縺輔ｌ縺ｾ縺吶・
+      Result is shown after turn 9.
     </div>
   );
 }

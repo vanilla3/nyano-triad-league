@@ -123,7 +123,7 @@ export function createMatchCardLoadActions(
         input.setEventNyanoDeckOverride(result.eventNyanoDeckOverride);
       }
       if (result.mintedAutoPickSummary) {
-        input.toast.success("Nyano繝・ャ繧ｭ繧定・蜍暮∈謚槭＠縺ｾ縺励◆", result.mintedAutoPickSummary);
+        input.toast.success("Nyano deck auto-picked", result.mintedAutoPickSummary);
       }
       input.setCards(result.cardsByTokenId);
       input.setOwners(result.ownersByTokenId);

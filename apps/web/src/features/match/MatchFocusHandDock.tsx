@@ -76,7 +76,7 @@ export function MatchFocusHandDock(input: {
 
       {forcedCardIndex !== null && (
         <div className="mint-order-lock-badge" role="status" aria-live="polite">
-          蝗ｺ螳壹せ繝ｭ繝・ヨ ({forcedRuleLabel ?? "FIX"}): {forcedCardIndex + 1}
+          Forced slot ({forcedRuleLabel ?? "FIX"}): {forcedCardIndex + 1}
         </div>
       )}
 

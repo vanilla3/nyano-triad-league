@@ -33,12 +33,12 @@ export function MatchGuestPostGamePanel(input: {
     <div className={["grid gap-2 rounded-lg border border-nyano-200 bg-nyano-50 p-3", isStageFocusRoute ? "stage-focus-side-panel" : ""].filter(Boolean).join(" ")}>
       <div className="text-sm font-medium text-nyano-800">Enjoyed this guest deck?</div>
       <div className="flex flex-wrap gap-2">
-        <Link className="btn btn-primary no-underline text-xs" to="/decks">閾ｪ蛻・・繝・ャ繧ｭ繧剃ｽ懊ｋ</Link>
+        <Link className="btn btn-primary no-underline text-xs" to="/decks">Save this deck</Link>
         <button className="btn btn-primary text-xs" onClick={onRematch}>
-          蜀肴姶・亥酔縺倥ョ繝・く・・
+          Rematch with this deck
         </button>
         <button className="btn text-xs" onClick={onLoadNewGuestDeck}>
-          譁ｰ縺励＞繝・ャ繧ｭ
+          Load new guest deck
         </button>
         <button
           className="btn text-xs"
@@ -51,18 +51,18 @@ export function MatchGuestPostGamePanel(input: {
       <div className="grid gap-2 border-t border-nyano-200 pt-2">
         <div className="flex flex-wrap gap-2">
           <button className="btn text-xs" onClick={onCopyShareUrl} disabled={!canFinalize}>
-            蜈ｱ譛蔚RL
+            Copy share URL
           </button>
           <button className="btn text-xs" onClick={onCopyShareTemplate} disabled={!canFinalize}>
-            蜈ｱ譛峨ユ繝ｳ繝励Ξ繝ｼ繝・
+            Copy share template
           </button>
           <button className="btn text-xs" onClick={onOpenReplay} disabled={!canFinalize}>
-            繝ｪ繝励Ξ繧､ (Replay)
+            Open replay
           </button>
         </div>
         {canFinalize ? (
           <details className="text-xs">
-            <summary className="cursor-pointer text-sky-600 hover:text-sky-700 font-medium">QR繧ｳ繝ｼ繝・(QR Code)</summary>
+            <summary className="cursor-pointer text-sky-600 hover:text-sky-700 font-medium">QR Code</summary>
             <div className="mt-2 flex justify-center">
               {qrCode}
             </div>

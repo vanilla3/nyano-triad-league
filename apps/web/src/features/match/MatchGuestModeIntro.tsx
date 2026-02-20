@@ -15,9 +15,9 @@ export function MatchGuestModeIntro(input: {
         <div className="flex items-center gap-3">
           <NyanoAvatar size={48} expression="playful" />
           <div>
-            <div className="font-semibold text-nyano-800">繧ｲ繧ｹ繝亥ｯｾ謌ｦ (Guest Quick Play)</div>
+            <div className="font-semibold text-nyano-800">Guest Quick Play</div>
             <div className="text-xs text-nyano-600">
-              繧ｲ繧ｹ繝医Δ繝ｼ繝峨〒繝ｩ繝ｳ繝繝繝・ャ繧ｭ繧剃ｽｿ逕ｨ荳ｭ縺ｧ縺吶り・蛻・・繝・ャ繧ｭ縺ｧ驕翫・蝣ｴ蜷医・ <Link className="font-medium underline" to="/decks">Decks</Link> 縺ｧ菴懈・縺励※縺上□縺輔＞縲・
+              Start instantly with a random guest deck. To use your own deck, open <Link className="font-medium underline" to="/decks">Decks</Link> and create one.
             </div>
           </div>
         </div>

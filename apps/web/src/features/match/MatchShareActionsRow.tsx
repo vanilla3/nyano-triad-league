@@ -21,13 +21,13 @@ export function MatchShareActionsRow(input: {
     <div className="grid gap-2">
       <div className="flex flex-wrap items-center gap-2">
         <button className={buttonClassName} onClick={onCopyTranscriptJson} disabled={!simOk}>
-          JSON繧偵さ繝斐・
+          Copy JSON
         </button>
         <button className={buttonClassName} onClick={onCopyShareUrl} disabled={!canFinalize}>
-          蜈ｱ譛蔚RL
+          Copy share URL
         </button>
         <button className={buttonClassName} onClick={onOpenReplay} disabled={!canFinalize}>
-          繝ｪ繝励Ξ繧､ (Replay)
+          Open replay
         </button>
       </div>
     </div>
