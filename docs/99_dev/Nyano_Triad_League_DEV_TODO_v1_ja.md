@@ -508,3 +508,4 @@
 - [x] 2026-02-20 WO037-step75: Match/Replay Pixi fallback state was shared into useEngineRendererFallback with tests.
 - [x] 2026-02-20 WO037-step76: Replay stage feedback timer/state logic now reuses useMatchStageActionFeedback.
 - [x] 2026-02-20 WO037-step77: Replay fullscreen state/toggle now reuses useMatchStageFullscreen.
+- [x] 2026-02-20 WO037-step78: Replay stage controls visibility/toggle now reuses useMatchStageUi.

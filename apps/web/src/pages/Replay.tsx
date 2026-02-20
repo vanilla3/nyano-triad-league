@@ -103,6 +103,7 @@ import {
 import { useEngineRendererFallback } from "@/features/match/useEngineRendererFallback";
 import { useMatchStageActionFeedback } from "@/features/match/useMatchStageActionFeedback";
 import { useMatchStageFullscreen } from "@/features/match/useMatchStageFullscreen";
+import { useMatchStageUi } from "@/features/match/useMatchStageUi";
 
 type Mode = ReplayMode;
 
@@ -367,7 +368,6 @@ export function ReplayPage() {
   const [verifyStatus, setVerifyStatus] = React.useState<"idle" | "ok" | "mismatch">("idle");
   const [showStagePanels, setShowStagePanels] = React.useState(() => !isStageFocus);
   const [showStageSetup, setShowStageSetup] = React.useState(() => !isStageFocus);
-  const stageTransportManualOverrideRef = React.useRef(false);
   const {
     stageActionFeedback,
     stageActionFeedbackTone,
@@ -377,10 +377,11 @@ export function ReplayPage() {
   });
   const [vfxPreference, setVfxPreference] = React.useState<VfxPreference>(() => readVfxQuality("auto"));
   const [resolvedVfxQuality, setResolvedVfxQuality] = React.useState<VfxQuality>(() => resolveVfxQuality());
-  const [showStageTransport, setShowStageTransport] = React.useState(() => {
-    if (!isStageFocus) return true;
-    if (typeof window === "undefined") return true;
-    return shouldShowStageSecondaryControls(window.innerWidth);
+  const {
+    showStageControls: showStageTransport,
+    toggleStageControls: toggleStageTransport,
+  } = useMatchStageUi({
+    isStageFocusRoute: isStageFocus,
   });
   const { isStageFullscreen, toggleStageFullscreen } = useMatchStageFullscreen({
     isStageFocusRoute: isStageFocus,
@@ -403,34 +404,6 @@ export function ReplayPage() {
     }
     setShowStageSetup(false);
   }, [isStageFocus]);
-
-  React.useEffect(() => {
-    stageTransportManualOverrideRef.current = false;
-    if (!isStageFocus) {
-      setShowStageTransport(true);
-      return;
-    }
-    if (typeof window === "undefined") {
-      setShowStageTransport(true);
-      return;
-    }
-    setShowStageTransport(shouldShowStageSecondaryControls(window.innerWidth));
-  }, [isStageFocus]);
-
-  React.useEffect(() => {
-    if (!isStageFocus || typeof window === "undefined") return;
-    const handleResize = () => {
-      if (stageTransportManualOverrideRef.current) return;
-      setShowStageTransport(shouldShowStageSecondaryControls(window.innerWidth));
-    };
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
-  }, [isStageFocus]);
-
-  const toggleStageTransport = React.useCallback(() => {
-    stageTransportManualOverrideRef.current = true;
-    setShowStageTransport((prev) => !prev);
-  }, []);
 
   const handleStageVfxChange = React.useCallback((nextPreference: VfxPreference) => {
     setVfxPreference(nextPreference);
