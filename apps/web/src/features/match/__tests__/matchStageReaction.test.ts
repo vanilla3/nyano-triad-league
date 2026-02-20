@@ -132,8 +132,25 @@ describe("features/match/matchStageReaction", () => {
         nyanoReactionImpact: highImpact,
       }),
     ).toBe(true);
-    expect(resolveStageImpactBurstDurationMs("high")).toBe(960);
-    expect(resolveStageImpactBurstDurationMs("mid")).toBe(760);
+    expect(
+      shouldTriggerStageImpactBurst({
+        isEngineFocus: true,
+        nyanoReactionInput: {
+          flipCount: 2,
+          hasChain: true,
+          comboEffect: "none",
+          warningTriggered: false,
+          tilesA: 4,
+          tilesB: 3,
+          perspective: 0,
+          finished: false,
+          winner: null,
+        },
+        nyanoReactionImpact: "mid",
+      }),
+    ).toBe(false);
+    expect(resolveStageImpactBurstDurationMs("high")).toBe(820);
+    expect(resolveStageImpactBurstDurationMs("mid")).toBe(0);
   });
 
   it("gates board burst by animation, flipped count and cooldown", () => {

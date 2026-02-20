@@ -64,7 +64,7 @@ describe("features/match/useReplayStageImpactBurst", () => {
         nyanoReactionInput: highImpactInput,
         nyanoReactionImpact: "high",
       }),
-    ).toEqual({ active: true, burstMs: 960 });
+    ).toEqual({ active: true, burstMs: 820 });
     expect(
       resolveReplayStageImpactBurstPlan({
         isEngine: true,

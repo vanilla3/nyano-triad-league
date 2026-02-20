@@ -106,6 +106,7 @@ export function GameResultOverlayMint({
       <div
         className={[
           "mint-result-panel",
+          onShare ? "mint-result-panel--shareworthy" : "",
           visible ? "scale-100" : "scale-95",
         ].join(" ")}
         style={{ transition: "transform var(--transition-bounce)" }}
@@ -176,6 +177,12 @@ export function GameResultOverlayMint({
             </div>
           );
         })()}
+
+        {onShare ? (
+          <div className="mint-result__share-cue" role="note">
+            Capture this panel now for the best share.
+          </div>
+        ) : null}
 
         {/* Actions */}
         <div className="mint-result__actions">

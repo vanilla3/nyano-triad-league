@@ -52,15 +52,42 @@ function buildClasses(props: MintPressableCommonProps): string {
 
 export function MintPressable(props: MintPressableProps) {
   const [pressed, setPressed] = React.useState(false);
+  const [pressAck, setPressAck] = React.useState(false);
+  const ackTimerRef = React.useRef<number | null>(null);
+  const triggerPressAck = React.useCallback(() => {
+    if (typeof window === "undefined") return;
+    if (ackTimerRef.current !== null) {
+      window.clearTimeout(ackTimerRef.current);
+    }
+    setPressAck(true);
+    ackTimerRef.current = window.setTimeout(() => {
+      setPressAck(false);
+      ackTimerRef.current = null;
+    }, 140);
+  }, []);
+  React.useEffect(() => {
+    return () => {
+      if (ackTimerRef.current !== null) {
+        window.clearTimeout(ackTimerRef.current);
+      }
+    };
+  }, []);
   const classes = buildClasses(props);
   const pressAttrs = {
     "data-pressed": pressed ? "true" : undefined,
-    onPointerDown: () => setPressed(true),
+    "data-press-ack": pressAck ? "true" : undefined,
+    onPointerDown: () => {
+      setPressed(true);
+      triggerPressAck();
+    },
     onPointerUp: () => setPressed(false),
     onPointerCancel: () => setPressed(false),
     onPointerLeave: () => setPressed(false),
     onKeyDown: (event: React.KeyboardEvent) => {
-      if (event.key === " " || event.key === "Enter") setPressed(true);
+      if (event.key === " " || event.key === "Enter") {
+        setPressed(true);
+        triggerPressAck();
+      }
     },
     onKeyUp: () => setPressed(false),
     onBlur: () => setPressed(false),
@@ -101,6 +128,7 @@ export function MintPressable(props: MintPressableProps) {
         onClick={onClick}
         className={classes}
         data-pressed={pressAttrs["data-pressed"]}
+        data-press-ack={pressAttrs["data-press-ack"]}
         onPointerDown={(event) => {
           onPointerDown?.(event);
           pressAttrs.onPointerDown();
@@ -157,6 +185,7 @@ export function MintPressable(props: MintPressableProps) {
       {...buttonProps}
       className={classes}
       data-pressed={pressAttrs["data-pressed"]}
+      data-press-ack={pressAttrs["data-press-ack"]}
       onPointerDown={(event) => {
         onPointerDown?.(event);
         pressAttrs.onPointerDown();

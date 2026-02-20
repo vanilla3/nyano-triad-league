@@ -54,6 +54,11 @@ export function MatchShareActionsRow(input: {
           Share and replay unlock after turn 9.
         </div>
       ) : null}
+      {!isRpg && canFinalize ? (
+        <div className="mint-share-actions__ready" role="note">
+          Best shot: capture the result panel now, then tap Share URL.
+        </div>
+      ) : null}
     </div>
   );
 }

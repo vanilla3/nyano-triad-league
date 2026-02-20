@@ -79,21 +79,18 @@ export interface ReactionCutInTiming {
 // eslint-disable-next-line react-refresh/only-export-components -- shared utility is consumed by pages/components
 export function resolveReactionCutInImpact(kind: ReactionKind, aiReasonCode?: AiReasonCode): CutInImpact {
   if (
-    kind === "fever"
-    || kind === "chain"
-    || kind === "domination"
-    || kind === "victory"
+    kind === "victory"
     || kind === "defeat"
     || kind === "game_draw"
+    || kind === "fever"
   ) {
     return "high";
   }
   if (
-    kind === "warning_triggered"
+    kind === "chain"
+    || kind === "domination"
+    || kind === "warning_triggered"
     || kind === "flip_multi"
-    || kind === "momentum"
-    || kind === "advantage"
-    || kind === "disadvantage"
     || aiReasonCode === "MINIMAX_D3"
     || aiReasonCode === "SET_WARNING"
   ) {
@@ -103,9 +100,9 @@ export function resolveReactionCutInImpact(kind: ReactionKind, aiReasonCode?: Ai
 }
 
 function cutInDurationsForImpact(impact: CutInImpact): { burstMs: number; visibleMs: number } {
-  if (impact === "high") return { burstMs: 860, visibleMs: 3600 };
-  if (impact === "mid") return { burstMs: 700, visibleMs: 3300 };
-  return { burstMs: 560, visibleMs: 3000 };
+  if (impact === "high") return { burstMs: 620, visibleMs: 2200 };
+  if (impact === "mid") return { burstMs: 460, visibleMs: 1800 };
+  return { burstMs: 0, visibleMs: 1400 };
 }
 
 function normalizeReactionVfxQuality(v: string | null | undefined): ReactionVfxQuality {
@@ -141,26 +138,41 @@ export function resolveReactionCutInTiming(
   if (prefs.reducedMotion || prefs.vfxQuality === "off") {
     return {
       burstMs: 0,
-      visibleMs: 1800,
+      visibleMs: 1200,
       allowBurst: false,
     };
   }
 
-  const baseImpact = prefs.vfxQuality === "low" && impact === "high" ? "mid" : impact;
+  let baseImpact: CutInImpact = impact;
+  if (prefs.vfxQuality === "low") {
+    if (baseImpact === "high") baseImpact = "mid";
+    else if (baseImpact === "mid") baseImpact = "low";
+  } else if (prefs.vfxQuality === "medium" && baseImpact === "high") {
+    baseImpact = "mid";
+  }
   const base = cutInDurationsForImpact(baseImpact);
 
   if (prefs.vfxQuality === "low") {
     return {
-      burstMs: Math.max(0, Math.round(base.burstMs * 0.58)),
-      visibleMs: Math.max(1200, Math.round(base.visibleMs * 0.72)),
+      burstMs: 0,
+      visibleMs: Math.max(1000, Math.round(base.visibleMs * 0.78)),
       allowBurst: false,
     };
   }
 
+  if (prefs.vfxQuality === "medium") {
+    return {
+      burstMs: 0,
+      visibleMs: Math.max(1100, Math.round(base.visibleMs * 0.9)),
+      allowBurst: false,
+    };
+  }
+
+  const allowBurst = baseImpact === "high";
   return {
-    burstMs: base.burstMs,
+    burstMs: allowBurst ? base.burstMs : 0,
     visibleMs: base.visibleMs,
-    allowBurst: true,
+    allowBurst,
   };
 }
 
@@ -393,7 +405,7 @@ export function NyanoReaction({
       display: "flex",
       alignItems: "center",
       gap: 10,
-      padding: "12px 18px",
+      padding: "10px 14px",
       borderRadius: 20,
       background: pixiTone
         ? "linear-gradient(145deg, rgba(8,21,40,0.88), rgba(5,13,28,0.84))"
@@ -433,7 +445,7 @@ export function NyanoReaction({
           </div>
         )}
         <div className="mint-nyano-reaction__inner">
-          <NyanoAvatar size={44} expression={reactionToExpression(kind)} alt={cfg.emoji} />
+          <NyanoAvatar size={38} expression={reactionToExpression(kind)} alt={cfg.emoji} />
           {cfg.badge && (
             <span
               className={`mint-nyano-reaction__badge mint-nyano-reaction__badge--${cutInImpact}`}

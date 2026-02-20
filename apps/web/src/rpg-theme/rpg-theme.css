@@ -878,6 +878,12 @@
   box-shadow: 0 0 12px rgba(201, 168, 76, 0.3);
 }
 
+.rpg-result__btn:active:not(:disabled) {
+  transition-duration: 0ms;
+  transform: scale(0.98);
+  box-shadow: 0 0 0 2px rgba(201, 168, 76, 0.34), 0 0 10px rgba(201, 168, 76, 0.24);
+}
+
 .rpg-result__btn--primary {
   background: linear-gradient(135deg, var(--rpg-frame-gold), var(--rpg-frame-light));
   color: var(--rpg-frame-dark);

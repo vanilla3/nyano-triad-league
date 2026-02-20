@@ -88,6 +88,11 @@ export function MatchGuestPostGamePanel(input: {
             Share and replay unlock after turn 9.
           </div>
         ) : null}
+        {!isRpg && canFinalize ? (
+          <div className="mint-share-actions__ready" role="note">
+            Best shot: capture the victory panel now, then share.
+          </div>
+        ) : null}
         {canFinalize ? (
           <details className="text-xs">
             <summary className="cursor-pointer text-sky-600 hover:text-sky-700 font-medium">QR Code</summary>

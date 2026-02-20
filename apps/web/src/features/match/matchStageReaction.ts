@@ -61,13 +61,13 @@ export function shouldTriggerStageImpactBurst(input: {
   nyanoReactionInput: NyanoReactionInput | null;
   nyanoReactionImpact: CutInImpact;
 }): boolean {
-  return input.isEngineFocus && input.nyanoReactionInput !== null && input.nyanoReactionImpact !== "low";
+  return input.isEngineFocus && input.nyanoReactionInput !== null && input.nyanoReactionImpact === "high";
 }
 
 export function resolveStageImpactBurstDurationMs(
   nyanoReactionImpact: CutInImpact,
 ): number {
-  return nyanoReactionImpact === "high" ? 960 : 760;
+  return nyanoReactionImpact === "high" ? 820 : 0;
 }
 
 export function resolveBoardImpactBurstState(input: {
