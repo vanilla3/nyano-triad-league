@@ -595,3 +595,7 @@
 - [x] 2026-02-20 WO037-step112: Replay generic copy action runner was added to apps/web/src/features/match/replayActionRunners.ts (runReplayCopyAction), and Replay.tsx copy buttons now delegate via the runner to unify async copy handling and avoid inline floating promises.
 
 - [x] 2026-02-20 WO037-step112: expanded apps/web/src/features/match/__tests__/replayActionRunners.test.ts and re-verified pnpm.cmd -C apps/web test -- replayActionRunners replayUiActions replayEventAttempts replayLoadRecovery replayLoadAction replaySimState replayOverlayActions replayShareLinks, pnpm.cmd -C apps/web lint, pnpm.cmd -C apps/web typecheck, pnpm.cmd -C apps/web build.
+
+- [x] 2026-02-20 WO037-step113: Replay stage-panel visibility state sync (showStagePanels / showStageSetup) was extracted to apps/web/src/features/match/useReplayStagePanelVisibility.ts, and Replay.tsx now consumes the hook instead of duplicated focus-route effects.
+
+- [x] 2026-02-20 WO037-step113: added apps/web/src/features/match/__tests__/useReplayStagePanelVisibility.test.ts and re-verified pnpm.cmd -C apps/web test -- useReplayStagePanelVisibility useReplayStageActionCallbacks replayActionRunners replayUiActions replayLoadRecovery replayLoadAction replaySimState, pnpm.cmd -C apps/web lint, pnpm.cmd -C apps/web typecheck, pnpm.cmd -C apps/web build.

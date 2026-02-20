@@ -102,6 +102,7 @@ import { useMatchStageUi } from "@/features/match/useMatchStageUi";
 import { useReplayStageFocusShortcuts } from "@/features/match/useReplayStageFocusShortcuts";
 import { useReplayStageBoardSizing } from "@/features/match/useReplayStageBoardSizing";
 import { useReplayStageActionCallbacks } from "@/features/match/useReplayStageActionCallbacks";
+import { useReplayStagePanelVisibility } from "@/features/match/useReplayStagePanelVisibility";
 import { useReplayStageRouteState } from "@/features/match/replayStageRouteState";
 import { useReplaySearchMutators } from "@/features/match/useReplaySearchMutators";
 import { useReplayStepModeUrlSync } from "@/features/match/useReplayStepModeUrlSync";
@@ -231,8 +232,14 @@ export function ReplayPage() {
   }, [sfx]);
 
   const [verifyStatus, setVerifyStatus] = React.useState<"idle" | "ok" | "mismatch">("idle");
-  const [showStagePanels, setShowStagePanels] = React.useState(() => !isStageFocus);
-  const [showStageSetup, setShowStageSetup] = React.useState(() => !isStageFocus);
+  const {
+    showStagePanels,
+    setShowStagePanels,
+    showStageSetup,
+    setShowStageSetup,
+  } = useReplayStagePanelVisibility({
+    isStageFocusRoute: isStageFocus,
+  });
   const {
     stageActionFeedback,
     stageActionFeedbackTone,
@@ -253,22 +260,6 @@ export function ReplayPage() {
     stageViewportRef,
     onWarn: toast.warn,
   });
-
-  React.useEffect(() => {
-    if (!isStageFocus) {
-      setShowStagePanels(true);
-      return;
-    }
-    setShowStagePanels(false);
-  }, [isStageFocus]);
-
-  React.useEffect(() => {
-    if (!isStageFocus) {
-      setShowStageSetup(true);
-      return;
-    }
-    setShowStageSetup(false);
-  }, [isStageFocus]);
 
   const handleStageVfxChange = React.useCallback((nextPreference: VfxPreference) => {
     setVfxPreference(nextPreference);
