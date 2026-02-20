@@ -9,7 +9,6 @@ import { MintIcon, type MintIconName } from "@/components/mint/icons/MintIcon";
 
 import type { CardData, MatchResultWithHistory, RulesetConfig, TranscriptV1, TurnSummary } from "@nyano/triad-engine";
 import {
-  computeRulesetId,
   simulateMatchV1WithHistory,
   verifyReplayV1,
   ONCHAIN_CORE_TACTICS_RULESET_CONFIG_V1,
@@ -86,7 +85,6 @@ import {
   type ReplayMode,
 } from "@/features/match/replayModeParams";
 import {
-  pickDefaultReplayMode,
   resolveReplayRulesetFromParams,
   shouldAutoCompareByRulesetId,
 } from "@/features/match/replayRulesetParams";
@@ -106,6 +104,7 @@ import {
   rulesetLabelFromRegistryConfig,
   rulesetLabelFromUrlFallback,
 } from "@/features/match/replayRulesetLabel";
+import { resolveReplayRulesetContext } from "@/features/match/replayRulesetContext";
 import {
   formatReplayToolbarHighlightStatus,
   resolveNextReplayHighlightStep,
@@ -530,13 +529,17 @@ protocolV1: {
         searchParams.get("cr"),
       );
       const rulesetById = resolveRulesetById(transcript.header.rulesetId);
-      const resolvedReplayRuleset = rulesetById ?? fallbackRulesetFromParams;
-      const useResolvedRuleset = mode0 === "auto" && resolvedReplayRuleset !== null;
-      const effectiveMode: Mode = mode0 === "auto" ? pickDefaultReplayMode(transcript.header.rulesetId) : mode0;
-      const rulesetIdMismatchWarning = !rulesetById && fallbackRulesetFromParams
-        && computeRulesetId(fallbackRulesetFromParams).toLowerCase() !== transcript.header.rulesetId.toLowerCase()
-        ? "URL の classic 設定が transcript rulesetId と一致しません。URL fallback ルールで再生しています。"
-        : null;
+      const {
+        resolvedReplayRuleset,
+        useResolvedRuleset,
+        effectiveMode,
+        rulesetIdMismatchWarning,
+      } = resolveReplayRulesetContext({
+        mode: mode0,
+        transcriptRulesetId: transcript.header.rulesetId,
+        rulesetById,
+        fallbackRulesetFromParams,
+      });
 
       // v2: use embedded card data (no network calls needed)
       // v1: resolve via game index first (fast/cached), RPC fallback for missing
