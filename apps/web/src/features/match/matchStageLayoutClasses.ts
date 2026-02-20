@@ -54,7 +54,10 @@ export function resolveMatchStageLayoutClasses(input: {
     input.isStageFocusRoute ? "stage-focus-main-column" : "",
     input.showStageFocusHandDock ? "stage-focus-main-column--with-hand-dock" : "",
   ].filter(Boolean).join(" ");
-  const announcerStackClassName = ["mint-announcer-stack", input.isStageFocusRoute ? "stage-focus-announcer-stack" : ""].filter(Boolean).join(" ");
+  const announcerStackClassName = [
+    "mint-announcer-stack",
+    input.isStageFocusRoute ? "stage-focus-announcer-stack min-h-[1px]" : "",
+  ].filter(Boolean).join(" ");
   const engineFallbackBannerClassName = [
     "flex flex-wrap items-center justify-between gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900",
     input.isStageFocusRoute ? "fixed left-3 right-3 top-20 z-40 shadow-lg" : "",
