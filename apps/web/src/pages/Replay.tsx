@@ -58,7 +58,7 @@ import { shouldShowStageSecondaryControls } from "@/lib/stage_layout";
 import { createSfxEngine, type SfxEngine, type SfxName } from "@/lib/sfx";
 import { readVfxQuality, writeVfxQuality, type VfxPreference } from "@/lib/local_settings";
 import { applyVfxQualityToDocument, resolveVfxQuality, type VfxQuality } from "@/lib/visual/visualSettings";
-import { decodeReplaySharePayload, hasReplaySharePayload, stripReplayShareParams } from "@/lib/replay_share_params";
+import { decodeReplaySharePayload, hasReplaySharePayload } from "@/lib/replay_share_params";
 import {
   detectReplayHighlights,
   formatReplayWinnerLabel,
@@ -107,6 +107,7 @@ import { useReplaySearchMutators } from "@/features/match/useReplaySearchMutator
 import { useReplayStepModeUrlSync } from "@/features/match/useReplayStepModeUrlSync";
 import { useReplayEngineFocusGuard } from "@/features/match/useReplayEngineFocusGuard";
 import { useReplayBroadcastToggle } from "@/features/match/useReplayBroadcastToggle";
+import { resolveReplayClearShareParamsMutation, resolveReplayRetryPayload } from "@/features/match/replayShareParamActions";
 
 type Mode = ReplayMode;
 
@@ -242,6 +243,7 @@ function formatClassicOpenSlots(indices: readonly number[]): string {
 }
 
 const HIGHLIGHT_KIND_ORDER: ReplayHighlightKind[] = ["big_flip", "chain", "combo", "warning"];
+const REPLAY_INPUT_PROMPT_ERROR = "transcript JSON を貼り付けて読み込んでください。";
 
 export function ReplayPage() {
   const navigate = useNavigate();
@@ -311,7 +313,7 @@ export function ReplayPage() {
   const [text, setText] = React.useState<string>(initialZ ? "" : initialTextFromT);
 
   const [loading, setLoading] = React.useState(false);
-  const [sim, setSim] = React.useState<SimState>({ ok: false, error: "transcript JSON を貼り付けて読み込んでください。" });
+  const [sim, setSim] = React.useState<SimState>({ ok: false, error: REPLAY_INPUT_PROMPT_ERROR });
 
   const [step, setStep] = React.useState<number>(initialStep);
   const [isPlaying, setIsPlaying] = React.useState<boolean>(false);
@@ -704,6 +706,28 @@ protocolV1: {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleRetryLoad = () => {
+    void (async () => {
+      const decoded = resolveReplayRetryPayload(searchParams);
+      if (decoded.kind === "error") {
+        setSim({ ok: false, error: decoded.error });
+        return;
+      }
+      if (decoded.kind === "ok") {
+        setText(decoded.text);
+        await load({ text: decoded.text, mode, step });
+        return;
+      }
+      await load();
+    })();
+  };
+
+  const handleClearShareParams = () => {
+    const next = resolveReplayClearShareParamsMutation(searchParams);
+    if (next) setSearchParams(next, { replace: true });
+    setSim({ ok: false, error: REPLAY_INPUT_PROMPT_ERROR });
   };
 
   // If this page is opened via a share link (?t=... or ?z=...), auto-load once.
@@ -1640,21 +1664,7 @@ protocolV1: {
                 <div className="mt-2 flex flex-wrap items-center gap-2">
                   <button
                     className="btn btn-sm"
-                    onClick={() => {
-                      void (async () => {
-                        const decoded = decodeReplaySharePayload(searchParams);
-                        if (decoded.kind === "error") {
-                          setSim({ ok: false, error: decoded.error });
-                          return;
-                        }
-                        if (decoded.kind === "ok") {
-                          setText(decoded.text);
-                          await load({ text: decoded.text, mode, step });
-                          return;
-                        }
-                        await load();
-                      })();
-                    }}
+                    onClick={handleRetryLoad}
                     disabled={loading}
                   >
                     {loading ? "再試行中... (Retrying...)" : "再試行 (Retry load)"}
@@ -1662,11 +1672,7 @@ protocolV1: {
                   {hasSharePayload ? (
                     <button
                       className="btn btn-sm"
-                      onClick={() => {
-                        const next = stripReplayShareParams(searchParams);
-                        setSearchParams(next, { replace: true });
-                        setSim({ ok: false, error: "transcript JSON を貼り付けて読み込んでください。" });
-                      }}
+                      onClick={handleClearShareParams}
                     >
                       共有パラメータをクリア (Clear share params)
                     </button>

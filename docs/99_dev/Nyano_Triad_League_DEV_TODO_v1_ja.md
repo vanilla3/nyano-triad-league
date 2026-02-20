@@ -522,3 +522,5 @@
 - [x] 2026-02-20 WO037-step85: Replay non-engine focus auto-clear effect was extracted to useReplayEngineFocusGuard with tested pure mutation helper.
 
 - [x] 2026-02-20 WO037-step86: Replay broadcast toggle URL sync was extracted to useReplayBroadcastToggle with tested pure mutation helper.
+
+- [x] 2026-02-20 WO037-step87: Replay error-panel actions (retry decode/load + clear share params) were extracted into replayShareParamActions helpers and bound via dedicated handlers in Replay.tsx.
