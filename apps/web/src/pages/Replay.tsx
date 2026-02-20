@@ -7,7 +7,7 @@ import { MintPageGuide } from "@/components/mint/MintPageGuide";
 import { MintPressable } from "@/components/mint/MintPressable";
 import { MintIcon, type MintIconName } from "@/components/mint/icons/MintIcon";
 
-import type { BoardCell, CardData, MatchResultWithHistory, RulesetConfig, TranscriptV1, TurnSummary } from "@nyano/triad-engine";
+import type { CardData, MatchResultWithHistory, RulesetConfig, TranscriptV1, TurnSummary } from "@nyano/triad-engine";
 import {
   computeRulesetId,
   simulateMatchV1WithHistory,
@@ -28,7 +28,6 @@ import { TurnLog } from "@/components/TurnLog";
 import { GameResultBanner } from "@/components/GameResultOverlay";
 import {
   pickReactionKind,
-  type NyanoReactionInput,
 } from "@/components/NyanoReaction";
 import { NyanoReactionSlot } from "@/components/NyanoReactionSlot";
 import { NyanoAvatar } from "@/components/NyanoAvatar";
@@ -75,6 +74,7 @@ import { MINT_PAGE_GUIDES } from "@/lib/mint_page_guides";
 import { appendThemeToPath, resolveAppTheme } from "@/lib/theme";
 import { listClassicRuleTags } from "@/lib/classic_rules_param";
 import { parseFocusMode } from "@/features/match/urlParams";
+import { turnPlayer } from "@/features/match/matchTurnUtils";
 import {
   parseReplayBoardUi,
   toMatchBoardUi,
@@ -97,6 +97,11 @@ import {
 } from "@/features/match/replayCompareState";
 import { resolveReplayPreloadTokenIds } from "@/features/match/replayPreloadTokenIds";
 import { formatClassicOpenSlots, resolveReplayClassicState } from "@/features/match/replayClassicState";
+import {
+  replayBoardEquals,
+  resolveReplayBoardDelta,
+  resolveReplayNyanoReactionInput,
+} from "@/features/match/replayDerivedState";
 import {
   formatReplayToolbarHighlightStatus,
   resolveNextReplayHighlightStep,
@@ -142,12 +147,6 @@ function clampInt(n: number, min: number, max: number): number {
   return Math.max(min, Math.min(max, n));
 }
 
-
-function turnPlayer(firstPlayer: 0 | 1, turnIndex: number): 0 | 1 {
-  return ((firstPlayer + (turnIndex % 2)) % 2) as 0 | 1;
-}
-
-
 const STAGE_VFX_OPTIONS: ReadonlyArray<{ value: VfxPreference; label: string }> = [
   { value: "auto", label: "auto" },
   { value: "off", label: "off" },
@@ -159,73 +158,6 @@ const STAGE_VFX_OPTIONS: ReadonlyArray<{ value: VfxPreference; label: string }> 
 function formatStageVfxLabel(pref: VfxPreference, resolved: VfxQuality): string {
   if (pref === "auto") return `auto (${resolved})`;
   return pref;
-}
-
-function boardEquals(a: ReadonlyArray<BoardCell | null>, b: ReadonlyArray<BoardCell | null>): boolean {
-  if (a === b) return true;
-  if (!a || !b) return false;
-  if (a.length !== b.length) return false;
-  for (let i = 0; i < a.length; i++) {
-    const ca = a[i];
-    const cb = b[i];
-    if (ca === null && cb === null) continue;
-    if (ca === null || cb === null) return false;
-    if (ca.owner !== cb.owner) return false;
-    if (String(ca.card?.tokenId) !== String(cb.card?.tokenId)) return false;
-  }
-  return true;
-}
-
-function computeDelta(boardPrev: ReadonlyArray<BoardCell | null>, boardNow: ReadonlyArray<BoardCell | null>): { placedCell: number | null; flippedCells: number[] } {
-  let placedCell: number | null = null;
-  const flippedCells: number[] = [];
-
-  for (let i = 0; i < boardNow.length; i++) {
-    const a = boardPrev[i];
-    const b = boardNow[i];
-
-    if (a === null && b !== null) {
-      placedCell = i;
-      continue;
-    }
-    if (a !== null && b !== null && a.owner !== b.owner) {
-      flippedCells.push(i);
-    }
-  }
-  return { placedCell, flippedCells };
-}
-
-function buildNyanoReactionInput(res: MatchResultWithHistory, step: number): NyanoReactionInput | null {
-  // Nyano reaction is based on the *last executed turn* at the given step.
-  // step: 0 = initial, 1 = after turn 1, ... 9 = finished
-  if (step <= 0) return null;
-  if (!res.turns || res.turns.length === 0) return null;
-
-  const lastIdx = Math.min(step - 1, res.turns.length - 1);
-  const last = res.turns[lastIdx];
-  const boardNow = res.boardHistory?.[step] ?? res.board;
-
-  // Count current tiles
-  let tilesA = 0;
-  let tilesB = 0;
-  for (const cell of boardNow) {
-    if (!cell) continue;
-    if (cell.owner === 0) tilesA++;
-    else tilesB++;
-  }
-
-  return {
-    flipCount: Number(last.flipCount ?? 0),
-    hasChain: Boolean(last.flipTraces?.some((t) => t.isChain)),
-    comboEffect: last.comboEffect ?? "none",
-    warningTriggered: Boolean(last.warningTriggered),
-    tilesA,
-    tilesB,
-    // Replay is a spectator experience: keep neutral perspective.
-    perspective: null,
-    finished: step >= 9,
-    winner: step >= 9 ? res.winner : null,
-  };
 }
 
 function rulesetLabelFromConfig(cfg: RulesetConfig): string {
@@ -955,10 +887,10 @@ protocolV1: {
     simOk: sim.ok,
     v1Board: sim.ok ? (sim.v1.boardHistory[step] ?? null) : null,
     v2Board: sim.ok ? (sim.v2.boardHistory[step] ?? null) : null,
-    boardEquals,
+    boardEquals: replayBoardEquals,
   });
   const replayNyanoReactionInput = React.useMemo(
-    () => (sim.ok ? buildNyanoReactionInput(sim.current, step) : null),
+    () => (sim.ok ? resolveReplayNyanoReactionInput({ result: sim.current, step }) : null),
     [sim, step],
   );
   const replayNyanoReactionImpact = React.useMemo(() => {
@@ -1002,8 +934,8 @@ protocolV1: {
   const renderReplay = (label: string, res: MatchResultWithHistory) => {
     const boardNow = res.boardHistory[step];
     const boardPrev = step === 0 ? res.boardHistory[0] : res.boardHistory[step - 1];
-    const { placedCell, flippedCells } = step === 0 ? { placedCell: null, flippedCells: [] } : computeDelta(boardPrev, boardNow);
-    const nyanoReactionInput = buildNyanoReactionInput(res, step);
+    const { placedCell, flippedCells } = step === 0 ? { placedCell: null, flippedCells: [] } : resolveReplayBoardDelta({ boardPrev, boardNow });
+    const nyanoReactionInput = resolveReplayNyanoReactionInput({ result: res, step });
     const focusCell = focusTurnIndex !== null ? (res.turns[focusTurnIndex]?.cell ?? null) : null;
     const replayCurrentPlayer = turnPlayer(replayFirstPlayer, Math.min(step, 8));
     const isPrimaryReplay = sim.ok && res === sim.current;
