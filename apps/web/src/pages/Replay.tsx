@@ -101,6 +101,7 @@ import {
   shouldAutoCompareByRulesetId,
 } from "@/features/match/replayRulesetParams";
 import { useEngineRendererFallback } from "@/features/match/useEngineRendererFallback";
+import { useMatchStageActionFeedback } from "@/features/match/useMatchStageActionFeedback";
 
 type Mode = ReplayMode;
 
@@ -366,9 +367,13 @@ export function ReplayPage() {
   const [showStagePanels, setShowStagePanels] = React.useState(() => !isStageFocus);
   const [showStageSetup, setShowStageSetup] = React.useState(() => !isStageFocus);
   const stageTransportManualOverrideRef = React.useRef(false);
-  const stageActionFeedbackTimerRef = React.useRef<number | null>(null);
-  const [stageActionFeedback, setStageActionFeedback] = React.useState("");
-  const [stageActionFeedbackTone, setStageActionFeedbackTone] = React.useState<"info" | "success" | "warn">("info");
+  const {
+    stageActionFeedback,
+    stageActionFeedbackTone,
+    pushStageActionFeedback,
+  } = useMatchStageActionFeedback({
+    isStageFocusRoute: isStageFocus,
+  });
   const [vfxPreference, setVfxPreference] = React.useState<VfxPreference>(() => readVfxQuality("auto"));
   const [resolvedVfxQuality, setResolvedVfxQuality] = React.useState<VfxQuality>(() => resolveVfxQuality());
   const [showStageTransport, setShowStageTransport] = React.useState(() => {
@@ -422,37 +427,6 @@ export function ReplayPage() {
   const toggleStageTransport = React.useCallback(() => {
     stageTransportManualOverrideRef.current = true;
     setShowStageTransport((prev) => !prev);
-  }, []);
-
-  const pushStageActionFeedback = React.useCallback((message: string, tone: "info" | "success" | "warn" = "info") => {
-    if (!isStageFocus) return;
-    setStageActionFeedback(message);
-    setStageActionFeedbackTone(tone);
-    if (typeof window === "undefined") return;
-    if (stageActionFeedbackTimerRef.current !== null) {
-      window.clearTimeout(stageActionFeedbackTimerRef.current);
-    }
-    stageActionFeedbackTimerRef.current = window.setTimeout(() => {
-      stageActionFeedbackTimerRef.current = null;
-      setStageActionFeedback("");
-      setStageActionFeedbackTone("info");
-    }, 1800);
-  }, [isStageFocus]);
-
-  React.useEffect(() => {
-    if (isStageFocus) return;
-    setStageActionFeedback("");
-    setStageActionFeedbackTone("info");
-    if (typeof window !== "undefined" && stageActionFeedbackTimerRef.current !== null) {
-      window.clearTimeout(stageActionFeedbackTimerRef.current);
-      stageActionFeedbackTimerRef.current = null;
-    }
-  }, [isStageFocus]);
-
-  React.useEffect(() => () => {
-    if (typeof window !== "undefined" && stageActionFeedbackTimerRef.current !== null) {
-      window.clearTimeout(stageActionFeedbackTimerRef.current);
-    }
   }, []);
 
   const handleStageVfxChange = React.useCallback((nextPreference: VfxPreference) => {

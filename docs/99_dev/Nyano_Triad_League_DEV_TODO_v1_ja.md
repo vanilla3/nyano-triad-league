@@ -506,3 +506,4 @@
 - [x] 2026-02-20 WO008/WO009 docs sync: aligned stale top-level Deliverables/Task checkboxes in `codex/work_orders/008_match_setup_nintendo_quality.md` and `codex/work_orders/009_rulesets_page_make_it_obvious.md` with already-completed implementation status sections (no runtime behavior change).
 - [x] 2026-02-20 WO025/026/027 docs sync: reconciled stale top-level Deliverables/Task checklists in `codex/work_orders/025_classic_rules_presets_surface.md`, `codex/work_orders/026_classic_rules_custom_builder_share.md`, and `codex/work_orders/027_rules_setup_nintendo_quality.md` against existing implemented artifacts/tests (docs-only cleanup).
 - [x] 2026-02-20 WO037-step75: Match/Replay Pixi fallback state was shared into useEngineRendererFallback with tests.
+- [x] 2026-02-20 WO037-step76: Replay stage feedback timer/state logic now reuses useMatchStageActionFeedback.

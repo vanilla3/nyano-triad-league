@@ -3624,3 +3624,4 @@
 - 2026-02-20 docs consistency: synchronized WO008/WO009 checklist states with their completed implementation updates (Deliverables + task breakdown set to done) to avoid planning/status drift.
 - 2026-02-20 docs consistency: synchronized WO025/WO026/WO027 checklist states with existing implementation evidence (ruleset registry/discovery expansion, classic custom mask encode/decode + replay fallback, MintRulesetPicker + tests) to keep planning docs aligned with shipped behavior.
 - 2026-02-20 WO037-step75: shared Pixi fallback hook for Match and Replay; added useEngineRendererFallback tests; verified with apps/web test, lint, typecheck, build.
+- 2026-02-20 WO037-step76: Replay now uses useMatchStageActionFeedback for stage-focus feedback timers/reset behavior, replacing duplicated local timer state/effects in Replay.tsx. Verification: pnpm.cmd -C apps/web test -- useMatchStageActionFeedback / lint / typecheck / build OK.
