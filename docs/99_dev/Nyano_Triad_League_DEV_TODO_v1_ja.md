@@ -580,3 +580,7 @@
 - [x] 2026-02-20 WO037-step108: Replay load orchestration (input text resolution + payload parse + ruleset fallback params + card resolve + simulation derive + start-step clamp) was extracted to apps/web/src/features/match/replayLoadAction.ts, and Replay.tsx load now delegates to runReplayLoadAction.
 
 - [x] 2026-02-20 WO037-step108: added apps/web/src/features/match/__tests__/replayLoadAction.test.ts and re-verified pnpm.cmd -C apps/web test -- replayLoadAction replaySimulationState replayUiActions replayOverlayActions replayEventAttempts replayShareLinks replayCardLoaders replayOverlayState replayOverlaySummary, pnpm.cmd -C apps/web lint, pnpm.cmd -C apps/web typecheck, pnpm.cmd -C apps/web build.
+
+- [x] 2026-02-20 WO037-step109: Replay retry/initial auto-load recovery flow was extracted to apps/web/src/features/match/replayLoadRecovery.ts (runReplayRetryLoadFlow / runReplayInitialAutoLoadFlow), and Replay.tsx now delegates retry decode branches and first-load share handling.
+
+- [x] 2026-02-20 WO037-step109: added apps/web/src/features/match/__tests__/replayLoadRecovery.test.ts and re-verified pnpm.cmd -C apps/web test -- replayLoadRecovery replayLoadAction replaySimulationState replayUiActions replayOverlayActions replayEventAttempts replayShareLinks replayCardLoaders replayOverlayState replayOverlaySummary, pnpm.cmd -C apps/web lint, pnpm.cmd -C apps/web typecheck, pnpm.cmd -C apps/web build.

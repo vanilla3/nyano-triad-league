@@ -106,10 +106,11 @@ import { useReplaySearchMutators } from "@/features/match/useReplaySearchMutator
 import { useReplayStepModeUrlSync } from "@/features/match/useReplayStepModeUrlSync";
 import { useReplayEngineFocusGuard } from "@/features/match/useReplayEngineFocusGuard";
 import { useReplayBroadcastToggle } from "@/features/match/useReplayBroadcastToggle";
-import { resolveReplayClearShareParamsMutation, resolveReplayRetryPayload } from "@/features/match/replayShareParamActions";
+import { resolveReplayClearShareParamsMutation } from "@/features/match/replayShareParamActions";
 import { useReplayAutoplay } from "@/features/match/useReplayAutoplay";
 import { resolveReplayNyanoReactionImpact, useReplayStageImpactBurst } from "@/features/match/useReplayStageImpactBurst";
 import { STAGE_VFX_OPTIONS, formatStageVfxLabel } from "@/features/match/replayUiHelpers";
+import { runReplayInitialAutoLoadFlow, runReplayRetryLoadFlow } from "@/features/match/replayLoadRecovery";
 
 type Mode = ReplayMode;
 
@@ -435,20 +436,19 @@ export function ReplayPage() {
     }
   };
 
+  const setReplayError = React.useCallback((error: string) => {
+    setSim({ ok: false, error });
+  }, []);
+
   const handleRetryLoad = () => {
-    void (async () => {
-      const decoded = resolveReplayRetryPayload(searchParams);
-      if (decoded.kind === "error") {
-        setSim({ ok: false, error: decoded.error });
-        return;
-      }
-      if (decoded.kind === "ok") {
-        setText(decoded.text);
-        await load({ text: decoded.text, mode, step });
-        return;
-      }
-      await load();
-    })();
+    void runReplayRetryLoadFlow({
+      searchParams,
+      mode,
+      step,
+      load,
+      setText,
+      setReplayError,
+    });
   };
 
   const handleClearShareParams = () => {
@@ -463,17 +463,14 @@ export function ReplayPage() {
     if (didAutoLoadRef.current) return;
     didAutoLoadRef.current = true;
 
-    const auto = async () => {
-      if (initialSharePayload.kind === "none") return;
-      if (initialSharePayload.kind === "error") {
-        setSim({ ok: false, error: initialSharePayload.error });
-        return;
-      }
-      setText(initialSharePayload.text);
-      await load({ text: initialSharePayload.text, mode: initialMode, step: initialStep });
-    };
-
-    void auto();
+    void runReplayInitialAutoLoadFlow({
+      initialSharePayload,
+      initialMode,
+      initialStep,
+      load,
+      setText,
+      setReplayError,
+    });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   const stepMax = sim.ok ? sim.current.boardHistory.length - 1 : 0;
