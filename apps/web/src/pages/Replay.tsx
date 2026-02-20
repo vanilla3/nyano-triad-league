@@ -40,7 +40,6 @@ import { errorMessage } from "@/lib/errorMessage";
 import { stringifyWithBigInt } from "@/lib/json";
 import { formatEventPeriod, getEventById, getEventStatus } from "@/lib/events";
 import { hasEventAttempt, upsertEventAttempt, type EventAttemptV1 } from "@/lib/event_attempts";
-import { resolveCards } from "@/lib/resolveCards";
 import { publishOverlayState } from "@/lib/streamer_bus";
 import { parseReplayPayload } from "@/lib/replay_bundle";
 import { annotateReplayMoves } from "@/lib/ai/replay_annotations";
@@ -106,6 +105,7 @@ import {
 } from "@/features/match/replayRulesetLabel";
 import { resolveReplayRulesetContext } from "@/features/match/replayRulesetContext";
 import { resolveReplayCurrentResult } from "@/features/match/replayResultSelection";
+import { resolveReplayCardsFromPayload } from "@/features/match/replayCardLoaders";
 import {
   resolveReplayOverlayLastMove,
   resolveReplayOverlayLastTurnSummary,
@@ -478,30 +478,10 @@ export function ReplayPage() {
         fallbackRulesetFromParams,
       });
 
-      // v2: use embedded card data (no network calls needed)
-      // v1: resolve via game index first (fast/cached), RPC fallback for missing
-      let cards: Map<bigint, CardData>;
-      let owners: Map<bigint, `0x${string}`>;
-      if (parsed.version === 2) {
-        cards = parsed.cards;
-        owners = new Map();
-      } else {
-        const tokenIds = [...transcript.header.deckA, ...transcript.header.deckB];
-        const resolved = await resolveCards(tokenIds);
-        cards = resolved.cards;
-        owners = resolved.owners;
-
-        // Verify all cards were resolved — resolveCards silently swallows
-        // RPC errors and returns an incomplete map. Surface the failure here
-        // so the user sees a clear error instead of a broken replay.
-        const unique = new Set(tokenIds.map((t) => t.toString()));
-        if (cards.size < unique.size) {
-          const missing = [...unique].filter((id) => !cards.has(BigInt(id)));
-          throw new Error(
-            `${missing.length}枚のカードを解決できませんでした: ${missing.slice(0, 5).join(", ")}${missing.length > 5 ? "…" : ""}。ネットワーク接続を確認してください。`,
-          );
-        }
-      }
+      const {
+        cards,
+        owners,
+      } = await resolveReplayCardsFromPayload({ parsed });
 
       // Always compute both (cheap compared to RPC reads)
       const v1 = simulateMatchV1WithHistory(transcript, cards, ONCHAIN_CORE_TACTICS_RULESET_CONFIG_V1);

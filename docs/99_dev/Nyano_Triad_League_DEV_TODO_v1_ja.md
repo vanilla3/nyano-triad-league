@@ -552,3 +552,7 @@
 - [x] 2026-02-20 WO037-step100: Replay overlay last-move/last-turn-summary derivation was extracted to replayOverlaySummary and Replay.tsx now reuses the helper functions.
 
 - [x] 2026-02-20 WO037-step101: Replay overlay publish payload assembly was extracted to replayOverlayState helpers (error/payload/protocol snapshot) and Replay.tsx now delegates to the helper module.
+
+- [x] 2026-02-20 WO037-step102: Replay card-resolution branch (v2 embedded cards / v1 resolveCards + missing-card guard) was extracted to replayCardLoaders and Replay.tsx now delegates to the helper.
+
+- [x] 2026-02-20 WO037-step102: added apps/web/src/features/match/__tests__/replayCardLoaders.test.ts and re-verified pnpm.cmd -C apps/web test -- replayCardLoaders replayOverlayState replayOverlaySummary replayResultSelection replayRulesetContext replayRulesetLabel replayUiHelpers replayDerivedState replayClassicState replayPreloadTokenIds replayCompareState useReplayStageImpactBurst useReplayAutoplay replayTransportState replayHighlightNavigation replayShareParamActions useReplayBroadcastToggle useReplayEngineFocusGuard useReplayStepModeUrlSync useReplaySearchMutators replayStageRouteState, pnpm.cmd -C apps/web lint, pnpm.cmd -C apps/web typecheck, pnpm.cmd -C apps/web build.
