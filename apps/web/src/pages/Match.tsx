@@ -49,14 +49,13 @@ import { MiniTutorial } from "@/components/MiniTutorial";
 import { markOnboardingStepDone } from "@/lib/onboarding";
 import { createTelemetryTracker } from "@/lib/telemetry";
 import { createSfxEngine, type SfxEngine, type SfxName } from "@/lib/sfx";
-import { readUiDensity, readVfxQuality, writeUiDensity, writeVfxQuality, type UiDensity, type VfxPreference } from "@/lib/local_settings";
+import { readUiDensity, writeUiDensity, type UiDensity, type VfxPreference } from "@/lib/local_settings";
 import type { FlipTraceArrow } from "@/components/FlipArrowOverlay";
 import { MatchSetupPanelMint } from "@/components/match/MatchSetupPanelMint";
 import { getClassicOpenModeLabel, getPlayerDisplayLabel } from "@/components/match/classicRulesUi";
 import { writeClipboardText } from "@/lib/clipboard";
 import { appAbsoluteUrl } from "@/lib/appUrl";
 import { BattleStageEngine } from "@/engine/components/BattleStageEngine";
-import { applyVfxQualityToDocument, resolveVfxQuality, type VfxQuality } from "@/lib/visual/visualSettings";
 import { MAX_CHAIN_CAP_PER_TURN } from "@/lib/ruleset_meta";
 import {
   decodeClassicRulesMask,
@@ -172,19 +171,8 @@ import { MatchErrorPanel } from "@/features/match/MatchErrorPanel";
 import { MatchHandInteractionArea } from "@/features/match/MatchHandInteractionArea";
 import { MatchBoardFeedbackPanels } from "@/features/match/MatchBoardFeedbackPanels";
 import { MatchInfoColumn } from "@/features/match/MatchInfoColumn";
-
-const STAGE_VFX_OPTIONS: ReadonlyArray<{ value: VfxPreference; label: string }> = [
-  { value: "auto", label: "auto" },
-  { value: "off", label: "off" },
-  { value: "low", label: "low" },
-  { value: "medium", label: "medium" },
-  { value: "high", label: "high" },
-];
-
-function formatStageVfxLabel(pref: VfxPreference, resolved: VfxQuality): string {
-  if (pref === "auto") return `auto (${resolved})`;
-  return pref;
-}
+import { resolveStageVfxOptionLabel, STAGE_VFX_OPTIONS } from "@/features/match/stageVfxUi";
+import { useStageVfxPreference } from "@/features/match/useStageVfxPreference";
 
 type SimOk = {
   ok: true;
@@ -458,8 +446,6 @@ export function MatchPage() {
     setDensity(d);
     writeUiDensity(d);
   }, []);
-  const [vfxPreference, setVfxPreference] = React.useState<VfxPreference>(() => readVfxQuality("auto"));
-  const [resolvedVfxQuality, setResolvedVfxQuality] = React.useState<VfxQuality>(() => resolveVfxQuality());
   const {
     showStageAssist,
     setShowStageAssist,
@@ -476,16 +462,14 @@ export function MatchPage() {
   } = useMatchStageActionFeedback({
     isStageFocusRoute,
   });
-
-  const handleStageVfxChange = React.useCallback((nextPreference: VfxPreference) => {
-    setVfxPreference(nextPreference);
-    writeVfxQuality(nextPreference);
-    const nextResolved = resolveVfxQuality();
-    setResolvedVfxQuality(nextResolved);
-    applyVfxQualityToDocument(nextResolved);
-    playMatchUiSfx("card_place");
-    pushStageActionFeedback(`VFX ${formatStageVfxLabel(nextPreference, nextResolved)}`, "info");
-  }, [playMatchUiSfx, pushStageActionFeedback]);
+  const {
+    vfxPreference,
+    resolvedVfxQuality,
+    handleStageVfxChange,
+  } = useStageVfxPreference({
+    playVfxChangeSfx: () => playMatchUiSfx("card_place"),
+    pushStageActionFeedback,
+  });
 
   const resetMatch = React.useCallback(() => {
     setTurns([]);
@@ -1844,7 +1828,7 @@ export function MatchPage() {
                     >
                       {STAGE_VFX_OPTIONS.map((option) => (
                         <option key={option.value} value={option.value}>
-                          {option.value === "auto" ? `auto (${resolvedVfxQuality})` : option.label}
+                          {resolveStageVfxOptionLabel(option, resolvedVfxQuality)}
                         </option>
                       ))}
                     </select>

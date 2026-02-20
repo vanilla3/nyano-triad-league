@@ -35,8 +35,7 @@ import { AdvantageBadge } from "@/components/AdvantageBadge";
 import { appAbsoluteUrl, appPath } from "@/lib/appUrl";
 import { shouldShowStageSecondaryControls } from "@/lib/stage_layout";
 import { createSfxEngine, type SfxEngine, type SfxName } from "@/lib/sfx";
-import { readVfxQuality, writeVfxQuality, type VfxPreference } from "@/lib/local_settings";
-import { applyVfxQualityToDocument, resolveVfxQuality, type VfxQuality } from "@/lib/visual/visualSettings";
+import type { VfxPreference } from "@/lib/local_settings";
 import { decodeReplaySharePayload, hasReplaySharePayload } from "@/lib/replay_share_params";
 import {
   detectReplayHighlights,
@@ -111,7 +110,8 @@ import { useReplayBroadcastToggle } from "@/features/match/useReplayBroadcastTog
 import { useReplayAutoplay } from "@/features/match/useReplayAutoplay";
 import { resolveReplayNyanoReactionImpact, useReplayStageImpactBurst } from "@/features/match/useReplayStageImpactBurst";
 import { useReplayTransportActionCallbacks } from "@/features/match/useReplayTransportActionCallbacks";
-import { STAGE_VFX_OPTIONS, formatStageVfxLabel } from "@/features/match/replayUiHelpers";
+import { resolveStageVfxOptionLabel, STAGE_VFX_OPTIONS } from "@/features/match/stageVfxUi";
+import { useStageVfxPreference } from "@/features/match/useStageVfxPreference";
 import {
   runReplayClearShareParamsFlow,
   runReplayInitialAutoLoadFlow,
@@ -251,8 +251,6 @@ export function ReplayPage() {
   } = useMatchStageActionFeedback({
     isStageFocusRoute: isStageFocus,
   });
-  const [vfxPreference, setVfxPreference] = React.useState<VfxPreference>(() => readVfxQuality("auto"));
-  const [resolvedVfxQuality, setResolvedVfxQuality] = React.useState<VfxQuality>(() => resolveVfxQuality());
   const {
     showStageControls: showStageTransport,
     toggleStageControls: toggleStageTransport,
@@ -264,16 +262,14 @@ export function ReplayPage() {
     stageViewportRef,
     onWarn: toast.warn,
   });
-
-  const handleStageVfxChange = React.useCallback((nextPreference: VfxPreference) => {
-    setVfxPreference(nextPreference);
-    writeVfxQuality(nextPreference);
-    const nextResolved = resolveVfxQuality();
-    setResolvedVfxQuality(nextResolved);
-    applyVfxQualityToDocument(nextResolved);
-    playReplaySfx("card_place");
-    pushStageActionFeedback(`VFX ${formatStageVfxLabel(nextPreference, nextResolved)}`, "info");
-  }, [playReplaySfx, pushStageActionFeedback]);
+  const {
+    vfxPreference,
+    resolvedVfxQuality,
+    handleStageVfxChange,
+  } = useStageVfxPreference({
+    playVfxChangeSfx: () => playReplaySfx("card_place"),
+    pushStageActionFeedback,
+  });
 
   const handleVerify = React.useCallback(() => {
     runReplayVerifyAction({
@@ -1058,7 +1054,7 @@ export function ReplayPage() {
                     >
                       {STAGE_VFX_OPTIONS.map((option) => (
                         <option key={option.value} value={option.value}>
-                          {option.value === "auto" ? `auto (${resolvedVfxQuality})` : option.label}
+                          {resolveStageVfxOptionLabel(option, resolvedVfxQuality)}
                         </option>
                       ))}
                     </select>

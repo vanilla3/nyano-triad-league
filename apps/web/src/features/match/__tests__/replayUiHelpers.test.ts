@@ -3,6 +3,7 @@ import {
   STAGE_VFX_OPTIONS,
   clampInt,
   formatStageVfxLabel,
+  resolveStageVfxOptionLabel,
 } from "@/features/match/replayUiHelpers";
 
 describe("features/match/replayUiHelpers", () => {
@@ -20,6 +21,13 @@ describe("features/match/replayUiHelpers", () => {
   it("returns explicit VFX preference labels unchanged", () => {
     expect(formatStageVfxLabel("off", "high")).toBe("off");
     expect(formatStageVfxLabel("medium", "low")).toBe("medium");
+  });
+
+  it("formats VFX option labels with resolved quality for auto only", () => {
+    const autoOption = { value: "auto", label: "auto" } as const;
+    const lowOption = { value: "low", label: "low" } as const;
+    expect(resolveStageVfxOptionLabel(autoOption, "medium")).toBe("auto (medium)");
+    expect(resolveStageVfxOptionLabel(lowOption, "high")).toBe("low");
   });
 
   it("keeps stage VFX option order stable", () => {

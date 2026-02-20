@@ -615,3 +615,12 @@
 - [x] 2026-02-20 WO037-step117: Replay copy-toast wrapper creation was extracted to apps/web/src/features/match/replayUiActions.ts (createReplayCopyWithToast), and Replay.tsx now reuses the shared helper instead of defining a local async wrapper.
 
 - [x] 2026-02-20 WO037-step117: expanded apps/web/src/features/match/__tests__/replayUiActions.test.ts and re-verified pnpm.cmd -C apps/web test -- replayUiActions replayActionRunners replayLoadRecovery replayShareLinkBuilders useReplayTransportActionCallbacks replayLoadAction replaySimState, pnpm.cmd -C apps/web lint, pnpm.cmd -C apps/web typecheck, pnpm.cmd -C apps/web build.
+- [x] 2026-02-20 WO037-step118: Stage VFX UI/options and change flow were unified for Match/Replay by adding shared helpers (apps/web/src/features/match/stageVfxUi.ts, apps/web/src/features/match/stageVfxPreference.ts) and wiring both pages to reuse the same VFX apply/sfx/feedback path.
+
+- [x] 2026-02-20 WO037-step118: added apps/web/src/features/match/__tests__/stageVfxPreference.test.ts and re-verified pnpm.cmd -C apps/web test -- stageVfxPreference replayUiHelpers, pnpm.cmd -C apps/web lint, pnpm.cmd -C apps/web typecheck, pnpm.cmd -C apps/web build (sandboxed vitest hit spawn EPERM; rerun outside sandbox passed).
+- [x] 2026-02-20 WO037-step119: Match/Replay の Stage VFX state 初期化と変更ハンドラを useStageVfxPreference に統合し、ページ側の重複実装を削減。
+
+- [x] 2026-02-20 WO037-step119: added apps/web/src/features/match/__tests__/useStageVfxPreference.test.ts and re-verified pnpm.cmd -C apps/web test -- useStageVfxPreference stageVfxPreference replayUiHelpers, pnpm.cmd -C apps/web lint, pnpm.cmd -C apps/web typecheck, pnpm.cmd -C apps/web build (sandboxed vitest hit spawn EPERM; rerun outside sandbox passed).
+- [x] 2026-02-20 WO037-step120: Stage VFX セレクトの option label 生成を resolveStageVfxOptionLabel に共通化し、Match/Replay の JSX 分岐重複を削減。
+
+- [x] 2026-02-20 WO037-step120: expanded apps/web/src/features/match/__tests__/replayUiHelpers.test.ts and re-verified pnpm.cmd -C apps/web test -- replayUiHelpers useStageVfxPreference stageVfxPreference, pnpm.cmd -C apps/web lint, pnpm.cmd -C apps/web typecheck, pnpm.cmd -C apps/web build (sandboxed vitest hit spawn EPERM; rerun outside sandbox passed).
