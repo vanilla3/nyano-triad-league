@@ -29,7 +29,7 @@ export function MintTabNav({
           end={item.exact}
           className={({ isActive }) =>
             [
-              "mint-pressable mint-tab-nav__item",
+              "mint-pressable mint-hit mint-tab-nav__item",
               isActive ? "mint-tab-nav__item--active" : "",
             ].join(" ").trim()
           }

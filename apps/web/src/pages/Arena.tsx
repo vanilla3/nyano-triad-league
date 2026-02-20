@@ -116,7 +116,7 @@ export function ArenaPage() {
             <button
               type="button"
               className={[
-                "mint-pressable mint-arena-rules-chip",
+                "mint-pressable mint-hit mint-arena-rules-chip",
                 quickRulesPreset === "standard" ? "mint-arena-rules-chip--active" : "",
               ].join(" ")}
               aria-pressed={quickRulesPreset === "standard"}
@@ -129,7 +129,7 @@ export function ArenaPage() {
                 key={preset.id}
                 type="button"
                 className={[
-                  "mint-pressable mint-arena-rules-chip",
+                  "mint-pressable mint-hit mint-arena-rules-chip",
                   quickRulesPreset === preset.id ? "mint-arena-rules-chip--active" : "",
                 ].join(" ")}
                 aria-pressed={quickRulesPreset === preset.id}
@@ -167,7 +167,7 @@ export function ArenaPage() {
             key={item.key}
             type="button"
             className={[
-              "mint-pressable mint-ui-pressable mint-ui-pressable--soft mint-ui-pressable--lg mint-arena-difficulty__card",
+              "mint-pressable mint-ui-pressable mint-hit mint-ui-pressable--soft mint-ui-pressable--lg mint-arena-difficulty__card",
               difficulty === item.key ? "mint-arena-difficulty__card--active" : "",
             ].join(" ")}
             onClick={() => handleDifficultySelect(item.key)}

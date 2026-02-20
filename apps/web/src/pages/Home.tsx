@@ -264,7 +264,7 @@ export function HomePage() {
                 <button
                   key={item.key}
                   className={[
-                    "mint-pressable mint-home-difficulty",
+                    "mint-pressable mint-hit mint-home-difficulty",
                     difficulty === item.key ? "mint-home-difficulty--active" : "",
                   ].join(" ")}
                   onClick={() => setDifficulty(item.key)}
@@ -280,7 +280,7 @@ export function HomePage() {
                 <button
                   type="button"
                   className={[
-                    "mint-pressable mint-home-rules-chip",
+                    "mint-pressable mint-hit mint-home-rules-chip",
                     quickRulesPreset === "standard" ? "mint-home-rules-chip--active" : "",
                   ].join(" ")}
                   aria-pressed={quickRulesPreset === "standard"}
@@ -293,7 +293,7 @@ export function HomePage() {
                     key={preset.id}
                     type="button"
                     className={[
-                      "mint-pressable mint-home-rules-chip",
+                      "mint-pressable mint-hit mint-home-rules-chip",
                       quickRulesPreset === preset.id ? "mint-home-rules-chip--active" : "",
                     ].join(" ")}
                     aria-pressed={quickRulesPreset === preset.id}

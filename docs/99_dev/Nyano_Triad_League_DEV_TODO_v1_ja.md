@@ -624,3 +624,6 @@
 - [x] 2026-02-20 WO037-step120: Stage VFX セレクトの option label 生成を resolveStageVfxOptionLabel に共通化し、Match/Replay の JSX 分岐重複を削減。
 
 - [x] 2026-02-20 WO037-step120: expanded apps/web/src/features/match/__tests__/replayUiHelpers.test.ts and re-verified pnpm.cmd -C apps/web test -- replayUiHelpers useStageVfxPreference stageVfxPreference, pnpm.cmd -C apps/web lint, pnpm.cmd -C apps/web typecheck, pnpm.cmd -C apps/web build (sandboxed vitest hit spawn EPERM; rerun outside sandbox passed).
+- [x] 2026-02-20 WO043-followup-1: direct mint-pressable controls in Home/Arena/Decks/ResultOverlay/TabNav/RulesetPicker were hardened with mint-hit so touch hit targets consistently respect the 44px baseline.
+
+- [x] 2026-02-20 WO043-followup-1: re-verified pnpm.cmd -C apps/web test -- MintRulesetPicker, pnpm.cmd -C apps/web lint, pnpm.cmd -C apps/web typecheck, pnpm.cmd -C apps/web build (sandboxed vitest hit spawn EPERM; rerun outside sandbox passed).

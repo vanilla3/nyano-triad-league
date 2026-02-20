@@ -38,11 +38,11 @@ function resolveRulesetFamily(rulesetKey: RulesetKey): RulesetFamily {
 }
 
 function segmentButtonClass(active: boolean): string {
-  return `mint-ruleset-picker__family-btn mint-pressable${active ? " is-active" : ""}`;
+  return `mint-ruleset-picker__family-btn mint-pressable mint-hit${active ? " is-active" : ""}`;
 }
 
 function smallChipClass(active: boolean): string {
-  return `mint-ruleset-picker__chip mint-pressable${active ? " is-active" : ""}`;
+  return `mint-ruleset-picker__chip mint-pressable mint-hit${active ? " is-active" : ""}`;
 }
 
 export function MintRulesetPicker(props: MintRulesetPickerProps) {

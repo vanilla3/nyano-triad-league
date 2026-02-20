@@ -277,7 +277,7 @@ export function DecksPage() {
                   type="button"
                   data-testid={`decks-filter-${filter.id}`}
                   className={[
-                    "mint-pressable mint-decks-filter",
+                    "mint-pressable mint-hit mint-decks-filter",
                     selectedFilter === filter.id ? "mint-decks-filter--active" : "",
                   ].join(" ")}
                   title={filter.hint}
