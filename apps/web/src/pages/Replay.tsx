@@ -68,7 +68,6 @@ import {
 } from "@/lib/replay_highlights";
 import {
   REPLAY_PLAYBACK_SPEED_OPTIONS,
-  nextReplayAutoplayStep,
   normalizeReplayPlaybackSpeed,
   replayPhaseInfo,
   replayStepProgress,
@@ -115,6 +114,7 @@ import { useReplayStepModeUrlSync } from "@/features/match/useReplayStepModeUrlS
 import { useReplayEngineFocusGuard } from "@/features/match/useReplayEngineFocusGuard";
 import { useReplayBroadcastToggle } from "@/features/match/useReplayBroadcastToggle";
 import { resolveReplayClearShareParamsMutation, resolveReplayRetryPayload } from "@/features/match/replayShareParamActions";
+import { useReplayAutoplay } from "@/features/match/useReplayAutoplay";
 
 type Mode = ReplayMode;
 
@@ -945,22 +945,15 @@ protocolV1: {
     jumpToNextHighlightWithFeedback,
   });
 
-  // Autoplay timer
-  React.useEffect(() => {
-    if (!isPlaying || !sim.ok || !canPlay) return;
-    const ms = 1000 / normalizeReplayPlaybackSpeed(playbackSpeed);
-    const timer = window.setInterval(() => {
-      setStep((s) => {
-        const next = nextReplayAutoplayStep(s, stepMax);
-        if (next === null) {
-          setIsPlaying(false);
-          return s;
-        }
-        return next;
-      });
-    }, ms);
-    return () => window.clearInterval(timer);
-  }, [isPlaying, playbackSpeed, stepMax, sim.ok, canPlay]);
+  useReplayAutoplay({
+    isPlaying,
+    simOk: sim.ok,
+    canPlay,
+    playbackSpeed,
+    stepMax,
+    setStep,
+    setIsPlaying,
+  });
 
   const compare = sim.ok && (
     mode === "compare"
