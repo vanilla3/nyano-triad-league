@@ -30,7 +30,6 @@ import { TurnLog } from "@/components/TurnLog";
 import { GameResultBanner } from "@/components/GameResultOverlay";
 import {
   pickReactionKind,
-  resolveReactionCutInImpact,
   type NyanoReactionInput,
 } from "@/components/NyanoReaction";
 import { NyanoReactionSlot } from "@/components/NyanoReactionSlot";
@@ -115,6 +114,7 @@ import { useReplayEngineFocusGuard } from "@/features/match/useReplayEngineFocus
 import { useReplayBroadcastToggle } from "@/features/match/useReplayBroadcastToggle";
 import { resolveReplayClearShareParamsMutation, resolveReplayRetryPayload } from "@/features/match/replayShareParamActions";
 import { useReplayAutoplay } from "@/features/match/useReplayAutoplay";
+import { resolveReplayNyanoReactionImpact, useReplayStageImpactBurst } from "@/features/match/useReplayStageImpactBurst";
 
 type Mode = ReplayMode;
 
@@ -967,25 +967,18 @@ protocolV1: {
     [sim, step],
   );
   const replayNyanoReactionImpact = React.useMemo(() => {
-    if (!replayNyanoReactionInput) return "low" as const;
-    return resolveReactionCutInImpact(pickReactionKind(replayNyanoReactionInput));
+    return resolveReplayNyanoReactionImpact({
+      nyanoReactionInput: replayNyanoReactionInput,
+    });
   }, [replayNyanoReactionInput]);
-  const [replayStageImpactBurst, setReplayStageImpactBurst] = React.useState(false);
-
-  React.useEffect(() => {
-    if (!isEngineFocus || !isEngine || compare || !replayNyanoReactionInput) {
-      setReplayStageImpactBurst(false);
-      return;
-    }
-    if (replayNyanoReactionImpact === "low") {
-      setReplayStageImpactBurst(false);
-      return;
-    }
-    setReplayStageImpactBurst(true);
-    const burstMs = replayNyanoReactionImpact === "high" ? 960 : 760;
-    const timer = window.setTimeout(() => setReplayStageImpactBurst(false), burstMs);
-    return () => window.clearTimeout(timer);
-  }, [isEngineFocus, isEngine, compare, replayNyanoReactionInput, replayNyanoReactionImpact, step]);
+  const replayStageImpactBurst = useReplayStageImpactBurst({
+    isEngine,
+    isEngineFocus,
+    compare,
+    nyanoReactionInput: replayNyanoReactionInput,
+    nyanoReactionImpact: replayNyanoReactionImpact,
+    step,
+  });
 
   const annotations = React.useMemo(
     () => sim.ok ? annotateReplayMoves(sim.current, sim.transcript.header.firstPlayer as 0 | 1) : [],

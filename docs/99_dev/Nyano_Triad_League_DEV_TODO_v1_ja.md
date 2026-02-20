@@ -530,3 +530,5 @@
 - [x] 2026-02-20 WO037-step89: Replay transport derived state (playability/step edges/focus toolbar visibility/button classes) was extracted to replayTransportState helper with tests.
 
 - [x] 2026-02-20 WO037-step90: Replay autoplay timer/step-advance logic was extracted to useReplayAutoplay with tested pure interval/advance helpers.
+
+- [x] 2026-02-20 WO037-step91: Replay stage impact burst logic (impact resolve + burst plan + timeout effect) was extracted to useReplayStageImpactBurst.
