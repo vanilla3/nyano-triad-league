@@ -518,3 +518,5 @@
 - [x] 2026-02-20 WO037-step83: Replay URL mutators (board-ui switch and focus-mode toggle) were extracted to useReplaySearchMutators with tested pure mutation helpers.
 
 - [x] 2026-02-20 WO037-step84: Replay share URL mode/step sync effect was extracted to useReplayStepModeUrlSync with tested pure mutation helper.
+
+- [x] 2026-02-20 WO037-step85: Replay non-engine focus auto-clear effect was extracted to useReplayEngineFocusGuard with tested pure mutation helper.

@@ -3639,3 +3639,6 @@
 
 - 2026-02-20 WO037-step84: extracted Replay share URL mode/step sync logic from apps/web/src/pages/Replay.tsx into apps/web/src/features/match/useReplayStepModeUrlSync.ts using resolveReplayStepModeSyncMutation + useReplayStepModeUrlSync.
 - 2026-02-20 WO037-step84 tests/verification: added apps/web/src/features/match/__tests__/useReplayStepModeUrlSync.test.ts and verified pnpm.cmd -C apps/web test -- useReplayStepModeUrlSync useReplaySearchMutators replayStageRouteState / pnpm.cmd -C apps/web lint / pnpm.cmd -C apps/web typecheck / pnpm.cmd -C apps/web build OK (sandboxed vitest failed once with spawn EPERM; rerun outside sandbox passed).
+
+- 2026-02-20 WO037-step85: extracted Replay non-engine focus guard logic from apps/web/src/pages/Replay.tsx into apps/web/src/features/match/useReplayEngineFocusGuard.ts using resolveReplayEngineFocusGuardMutation + useReplayEngineFocusGuard.
+- 2026-02-20 WO037-step85 tests/verification: added apps/web/src/features/match/__tests__/useReplayEngineFocusGuard.test.ts and verified pnpm.cmd -C apps/web test -- useReplayEngineFocusGuard useReplayStepModeUrlSync useReplaySearchMutators replayStageRouteState / pnpm.cmd -C apps/web lint / pnpm.cmd -C apps/web typecheck / pnpm.cmd -C apps/web build OK (sandboxed vitest failed once with spawn EPERM; rerun outside sandbox passed).

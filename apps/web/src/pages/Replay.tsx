@@ -82,7 +82,6 @@ import { parseFocusMode } from "@/features/match/urlParams";
 import {
   parseReplayBoardUi,
   toMatchBoardUi,
-  withReplayFocusMode,
 } from "@/features/match/replayUrlParams";
 import {
   parseReplayMode,
@@ -106,6 +105,7 @@ import { useReplayStageActionCallbacks } from "@/features/match/useReplayStageAc
 import { useReplayStageRouteState } from "@/features/match/replayStageRouteState";
 import { useReplaySearchMutators } from "@/features/match/useReplaySearchMutators";
 import { useReplayStepModeUrlSync } from "@/features/match/useReplayStepModeUrlSync";
+import { useReplayEngineFocusGuard } from "@/features/match/useReplayEngineFocusGuard";
 
 type Mode = ReplayMode;
 
@@ -456,12 +456,12 @@ export function ReplayPage() {
   });
 
 
-  React.useEffect(() => {
-    if (isEngine || !isFocusMode) return;
-    const next = withReplayFocusMode(searchParams, false);
-    if (next.toString() === searchParams.toString()) return;
-    setSearchParams(next, { replace: true });
-  }, [isEngine, isFocusMode, searchParams, setSearchParams]);
+  useReplayEngineFocusGuard({
+    searchParams,
+    isEngine,
+    isFocusMode,
+    setSearchParams,
+  });
 
   const overlayUrl = React.useMemo(() => appAbsoluteUrl("overlay?controls=0"), []);
   const overlayPath = React.useMemo(() => appPath("overlay"), []);
