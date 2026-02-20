@@ -38,6 +38,10 @@ import {
   type VfxFeatureFlags,
 } from "./cellAnimations";
 import { boardLayerTokensForQuality } from "./boardLayerTokens";
+import {
+  computeFoilFlashIntensity,
+  staticFoilEnabledForQuality,
+} from "./foilFx";
 import { texturePreloadConcurrencyForQuality } from "./preloadPolicy";
 import { errorMessage } from "@/lib/errorMessage";
 
@@ -936,8 +940,44 @@ export class PixiBattleRenderer implements IBattleRenderer {
       glass.visible = false;
     }
 
-    // Foil layer is animated only during place/flip in high tier.
-    foil.visible = false;
+    // High tier keeps a subtle static foil base; event flash layers on top.
+    this.drawFoilBase(index, w, h, quality, hasTexture);
+  }
+
+  private hasTextureForCell(cell: BoardCell | null): boolean {
+    if (!cell) return false;
+    return this.textureResolver.getTexture(cell.card.tokenId.toString()) !== null;
+  }
+
+  private drawFoilBase(
+    index: number,
+    w: number,
+    h: number,
+    quality: BattleRendererState["vfxQuality"],
+    hasTexture: boolean,
+  ): boolean {
+    const foil = this.cellFoilOverlays[index];
+    if (!foil) return false;
+
+    if (!staticFoilEnabledForQuality(quality, hasTexture)) {
+      foil.visible = false;
+      return false;
+    }
+
+    const stripeW = Math.max(LAYOUT.foilStripeWidth * 0.72, w * 0.11);
+    foil.clear();
+    foil.roundRect(0, 0, w, h, LAYOUT.cardFrameCorner);
+    foil.stroke({ color: COLORS.cardGlass, width: 1, alpha: 0.08 });
+    foil.roundRect(0, 0, w, Math.max(8, h * 0.22), LAYOUT.cardFrameCorner);
+    foil.fill({ color: COLORS.cardGlass, alpha: 0.03 });
+    foil.rect(-stripeW * 0.55, 0, stripeW, h);
+    foil.fill({ color: COLORS.holoA, alpha: 0.06 });
+    foil.rect(w * 0.4, 0, stripeW * 0.84, h);
+    foil.fill({ color: COLORS.holoB, alpha: 0.048 });
+    foil.rect(w - stripeW * 0.24, 0, stripeW * 0.6, h);
+    foil.fill({ color: COLORS.cardGlass, alpha: 0.032 });
+    foil.visible = true;
+    return true;
   }
 
   private applyEventFoilFlash(
@@ -950,12 +990,14 @@ export class PixiBattleRenderer implements IBattleRenderer {
     const foil = this.cellFoilOverlays[index];
     if (!foil) return;
 
-    const rawIntensity = Math.max(0, Math.min(1, (frame.brightness - 1) / 0.45));
+    const quality = this.state?.vfxQuality ?? "medium";
+    const cell = this.state?.board[index] ?? null;
+    const hasTexture = this.hasTextureForCell(cell);
+    if (!this.drawFoilBase(index, w, h, quality, hasTexture)) return;
+
     const sweepProgress = Math.max(0, Math.min(1, animProgress));
-    const pulse = Math.sin(Math.PI * sweepProgress);
-    const intensity = rawIntensity * pulse;
+    const intensity = computeFoilFlashIntensity(frame.brightness, sweepProgress);
     if (intensity < 0.01) {
-      foil.visible = false;
       return;
     }
 
@@ -965,13 +1007,12 @@ export class PixiBattleRenderer implements IBattleRenderer {
     const sweep = sweepStart + (sweepEnd - sweepStart) * sweepProgress;
     const counterSweep = w + stripeW - (w + stripeW * 2) * sweepProgress;
 
-    foil.clear();
     foil.roundRect(0, 0, w, h, LAYOUT.cardFrameCorner);
-    foil.stroke({ color: COLORS.cardGlass, width: 1, alpha: 0.2 * intensity });
+    foil.stroke({ color: COLORS.cardGlass, width: 1, alpha: 0.24 * intensity });
     foil.rect(sweep, 0, stripeW, h);
-    foil.fill({ color: COLORS.holoA, alpha: 0.16 * intensity });
+    foil.fill({ color: COLORS.holoA, alpha: 0.19 * intensity });
     foil.rect(counterSweep, 0, stripeW * 0.8, h);
-    foil.fill({ color: COLORS.holoB, alpha: 0.1 * intensity });
+    foil.fill({ color: COLORS.holoB, alpha: 0.14 * intensity });
     foil.visible = true;
   }
 
@@ -1618,7 +1659,10 @@ export class PixiBattleRenderer implements IBattleRenderer {
     // Hide brightness overlay
     const overlay = this.cellBrightnessOverlays[i];
     if (overlay) overlay.visible = false;
-    this.cellFoilOverlays[i].visible = false;
+    const quality = this.state?.vfxQuality ?? "medium";
+    const cell = this.state?.board[i] ?? null;
+    const hasTexture = this.hasTextureForCell(cell);
+    this.drawFoilBase(i, layout.w, layout.h, quality, hasTexture);
   }
 
   private applyBreatheGlow(
