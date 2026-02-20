@@ -82,8 +82,6 @@ import { parseFocusMode } from "@/features/match/urlParams";
 import {
   parseReplayBoardUi,
   toMatchBoardUi,
-  type ReplayBoardUi,
-  withReplayBoardUi,
   withReplayFocusMode,
   withReplayStepMode,
 } from "@/features/match/replayUrlParams";
@@ -107,6 +105,7 @@ import { useReplayStageFocusShortcuts } from "@/features/match/useReplayStageFoc
 import { useReplayStageBoardSizing } from "@/features/match/useReplayStageBoardSizing";
 import { useReplayStageActionCallbacks } from "@/features/match/useReplayStageActionCallbacks";
 import { useReplayStageRouteState } from "@/features/match/replayStageRouteState";
+import { useReplaySearchMutators } from "@/features/match/useReplaySearchMutators";
 
 type Mode = ReplayMode;
 
@@ -421,22 +420,12 @@ export function ReplayPage() {
   };
 
 
-  const setReplayBoardUi = React.useCallback((nextUi: ReplayBoardUi) => {
-    const next = withReplayBoardUi(searchParams, nextUi);
-    if (next.toString() === searchParams.toString()) return;
-    setSearchParams(next, { replace: true });
-  }, [searchParams, setSearchParams]);
-
-  const setFocusMode = React.useCallback((enabled: boolean) => {
-    const next = withReplayFocusMode(searchParams, enabled);
-    if (!enabled && isReplayStageRoute) {
-      const query = next.toString();
-      navigate(query ? `/replay?${query}` : "/replay", { replace: true });
-      return;
-    }
-    if (next.toString() === searchParams.toString()) return;
-    setSearchParams(next, { replace: true });
-  }, [searchParams, setSearchParams, isReplayStageRoute, navigate]);
+  const { setReplayBoardUi, setFocusMode } = useReplaySearchMutators({
+    searchParams,
+    setSearchParams,
+    navigate,
+    isReplayStageRoute,
+  });
 
   const {
     toggleStageFullscreenWithFeedback,

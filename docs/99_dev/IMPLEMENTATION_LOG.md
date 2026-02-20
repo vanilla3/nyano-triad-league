@@ -3633,3 +3633,6 @@
 
 - 2026-02-20 WO037-step82: extracted Replay stage route derivation (/replay-stage detection, focus-route bool, stage URL generation) into apps/web/src/features/match/replayStageRouteState.ts (isReplayStagePathname, resolveReplayStageRouteState, useReplayStageRouteState) and replaced duplicated route logic in apps/web/src/pages/Replay.tsx.
 - 2026-02-20 WO037-step82 verification: pnpm.cmd -C apps/web test -- replayStageRouteState / pnpm.cmd -C apps/web lint / pnpm.cmd -C apps/web typecheck / pnpm.cmd -C apps/web build OK (sandboxed vitest failed once with spawn EPERM; rerun outside sandbox passed).
+
+- 2026-02-20 WO037-step83: extracted Replay search-param mutators from apps/web/src/pages/Replay.tsx into apps/web/src/features/match/useReplaySearchMutators.ts (setReplayBoardUi + setFocusMode) with pure helpers resolveReplayBoardUiMutation/resolveReplayFocusModeMutation.
+- 2026-02-20 WO037-step83 tests/verification: added apps/web/src/features/match/__tests__/useReplaySearchMutators.test.ts and verified pnpm.cmd -C apps/web test -- useReplaySearchMutators replayStageRouteState / pnpm.cmd -C apps/web lint / pnpm.cmd -C apps/web typecheck / pnpm.cmd -C apps/web build OK (sandboxed vitest failed once with spawn EPERM; rerun outside sandbox passed).

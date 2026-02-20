@@ -514,3 +514,5 @@
 - [x] 2026-02-20 WO037-step81: Replay stage focus UI callbacks were extracted to useReplayStageActionCallbacks.
 
 - [x] 2026-02-20 WO037-step82: Replay stage route derivation (/replay-stage detection + focus route + stage URL) was extracted to replayStageRouteState / useReplayStageRouteState.
+
+- [x] 2026-02-20 WO037-step83: Replay URL mutators (board-ui switch and focus-mode toggle) were extracted to useReplaySearchMutators with tested pure mutation helpers.
