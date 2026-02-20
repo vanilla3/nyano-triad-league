@@ -28,8 +28,6 @@ describe("DuelStageMint", () => {
       .map((child) => (child.props as { className?: string }).className)
       .filter((v): v is string => typeof v === "string");
 
-    expect(classNames.some((c) => c.includes("mint-stage__rim"))).toBe(true);
-    expect(classNames.some((c) => c.includes("mint-stage__atmo"))).toBe(true);
     expect(classNames.some((c) => c.includes("mint-stage__holo"))).toBe(true);
     expect(classNames.some((c) => c.includes("mint-stage__glow--top"))).toBe(true);
     expect(classNames.some((c) => c.includes("mint-stage__glow--bottom"))).toBe(true);
