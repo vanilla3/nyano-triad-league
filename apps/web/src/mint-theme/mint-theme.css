@@ -73,6 +73,9 @@
   --mint-motion-ease-pop: cubic-bezier(0.34, 1.56, 0.64, 1);
   --mint-motion-press-scale: 0.98;
   --mint-motion-hover-lift: -1px;
+  --mint-focus-toolbar-hit-size: 34px;
+  --mint-focus-toolbar-hit-size-coarse: 44px;
+  --mint-focus-toolbar-hit-radius: 10px;
 
   /* Z-depth tokens: sink -> float -> overlay */
   --mint-z-base: 0;
@@ -1142,8 +1145,29 @@
   color: #92400e;
 }
 
+.stage-focus-toolbar .btn,
+.stage-focus-toolbar-speed-select,
+.stage-focus-toolbar .mint-sfx-toggle {
+  touch-action: manipulation;
+}
+
+.stage-focus-toolbar .btn {
+  transform: translateZ(0);
+  will-change: transform;
+  transition-property: transform, box-shadow, border-color, background-color, color, opacity, filter;
+  transition-duration: var(--mint-motion-duration-ui);
+  transition-timing-function: var(--mint-motion-ease-standard);
+}
+
+.stage-focus-toolbar .btn:active:not(:disabled),
+.stage-focus-toolbar .btn[data-pressed="true"] {
+  transform: translateY(0) scale(var(--mint-motion-press-scale));
+  transition-duration: 0ms;
+}
+
 .stage-focus-toolbar-actions .btn {
-  min-height: 30px;
+  min-height: var(--mint-focus-toolbar-hit-size);
+  border-radius: var(--mint-focus-toolbar-hit-radius);
 }
 
 .stage-focus-toolbar-actions--replay {
@@ -1152,7 +1176,7 @@
 }
 
 .stage-focus-toolbar-actions--replay .btn {
-  min-height: 28px;
+  min-height: var(--mint-focus-toolbar-hit-size);
 }
 
 .stage-focus-toolbar-speed {
@@ -1166,12 +1190,18 @@
 }
 
 .stage-focus-toolbar-speed-select {
-  min-height: 28px;
-  border-radius: 8px;
+  min-height: var(--mint-focus-toolbar-hit-size);
+  border-radius: var(--mint-focus-toolbar-hit-radius);
   border: 1px solid rgba(148, 163, 184, 0.42);
   background: rgba(255, 255, 255, 0.92);
   padding: 0 6px;
   font-size: 12px;
+}
+
+@media (pointer: coarse) {
+  :root {
+    --mint-focus-toolbar-hit-size: var(--mint-focus-toolbar-hit-size-coarse);
+  }
 }
 
 .stage-focus-arena-shell {
@@ -2287,9 +2317,9 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 34px;
-  height: 34px;
-  border-radius: 11px;
+  width: var(--mint-focus-toolbar-hit-size);
+  height: var(--mint-focus-toolbar-hit-size);
+  border-radius: calc(var(--mint-focus-toolbar-hit-radius) + 1px);
   border: 1px solid rgba(125, 211, 252, 0.52);
   background:
     linear-gradient(165deg, rgba(255, 255, 255, 0.84), rgba(238, 250, 255, 0.7));
