@@ -110,7 +110,7 @@ describe("features/match/replayUiActions", () => {
 
     await copyReplayValueWithToast(
       {
-        label: "共有URL",
+        label: "Share URL",
         value: "https://example.invalid",
         toast,
       },
@@ -120,7 +120,7 @@ describe("features/match/replayUiActions", () => {
     );
 
     expect(writeClipboardTextSpy).toHaveBeenCalledWith("https://example.invalid");
-    expect(toast.success).toHaveBeenCalledWith("コピーしました", "共有URL");
+    expect(toast.success).toHaveBeenCalledWith("Copied", "Share URL");
     expect(toast.error).not.toHaveBeenCalled();
   });
 
@@ -133,7 +133,7 @@ describe("features/match/replayUiActions", () => {
 
     await copyReplayValueWithToast(
       {
-        label: "共有URL",
+        label: "Share URL",
         value: "https://example.invalid",
         toast,
       },
@@ -144,8 +144,9 @@ describe("features/match/replayUiActions", () => {
     );
 
     expect(toast.success).not.toHaveBeenCalled();
-    expect(toast.error).toHaveBeenCalledWith("コピー失敗", "copy failed");
+    expect(toast.error).toHaveBeenCalledWith("Copy failed", "copy failed");
   });
+
   it("creates copy helper that forwards label/value/toast", async () => {
     const toast = {
       success: vi.fn(),

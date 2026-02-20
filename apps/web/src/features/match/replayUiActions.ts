@@ -98,8 +98,8 @@ export async function copyReplayValueWithToast(
   const deps: ReplayCopyDeps = { ...DEFAULT_COPY_DEPS, ...(depsPartial ?? {}) };
   try {
     await deps.writeClipboardText(input.value);
-    input.toast.success("コピーしました", input.label);
+    input.toast.success("Copied", input.label);
   } catch (error: unknown) {
-    input.toast.error("コピー失敗", deps.errorMessage(error));
+    input.toast.error("Copy failed", deps.errorMessage(error));
   }
 }
