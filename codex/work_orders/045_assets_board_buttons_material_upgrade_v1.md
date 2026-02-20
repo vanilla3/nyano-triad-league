@@ -97,6 +97,10 @@
     - `board_tray_tex_1024_v1.png` (1024x1024)
     - `bg_paw_tile_512_v1.png` (512x512)
     - `bg_cloud_corners_16x9_v3.png` (1920x1080)
+  - Added optional P1 assets and wired usage for button-material polish:
+    - `ui_sheen_soft_512_v1.png` (512x512)
+    - `ui_rim_highlight_512_v1.png` (512x512)
+    - `apps/web/src/mint-theme/mint-theme.css`: `--mint-material-ui-sheen-url` / `--mint-material-ui-rim-url` and fallback-backed application on `.mint-share-action__btn`.
   - Verified with `pnpm.cmd lint:text` / `pnpm.cmd -C apps/web lint` / `pnpm.cmd -C apps/web typecheck` / `pnpm.cmd -C apps/web test --` / `pnpm.cmd -C apps/web build`.
 - Remaining:
   - None for WO-045 v1.

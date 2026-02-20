@@ -108,6 +108,8 @@
   --mint-material-board-overlay-url: url("/assets/gen/board_tray_tex_1024_v1.png");
   --mint-material-paw-url: url("/assets/gen/bg_paw_tile_512_v1.png");
   --mint-material-cloud-corners-url: url("/assets/gen/bg_cloud_corners_16x9_v3.png");
+  --mint-material-ui-sheen-url: url("/assets/gen/ui_sheen_soft_512_v1.png");
+  --mint-material-ui-rim-url: url("/assets/gen/ui_rim_highlight_512_v1.png");
   --mint-material-noise-fallback: repeating-linear-gradient(
     0deg,
     rgba(255, 255, 255, 0.02) 0px,
@@ -132,6 +134,15 @@
     radial-gradient(circle at 108% -8%, rgba(255, 255, 255, 0.34), transparent 40%),
     radial-gradient(circle at -6% 108%, rgba(255, 255, 255, 0.24), transparent 36%),
     radial-gradient(circle at 104% 106%, rgba(255, 255, 255, 0.22), transparent 34%);
+  --mint-material-ui-sheen-fallback: linear-gradient(
+    128deg,
+    transparent 22%,
+    rgba(255, 255, 255, 0.36) 52%,
+    transparent 74%
+  );
+  --mint-material-ui-rim-fallback:
+    radial-gradient(circle at 18% -22%, rgba(255, 255, 255, 0.34), transparent 46%),
+    radial-gradient(circle at 88% -20%, rgba(186, 230, 253, 0.28), transparent 44%);
 }
 
 
@@ -7713,7 +7724,14 @@
   border-radius: 999px;
   border-color: rgba(125, 211, 252, 0.68);
   background:
+    var(--mint-material-ui-rim-url),
+    var(--mint-material-ui-rim-fallback),
+    var(--mint-material-ui-sheen-url),
+    var(--mint-material-ui-sheen-fallback),
     linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(186, 230, 253, 0.72));
+  background-size: cover, cover, 170% 170%, 170% 170%, auto;
+  background-repeat: no-repeat;
+  background-position: center, center, 18% 10%, 18% 10%, center;
   color: #0f766e;
   font-weight: 800;
 }
@@ -7721,7 +7739,12 @@
 [data-theme="mint"] .mint-share-action__btn:hover:not(:disabled) {
   border-color: rgba(56, 189, 248, 0.82);
   background:
+    var(--mint-material-ui-rim-url),
+    var(--mint-material-ui-rim-fallback),
+    var(--mint-material-ui-sheen-url),
+    var(--mint-material-ui-sheen-fallback),
     linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(125, 211, 252, 0.72));
+  background-position: center, center, 28% 6%, 28% 6%, center;
   box-shadow: 0 10px 16px -14px rgba(14, 116, 144, 0.44);
 }
 

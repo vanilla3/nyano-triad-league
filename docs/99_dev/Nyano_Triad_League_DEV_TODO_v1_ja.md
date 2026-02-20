@@ -651,3 +651,7 @@
 - [x] 2026-02-20 WO046-step4: Replay の share 導線を Mint 規格へ統一。`replayUiHelpers` に `resolveReplayMintButtonClass` を追加し、`Replay.tsx` の共有ボタン（focus toolbar / setup / result hero）へ `mint-pressable` / `mint-hit` / `mint-share-action__btn` と `aria-label` / `title` を適用。
 
 - [x] 2026-02-20 WO046-step4 verification: `pnpm.cmd -C apps/web test -- replayUiHelpers replayUiActions replayShareLinkBuilders replayTransportState`、`pnpm.cmd lint:text`、`pnpm.cmd -C apps/web lint`、`pnpm.cmd -C apps/web typecheck`、`pnpm.cmd -C apps/web test --`（218 files / 1748 tests）、`pnpm.cmd -C apps/web build` all passed.
+
+- [x] 2026-02-20 WO045-step4: 任意P1素材 `ui_sheen_soft_512_v1.png` / `ui_rim_highlight_512_v1.png` を `apps/web/public/assets/gen` に追加し、`mint-theme.css` の `mint-share-action__btn` に asset-first + fallback で反射/リム質感を適用。
+
+- [x] 2026-02-20 WO045-step4 verification: `pnpm.cmd lint:text`、`pnpm.cmd -C apps/web lint`、`pnpm.cmd -C apps/web typecheck`、`pnpm.cmd -C apps/web test --`（218 files / 1748 tests）、`pnpm.cmd -C apps/web build` all passed.
