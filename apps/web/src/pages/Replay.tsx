@@ -54,7 +54,7 @@ import { AdvantageBadge } from "@/components/AdvantageBadge";
 import { resolveRulesetById } from "@/lib/ruleset_registry";
 import { writeClipboardText } from "@/lib/clipboard";
 import { appAbsoluteUrl, appPath, buildReplayShareUrl } from "@/lib/appUrl";
-import { computeStageBoardSizing, shouldShowStageSecondaryControls } from "@/lib/stage_layout";
+import { shouldShowStageSecondaryControls } from "@/lib/stage_layout";
 import { createSfxEngine, type SfxEngine, type SfxName } from "@/lib/sfx";
 import { readVfxQuality, writeVfxQuality, type VfxPreference } from "@/lib/local_settings";
 import { applyVfxQualityToDocument, resolveVfxQuality, type VfxQuality } from "@/lib/visual/visualSettings";
@@ -105,6 +105,7 @@ import { useMatchStageActionFeedback } from "@/features/match/useMatchStageActio
 import { useMatchStageFullscreen } from "@/features/match/useMatchStageFullscreen";
 import { useMatchStageUi } from "@/features/match/useMatchStageUi";
 import { useReplayStageFocusShortcuts } from "@/features/match/useReplayStageFocusShortcuts";
+import { useReplayStageBoardSizing } from "@/features/match/useReplayStageBoardSizing";
 
 type Mode = ReplayMode;
 
@@ -271,33 +272,11 @@ export function ReplayPage() {
   const isReplayStageRoute = /\/replay-stage$/.test(location.pathname);
   const isStageFocus = isEngineFocus && isReplayStageRoute;
   const stageViewportRef = React.useRef<HTMLDivElement>(null);
-  const [stageBoardSizing, setStageBoardSizing] = React.useState(() =>
-    computeStageBoardSizing({
-      viewportWidthPx: typeof window === "undefined" ? 1366 : window.innerWidth,
-      viewportHeightPx: typeof window === "undefined" ? 900 : window.innerHeight,
-      kind: "replay",
-    })
-  );
+  const stageBoardSizing = useReplayStageBoardSizing({
+    isReplayStageRoute,
+  });
   const engineBoardMaxWidthPx = isReplayStageRoute ? stageBoardSizing.maxWidthPx : undefined;
   const engineBoardMinHeightPx = isReplayStageRoute ? stageBoardSizing.minHeightPx : undefined;
-
-  React.useEffect(() => {
-    if (!isReplayStageRoute) return;
-
-    const updateSizing = () => {
-      setStageBoardSizing(
-        computeStageBoardSizing({
-          viewportWidthPx: window.innerWidth,
-          viewportHeightPx: window.innerHeight,
-          kind: "replay",
-        })
-      );
-    };
-
-    updateSizing();
-    window.addEventListener("resize", updateSizing);
-    return () => window.removeEventListener("resize", updateSizing);
-  }, [isReplayStageRoute]);
 
   const eventId = searchParams.get("event") ?? "";
   const event = React.useMemo(() => (eventId ? getEventById(eventId) : null), [eventId]);
