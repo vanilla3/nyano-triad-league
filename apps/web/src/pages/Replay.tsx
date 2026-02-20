@@ -10,8 +10,6 @@ import { MintIcon, type MintIconName } from "@/components/mint/icons/MintIcon";
 import type { BoardCell, CardData, MatchResultWithHistory, RulesetConfig, TranscriptV1, TurnSummary } from "@nyano/triad-engine";
 import {
   computeRulesetId,
-  resolveClassicOpenCardIndices,
-  resolveClassicSwapIndices,
   simulateMatchV1WithHistory,
   verifyReplayV1,
   ONCHAIN_CORE_TACTICS_RULESET_CONFIG_V1,
@@ -98,6 +96,7 @@ import {
   resolveReplayCompareMode,
 } from "@/features/match/replayCompareState";
 import { resolveReplayPreloadTokenIds } from "@/features/match/replayPreloadTokenIds";
+import { formatClassicOpenSlots, resolveReplayClassicState } from "@/features/match/replayClassicState";
 import {
   formatReplayToolbarHighlightStatus,
   resolveNextReplayHighlightStep,
@@ -248,10 +247,6 @@ function rulesetLabelFromUrlFallback(cfg: RulesetConfig): string {
   const tags = listClassicRuleTags(cfg.classic);
   if (tags.length === 0) return "URL fallback（classic custom: なし）";
   return `URL fallback（classic: ${tags.join(", ")}）`;
-}
-
-function formatClassicOpenSlots(indices: readonly number[]): string {
-  return indices.map((idx) => String(idx + 1)).join(", ");
 }
 
 const HIGHLIGHT_KIND_ORDER: ReplayHighlightKind[] = ["big_flip", "chain", "combo", "warning"];
@@ -811,33 +806,22 @@ protocolV1: {
   );
   const phaseInfo: ReplayPhaseInfo = React.useMemo(() => replayPhaseInfo(step, stepMax), [step, stepMax]);
   const stepStatusText = replayStepStatusText(step);
-  const replayClassicSwap = React.useMemo(() => {
-    if (!sim.ok) return null;
-    const ruleset = sim.resolvedRuleset;
-    if (!ruleset) return null;
-    return resolveClassicSwapIndices({
-      ruleset,
-      header: sim.transcript.header,
-    });
-  }, [sim]);
-  const replayClassicOpen = React.useMemo(() => {
-    if (!sim.ok) return null;
-    const ruleset = sim.resolvedRuleset;
-    if (!ruleset) return null;
-    return resolveClassicOpenCardIndices({
-      ruleset,
-      header: sim.transcript.header,
-    });
-  }, [sim]);
-  const replayOpenVisibleA = React.useMemo(() => {
-    if (!replayClassicOpen) return null;
-    return new Set<number>(replayClassicOpen.playerA);
-  }, [replayClassicOpen]);
-  const replayOpenVisibleB = React.useMemo(() => {
-    if (!replayClassicOpen) return null;
-    return new Set<number>(replayClassicOpen.playerB);
-  }, [replayClassicOpen]);
-  const shouldMaskReplayDeckSlots = replayClassicOpen?.mode === "three_open" && !replayRevealHiddenSlots;
+  const {
+    replayClassicSwap,
+    replayClassicOpen,
+    replayOpenVisibleA,
+    replayOpenVisibleB,
+    shouldMaskReplayDeckSlots,
+  } = React.useMemo(
+    () =>
+      resolveReplayClassicState({
+        simOk: sim.ok,
+        ruleset: sim.ok ? sim.resolvedRuleset : null,
+        header: sim.ok ? sim.transcript.header : null,
+        replayRevealHiddenSlots,
+      }),
+    [sim, replayRevealHiddenSlots],
+  );
 
   React.useEffect(() => {
     if (canPlay || !isPlaying) return;

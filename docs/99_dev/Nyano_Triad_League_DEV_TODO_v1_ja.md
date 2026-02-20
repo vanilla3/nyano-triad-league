@@ -536,3 +536,5 @@
 - [x] 2026-02-20 WO037-step92: Replay compare-mode/diverged-state derivation was extracted to replayCompareState helpers with tests.
 
 - [x] 2026-02-20 WO037-step93: Replay preload token-id derivation was extracted to replayPreloadTokenIds helper with order-preserving dedupe tests.
+
+- [x] 2026-02-20 WO037-step94: Replay classic open/swap visibility state was consolidated into replayClassicState helper (including slot-label formatter).
