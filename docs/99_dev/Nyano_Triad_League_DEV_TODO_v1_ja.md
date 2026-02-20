@@ -677,3 +677,5 @@
 - [x] 2026-02-20 WO006-followup-7 verification: `pnpm.cmd lint:text`, `pnpm.cmd -C apps/web lint`, `pnpm.cmd -C apps/web typecheck`, and `pnpm.cmd -C apps/web build` all passed.
 - [x] 2026-02-20 WO008-followup-8: replaced Home onboarding placeholder status copy (`TODO` / `DONE` / `AUTO`) with production-facing Japanese labels (`未完了` / `完了` / `自動`) in `apps/web/src/pages/Home.tsx`.
 - [x] 2026-02-20 WO008-followup-8 verification: `pnpm.cmd lint:text`, `pnpm.cmd -C apps/web lint`, `pnpm.cmd -C apps/web typecheck`, and `pnpm.cmd -C apps/web build` all passed.
+- [x] 2026-02-20 WO039-followup-9: normalized the remaining hard-coded transition timings in `apps/web/src/mint-theme/mint-theme.css` (`mint-nyano-reaction`, `mint-drawer-backdrop`, `mint-drawer`, `mint-battle-hud__progress-fill`, `mint-duel-card`) to shared motion tokens (`--mint-motion-duration-pop`, `--mint-motion-ease-standard`, `--mint-motion-ease-pop`).
+- [x] 2026-02-20 WO039-followup-9 verification: `pnpm.cmd lint:text`, `pnpm.cmd -C apps/web lint`, `pnpm.cmd -C apps/web typecheck`, and `pnpm.cmd -C apps/web build` all passed.

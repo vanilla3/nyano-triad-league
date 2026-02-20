@@ -377,7 +377,11 @@
     radial-gradient(circle at 24% 16%, rgba(255, 255, 255, 0.58), transparent 38%),
     linear-gradient(168deg, rgba(255, 255, 255, 0.94), rgba(241, 245, 249, 0.86));
   overflow: hidden;
-  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease, background 0.2s ease;
+  transition:
+    transform var(--mint-motion-duration-md) var(--mint-motion-ease-standard),
+    box-shadow var(--mint-motion-duration-md) var(--mint-motion-ease-standard),
+    border-color var(--mint-motion-duration-md) var(--mint-motion-ease-standard),
+    background var(--mint-motion-duration-md) var(--mint-motion-ease-standard);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -697,7 +701,11 @@
   background: var(--mint-surface);
   padding: 4px;
   cursor: pointer;
-  transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+  transition:
+    transform var(--mint-motion-duration-md) var(--mint-motion-ease-pop),
+    box-shadow var(--mint-motion-duration-md) var(--mint-motion-ease-pop),
+    border-color var(--mint-motion-duration-md) var(--mint-motion-ease-pop),
+    filter var(--mint-motion-duration-md) var(--mint-motion-ease-pop);
   flex-shrink: 0;
   /* Subtle depth even at rest */
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
@@ -1662,7 +1670,11 @@
   font-weight: 700;
   font-family: 'Nunito', sans-serif;
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition:
+    background var(--mint-motion-duration-fast) var(--mint-motion-ease-standard),
+    box-shadow var(--mint-motion-duration-fast) var(--mint-motion-ease-standard),
+    transform var(--mint-motion-duration-fast) var(--mint-motion-ease-standard),
+    color var(--mint-motion-duration-fast) var(--mint-motion-ease-standard);
   border: none;
 }
 
@@ -1822,7 +1834,12 @@
   font-size: 14px;
   font-weight: 700;
   cursor: pointer;
-  transition: all 0.15s;
+  transition:
+    background var(--mint-motion-duration-fast) var(--mint-motion-ease-standard),
+    border-color var(--mint-motion-duration-fast) var(--mint-motion-ease-standard),
+    box-shadow var(--mint-motion-duration-fast) var(--mint-motion-ease-standard),
+    transform var(--mint-motion-duration-fast) var(--mint-motion-ease-standard),
+    color var(--mint-motion-duration-fast) var(--mint-motion-ease-standard);
 }
 
 .mint-result__btn:hover {
@@ -1893,7 +1910,9 @@
     0 16px 30px -24px rgba(2, 6, 23, 0.55),
     0 0 0 1px rgba(125, 211, 252, 0.24),
     inset 0 1px 0 rgba(255, 255, 255, 0.18);
-  transition: opacity 0.3s ease, transform 0.3s ease;
+  transition:
+    opacity var(--mint-motion-duration-pop) var(--mint-motion-ease-standard),
+    transform var(--mint-motion-duration-pop) var(--mint-motion-ease-standard);
 }
 
 .mint-nyano-reaction--visible {
@@ -2227,7 +2246,12 @@
   box-shadow:
     0 8px 18px -14px rgba(14, 116, 144, 0.7),
     inset 0 1px 0 rgba(255, 255, 255, 0.72);
-  transition: background 0.2s, border-color 0.2s, transform 0.2s, box-shadow 0.2s, color 0.2s;
+  transition:
+    background var(--mint-motion-duration-md) var(--mint-motion-ease-standard),
+    border-color var(--mint-motion-duration-md) var(--mint-motion-ease-standard),
+    transform var(--mint-motion-duration-md) var(--mint-motion-ease-standard),
+    box-shadow var(--mint-motion-duration-md) var(--mint-motion-ease-standard),
+    color var(--mint-motion-duration-md) var(--mint-motion-ease-standard);
   padding: 0;
   line-height: 1;
 }
@@ -2262,7 +2286,7 @@
   -webkit-backdrop-filter: blur(2px);
   opacity: 0;
   pointer-events: none;
-  transition: opacity 0.25s ease;
+  transition: opacity var(--mint-motion-duration-pop) var(--mint-motion-ease-standard);
 }
 
 .mint-drawer-backdrop--open {
@@ -2284,7 +2308,7 @@
   border-left: 1px solid var(--mint-accent-muted);
   box-shadow: -4px 0 24px rgba(0, 0, 0, 0.08);
   transform: translateX(100%);
-  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  transition: transform var(--mint-motion-duration-pop) var(--mint-motion-ease-pop);
   display: flex;
   flex-direction: column;
   font-family: 'Nunito', system-ui, sans-serif;
@@ -2321,7 +2345,9 @@
   cursor: pointer;
   font-size: 14px;
   color: var(--mint-text-secondary);
-  transition: background 0.2s;
+  transition:
+    background var(--mint-motion-duration-md) var(--mint-motion-ease-standard),
+    color var(--mint-motion-duration-md) var(--mint-motion-ease-standard);
   padding: 0;
 }
 
@@ -2351,7 +2377,11 @@
   cursor: pointer;
   font-size: 18px;
   color: var(--mint-text-secondary);
-  transition: background 0.2s, border-color 0.2s;
+  transition:
+    background var(--mint-motion-duration-md) var(--mint-motion-ease-standard),
+    border-color var(--mint-motion-duration-md) var(--mint-motion-ease-standard),
+    transform var(--mint-motion-duration-md) var(--mint-motion-ease-standard),
+    box-shadow var(--mint-motion-duration-md) var(--mint-motion-ease-standard);
   padding: 0;
   line-height: 1;
 }
@@ -2397,7 +2427,7 @@
   box-shadow:
     0 1px 4px rgba(0, 0, 0, 0.08),
     inset 0 1px 0 rgba(255, 255, 255, 0.9);
-  transition: box-shadow 0.2s ease;
+  transition: box-shadow var(--mint-motion-duration-md) var(--mint-motion-ease-standard);
 }
 
 .mint-cell--owner-a .mint-compact-card {
@@ -2914,7 +2944,7 @@
   border-radius: 999px;
   background: linear-gradient(90deg, #22d3ee 0%, #34d399 100%);
   box-shadow: 0 0 10px rgba(20, 184, 166, 0.34);
-  transition: width 0.3s ease;
+  transition: width var(--mint-motion-duration-pop) var(--mint-motion-ease-standard);
 }
 
 .mint-battle-hud__progress-fill::after {
@@ -3231,7 +3261,10 @@
   box-shadow:
     0 10px 18px -12px rgba(2, 6, 23, 0.9),
     inset 0 1px 0 rgba(255, 255, 255, 0.24);
-  transition: box-shadow 0.25s ease, border-color 0.25s ease, transform 0.25s ease;
+  transition:
+    box-shadow var(--mint-motion-duration-pop) var(--mint-motion-ease-standard),
+    border-color var(--mint-motion-duration-pop) var(--mint-motion-ease-standard),
+    transform var(--mint-motion-duration-pop) var(--mint-motion-ease-standard);
 }
 
 .mint-duel-card::before {
@@ -3565,7 +3598,7 @@
 /* Hover lift with spring feel */
 .card-mini-duel:hover {
   transform: translateY(-2px) scale(1.03);
-  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+  transition: transform var(--mint-motion-duration-md) var(--mint-motion-ease-pop);
 }
 
 /* Deck preview: larger cards in 5-col grid */
