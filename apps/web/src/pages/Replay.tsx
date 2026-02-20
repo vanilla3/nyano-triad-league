@@ -106,6 +106,7 @@ import { useReplayStageRouteState } from "@/features/match/replayStageRouteState
 import { useReplaySearchMutators } from "@/features/match/useReplaySearchMutators";
 import { useReplayStepModeUrlSync } from "@/features/match/useReplayStepModeUrlSync";
 import { useReplayEngineFocusGuard } from "@/features/match/useReplayEngineFocusGuard";
+import { useReplayBroadcastToggle } from "@/features/match/useReplayBroadcastToggle";
 
 type Mode = ReplayMode;
 
@@ -591,13 +592,11 @@ protocolV1: {
     [sim, step, event?.id, event?.title, eventId, toast]
   );
 
-  const setBroadcastOverlayWithUrl = (nextOn: boolean) => {
-    setBroadcastOverlay(nextOn);
-    const next = new URLSearchParams(searchParams);
-    if (nextOn) next.set("broadcast", "1");
-    else next.delete("broadcast");
-    setSearchParams(next, { replace: true });
-  };
+  const { setBroadcastOverlayWithUrl } = useReplayBroadcastToggle({
+    searchParams,
+    setSearchParams,
+    setBroadcastOverlay,
+  });
 
   React.useEffect(() => {
     if (!broadcastOverlay) return;

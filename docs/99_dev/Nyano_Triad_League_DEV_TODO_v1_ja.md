@@ -520,3 +520,5 @@
 - [x] 2026-02-20 WO037-step84: Replay share URL mode/step sync effect was extracted to useReplayStepModeUrlSync with tested pure mutation helper.
 
 - [x] 2026-02-20 WO037-step85: Replay non-engine focus auto-clear effect was extracted to useReplayEngineFocusGuard with tested pure mutation helper.
+
+- [x] 2026-02-20 WO037-step86: Replay broadcast toggle URL sync was extracted to useReplayBroadcastToggle with tested pure mutation helper.
