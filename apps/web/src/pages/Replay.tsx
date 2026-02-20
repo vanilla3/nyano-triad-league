@@ -1,4 +1,4 @@
-import React from "react";
+﻿import React from "react";
 import { useToast } from "@/components/Toast";
 import { Disclosure } from "@/components/Disclosure";
 import { Link, useLocation, useNavigate, useSearchParams } from "react-router-dom";
@@ -110,6 +110,10 @@ import {
   resolveReplayOverlayLastMove,
   resolveReplayOverlayLastTurnSummary,
 } from "@/features/match/replayOverlaySummary";
+import {
+  buildReplayOverlayErrorState,
+  buildReplayOverlayState,
+} from "@/features/match/replayOverlayState";
 import {
   formatReplayToolbarHighlightStatus,
   resolveNextReplayHighlightStep,
@@ -384,15 +388,13 @@ export function ReplayPage() {
       const updatedAtMs = Date.now();
       try {
         if (!sim.ok) {
-          publishOverlayState({
-            version: 1,
+          publishOverlayState(buildReplayOverlayErrorState({
             updatedAtMs,
-            mode: "replay",
             eventId: event?.id ?? (eventId || undefined),
             eventTitle: event?.title,
             error: sim.error || "リプレイが未読込です",
-          });
-          if (!opts?.silent) toast.warn("Overlay", "リプレイが未準備です");
+          }));
+          if (!opts?.silent) toast.warn("Overlay", "リプレイが未読込状態です");
           return;
         }
 
@@ -408,66 +410,29 @@ export function ReplayPage() {
         });
         const lastTurnSummary = resolveReplayOverlayLastTurnSummary(last);
 
-
-        publishOverlayState({
-          version: 1,
+        publishOverlayState(buildReplayOverlayState({
           updatedAtMs,
-          mode: "replay",
           eventId: event?.id ?? (eventId || undefined),
           eventTitle: event?.title,
-          turn: step,
-          firstPlayer: transcript.header.firstPlayer as 0 | 1,
-          playerA: transcript.header.playerA,
-          playerB: transcript.header.playerB,
-          rulesetId: transcript.header.rulesetId,
-          seasonId: transcript.header.seasonId,
-          deckA: transcript.header.deckA.map((x) => x.toString()),
-deckB: transcript.header.deckB.map((x) => x.toString()),
-protocolV1: {
-  header: {
-    version: Number(transcript.header.version),
-    rulesetId: String(transcript.header.rulesetId),
-    seasonId: Number(transcript.header.seasonId),
-    playerA: String(transcript.header.playerA),
-    playerB: String(transcript.header.playerB),
-    deckA: transcript.header.deckA.map((x) => x.toString()),
-    deckB: transcript.header.deckB.map((x) => x.toString()),
-    firstPlayer: transcript.header.firstPlayer as 0 | 1,
-    deadline: Number(transcript.header.deadline),
-    salt: String(transcript.header.salt),
-  },
-  turns: transcript.turns.slice(0, step).map((t) => ({
-    cell: Number(t.cell),
-    cardIndex: Number(t.cardIndex),
-    ...(typeof t.warningMarkCell === "number" ? { warningMarkCell: Number(t.warningMarkCell) } : {}),
-  })),
-},
-          board: res.boardHistory[step],
+          step,
+          transcript,
+          result: res,
           lastMove,
           lastTurnSummary,
-          status: {
-            finished: step >= 9,
-            winner: res.winner === "draw" ? "draw" : res.winner === 0 ? "A" : "B",
-            tilesA: Number(res.tiles.A),
-            tilesB: Number(res.tiles.B),
-            matchId: res.matchId,
-          },
-        });
+        }));
 
         if (!opts?.silent) toast.success("Overlay", "OBS overlay へ送信しました");
       } catch (e: unknown) {
-        publishOverlayState({
-          version: 1,
+        publishOverlayState(buildReplayOverlayErrorState({
           updatedAtMs,
-          mode: "replay",
           eventId: event?.id ?? (eventId || undefined),
           eventTitle: event?.title,
           error: errorMessage(e),
-        });
+        }));
         if (!opts?.silent) toast.error("Overlay", errorMessage(e));
       }
     },
-    [sim, step, event?.id, event?.title, eventId, toast]
+    [sim, step, event?.id, event?.title, eventId, toast],
   );
 
   const { setBroadcastOverlayWithUrl } = useReplayBroadcastToggle({

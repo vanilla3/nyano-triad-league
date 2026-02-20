@@ -550,3 +550,5 @@
 - [x] 2026-02-20 WO037-step99: Replay current-result selection (v1/v2/compare/resolved ruleset + label) was extracted to replayResultSelection and Replay.tsx now uses the helper.
 
 - [x] 2026-02-20 WO037-step100: Replay overlay last-move/last-turn-summary derivation was extracted to replayOverlaySummary and Replay.tsx now reuses the helper functions.
+
+- [x] 2026-02-20 WO037-step101: Replay overlay publish payload assembly was extracted to replayOverlayState helpers (error/payload/protocol snapshot) and Replay.tsx now delegates to the helper module.
