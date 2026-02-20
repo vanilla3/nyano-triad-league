@@ -1127,10 +1127,10 @@ export function ReplayPage() {
                       onShared: () => toast.success("共有しました", "Share URL"),
                     });
                   }}
-                  aria-label="Copy share URL"
-                  title="Copy share URL"
+                  aria-label="Share URL"
+                  title="Share URL"
                 >
-                  共有URLコピー
+                  共有URL
                 </button>
               ) : null}
             </div>
@@ -1250,10 +1250,10 @@ export function ReplayPage() {
                       onShared: () => toast.success("共有しました", "Share URL"),
                     });
                   }}
-                  aria-label="Copy share URL"
-                  title="Copy share URL"
+                  aria-label="Share URL"
+                  title="Share URL"
                 >
-                  共有URLをコピー
+                  共有URL
                 </button>
 
                 {eventId ? (
@@ -1469,8 +1469,8 @@ export function ReplayPage() {
                             onShared: () => toast.success("共有しました", "Share URL"),
                           });
                         }}
-                        aria-label="Copy share URL"
-                        title="Copy share URL"
+                        aria-label="Share URL"
+                        title="Share URL"
                       >
                         共有
                       </button>

@@ -34,10 +34,10 @@ export function MatchShareActionsRow(input: {
           className={buttonClassName}
           onClick={onCopyShareUrl}
           disabled={!canFinalize}
-          aria-label="Copy share URL"
-          title="Copy share URL"
+          aria-label="Share URL"
+          title="Share URL"
         >
-          Copy share URL
+          Share URL
         </button>
         <button
           className={buttonClassName}
