@@ -7,7 +7,7 @@ import { MintPageGuide } from "@/components/mint/MintPageGuide";
 import { MintPressable } from "@/components/mint/MintPressable";
 import { MintIcon, type MintIconName } from "@/components/mint/icons/MintIcon";
 
-import type { CardData, MatchResultWithHistory, RulesetConfig, TranscriptV1, TurnSummary } from "@nyano/triad-engine";
+import type { CardData, MatchResultWithHistory, RulesetConfig, TranscriptV1 } from "@nyano/triad-engine";
 import {
   simulateMatchV1WithHistory,
   verifyReplayV1,
@@ -106,6 +106,10 @@ import {
 } from "@/features/match/replayRulesetLabel";
 import { resolveReplayRulesetContext } from "@/features/match/replayRulesetContext";
 import { resolveReplayCurrentResult } from "@/features/match/replayResultSelection";
+import {
+  resolveReplayOverlayLastMove,
+  resolveReplayOverlayLastTurnSummary,
+} from "@/features/match/replayOverlaySummary";
 import {
   formatReplayToolbarHighlightStatus,
   resolveNextReplayHighlightStep,
@@ -396,46 +400,13 @@ export function ReplayPage() {
         const transcript = sim.transcript;
 
         const lastIndex = step - 1;
-        const last: TurnSummary | null = lastIndex >= 0 ? (res.turns[lastIndex] ?? null) : null;
-
-        const lastMove =
-          last && typeof last.cell === "number"
-            ? {
-                turnIndex: lastIndex,
-                by: turnPlayer(transcript.header.firstPlayer as 0 | 1, lastIndex),
-                cell: last.cell,
-                cardIndex: last.cardIndex,
-                warningMarkCell: typeof last.warningPlaced === "number" ? last.warningPlaced : null,
-              }
-            : undefined;
-
-const lastTurnSummary =
-  last
-    ? {
-        flipCount: last.flipCount,
-        comboCount: last.comboCount,
-        comboEffect: last.comboEffect ?? "none",
-        triadPlus: last.appliedBonus?.triadPlus ?? 0,
-        ignoreWarningMark: Boolean(last.appliedBonus?.ignoreWarningMark),
-        warningTriggered: Boolean(last.warningTriggered),
-        warningPlaced: typeof last.warningPlaced === "number" ? last.warningPlaced : null,
-        flips: last.flipTraces
-          ? last.flipTraces.map((f) => ({
-              from: f.from,
-              to: f.to,
-              isChain: f.isChain,
-              kind: f.kind,
-              dir: f.dir as "up" | "right" | "down" | "left" | undefined,
-              vert: f.vert as "up" | "down" | undefined,
-              horiz: f.horiz as "left" | "right" | undefined,
-              aVal: f.aVal,
-              dVal: f.dVal,
-              tieBreak: f.tieBreak,
-              winBy: f.winBy,
-            }))
-          : undefined,
-      }
-    : undefined;
+        const last = lastIndex >= 0 ? (res.turns[lastIndex] ?? null) : null;
+        const lastMove = resolveReplayOverlayLastMove({
+          last,
+          lastIndex,
+          firstPlayer: transcript.header.firstPlayer as 0 | 1,
+        });
+        const lastTurnSummary = resolveReplayOverlayLastTurnSummary(last);
 
 
         publishOverlayState({
