@@ -584,3 +584,7 @@
 - [x] 2026-02-20 WO037-step109: Replay retry/initial auto-load recovery flow was extracted to apps/web/src/features/match/replayLoadRecovery.ts (runReplayRetryLoadFlow / runReplayInitialAutoLoadFlow), and Replay.tsx now delegates retry decode branches and first-load share handling.
 
 - [x] 2026-02-20 WO037-step109: added apps/web/src/features/match/__tests__/replayLoadRecovery.test.ts and re-verified pnpm.cmd -C apps/web test -- replayLoadRecovery replayLoadAction replaySimulationState replayUiActions replayOverlayActions replayEventAttempts replayShareLinks replayCardLoaders replayOverlayState replayOverlaySummary, pnpm.cmd -C apps/web lint, pnpm.cmd -C apps/web typecheck, pnpm.cmd -C apps/web build.
+
+- [x] 2026-02-20 WO037-step110: Replay sim-state shape and builders were extracted to apps/web/src/features/match/replaySimState.ts (ReplaySimState / REPLAY_INPUT_PROMPT_ERROR / buildReplaySimErrorState / buildReplaySimSuccessState), and Replay.tsx setSim calls now use the shared builders.
+
+- [x] 2026-02-20 WO037-step110: added apps/web/src/features/match/__tests__/replaySimState.test.ts and re-verified pnpm.cmd -C apps/web test -- replaySimState replayLoadRecovery replayLoadAction replaySimulationState replayUiActions replayOverlayActions replayEventAttempts replayShareLinks replayCardLoaders replayOverlayState replayOverlaySummary, pnpm.cmd -C apps/web lint, pnpm.cmd -C apps/web typecheck, pnpm.cmd -C apps/web build.

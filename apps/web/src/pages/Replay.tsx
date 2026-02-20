@@ -7,7 +7,7 @@ import { MintPageGuide } from "@/components/mint/MintPageGuide";
 import { MintPressable } from "@/components/mint/MintPressable";
 import { MintIcon, type MintIconName } from "@/components/mint/icons/MintIcon";
 
-import type { CardData, MatchResultWithHistory, RulesetConfig, TranscriptV1 } from "@nyano/triad-engine";
+import type { MatchResultWithHistory } from "@nyano/triad-engine";
 import { BoardView } from "@/components/BoardView";
 import { BoardViewMint } from "@/components/BoardViewMint";
 import { BoardViewRPG } from "@/components/BoardViewRPG";
@@ -111,26 +111,16 @@ import { useReplayAutoplay } from "@/features/match/useReplayAutoplay";
 import { resolveReplayNyanoReactionImpact, useReplayStageImpactBurst } from "@/features/match/useReplayStageImpactBurst";
 import { STAGE_VFX_OPTIONS, formatStageVfxLabel } from "@/features/match/replayUiHelpers";
 import { runReplayInitialAutoLoadFlow, runReplayRetryLoadFlow } from "@/features/match/replayLoadRecovery";
+import {
+  REPLAY_INPUT_PROMPT_ERROR,
+  buildReplaySimErrorState,
+  buildReplaySimSuccessState,
+  type ReplaySimState,
+} from "@/features/match/replaySimState";
 
 type Mode = ReplayMode;
 
-type SimState =
-  | { ok: false; error: string }
-  | {
-      ok: true;
-      transcript: TranscriptV1;
-      cards: Map<bigint, CardData>;
-      owners: Map<bigint, `0x${string}`>;
-      currentRulesetLabel: string;
-      resolvedRuleset: RulesetConfig | null;
-      rulesetIdMismatchWarning: string | null;
-      current: MatchResultWithHistory;
-      v1: MatchResultWithHistory;
-      v2: MatchResultWithHistory;
-    };
-
 const HIGHLIGHT_KIND_ORDER: ReplayHighlightKind[] = ["big_flip", "chain", "combo", "warning"];
-const REPLAY_INPUT_PROMPT_ERROR = "transcript JSON を貼り付けて読み込んでください。";
 
 export function ReplayPage() {
   const navigate = useNavigate();
@@ -200,7 +190,7 @@ export function ReplayPage() {
   const [text, setText] = React.useState<string>(initialZ ? "" : initialTextFromT);
 
   const [loading, setLoading] = React.useState(false);
-  const [sim, setSim] = React.useState<SimState>({ ok: false, error: REPLAY_INPUT_PROMPT_ERROR });
+  const [sim, setSim] = React.useState<ReplaySimState>(buildReplaySimErrorState(REPLAY_INPUT_PROMPT_ERROR));
 
   const [step, setStep] = React.useState<number>(initialStep);
   const [isPlaying, setIsPlaying] = React.useState<boolean>(false);
@@ -395,7 +385,7 @@ export function ReplayPage() {
 
   const load = async (override?: { text?: string; mode?: Mode; step?: number }) => {
     setLoading(true);
-    setSim({ ok: false, error: "" });
+    setSim(buildReplaySimErrorState(""));
     setVerifyStatus("idle");
     try {
       const {
@@ -416,8 +406,7 @@ export function ReplayPage() {
         override,
       });
 
-      setSim({
-        ok: true,
+      setSim(buildReplaySimSuccessState({
         transcript,
         cards,
         owners,
@@ -427,17 +416,17 @@ export function ReplayPage() {
         current,
         v1,
         v2,
-      });
+      }));
       setStep(startStep);
     } catch (e: unknown) {
-      setSim({ ok: false, error: errorMessage(e) });
+      setSim(buildReplaySimErrorState(errorMessage(e)));
     } finally {
       setLoading(false);
     }
   };
 
   const setReplayError = React.useCallback((error: string) => {
-    setSim({ ok: false, error });
+    setSim(buildReplaySimErrorState(error));
   }, []);
 
   const handleRetryLoad = () => {
@@ -454,7 +443,7 @@ export function ReplayPage() {
   const handleClearShareParams = () => {
     const next = resolveReplayClearShareParamsMutation(searchParams);
     if (next) setSearchParams(next, { replace: true });
-    setSim({ ok: false, error: REPLAY_INPUT_PROMPT_ERROR });
+    setSim(buildReplaySimErrorState(REPLAY_INPUT_PROMPT_ERROR));
   };
 
   // If this page is opened via a share link (?t=... or ?z=...), auto-load once.
@@ -1259,7 +1248,7 @@ export function ReplayPage() {
                         const link = buildShareLink();
                         await copyWithToast("共有URL", link);
                       } catch (e: unknown) {
-                        setSim({ ok: false, error: errorMessage(e) });
+                        setSim(buildReplaySimErrorState(errorMessage(e)));
                       }
                     })();
                   }}
@@ -1280,7 +1269,7 @@ export function ReplayPage() {
                               await saveToMyAttempts();
                               toast.success("保存しました", "My Attempts に追加しました");
                             } catch (e: unknown) {
-                              setSim({ ok: false, error: errorMessage(e) });
+                              setSim(buildReplaySimErrorState(errorMessage(e)));
                             }
                           })();
                         }}
@@ -1477,7 +1466,7 @@ export function ReplayPage() {
                                 await saveToMyAttempts();
                                 toast.success("保存しました", "My Attempts に追加しました");
                               } catch (e: unknown) {
-                                setSim({ ok: false, error: errorMessage(e) });
+                                setSim(buildReplaySimErrorState(errorMessage(e)));
                               }
                             })();
                           }}
