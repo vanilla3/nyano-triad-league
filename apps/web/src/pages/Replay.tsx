@@ -106,6 +106,7 @@ import { useMatchStageFullscreen } from "@/features/match/useMatchStageFullscree
 import { useMatchStageUi } from "@/features/match/useMatchStageUi";
 import { useReplayStageFocusShortcuts } from "@/features/match/useReplayStageFocusShortcuts";
 import { useReplayStageBoardSizing } from "@/features/match/useReplayStageBoardSizing";
+import { useReplayStageActionCallbacks } from "@/features/match/useReplayStageActionCallbacks";
 
 type Mode = ReplayMode;
 
@@ -433,46 +434,34 @@ export function ReplayPage() {
     setSearchParams(next, { replace: true });
   }, [searchParams, setSearchParams, isReplayStageRoute, navigate]);
 
-  const toggleStageFullscreenWithFeedback = React.useCallback(() => {
-    pushStageActionFeedback(isStageFullscreen ? "全画面を終了" : "全画面を開始");
-    playReplaySfx("card_place");
-    void toggleStageFullscreen();
-  }, [isStageFullscreen, playReplaySfx, pushStageActionFeedback, toggleStageFullscreen]);
+  const {
+    toggleStageFullscreenWithFeedback,
+    toggleStageTransportWithFeedback,
+    toggleStageSetupWithFeedback,
+    toggleStagePanelsWithFeedback,
+    exitFocusModeWithFeedback,
+  } = useReplayStageActionCallbacks({
+    isStageFocus,
+    isStageFullscreen,
+    showStageTransport,
+    pushStageActionFeedback,
+    playReplaySfx,
+    toggleStageFullscreen,
+    toggleStageTransport,
+    setShowStageSetup,
+    setShowStagePanels,
+    setFocusMode,
+    enterFullscreenMessage: "全画面を開始",
+    exitFullscreenMessage: "全画面を終了",
+    hideControlsMessage: "操作を隠しました (Controls hidden)",
+    showControlsMessage: "操作を表示しました (Controls shown)",
+    setupShownMessage: "Setup shown",
+    setupHiddenMessage: "Setup hidden",
+    panelsShownMessage: "タイムラインを表示",
+    panelsHiddenMessage: "タイムラインを非表示",
+    exitFocusMessage: "フォーカスを終了します",
+  });
 
-  const toggleStageTransportWithFeedback = React.useCallback(() => {
-    pushStageActionFeedback(
-      showStageTransport ? "操作を隠しました (Controls hidden)" : "操作を表示しました (Controls shown)",
-    );
-    playReplaySfx("card_place");
-    toggleStageTransport();
-  }, [playReplaySfx, pushStageActionFeedback, showStageTransport, toggleStageTransport]);
-
-  const toggleStageSetupWithFeedback = React.useCallback(() => {
-    setShowStageSetup((prev) => {
-      const next = !prev;
-      if (isStageFocus) {
-        pushStageActionFeedback(next ? "Setup shown" : "Setup hidden");
-        playReplaySfx("card_place");
-      }
-      return next;
-    });
-  }, [isStageFocus, playReplaySfx, pushStageActionFeedback]);
-
-  const toggleStagePanelsWithFeedback = React.useCallback(() => {
-    setShowStagePanels((prev) => {
-      const next = !prev;
-      if (isStageFocus) {
-        pushStageActionFeedback(next ? "タイムラインを表示" : "タイムラインを非表示");
-        playReplaySfx("card_place");
-      }
-      return next;
-    });
-  }, [isStageFocus, playReplaySfx, pushStageActionFeedback]);
-
-  const exitFocusModeWithFeedback = React.useCallback(() => {
-    pushStageActionFeedback("フォーカスを終了します", "warn");
-    setFocusMode(false);
-  }, [pushStageActionFeedback, setFocusMode]);
 
   React.useEffect(() => {
     if (isEngine || !isFocusMode) return;
