@@ -124,6 +124,7 @@ import { useReplayBroadcastToggle } from "@/features/match/useReplayBroadcastTog
 import { resolveReplayClearShareParamsMutation, resolveReplayRetryPayload } from "@/features/match/replayShareParamActions";
 import { useReplayAutoplay } from "@/features/match/useReplayAutoplay";
 import { resolveReplayNyanoReactionImpact, useReplayStageImpactBurst } from "@/features/match/useReplayStageImpactBurst";
+import { STAGE_VFX_OPTIONS, clampInt, formatStageVfxLabel } from "@/features/match/replayUiHelpers";
 
 type Mode = ReplayMode;
 
@@ -141,24 +142,6 @@ type SimState =
       v1: MatchResultWithHistory;
       v2: MatchResultWithHistory;
     };
-
-function clampInt(n: number, min: number, max: number): number {
-  if (Number.isNaN(n)) return min;
-  return Math.max(min, Math.min(max, n));
-}
-
-const STAGE_VFX_OPTIONS: ReadonlyArray<{ value: VfxPreference; label: string }> = [
-  { value: "auto", label: "auto" },
-  { value: "off", label: "off" },
-  { value: "low", label: "low" },
-  { value: "medium", label: "medium" },
-  { value: "high", label: "high" },
-];
-
-function formatStageVfxLabel(pref: VfxPreference, resolved: VfxQuality): string {
-  if (pref === "auto") return `auto (${resolved})`;
-  return pref;
-}
 
 function rulesetLabelFromConfig(cfg: RulesetConfig): string {
   if (cfg === ONCHAIN_CORE_TACTICS_SHADOW_RULESET_CONFIG_V2) return "エンジン v2（shadow: warning無視）";
