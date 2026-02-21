@@ -1931,6 +1931,12 @@ export function MatchPage() {
   const canCommitFromFocusToolbar = !isAiTurn && draftCell !== null && draftCardIndex !== null;
   const canUndoFromFocusToolbar = !isAiTurn && turns.length > 0;
   const canManualAiMoveFromFocusToolbar = isVsNyanoAi && !aiAutoPlay && isAiTurn;
+  const stageFocusToolbarButtonClass = isStageFocusRoute
+    ? "btn btn-sm h-10 px-4 mint-pressable mint-hit"
+    : "btn btn-sm";
+  const stageFocusToolbarPrimaryButtonClass = isStageFocusRoute
+    ? "btn btn-sm btn-primary h-10 px-4 mint-pressable mint-hit"
+    : "btn btn-sm btn-primary";
 
   React.useEffect(() => {
     if (!isStageFocusRoute || typeof window === "undefined") return;
@@ -2084,7 +2090,7 @@ export function MatchPage() {
                     </select>
                   </label>
                   <button
-                    className="btn btn-sm btn-primary"
+                    className={stageFocusToolbarPrimaryButtonClass}
                     onClick={commitMove}
                     disabled={!canCommitFromFocusToolbar}
                     aria-label="Commit move from focus toolbar"
@@ -2092,7 +2098,7 @@ export function MatchPage() {
                     Commit
                   </button>
                   <button
-                    className="btn btn-sm"
+                    className={stageFocusToolbarButtonClass}
                     onClick={undoMove}
                     disabled={!canUndoFromFocusToolbar}
                     aria-label="Undo move from focus toolbar"
@@ -2101,7 +2107,7 @@ export function MatchPage() {
                   </button>
                   {canManualAiMoveFromFocusToolbar ? (
                     <button
-                      className="btn btn-sm btn-primary"
+                      className={stageFocusToolbarPrimaryButtonClass}
                       onClick={doAiMoveWithFeedback}
                       aria-label="Nyano AI move from focus toolbar"
                     >
@@ -2153,21 +2159,21 @@ export function MatchPage() {
                       {sfxMuted ? "🔇" : "🔊"}
                     </button>
                   ) : null}
-                  <button className="btn btn-sm" onClick={toggleStageFullscreenWithFeedback}>
+                  <button className={stageFocusToolbarButtonClass} onClick={toggleStageFullscreenWithFeedback}>
                     {isStageFullscreen ? "Exit Fullscreen" : "Fullscreen"}
                   </button>
-                  <button className="btn btn-sm" onClick={toggleStageControlsWithFeedback}>
+                  <button className={stageFocusToolbarButtonClass} onClick={toggleStageControlsWithFeedback}>
                     {showStageControls ? "Hide Controls" : "Show Controls"}
                   </button>
-                  <button className="btn btn-sm" onClick={toggleStageAssistWithFeedback}>
+                  <button className={stageFocusToolbarButtonClass} onClick={toggleStageAssistWithFeedback}>
                     {showStageAssist ? "Hide HUD" : "Show HUD"}
                   </button>
                 </>
               ) : null}
-              <button className="btn btn-sm" onClick={exitFocusModeWithFeedback}>
+              <button className={stageFocusToolbarButtonClass} onClick={exitFocusModeWithFeedback}>
                 Exit Focus
               </button>
-              <button className="btn btn-sm" onClick={openReplayWithFeedback} disabled={!canFinalize}>
+              <button className={stageFocusToolbarButtonClass} onClick={openReplayWithFeedback} disabled={!canFinalize}>
                 Replay
               </button>
             </div>

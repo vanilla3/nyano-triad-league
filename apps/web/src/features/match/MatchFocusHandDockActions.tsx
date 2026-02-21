@@ -46,7 +46,7 @@ export function MatchFocusHandDockActions(input: {
       </select>
 
       <button
-        className="btn btn-primary h-9 px-3 text-xs"
+        className="btn btn-primary h-9 px-3 text-xs mint-pressable mint-hit"
         onClick={onCommitMove}
         disabled={!canCommit}
         aria-label="Commit move from focus hand dock"
@@ -54,7 +54,7 @@ export function MatchFocusHandDockActions(input: {
         Commit
       </button>
       <button
-        className="btn h-9 px-3 text-xs"
+        className="btn h-9 px-3 text-xs mint-pressable mint-hit"
         onClick={onUndoMove}
         disabled={!canUndo}
         aria-label="Undo move from focus hand dock"

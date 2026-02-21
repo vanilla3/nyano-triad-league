@@ -72,6 +72,7 @@ import {
   replayStepStatusText,
   type ReplayPhaseInfo,
 } from "@/lib/replay_timeline";
+import { resolveReplayTransportState } from "@/features/match/replayTransportState";
 
 type Mode = "auto" | "v1" | "v2" | "compare";
 
@@ -881,13 +882,24 @@ protocolV1: {
     [highlights, step],
   );
   const stepProgress = replayStepProgress(step, stepMax);
-  const canStepBack = step > 0;
-  const canStepForward = step < stepMax;
-  const canPlay = sim.ok && stepMax > 0;
-  const showStageToolbarTransport = isStageFocus
-    && sim.ok
-    && showStageTransport
-    && (typeof window === "undefined" || shouldShowStageSecondaryControls(window.innerWidth));
+  const replayTransportState = resolveReplayTransportState({
+    step,
+    stepMax,
+    simOk: sim.ok,
+    isStageFocus,
+    showStageTransport,
+    viewportWidth: typeof window === "undefined" ? null : window.innerWidth,
+    resolveShouldShowStageSecondaryControls: shouldShowStageSecondaryControls,
+  });
+  const {
+    canStepBack,
+    canStepForward,
+    canPlay,
+    showStageToolbarTransport,
+    replayTransportButtonClass,
+    replayTransportPrimaryButtonClass,
+    replaySpeedSelectClass,
+  } = replayTransportState;
   const phaseInfo: ReplayPhaseInfo = React.useMemo(() => replayPhaseInfo(step, stepMax), [step, stepMax]);
   const stepStatusText = replayStepStatusText(step);
   const replayClassicSwap = React.useMemo(() => {
@@ -917,11 +929,6 @@ protocolV1: {
     return new Set<number>(replayClassicOpen.playerB);
   }, [replayClassicOpen]);
   const shouldMaskReplayDeckSlots = replayClassicOpen?.mode === "three_open" && !replayRevealHiddenSlots;
-  const replayTransportButtonClass = isStageFocus ? "btn h-10 px-4" : "btn btn-sm";
-  const replayTransportPrimaryButtonClass = isStageFocus ? "btn btn-primary h-10 px-4" : "btn btn-sm btn-primary";
-  const replaySpeedSelectClass = isStageFocus
-    ? "rounded-md border border-surface-300 bg-white h-10 px-2 text-sm"
-    : "rounded-md border border-surface-300 bg-white px-2 py-1 text-xs";
 
   React.useEffect(() => {
     if (canPlay || !isPlaying) return;
@@ -1410,7 +1417,7 @@ protocolV1: {
                     hotkeys: ← → space [ ] · F/C/S/D/Esc
                   </span>
                   <button
-                    className="btn btn-sm"
+                    className={replayTransportButtonClass}
                     onClick={jumpToStartWithFeedback}
                     disabled={!canStepBack}
                     aria-label="Replay start from focus toolbar"
@@ -1418,7 +1425,7 @@ protocolV1: {
                     start
                   </button>
                   <button
-                    className="btn btn-sm"
+                    className={replayTransportButtonClass}
                     onClick={jumpToPrevStepWithFeedback}
                     disabled={!canStepBack}
                     aria-label="Replay previous from focus toolbar"
@@ -1426,7 +1433,7 @@ protocolV1: {
                     prev
                   </button>
                   <button
-                    className="btn btn-sm btn-primary"
+                    className={replayTransportPrimaryButtonClass}
                     onClick={toggleReplayPlayWithFeedback}
                     disabled={!canPlay}
                     aria-label={isPlaying ? "Pause replay from focus toolbar" : "Play replay from focus toolbar"}
@@ -1434,7 +1441,7 @@ protocolV1: {
                     {isPlaying ? "pause" : "play"}
                   </button>
                   <button
-                    className="btn btn-sm"
+                    className={replayTransportButtonClass}
                     onClick={jumpToNextStepWithFeedback}
                     disabled={!canStepForward}
                     aria-label="Replay next from focus toolbar"
@@ -1442,7 +1449,7 @@ protocolV1: {
                     next
                   </button>
                   <button
-                    className="btn btn-sm"
+                    className={replayTransportButtonClass}
                     onClick={jumpToEndWithFeedback}
                     disabled={!canStepForward}
                     aria-label="Replay end from focus toolbar"
@@ -1450,7 +1457,7 @@ protocolV1: {
                     end
                   </button>
                   <button
-                    className="btn btn-sm"
+                    className={replayTransportButtonClass}
                     onClick={jumpToPrevHighlightWithFeedback}
                     disabled={highlights.length === 0}
                     aria-label="Previous highlight from focus toolbar"
@@ -1458,7 +1465,7 @@ protocolV1: {
                     prev hl
                   </button>
                   <button
-                    className="btn btn-sm"
+                    className={replayTransportButtonClass}
                     onClick={jumpToNextHighlightWithFeedback}
                     disabled={highlights.length === 0}
                     aria-label="Next highlight from focus toolbar"
@@ -1529,22 +1536,22 @@ protocolV1: {
                       {sfxMuted ? "🔇" : "🔊"}
                     </button>
                   ) : null}
-                  <button className="btn btn-sm" onClick={toggleStageFullscreenWithFeedback}>
+                  <button className={replayTransportButtonClass} onClick={toggleStageFullscreenWithFeedback}>
                     {isStageFullscreen ? "Exit Fullscreen" : "Fullscreen"}
                   </button>
-                  <button className="btn btn-sm" onClick={toggleStageTransportWithFeedback}>
+                  <button className={replayTransportButtonClass} onClick={toggleStageTransportWithFeedback}>
                     {showStageTransport ? "Hide controls" : "Show controls"}
                   </button>
-                  <button className="btn btn-sm" onClick={toggleStageSetupWithFeedback}>
+                  <button className={replayTransportButtonClass} onClick={toggleStageSetupWithFeedback}>
                     {showStageSetup ? "Hide setup" : "Show setup"}
                   </button>
                 </>
               ) : null}
-              <button className="btn btn-sm" onClick={exitFocusModeWithFeedback}>
+              <button className={replayTransportButtonClass} onClick={exitFocusModeWithFeedback}>
                 Exit Focus
               </button>
               {sim.ok ? (
-                <button className="btn btn-sm" onClick={() => copyWithToast("share link", buildShareLink())}>
+                <button className={replayTransportButtonClass} onClick={() => copyWithToast("share link", buildShareLink())}>
                   Copy Share
                 </button>
               ) : null}
@@ -1818,8 +1825,8 @@ protocolV1: {
           <div className="flex flex-wrap items-center justify-between gap-2">
             <div>Pixi focus needs a loaded replay. Load transcript first, or exit focus mode.</div>
             <div className="flex flex-wrap items-center gap-2">
-              <button className="btn btn-sm" onClick={() => setFocusMode(false)}>Exit Focus</button>
-              <button className="btn btn-sm btn-primary" onClick={() => load()} disabled={loading}>
+              <button className={replayTransportButtonClass} onClick={() => setFocusMode(false)}>Exit Focus</button>
+              <button className={replayTransportPrimaryButtonClass} onClick={() => load()} disabled={loading}>
                 {loading ? "Loading..." : "Load replay"}
               </button>
             </div>

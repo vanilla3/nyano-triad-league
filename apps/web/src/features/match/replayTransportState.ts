@@ -35,8 +35,8 @@ export function resolveReplayTransportState(input: ReplayTransportStateInput): R
     canStepForward,
     canPlay,
     showStageToolbarTransport,
-    replayTransportButtonClass: input.isStageFocus ? "btn h-10 px-4" : "btn btn-sm",
-    replayTransportPrimaryButtonClass: input.isStageFocus ? "btn btn-primary h-10 px-4" : "btn btn-sm btn-primary",
+    replayTransportButtonClass: input.isStageFocus ? "btn h-10 px-4 mint-pressable mint-hit" : "btn btn-sm",
+    replayTransportPrimaryButtonClass: input.isStageFocus ? "btn btn-primary h-10 px-4 mint-pressable mint-hit" : "btn btn-sm btn-primary",
     replaySpeedSelectClass: input.isStageFocus
       ? "rounded-md border border-surface-300 bg-white h-10 px-2 text-sm"
       : "rounded-md border border-surface-300 bg-white px-2 py-1 text-xs",

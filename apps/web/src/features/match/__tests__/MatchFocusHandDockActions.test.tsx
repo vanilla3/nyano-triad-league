@@ -61,6 +61,10 @@ describe("features/match/MatchFocusHandDockActions", () => {
     expect(onChangeDraftWarningMarkCell).toHaveBeenNthCalledWith(2, null);
     expect(buttons[0]?.props.disabled).toBe(false);
     expect(buttons[1]?.props.disabled).toBe(true);
+    expect(buttons[0]?.props.className).toContain("mint-pressable");
+    expect(buttons[0]?.props.className).toContain("mint-hit");
+    expect(buttons[1]?.props.className).toContain("mint-pressable");
+    expect(buttons[1]?.props.className).toContain("mint-hit");
     buttons[0]?.props.onClick();
     buttons[1]?.props.onClick();
     expect(onCommitMove).toHaveBeenCalledTimes(1);

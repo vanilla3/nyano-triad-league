@@ -47,8 +47,8 @@ describe("features/match/replayTransportState", () => {
 
     expect(hidden.showStageToolbarTransport).toBe(false);
     expect(shown.showStageToolbarTransport).toBe(true);
-    expect(hidden.replayTransportButtonClass).toBe("btn h-10 px-4");
-    expect(shown.replayTransportPrimaryButtonClass).toBe("btn btn-primary h-10 px-4");
+    expect(hidden.replayTransportButtonClass).toBe("btn h-10 px-4 mint-pressable mint-hit");
+    expect(shown.replayTransportPrimaryButtonClass).toBe("btn btn-primary h-10 px-4 mint-pressable mint-hit");
     expect(shown.replaySpeedSelectClass).toBe("rounded-md border border-surface-300 bg-white h-10 px-2 text-sm");
   });
 

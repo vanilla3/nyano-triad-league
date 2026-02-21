@@ -2548,3 +2548,31 @@
 - `pnpm.cmd -C apps/web lint` OK
 - `pnpm.cmd -C apps/web test --` OK (222 files / 1761 tests)
 - `pnpm.cmd -C apps/web build` OK
+
+## 2026-02-21 - WO043 follow-up: unify focus-action press/hit UX across Match/Replay
+
+### Why
+- WO043 baseline (`hit targets / pressed affordance`) was partially implemented, but high-frequency focus controls still mixed old `btn btn-sm` classes and did not consistently opt into `mint-pressable` + `mint-hit` feedback.
+- Replay had duplicated transport class logic in `Replay.tsx`, diverging from helper/tested state resolution.
+
+### What
+- `apps/web/src/features/match/MatchFocusHandDockActions.tsx`
+  - Added `mint-pressable mint-hit` to Commit/Undo buttons in focus hand dock actions.
+- `apps/web/src/features/match/replayTransportState.ts`
+  - Updated stage-focus transport classes to include `mint-pressable mint-hit` for both normal and primary transport buttons.
+- `apps/web/src/pages/Replay.tsx`
+  - Switched transport/focus class resolution to `resolveReplayTransportState(...)`.
+  - Reused resolved `replayTransportButtonClass` / `replayTransportPrimaryButtonClass` across focus toolbar controls and focus-empty fallback controls.
+- `apps/web/src/pages/Match.tsx`
+  - Added focus-toolbar class constants to apply `mint-pressable mint-hit` (+ 40px-height sizing) consistently across focus actions (`Commit/Undo/Nyano Move/Fullscreen/Controls/HUD/Exit/Replay`) when route is stage focus.
+- Tests:
+  - `apps/web/src/features/match/__tests__/MatchFocusHandDockActions.test.tsx`: assert `mint-pressable` / `mint-hit` presence.
+  - `apps/web/src/features/match/__tests__/replayTransportState.test.ts`: update expected class strings for stage-focus transport buttons.
+
+### Verify
+- `pnpm.cmd -C apps/web test -- MatchFocusHandDockActions replayTransportState replayUiHelpers` OK (one sandbox `spawn EPERM` retry required)
+- `pnpm.cmd lint:text` OK
+- `pnpm.cmd -C apps/web lint` OK
+- `pnpm.cmd -C apps/web typecheck` OK
+- `pnpm.cmd -C apps/web test --` OK (222 files / 1761 tests)
+- `pnpm.cmd -C apps/web build` OK
