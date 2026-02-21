@@ -107,4 +107,12 @@ describe("features/match/MatchHandInteractionArea", () => {
     expect(onSelectDraftCard).toHaveBeenCalledWith(4);
     expect(actionPanel?.props.canUndo).toBe(false);
   });
+
+  it("adds idle guidance class to hand interaction wrapper only when enabled", () => {
+    const normalTree = createTree();
+    const guidedTree = createTree({ idleGuideHand: true });
+
+    expect(normalTree.props.className).not.toContain("mint-hand-area--idle-guide");
+    expect(guidedTree.props.className).toContain("mint-hand-area--idle-guide");
+  });
 });

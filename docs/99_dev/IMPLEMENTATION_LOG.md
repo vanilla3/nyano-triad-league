@@ -2383,3 +2383,168 @@
 - `pnpm.cmd -C apps/web lint` OK
 - `pnpm.cmd -C apps/web test --` OK (221 files / 1752 tests)
 - `pnpm.cmd -C apps/web build` OK
+
+## 2026-02-21 - WO043 follow-up: reduce share-row CLS with persistent status slot
+
+### Why
+- Mint share rows switched between separate hint/ready blocks during finalize transitions, which could trigger small layout shifts and reduce perceived polish.
+
+### What
+- `apps/web/src/features/match/MatchShareActionsRow.tsx`
+  - Replaced conditional dual note rendering with one persistent status node using:
+    - `mint-share-actions__status`
+    - variant class: `mint-share-actions__hint` or `mint-share-actions__ready`
+- `apps/web/src/features/match/MatchGuestPostGamePanel.tsx`
+  - Applied the same persistent status-slot pattern.
+- `apps/web/src/styles.css`
+  - Added slot reservation rule:
+    - `.mint-share-actions__status { min-height: 38px; }`
+- Tests
+  - Updated assertions in:
+    - `apps/web/src/features/match/__tests__/MatchShareActionsRow.test.tsx`
+    - `apps/web/src/features/match/__tests__/MatchGuestPostGamePanel.test.tsx`
+  - to validate persistent slot classes across locked/ready states.
+
+### Verify
+- `pnpm.cmd lint:text` OK
+- `pnpm.cmd -C apps/web test -- MatchShareActionsRow MatchGuestPostGamePanel replayUiHelpers` OK (one sandbox `spawn EPERM` retry required)
+- `pnpm.cmd -C apps/web lint` OK
+- `pnpm.cmd -C apps/web build` OK
+- `pnpm.cmd -C apps/web test --` OK (221 files / 1753 tests)
+
+## 2026-02-21 - WO041 follow-up: Nyano cut-in de-emphasis and rare strong burst
+
+### Why
+- UX feedback asked to keep Nyano cut-in as a supporting effect, not the main actor.
+- Strong effects should remain rare and meaningful, while preserving responsiveness and readability.
+
+### What
+- `apps/web/src/components/NyanoReaction.tsx`
+  - Shortened cut-in timing to reduce visual occupation time:
+    - `high`: `burstMs 760` / `visibleMs 2800`
+    - `mid`: `burstMs 620` / `visibleMs 2500`
+    - `low`: `burstMs 500` / `visibleMs 2100`
+  - Added `showBurstBanner` guard so high-impact burst banner appears only when `vfxQuality === "high"`.
+  - Reduced mint cut-in footprint:
+    - panel padding `12x18 -> 10x14`
+    - border radius `20 -> 18`
+    - avatar size `44 -> 40`
+- `apps/web/src/mint-theme/mint-theme.css`
+  - Reduced cut-in text emphasis:
+    - `.mint-nyano-reaction__line` `clamp(18px,1.6vw,26px) -> clamp(16px,1.4vw,22px)`
+    - stage-focus override `clamp(20px,1.9vw,30px) -> clamp(18px,1.7vw,24px)`
+    - stage-focus badge font `14px -> 13px`
+- `apps/web/src/components/__tests__/NyanoReaction.timing.test.ts`
+  - Updated expected timing values to match tuned durations.
+
+### Verify
+- `pnpm.cmd lint:text` OK
+- `pnpm.cmd -C apps/web test -- NyanoReaction.timing motionTransitionTokenGuard` OK (one sandbox `spawn EPERM` retry required)
+- `pnpm.cmd -C apps/web lint` OK
+- `pnpm.cmd -C apps/web build` OK
+
+## 2026-02-21 - WO042 follow-up: idle-only next-action guidance on Home/Arena
+
+### Why
+- WO042 requires guidance to appear only during inactivity and only on primary actions, so users get direction without constant motion noise.
+- Hero CTA shimmer was always-on, which weakened the “idle-only” principle and made emphasis less meaningful.
+
+### What
+- `apps/web/src/pages/Home.tsx`
+  - Added `useIdle` integration (`timeoutMs: 3800`, disabled while quick-guide modal is open).
+  - Hero quick-play CTA now conditionally applies `home-hero__cta--idle` only when idle.
+- `apps/web/src/pages/Arena.tsx`
+  - Added `useIdle` integration (`timeoutMs: 4200`).
+  - Quick Play `Play Now` button now conditionally applies `mint-idle-attention` only when idle.
+- `apps/web/src/styles.css`
+  - Converted hero CTA shimmer from always-on to opt-in class (`home-hero__cta--idle`).
+  - Added shared idle attention animation:
+    - `@keyframes mint-idle-attention-breathe`
+    - `.mint-idle-attention`
+  - Added suppression guardrails:
+    - disable idle animations under `:root[data-vfx="off"|"low"]`
+    - disable idle animations under `prefers-reduced-motion: reduce`
+
+### Verify
+- `pnpm.cmd lint:text` OK
+- `pnpm.cmd -C apps/web typecheck` OK
+- `pnpm.cmd -C apps/web lint` OK
+- `pnpm.cmd -C apps/web build` OK
+- `pnpm.cmd -C apps/web test --` OK (221 files / 1753 tests)
+
+## 2026-02-21 - WO042 follow-up: extend idle guidance to Deck Studio primary CTA
+
+### Why
+- WO042 targets Home/Arena/Decks; after Home and Arena were covered, Deck Studio still lacked idle-only “next action” guidance.
+- Decks page has multiple controls, so guidance should stay on one primary CTA to avoid visual noise.
+
+### What
+- `apps/web/src/pages/Decks.tsx`
+  - Added `useIdle` integration (`timeoutMs: 4200`, disabled while preview is loading).
+  - Applied `mint-idle-attention` only to the `Save deck` button so the next action is clear when the user pauses.
+
+### Verify
+- `pnpm.cmd -C apps/web typecheck` OK
+- `pnpm.cmd -C apps/web lint` OK
+- `pnpm.cmd -C apps/web build` OK
+- `pnpm.cmd -C apps/web test --` OK (221 files / 1753 tests)
+
+## 2026-02-21 - WO042 follow-up: extend idle-only guidance to Match placement flow
+
+### Why
+- WO042 scope includes Match as the highest-frequency decision surface; Home/Arena/Decks guidance was in place, but Match still lacked a unified idle-only "next action" cue across hand select and board place steps.
+- Guidance must remain contextual and quiet, so animation only appears during inactivity and only on currently relevant targets.
+
+### What
+- `apps/web/src/pages/Match.tsx`
+  - Added `useIdle`-driven `stageIdleGuidance` with explicit disable guards (non-mint/rpg mode, no hand cards, AI turn, game over, drag state, active board animation, inline error).
+  - Split idle focus into two mutually exclusive hints:
+    - `idleGuideHand`: no selected card yet (guide hand selection).
+    - `idleGuideBoard`: card selected, no target cell yet (guide board placement).
+  - Wired class hooks:
+    - hand wrapper: `mint-hand-area--idle-guide`
+    - board wrapper: `mint-board--idle-guide`
+    - engine drop targets: `idleGuideDroppable`
+    - hand component prop: `idleGuide`
+- `apps/web/src/components/HandDisplayMint.tsx`
+  - Added optional `idleGuide` prop and class application (`mint-hand--idle-guide`) without behavior changes.
+- `apps/web/src/engine/components/BattleStageEngine.tsx`
+  - Added optional `idleGuideDroppable` prop and class application (`engine-drop-grid--idle-guide`) on drop grid root only.
+- `apps/web/src/mint-theme/mint-theme.css`
+  - Added Match idle cue animations for hand area, selectable board cells, and droppable cells.
+  - Added suppression guardrails for `prefers-reduced-motion` and `data-vfx="off"|"low"`.
+- `apps/web/src/features/match/__tests__/MatchHandInteractionArea.test.tsx`
+  - Added regression test to ensure hand interaction wrapper applies/removes `mint-hand-area--idle-guide` correctly.
+
+### Verify
+- `pnpm.cmd -C apps/web test -- MatchHandInteractionArea` OK (one sandbox `spawn EPERM` retry required)
+- `pnpm.cmd -C apps/web test --` OK (221 files / 1753 tests)
+- `pnpm.cmd -C apps/web typecheck` OK
+- `pnpm.cmd -C apps/web lint` OK
+- `pnpm.cmd lint:text` OK
+- `pnpm.cmd -C apps/web build` OK
+
+## 2026-02-21 - WO042 follow-up: make Match idle guidance deterministic and testable
+
+### Why
+- Match idle guidance logic had grown as inline conditions in `Match.tsx`, which made branch consistency harder to validate as follow-up polish continued.
+- Extracting these rules into pure functions reduces drift risk and makes regressions detectable without rendering the full page component.
+
+### What
+- Added `apps/web/src/features/match/matchStageIdleGuidance.ts`:
+  - `shouldDisableMatchStageIdleGuidance(...)`
+  - `resolveMatchStageIdleGuidanceTargets(...)`
+- Updated `apps/web/src/pages/Match.tsx`:
+  - Replaced inline `useIdle().disabled` condition with `shouldDisableMatchStageIdleGuidance`.
+  - Replaced inline `idleGuideHand` / `idleGuideBoard` branching with `resolveMatchStageIdleGuidanceTargets`.
+  - Kept behavior parity while centralizing logic.
+- Added `apps/web/src/features/match/__tests__/matchStageIdleGuidance.test.ts`:
+  - covers disable gating and hand/board target resolution branches.
+
+### Verify
+- `pnpm.cmd -C apps/web test -- matchStageIdleGuidance MatchHandInteractionArea` OK (one sandbox `spawn EPERM` retry required)
+- `pnpm.cmd lint:text` OK
+- `pnpm.cmd -C apps/web typecheck` OK
+- `pnpm.cmd -C apps/web lint` OK
+- `pnpm.cmd -C apps/web test --` OK (222 files / 1761 tests)
+- `pnpm.cmd -C apps/web build` OK
