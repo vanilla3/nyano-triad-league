@@ -9,6 +9,7 @@
   "scripts": {
     "test": "pnpm -C packages/triad-engine test",
     "lint": "pnpm -C apps/web lint",
+    "lint:text": "node scripts/check_text_hygiene.mjs",
     "fmt": "pnpm -C apps/web format",
     "typecheck": "pnpm -C packages/triad-engine build && pnpm -C apps/web typecheck",
     "dev:web": "pnpm -C apps/web dev",

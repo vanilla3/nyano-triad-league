@@ -2569,3 +2569,24 @@
 - `pnpm.cmd -C apps/web typecheck` OK
 - `pnpm.cmd -C apps/web test -- ruleset_registry classic_quick_presets MintRulesetPicker matchRulesetParams matchSetupParamPatches matchShareLinks urlParams useMatchReplayActions matchReplayShare replayShareLinks replayRulesetParams` OK (`13 files / 92 tests`)
 - `pnpm.cmd -C apps/web build` OK
+
+## 2026-02-21 - Roadmap hygiene follow-up: lint:text recovery and TODO rewrite
+
+### Why
+- Roadmap execution was slowed by doc-state inconsistency:
+  - `pnpm lint:text` was referenced but missing from root scripts.
+  - Active TODO file had mojibake/control/PUA contamination and was no longer reliable as an execution guide.
+
+### What
+- Added root script:
+  - `package.json` -> `"lint:text": "node scripts/check_text_hygiene.mjs"`
+- Hardened text hygiene utility:
+  - `scripts/check_text_hygiene.mjs` now accepts `--root` file paths in addition to directories.
+- Cleaned failing management docs:
+  - Replaced first heading in `codex/work_orders/007_board_stage_visual_polish.md` to remove replacement-char contamination.
+  - Backed up and rewrote active TODO snapshot:
+    - backup: `docs/99_dev/_archive/Nyano_Triad_League_DEV_TODO_v1_ja_rewrite_input_20260221.md`
+    - active: `docs/99_dev/Nyano_Triad_League_DEV_TODO_v1_ja.md`
+
+### Verify
+- `pnpm lint:text`

@@ -34,6 +34,11 @@ function parseRootsFromArgs(argv) {
 
 function walk(dir, out = []) {
   if (!fs.existsSync(dir)) return out;
+  const stat = fs.statSync(dir);
+  if (stat.isFile()) {
+    out.push(dir);
+    return out;
+  }
   const entries = fs.readdirSync(dir, { withFileTypes: true });
   for (const ent of entries) {
     const p = path.join(dir, ent.name);
