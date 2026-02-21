@@ -46,6 +46,10 @@ Detailed historical logs remain in `docs/99_dev/_archive/` and `docs/99_dev/IMPL
 - [x] Re-enable text hygiene script for file-path roots.
 - [x] Remove known replacement-character issue from WO007 header.
 - [x] Rewrite this TODO file into a clean active snapshot.
+- [x] Start Next Priority #2: Match/Replay copy quality pass (label wording consistency without E2E selector breakage).
+- [x] Continue Next Priority #2: normalize Winner/Match ID/Open-rule wording across Match/Replay panels.
+- [x] Continue Next Priority #2 (Round 3): align Replay labels (Ruleset ID / Match ID / Winner capitalization) with Match.
+- [x] Recover ExecPlan 014 readability for reliable roadmap operations.
 
 ---
 

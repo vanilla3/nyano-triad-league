@@ -2443,7 +2443,7 @@ export function MatchPage() {
                           <div className="mb-1 text-[11px] text-slate-500">
                             {classicOpenCardIndices.mode === "all_open"
                               ? "Open rule: all cards revealed"
-                              : `Open rule: slots ${formatClassicOpenSlots(classicOpenCardIndices.playerB)} revealed`}
+                              : `Open rule: slots ${formatClassicOpenSlots(classicOpenCardIndices.playerB)} are revealed`}
                           </div>
                         ) : null}
                         <div className="deck-preview-grid grid grid-cols-5 gap-2">
@@ -3042,8 +3042,8 @@ export function MatchPage() {
                     {/* Winner / Match info */}
                     {turns.length === 9 && sim.ok ? (
                       <div className="rounded-xl border p-3 text-xs" style={{ background: "var(--mint-surface-dim)", borderColor: "var(--mint-accent-muted)", color: "var(--mint-text-primary)" }}>
-                        <div>winner: <span className="font-medium">{sim.full.winner}</span> (tiles A/B = {sim.full.tiles.A}/{sim.full.tiles.B})</div>
-                        <div className="font-mono mt-1 truncate" style={{ color: "var(--mint-text-secondary)" }}>matchId: {sim.full.matchId}</div>
+                        <div>Winner: <span className="font-medium">{sim.full.winner}</span> (tiles A/B = {sim.full.tiles.A}/{sim.full.tiles.B})</div>
+                        <div className="font-mono mt-1 truncate" style={{ color: "var(--mint-text-secondary)" }}>Match ID: {sim.full.matchId}</div>
                       </div>
                     ) : (
                       <div className="rounded-xl border px-3 py-2 text-xs" style={{ background: "var(--mint-surface-dim)", borderColor: "var(--mint-accent-muted)", color: "var(--mint-text-secondary)" }}>
@@ -3054,7 +3054,7 @@ export function MatchPage() {
                     {/* Share buttons */}
                     <div className="grid gap-2">
                       <div className="flex flex-wrap items-center gap-2">
-                        <button className="btn" onClick={copyTranscriptJson} disabled={!sim.ok}>Copy JSON</button>
+                        <button className="btn" onClick={copyTranscriptJson} disabled={!sim.ok}>Copy transcript JSON</button>
                         <button className="btn" onClick={copyShareUrl} disabled={!canFinalize}>Share URL</button>
                         <button className="btn" onClick={openReplay} disabled={!canFinalize}>Replay</button>
                       </div>
@@ -3098,8 +3098,8 @@ export function MatchPage() {
                   }
                   style={isRpg ? { background: "rgba(0,0,0,0.4)", color: "#F5F0E1", border: "1px solid rgba(201,168,76,0.2)" } : undefined}
                   >
-                    <div>winner: <span className="font-medium">{sim.full.winner}</span> (tiles A/B = {sim.full.tiles.A}/{sim.full.tiles.B})</div>
-                    <div className="font-mono mt-1 truncate">matchId: {sim.full.matchId}</div>
+                    <div>Winner: <span className="font-medium">{sim.full.winner}</span> (tiles A/B = {sim.full.tiles.A}/{sim.full.tiles.B})</div>
+                    <div className="font-mono mt-1 truncate">Match ID: {sim.full.matchId}</div>
                   </div>
                 ) : (
                   <div className={
@@ -3117,7 +3117,7 @@ export function MatchPage() {
                 <div className="grid gap-2">
                   <div className="flex flex-wrap items-center gap-2">
                     <button className={isRpg ? "rpg-result__btn" : "btn"} onClick={copyTranscriptJson} disabled={!sim.ok}>
-                      Copy JSON
+                      Copy transcript JSON
                     </button>
                     <button className={isRpg ? "rpg-result__btn" : "btn"} onClick={copyShareUrl} disabled={!canFinalize}>
                       Share URL
@@ -3206,4 +3206,3 @@ export function MatchPage() {
     </div>
   );
 }
-

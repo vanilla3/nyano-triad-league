@@ -2590,3 +2590,76 @@
 
 ### Verify
 - `pnpm lint:text`
+
+## 2026-02-21 - Match/Replay copy quality pass (Next Priority #2 start)
+
+### Why
+- Match/Replay had minor wording inconsistencies in user-facing labels (capitalization and readability), which reduced polish quality.
+- We needed to improve copy quality while preserving existing E2E-sensitive labels (`Share URL`, `Replay`, `Load replay`).
+
+### What
+- Updated Match labels:
+  - `Copy JSON` -> `Copy transcript JSON` (Match side panels)
+- Updated Replay labels:
+  - `current winner` -> `Winner`
+  - `tieBreak` -> `Tie-break`
+  - `playerA deck`/`playerB deck` -> `Player A deck`/`Player B deck`
+  - `owners (read-only)` -> `Owners (read-only)`
+  - Open-rule phrasing clarified: `slots X are revealed`
+- No URL/protocol/state-shape changes.
+
+### Verify
+- `pnpm -C apps/web lint`
+- `pnpm -C apps/web test -- MatchGuestPostGamePanel replayUiHelpers`
+
+## 2026-02-21 - Match/Replay copy quality pass (round 2)
+
+### Why
+- After starting Next Priority #2, several high-visibility labels in Match/Replay still had inconsistent casing/wording.
+- We polished these without touching E2E-sensitive control labels.
+
+### What
+- `apps/web/src/pages/Match.tsx`
+  - `Winner` / `Match ID` wording unified in result panels.
+  - Classic Open helper text unified to `slots ... are revealed`.
+- `apps/web/src/pages/Replay.tsx`
+  - Previous round changes retained; no selector-sensitive labels changed.
+- Updated roadmap note in active TODO.
+
+### Verify
+- `pnpm lint:text` OK
+- `pnpm -C apps/web lint` OK (existing warnings only)
+- `pnpm -C apps/web typecheck` OK
+
+## 2026-02-21 - Match/Replay copy quality pass (round 3)
+
+### Why
+- Replay still contained mixed label styles (`rulesetId`/`matchId` lowercase) compared to Match panels.
+- We aligned visible labels for a single, share-friendly tone.
+
+### What
+- `apps/web/src/pages/Replay.tsx`
+  - `winner:` -> `Winner:`
+  - `auto (rulesetId registry/official)` -> `auto (Ruleset ID registry/official)`
+  - `Copy matchId` / toast label -> `Copy Match ID` / `Match ID`
+  - `rulesetId` -> `Ruleset ID`
+  - `classic swap/open` -> `Classic swap/open`
+  - `matchId` -> `Match ID`
+
+### Verify
+- `pnpm lint:text`
+- `pnpm -C apps/web lint`
+- `pnpm -C apps/web typecheck`
+
+## 2026-02-21 - ExecPlan 014 readability recovery
+
+### Why
+- `codex/execplans/014_uiux_polish_qa_shareworthy_v8.md` had severe encoding noise and was hard to use as an active execution tracker.
+
+### What
+- Rewrote ExecPlan 014 into a clean, readable living-document format.
+- Preserved practical status: WO-044/045/046 complete, text-hygiene/copy-pass follow-ups tracked.
+- Added explicit verification and next-action sections.
+
+### Verify
+- Open/read `codex/execplans/014_uiux_polish_qa_shareworthy_v8.md`

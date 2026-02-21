@@ -1188,7 +1188,7 @@ protocolV1: {
         <div className="flex items-center justify-between">
           <div className="text-sm font-semibold">{label}</div>
           <div className="text-xs text-slate-500">
-            winner: {formatReplayWinnerLabel(res.winner)}
+            Winner: {formatReplayWinnerLabel(res.winner)}
           </div>
         </div>
 
@@ -1618,7 +1618,7 @@ protocolV1: {
               <div className="flex flex-wrap items-center gap-2 text-xs text-slate-600">
                 <span>mode</span>
                 <select className="select w-48" value={mode} onChange={(e) => setMode(parseMode(e.target.value))}>
-                  <option value="auto">auto (rulesetId registry/official)</option>
+                  <option value="auto">auto (Ruleset ID registry/official)</option>
                   <option value="v1">engine v1</option>
                   <option value="v2">engine v2</option>
                   <option value="compare">compare</option>
@@ -1854,9 +1854,9 @@ protocolV1: {
                     <div className="flex flex-wrap items-center gap-2">
                       <button
                         className="btn btn-sm"
-                        onClick={() => copyWithToast("matchId", sim.current.matchId)}
+                        onClick={() => copyWithToast("Match ID", sim.current.matchId)}
                       >
-                        Copy matchId
+                        Copy Match ID
                       </button>
                       <button
                         className={`btn btn-sm ${verifyStatus === "ok" ? "border-emerald-400 bg-emerald-50 text-emerald-700" : verifyStatus === "mismatch" ? "btn-danger" : ""}`}
@@ -2156,29 +2156,29 @@ protocolV1: {
                     <div className={["rounded-lg border border-slate-200 bg-white p-3 text-sm", isStageFocus ? "stage-focus-side-panel" : ""].filter(Boolean).join(" ")}>
                       <div className="flex flex-wrap items-center justify-between gap-2">
                         <div className="font-medium">
-                          current winner: {formatReplayWinnerLabel(sim.current.winner)} | tiles A:{sim.current.tiles.A} / B:{sim.current.tiles.B}
+                          Winner: {formatReplayWinnerLabel(sim.current.winner)} | tiles A:{sim.current.tiles.A} / B:{sim.current.tiles.B}
                         </div>
-                        <div className="text-xs text-slate-500">tieBreak: {sim.current.tieBreak}</div>
+                        <div className="text-xs text-slate-500">Tie-break: {sim.current.tieBreak}</div>
                       </div>
 
                       <div className="mt-2 grid gap-2 text-xs text-slate-600">
                         <div>
-                          <span className="font-medium">rulesetId</span>: <code>{sim.transcript.header.rulesetId}</code>
+                          <span className="font-medium">Ruleset ID</span>: <code>{sim.transcript.header.rulesetId}</code>
                         </div>
                         {replayClassicSwap ? (
                           <div>
-                            <span className="font-medium">classic swap</span>: A{replayClassicSwap.aIndex + 1} ↔ B{replayClassicSwap.bIndex + 1}
+                            <span className="font-medium">Classic swap</span>: A{replayClassicSwap.aIndex + 1} ↔ B{replayClassicSwap.bIndex + 1}
                           </div>
                         ) : null}
                         {replayClassicOpen ? (
                           <div>
-                            <span className="font-medium">classic open</span>: {replayClassicOpen.mode === "all_open"
+                            <span className="font-medium">Classic open</span>: {replayClassicOpen.mode === "all_open"
                               ? "all cards revealed"
                               : `A[${formatClassicOpenSlots(replayClassicOpen.playerA)}] / B[${formatClassicOpenSlots(replayClassicOpen.playerB)}]`}
                           </div>
                         ) : null}
                         <div className="flex items-center gap-2">
-                          <span className="font-medium">matchId</span>: <code>{sim.current.matchId}</code>
+                          <span className="font-medium">Match ID</span>: <code>{sim.current.matchId}</code>
                           {verifyStatus === "ok" && <span className="text-emerald-600 font-semibold" title="Replay verified">Verified</span>}
                           {verifyStatus === "mismatch" && <span className="text-red-600 font-semibold" title="Replay mismatch">Mismatch</span>}
                         </div>
@@ -2262,12 +2262,12 @@ protocolV1: {
 
             <div className="card-bd grid gap-6 md:grid-cols-2">
               <div className="grid gap-2">
-                <div className="text-xs font-medium text-slate-600">playerA deck</div>
+                <div className="text-xs font-medium text-slate-600">Player A deck</div>
                 {replayClassicOpen ? (
                   <div className="text-[11px] text-slate-500">
                     {replayClassicOpen.mode === "all_open"
                       ? "Open rule: all cards revealed"
-                      : `Open rule: slots ${formatClassicOpenSlots(replayClassicOpen.playerA)} revealed`}
+                      : `Open rule: slots ${formatClassicOpenSlots(replayClassicOpen.playerA)} are revealed`}
                   </div>
                 ) : null}
                 <div className="deck-preview-grid grid grid-cols-3 gap-2 sm:grid-cols-5">
@@ -2283,12 +2283,12 @@ protocolV1: {
               </div>
 
               <div className="grid gap-2">
-                <div className="text-xs font-medium text-slate-600">playerB deck</div>
+                <div className="text-xs font-medium text-slate-600">Player B deck</div>
                 {replayClassicOpen ? (
                   <div className="text-[11px] text-slate-500">
                     {replayClassicOpen.mode === "all_open"
                       ? "Open rule: all cards revealed"
-                      : `Open rule: slots ${formatClassicOpenSlots(replayClassicOpen.playerB)} revealed`}
+                      : `Open rule: slots ${formatClassicOpenSlots(replayClassicOpen.playerB)} are revealed`}
                   </div>
                 ) : null}
                 <div className="deck-preview-grid grid grid-cols-3 gap-2 sm:grid-cols-5">
@@ -2305,7 +2305,7 @@ protocolV1: {
 
               <div className="md:col-span-2 grid gap-2 text-xs text-slate-600">
                 <div className="rounded-lg border border-slate-200 bg-white p-3">
-                  <div className="font-medium text-slate-700">owners (read-only)</div>
+                  <div className="font-medium text-slate-700">Owners (read-only)</div>
                   {shouldMaskReplayDeckSlots ? (
                     <div className="mt-2 text-[11px] text-slate-500">
                       Hidden by Three Open. Enable "Show hidden slots" to inspect full owner mapping.
