@@ -56,6 +56,7 @@ Detailed historical logs remain in `docs/99_dev/_archive/` and `docs/99_dev/IMPL
 - [x] Recover ExecPlan 014 readability for reliable roadmap operations.
 - [x] Integrate `pnpm lint:text` into CI web job and `release:check`.
 - [x] Integrate `pnpm lint:text` into root `pnpm lint` local workflow.
+- [x] Resolve remaining `apps/web lint` warnings by splitting Match setup helper exports into a dedicated utility module.
 
 ---
 

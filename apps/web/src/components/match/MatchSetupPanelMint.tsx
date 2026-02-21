@@ -6,6 +6,11 @@ import type { AiDifficulty } from "@/lib/ai/nyano_ai";
 import type { DeckV1 } from "@/lib/deck_store";
 import type { FirstPlayerResolution, FirstPlayerResolutionMode } from "@/lib/first_player_resolve";
 import type { RulesetKey } from "@/lib/ruleset_registry";
+import {
+  buildMatchSetupSummaryLine,
+  describeRulesetKey,
+  shouldOpenAdvancedSetup,
+} from "./MatchSetupPanelMint.summary";
 
 export type MatchSetupOpponentMode = "pvp" | "vs_nyano_ai";
 export type MatchSetupDataMode = "fast" | "verified";
@@ -16,84 +21,6 @@ function chipButtonClass(active: boolean): string {
     "rounded-md px-3 py-1.5 text-xs font-medium transition",
     active ? "bg-slate-900 text-white" : "text-slate-700 hover:bg-slate-100",
   ].join(" ");
-}
-
-export function describeRulesetKey(rulesetKey: RulesetKey): string {
-  switch (rulesetKey) {
-    case "v1":
-      return "v1 core+tactics";
-    case "v2":
-      return "v2 shadow+tactics";
-    case "full":
-      return "full traits+formations";
-    case "classic_plus_same":
-      return "classic plus+same";
-    case "classic_order":
-      return "classic order";
-    case "classic_chaos":
-      return "classic chaos";
-    case "classic_swap":
-      return "classic swap";
-    case "classic_all_open":
-      return "classic all open";
-    case "classic_three_open":
-      return "classic three open";
-    default:
-      return rulesetKey;
-  }
-}
-
-function describeBoardUi(ui: MatchSetupBoardUi): string {
-  if (ui === "engine") return "engine";
-  if (ui === "rpg") return "rpg";
-  return "mint";
-}
-
-export function describeFirstPlayerMode(mode: FirstPlayerResolutionMode): string {
-  switch (mode) {
-    case "manual":
-      return "manual";
-    case "mutual":
-      return "mutual";
-    case "committed_mutual_choice":
-      return "committed mutual";
-    case "seed":
-      return "seed";
-    case "commit_reveal":
-      return "commit reveal";
-    default:
-      return mode;
-  }
-}
-
-export function buildMatchSetupSummaryLine(input: {
-  deckAName: string | null;
-  deckBName: string | null;
-  isEvent: boolean;
-  rulesetKey: RulesetKey;
-  opponentMode: MatchSetupOpponentMode;
-  firstPlayerMode: FirstPlayerResolutionMode;
-  ui: MatchSetupBoardUi;
-}): string {
-  const deckA = input.deckAName ?? "Deck A: unset";
-  const deckB = input.isEvent ? "Deck B: event fixed" : input.deckBName ?? "Deck B: unset";
-  const opponent = input.opponentMode === "vs_nyano_ai" ? "Nyano AI" : "Human vs Human";
-  return [
-    deckA,
-    deckB,
-    describeRulesetKey(input.rulesetKey),
-    opponent,
-    `first=${describeFirstPlayerMode(input.firstPlayerMode)}`,
-    `board=${describeBoardUi(input.ui)}`,
-  ].join(" / ");
-}
-
-export function shouldOpenAdvancedSetup(input: {
-  firstPlayerMode: FirstPlayerResolutionMode;
-  streamMode: boolean;
-  chainCapRawParam: string | null;
-}): boolean {
-  return input.firstPlayerMode !== "manual" || input.streamMode || input.chainCapRawParam !== null;
 }
 
 type MatchSetupPanelMintProps = {

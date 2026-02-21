@@ -64,6 +64,7 @@ Follow-up continuity (post WO-046):
 - [x] Match/Replay copy quality pass round 5 complete (`matchId`/`rulesetId` casing normalization on remaining UI helper surfaces).
 - [x] Match/Replay copy quality pass round 6 complete (Replay mismatch warning copy normalized to `Ruleset ID`).
 - [x] Match/Replay copy quality pass round 7 complete (`Classic Swap/Open` capitalization alignment in Replay summary).
+- [x] `apps/web lint` warning cleanup completed for Match setup module (`react-refresh/only-export-components` resolved via helper split).
 
 ---
 

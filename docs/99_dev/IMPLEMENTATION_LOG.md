@@ -2786,3 +2786,26 @@
 
 ### Verify
 - `pnpm lint` OK（`lint:text` 実行後に web lint が継続実行されることを確認）
+
+## 2026-02-21 - Lint quality follow-up: Match setup helpers split for Fast Refresh rule
+
+### Why
+- `apps/web lint` had persistent `react-refresh/only-export-components` warnings in `MatchSetupPanelMint.tsx`.
+- The file exported non-component helper functions for testing convenience, which reduced lint signal quality.
+
+### What
+- Added `apps/web/src/components/match/MatchSetupPanelMint.summary.ts`:
+  - moved `describeRulesetKey`
+  - moved `describeFirstPlayerMode`
+  - moved `buildMatchSetupSummaryLine`
+  - moved `shouldOpenAdvancedSetup`
+- Updated `apps/web/src/components/match/MatchSetupPanelMint.tsx`:
+  - removed helper exports
+  - imported helpers from `MatchSetupPanelMint.summary.ts`
+- Updated `apps/web/src/components/match/__tests__/MatchSetupPanelMint.test.ts`:
+  - import source switched from `MatchSetupPanelMint` to `MatchSetupPanelMint.summary`
+
+### Verify
+- `pnpm lint` OK (warning-free)
+- `pnpm -C apps/web test -- MatchSetupPanelMint MintRulesetPicker` OK
+- `pnpm -C apps/web typecheck` OK
