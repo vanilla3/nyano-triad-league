@@ -2654,3 +2654,21 @@
 - `pnpm.cmd -C apps/web typecheck` OK
 - `pnpm.cmd -C apps/web test --` OK (222 files / 1763 tests)
 - `pnpm.cmd -C apps/web build` OK
+
+## 2026-02-21 - WO010 follow-up: stabilize major-flow E2E guardrail
+
+### Why
+- The in-progress `home-arena-match-replay-flow` E2E was flaky because it depended on completing nine interactive match turns in real time.
+- DEV TODO requires a durable major-flow regression guardrail (`Home -> Arena -> Match` and Replay viewing) that can run reliably in CI/local reruns.
+
+### What
+- Reworked `apps/web/e2e/home-arena-match-replay-flow.spec.ts` into a deterministic guardrail:
+  - Verifies navigation `Home -> Arena -> Match` using stable route-based locators.
+  - Confirms Match pre-result gating (`Share URL` / `Replay` disabled before finalize).
+  - Loads Replay with a deterministic transcript fixture (`z` gzip payload, `step=9`) and verifies replay UI + URL params.
+- Added local transcript encoding helper (`gzipSync` + base64url) directly in the spec to avoid runtime dependency on in-page state.
+
+### Verify
+- `pnpm.cmd -C apps/web e2e -- e2e/home-arena-match-replay-flow.spec.ts` (passed)
+- `pnpm.cmd -C apps/web lint` (passed)
+- `pnpm.cmd lint:text` (passed)
