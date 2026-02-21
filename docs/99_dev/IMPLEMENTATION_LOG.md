@@ -2771,3 +2771,18 @@
 - `pnpm -C apps/web lint` OK (existing warnings only in `MatchSetupPanelMint.tsx`)
 - `pnpm -C apps/web typecheck` OK
 - `pnpm -C apps/web build` OK
+
+## 2026-02-21 - Next Priority #1 follow-up: text hygiene in local lint flow
+
+### Why
+- `lint:text` は CI と `release:check` で有効化済みだったが、日常の `pnpm lint` 実行では自動的に走らなかった。
+- ローカル段階での早期検知を強化し、文字衛生の再発をさらに防ぐため。
+
+### What
+- `package.json`
+  - root `lint` script を更新:
+    - `pnpm -C apps/web lint`
+    - -> `pnpm lint:text && pnpm -C apps/web lint`
+
+### Verify
+- `pnpm lint` OK（`lint:text` 実行後に web lint が継続実行されることを確認）

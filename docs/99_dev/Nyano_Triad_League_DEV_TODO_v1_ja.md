@@ -55,6 +55,7 @@ Detailed historical logs remain in `docs/99_dev/_archive/` and `docs/99_dev/IMPL
 - [x] Continue Next Priority #2 (Round 7): align Replay `Classic Swap/Open` label capitalization with Match terminology.
 - [x] Recover ExecPlan 014 readability for reliable roadmap operations.
 - [x] Integrate `pnpm lint:text` into CI web job and `release:check`.
+- [x] Integrate `pnpm lint:text` into root `pnpm lint` local workflow.
 
 ---
 

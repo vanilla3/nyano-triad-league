@@ -58,6 +58,7 @@ Follow-up continuity (post WO-046):
 - [x] `pnpm lint:text` restored at root.
 - [x] text hygiene checker improved for file-root input.
 - [x] `pnpm lint:text` integrated into CI (`web` job) and `release:check`.
+- [x] `pnpm lint:text` integrated into root `pnpm lint` local flow.
 - [x] active TODO snapshot rewritten to clean readable form.
 - [x] Match/Replay copy quality pass started and continued (label normalization, no E2E selector break).
 - [x] Match/Replay copy quality pass round 5 complete (`matchId`/`rulesetId` casing normalization on remaining UI helper surfaces).
