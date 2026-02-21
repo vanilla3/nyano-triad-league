@@ -2210,8 +2210,8 @@ export function MatchPage() {
               </div>
             </div>
             <div className="flex flex-wrap items-center gap-2">
-              <Link className="btn no-underline" to="/events">All events</Link>
-              <button className="btn" onClick={clearEvent}>Leave event</button>
+              <Link className="btn no-underline mint-pressable mint-hit" to="/events">All events</Link>
+              <button className="btn mint-pressable mint-hit" onClick={clearEvent}>Leave event</button>
             </div>
           </div>
           <div className="card-bd grid gap-2 text-sm text-slate-700">
@@ -2354,10 +2354,10 @@ export function MatchPage() {
             </select>
             {isEngine ? (
               <div className="flex flex-wrap items-center gap-2">
-                <button className="btn btn-sm" onClick={() => setFocusMode(true)}>
+                <button className="btn btn-sm mint-pressable mint-hit" onClick={() => setFocusMode(true)}>
                   Enter Pixi Focus
                 </button>
-                <Link className="btn btn-sm no-underline" to={stageMatchUrl}>
+                <Link className="btn btn-sm no-underline mint-pressable mint-hit" to={stageMatchUrl}>
                   Open Stage Page
                 </Link>
               </div>
@@ -2518,7 +2518,7 @@ export function MatchPage() {
                 <div className="flex items-center gap-2">
                   <button
                     type="button"
-                    className="btn btn-sm"
+                    className="btn btn-sm mint-pressable mint-hit"
                     disabled={isEvent}
                     onClick={() => {
                       setParams({
@@ -2534,7 +2534,7 @@ export function MatchPage() {
                   </button>
                   <button
                     type="button"
-                    className="btn btn-sm"
+                    className="btn btn-sm mint-pressable mint-hit"
                     disabled={isEvent}
                     onClick={() => {
                       const commitA = deriveRevealCommitHex(commitRevealSaltParam, commitRevealAParam);
@@ -2639,7 +2639,7 @@ export function MatchPage() {
                 <div className="flex items-center gap-2">
                   <button
                     type="button"
-                    className="btn btn-sm"
+                    className="btn btn-sm mint-pressable mint-hit"
                     disabled={isEvent}
                     onClick={() => {
                       setParams({
@@ -2655,7 +2655,7 @@ export function MatchPage() {
                   </button>
                   <button
                     type="button"
-                    className="btn btn-sm"
+                    className="btn btn-sm mint-pressable mint-hit"
                     disabled={isEvent}
                     onClick={() => {
                       const commitA = deriveChoiceCommitHex({
@@ -2708,7 +2708,7 @@ export function MatchPage() {
                 <div className="flex items-center gap-2">
                   <button
                     type="button"
-                    className="btn btn-sm"
+                    className="btn btn-sm mint-pressable mint-hit"
                     disabled={isEvent}
                     onClick={() => {
                       setParams({
@@ -2743,13 +2743,13 @@ export function MatchPage() {
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
-          <button className="btn btn-primary" disabled={!canLoad || loading} onClick={loadCards}>
+          <button className="btn btn-primary mint-pressable mint-hit" disabled={!canLoad || loading} onClick={loadCards}>
             {loading ? "Loading…" : dataMode === "fast" ? "Load Cards (Fast)" : "Load Cards (Verified)"}
           </button>
-          <button className="btn" onClick={resetMatch}>Reset Match</button>
-          <button className="btn" onClick={() => setSalt(randomSalt())}>New Salt</button>
+          <button className="btn mint-pressable mint-hit" onClick={resetMatch}>Reset Match</button>
+          <button className="btn mint-pressable mint-hit" onClick={() => setSalt(randomSalt())}>New Salt</button>
           <a
-            className="btn"
+            className="btn mint-pressable mint-hit"
             href={overlayUrl}
             target="_blank"
             rel="noreferrer noopener"
@@ -2764,7 +2764,7 @@ export function MatchPage() {
             <div>{error}</div>
             {looksLikeRpcError(error) ? (
               <div className="mt-2 flex flex-wrap gap-2">
-                <Link className="btn btn-sm" to="/nyano">RPC Settings</Link>
+                <Link className="btn btn-sm mint-pressable mint-hit" to="/nyano">RPC Settings</Link>
               </div>
             ) : null}
           </div>
@@ -2811,10 +2811,10 @@ export function MatchPage() {
             </div>
             {isEngine ? (
               <div className="flex flex-wrap items-center gap-2">
-                <button className="btn btn-sm" onClick={() => setFocusMode(true)}>
+                <button className="btn btn-sm mint-pressable mint-hit" onClick={() => setFocusMode(true)}>
                   Enter Pixi Focus
                 </button>
-                <Link className="btn btn-sm no-underline" to={stageMatchUrl}>
+                <Link className="btn btn-sm no-underline mint-pressable mint-hit" to={stageMatchUrl}>
                   Open Stage Page
                 </Link>
               </div>
@@ -2840,7 +2840,7 @@ export function MatchPage() {
                   <div className="text-center text-xs text-surface-400">Loading cards...</div>
                 </div>
               ) : isGuestMode ? (
-                <button className="btn btn-primary" onClick={() => void loadCardsFromIndex()}>Start Guest Match</button>
+                <button className="btn btn-primary mint-pressable mint-hit" onClick={() => void loadCardsFromIndex()}>Start Guest Match</button>
               ) : (
                 <>まずは Match Setup でデッキを選択し、<strong>Load Cards</strong> を実行してください</>
               )}
@@ -2969,7 +2969,7 @@ export function MatchPage() {
                     </span>
                     <button
                       type="button"
-                      className="btn btn-sm"
+                      className="btn btn-sm mint-pressable mint-hit"
                       onClick={handleRetryEngineRenderer}
                       aria-label="Retry Pixi renderer"
                     >
@@ -3119,7 +3119,7 @@ export function MatchPage() {
                         </select>
                       </label>
                       <button
-                        className="btn btn-primary h-10 px-4"
+                        className="btn btn-primary h-10 px-4 mint-pressable mint-hit"
                         onClick={commitMove}
                         disabled={turns.length >= 9 || isAiTurn || draftCell === null || draftCardIndex === null}
                         aria-label="Quick commit move"
@@ -3127,7 +3127,7 @@ export function MatchPage() {
                         Commit Move
                       </button>
                       <button
-                        className="btn h-10 px-4"
+                        className="btn h-10 px-4 mint-pressable mint-hit"
                         onClick={undoMove}
                         disabled={turns.length === 0}
                         aria-label="Quick undo move"
@@ -3287,7 +3287,7 @@ export function MatchPage() {
                       </select>
 
                       <button
-                        className="btn btn-primary h-9 px-3 text-xs"
+                        className="btn btn-primary h-9 px-3 text-xs mint-pressable mint-hit"
                         onClick={commitMove}
                         disabled={isAiTurn || draftCell === null || draftCardIndex === null}
                         aria-label="Commit move from focus hand dock"
@@ -3295,7 +3295,7 @@ export function MatchPage() {
                         Commit
                       </button>
                       <button
-                        className="btn h-9 px-3 text-xs"
+                        className="btn h-9 px-3 text-xs mint-pressable mint-hit"
                         onClick={undoMove}
                         disabled={isAiTurn || turns.length === 0}
                         aria-label="Undo move from focus hand dock"
@@ -3495,9 +3495,9 @@ export function MatchPage() {
                     {/* Share buttons */}
                     <div className="grid gap-2">
                       <div className="flex flex-wrap items-center gap-2">
-                        <button className="btn" onClick={copyTranscriptJson} disabled={!sim.ok}>Copy JSON</button>
-                        <button className="btn" onClick={copyShareUrl} disabled={!canFinalize}>Share URL</button>
-                        <button className="btn" onClick={openReplay} disabled={!canFinalize}>Replay</button>
+                        <button className="btn mint-pressable mint-hit" onClick={copyTranscriptJson} disabled={!sim.ok}>Copy JSON</button>
+                        <button className="btn mint-pressable mint-hit" onClick={copyShareUrl} disabled={!canFinalize}>Share URL</button>
+                        <button className="btn mint-pressable mint-hit" onClick={openReplay} disabled={!canFinalize}>Replay</button>
                       </div>
                     </div>
 
@@ -3574,15 +3574,15 @@ export function MatchPage() {
                   <div className={["grid gap-2 rounded-lg border border-nyano-200 bg-nyano-50 p-3", isStageFocusRoute ? "stage-focus-side-panel" : ""].filter(Boolean).join(" ")}>
                     <div className="text-sm font-medium text-nyano-800">Ready for the real thing?</div>
                     <div className="flex flex-wrap gap-2">
-                      <Link className="btn btn-primary no-underline text-xs" to="/decks">Create Your Own Deck</Link>
-                      <button className="btn btn-primary text-xs" onClick={handleRematch}>
+                      <Link className="btn btn-primary no-underline text-xs mint-pressable mint-hit" to="/decks">Create Your Own Deck</Link>
+                      <button className="btn btn-primary text-xs mint-pressable mint-hit" onClick={handleRematch}>
                         Rematch (same decks)
                       </button>
-                      <button className="btn text-xs" onClick={() => { resetMatch(); void loadCardsFromIndex(); }}>
+                      <button className="btn text-xs mint-pressable mint-hit" onClick={() => { resetMatch(); void loadCardsFromIndex(); }}>
                         New Decks
                       </button>
                       <button
-                        className="btn text-xs"
+                        className="btn text-xs mint-pressable mint-hit"
                         onClick={handleSaveGuestDeck}
                         disabled={guestDeckSaved}
                       >
@@ -3591,10 +3591,10 @@ export function MatchPage() {
                     </div>
                     <div className="grid gap-2 border-t border-nyano-200 pt-2">
                       <div className="flex flex-wrap gap-2">
-                        <button className="btn text-xs" onClick={copyShareUrl} disabled={!canFinalize}>
+                        <button className="btn text-xs mint-pressable mint-hit" onClick={copyShareUrl} disabled={!canFinalize}>
                           Share URL
                         </button>
-                        <button className="btn text-xs" onClick={async () => {
+                        <button className="btn text-xs mint-pressable mint-hit" onClick={async () => {
                           try {
                             const url = buildReplayUrl(true);
                             if (!url) { toast.warn("Share", "Match not ready"); return; }
@@ -3607,7 +3607,7 @@ export function MatchPage() {
                         }} disabled={!canFinalize}>
                           Share Template
                         </button>
-                        <button className="btn text-xs" onClick={openReplay} disabled={!canFinalize}>
+                        <button className="btn text-xs mint-pressable mint-hit" onClick={openReplay} disabled={!canFinalize}>
                           Replay
                         </button>
                       </div>

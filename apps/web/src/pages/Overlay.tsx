@@ -484,16 +484,16 @@ export function OverlayPage() {
             </div>
 
             <div className="flex flex-wrap items-center gap-2">
-              <a className="btn btn-sm no-underline" href={window.location.href} target="_blank" rel="noreferrer noopener">
+              <a className="btn btn-sm no-underline mint-pressable mint-hit" href={window.location.href} target="_blank" rel="noreferrer noopener">
                 Open
               </a>
-              <Link className="btn btn-sm no-underline" to="/stream">
+              <Link className="btn btn-sm no-underline mint-pressable mint-hit" to="/stream">
                 Stream Studio
               </Link>
-              <Link className="btn btn-sm no-underline" to="/match?ui=mint">
+              <Link className="btn btn-sm no-underline mint-pressable mint-hit" to="/match?ui=mint">
                 Match
               </Link>
-              <Link className="btn btn-sm no-underline" to="/replay">
+              <Link className="btn btn-sm no-underline mint-pressable mint-hit" to="/replay">
                 Replay
               </Link>
             </div>

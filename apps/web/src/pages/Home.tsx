@@ -445,7 +445,7 @@ export function HomePage() {
                   key={d.key}
                   onClick={() => setDifficulty(d.key)}
                   className={[
-                    "px-4 py-2.5 rounded-2xl text-sm font-bold font-display transition-all",
+                    "px-4 py-2.5 rounded-2xl text-sm font-bold font-display transition-all mint-pressable mint-hit",
                     difficulty === d.key
                       ? "bg-nyano-500 text-white shadow-glow-nyano scale-105"
                       : "bg-white/15 text-white/90 backdrop-blur-sm border border-white/20 hover:bg-white/25",
@@ -464,6 +464,7 @@ export function HomePage() {
                 onClick={handleQuickPlayStart}
                 className={[
                   "home-hero__cta",
+                  "mint-pressable mint-hit",
                   heroCtaIdle ? "home-hero__cta--idle" : "",
                   "inline-flex items-center gap-3",
                   "px-10 py-4 rounded-3xl",
@@ -479,10 +480,10 @@ export function HomePage() {
 
             {/* Secondary actions */}
             <div className="flex flex-wrap items-center justify-center gap-3 mt-5">
-              <Link to="/arena" className="inline-flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-white/10 backdrop-blur-sm border border-white/20 text-white text-sm font-semibold hover:bg-white/20 transition-all no-underline">
+              <Link to="/arena" className="inline-flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-white/10 backdrop-blur-sm border border-white/20 text-white text-sm font-semibold hover:bg-white/20 transition-all no-underline mint-pressable mint-hit">
                 ⚔️ Arena
               </Link>
-              <Link to="/decks" className="inline-flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-white/10 backdrop-blur-sm border border-white/20 text-white text-sm font-semibold hover:bg-white/20 transition-all no-underline">
+              <Link to="/decks" className="inline-flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-white/10 backdrop-blur-sm border border-white/20 text-white text-sm font-semibold hover:bg-white/20 transition-all no-underline mint-pressable mint-hit">
                 🃏 Build Deck
               </Link>
             </div>
@@ -519,7 +520,7 @@ export function HomePage() {
                 ) : (
                   <span className="text-[11px] font-semibold text-surface-400">TODO</span>
                 )}
-                <button className="btn text-xs" onClick={openQuickGuide}>
+                <button className="btn text-xs mint-pressable mint-hit" onClick={openQuickGuide}>
                   ルールを開く
                 </button>
               </div>
@@ -539,7 +540,7 @@ export function HomePage() {
                 <Link
                   to={quickPlayUrl}
                   onClick={handleQuickPlayStart}
-                  className="btn btn-primary text-xs no-underline"
+                  className="btn btn-primary text-xs no-underline mint-pressable mint-hit"
                 >
                   今すぐ対戦
                 </Link>
@@ -570,7 +571,7 @@ export function HomePage() {
               </div>
             )}
             <button
-              className="btn text-xs"
+              className="btn text-xs mint-pressable mint-hit"
               onClick={() => {
                 resetOnboardingProgress();
                 refreshOnboarding();
@@ -595,7 +596,7 @@ export function HomePage() {
               <div>5. 同値はじゃんけん属性で判定（Rock/Paper/Scissors）</div>
             </div>
             <div className="mt-4 flex justify-end gap-2">
-              <button className="btn text-xs" onClick={() => setShowQuickGuide(false)}>
+              <button className="btn text-xs mint-pressable mint-hit" onClick={() => setShowQuickGuide(false)}>
                 閉じる
               </button>
             </div>
@@ -724,7 +725,7 @@ export function HomePage() {
           <summary className="cursor-pointer text-xs font-medium text-surface-500">Settings</summary>
           <div className="mt-2 flex flex-wrap gap-3">
             <button
-              className="btn text-xs"
+              className="btn text-xs mint-pressable mint-hit"
               onClick={() => {
                 resetTutorialSeen();
                 toast.success("Tutorial reset", "The tutorial will appear on your next guest match.");
@@ -733,7 +734,7 @@ export function HomePage() {
               Reset Tutorial
             </button>
             <button
-              className="btn text-xs"
+              className="btn text-xs mint-pressable mint-hit"
               onClick={() => {
                 clearGameIndexCache();
                 toast.success("Cache cleared", "Game index cache has been cleared. Card data will be re-fetched on next load.");
@@ -751,14 +752,14 @@ export function HomePage() {
                 </div>
               </div>
               <div className="flex flex-wrap gap-2">
-                <button className="btn text-xs" onClick={refreshUxStats}>
+                <button className="btn text-xs mint-pressable mint-hit" onClick={refreshUxStats}>
                   Refresh Metrics
                 </button>
-                <button className="btn text-xs" onClick={copyUxSnapshot}>
+                <button className="btn text-xs mint-pressable mint-hit" onClick={copyUxSnapshot}>
                   Copy Snapshot
                 </button>
                 <button
-                  className="btn text-xs"
+                  className="btn text-xs mint-pressable mint-hit"
                   onClick={() => {
                     clearCumulativeStats();
                     refreshUxStats();
@@ -833,7 +834,7 @@ export function HomePage() {
               <div className="flex items-center justify-between gap-2">
                 <div className="text-xs font-semibold text-surface-700">Recent Snapshots (Local)</div>
                 <button
-                  className="btn text-[11px]"
+                  className="btn text-[11px] mint-pressable mint-hit"
                   disabled={uxSnapshotHistory.length === 0}
                   onClick={() => {
                     clearUxTelemetrySnapshotHistory();

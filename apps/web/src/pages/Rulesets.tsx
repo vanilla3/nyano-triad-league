@@ -168,13 +168,13 @@ export function RulesetsPage() {
 
                   <td className="py-3 pr-3">
                     <div className="flex flex-wrap items-center gap-2">
-                      <button className="btn btn-sm" onClick={() => copyWithToast("rulesetId", r.rulesetId)}>
+                      <button className="btn btn-sm mint-pressable mint-hit" onClick={() => copyWithToast("rulesetId", r.rulesetId)}>
                         Copy rulesetId
                       </button>
-                      <button className="btn btn-sm" onClick={() => copyWithToast("configHash", r.configHash)}>
+                      <button className="btn btn-sm mint-pressable mint-hit" onClick={() => copyWithToast("configHash", r.configHash)}>
                         Copy configHash
                       </button>
-                      <button className="btn btn-sm" onClick={() => copyWithToast("uri", r.uri)}>
+                      <button className="btn btn-sm mint-pressable mint-hit" onClick={() => copyWithToast("uri", r.uri)}>
                         Copy uri
                       </button>
                     </div>

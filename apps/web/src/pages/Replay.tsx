@@ -1248,7 +1248,7 @@ protocolV1: {
             </span>
             <button
               type="button"
-              className="btn btn-sm"
+              className="btn btn-sm mint-pressable mint-hit"
               onClick={handleRetryEngineRenderer}
               aria-label="Retry Pixi renderer in replay"
             >
@@ -1579,11 +1579,11 @@ protocolV1: {
             </div>
 
             <div className="flex flex-wrap items-center gap-2">
-              <Link className="btn no-underline" to="/events">
+              <Link className="btn no-underline mint-pressable mint-hit" to="/events">
                 Events
               </Link>
               {event ? (
-                <Link className="btn btn-primary no-underline" to={`/match?event=${encodeURIComponent(event.id)}&ui=${matchUi}`}>
+                <Link className="btn btn-primary no-underline mint-pressable mint-hit" to={`/match?event=${encodeURIComponent(event.id)}&ui=${matchUi}`}>
                   Challenge again
                 </Link>
               ) : null}
@@ -1647,21 +1647,21 @@ protocolV1: {
                 ) : null}
                 {isEngine && !isEngineFocus ? (
                   <div className="flex flex-wrap items-center gap-2">
-                    <button className="btn btn-sm" onClick={() => setFocusMode(true)}>
+                    <button className="btn btn-sm mint-pressable mint-hit" onClick={() => setFocusMode(true)}>
                       Enter Pixi Focus
                     </button>
-                    <Link className="btn btn-sm no-underline" to={stageReplayUrl}>
+                    <Link className="btn btn-sm no-underline mint-pressable mint-hit" to={stageReplayUrl}>
                       Open Stage Page
                     </Link>
                   </div>
                 ) : null}
 
-                <button className="btn btn-primary" onClick={() => load()} disabled={loading}>
+                <button className="btn btn-primary mint-pressable mint-hit" onClick={() => load()} disabled={loading}>
                   {loading ? "Loading..." : "Load & replay"}
                 </button>
 
                 <button
-                  className="btn"
+                  className="btn mint-pressable mint-hit"
                   onClick={() => {
                     void (async () => {
                       try {
@@ -1681,7 +1681,7 @@ protocolV1: {
                     const saved = sim.ok ? hasEventAttempt(eventId, sim.current.matchId) : false;
                     return (
                       <button
-                        className="btn"
+                        className="btn mint-pressable mint-hit"
                         disabled={!sim.ok || saved}
                         onClick={() => {
                           (async () => {
@@ -1729,12 +1729,12 @@ protocolV1: {
                       Broadcast to overlay (sync step)
                     </label>
 
-                    <button className="btn btn-sm" onClick={() => pushOverlay()}>
+                    <button className="btn btn-sm mint-pressable mint-hit" onClick={() => pushOverlay()}>
                       Send snapshot
                     </button>
 
                     <a
-                      className="btn btn-sm no-underline"
+                      className="btn btn-sm no-underline mint-pressable mint-hit"
                       href={overlayUrl}
                       target="_blank"
                       rel="noreferrer noopener"
@@ -1743,7 +1743,7 @@ protocolV1: {
                     </a>
 
                     <button
-                      className="btn btn-sm"
+                      className="btn btn-sm mint-pressable mint-hit"
                       onClick={() => {
                         void copyWithToast("overlay URL", overlayUrl);
                       }}
@@ -1771,7 +1771,7 @@ protocolV1: {
                 </div>
                 <div className="mt-2 flex flex-wrap items-center gap-2">
                   <button
-                    className="btn btn-sm"
+                    className="btn btn-sm mint-pressable mint-hit"
                     onClick={() => {
                       void (async () => {
                         const decoded = decodeReplaySharePayload(searchParams);
@@ -1793,7 +1793,7 @@ protocolV1: {
                   </button>
                   {hasSharePayload ? (
                     <button
-                      className="btn btn-sm"
+                      className="btn btn-sm mint-pressable mint-hit"
                       onClick={() => {
                         const next = stripReplayShareParams(searchParams);
                         setSearchParams(next, { replace: true });
@@ -1803,7 +1803,7 @@ protocolV1: {
                       Clear share params
                     </button>
                   ) : null}
-                  <Link className="btn btn-sm no-underline" to="/">
+                  <Link className="btn btn-sm no-underline mint-pressable mint-hit" to="/">
                     Home
                   </Link>
                 </div>
@@ -1862,7 +1862,7 @@ protocolV1: {
                     </div>
                     <div className="flex flex-wrap items-center gap-2">
                       <button
-                        className="btn btn-sm"
+                        className="btn btn-sm mint-pressable mint-hit"
                         onClick={() => copyWithToast("matchId", sim.current.matchId)}
                       >
                         Copy matchId
@@ -1874,13 +1874,13 @@ protocolV1: {
                         {verifyStatus === "ok" ? "Verified" : verifyStatus === "mismatch" ? "Mismatch!" : "Verify"}
                       </button>
                       <button
-                        className="btn btn-sm"
+                        className="btn btn-sm mint-pressable mint-hit"
                         onClick={() => copyWithToast("transcript", stringifyWithBigInt(sim.transcript))}
                       >
                         Copy transcript
                       </button>
                       <button
-                        className="btn btn-sm btn-primary"
+                        className="btn btn-sm btn-primary mint-pressable mint-hit"
                         onClick={() => {
                           void (async () => {
                             try {
@@ -1896,7 +1896,7 @@ protocolV1: {
                       </button>
                       {eventId ? (
                         <button
-                          className="btn btn-sm"
+                          className="btn btn-sm mint-pressable mint-hit"
                           disabled={hasEventAttempt(eventId, sim.current.matchId)}
                           onClick={() => {
                             (async () => {
@@ -2194,10 +2194,10 @@ protocolV1: {
                       </div>
 
                       <div className="mt-3 flex flex-wrap items-center gap-2">
-                        <button className="btn" onClick={() => copyWithToast("transcript", stringifyWithBigInt(sim.transcript))}>
+                        <button className="btn mint-pressable mint-hit" onClick={() => copyWithToast("transcript", stringifyWithBigInt(sim.transcript))}>
                           Copy transcript JSON
                         </button>
-                        <button className="btn" onClick={() => copyWithToast("result", stringifyWithBigInt(sim.current))}>
+                        <button className="btn mint-pressable mint-hit" onClick={() => copyWithToast("result", stringifyWithBigInt(sim.current))}>
                           Copy result JSON
                         </button>
                         <button

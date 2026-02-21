@@ -1248,10 +1248,10 @@ return (
               overlayが step と一緒に追随します（解説がしやすい）。
             </div>
             <div className="mt-3 flex flex-wrap items-center gap-2">
-              <button className="btn btn-sm btn-primary" onClick={() => copy("Replay (broadcast)", replayBroadcastUrl)}>
+              <button className="btn btn-sm btn-primary mint-pressable mint-hit" onClick={() => copy("Replay (broadcast)", replayBroadcastUrl)}>
                 Copy replay (broadcast)
               </button>
-              <a className="btn btn-sm no-underline" href={replayBroadcastUrl} target="_blank" rel="noreferrer noopener">
+              <a className="btn btn-sm no-underline mint-pressable mint-hit" href={replayBroadcastUrl} target="_blank" rel="noreferrer noopener">
                 Open
               </a>
             </div>
@@ -1435,16 +1435,16 @@ return (
           </div>
         </div>
         <div className="card-bd flex flex-wrap items-center gap-2">
-          <Link className="btn no-underline" to="/events">
+          <Link className="btn no-underline mint-pressable mint-hit" to="/events">
             Events
           </Link>
-          <Link className="btn no-underline" to="/match?ui=mint">
+          <Link className="btn no-underline mint-pressable mint-hit" to="/match?ui=mint">
             Match
           </Link>
-          <Link className="btn no-underline" to="/replay">
+          <Link className="btn no-underline mint-pressable mint-hit" to="/replay">
             Replay
           </Link>
-          <a className="btn no-underline" href={overlayUrl} target="_blank" rel="noreferrer noopener">
+          <a className="btn no-underline mint-pressable mint-hit" href={overlayUrl} target="_blank" rel="noreferrer noopener">
             Overlay
           </a>
         </div>

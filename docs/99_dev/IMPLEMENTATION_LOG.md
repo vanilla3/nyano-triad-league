@@ -2576,3 +2576,53 @@
 - `pnpm.cmd -C apps/web typecheck` OK
 - `pnpm.cmd -C apps/web test --` OK (222 files / 1761 tests)
 - `pnpm.cmd -C apps/web build` OK
+
+## 2026-02-21 - WO043 follow-up: extend press/hit consistency to page-level CTAs
+
+### Why
+- WO043 already aligned stage-focus controls, but page-level flows (Home/Arena/Decks/Replay) still had mixed `btn` usage without `mint-pressable`/`mint-hit`.
+- This inconsistency weakened the 0ms press-response illusion and left some tap targets without the shared hit-area baseline.
+
+### What
+- `apps/web/src/pages/Home.tsx`
+  - Added `mint-pressable mint-hit` to hero quick-play CTA, difficulty selectors, secondary action links, and utility/settings buttons.
+- `apps/web/src/pages/Arena.tsx`
+  - Added `mint-pressable mint-hit` to quick-play/stage/event links and supporting navigation CTAs.
+- `apps/web/src/pages/Decks.tsx`
+  - Added `mint-pressable mint-hit` to save/preview/reset, strategy chips, import/export, and deck action controls.
+- `apps/web/src/pages/Replay.tsx`
+  - Added `mint-pressable mint-hit` to remaining non-focus action rows (`load/retry/share/copy/challenge/home/events` paths) so replay flow behavior matches stage-focus controls.
+
+### Verify
+- `pnpm.cmd lint:text` OK
+- `pnpm.cmd -C apps/web test -- replayUiActions replayUiHelpers replayTransportState` OK (one sandbox `spawn EPERM` retry required)
+- `pnpm.cmd -C apps/web lint` OK
+- `pnpm.cmd -C apps/web typecheck` OK
+- `pnpm.cmd -C apps/web test --` OK (222 files / 1761 tests)
+- `pnpm.cmd -C apps/web build` OK
+
+## 2026-02-21 - WO043 follow-up: complete pages-wide btn class parity
+
+### Why
+- After CTA-focused updates, several pages still had legacy `btn` class usage without `mint-pressable`/`mint-hit`, which left interaction affordance inconsistent depending on route.
+- WO043 objective is sitewide consistency, so parity had to be enforced across all page-level button/link surfaces.
+
+### What
+- Updated remaining `btn` controls to include `mint-pressable mint-hit` in:
+  - `apps/web/src/pages/Match.tsx`
+  - `apps/web/src/pages/Events.tsx`
+  - `apps/web/src/pages/Stream.tsx`
+  - `apps/web/src/pages/Overlay.tsx`
+  - `apps/web/src/pages/Nyano.tsx`
+  - `apps/web/src/pages/Playground.tsx`
+  - `apps/web/src/pages/Rulesets.tsx`
+  - `apps/web/src/pages/_design/Home.tsx`
+- Scope was class-only UX wiring (press/hit affordance); no game logic, URL/protocol, or engine behavior changes.
+
+### Verify
+- `rg -n -P 'className=\"(?=[^\"]*\\bbtn\\b)(?![^\"]*mint-pressable)[^\"]*\"' apps/web/src/pages` returned no matches (tests excluded).
+- `pnpm.cmd lint:text` OK
+- `pnpm.cmd -C apps/web lint` OK
+- `pnpm.cmd -C apps/web typecheck` OK
+- `pnpm.cmd -C apps/web test --` OK (222 files / 1761 tests)
+- `pnpm.cmd -C apps/web build` OK

@@ -33,7 +33,7 @@ export function ArenaPage() {
                     key={d}
                     onClick={() => setDifficulty(d)}
                     className={[
-                      "px-2 py-0.5 rounded-full text-xs font-medium transition-all",
+                      "px-2 py-0.5 rounded-full text-xs font-medium transition-all mint-pressable mint-hit",
                       difficulty === d
                         ? "bg-nyano-500 text-white"
                         : "bg-white text-nyano-700 border border-nyano-200 hover:bg-nyano-100",
@@ -45,10 +45,10 @@ export function ArenaPage() {
               </div>
               <div className="mt-3">
                 <div className="flex flex-wrap items-center gap-2">
-                  <Link className={["btn btn-primary no-underline", quickPlayIdle ? "mint-idle-attention" : ""].join(" ").trim()} to={quickPlayUrl}>
+                  <Link className={["btn btn-primary no-underline mint-pressable mint-hit", quickPlayIdle ? "mint-idle-attention" : ""].join(" ").trim()} to={quickPlayUrl}>
                     Play Now
                   </Link>
-                  <Link className="btn no-underline" to={quickStageUrl}>
+                  <Link className="btn no-underline mint-pressable mint-hit" to={quickStageUrl}>
                     Pixi Stage
                   </Link>
                 </div>
@@ -59,7 +59,7 @@ export function ArenaPage() {
               <div className="font-medium">1) Decks</div>
               <div className="mt-1 text-xs text-slate-600">Nyano tokenId 5枚でデッキを保存</div>
               <div className="mt-3">
-                <Link className="btn no-underline" to="/decks">
+                <Link className="btn no-underline mint-pressable mint-hit" to="/decks">
                   Decks を開く
                 </Link>
               </div>
@@ -69,7 +69,7 @@ export function ArenaPage() {
               <div className="font-medium">2) Match</div>
               <div className="mt-1 text-xs text-slate-600">ローカル対戦（ドラフト）→ transcript → Replay（Vs Nyano AIも可）</div>
               <div className="mt-3">
-                <Link className="btn btn-primary no-underline" to="/match?ui=mint">
+                <Link className="btn btn-primary no-underline mint-pressable mint-hit" to="/match?ui=mint">
                   Match を開始
                 </Link>
               </div>
@@ -79,7 +79,7 @@ export function ArenaPage() {
               <div className="font-medium">3) Replay</div>
               <div className="mt-1 text-xs text-slate-600">共有リンクから誰でも検証</div>
               <div className="mt-3">
-                <Link className="btn no-underline" to="/replay">
+                <Link className="btn no-underline mint-pressable mint-hit" to="/replay">
                   Replay を開く
                 </Link>
               </div>
@@ -89,7 +89,7 @@ export function ArenaPage() {
               <div className="font-medium">4) Playground</div>
               <div className="mt-1 text-xs text-slate-600">公式ベクタで議論の起点を固定</div>
               <div className="mt-3">
-                <Link className="btn no-underline" to="/playground">
+                <Link className="btn no-underline mint-pressable mint-hit" to="/playground">
                   Playground を開く
                 </Link>
               </div>
@@ -116,10 +116,10 @@ export function ArenaPage() {
           </p>
 
           <div className="flex flex-wrap items-center gap-2">
-            <Link className="btn btn-primary no-underline" to="/events">
+            <Link className="btn btn-primary no-underline mint-pressable mint-hit" to="/events">
               Events を開く
             </Link>
-            <Link className="btn no-underline" to="/match?event=nyano-open-challenge&ui=mint">
+            <Link className="btn no-underline mint-pressable mint-hit" to="/match?event=nyano-open-challenge&ui=mint">
               Nyano Open Challenge を開始
             </Link>
           </div>
