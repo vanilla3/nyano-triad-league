@@ -20,6 +20,7 @@ export interface HandDisplayMintProps {
   owner: PlayerIndex;
   usedIndices: Set<number>;
   selectedIndex: number | null;
+  forcedIndex?: number | null;
   onSelect?: (index: number) => void;
   disabled?: boolean;
   /** Enable desktop drag-and-drop from hand to board */
@@ -33,6 +34,7 @@ export function HandDisplayMint({
   owner,
   usedIndices,
   selectedIndex,
+  forcedIndex = null,
   onSelect,
   disabled = false,
   enableDragDrop = false,
@@ -46,12 +48,14 @@ export function HandDisplayMint({
       {cards.map((card, idx) => {
         const isUsed = usedIndices.has(idx);
         const isSelected = selectedIndex === idx;
+        const isForced = forcedIndex === idx;
         const isDisabled = isUsed || disabled;
 
         const classes = [
           "mint-hand-card",
           owner === 0 ? "mint-hand-card--a" : "mint-hand-card--b",
           isSelected && "mint-hand-card--selected",
+          isForced && "mint-hand-card--selected",
           isUsed && "mint-hand-card--used",
           enableDragDrop && !isDisabled && "mint-hand-card--draggable",
         ].filter(Boolean).join(" ");

@@ -16,7 +16,7 @@ import {
 } from "@nyano/triad-engine";
 
 /** Canonical ruleset key strings used across the application. */
-export type RulesetKey =
+export type CanonicalRulesetKey =
   | "v1"
   | "v2"
   | "full"
@@ -27,8 +27,20 @@ export type RulesetKey =
   | "classic_all_open"
   | "classic_three_open";
 
+/** Legacy/compat ruleset keys kept for URL/backward compatibility. */
+export type LegacyRulesetKey =
+  | "classic_custom"
+  | "classic_plus"
+  | "classic_same"
+  | "classic_reverse"
+  | "classic_ace_killer"
+  | "classic_type_ascend"
+  | "classic_type_descend";
+
+export type RulesetKey = CanonicalRulesetKey | LegacyRulesetKey;
+
 /** All valid ruleset keys as a readonly array. */
-export const RULESET_KEYS: readonly RulesetKey[] = [
+export const RULESET_KEYS: readonly CanonicalRulesetKey[] = [
   "v1",
   "v2",
   "full",
@@ -38,6 +50,16 @@ export const RULESET_KEYS: readonly RulesetKey[] = [
   "classic_swap",
   "classic_all_open",
   "classic_three_open",
+] as const;
+
+export const LEGACY_RULESET_KEYS: readonly LegacyRulesetKey[] = [
+  "classic_custom",
+  "classic_plus",
+  "classic_same",
+  "classic_reverse",
+  "classic_ace_killer",
+  "classic_type_ascend",
+  "classic_type_descend",
 ] as const;
 
 const CLASSIC_ORDER_RULESET_CONFIG_V2: RulesetConfig = {
@@ -80,7 +102,62 @@ const CLASSIC_THREE_OPEN_RULESET_CONFIG_V2: RulesetConfig = {
   },
 };
 
-const REGISTRY: Record<RulesetKey, RulesetConfig> = {
+const CLASSIC_CUSTOM_RULESET_CONFIG_V2: RulesetConfig = {
+  ...DEFAULT_RULESET_CONFIG_V2,
+  classic: {
+    ...DEFAULT_RULESET_CONFIG_V2.classic,
+  },
+};
+
+const CLASSIC_PLUS_RULESET_CONFIG_V2: RulesetConfig = {
+  ...DEFAULT_RULESET_CONFIG_V2,
+  classic: {
+    ...DEFAULT_RULESET_CONFIG_V2.classic,
+    plus: true,
+  },
+};
+
+const CLASSIC_SAME_RULESET_CONFIG_V2: RulesetConfig = {
+  ...DEFAULT_RULESET_CONFIG_V2,
+  classic: {
+    ...DEFAULT_RULESET_CONFIG_V2.classic,
+    same: true,
+  },
+};
+
+const CLASSIC_REVERSE_RULESET_CONFIG_V2: RulesetConfig = {
+  ...DEFAULT_RULESET_CONFIG_V2,
+  classic: {
+    ...DEFAULT_RULESET_CONFIG_V2.classic,
+    reverse: true,
+  },
+};
+
+const CLASSIC_ACE_KILLER_RULESET_CONFIG_V2: RulesetConfig = {
+  ...DEFAULT_RULESET_CONFIG_V2,
+  classic: {
+    ...DEFAULT_RULESET_CONFIG_V2.classic,
+    aceKiller: true,
+  },
+};
+
+const CLASSIC_TYPE_ASCEND_RULESET_CONFIG_V2: RulesetConfig = {
+  ...DEFAULT_RULESET_CONFIG_V2,
+  classic: {
+    ...DEFAULT_RULESET_CONFIG_V2.classic,
+    typeAscend: true,
+  },
+};
+
+const CLASSIC_TYPE_DESCEND_RULESET_CONFIG_V2: RulesetConfig = {
+  ...DEFAULT_RULESET_CONFIG_V2,
+  classic: {
+    ...DEFAULT_RULESET_CONFIG_V2.classic,
+    typeDescend: true,
+  },
+};
+
+const REGISTRY: Record<CanonicalRulesetKey, RulesetConfig> = {
   v1: ONCHAIN_CORE_TACTICS_RULESET_CONFIG_V1,
   v2: ONCHAIN_CORE_TACTICS_SHADOW_RULESET_CONFIG_V2,
   full: DEFAULT_RULESET_CONFIG_V1,
@@ -92,15 +169,44 @@ const REGISTRY: Record<RulesetKey, RulesetConfig> = {
   classic_three_open: CLASSIC_THREE_OPEN_RULESET_CONFIG_V2,
 };
 
+const LEGACY_REGISTRY: Record<LegacyRulesetKey, RulesetConfig> = {
+  classic_custom: CLASSIC_CUSTOM_RULESET_CONFIG_V2,
+  classic_plus: CLASSIC_PLUS_RULESET_CONFIG_V2,
+  classic_same: CLASSIC_SAME_RULESET_CONFIG_V2,
+  classic_reverse: CLASSIC_REVERSE_RULESET_CONFIG_V2,
+  classic_ace_killer: CLASSIC_ACE_KILLER_RULESET_CONFIG_V2,
+  classic_type_ascend: CLASSIC_TYPE_ASCEND_RULESET_CONFIG_V2,
+  classic_type_descend: CLASSIC_TYPE_DESCEND_RULESET_CONFIG_V2,
+};
+
+function isCanonicalRulesetKey(key: string): key is CanonicalRulesetKey {
+  return RULESET_KEYS.includes(key as CanonicalRulesetKey);
+}
+
+function isLegacyRulesetKey(key: string): key is LegacyRulesetKey {
+  return LEGACY_RULESET_KEYS.includes(key as LegacyRulesetKey);
+}
+
+const ALL_RULESET_KEYS: readonly RulesetKey[] = [
+  ...RULESET_KEYS,
+  ...LEGACY_RULESET_KEYS,
+] as const;
+
 const REGISTRY_BY_RULESET_ID = new Map<string, RulesetConfig>(
-  RULESET_KEYS.map((key) => [computeRulesetId(REGISTRY[key]).toLowerCase(), REGISTRY[key]])
+  ALL_RULESET_KEYS.map((key) => {
+    const config = isCanonicalRulesetKey(key) ? REGISTRY[key] : LEGACY_REGISTRY[key];
+    return [computeRulesetId(config).toLowerCase(), config];
+  })
 );
 
 /**
  * Type guard: returns true if `key` is a valid RulesetKey.
  */
 export function isValidRulesetKey(key: unknown): key is RulesetKey {
-  return typeof key === "string" && RULESET_KEYS.includes(key as RulesetKey);
+  return (
+    typeof key === "string" &&
+    (isCanonicalRulesetKey(key) || isLegacyRulesetKey(key))
+  );
 }
 
 /**
@@ -118,7 +224,9 @@ export function parseRulesetKeyOrDefault(
  * Safe resolver: returns the RulesetConfig for the given key, or null if unknown.
  */
 export function resolveRuleset(key: string): RulesetConfig | null {
-  return isValidRulesetKey(key) ? REGISTRY[key] : null;
+  if (isCanonicalRulesetKey(key)) return REGISTRY[key];
+  if (isLegacyRulesetKey(key)) return LEGACY_REGISTRY[key];
+  return null;
 }
 
 /**
@@ -137,7 +245,7 @@ export function resolveRulesetById(rulesetId: string | null | undefined): Rulese
 export function resolveRulesetOrThrow(key: string): RulesetConfig {
   const config = resolveRuleset(key);
   if (!config) {
-    throw new Error(`Unknown rulesetKey: "${key}". Valid keys: ${RULESET_KEYS.join(", ")}`);
+    throw new Error(`Unknown rulesetKey: "${key}". Valid keys: ${ALL_RULESET_KEYS.join(", ")}`);
   }
   return config;
 }

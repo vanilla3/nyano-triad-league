@@ -1,6 +1,12 @@
 import { computeRulesetId } from "@nyano/triad-engine";
 
-import { RULESET_KEYS, resolveRulesetOrThrow, type RulesetKey } from "@/lib/ruleset_registry";
+import {
+  RULESET_KEYS,
+  resolveRulesetOrThrow,
+  type CanonicalRulesetKey,
+  type LegacyRulesetKey,
+  type RulesetKey,
+} from "@/lib/ruleset_registry";
 
 export type RulesetDiscoveryMeta = {
   title: string;
@@ -9,7 +15,7 @@ export type RulesetDiscoveryMeta = {
   recommended: boolean;
 };
 
-const RULESET_META: Record<RulesetKey, RulesetDiscoveryMeta> = {
+const RULESET_META: Record<CanonicalRulesetKey, RulesetDiscoveryMeta> = {
   v1: {
     title: "Core Tactics v1",
     summary: "Baseline ruleset for deterministic on-chain compatible matches.",
@@ -66,6 +72,51 @@ const RULESET_META: Record<RulesetKey, RulesetDiscoveryMeta> = {
   },
 };
 
+const LEGACY_RULESET_META: Record<LegacyRulesetKey, RulesetDiscoveryMeta> = {
+  classic_custom: {
+    title: "Classic Custom",
+    summary: "Classic rules configured from URL mask parameters.",
+    tags: ["classic", "custom", "legacy"],
+    recommended: false,
+  },
+  classic_plus: {
+    title: "Classic Plus (Legacy)",
+    summary: "Legacy key for Plus-only classic rules.",
+    tags: ["classic", "legacy"],
+    recommended: false,
+  },
+  classic_same: {
+    title: "Classic Same (Legacy)",
+    summary: "Legacy key for Same-only classic rules.",
+    tags: ["classic", "legacy"],
+    recommended: false,
+  },
+  classic_reverse: {
+    title: "Classic Reverse (Legacy)",
+    summary: "Legacy key for Reverse-only classic rules.",
+    tags: ["classic", "legacy"],
+    recommended: false,
+  },
+  classic_ace_killer: {
+    title: "Classic Ace Killer (Legacy)",
+    summary: "Legacy key for Ace Killer-only classic rules.",
+    tags: ["classic", "legacy"],
+    recommended: false,
+  },
+  classic_type_ascend: {
+    title: "Classic Type Ascend (Legacy)",
+    summary: "Legacy key for Type Ascend-only classic rules.",
+    tags: ["classic", "legacy"],
+    recommended: false,
+  },
+  classic_type_descend: {
+    title: "Classic Type Descend (Legacy)",
+    summary: "Legacy key for Type Descend-only classic rules.",
+    tags: ["classic", "legacy"],
+    recommended: false,
+  },
+};
+
 const RULESET_ID_TO_KEY = new Map<string, RulesetKey>(
   RULESET_KEYS.map((key) => [computeRulesetId(resolveRulesetOrThrow(key)).toLowerCase(), key]),
 );
@@ -76,7 +127,8 @@ export function resolveRulesetKeyById(rulesetId: string | null | undefined): Rul
 }
 
 export function getRulesetMeta(key: RulesetKey): RulesetDiscoveryMeta {
-  return RULESET_META[key];
+  if (key in RULESET_META) return RULESET_META[key as CanonicalRulesetKey];
+  return LEGACY_RULESET_META[key as LegacyRulesetKey];
 }
 
 export function getRecommendedRulesetKeys(): RulesetKey[] {

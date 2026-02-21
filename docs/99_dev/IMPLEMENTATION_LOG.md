@@ -2545,3 +2545,27 @@
 - `pnpm.cmd -C apps/web test -- cellAnimations boardLayerTokens` OK
 - `pnpm.cmd -C apps/web build` OK
 - `pnpm.cmd -C apps/web typecheck` failed due pre-existing unrelated RulesetKey/type mismatch errors in match/ruleset modules (not introduced by WO011 diff)
+
+## 2026-02-21 - WO011 follow-up: ruleset key compatibility recovery
+
+### Why
+- After WO011, `apps/web typecheck` still failed due accumulated compatibility drift:
+  - `classic_custom` and legacy `classic_*` keys no longer matched `RulesetKey`
+  - replay share URL options missed `rulesetKey` / `classicMask`
+  - `MatchHandCardsPanel` passed `forcedIndex` to `HandDisplayMint`, but prop type was missing
+
+### What
+- Restored legacy ruleset key compatibility in `apps/web/src/lib/ruleset_registry.ts`:
+  - added `LegacyRulesetKey` + `LEGACY_RULESET_KEYS`
+  - added legacy config mapping (`classic_custom`, `classic_plus`, `classic_same`, `classic_reverse`, `classic_ace_killer`, `classic_type_ascend`, `classic_type_descend`)
+  - kept `RULESET_KEYS` canonical for primary discovery flow
+- Extended discovery metadata handling for legacy keys in `apps/web/src/lib/ruleset_discovery.ts`.
+- Extended replay share URL options in `apps/web/src/lib/appUrl.ts`:
+  - added `rulesetKey` / `classicMask` query support (`rk` / `cr`)
+- Added missing optional prop to `apps/web/src/components/HandDisplayMint.tsx`:
+  - `forcedIndex?: number | null`
+
+### Verify
+- `pnpm.cmd -C apps/web typecheck` OK
+- `pnpm.cmd -C apps/web test -- ruleset_registry classic_quick_presets MintRulesetPicker matchRulesetParams matchSetupParamPatches matchShareLinks urlParams useMatchReplayActions matchReplayShare replayShareLinks replayRulesetParams` OK (`13 files / 92 tests`)
+- `pnpm.cmd -C apps/web build` OK

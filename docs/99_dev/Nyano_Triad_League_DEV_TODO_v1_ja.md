@@ -184,3 +184,4 @@
 - [x] 2026-02-15 WO008追補: `apps/web/e2e/match-setup-ux-guardrails.spec.ts` を追加し、Match Setup導線（1行サマリ同期 + Advanced自動展開 + ccap URL同期）をE2E化。`pnpm.cmd -C apps/web e2e:ux` で 9 passed を確認。
 - [x] 2026-02-21 WO011: Motion Language v1 の基礎を実装（`--m-*`トークン活用、`motions.css` ユーティリティ追加、`prefers-reduced-motion`/`data-vfx=off` 一括抑制）。
 - [x] 2026-02-21 WO011: 主要UI適用を実施（`.btn`/`.card`/`BoardView`セル/`GameResultOverlay`/`GameResultOverlayMint`/`NyanoReaction`）し、`/_design/motions` ショーケースを追加。
+- [x] 2026-02-21 WO011 follow-up: Ruleset互換キー（`classic_custom` ほか）をレジストリに再導入し、`typecheck` 崩れを修復。`ReplayShareUrlOptions` と `HandDisplayMint` の型ずれも解消。
