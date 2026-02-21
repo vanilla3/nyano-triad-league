@@ -1876,6 +1876,11 @@ export function MatchPage() {
     else sfx.play("defeat_sad");
   }, [sfx, turns.length, sim]);
 
+  React.useEffect(() => {
+    if (!sim.ok || turns.length < 9) return;
+    telemetry.recordResult();
+  }, [sim, telemetry, turns.length]);
+
   // D-3: SFX error buzz on validation error
   React.useEffect(() => {
     if (!sfx || !error) return;

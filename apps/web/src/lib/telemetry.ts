@@ -5,6 +5,7 @@
    Tracks the "Nintendo UX" quality metrics:
    - first_interaction_ms: Time to first user interaction
    - first_place_ms: Time to first card placement
+   - first_result_ms: Time to first result reveal
    - home_lcp_ms: Largest Contentful Paint on Home page
    - invalid_action_count: Number of invalid action attempts
    ═══════════════════════════════════════════════════════════════════════════ */
@@ -14,6 +15,8 @@ export interface SessionTelemetry {
   first_interaction_ms: number | null;
   /** ms from page load to first card placement */
   first_place_ms: number | null;
+  /** ms from page load to first result reveal */
+  first_result_ms: number | null;
   /** ms from Home quick-play click to first card placement */
   quickplay_to_first_place_ms: number | null;
   /** Count of invalid action attempts in this session */
@@ -59,6 +62,7 @@ export interface CumulativeStats {
   sessions: number;
   avg_first_interaction_ms: number | null;
   avg_first_place_ms: number | null;
+  avg_first_result_ms: number | null;
   avg_quickplay_to_first_place_ms: number | null;
   avg_home_lcp_ms: number | null;
   total_invalid_actions: number;
@@ -127,6 +131,7 @@ function parseSnapshotStats(value: unknown): CumulativeStats | null {
     sessions,
     avg_first_interaction_ms: parseFiniteNumber(v.avg_first_interaction_ms),
     avg_first_place_ms: parseFiniteNumber(v.avg_first_place_ms),
+    avg_first_result_ms: parseFiniteNumber(v.avg_first_result_ms),
     avg_quickplay_to_first_place_ms: parseFiniteNumber(v.avg_quickplay_to_first_place_ms),
     avg_home_lcp_ms: parseFiniteNumber(v.avg_home_lcp_ms),
     total_invalid_actions: totalInvalidActions,
@@ -205,10 +210,12 @@ const CUMULATIVE_KEYS = [
   "cum.sessions",
   "cum.sum_first_interaction_ms",
   "cum.sum_first_place_ms",
+  "cum.sum_first_result_ms",
   "cum.sum_quickplay_to_first_place_ms",
   "cum.sum_home_lcp_ms",
   "cum.count_first_interaction",
   "cum.count_first_place",
+  "cum.count_first_result",
   "cum.count_quickplay_to_first_place",
   "cum.count_home_lcp",
   "cum.total_invalid_actions",
@@ -218,10 +225,12 @@ export function readCumulativeStats(): CumulativeStats {
   const sessions = readNumber("cum.sessions") ?? 0;
   const sumInteraction = readNumber("cum.sum_first_interaction_ms");
   const sumPlace = readNumber("cum.sum_first_place_ms");
+  const sumResult = readNumber("cum.sum_first_result_ms");
   const sumQuickPlayToFirstPlace = readNumber("cum.sum_quickplay_to_first_place_ms");
   const sumHomeLcp = readNumber("cum.sum_home_lcp_ms");
   const countInteraction = readNumber("cum.count_first_interaction") ?? 0;
   const countPlace = readNumber("cum.count_first_place") ?? 0;
+  const countResult = readNumber("cum.count_first_result") ?? 0;
   const countQuickPlayToFirstPlace = readNumber("cum.count_quickplay_to_first_place") ?? 0;
   const countHomeLcp = readNumber("cum.count_home_lcp") ?? 0;
   const totalInvalid = readNumber("cum.total_invalid_actions") ?? 0;
@@ -234,6 +243,8 @@ export function readCumulativeStats(): CumulativeStats {
         : null,
     avg_first_place_ms:
       countPlace > 0 && sumPlace !== null ? Math.round(sumPlace / countPlace) : null,
+    avg_first_result_ms:
+      countResult > 0 && sumResult !== null ? Math.round(sumResult / countResult) : null,
     avg_quickplay_to_first_place_ms:
       countQuickPlayToFirstPlace > 0 && sumQuickPlayToFirstPlace !== null
         ? Math.round(sumQuickPlayToFirstPlace / countQuickPlayToFirstPlace)
@@ -365,6 +376,7 @@ export function formatUxTelemetrySnapshotMarkdown(snapshot: UxTelemetrySnapshot)
     `- Sessions: ${stats.sessions}`,
     `- Avg first interaction: ${formatSeconds(stats.avg_first_interaction_ms)}`,
     `- Avg first place: ${formatSeconds(stats.avg_first_place_ms)}`,
+    `- Avg first result reveal: ${formatSeconds(stats.avg_first_result_ms)}`,
     `- Avg quick-play to first place: ${formatSeconds(stats.avg_quickplay_to_first_place_ms)}`,
     `- Avg Home LCP: ${formatSeconds(stats.avg_home_lcp_ms)}`,
     `- Invalid / session: ${avgInvalidPerSession}`,
@@ -421,6 +433,13 @@ function persistSession(session: SessionTelemetry): void {
     const count = (readNumber("cum.count_first_place") ?? 0) + 1;
     writeNumber("cum.sum_first_place_ms", sum);
     writeNumber("cum.count_first_place", count);
+  }
+
+  if (session.first_result_ms !== null) {
+    const sum = (readNumber("cum.sum_first_result_ms") ?? 0) + session.first_result_ms;
+    const count = (readNumber("cum.count_first_result") ?? 0) + 1;
+    writeNumber("cum.sum_first_result_ms", sum);
+    writeNumber("cum.count_first_result", count);
   }
 
   if (session.quickplay_to_first_place_ms !== null) {
@@ -491,6 +510,8 @@ export interface TelemetryTracker {
   recordInteraction: () => void;
   /** Call when a card is successfully placed */
   recordPlace: () => void;
+  /** Call when result UI becomes visible */
+  recordResult: () => void;
   /** Call when an invalid action is attempted */
   recordInvalidAction: () => void;
   /** Get current session data */
@@ -506,6 +527,7 @@ export function createTelemetryTracker(): TelemetryTracker {
   const session: SessionTelemetry = {
     first_interaction_ms: null,
     first_place_ms: null,
+    first_result_ms: null,
     quickplay_to_first_place_ms: null,
     invalid_action_count: 0,
   };
@@ -535,6 +557,12 @@ export function createTelemetryTracker(): TelemetryTracker {
             session.quickplay_to_first_place_ms = Math.round(elapsed);
           }
         }
+      }
+    },
+
+    recordResult() {
+      if (session.first_result_ms === null) {
+        session.first_result_ms = Math.round(performance.now() - startTime);
       }
     },
 

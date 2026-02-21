@@ -770,7 +770,7 @@ export function HomePage() {
                 </button>
               </div>
             </div>
-            <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-6">
+            <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-7">
               <div className="rounded-xl border border-surface-200 bg-surface-50 px-3 py-2">
                 <div className="text-[11px] text-surface-500">Sessions</div>
                 <div className="text-sm font-semibold text-surface-800">{uxStats.sessions}</div>
@@ -791,6 +791,12 @@ export function HomePage() {
                 <div className="text-[11px] text-surface-500">Avg quick-play to first place</div>
                 <div className="text-sm font-semibold text-surface-800">
                   {formatSecondsFromMs(uxStats.avg_quickplay_to_first_place_ms)}
+                </div>
+              </div>
+              <div className="rounded-xl border border-surface-200 bg-surface-50 px-3 py-2">
+                <div className="text-[11px] text-surface-500">Avg first result reveal</div>
+                <div className="text-sm font-semibold text-surface-800">
+                  {formatSecondsFromMs(uxStats.avg_first_result_ms)}
                 </div>
               </div>
               <div className="rounded-xl border border-surface-200 bg-surface-50 px-3 py-2">

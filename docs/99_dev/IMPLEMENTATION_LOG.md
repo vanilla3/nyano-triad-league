@@ -2626,3 +2626,31 @@
 - `pnpm.cmd -C apps/web typecheck` OK
 - `pnpm.cmd -C apps/web test --` OK (222 files / 1761 tests)
 - `pnpm.cmd -C apps/web build` OK
+
+## 2026-02-21 - Telemetry follow-up: add "time to first result reveal" metric
+
+### Why
+- DEV TODO's operations-quality track requires observability for "勝敗表示までの時間", but current telemetry only tracked first interaction / first place / quick-play-to-first-place / Home LCP.
+- Without a result-reveal metric, tuning gamefeel around match closure and share timing lacks quantitative feedback.
+
+### What
+- `apps/web/src/lib/telemetry.ts`
+  - Added session metric: `first_result_ms`.
+  - Added cumulative metric: `avg_first_result_ms` with new sum/count storage keys.
+  - Included result metric in cumulative read path, snapshot parsing, and markdown export (`Avg first result reveal`).
+  - Extended tracker API with `recordResult()`.
+- `apps/web/src/pages/Match.tsx`
+  - Added effect to call `telemetry.recordResult()` when result state becomes visible (`turns.length >= 9` and `sim.ok`).
+- `apps/web/src/pages/Home.tsx`
+  - Added telemetry card for `Avg first result reveal`.
+- `apps/web/src/lib/__tests__/telemetry.test.ts`
+  - Added tests for `recordResult` and cumulative averaging.
+  - Updated existing expectations/literals to include `avg_first_result_ms`.
+
+### Verify
+- `pnpm.cmd -C apps/web test -- telemetry` OK (one sandbox `spawn EPERM` retry required)
+- `pnpm.cmd lint:text` OK
+- `pnpm.cmd -C apps/web lint` OK
+- `pnpm.cmd -C apps/web typecheck` OK
+- `pnpm.cmd -C apps/web test --` OK (222 files / 1763 tests)
+- `pnpm.cmd -C apps/web build` OK
