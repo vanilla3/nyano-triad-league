@@ -4,6 +4,25 @@
 
 :root {
   color-scheme: light;
+  /* Motion Language v1 tokens */
+  --m-dur-instant: 0ms;
+  --m-dur-press: 110ms;
+  --m-dur-hover: 180ms;
+  --m-dur-pop-in: 220ms;
+  --m-dur-pop-out: 140ms;
+  --m-dur-place: 260ms;
+  --m-dur-flip: 320ms;
+  --m-dur-impact: 170ms;
+  --m-dur-breathe: 2400ms;
+  --m-ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
+  --m-ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --m-ease-back: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --m-ease-impact: cubic-bezier(0.22, 1, 0.36, 1);
+  --m-amp-press-scale: 0.975;
+  --m-amp-hover-lift-y: -1.5px;
+  --m-amp-magnet-scale: 1.02;
+  --m-amp-impact-shift: 2px;
+
   --stage-shell-bg: linear-gradient(165deg, rgba(255, 255, 255, 0.96), rgba(235, 248, 255, 0.92));
   --stage-shell-border: rgba(125, 211, 252, 0.46);
   --stage-shell-shadow: 0 20px 40px -26px rgba(2, 132, 199, 0.46);
@@ -44,6 +63,14 @@ body {
   animation: nytl-ambient-drift 34s ease-in-out infinite alternate;
 }
 
+[data-vfx="off"] body {
+  animation: none;
+}
+
+[data-vfx="low"] body {
+  animation-duration: 46s;
+}
+
 @keyframes nytl-ambient-drift {
   0% {
     background-position: 0% 0%, 100% 0%, 50% 100%, 0% 0%;
@@ -56,6 +83,14 @@ body {
 @media (prefers-reduced-motion: reduce) {
   body {
     animation: none;
+  }
+
+  .btn,
+  .card,
+  .toast {
+    transition: none !important;
+    animation: none !important;
+    transform: none !important;
   }
 }
 
@@ -81,6 +116,23 @@ a {
   border-color: var(--nytl-glass-border);
   background: var(--nytl-glass-bg);
   box-shadow: var(--nytl-glass-shadow-soft);
+  transition:
+    transform var(--m-dur-hover) var(--m-ease-out),
+    box-shadow var(--m-dur-hover) var(--m-ease-standard),
+    border-color var(--m-dur-hover) var(--m-ease-standard);
+  transform: translateY(0) scale(1);
+}
+
+.card:hover {
+  transform: translateY(var(--m-amp-hover-lift-y)) scale(1.003);
+  border-color: rgba(56, 189, 248, 0.5);
+  box-shadow: var(--nytl-glass-shadow), 0 18px 30px -24px rgba(14, 116, 144, 0.46);
+}
+
+.card:active {
+  transform: translateY(0) scale(var(--m-amp-press-scale));
+  transition-duration: var(--m-dur-press);
+  transition-timing-function: var(--m-ease-impact);
 }
 
 .card-hd {
@@ -99,18 +151,34 @@ a {
 }
 
 .btn {
-  @apply inline-flex items-center justify-center gap-2 rounded-xl border px-3 py-2 text-sm font-medium transition active:translate-y-px disabled:cursor-not-allowed disabled:opacity-50;
+  @apply inline-flex items-center justify-center gap-2 rounded-xl border px-3 py-2 text-sm font-medium disabled:cursor-not-allowed disabled:opacity-50;
   border-color: rgba(148, 163, 184, 0.36);
   background: var(--nytl-glass-bg-soft);
   box-shadow: 0 10px 20px -18px rgba(15, 23, 42, 0.68), inset 0 1px 0 rgba(255, 255, 255, 0.55);
   backdrop-filter: blur(10px) saturate(1.18);
   -webkit-backdrop-filter: blur(10px) saturate(1.18);
+  transition:
+    transform var(--m-dur-hover) var(--m-ease-out),
+    filter var(--m-dur-hover) var(--m-ease-standard),
+    box-shadow var(--m-dur-hover) var(--m-ease-standard),
+    border-color var(--m-dur-hover) var(--m-ease-standard),
+    background-color var(--m-dur-hover) var(--m-ease-standard);
+  transform: translateY(0) scale(1);
 }
 
 .btn:hover:not(:disabled) {
-  transform: translateY(-1px);
+  transform: translateY(var(--m-amp-hover-lift-y)) scale(1.005);
   border-color: rgba(56, 189, 248, 0.42);
   box-shadow: 0 14px 22px -16px rgba(14, 116, 144, 0.56), inset 0 1px 0 rgba(255, 255, 255, 0.72);
+}
+
+.btn:active:not(:disabled),
+.btn[data-pressed="true"]:not(:disabled),
+.btn[data-press-ack="true"]:not(:disabled) {
+  transform: translateY(0) scale(var(--m-amp-press-scale));
+  filter: brightness(0.98) saturate(1.04);
+  transition-duration: var(--m-dur-press);
+  transition-timing-function: var(--m-ease-impact);
 }
 
 .btn-primary {
@@ -254,11 +322,17 @@ a {
 
 .toast {
   @apply w-[min(360px,calc(100vw-2rem))] rounded-2xl border bg-white/90 px-3 py-2 text-left shadow-md backdrop-blur;
-  animation: toast-in 0.18s ease-out;
+  animation: toast-in var(--m-dur-pop-in) var(--m-ease-out);
+  transition:
+    transform var(--m-dur-hover) var(--m-ease-out),
+    box-shadow var(--m-dur-hover) var(--m-ease-standard),
+    border-color var(--m-dur-hover) var(--m-ease-standard);
+  transform: translateY(0) scale(1);
 }
 
 .toast:hover {
   @apply shadow-lg;
+  transform: translateY(var(--m-amp-hover-lift-y)) scale(1.006);
 }
 
 .toast-title {

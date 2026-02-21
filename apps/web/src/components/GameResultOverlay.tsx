@@ -154,6 +154,7 @@ export function GameResultOverlay({
       className={[
         "fixed inset-0 z-50 flex items-center justify-center",
         "bg-black/50 backdrop-blur-sm",
+        "motion-backdrop",
         "transition-opacity duration-300",
         visible ? "opacity-100" : "opacity-0",
       ].join(" ")}
@@ -168,6 +169,7 @@ export function GameResultOverlay({
           "relative w-[90%] max-w-sm",
           "rounded-3xl overflow-hidden",
           "shadow-2xl",
+          "motion-modal",
           "transition-all duration-500",
           visible ? "scale-100 translate-y-0" : "scale-95 translate-y-4",
           state === "victory" && "animate-victory",

@@ -119,7 +119,7 @@ function BoardCell({
   };
 
   const baseClasses = [
-    "relative rounded-2xl border-2 transition-all duration-200",
+    "relative rounded-2xl border-2 motion-cell",
     "flex items-center justify-center",
     sizeClasses[size],
     hasCard ? "bg-white" : "bg-surface-100",
@@ -131,14 +131,14 @@ function BoardCell({
   if (!hasCard) baseClasses.push("border-surface-200");
 
   if (isSelectable && !hasCard) {
-    baseClasses.push("cursor-pointer hover:border-nyano-400 hover:bg-nyano-50");
+    baseClasses.push("cursor-pointer motion-cell--interactive motion-magnet hover:border-nyano-400 hover:bg-nyano-50");
   } else {
     baseClasses.push("cursor-default");
   }
 
-  if (isPlaced) baseClasses.push("ring-4 ring-flip/40 shadow-flip animate-cell-place");
+  if (isPlaced) baseClasses.push("ring-4 ring-flip/40 shadow-flip motion-place");
   if (isFlipped) {
-    baseClasses.push("ring-4 ring-chain/40 shadow-chain animate-cell-flip animate-flip-glow");
+    baseClasses.push("ring-4 ring-chain/40 shadow-chain motion-flip motion-impact animate-flip-glow");
     if (flipDelayClass) baseClasses.push(flipDelayClass);
   }
 

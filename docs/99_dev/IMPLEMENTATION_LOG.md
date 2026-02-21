@@ -2513,3 +2513,35 @@
 
 ### Verify
 - `pnpm.cmd -C apps/web e2e:ux` OK (`9 passed`)
+
+## 2026-02-21 - WO011: Motion Language v1 tokenization + showcase
+
+### Why
+- WO011 requested a reusable motion language (token + utility), broad application to primary UI surfaces, and a visible tuning page.
+
+### What
+- Added/expanded motion primitives in `apps/web/src/motions.css`:
+  - `motion-press`, `motion-hover-lift`, `motion-magnet`
+  - `motion-pop-in`, `motion-pop-out`, `motion-slide-in`
+  - `motion-impact`, `motion-idle`, `motion-shimmer`
+  - `motion-place`, `motion-flip`, `motion-modal`, `motion-backdrop`
+- Unified suppression behavior for both:
+  - `prefers-reduced-motion: reduce`
+  - `data-vfx="off"`
+- Applied motion language to key UI surfaces:
+  - Buttons/cards/toasts in `apps/web/src/styles.css`
+  - Board cells in `apps/web/src/components/BoardView.tsx`
+  - Result modal in `apps/web/src/components/GameResultOverlay.tsx`
+  - Removed hardcoded inline transition strings from:
+    - `apps/web/src/components/GameResultOverlayMint.tsx`
+    - `apps/web/src/components/NyanoReaction.tsx`
+  - Added tokenized transition bridge selectors for mint surfaces in `apps/web/src/motions.css`
+- Added showcase route/page:
+  - `apps/web/src/pages/_design/Motions.tsx`
+  - route `/_design/motions` in `apps/web/src/main.tsx`
+
+### Verify
+- `pnpm.cmd -C apps/web test -- motionTransitionTokenGuard NyanoReaction NyanoReactionSlot` OK
+- `pnpm.cmd -C apps/web test -- cellAnimations boardLayerTokens` OK
+- `pnpm.cmd -C apps/web build` OK
+- `pnpm.cmd -C apps/web typecheck` failed due pre-existing unrelated RulesetKey/type mismatch errors in match/ruleset modules (not introduced by WO011 diff)

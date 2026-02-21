@@ -29,6 +29,7 @@ const NyanoPage = React.lazy(() => import("./pages/Nyano").then((m) => ({ defaul
 const RulesetsPage = React.lazy(() => import("./pages/Rulesets").then((m) => ({ default: m.RulesetsPage })));
 const StreamPage = React.lazy(() => import("./pages/Stream").then((m) => ({ default: m.StreamPage })));
 const OverlayPage = React.lazy(() => import("./pages/Overlay").then((m) => ({ default: m.OverlayPage })));
+const MotionsDesignPage = React.lazy(() => import("./pages/_design/Motions").then((m) => ({ default: m.MotionsDesignPage })));
 
 // ── Route-level loading fallback ────────────────────────────────────
 function RouteFallback() {
@@ -68,6 +69,7 @@ const router = createBrowserRouter([
       { path: "nyano", element: <Lazy><NyanoPage /></Lazy> },
       { path: "rulesets", element: <Lazy><RulesetsPage /></Lazy> },
       { path: "stream", element: <Lazy><StreamPage /></Lazy> },
+      { path: "_design/motions", element: <Lazy><MotionsDesignPage /></Lazy> },
     ],
   },
 ], { basename });

@@ -346,7 +346,7 @@ export function NyanoReaction({
   if (rpg) {
     return (
       <div
-        className={`rpg-nyano-reaction ${className}`}
+        className={`rpg-nyano-reaction motion-rpg-reaction ${className}`}
         style={{
           display: "flex",
           alignItems: "center",
@@ -358,7 +358,6 @@ export function NyanoReaction({
           boxShadow: `0 0 12px ${cfg.glow}`,
           opacity: visible ? 1 : 0,
           transform: visible ? "translateY(0)" : "translateY(8px)",
-          transition: "opacity 0.3s, transform 0.3s",
           fontFamily: "'Nunito', system-ui, sans-serif",
         }}
       >

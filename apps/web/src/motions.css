@@ -12,7 +12,6 @@
   - Respect `prefers-reduced-motion` and the app's `[data-vfx]` tiers.
 */
 
-@layer utilities {
   /* ── Board: placement pop ─────────────────────────────────────── */
   @keyframes nytl-cell-place {
     0% {
@@ -158,6 +157,241 @@
   .animate-victory {
     animation: nytl-victory-pulse 0.6s ease-in-out 3;
   }
+
+  /* Motion Language v1 primitives (WO-011) */
+  @keyframes nytl-motion-pop-in {
+    0% {
+      opacity: 0;
+      transform: translateY(8px) scale(0.94);
+    }
+    100% {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+  }
+
+  @keyframes nytl-motion-pop-out {
+    0% {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+    100% {
+      opacity: 0;
+      transform: translateY(6px) scale(0.98);
+    }
+  }
+
+  @keyframes nytl-motion-slide-in {
+    0% {
+      opacity: 0;
+      transform: translateY(12px);
+    }
+    100% {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes nytl-motion-fade-in {
+    0% { opacity: 0; }
+    100% { opacity: 1; }
+  }
+
+  @keyframes nytl-motion-impact {
+    0% { transform: translateX(0); }
+    20% { transform: translateX(calc(var(--m-amp-impact-shift, 2px) * -1)); }
+    45% { transform: translateX(var(--m-amp-impact-shift, 2px)); }
+    70% { transform: translateX(calc(var(--m-amp-impact-shift, 2px) * -0.5)); }
+    100% { transform: translateX(0); }
+  }
+
+  @keyframes nytl-motion-idle {
+    0%, 100% { transform: translateY(0) scale(1); }
+    50% { transform: translateY(-1px) scale(1.008); }
+  }
+
+  @keyframes nytl-motion-shimmer {
+    0% { background-position: -160% 0; }
+    100% { background-position: 160% 0; }
+  }
+
+  @keyframes nytl-motion-flip {
+    0% {
+      transform: perspective(560px) rotateY(0deg) scale(1);
+      filter: brightness(1);
+    }
+    50% {
+      transform: perspective(560px) rotateY(180deg) scale(1.03);
+      filter: brightness(1.16);
+    }
+    100% {
+      transform: perspective(560px) rotateY(360deg) scale(1);
+      filter: brightness(1);
+    }
+  }
+
+  @keyframes nytl-motion-place {
+    0% {
+      transform: translateY(-8px) scale(0.9);
+      opacity: 0.72;
+    }
+    60% {
+      transform: translateY(0) scale(1.05);
+      opacity: 1;
+    }
+    100% {
+      transform: translateY(0) scale(1);
+      opacity: 1;
+    }
+  }
+
+  .motion-press {
+    transition:
+      transform var(--m-dur-hover) var(--m-ease-out),
+      filter var(--m-dur-hover) var(--m-ease-standard),
+      box-shadow var(--m-dur-hover) var(--m-ease-standard);
+    transform: translateY(0) scale(1);
+  }
+
+  .motion-press:active,
+  .motion-press[data-pressed="true"],
+  .motion-press[data-press-ack="true"] {
+    transform: translateY(0) scale(var(--m-amp-press-scale, 0.975));
+    filter: brightness(0.98) saturate(1.02);
+    transition-duration: var(--m-dur-press);
+    transition-timing-function: var(--m-ease-impact);
+  }
+
+  .motion-hover-lift {
+    transition:
+      transform var(--m-dur-hover) var(--m-ease-out),
+      box-shadow var(--m-dur-hover) var(--m-ease-standard),
+      border-color var(--m-dur-hover) var(--m-ease-standard);
+  }
+
+  .motion-hover-lift:hover {
+    transform: translateY(var(--m-amp-hover-lift-y, -1.5px));
+  }
+
+  .motion-magnet {
+    transition:
+      transform var(--m-dur-hover) var(--m-ease-back),
+      box-shadow var(--m-dur-hover) var(--m-ease-standard),
+      border-color var(--m-dur-hover) var(--m-ease-standard);
+    will-change: transform;
+  }
+
+  .motion-magnet:hover {
+    transform: translateY(var(--m-amp-hover-lift-y, -1.5px)) scale(var(--m-amp-magnet-scale, 1.02));
+  }
+
+  .motion-pop-in {
+    animation: nytl-motion-pop-in var(--m-dur-pop-in) var(--m-ease-back) both;
+  }
+
+  .motion-pop-out {
+    animation: nytl-motion-pop-out var(--m-dur-pop-out) var(--m-ease-standard) both;
+  }
+
+  .motion-slide-in {
+    animation: nytl-motion-slide-in var(--m-dur-pop-in) var(--m-ease-out) both;
+  }
+
+  .motion-impact {
+    animation: nytl-motion-impact var(--m-dur-impact) var(--m-ease-impact) both;
+  }
+
+  .motion-idle {
+    animation: nytl-motion-idle var(--m-dur-breathe) var(--m-ease-standard) infinite;
+    will-change: transform;
+  }
+
+  .motion-shimmer {
+    background-size: 200% 100%;
+    animation: nytl-motion-shimmer calc(var(--m-dur-breathe) * 1.2) linear infinite;
+  }
+
+  .motion-place {
+    animation: nytl-motion-place var(--m-dur-place) var(--m-ease-back) both;
+  }
+
+  .motion-flip {
+    animation: nytl-motion-flip var(--m-dur-flip) var(--m-ease-standard) both;
+    transform-style: preserve-3d;
+    backface-visibility: hidden;
+  }
+
+  .motion-card {
+    transition:
+      transform var(--m-dur-hover) var(--m-ease-out),
+      box-shadow var(--m-dur-hover) var(--m-ease-standard),
+      border-color var(--m-dur-hover) var(--m-ease-standard);
+  }
+
+  .motion-card:hover {
+    transform: translateY(var(--m-amp-hover-lift-y, -1.5px)) scale(1.005);
+  }
+
+  .motion-cell {
+    transition:
+      transform var(--m-dur-hover) var(--m-ease-out),
+      box-shadow var(--m-dur-hover) var(--m-ease-standard),
+      border-color var(--m-dur-hover) var(--m-ease-standard),
+      filter var(--m-dur-hover) var(--m-ease-standard);
+    transform: translateZ(0);
+  }
+
+  .motion-cell--interactive:hover {
+    transform: translateY(var(--m-amp-hover-lift-y, -1.5px)) scale(var(--m-amp-magnet-scale, 1.02));
+  }
+
+  .motion-modal {
+    animation: nytl-motion-pop-in var(--m-dur-pop-in) var(--m-ease-back) both;
+  }
+
+.motion-backdrop {
+  animation: nytl-motion-fade-in var(--m-dur-pop-in) var(--m-ease-standard) both;
+}
+
+/* Motion token bridge for Mint surfaces (WO-011) */
+.mint-cell {
+  transition-duration: var(--m-dur-hover), var(--m-dur-hover), var(--m-dur-hover), var(--m-dur-hover), var(--m-dur-hover) !important;
+  transition-timing-function: var(--m-ease-standard), var(--m-ease-standard), var(--m-ease-standard), var(--m-ease-standard), var(--m-ease-standard) !important;
+}
+
+.mint-cell--selectable {
+  animation-duration: var(--m-dur-breathe) !important;
+}
+
+.mint-cell--placed {
+  animation-duration: var(--m-dur-place) !important;
+  animation-timing-function: var(--m-ease-back) !important;
+}
+
+.mint-cell--flipped {
+  animation-duration: var(--m-dur-flip), var(--m-dur-flip) !important;
+}
+
+.mint-result-overlay {
+  animation-duration: var(--m-dur-pop-in) !important;
+  transition: opacity var(--m-dur-pop-in) var(--m-ease-standard);
+}
+
+.mint-result-panel {
+  animation-duration: var(--m-dur-pop-in) !important;
+  animation-timing-function: var(--m-ease-back) !important;
+  transition: transform var(--m-dur-pop-in) var(--m-ease-back);
+}
+
+.mint-result__btn {
+  transition-duration: var(--m-dur-hover) !important;
+  transition-timing-function: var(--m-ease-standard) !important;
+}
+
+.motion-rpg-reaction {
+  transition:
+    opacity var(--m-dur-pop-in) var(--m-ease-standard),
+    transform var(--m-dur-pop-in) var(--m-ease-out);
 }
 
 /* ── VFX gating ────────────────────────────────────────────────────── */
@@ -170,8 +404,27 @@
 [data-vfx="off"] .animate-counter-tick,
 [data-vfx="off"] .animate-live-dot,
 [data-vfx="off"] .animate-float,
-[data-vfx="off"] .animate-victory {
+[data-vfx="off"] .animate-victory,
+[data-vfx="off"] .motion-pop-in,
+[data-vfx="off"] .motion-pop-out,
+[data-vfx="off"] .motion-slide-in,
+[data-vfx="off"] .motion-impact,
+[data-vfx="off"] .motion-idle,
+[data-vfx="off"] .motion-shimmer,
+[data-vfx="off"] .motion-place,
+[data-vfx="off"] .motion-flip,
+[data-vfx="off"] .motion-modal,
+[data-vfx="off"] .motion-backdrop {
   animation: none !important;
+}
+
+[data-vfx="off"] .motion-press,
+[data-vfx="off"] .motion-hover-lift,
+[data-vfx="off"] .motion-magnet,
+[data-vfx="off"] .motion-card,
+[data-vfx="off"] .motion-cell {
+  transition: none !important;
+  transform: none !important;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -184,7 +437,26 @@
   .animate-counter-tick,
   .animate-live-dot,
   .animate-float,
-  .animate-victory {
+  .animate-victory,
+  .motion-pop-in,
+  .motion-pop-out,
+  .motion-slide-in,
+  .motion-impact,
+  .motion-idle,
+  .motion-shimmer,
+  .motion-place,
+  .motion-flip,
+  .motion-modal,
+  .motion-backdrop {
     animation: none !important;
+  }
+
+  .motion-press,
+  .motion-hover-lift,
+  .motion-magnet,
+  .motion-card,
+  .motion-cell {
+    transition: none !important;
+    transform: none !important;
   }
 }
