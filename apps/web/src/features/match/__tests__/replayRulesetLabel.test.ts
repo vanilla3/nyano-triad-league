@@ -34,8 +34,8 @@ describe("features/match/replayRulesetLabel", () => {
   });
 
   it("formats registry-derived labels", () => {
-    expect(rulesetLabelFromRegistryConfig(ONCHAIN_CORE_TACTICS_RULESET_CONFIG_V1)).toBe("rulesetId由来（v1）");
-    expect(rulesetLabelFromRegistryConfig(taggedV2)).toContain("rulesetId由来（classic:");
+    expect(rulesetLabelFromRegistryConfig(ONCHAIN_CORE_TACTICS_RULESET_CONFIG_V1)).toBe("Ruleset ID由来（v1）");
+    expect(rulesetLabelFromRegistryConfig(taggedV2)).toContain("Ruleset ID由来（classic:");
   });
 
   it("formats URL-fallback labels for v1/v2 classic", () => {

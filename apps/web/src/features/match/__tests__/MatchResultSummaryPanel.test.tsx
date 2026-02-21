@@ -14,7 +14,7 @@ describe("features/match/MatchResultSummaryPanel", () => {
     );
     expect(html).toContain("Winner:");
     expect(html).toContain("tiles A/B = 6/3");
-    expect(html).toContain("matchId: match-1");
+    expect(html).toContain("Match ID: match-1");
   });
 
   it("renders pending summary with stage-focus muted class when result is missing", () => {

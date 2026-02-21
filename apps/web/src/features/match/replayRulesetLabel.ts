@@ -10,10 +10,10 @@ export function rulesetLabelFromConfig(cfg: RulesetConfig): string {
 export function rulesetLabelFromRegistryConfig(cfg: RulesetConfig): string {
   if (cfg.version === 2) {
     const tags = listClassicRuleTags(cfg.classic);
-    if (tags.length > 0) return `rulesetId由来（classic: ${tags.join(", ")}）`;
-    return "rulesetId由来（v2）";
+    if (tags.length > 0) return `Ruleset ID由来（classic: ${tags.join(", ")}）`;
+    return "Ruleset ID由来（v2）";
   }
-  return "rulesetId由来（v1）";
+  return "Ruleset ID由来（v1）";
 }
 
 export function rulesetLabelFromUrlFallback(cfg: RulesetConfig): string {

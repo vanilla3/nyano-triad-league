@@ -2663,3 +2663,75 @@
 
 ### Verify
 - Open/read `codex/execplans/014_uiux_polish_qa_shareworthy_v8.md`
+
+## 2026-02-21 - Next Priority #1: text hygiene guardrail in CI/release flow
+
+### Why
+- `pnpm lint:text` was restored locally, but CI and release-check flow did not enforce it yet.
+- To keep text hygiene green continuously, the same guardrail must run in automation.
+
+### What
+- `/.github/workflows/ci.yml`
+  - Added `Text hygiene guardrail` step to the `web` job: `pnpm lint:text`.
+- `/package.json`
+  - Updated `release:check` to run `pnpm lint:text` first.
+- Updated active TODO to record completion.
+
+### Verify
+- `pnpm lint:text`
+
+## 2026-02-21 - Match/Replay copy quality pass (round 4)
+
+### Why
+- Replay label output still had one remaining low-visibility inconsistency in `ruleset registry` wording.
+
+### What
+- `apps/web/src/pages/Replay.tsx`
+  - `rulesetId registry (...)` -> `Ruleset ID registry (...)`
+  - applied for v1/v2/classic variants from `rulesetLabelFromRegistryConfig`.
+
+### Verify
+- `pnpm lint:text`
+- `pnpm -C apps/web typecheck`
+- `pnpm -C apps/web test -- replayUiHelpers`
+
+## 2026-02-21 - ExecPlan 014 sync update
+
+### Why
+- After CI/release integration of `lint:text`, ExecPlan 014 needed status synchronization.
+
+### What
+- Updated `codex/execplans/014_uiux_polish_qa_shareworthy_v8.md`:
+  - marked CI/release integration of `lint:text` as complete.
+  - refreshed outcome wording to reflect current guardrail enforcement.
+
+### Verify
+- Open/read `codex/execplans/014_uiux_polish_qa_shareworthy_v8.md`
+
+## 2026-02-21 - Match/Replay copy quality pass (round 5)
+
+### Why
+- A small set of user-facing labels still used mixed technical casing (`matchId` / `rulesetId`) in Match-side summary surfaces and Replay helper labeling.
+- We finalized these without touching URL params, protocol payload keys, or selector-sensitive controls.
+
+### What
+- `apps/web/src/features/match/MatchResultSummaryPanel.tsx`
+  - `matchId:` -> `Match ID:`
+- `apps/web/src/features/match/MatchMintResultSummaryPanel.tsx`
+  - `matchId:` -> `Match ID:`
+- `apps/web/src/components/match/MatchSetupPanelMint.tsx`
+  - `rulesetId unchanged` -> `Ruleset ID unchanged`
+  - `rulesetId:` -> `Ruleset ID:`
+- `apps/web/src/features/match/replayRulesetLabel.ts`
+  - `rulesetId由来` -> `Ruleset ID由来` (v1/v2/classic variants)
+- Updated associated tests:
+  - `apps/web/src/features/match/__tests__/MatchResultSummaryPanel.test.tsx`
+  - `apps/web/src/features/match/__tests__/MatchMintResultSummaryPanel.test.tsx`
+  - `apps/web/src/features/match/__tests__/replayRulesetLabel.test.ts`
+
+### Verify
+- `pnpm lint:text` OK
+- `pnpm -C apps/web test -- MatchResultSummaryPanel MatchMintResultSummaryPanel replayRulesetLabel MatchSetupPanelMint replaySimulationState` OK
+- `pnpm -C apps/web lint` OK (existing warnings only in `MatchSetupPanelMint.tsx`)
+- `pnpm -C apps/web typecheck` OK
+- `pnpm -C apps/web build` OK

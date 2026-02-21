@@ -233,10 +233,10 @@ function rulesetLabelFromRegistryConfig(cfg: RulesetConfig): string {
       c.allOpen && "allOpen",
       c.threeOpen && "threeOpen",
     ].filter(Boolean) as string[];
-    if (tags.length > 0) return `rulesetId registry (classic: ${tags.join(", ")})`;
-    return "rulesetId registry (v2)";
+    if (tags.length > 0) return `Ruleset ID registry (classic: ${tags.join(", ")})`;
+    return "Ruleset ID registry (v2)";
   }
-  return "rulesetId registry (v1)";
+  return "Ruleset ID registry (v1)";
 }
 
 function pickDefaultMode(rulesetId: string): Mode {

@@ -516,11 +516,11 @@ export function MatchSetupPanelMint(props: MatchSetupPanelMintProps) {
                   {chainCapRawParam !== null && chainCapPerTurnParam === null ? (
                     <div className="text-xs text-rose-600">Invalid ccap parameter (allowed: 0..{maxChainCapPerTurn})</div>
                   ) : (
-                    <div className="text-xs text-slate-500">Layer4 experimental knob (engine-only, rulesetId unchanged)</div>
+                    <div className="text-xs text-slate-500">Layer4 experimental knob (engine-only, Ruleset ID unchanged)</div>
                   )}
                   {classicSwapLabel ? <div className="text-xs text-amber-700">{classicSwapLabel}</div> : null}
                   {classicOpenLabel ? <div className="text-xs text-emerald-700">{classicOpenLabel}</div> : null}
-                  <div className="text-xs font-mono text-slate-500">rulesetId: {rulesetId}</div>
+                  <div className="text-xs font-mono text-slate-500">Ruleset ID: {rulesetId}</div>
                 </div>
 
                 {firstPlayerMode === "mutual" ? (

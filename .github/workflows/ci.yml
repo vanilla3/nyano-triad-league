@@ -49,6 +49,8 @@ jobs:
           else
             pnpm install
           fi
+      - name: Text hygiene guardrail
+        run: pnpm lint:text
       - run: pnpm -C packages/triad-engine build
       - run: pnpm -C apps/web typecheck
       - run: pnpm -C apps/web lint

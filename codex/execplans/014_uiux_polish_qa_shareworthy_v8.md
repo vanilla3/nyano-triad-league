@@ -57,8 +57,10 @@ Raise Match/Replay UX quality to share-worthy level while preserving core invari
 Follow-up continuity (post WO-046):
 - [x] `pnpm lint:text` restored at root.
 - [x] text hygiene checker improved for file-root input.
+- [x] `pnpm lint:text` integrated into CI (`web` job) and `release:check`.
 - [x] active TODO snapshot rewritten to clean readable form.
 - [x] Match/Replay copy quality pass started and continued (label normalization, no E2E selector break).
+- [x] Match/Replay copy quality pass round 5 complete (`matchId`/`rulesetId` casing normalization on remaining UI helper surfaces).
 
 ---
 
@@ -88,13 +90,13 @@ Manual:
 ## 7) Current Outcome
 
 - WO-044/045/046 objectives are complete.
-- Text hygiene guardrail is active and passing.
-- Copy quality pass is in progress with visible consistency gains in Match/Replay panels.
+- Text hygiene guardrail is active, passing, and enforced in CI/release flow.
+- Copy quality pass has visible consistency gains in Match/Replay panels and remaining low-visibility labels were normalized in round 5.
 
 ---
 
 ## 8) Next Actions
 
-1. Finish remaining Match/Replay copy normalization pass (non-breaking).
-2. Commit and push the current copy/doc updates.
-3. Continue with next approved roadmap/work-order request.
+1. Commit and push the current copy/doc updates.
+2. Continue with next approved roadmap/work-order request.
+3. Keep `pnpm lint:text` and targeted Match/Replay copy checks green in CI/local flow.

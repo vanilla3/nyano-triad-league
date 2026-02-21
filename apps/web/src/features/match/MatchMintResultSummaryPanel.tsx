@@ -21,7 +21,7 @@ export function MatchMintResultSummaryPanel(input: {
           Winner: <span className="font-medium">{result.winner}</span> (tiles A/B = {result.tilesA}/{result.tilesB})
         </div>
         <div className="font-mono mt-1 truncate" style={{ color: "var(--mint-text-secondary)" }}>
-          matchId: {result.matchId}
+          Match ID: {result.matchId}
         </div>
       </div>
     );

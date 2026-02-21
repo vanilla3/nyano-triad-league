@@ -25,7 +25,7 @@ export function MatchResultSummaryPanel(input: {
         style={isRpg ? { background: "rgba(0,0,0,0.4)", color: "#F5F0E1", border: "1px solid rgba(201,168,76,0.2)" } : undefined}
       >
         <div>Winner: <span className="font-medium">{result.winner}</span> (tiles A/B = {result.tilesA}/{result.tilesB})</div>
-        <div className="font-mono mt-1 truncate">matchId: {result.matchId}</div>
+        <div className="font-mono mt-1 truncate">Match ID: {result.matchId}</div>
       </div>
     );
   }

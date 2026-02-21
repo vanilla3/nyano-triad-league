@@ -13,7 +13,7 @@ describe("features/match/MatchMintResultSummaryPanel", () => {
     );
     expect(html).toContain("Winner:");
     expect(html).toContain("tiles A/B = 6/3");
-    expect(html).toContain("matchId: 0xabc");
+    expect(html).toContain("Match ID: 0xabc");
   });
 
   it("renders pending branch when result is null", () => {
