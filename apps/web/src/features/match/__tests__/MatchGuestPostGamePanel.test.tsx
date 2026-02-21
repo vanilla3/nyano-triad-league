@@ -122,6 +122,7 @@ describe("features/match/MatchGuestPostGamePanel", () => {
     const shareRow = shareSectionChildren[0];
     const shareButtons = React.Children.toArray(shareRow.props.children)
       .filter((child): child is React.ReactElement => React.isValidElement(child) && child.type === "button");
+    expect(String(shareRow.props.className)).toContain("mint-share-actions__row--ready");
     shareButtons[0]?.props.onClick();
     shareButtons[1]?.props.onClick();
     shareButtons[2]?.props.onClick();
@@ -138,5 +139,6 @@ describe("features/match/MatchGuestPostGamePanel", () => {
     const summary = collectElementsByType(details[0], "summary")[0];
     expect(summary.props.children).toContain("QR Code");
     expect(collectElementsByClass(tree, "mint-share-actions__hint")).toHaveLength(0);
+    expect(collectElementsByClass(tree, "mint-share-actions__ready")).toHaveLength(1);
   });
 });

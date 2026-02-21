@@ -18,9 +18,14 @@ export function MatchShareActionsRow(input: {
   } = input;
   const baseButtonClassName = isRpg ? "rpg-result__btn" : "btn";
   const buttonClassName = isRpg ? baseButtonClassName : `${baseButtonClassName} mint-pressable mint-hit mint-share-action__btn`;
+  const shareRowClassName = [
+    "flex flex-wrap items-center gap-2",
+    !isRpg ? "mint-share-actions__row" : "",
+    !isRpg && canFinalize ? "mint-share-actions__row--ready" : "",
+  ].filter(Boolean).join(" ");
   return (
     <div className={["grid gap-2", !isRpg ? "mint-share-actions" : ""].filter(Boolean).join(" ")}>
-      <div className={["flex flex-wrap items-center gap-2", !isRpg ? "mint-share-actions__row" : ""].filter(Boolean).join(" ")}>
+      <div className={shareRowClassName}>
         <button
           className={buttonClassName}
           onClick={onCopyTranscriptJson}

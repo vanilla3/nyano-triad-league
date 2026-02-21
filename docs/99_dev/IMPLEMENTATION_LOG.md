@@ -2322,3 +2322,64 @@
 - `pnpm.cmd -C apps/web test --` OK (221 files / 1752 tests)
 - `pnpm.cmd -C apps/web lint` OK
 - `pnpm.cmd lint:text` OK
+
+## 2026-02-21 - WO046 follow-up: 0ms press feedback foundation for Mint pressables
+
+### Why
+- UX polish direction requires the interface to acknowledge input at press start (0ms illusion of speed), while keeping strong effects rare and respecting reduced-motion.
+- `mint-pressable` class usage was already widespread, but global feedback behavior was not yet standardized.
+
+### What
+- Updated `apps/web/src/styles.css`:
+  - Added motion tokens for press acknowledgement/release (`--mint-press-*`).
+  - Added `.mint-hit` baseline (44x44 hit area + touch tuning).
+  - Added `.mint-pressable` interaction layer:
+    - immediate pressed state for `:active`, `[data-pressed="true"]`, `[data-press-ack="true"]`
+    - 0ms acknowledgement path for `[data-press-ack="true"]`
+    - subtle sheen overlay for hover/focus/press (micro-delight)
+  - Added guardrails:
+    - disables sheen under `:root[data-vfx="off"|"low"]`
+    - reduced-motion branch removes transform animation and keeps minimal brightness response
+
+### Verify
+- `pnpm.cmd lint:text` OK
+- `pnpm.cmd -C apps/web lint` OK
+- `pnpm.cmd -C apps/web test -- MintPressable MatchShareActionsRow replayUiHelpers` OK (one sandbox `spawn EPERM` retry required)
+- `pnpm.cmd -C apps/web test --` OK (221 files / 1752 tests)
+- `pnpm.cmd -C apps/web build` OK
+
+## 2026-02-21 - WO046 follow-up: make share-action class names effective + ready-state guidance
+
+### Why
+- `mint-share-actions` / `mint-share-action__btn` class names were present in Match/Replay flows but had no concrete CSS behavior, so share-path polish depended only on generic button styles.
+- Share motivation should appear when action unlocks, while keeping strong emphasis rare and respecting VFX/reduced-motion constraints.
+
+### What
+- `apps/web/src/features/match/MatchShareActionsRow.tsx`
+  - Added conditional `mint-share-actions__row--ready` class when `canFinalize=true` in mint mode.
+- `apps/web/src/features/match/MatchGuestPostGamePanel.tsx`
+  - Added same `mint-share-actions__row--ready` class logic for guest post-game share row.
+- `apps/web/src/styles.css`
+  - Implemented concrete styles for:
+    - `.mint-share-actions`
+    - `.mint-share-actions__row`
+    - `.mint-share-action__btn`
+    - `.mint-share-actions__hint`
+    - `.mint-share-actions__ready`
+  - Added one-shot callout animation on ready-state first share button:
+    - `.mint-share-actions__row--ready .mint-share-action__btn:first-child`
+  - Added guardrails:
+    - disable callout animation for `:root[data-vfx="off"|"low"]`
+    - disable callout animation under `prefers-reduced-motion: reduce`
+- Tests
+  - `apps/web/src/features/match/__tests__/MatchShareActionsRow.test.tsx`
+    - added assertions for locked/ready state class + hint/ready note switching
+  - `apps/web/src/features/match/__tests__/MatchGuestPostGamePanel.test.tsx`
+    - added ready-row class assertion and ready-note assertion
+
+### Verify
+- `pnpm.cmd -C apps/web test -- MatchShareActionsRow MatchGuestPostGamePanel replayUiHelpers MintPressable` OK (one sandbox `spawn EPERM` retry required)
+- `pnpm.cmd lint:text` OK
+- `pnpm.cmd -C apps/web lint` OK
+- `pnpm.cmd -C apps/web test --` OK (221 files / 1752 tests)
+- `pnpm.cmd -C apps/web build` OK

@@ -33,6 +33,11 @@ export function MatchGuestPostGamePanel(input: {
   const actionButtonClassName = isRpg ? "btn text-xs" : "btn text-xs mint-pressable mint-hit";
   const primaryActionButtonClassName = isRpg ? "btn btn-primary text-xs" : "btn btn-primary text-xs mint-pressable mint-hit";
   const shareButtonClassName = isRpg ? actionButtonClassName : `${actionButtonClassName} mint-share-action__btn`;
+  const shareRowClassName = [
+    "flex flex-wrap gap-2",
+    !isRpg ? "mint-share-actions__row" : "",
+    !isRpg && canFinalize ? "mint-share-actions__row--ready" : "",
+  ].filter(Boolean).join(" ");
 
   return (
     <div className={["grid gap-2 rounded-lg border border-nyano-200 bg-nyano-50 p-3", isStageFocusRoute ? "stage-focus-side-panel" : ""].filter(Boolean).join(" ")}>
@@ -54,7 +59,7 @@ export function MatchGuestPostGamePanel(input: {
         </button>
       </div>
       <div className={["grid gap-2 border-t border-nyano-200 pt-2", !isRpg ? "mint-share-actions" : ""].filter(Boolean).join(" ")}>
-        <div className={["flex flex-wrap gap-2", !isRpg ? "mint-share-actions__row" : ""].filter(Boolean).join(" ")}>
+        <div className={shareRowClassName}>
           <button
             className={shareButtonClassName}
             onClick={onCopyShareUrl}

@@ -17,6 +17,23 @@ function collectButtons(node: React.ReactNode): React.ReactElement[] {
   return out;
 }
 
+function collectElementsByClass(node: React.ReactNode, className: string): React.ReactElement[] {
+  const out: React.ReactElement[] = [];
+  const walk = (value: React.ReactNode): void => {
+    if (Array.isArray(value)) {
+      value.forEach(walk);
+      return;
+    }
+    if (!React.isValidElement(value)) return;
+    if (typeof value.props.className === "string" && value.props.className.split(/\s+/).includes(className)) {
+      out.push(value);
+    }
+    walk(value.props.children as React.ReactNode);
+  };
+  walk(node);
+  return out;
+}
+
 describe("features/match/MatchShareActionsRow", () => {
   it("uses default button class when not rpg", () => {
     const tree = MatchShareActionsRow({
@@ -70,5 +87,31 @@ describe("features/match/MatchShareActionsRow", () => {
     expect(onCopyTranscriptJson).toHaveBeenCalledTimes(1);
     expect(onCopyShareUrl).toHaveBeenCalledTimes(1);
     expect(onOpenReplay).toHaveBeenCalledTimes(1);
+  });
+
+  it("shows share-ready state only after finalize unlock", () => {
+    const lockedTree = MatchShareActionsRow({
+      isRpg: false,
+      simOk: true,
+      canFinalize: false,
+      onCopyTranscriptJson: () => {},
+      onCopyShareUrl: () => {},
+      onOpenReplay: () => {},
+    });
+    expect(collectElementsByClass(lockedTree, "mint-share-actions__hint")).toHaveLength(1);
+    expect(collectElementsByClass(lockedTree, "mint-share-actions__ready")).toHaveLength(0);
+    expect(collectElementsByClass(lockedTree, "mint-share-actions__row--ready")).toHaveLength(0);
+
+    const readyTree = MatchShareActionsRow({
+      isRpg: false,
+      simOk: true,
+      canFinalize: true,
+      onCopyTranscriptJson: () => {},
+      onCopyShareUrl: () => {},
+      onOpenReplay: () => {},
+    });
+    expect(collectElementsByClass(readyTree, "mint-share-actions__hint")).toHaveLength(0);
+    expect(collectElementsByClass(readyTree, "mint-share-actions__ready")).toHaveLength(1);
+    expect(collectElementsByClass(readyTree, "mint-share-actions__row--ready")).toHaveLength(1);
   });
 });
