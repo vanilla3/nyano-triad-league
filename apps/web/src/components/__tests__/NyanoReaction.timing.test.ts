@@ -28,8 +28,8 @@ describe("resolveReactionCutInTiming", () => {
       vfxQuality: "high",
     });
     expect(timing.allowBurst).toBe(true);
-    expect(timing.burstMs).toBe(760);
-    expect(timing.visibleMs).toBe(2800);
+    expect(timing.burstMs).toBe(860);
+    expect(timing.visibleMs).toBe(3600);
   });
 
   it("suppresses burst and trims durations for vfx=low", () => {
@@ -38,7 +38,7 @@ describe("resolveReactionCutInTiming", () => {
       vfxQuality: "low",
     });
     expect(timing.allowBurst).toBe(false);
-    expect(timing.burstMs).toBe(360);
-    expect(timing.visibleMs).toBe(1800);
+    expect(timing.burstMs).toBe(406);
+    expect(timing.visibleMs).toBe(2376);
   });
 });

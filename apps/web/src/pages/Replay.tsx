@@ -26,11 +26,11 @@ import { HiddenDeckPreviewCard } from "@/components/HiddenDeckPreviewCard";
 import { TurnLog } from "@/components/TurnLog";
 import { GameResultBanner } from "@/components/GameResultOverlay";
 import {
-  NyanoReaction,
   pickReactionKind,
   resolveReactionCutInImpact,
   type NyanoReactionInput,
 } from "@/components/NyanoReaction";
+import { NyanoReactionSlot } from "@/components/NyanoReactionSlot";
 import { NyanoAvatar } from "@/components/NyanoAvatar";
 import { BattleStageEngine } from "@/engine/components/BattleStageEngine";
 import { reactionToExpression } from "@/lib/expression_map";
@@ -72,7 +72,6 @@ import {
   replayStepStatusText,
   type ReplayPhaseInfo,
 } from "@/lib/replay_timeline";
-import { resolveReplayTransportState } from "@/features/match/replayTransportState";
 
 type Mode = "auto" | "v1" | "v2" | "compare";
 
@@ -882,24 +881,13 @@ protocolV1: {
     [highlights, step],
   );
   const stepProgress = replayStepProgress(step, stepMax);
-  const replayTransportState = resolveReplayTransportState({
-    step,
-    stepMax,
-    simOk: sim.ok,
-    isStageFocus,
-    showStageTransport,
-    viewportWidth: typeof window === "undefined" ? null : window.innerWidth,
-    resolveShouldShowStageSecondaryControls: shouldShowStageSecondaryControls,
-  });
-  const {
-    canStepBack,
-    canStepForward,
-    canPlay,
-    showStageToolbarTransport,
-    replayTransportButtonClass,
-    replayTransportPrimaryButtonClass,
-    replaySpeedSelectClass,
-  } = replayTransportState;
+  const canStepBack = step > 0;
+  const canStepForward = step < stepMax;
+  const canPlay = sim.ok && stepMax > 0;
+  const showStageToolbarTransport = isStageFocus
+    && sim.ok
+    && showStageTransport
+    && (typeof window === "undefined" || shouldShowStageSecondaryControls(window.innerWidth));
   const phaseInfo: ReplayPhaseInfo = React.useMemo(() => replayPhaseInfo(step, stepMax), [step, stepMax]);
   const stepStatusText = replayStepStatusText(step);
   const replayClassicSwap = React.useMemo(() => {
@@ -929,6 +917,11 @@ protocolV1: {
     return new Set<number>(replayClassicOpen.playerB);
   }, [replayClassicOpen]);
   const shouldMaskReplayDeckSlots = replayClassicOpen?.mode === "three_open" && !replayRevealHiddenSlots;
+  const replayTransportButtonClass = isStageFocus ? "btn h-10 px-4" : "btn btn-sm";
+  const replayTransportPrimaryButtonClass = isStageFocus ? "btn btn-primary h-10 px-4" : "btn btn-sm btn-primary";
+  const replaySpeedSelectClass = isStageFocus
+    ? "rounded-md border border-surface-300 bg-white h-10 px-2 text-sm"
+    : "rounded-md border border-surface-300 bg-white px-2 py-1 text-xs";
 
   React.useEffect(() => {
     if (canPlay || !isPlaying) return;
@@ -1229,16 +1222,14 @@ protocolV1: {
               </div>
             </div>
           )}
-          {nyanoReactionInput ? (
-            <NyanoReaction
-              input={nyanoReactionInput}
-              turnIndex={step}
-              rpg={isRpg}
-              mint={isEngine}
-              tone={isEngine ? "pixi" : "mint"}
-              className={isStageFocus ? "stage-focus-cutin" : ""}
-            />
-          ) : null}
+          <NyanoReactionSlot
+            input={nyanoReactionInput}
+            turnIndex={step}
+            rpg={isRpg}
+            mint={isEngine}
+            tone={isEngine ? "pixi" : "mint"}
+            stageFocus={isStageFocus}
+          />
         </div>
 
         {isEngine && !compare && engineRendererFailed ? (
@@ -1248,7 +1239,7 @@ protocolV1: {
             </span>
             <button
               type="button"
-              className="btn btn-sm mint-pressable mint-hit"
+              className="btn btn-sm"
               onClick={handleRetryEngineRenderer}
               aria-label="Retry Pixi renderer in replay"
             >
@@ -1417,7 +1408,7 @@ protocolV1: {
                     hotkeys: ← → space [ ] · F/C/S/D/Esc
                   </span>
                   <button
-                    className={replayTransportButtonClass}
+                    className="btn btn-sm"
                     onClick={jumpToStartWithFeedback}
                     disabled={!canStepBack}
                     aria-label="Replay start from focus toolbar"
@@ -1425,7 +1416,7 @@ protocolV1: {
                     start
                   </button>
                   <button
-                    className={replayTransportButtonClass}
+                    className="btn btn-sm"
                     onClick={jumpToPrevStepWithFeedback}
                     disabled={!canStepBack}
                     aria-label="Replay previous from focus toolbar"
@@ -1433,7 +1424,7 @@ protocolV1: {
                     prev
                   </button>
                   <button
-                    className={replayTransportPrimaryButtonClass}
+                    className="btn btn-sm btn-primary"
                     onClick={toggleReplayPlayWithFeedback}
                     disabled={!canPlay}
                     aria-label={isPlaying ? "Pause replay from focus toolbar" : "Play replay from focus toolbar"}
@@ -1441,7 +1432,7 @@ protocolV1: {
                     {isPlaying ? "pause" : "play"}
                   </button>
                   <button
-                    className={replayTransportButtonClass}
+                    className="btn btn-sm"
                     onClick={jumpToNextStepWithFeedback}
                     disabled={!canStepForward}
                     aria-label="Replay next from focus toolbar"
@@ -1449,7 +1440,7 @@ protocolV1: {
                     next
                   </button>
                   <button
-                    className={replayTransportButtonClass}
+                    className="btn btn-sm"
                     onClick={jumpToEndWithFeedback}
                     disabled={!canStepForward}
                     aria-label="Replay end from focus toolbar"
@@ -1457,7 +1448,7 @@ protocolV1: {
                     end
                   </button>
                   <button
-                    className={replayTransportButtonClass}
+                    className="btn btn-sm"
                     onClick={jumpToPrevHighlightWithFeedback}
                     disabled={highlights.length === 0}
                     aria-label="Previous highlight from focus toolbar"
@@ -1465,7 +1456,7 @@ protocolV1: {
                     prev hl
                   </button>
                   <button
-                    className={replayTransportButtonClass}
+                    className="btn btn-sm"
                     onClick={jumpToNextHighlightWithFeedback}
                     disabled={highlights.length === 0}
                     aria-label="Next highlight from focus toolbar"
@@ -1536,22 +1527,22 @@ protocolV1: {
                       {sfxMuted ? "🔇" : "🔊"}
                     </button>
                   ) : null}
-                  <button className={replayTransportButtonClass} onClick={toggleStageFullscreenWithFeedback}>
+                  <button className="btn btn-sm" onClick={toggleStageFullscreenWithFeedback}>
                     {isStageFullscreen ? "Exit Fullscreen" : "Fullscreen"}
                   </button>
-                  <button className={replayTransportButtonClass} onClick={toggleStageTransportWithFeedback}>
+                  <button className="btn btn-sm" onClick={toggleStageTransportWithFeedback}>
                     {showStageTransport ? "Hide controls" : "Show controls"}
                   </button>
-                  <button className={replayTransportButtonClass} onClick={toggleStageSetupWithFeedback}>
+                  <button className="btn btn-sm" onClick={toggleStageSetupWithFeedback}>
                     {showStageSetup ? "Hide setup" : "Show setup"}
                   </button>
                 </>
               ) : null}
-              <button className={replayTransportButtonClass} onClick={exitFocusModeWithFeedback}>
+              <button className="btn btn-sm" onClick={exitFocusModeWithFeedback}>
                 Exit Focus
               </button>
               {sim.ok ? (
-                <button className={replayTransportButtonClass} onClick={() => copyWithToast("share link", buildShareLink())}>
+                <button className="btn btn-sm" onClick={() => copyWithToast("share link", buildShareLink())}>
                   Copy Share
                 </button>
               ) : null}
@@ -1579,11 +1570,11 @@ protocolV1: {
             </div>
 
             <div className="flex flex-wrap items-center gap-2">
-              <Link className="btn no-underline mint-pressable mint-hit" to="/events">
+              <Link className="btn no-underline" to="/events">
                 Events
               </Link>
               {event ? (
-                <Link className="btn btn-primary no-underline mint-pressable mint-hit" to={`/match?event=${encodeURIComponent(event.id)}&ui=${matchUi}`}>
+                <Link className="btn btn-primary no-underline" to={`/match?event=${encodeURIComponent(event.id)}&ui=${matchUi}`}>
                   Challenge again
                 </Link>
               ) : null}
@@ -1647,21 +1638,21 @@ protocolV1: {
                 ) : null}
                 {isEngine && !isEngineFocus ? (
                   <div className="flex flex-wrap items-center gap-2">
-                    <button className="btn btn-sm mint-pressable mint-hit" onClick={() => setFocusMode(true)}>
+                    <button className="btn btn-sm" onClick={() => setFocusMode(true)}>
                       Enter Pixi Focus
                     </button>
-                    <Link className="btn btn-sm no-underline mint-pressable mint-hit" to={stageReplayUrl}>
+                    <Link className="btn btn-sm no-underline" to={stageReplayUrl}>
                       Open Stage Page
                     </Link>
                   </div>
                 ) : null}
 
-                <button className="btn btn-primary mint-pressable mint-hit" onClick={() => load()} disabled={loading}>
+                <button className="btn btn-primary" onClick={() => load()} disabled={loading}>
                   {loading ? "Loading..." : "Load & replay"}
                 </button>
 
                 <button
-                  className="btn mint-pressable mint-hit"
+                  className="btn"
                   onClick={() => {
                     void (async () => {
                       try {
@@ -1681,7 +1672,7 @@ protocolV1: {
                     const saved = sim.ok ? hasEventAttempt(eventId, sim.current.matchId) : false;
                     return (
                       <button
-                        className="btn mint-pressable mint-hit"
+                        className="btn"
                         disabled={!sim.ok || saved}
                         onClick={() => {
                           (async () => {
@@ -1729,12 +1720,12 @@ protocolV1: {
                       Broadcast to overlay (sync step)
                     </label>
 
-                    <button className="btn btn-sm mint-pressable mint-hit" onClick={() => pushOverlay()}>
+                    <button className="btn btn-sm" onClick={() => pushOverlay()}>
                       Send snapshot
                     </button>
 
                     <a
-                      className="btn btn-sm no-underline mint-pressable mint-hit"
+                      className="btn btn-sm no-underline"
                       href={overlayUrl}
                       target="_blank"
                       rel="noreferrer noopener"
@@ -1743,7 +1734,7 @@ protocolV1: {
                     </a>
 
                     <button
-                      className="btn btn-sm mint-pressable mint-hit"
+                      className="btn btn-sm"
                       onClick={() => {
                         void copyWithToast("overlay URL", overlayUrl);
                       }}
@@ -1771,7 +1762,7 @@ protocolV1: {
                 </div>
                 <div className="mt-2 flex flex-wrap items-center gap-2">
                   <button
-                    className="btn btn-sm mint-pressable mint-hit"
+                    className="btn btn-sm"
                     onClick={() => {
                       void (async () => {
                         const decoded = decodeReplaySharePayload(searchParams);
@@ -1793,7 +1784,7 @@ protocolV1: {
                   </button>
                   {hasSharePayload ? (
                     <button
-                      className="btn btn-sm mint-pressable mint-hit"
+                      className="btn btn-sm"
                       onClick={() => {
                         const next = stripReplayShareParams(searchParams);
                         setSearchParams(next, { replace: true });
@@ -1803,7 +1794,7 @@ protocolV1: {
                       Clear share params
                     </button>
                   ) : null}
-                  <Link className="btn btn-sm no-underline mint-pressable mint-hit" to="/">
+                  <Link className="btn btn-sm no-underline" to="/">
                     Home
                   </Link>
                 </div>
@@ -1825,8 +1816,8 @@ protocolV1: {
           <div className="flex flex-wrap items-center justify-between gap-2">
             <div>Pixi focus needs a loaded replay. Load transcript first, or exit focus mode.</div>
             <div className="flex flex-wrap items-center gap-2">
-              <button className={replayTransportButtonClass} onClick={() => setFocusMode(false)}>Exit Focus</button>
-              <button className={replayTransportPrimaryButtonClass} onClick={() => load()} disabled={loading}>
+              <button className="btn btn-sm" onClick={() => setFocusMode(false)}>Exit Focus</button>
+              <button className="btn btn-sm btn-primary" onClick={() => load()} disabled={loading}>
                 {loading ? "Loading..." : "Load replay"}
               </button>
             </div>
@@ -1862,7 +1853,7 @@ protocolV1: {
                     </div>
                     <div className="flex flex-wrap items-center gap-2">
                       <button
-                        className="btn btn-sm mint-pressable mint-hit"
+                        className="btn btn-sm"
                         onClick={() => copyWithToast("matchId", sim.current.matchId)}
                       >
                         Copy matchId
@@ -1874,13 +1865,13 @@ protocolV1: {
                         {verifyStatus === "ok" ? "Verified" : verifyStatus === "mismatch" ? "Mismatch!" : "Verify"}
                       </button>
                       <button
-                        className="btn btn-sm mint-pressable mint-hit"
+                        className="btn btn-sm"
                         onClick={() => copyWithToast("transcript", stringifyWithBigInt(sim.transcript))}
                       >
                         Copy transcript
                       </button>
                       <button
-                        className="btn btn-sm btn-primary mint-pressable mint-hit"
+                        className="btn btn-sm btn-primary"
                         onClick={() => {
                           void (async () => {
                             try {
@@ -1896,7 +1887,7 @@ protocolV1: {
                       </button>
                       {eventId ? (
                         <button
-                          className="btn btn-sm mint-pressable mint-hit"
+                          className="btn btn-sm"
                           disabled={hasEventAttempt(eventId, sim.current.matchId)}
                           onClick={() => {
                             (async () => {
@@ -2194,10 +2185,10 @@ protocolV1: {
                       </div>
 
                       <div className="mt-3 flex flex-wrap items-center gap-2">
-                        <button className="btn mint-pressable mint-hit" onClick={() => copyWithToast("transcript", stringifyWithBigInt(sim.transcript))}>
+                        <button className="btn" onClick={() => copyWithToast("transcript", stringifyWithBigInt(sim.transcript))}>
                           Copy transcript JSON
                         </button>
-                        <button className="btn mint-pressable mint-hit" onClick={() => copyWithToast("result", stringifyWithBigInt(sim.current))}>
+                        <button className="btn" onClick={() => copyWithToast("result", stringifyWithBigInt(sim.current))}>
                           Copy result JSON
                         </button>
                         <button

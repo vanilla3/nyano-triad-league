@@ -33,29 +33,3 @@ pnpm -C packages/triad-engine test
 Contract reference (Nyano Peace): https://etherscan.io/token/0xd5839db20b47a06Ed09D7c0f44d9c2A4f0A6fEC3#code
 
 Generated: 2026-02-01
-
----
-
-
-## Codex (GPT-5.3-Codex) での作業
-
-このリポジトリには Codex 用の Work Order とスクリプトが同梱されています。
-
-- 単発実行:
-  ```bash
-  ./codex/scripts/run_work_order.sh 006
-  ```
-
-- 006 以降をまとめて実行（Motion系だけ）:
-  ```bash
-  START_ID=006 INCLUDE_GLOB=motion ./codex/scripts/run_all_work_orders.sh
-  ```
-
-- 高速モデルを使う（任意）:
-  ```bash
-  MODEL=gpt-5.3-codex-spark ./codex/scripts/run_work_order.sh 006
-  ```
-
-> NOTE: git remote `origin` が無い場合は fetch/pull/push を自動でスキップし、ローカルで完結します。
-
-Work Order は `codex/work_orders/` を参照してください。

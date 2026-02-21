@@ -8,6 +8,10 @@
   - リポジトリ直下 `AGENTS.md` と、各ディレクトリ（例: `apps/web/AGENTS.md`）の指示を階層的にマージします。
 - このリポジトリでは **決定論**（transcript 再現）と **URL / プロトコル互換**が最優先です。
 
+運用メモ（短いガイド）:
+
+- `codex/CODEX_OPERATOR_GUIDE.md`
+
 ## 2) 推奨ワークフロー（失敗しにくい）
 
 1. **現状把握**（該当ページ/コンポーネント/仕様 doc を読む）
@@ -20,6 +24,8 @@
 5. **ログ更新**
    - `docs/99_dev/Nyano_Triad_League_DEV_TODO_v1_ja.md`
    - `docs/99_dev/IMPLEMENTATION_LOG.md`
+
+補足: Work Order を 1 本ずつ回すなら `codex/scripts/run_work_order.sh` / `.ps1` を使うと安全です。
 
 ## 3) 依頼文テンプレ（コピペして使う）
 

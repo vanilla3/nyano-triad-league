@@ -33,6 +33,10 @@ export function DuelStageMint({
 
   return (
     <div className={stageClassName}>
+      {/* Stage rim + atmosphere layers (kept lightweight and CSS-driven). */}
+      <div className="mint-stage__rim" aria-hidden="true" />
+      <div className="mint-stage__atmo" aria-hidden="true" />
+
       {/* Holo grid background (pure CSS, no image assets) */}
       <div className="mint-stage__holo" aria-hidden="true" />
 

@@ -20,8 +20,6 @@ export interface HandDisplayMintProps {
   owner: PlayerIndex;
   usedIndices: Set<number>;
   selectedIndex: number | null;
-  forcedIndex?: number | null;
-  idleGuide?: boolean;
   onSelect?: (index: number) => void;
   disabled?: boolean;
   /** Enable desktop drag-and-drop from hand to board */
@@ -35,8 +33,6 @@ export function HandDisplayMint({
   owner,
   usedIndices,
   selectedIndex,
-  forcedIndex = null,
-  idleGuide = false,
   onSelect,
   disabled = false,
   enableDragDrop = false,
@@ -46,16 +42,11 @@ export function HandDisplayMint({
   const preview = useCardPreview();
 
   return (
-    <div
-      className={["mint-hand", idleGuide ? "mint-hand--idle-guide" : ""].filter(Boolean).join(" ")}
-      role="listbox"
-      aria-label={`Player ${owner === 0 ? "A" : "B"} hand`}
-    >
+    <div className="mint-hand" role="listbox" aria-label={`Player ${owner === 0 ? "A" : "B"} hand`}>
       {cards.map((card, idx) => {
         const isUsed = usedIndices.has(idx);
         const isSelected = selectedIndex === idx;
-        const isForcedOut = forcedIndex !== null && idx !== forcedIndex;
-        const isDisabled = isUsed || isForcedOut || disabled;
+        const isDisabled = isUsed || disabled;
 
         const classes = [
           "mint-hand-card",
@@ -73,7 +64,7 @@ export function HandDisplayMint({
             role="option"
             aria-selected={isSelected}
             aria-disabled={isDisabled}
-            aria-label={`Card ${idx + 1}: edges ${card.edges.up}/${card.edges.right}/${card.edges.down}/${card.edges.left}${isUsed ? " (used)" : ""}${isForcedOut ? " (locked)" : ""}`}
+            aria-label={`Card ${idx + 1}: edges ${card.edges.up}/${card.edges.right}/${card.edges.down}/${card.edges.left}${isUsed ? " (used)" : ""}`}
             className={classes}
             disabled={isDisabled}
             draggable={enableDragDrop && !isDisabled}

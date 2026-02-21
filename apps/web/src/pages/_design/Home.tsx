@@ -230,10 +230,10 @@ export function HomePage() {
 
             {/* CTA buttons */}
             <div className="flex flex-wrap items-center justify-center gap-3">
-              <Link to="/arena" className="btn btn-primary btn-lg mint-pressable mint-hit">
+              <Link to="/arena" className="btn btn-primary btn-lg">
                 ⚔️ Play Now
               </Link>
-              <Link to="/decks" className="btn btn-secondary btn-lg mint-pressable mint-hit">
+              <Link to="/decks" className="btn btn-secondary btn-lg">
                 🃏 Build Deck
               </Link>
             </div>

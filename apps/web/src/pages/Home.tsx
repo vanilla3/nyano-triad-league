@@ -28,7 +28,6 @@ import {
 import { writeClipboardText } from "@/lib/clipboard";
 import { errorMessage } from "@/lib/errorMessage";
 import type { ExpressionName } from "@/lib/expression_map";
-import { useIdle } from "@/hooks/useIdle";
 
 /* ═══════════════════════════════════════════════════════════════════════════
    HOME PAGE — Polished Landing Page (M08)
@@ -278,7 +277,6 @@ export function HomePage() {
   const toast = useToast();
   const [difficulty, setDifficulty] = React.useState<string>("normal");
   const [showQuickGuide, setShowQuickGuide] = React.useState(false);
-  const heroCtaIdle = useIdle({ timeoutMs: 3800, disabled: showQuickGuide });
   const [uxStats, setUxStats] = React.useState(() => readCumulativeStats());
   const [uxSnapshotHistory, setUxSnapshotHistory] = React.useState(() =>
     readUxTelemetrySnapshotHistory(5),
@@ -445,7 +443,7 @@ export function HomePage() {
                   key={d.key}
                   onClick={() => setDifficulty(d.key)}
                   className={[
-                    "px-4 py-2.5 rounded-2xl text-sm font-bold font-display transition-all mint-pressable mint-hit",
+                    "px-4 py-2.5 rounded-2xl text-sm font-bold font-display transition-all",
                     difficulty === d.key
                       ? "bg-nyano-500 text-white shadow-glow-nyano scale-105"
                       : "bg-white/15 text-white/90 backdrop-blur-sm border border-white/20 hover:bg-white/25",
@@ -464,8 +462,6 @@ export function HomePage() {
                 onClick={handleQuickPlayStart}
                 className={[
                   "home-hero__cta",
-                  "mint-pressable mint-hit",
-                  heroCtaIdle ? "home-hero__cta--idle" : "",
                   "inline-flex items-center gap-3",
                   "px-10 py-4 rounded-3xl",
                   "text-white text-xl font-bold font-display",
@@ -480,10 +476,10 @@ export function HomePage() {
 
             {/* Secondary actions */}
             <div className="flex flex-wrap items-center justify-center gap-3 mt-5">
-              <Link to="/arena" className="inline-flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-white/10 backdrop-blur-sm border border-white/20 text-white text-sm font-semibold hover:bg-white/20 transition-all no-underline mint-pressable mint-hit">
+              <Link to="/arena" className="inline-flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-white/10 backdrop-blur-sm border border-white/20 text-white text-sm font-semibold hover:bg-white/20 transition-all no-underline">
                 ⚔️ Arena
               </Link>
-              <Link to="/decks" className="inline-flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-white/10 backdrop-blur-sm border border-white/20 text-white text-sm font-semibold hover:bg-white/20 transition-all no-underline mint-pressable mint-hit">
+              <Link to="/decks" className="inline-flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-white/10 backdrop-blur-sm border border-white/20 text-white text-sm font-semibold hover:bg-white/20 transition-all no-underline">
                 🃏 Build Deck
               </Link>
             </div>
@@ -520,7 +516,7 @@ export function HomePage() {
                 ) : (
                   <span className="text-[11px] font-semibold text-surface-400">TODO</span>
                 )}
-                <button className="btn text-xs mint-pressable mint-hit" onClick={openQuickGuide}>
+                <button className="btn text-xs" onClick={openQuickGuide}>
                   ルールを開く
                 </button>
               </div>
@@ -540,7 +536,7 @@ export function HomePage() {
                 <Link
                   to={quickPlayUrl}
                   onClick={handleQuickPlayStart}
-                  className="btn btn-primary text-xs no-underline mint-pressable mint-hit"
+                  className="btn btn-primary text-xs no-underline"
                 >
                   今すぐ対戦
                 </Link>
@@ -571,7 +567,7 @@ export function HomePage() {
               </div>
             )}
             <button
-              className="btn text-xs mint-pressable mint-hit"
+              className="btn text-xs"
               onClick={() => {
                 resetOnboardingProgress();
                 refreshOnboarding();
@@ -596,7 +592,7 @@ export function HomePage() {
               <div>5. 同値はじゃんけん属性で判定（Rock/Paper/Scissors）</div>
             </div>
             <div className="mt-4 flex justify-end gap-2">
-              <button className="btn text-xs mint-pressable mint-hit" onClick={() => setShowQuickGuide(false)}>
+              <button className="btn text-xs" onClick={() => setShowQuickGuide(false)}>
                 閉じる
               </button>
             </div>
@@ -725,7 +721,7 @@ export function HomePage() {
           <summary className="cursor-pointer text-xs font-medium text-surface-500">Settings</summary>
           <div className="mt-2 flex flex-wrap gap-3">
             <button
-              className="btn text-xs mint-pressable mint-hit"
+              className="btn text-xs"
               onClick={() => {
                 resetTutorialSeen();
                 toast.success("Tutorial reset", "The tutorial will appear on your next guest match.");
@@ -734,7 +730,7 @@ export function HomePage() {
               Reset Tutorial
             </button>
             <button
-              className="btn text-xs mint-pressable mint-hit"
+              className="btn text-xs"
               onClick={() => {
                 clearGameIndexCache();
                 toast.success("Cache cleared", "Game index cache has been cleared. Card data will be re-fetched on next load.");
@@ -752,14 +748,14 @@ export function HomePage() {
                 </div>
               </div>
               <div className="flex flex-wrap gap-2">
-                <button className="btn text-xs mint-pressable mint-hit" onClick={refreshUxStats}>
+                <button className="btn text-xs" onClick={refreshUxStats}>
                   Refresh Metrics
                 </button>
-                <button className="btn text-xs mint-pressable mint-hit" onClick={copyUxSnapshot}>
+                <button className="btn text-xs" onClick={copyUxSnapshot}>
                   Copy Snapshot
                 </button>
                 <button
-                  className="btn text-xs mint-pressable mint-hit"
+                  className="btn text-xs"
                   onClick={() => {
                     clearCumulativeStats();
                     refreshUxStats();
@@ -770,7 +766,7 @@ export function HomePage() {
                 </button>
               </div>
             </div>
-            <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-7">
+            <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-6">
               <div className="rounded-xl border border-surface-200 bg-surface-50 px-3 py-2">
                 <div className="text-[11px] text-surface-500">Sessions</div>
                 <div className="text-sm font-semibold text-surface-800">{uxStats.sessions}</div>
@@ -791,12 +787,6 @@ export function HomePage() {
                 <div className="text-[11px] text-surface-500">Avg quick-play to first place</div>
                 <div className="text-sm font-semibold text-surface-800">
                   {formatSecondsFromMs(uxStats.avg_quickplay_to_first_place_ms)}
-                </div>
-              </div>
-              <div className="rounded-xl border border-surface-200 bg-surface-50 px-3 py-2">
-                <div className="text-[11px] text-surface-500">Avg first result reveal</div>
-                <div className="text-sm font-semibold text-surface-800">
-                  {formatSecondsFromMs(uxStats.avg_first_result_ms)}
                 </div>
               </div>
               <div className="rounded-xl border border-surface-200 bg-surface-50 px-3 py-2">
@@ -840,7 +830,7 @@ export function HomePage() {
               <div className="flex items-center justify-between gap-2">
                 <div className="text-xs font-semibold text-surface-700">Recent Snapshots (Local)</div>
                 <button
-                  className="btn text-[11px] mint-pressable mint-hit"
+                  className="btn text-[11px]"
                   disabled={uxSnapshotHistory.length === 0}
                   onClick={() => {
                     clearUxTelemetrySnapshotHistory();

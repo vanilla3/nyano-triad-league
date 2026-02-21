@@ -1,6 +1,6 @@
 import React from "react";
 import type { AiReasonCode } from "@/lib/ai/nyano_ai";
-import { NyanoReaction, pickReactionKind, type NyanoReactionInput } from "./NyanoReaction";
+import { NyanoReaction, type NyanoReactionInput } from "./NyanoReaction";
 
 export interface NyanoReactionSlotProps {
   input: NyanoReactionInput | null;
@@ -25,11 +25,11 @@ export function NyanoReactionSlot({
   className = "",
   testId = "nyano-reaction-slot",
 }: NyanoReactionSlotProps) {
-  const hasVisibleReaction = input !== null && pickReactionKind(input) !== "idle";
+  const hasReaction = input !== null;
   const slotClassName = [
     "mint-nyano-reaction-slot",
     stageFocus ? "mint-nyano-reaction-slot--stage-focus" : "",
-    hasVisibleReaction ? "mint-nyano-reaction-slot--active" : "mint-nyano-reaction-slot--idle",
+    hasReaction ? "mint-nyano-reaction-slot--active" : "mint-nyano-reaction-slot--idle",
     className,
   ].filter(Boolean).join(" ");
 
@@ -40,21 +40,20 @@ export function NyanoReactionSlot({
       aria-live="polite"
       aria-atomic="true"
     >
-      {/* Always reserve slot area even if NyanoReaction returns null (idle). */}
-      <span className="mint-nyano-reaction-slot__placeholder" aria-hidden="true" />
-      <div className="mint-nyano-reaction-slot__content">
-        {input ? (
-          <NyanoReaction
-            input={input}
-            turnIndex={turnIndex}
-            rpg={rpg}
-            mint={mint}
-            tone={tone}
-            aiReasonCode={aiReasonCode}
-            className={stageFocus ? "stage-focus-cutin" : ""}
-          />
-        ) : null}
-      </div>
+      {/* Keep this slot mounted to prevent layout shift when reactions appear/disappear. */}
+      {input ? (
+        <NyanoReaction
+          input={input}
+          turnIndex={turnIndex}
+          rpg={rpg}
+          mint={mint}
+          tone={tone}
+          aiReasonCode={aiReasonCode}
+          className={stageFocus ? "stage-focus-cutin" : ""}
+        />
+      ) : (
+        <span className="mint-nyano-reaction-slot__placeholder" aria-hidden="true" />
+      )}
     </div>
   );
 }

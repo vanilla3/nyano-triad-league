@@ -9,6 +9,7 @@ import { getAppBasePath } from "./lib/appUrl";
 import { installGlobalErrorTracking } from "./lib/error_tracking";
 
 import "./styles.css";
+import "./motions.css";
 
 installGlobalErrorTracking();
 

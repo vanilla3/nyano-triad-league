@@ -3,10 +3,9 @@ import { describe, expect, it } from "vitest";
 import {
   buildMatchSetupSummaryLine,
   describeFirstPlayerMode,
-  describeRulesetKeyDisplay,
   describeRulesetKey,
   shouldOpenAdvancedSetup,
-} from "../MatchSetupPanelMint.helpers";
+} from "../MatchSetupPanelMint";
 
 describe("MatchSetupPanelMint helpers", () => {
   it("builds setup summary line with event deck wording", () => {
@@ -37,9 +36,6 @@ describe("MatchSetupPanelMint helpers", () => {
 
   it("keeps stable labels for ruleset and first-player mode", () => {
     expect(describeRulesetKey("classic_three_open")).toBe("classic three open");
-    expect(describeRulesetKey("classic_reverse")).toBe("classic reverse");
-    expect(describeRulesetKeyDisplay("classic_reverse")).toContain("クラシック");
-    expect(describeRulesetKeyDisplay("classic_reverse")).toContain("classic reverse");
     expect(describeFirstPlayerMode("committed_mutual_choice")).toBe("committed mutual");
   });
 });

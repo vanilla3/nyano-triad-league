@@ -1,0 +1,190 @@
+/*
+  Nyano Triad League — Motion Utilities
+
+  NOTE
+  - This file exists because legacy `index.css` is no longer imported.
+  - Several UI components still reference classes that used to live in `index.css`
+    (e.g. BoardView / Replay banners).
+  - Keep this file small and focused: only shared motion primitives.
+
+  Design intent:
+  - “Game-feel” micro motion (ease-out-back, pop, flip, shimmer)
+  - Respect `prefers-reduced-motion` and the app's `[data-vfx]` tiers.
+*/
+
+@layer utilities {
+  /* ── Board: placement pop ─────────────────────────────────────── */
+  @keyframes nytl-cell-place {
+    0% {
+      transform: scale(0.85);
+      opacity: 0.5;
+      box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.6);
+    }
+    40% {
+      transform: scale(1.08);
+      opacity: 1;
+      box-shadow: 0 0 24px -2px rgba(245, 158, 11, 0.5);
+    }
+    100% {
+      transform: scale(1);
+      opacity: 1;
+      box-shadow: 0 0 8px -2px rgba(245, 158, 11, 0.2);
+    }
+  }
+
+  .animate-cell-place {
+    animation: nytl-cell-place 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  }
+
+  /* ── Board: flip / ownership swap ─────────────────────────────── */
+  @keyframes nytl-cell-flip {
+    0% {
+      transform: perspective(400px) rotateY(0deg);
+      filter: brightness(1);
+    }
+    30% {
+      transform: perspective(400px) rotateY(90deg);
+      filter: brightness(1.3);
+    }
+    60% {
+      transform: perspective(400px) rotateY(180deg);
+      filter: brightness(1.1);
+    }
+    100% {
+      transform: perspective(400px) rotateY(360deg);
+      filter: brightness(1);
+    }
+  }
+
+  .animate-cell-flip {
+    animation: nytl-cell-flip 0.55s cubic-bezier(0.4, 0, 0.2, 1) both;
+  }
+
+  /* Staggered flip delays for chain effects */
+  .flip-delay-1 { animation-delay: 150ms; }
+  .flip-delay-2 { animation-delay: 300ms; }
+  .flip-delay-3 { animation-delay: 450ms; }
+
+  /* Flip glow ring */
+  @keyframes nytl-flip-glow {
+    0% { box-shadow: 0 0 0 0 rgba(139, 92, 246, 0.7); }
+    50% { box-shadow: 0 0 16px 4px rgba(139, 92, 246, 0.3); }
+    100% { box-shadow: 0 0 0 0 rgba(139, 92, 246, 0); }
+  }
+
+  .animate-flip-glow {
+    animation: nytl-flip-glow 0.8s ease-out;
+  }
+
+  /* ── Replay: result banner entry ───────────────────────────────── */
+  @keyframes nytl-banner-slide-in {
+    0% {
+      transform: translateY(-16px);
+      opacity: 0;
+      max-height: 0;
+    }
+    100% {
+      transform: translateY(0);
+      opacity: 1;
+      max-height: 200px;
+    }
+  }
+
+  .animate-banner-enter {
+    animation: nytl-banner-slide-in 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  }
+
+  @keyframes nytl-winner-shimmer {
+    0% { background-position: -200% center; }
+    100% { background-position: 200% center; }
+  }
+
+  .result-banner-shimmer {
+    background-size: 200% auto;
+    animation: nytl-winner-shimmer 3s linear infinite;
+  }
+
+  /* ── Stream/ops HUD ───────────────────────────────────────────── */
+  @keyframes nytl-hud-border-pulse {
+    0%, 100% {
+      border-color: rgba(255, 138, 80, 0.6);
+      box-shadow: 0 0 12px -2px rgba(255, 138, 80, 0.3);
+    }
+    50% {
+      border-color: rgba(255, 138, 80, 1);
+      box-shadow: 0 0 24px -2px rgba(255, 138, 80, 0.5);
+    }
+  }
+
+  .hud-vote-active {
+    animation: nytl-hud-border-pulse 1.5s ease-in-out infinite;
+  }
+
+  @keyframes nytl-counter-tick {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.15); }
+    100% { transform: scale(1); }
+  }
+
+  .animate-counter-tick {
+    animation: nytl-counter-tick 0.2s ease-out;
+  }
+
+  @keyframes nytl-live-dot {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.4; transform: scale(0.8); }
+  }
+
+  .animate-live-dot {
+    animation: nytl-live-dot 2s ease-in-out infinite;
+  }
+
+  /* ── Landing: mascot bobbing ───────────────────────────────────── */
+  @keyframes nytl-float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-8px); }
+  }
+
+  .animate-float {
+    animation: nytl-float 3s ease-in-out infinite;
+  }
+
+  /* ── Result: victory pulse ─────────────────────────────────────── */
+  @keyframes nytl-victory-pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+  }
+
+  .animate-victory {
+    animation: nytl-victory-pulse 0.6s ease-in-out 3;
+  }
+}
+
+/* ── VFX gating ────────────────────────────────────────────────────── */
+[data-vfx="off"] .animate-cell-place,
+[data-vfx="off"] .animate-cell-flip,
+[data-vfx="off"] .animate-flip-glow,
+[data-vfx="off"] .animate-banner-enter,
+[data-vfx="off"] .result-banner-shimmer,
+[data-vfx="off"] .hud-vote-active,
+[data-vfx="off"] .animate-counter-tick,
+[data-vfx="off"] .animate-live-dot,
+[data-vfx="off"] .animate-float,
+[data-vfx="off"] .animate-victory {
+  animation: none !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-cell-place,
+  .animate-cell-flip,
+  .animate-flip-glow,
+  .animate-banner-enter,
+  .result-banner-shimmer,
+  .hud-vote-active,
+  .animate-counter-tick,
+  .animate-live-dot,
+  .animate-float,
+  .animate-victory {
+    animation: none !important;
+  }
+}

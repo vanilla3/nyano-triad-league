@@ -1,23 +1,22 @@
-﻿import React from "react";
+import React from "react";
 import type { ComboEffectName, PlayerIndex } from "@nyano/triad-engine";
 import { NyanoAvatar } from "./NyanoAvatar";
 import { reactionToExpression, type ReactionKind } from "@/lib/expression_map";
 import type { AiReasonCode } from "@/lib/ai/nyano_ai";
 import { pickDialogue, pickReasonDialogue, detectLanguage, type DialogueLanguage } from "@/lib/nyano_dialogue";
 
-/*
- * Nyano reaction overlay.
- * - Maps gameplay events to reaction kind and avatar expression.
- * - Integrates JP/EN dialogue and optional AI reason copy.
- * - Applies cut-in timing based on reduced-motion and VFX quality.
- */
+/* ═══════════════════════════════════════════════════════════════════════════
+   NyanoReaction.tsx
 
-/*
- * Nyano reaction overlay.
- * - Maps gameplay events to reaction kind and avatar expression.
- * - Integrates JP/EN dialogue and optional AI reason copy.
- * - Applies cut-in timing based on reduced-motion and VFX quality.
- */
+   ゲームイベントに応じた Nyano のリアクション表示。
+   NyanoAvatar で表情画像を表示し、glow / badge / ひとこと吹き出しで装飾。
+
+   RM03-010: Dialogue system integration (JP/EN)
+   RM03-011: Emotion continuity (expression smoothing)
+   RM04-030: AI reason → dialogue connection
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── Reaction Visual Config ── */
 
 interface ReactionConfig {
   emoji: string;
@@ -26,30 +25,25 @@ interface ReactionConfig {
 }
 
 const REACTIONS: Record<ReactionKind, ReactionConfig> = {
-  idle: { emoji: "😺", glow: "rgba(255,138,80,0.2)", badge: "" },
-  flip_single: { emoji: "✨", glow: "rgba(245,166,35,0.4)", badge: "Flip" },
-  flip_multi: { emoji: "💥", glow: "rgba(245,166,35,0.5)", badge: "Multi" },
-  chain: { emoji: "⛓️", glow: "rgba(155,89,255,0.5)", badge: "Chain" },
-  fever: { emoji: "🔥", glow: "rgba(255,69,0,0.6)", badge: "Fever" },
-  momentum: { emoji: "⚡", glow: "rgba(56,161,232,0.4)", badge: "Momentum" },
-  domination: { emoji: "👑", glow: "rgba(232,70,106,0.5)", badge: "Dominance" },
-  warning_triggered: { emoji: "⚠️", glow: "rgba(239,68,68,0.4)", badge: "Warning" },
-  advantage: { emoji: "📈", glow: "rgba(16,185,129,0.4)", badge: "Lead" },
-  disadvantage: { emoji: "📉", glow: "rgba(99,102,241,0.3)", badge: "Behind" },
-  draw_state: { emoji: "🤝", glow: "rgba(168,162,158,0.3)", badge: "Draw" },
-  victory: { emoji: "🏆", glow: "rgba(16,185,129,0.6)", badge: "Win" },
-  defeat: { emoji: "😿", glow: "rgba(239,68,68,0.4)", badge: "Lose" },
-  game_draw: { emoji: "🤝", glow: "rgba(168,162,158,0.4)", badge: "Draw" },
+  idle:               { emoji: "🐱", glow: "rgba(255,138,80,0.2)",  badge: "" },
+  flip_single:        { emoji: "😼", glow: "rgba(245,166,35,0.4)",  badge: "⚔" },
+  flip_multi:         { emoji: "😸", glow: "rgba(245,166,35,0.5)",  badge: "⚔⚔" },
+  chain:              { emoji: "🙀", glow: "rgba(155,89,255,0.5)",  badge: "✦" },
+  fever:              { emoji: "😻", glow: "rgba(255,69,0,0.6)",    badge: "🔥" },
+  momentum:           { emoji: "😼", glow: "rgba(56,161,232,0.4)",  badge: "⚡" },
+  domination:         { emoji: "😸", glow: "rgba(232,70,106,0.5)",  badge: "👑" },
+  warning_triggered:  { emoji: "😿", glow: "rgba(239,68,68,0.4)",   badge: "⚠" },
+  advantage:          { emoji: "😸", glow: "rgba(16,185,129,0.4)",  badge: "✨" },
+  disadvantage:       { emoji: "😿", glow: "rgba(99,102,241,0.3)",  badge: "💧" },
+  draw_state:         { emoji: "🐱", glow: "rgba(168,162,158,0.3)", badge: "⚖" },
+  victory:            { emoji: "😻", glow: "rgba(16,185,129,0.6)",  badge: "🏆" },
+  defeat:             { emoji: "😿", glow: "rgba(239,68,68,0.4)",   badge: "💔" },
+  game_draw:          { emoji: "🐱", glow: "rgba(168,162,158,0.4)", badge: "🤝" },
 };
 
-/*
- * Nyano reaction overlay.
- * - Maps gameplay events to reaction kind and avatar expression.
- * - Integrates JP/EN dialogue and optional AI reason copy.
- * - Applies cut-in timing based on reduced-motion and VFX quality.
- */
+/* ── Emotion Continuity (RM03-011) ── */
 
-// Similar emotional state groups 窶・don't flicker between these
+// Similar emotional state groups — don't flicker between these
 const EMOTION_GROUPS: ReactionKind[][] = [
   ["advantage", "momentum", "domination"],
   ["disadvantage", "warning_triggered"],
@@ -109,9 +103,9 @@ export function resolveReactionCutInImpact(kind: ReactionKind, aiReasonCode?: Ai
 }
 
 function cutInDurationsForImpact(impact: CutInImpact): { burstMs: number; visibleMs: number } {
-  if (impact === "high") return { burstMs: 760, visibleMs: 2800 };
-  if (impact === "mid") return { burstMs: 620, visibleMs: 2500 };
-  return { burstMs: 500, visibleMs: 2100 };
+  if (impact === "high") return { burstMs: 860, visibleMs: 3600 };
+  if (impact === "mid") return { burstMs: 700, visibleMs: 3300 };
+  return { burstMs: 560, visibleMs: 3000 };
 }
 
 function normalizeReactionVfxQuality(v: string | null | undefined): ReactionVfxQuality {
@@ -189,70 +183,25 @@ function burstLabelForKind(kind: ReactionKind): string {
   }
 }
 
-/*
- * Nyano reaction overlay.
- * - Maps gameplay events to reaction kind and avatar expression.
- * - Integrates JP/EN dialogue and optional AI reason copy.
- * - Applies cut-in timing based on reduced-motion and VFX quality.
- */
+/* ── Determine Reaction Kind ── */
 
 export interface NyanoReactionInput {
-  /*
- * Nyano reaction overlay.
- * - Maps gameplay events to reaction kind and avatar expression.
- * - Integrates JP/EN dialogue and optional AI reason copy.
- * - Applies cut-in timing based on reduced-motion and VFX quality.
- */
+  /** Last turn's flip count */
   flipCount: number;
-  /*
- * Nyano reaction overlay.
- * - Maps gameplay events to reaction kind and avatar expression.
- * - Integrates JP/EN dialogue and optional AI reason copy.
- * - Applies cut-in timing based on reduced-motion and VFX quality.
- */
+  /** Whether any flip was a chain */
   hasChain: boolean;
-  /*
- * Nyano reaction overlay.
- * - Maps gameplay events to reaction kind and avatar expression.
- * - Integrates JP/EN dialogue and optional AI reason copy.
- * - Applies cut-in timing based on reduced-motion and VFX quality.
- */
+  /** Combo effect of last turn */
   comboEffect: ComboEffectName;
-  /*
- * Nyano reaction overlay.
- * - Maps gameplay events to reaction kind and avatar expression.
- * - Integrates JP/EN dialogue and optional AI reason copy.
- * - Applies cut-in timing based on reduced-motion and VFX quality.
- */
+  /** Whether warning mark was triggered */
   warningTriggered: boolean;
-  /*
- * Nyano reaction overlay.
- * - Maps gameplay events to reaction kind and avatar expression.
- * - Integrates JP/EN dialogue and optional AI reason copy.
- * - Applies cut-in timing based on reduced-motion and VFX quality.
- */
+  /** Current tile scores */
   tilesA: number;
   tilesB: number;
-  /*
- * Nyano reaction overlay.
- * - Maps gameplay events to reaction kind and avatar expression.
- * - Integrates JP/EN dialogue and optional AI reason copy.
- * - Applies cut-in timing based on reduced-motion and VFX quality.
- */
+  /** Which player perspective Nyano is representing (0=A, null=neutral) */
   perspective: PlayerIndex | null;
-  /*
- * Nyano reaction overlay.
- * - Maps gameplay events to reaction kind and avatar expression.
- * - Integrates JP/EN dialogue and optional AI reason copy.
- * - Applies cut-in timing based on reduced-motion and VFX quality.
- */
+  /** Is the game finished */
   finished: boolean;
-  /*
- * Nyano reaction overlay.
- * - Maps gameplay events to reaction kind and avatar expression.
- * - Integrates JP/EN dialogue and optional AI reason copy.
- * - Applies cut-in timing based on reduced-motion and VFX quality.
- */
+  /** Winner if finished */
   winner?: PlayerIndex | "draw" | null;
 }
 
@@ -285,8 +234,8 @@ export function pickReactionKind(input: NyanoReactionInput): ReactionKind {
   // Score-based reactions
   const diff = input.tilesA - input.tilesB;
 
-  // Neutral perspective should avoid assigning "our side / enemy side".
-  // Use absolute diff to indicate whether someone is clearly leading.
+  // Neutral perspective: avoid "ピンチ" / "優勢" bias.
+  // Use absolute diff for a simple "someone is leading" feel.
   if (input.perspective === null) {
     const abs = Math.abs(diff);
     if (abs >= 2) return "advantage";
@@ -303,56 +252,21 @@ export function pickReactionKind(input: NyanoReactionInput): ReactionKind {
   return "idle";
 }
 
-/*
- * Nyano reaction overlay.
- * - Maps gameplay events to reaction kind and avatar expression.
- * - Integrates JP/EN dialogue and optional AI reason copy.
- * - Applies cut-in timing based on reduced-motion and VFX quality.
- */
+/* ── Component ── */
 
 export interface NyanoReactionProps {
   input: NyanoReactionInput;
-  /*
- * Nyano reaction overlay.
- * - Maps gameplay events to reaction kind and avatar expression.
- * - Integrates JP/EN dialogue and optional AI reason copy.
- * - Applies cut-in timing based on reduced-motion and VFX quality.
- */
+  /** Turn index used for pseudo-random line selection */
   turnIndex?: number;
-  /*
- * Nyano reaction overlay.
- * - Maps gameplay events to reaction kind and avatar expression.
- * - Integrates JP/EN dialogue and optional AI reason copy.
- * - Applies cut-in timing based on reduced-motion and VFX quality.
- */
+  /** RPG mode styling */
   rpg?: boolean;
-  /*
- * Nyano reaction overlay.
- * - Maps gameplay events to reaction kind and avatar expression.
- * - Integrates JP/EN dialogue and optional AI reason copy.
- * - Applies cut-in timing based on reduced-motion and VFX quality.
- */
+  /** Mint mode styling (Nintendo-level soft UI) */
   mint?: boolean;
-  /*
- * Nyano reaction overlay.
- * - Maps gameplay events to reaction kind and avatar expression.
- * - Integrates JP/EN dialogue and optional AI reason copy.
- * - Applies cut-in timing based on reduced-motion and VFX quality.
- */
+  /** Mint tone variant */
   tone?: "mint" | "pixi";
-  /*
- * Nyano reaction overlay.
- * - Maps gameplay events to reaction kind and avatar expression.
- * - Integrates JP/EN dialogue and optional AI reason copy.
- * - Applies cut-in timing based on reduced-motion and VFX quality.
- */
+  /** Display language for dialogue */
   lang?: DialogueLanguage;
-  /*
- * Nyano reaction overlay.
- * - Maps gameplay events to reaction kind and avatar expression.
- * - Integrates JP/EN dialogue and optional AI reason copy.
- * - Applies cut-in timing based on reduced-motion and VFX quality.
- */
+  /** AI reason code for reason-aware dialogue (RM04-030) */
   aiReasonCode?: AiReasonCode;
   className?: string;
 }
@@ -401,7 +315,6 @@ export function NyanoReaction({
     [cutInImpact, reducedMotion, vfxQuality],
   );
   const burstLabel = React.useMemo(() => burstLabelForKind(kind), [kind]);
-  const showBurstBanner = cutInTiming.allowBurst && cutInImpact === "high" && vfxQuality === "high";
 
   // Pick dialogue: AI reason dialogue takes priority if available
   const line = React.useMemo(() => {
@@ -433,7 +346,7 @@ export function NyanoReaction({
   if (rpg) {
     return (
       <div
-        className={["rpg-nyano-reaction", "transition-all", "duration-300", "ease-out", className].join(" ")}
+        className={`rpg-nyano-reaction ${className}`}
         style={{
           display: "flex",
           alignItems: "center",
@@ -445,6 +358,7 @@ export function NyanoReaction({
           boxShadow: `0 0 12px ${cfg.glow}`,
           opacity: visible ? 1 : 0,
           transform: visible ? "translateY(0)" : "translateY(8px)",
+          transition: "opacity 0.3s, transform 0.3s",
           fontFamily: "'Nunito', system-ui, sans-serif",
         }}
       >
@@ -473,14 +387,14 @@ export function NyanoReaction({
     );
   }
 
-  // Mint (Nintendo-soft) style 窶・frosted white, rounded, accent glow
+  // Mint (Nintendo-soft) style — frosted white, rounded, accent glow
   if (mint) {
     const reactionStyle = {
       display: "flex",
       alignItems: "center",
       gap: 10,
-      padding: "10px 14px",
-      borderRadius: 18,
+      padding: "12px 18px",
+      borderRadius: 20,
       background: pixiTone
         ? "linear-gradient(145deg, rgba(8,21,40,0.88), rgba(5,13,28,0.84))"
         : "rgba(255,255,255,0.85)",
@@ -512,14 +426,14 @@ export function NyanoReaction({
       >
         <span className="mint-nyano-reaction__cutin-flash" aria-hidden="true" />
         <span className="mint-nyano-reaction__scanline" aria-hidden="true" />
-        {showBurstBanner && (
+        {cutInTiming.allowBurst && cutInImpact === "high" && (
           <div className="mint-nyano-reaction__burst-banner" aria-hidden="true">
             <span className="mint-nyano-reaction__burst-main">{burstLabel}</span>
             <span className="mint-nyano-reaction__burst-sub">{cfg.badge || "PIKA"}</span>
           </div>
         )}
         <div className="mint-nyano-reaction__inner">
-          <NyanoAvatar size={40} expression={reactionToExpression(kind)} alt={cfg.emoji} />
+          <NyanoAvatar size={44} expression={reactionToExpression(kind)} alt={cfg.emoji} />
           {cfg.badge && (
             <span
               className={`mint-nyano-reaction__badge mint-nyano-reaction__badge--${cutInImpact}`}
@@ -581,12 +495,7 @@ export function NyanoReaction({
   );
 }
 
-/*
- * Nyano reaction overlay.
- * - Maps gameplay events to reaction kind and avatar expression.
- * - Integrates JP/EN dialogue and optional AI reason copy.
- * - Applies cut-in timing based on reduced-motion and VFX quality.
- */
+/* ── Badge-only variant (compact, for overlay / inline) ── */
 
 export function NyanoReactionBadge({ input, turnIndex: _turnIndex = 0 }: { input: NyanoReactionInput; turnIndex?: number }) {
   const kind = pickReactionKind(input);
@@ -607,5 +516,3 @@ export function NyanoReactionBadge({ input, turnIndex: _turnIndex = 0 }: { input
     </span>
   );
 }
-
-

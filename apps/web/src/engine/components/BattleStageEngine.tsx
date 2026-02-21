@@ -37,8 +37,6 @@ export interface BattleStageEngineProps {
   onCellSelect?: (cell: number) => void;
   /** Enable drag-drop hit layer for hand card placement. */
   dragDropActive?: boolean;
-  /** Idle-only hint for placeable cells (visual guidance, no interaction changes). */
-  idleGuideDroppable?: boolean;
   /** Drop callback for drag-drop placement. */
   onCellDrop?: (cell: number) => void;
   /** Hover callback while dragging over a board cell. */
@@ -169,7 +167,6 @@ export function BattleStageEngine({
   selectableCells,
   onCellSelect,
   dragDropActive = false,
-  idleGuideDroppable = false,
   onCellDrop,
   onCellDragHover,
   currentPlayer = null,
@@ -387,7 +384,6 @@ export function BattleStageEngine({
           className={[
             "engine-drop-grid",
             dragDropActive ? "engine-drop-grid--active" : "",
-            idleGuideDroppable ? "engine-drop-grid--idle-guide" : "",
           ].join(" ")}
           style={{ width: "85%", height: "85%" }}
           onDragLeave={() => {

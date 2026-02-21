@@ -79,16 +79,6 @@ describe("telemetry", () => {
     expect(tracker.getSession().first_place_ms).toBe(8000);
   });
 
-  it("records first result time", () => {
-    const tracker = createTelemetryTracker();
-    expect(tracker.getSession().first_result_ms).toBeNull();
-
-    vi.spyOn(performance, "now").mockReturnValue(12000);
-    tracker.recordResult();
-
-    expect(tracker.getSession().first_result_ms).toBe(12000);
-  });
-
   it("recordPlace also sets first interaction", () => {
     const tracker = createTelemetryTracker();
 
@@ -128,7 +118,6 @@ describe("telemetry", () => {
     expect(stats.sessions).toBe(1);
     expect(stats.avg_first_interaction_ms).toBe(2000);
     expect(stats.avg_first_place_ms).toBe(5000);
-    expect(stats.avg_first_result_ms).toBeNull();
     expect(stats.total_invalid_actions).toBe(2);
   });
 
@@ -171,28 +160,9 @@ describe("telemetry", () => {
     expect(stats.sessions).toBe(2);
     expect(stats.avg_first_interaction_ms).toBe(3000); // (2000+4000)/2
     expect(stats.avg_first_place_ms).toBe(8000); // (6000+10000)/2
-    expect(stats.avg_first_result_ms).toBeNull();
     expect(stats.avg_quickplay_to_first_place_ms).toBeNull();
     expect(stats.avg_home_lcp_ms).toBeNull();
     expect(stats.total_invalid_actions).toBe(3); // 1+2
-  });
-
-  it("accumulates first result reveal across sessions", () => {
-    vi.spyOn(performance, "now").mockReturnValue(0);
-    const t1 = createTelemetryTracker();
-    vi.spyOn(performance, "now").mockReturnValue(9_000);
-    t1.recordResult();
-    t1.flush();
-
-    vi.spyOn(performance, "now").mockReturnValue(0);
-    const t2 = createTelemetryTracker();
-    vi.spyOn(performance, "now").mockReturnValue(15_000);
-    t2.recordResult();
-    t2.flush();
-
-    const stats = readCumulativeStats();
-    expect(stats.sessions).toBe(2);
-    expect(stats.avg_first_result_ms).toBe(12_000);
   });
 
   it("records quick-play to first place from Home marker", () => {
@@ -325,7 +295,6 @@ describe("telemetry", () => {
       sessions: 2,
       avg_first_interaction_ms: 1200,
       avg_first_place_ms: 9000,
-      avg_first_result_ms: 21000,
       avg_quickplay_to_first_place_ms: 8500,
       avg_home_lcp_ms: 2100,
       total_invalid_actions: 1,
@@ -334,7 +303,6 @@ describe("telemetry", () => {
     const markdown = formatUxTelemetrySnapshotMarkdown(snapshot);
     expect(markdown).toContain("## 2023-11-14T22:13:20.000Z — Local UX snapshot");
     expect(markdown).toContain("Avg Home LCP: 2.1s");
-    expect(markdown).toContain("Avg first result reveal: 21.0s");
     expect(markdown).toContain("| A-1 初見が30秒以内に1手目 | PASS | 9.0s | < 30.0s |");
     expect(markdown).toContain("| B-4 誤操作が2回未満/試合 | PASS | 0.50 | < 2.00 |");
   });
@@ -415,7 +383,6 @@ describe("telemetry", () => {
     expect(stats.sessions).toBe(0);
     expect(stats.avg_first_interaction_ms).toBeNull();
     expect(stats.avg_first_place_ms).toBeNull();
-    expect(stats.avg_first_result_ms).toBeNull();
     expect(stats.avg_quickplay_to_first_place_ms).toBeNull();
     expect(stats.avg_home_lcp_ms).toBeNull();
     expect(stats.total_invalid_actions).toBe(0);
@@ -436,7 +403,6 @@ describe("telemetry", () => {
     expect(stats.sessions).toBe(0);
     expect(stats.avg_first_interaction_ms).toBeNull();
     expect(stats.avg_first_place_ms).toBeNull();
-    expect(stats.avg_first_result_ms).toBeNull();
     expect(stats.avg_quickplay_to_first_place_ms).toBeNull();
     expect(stats.avg_home_lcp_ms).toBeNull();
     expect(stats.total_invalid_actions).toBe(0);

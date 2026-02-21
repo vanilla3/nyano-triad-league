@@ -11,7 +11,6 @@ import { errorMessage } from "@/lib/errorMessage";
 import { writeClipboardText } from "@/lib/clipboard";
 import { fetchGameIndex, type GameIndexV1 } from "@/lib/nyano/gameIndex";
 import { generateRecommendedDeck, strategyLabel, type DeckStrategy } from "@/lib/demo_decks";
-import { useIdle } from "@/hooks/useIdle";
 
 function parseTokenIds(text: string): bigint[] {
   const parts = text
@@ -55,7 +54,6 @@ export function DecksPage() {
 
   const [previewLoading, setPreviewLoading] = React.useState(false);
   const [previewCards, setPreviewCards] = React.useState<Map<bigint, CardData> | null>(null);
-  const saveDeckIdle = useIdle({ timeoutMs: 4200, disabled: previewLoading });
 
   // Game index for CardBrowser and recommended decks
   const [gameIndex, setGameIndex] = React.useState<GameIndexV1 | null>(null);
@@ -198,13 +196,13 @@ export function DecksPage() {
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
-            <button className={["btn btn-primary mint-pressable mint-hit", saveDeckIdle ? "mint-idle-attention" : ""].join(" ").trim()} onClick={doSave}>
+            <button className="btn btn-primary" onClick={doSave}>
               Save deck
             </button>
-            <button className="btn mint-pressable mint-hit" onClick={doPreview} disabled={previewLoading}>
+            <button className="btn" onClick={doPreview} disabled={previewLoading}>
               {previewLoading ? "Loading…" : "Preview cards"}
             </button>
-            <button className="btn mint-pressable mint-hit" onClick={resetForm}>
+            <button className="btn" onClick={resetForm}>
               Reset
             </button>
           </div>
@@ -238,7 +236,7 @@ export function DecksPage() {
               {STRATEGIES.map((s) => (
                 <button
                   key={s}
-                  className="btn btn-sm mint-pressable mint-hit"
+                  className="btn btn-sm"
                   onClick={() => {
                     const deck = generateRecommendedDeck(gameIndex, s);
                     upsertDeck({
@@ -296,7 +294,7 @@ export function DecksPage() {
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
-            <button className="btn mint-pressable mint-hit" onClick={doExportAll}>
+            <button className="btn" onClick={doExportAll}>
               Copy export JSON
             </button>
           </div>
@@ -340,22 +338,22 @@ export function DecksPage() {
                 <div className="mt-1 text-xs text-slate-600 font-mono">{d.tokenIds.join(", ")}</div>
 
                 <div className="mt-3 flex flex-wrap items-center gap-2">
-                  <button className="btn mint-pressable mint-hit" onClick={() => loadDeckToForm(d)}>
+                  <button className="btn" onClick={() => loadDeckToForm(d)}>
                     Edit
                   </button>
 
-                  <Link className="btn no-underline mint-pressable mint-hit" to={`/match?a=${d.id}&ui=mint`}>
+                  <Link className="btn no-underline" to={`/match?a=${d.id}&ui=mint`}>
                     Set as A
                   </Link>
-                  <Link className="btn no-underline mint-pressable mint-hit" to={`/match?b=${d.id}&ui=mint`}>
+                  <Link className="btn no-underline" to={`/match?b=${d.id}&ui=mint`}>
                     Set as B
                   </Link>
 
-                  <button className="btn mint-pressable mint-hit" onClick={() => copy("Deck JSON", JSON.stringify(d, null, 2))}>
+                  <button className="btn" onClick={() => copy("Deck JSON", JSON.stringify(d, null, 2))}>
                     Copy deck JSON
                   </button>
                   <button
-                    className="btn btn-danger mint-pressable mint-hit"
+                    className="btn btn-danger"
                     onClick={() => {
                       if (!window.confirm(`Delete deck: ${d.name}?`)) return;
                       deleteDeck(d.id);
@@ -386,7 +384,7 @@ export function DecksPage() {
             placeholder='[{"id":"...","name":"...","tokenIds":["1","2","3","4","5"],...}]'
           />
           <div className="flex flex-wrap items-center gap-2">
-            <button className="btn btn-primary mint-pressable mint-hit" onClick={doImport}>
+            <button className="btn btn-primary" onClick={doImport}>
               Import
             </button>
           </div>

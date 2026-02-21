@@ -22,27 +22,23 @@ export type ClassicResolvedMetadata = {
 
 type ProtocolV1Header = NonNullable<NonNullable<OverlayStateV1["protocolV1"]>["header"]>;
 
+function asHex(value: string): `0x${string}` {
+  return value as `0x${string}`;
+}
+
 export function resolveClassicMetadataFromHeader(
   header: ProtocolV1Header | null | undefined,
 ): ClassicResolvedMetadata | null {
   if (!header) return null;
-  if (
-    !header.rulesetId.startsWith("0x")
-    || header.rulesetId.length !== 66
-    || !header.playerA.startsWith("0x")
-    || !header.playerB.startsWith("0x")
-    || !header.salt.startsWith("0x")
-  ) {
-    return null;
-  }
+
   const ruleset = resolveRulesetById(header.rulesetId);
   if (!ruleset) return null;
   try {
     const classicHeader = {
-      rulesetId: header.rulesetId as `0x${string}`,
-      playerA: header.playerA as `0x${string}`,
-      playerB: header.playerB as `0x${string}`,
-      salt: header.salt as `0x${string}`,
+      rulesetId: asHex(header.rulesetId),
+      playerA: asHex(header.playerA),
+      playerB: asHex(header.playerB),
+      salt: asHex(header.salt),
     };
 
     const open = resolveClassicOpenCardIndices({ ruleset, header: classicHeader });

@@ -4,7 +4,7 @@ test.describe("Rulesets UX guardrails", () => {
   test("recommended section exposes concise cards and playable CTA", async ({ page }) => {
     await page.goto("/rulesets");
 
-    await expect(page.getByText(/Ruleset Registry|ルールセット一覧/).first()).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByText("Ruleset Registry")).toBeVisible({ timeout: 15_000 });
     const recommended = page.getByTestId("rulesets-recommended-section");
     await expect(recommended).toBeVisible({ timeout: 15_000 });
 
@@ -44,3 +44,4 @@ test.describe("Rulesets UX guardrails", () => {
     await expect(page.getByTestId("match-setup-panel")).toBeVisible({ timeout: 15_000 });
   });
 });
+

@@ -237,11 +237,11 @@ export function EventsPage() {
               <div className="text-xs text-slate-500">ローカル保存された挑戦ログを、season単位で振り返り</div>
             </div>
             <div className="flex flex-wrap items-center gap-2">
-              <button className="btn mint-pressable mint-hit" onClick={() => void copySeasonSummary()} disabled={!selectedSeason}>
+              <button className="btn" onClick={() => void copySeasonSummary()} disabled={!selectedSeason}>
                 Copy summary
               </button>
               <button
-                className="btn mint-pressable mint-hit"
+                className="btn"
                 onClick={() => {
                   if (!window.confirm("Clear all local event attempts across all seasons?")) return;
                   clearAllEventAttempts();
@@ -265,14 +265,14 @@ export function EventsPage() {
                   </div>
                 </div>
                 <div className="flex flex-wrap gap-2">
-                  <button className="btn mint-pressable mint-hit" onClick={() => void loadDefaultSettledJson()}>
+                  <button className="btn" onClick={() => void loadDefaultSettledJson()}>
                     Load /game/settled_events.json
                   </button>
-                  <button className="btn mint-pressable mint-hit" onClick={applySettledImport}>
+                  <button className="btn" onClick={applySettledImport}>
                     Apply import JSON
                   </button>
                   <button
-                    className="btn mint-pressable mint-hit"
+                    className="btn"
                     onClick={() => {
                       setSettledImportText("");
                       setSettledImportReport(null);
@@ -482,7 +482,7 @@ export function EventsPage() {
                         </div>
                         <div className="flex flex-wrap items-center gap-2">
                           {eventSummary.latestReplayUrl ? (
-                            <a className="btn no-underline mint-pressable mint-hit" href={eventSummary.latestReplayUrl} target="_blank" rel="noreferrer">
+                            <a className="btn no-underline" href={eventSummary.latestReplayUrl} target="_blank" rel="noreferrer">
                               Latest replay
                             </a>
                           ) : null}
@@ -571,7 +571,7 @@ export function EventsPage() {
                       <div className="flex flex-wrap items-center justify-between gap-2">
                         <div className="text-xs font-medium text-slate-600">My Pawprints 🐾 ({attempts.length})</div>
                         <button
-                          className="btn mint-pressable mint-hit"
+                          className="btn"
                           onClick={() => {
                             if (!window.confirm("Clear all local attempts for this event?")) return;
                             clearEventAttempts(e.id);
@@ -618,14 +618,14 @@ export function EventsPage() {
                             </div>
 
                             <div className="flex flex-wrap items-center gap-2">
-                              <a className="btn no-underline mint-pressable mint-hit" href={a.replayUrl} target="_blank" rel="noreferrer">
+                              <a className="btn no-underline" href={a.replayUrl} target="_blank" rel="noreferrer">
                                 Open
                               </a>
-                              <button className="btn mint-pressable mint-hit" onClick={() => void copyWithToast("replay url", a.replayUrl)}>
+                              <button className="btn" onClick={() => void copyWithToast("replay url", a.replayUrl)}>
                                 Copy
                               </button>
                               <button
-                                className="btn mint-pressable mint-hit"
+                                className="btn"
                                 onClick={() => {
                                   if (!window.confirm("Remove this attempt from local storage?")) return;
                                   deleteEventAttempt(e.id, a.id);
@@ -646,13 +646,13 @@ export function EventsPage() {
                 })()}
 
                 <div className="flex flex-wrap items-center gap-2">
-                  <Link className="btn btn-primary no-underline mint-pressable mint-hit" to={`/match?event=${encodeURIComponent(e.id)}&ui=mint`}>
+                  <Link className="btn btn-primary no-underline" to={`/match?event=${encodeURIComponent(e.id)}&ui=mint`}>
                     Start (Match)
                   </Link>
-                  <Link className="btn no-underline mint-pressable mint-hit" to="/decks">
+                  <Link className="btn no-underline" to="/decks">
                     Prepare your deck
                   </Link>
-                  <Link className="btn no-underline mint-pressable mint-hit" to="/replay">
+                  <Link className="btn no-underline" to="/replay">
                     Watch replays
                   </Link>
                 </div>

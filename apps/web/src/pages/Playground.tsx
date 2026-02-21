@@ -317,7 +317,7 @@ export function PlaygroundPage() {
             </div>
 
             <div className="flex flex-wrap items-center gap-2">
-              <button className="btn btn-soft mint-pressable mint-hit" onClick={() => copyWithToast("link", window.location.href)}>
+              <button className="btn btn-soft" onClick={() => copyWithToast("link", window.location.href)}>
                 Copy share link
               </button>
               
@@ -381,14 +381,14 @@ export function PlaygroundPage() {
                     </div>
 
                     <div className="flex items-center gap-2">
-                      <button className="btn mint-pressable mint-hit" onClick={() => setStep(0)} disabled={step === 0}>
+                      <button className="btn" onClick={() => setStep(0)} disabled={step === 0}>
                         reset
                       </button>
-                      <button className="btn mint-pressable mint-hit" onClick={() => setStep((s) => Math.max(0, s - 1))} disabled={step === 0}>
+                      <button className="btn" onClick={() => setStep((s) => Math.max(0, s - 1))} disabled={step === 0}>
                         ←
                       </button>
                       <button
-                        className="btn mint-pressable mint-hit"
+                        className="btn"
                         onClick={() => setStep((s) => Math.min(stepMax, s + 1))}
                         disabled={step === stepMax}
                       >
@@ -433,14 +433,14 @@ export function PlaygroundPage() {
                   </div>
 
                   <div className="mt-3 flex flex-wrap items-center gap-2">
-                    <button className="btn mint-pressable mint-hit" onClick={() => copyWithToast("transcript", stringifyWithBigInt(sim.transcript))}>
+                    <button className="btn" onClick={() => copyWithToast("transcript", stringifyWithBigInt(sim.transcript))}>
                       Copy transcript JSON
                     </button>
-                    <button className="btn mint-pressable mint-hit" onClick={() => copyWithToast("result", stringifyWithBigInt(sim.current))}>
+                    <button className="btn" onClick={() => copyWithToast("result", stringifyWithBigInt(sim.current))}>
                       Copy result JSON
                     </button>
                     <button
-                      className="btn mint-pressable mint-hit"
+                      className="btn"
                       onClick={() => {
                         void (async () => {
                           try {

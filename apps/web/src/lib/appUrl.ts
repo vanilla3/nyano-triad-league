@@ -83,8 +83,6 @@ export type ReplayShareUrlOptions = {
   step?: number;
   eventId?: string;
   ui?: string;
-  rulesetKey?: string;
-  classicMask?: string;
   pointsDeltaA?: number;
   absolute?: boolean;
 };
@@ -112,8 +110,6 @@ export function buildReplayShareUrl(opts: ReplayShareUrlOptions): string {
   if (opts.eventId) url.searchParams.set("event", opts.eventId);
   if (opts.mode) url.searchParams.set("mode", opts.mode);
   if (opts.ui) url.searchParams.set("ui", opts.ui);
-  if (opts.rulesetKey) url.searchParams.set("rk", opts.rulesetKey);
-  if (opts.classicMask) url.searchParams.set("cr", opts.classicMask);
   const pointsDeltaA = normalizeInt32(opts.pointsDeltaA);
   if (pointsDeltaA !== null) url.searchParams.set("pda", String(pointsDeltaA));
   const step = normalizeReplayStep(opts.step);

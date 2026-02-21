@@ -14,17 +14,6 @@ const BASE_INPUT = {
   finished: false,
 };
 
-const IDLE_INPUT = {
-  flipCount: 0,
-  hasChain: false,
-  comboEffect: "none" as const,
-  warningTriggered: false,
-  tilesA: 0,
-  tilesB: 0,
-  perspective: 0 as const,
-  finished: false,
-};
-
 describe("NyanoReactionSlot", () => {
   it("always renders a slot container to keep layout stable", () => {
     const node = NyanoReactionSlot({
@@ -52,24 +41,11 @@ describe("NyanoReactionSlot", () => {
     });
 
     const children = React.Children.toArray(node.props.children);
-    expect(children).toHaveLength(2);
-    const content = children[1] as React.ReactElement;
-    expect(content.props.className).toBe("mint-nyano-reaction-slot__content");
-    const reactionNode = React.Children.toArray(content.props.children)[0] as React.ReactElement;
+    expect(children).toHaveLength(1);
+
+    const reactionNode = children[0] as React.ReactElement;
     expect(reactionNode.type).toBe(NyanoReaction);
     expect(reactionNode.props.className).toBe("stage-focus-cutin");
     expect(node.props.className).toContain("mint-nyano-reaction-slot--active");
-  });
-
-  it("keeps slot idle when input exists but reaction kind is idle", () => {
-    const node = NyanoReactionSlot({
-      input: IDLE_INPUT,
-      turnIndex: 1,
-      mint: true,
-    });
-
-    expect(node.props.className).toContain("mint-nyano-reaction-slot--idle");
-    const children = React.Children.toArray(node.props.children) as React.ReactElement[];
-    expect((children[0].props as { className?: string }).className).toBe("mint-nyano-reaction-slot__placeholder");
   });
 });

@@ -2292,383 +2292,224 @@
 ### What
 - Updated `docs/02_protocol/samples/triad_league_ai_prompt_sample_v1.txt` to current ai_prompt format.
 - Updated `docs/01_product/Nyano_Triad_League_NYANO_WARUDO_BRIDGE_SPEC_v1_ja.md` to note optional Classic context lines in `ai_prompt`.
-- 2026-02-20 WO044-followup-3: upgraded `scripts/check_text_hygiene.mjs` from marker-only scan to production-grade checks (optional `--root` scoping, line/column/snippet diagnostics, control-char + PUA detection, and lower-false-positive mojibake regexes) so text hygiene can run against docs/codex/scripts reliably.
-- 2026-02-20 WO044-followup-3: removed current text-hygiene blockers by fixing residual mojibake copy in `apps/web/src/features/match/MatchFocusHandDockActions.tsx`, rewriting invalid-encoding `codex/work_orders/007_board_stage_visual_polish.md` as clean UTF-8, and replacing literal PUA sample glyphs with `U+F8F0`/`U+E05E` notation in `codex/work_orders/044_match_copy_mojibake_cleanup_text_hygiene_v1.md`.
-- 2026-02-20 WO009-followup-1: completed classic rules key typing/plumbing integration by extending `RulesetKey` + registry mappings in `apps/web/src/lib/ruleset_registry.ts`, adding replay share URL support for `rk`/`cr` in `apps/web/src/lib/appUrl.ts`, enabling `forcedIndex` in `apps/web/src/components/HandDisplayMint.tsx`, and hardening header hex typing guards in `apps/web/src/lib/classic_ruleset_visibility.ts`.
-- 2026-02-20 WO009-followup-1 tests/verification: `pnpm.cmd lint:text`, `pnpm.cmd -C apps/web typecheck`, focused vitest (`MatchFocusHandDockActions`, `MintRulesetPicker`, `MatchSetupPanelMint`, `ruleset_discovery`, `appUrl`, `classic_ruleset_visibility`, `matchRulesetParams`, `matchSetupParamPatches`, `matchShareLinks`, `urlParams`) with one sandbox EPERM retry (elevated rerun passed), plus `pnpm.cmd -C apps/web lint` and `pnpm.cmd -C apps/web build` all passed.
 
-## 2026-02-20 - WO044 follow-up: remove residual mojibake/PUA in result/reaction UI copy
+## 2026-02-14 - WO006 Nyano reaction layout stability (slot + clamp)
 
 ### Why
-- Share-quality polish was still blocked by visible mojibake/PUA strings in post-match/result UI surfaces, even after motion/ruleset stabilization.
-- `motionTransitionTokenGuard` also required eliminating remaining inline `transition` style literals in key components.
+- `NyanoReaction` was conditionally mounted/unmounted in Match/Replay, which could change vertical layout flow when comments appeared/disappeared.
+- UX scorecard `G-4` requires no visible layout jump for Nyano comment/cut-in rendering.
 
 ### What
-- `apps/web/src/lib/__tests__/ruleset_registry.test.ts`
-  - Rewrote test file as clean UTF-8 and aligned expected keys with expanded classic ruleset registry (16 keys).
-- `apps/web/src/components/GameResultOverlayMint.tsx`
-  - Replaced corrupted copy with clean JP/EN strings.
-  - Replaced PUA-like icon literals with standard Unicode (`?`, `??`, `??`, `??`, `??`).
-  - Removed inline transition literals and switched to class-based transitions (`transition-opacity`, `transition-transform`).
-- `apps/web/src/components/NyanoReaction.tsx`
-  - Replaced reaction emoji/badge literals with standard Unicode + plain-text badges.
-  - Removed inline transition literal in RPG branch (class-based transition classes already applied).
-  - Replaced corrupted header comment block with clean ASCII comment.
+- Added `apps/web/src/components/NyanoReactionSlot.tsx`.
+  - Always renders a stable slot container.
+  - Renders `NyanoReaction` only when input exists, while preserving slot height.
+  - Adds a code comment explaining why slot is always mounted.
+- Updated `apps/web/src/pages/Match.tsx` and `apps/web/src/pages/Replay.tsx` to use `NyanoReactionSlot`.
+- Updated `apps/web/src/mint-theme/mint-theme.css`.
+  - Added `.mint-nyano-reaction-slot*` classes with fixed `min-height` (including stage-focus variant).
+  - Changed `.mint-nyano-reaction__line` to 2-line clamp (`-webkit-line-clamp: 2`) to avoid height spikes from long text.
+- Added `apps/web/src/components/__tests__/NyanoReactionSlot.test.tsx` to guard slot stability behavior.
 
 ### Verify
-- `pnpm.cmd -C apps/web test -- motionTransitionTokenGuard` OK
-- `pnpm.cmd -C apps/web test -- ruleset_registry` OK (one sandbox `spawn EPERM` retry required)
-- `pnpm.cmd -C apps/web test -- motionTransitionTokenGuard NyanoReaction NyanoReactionSlot` OK (one sandbox `spawn EPERM` retry required)
-- `pnpm.cmd -C apps/web test --` OK (221 files / 1752 tests)
-- `pnpm.cmd -C apps/web lint` OK
-- `pnpm.cmd lint:text` OK
+- `pnpm -C apps/web test` (includes `NyanoReactionSlot.test.tsx`)
+- `pnpm -C apps/web typecheck`
+- `pnpm -C apps/web build`
 
-## 2026-02-21 - WO046 follow-up: 0ms press feedback foundation for Mint pressables
+## 2026-02-14 - WO007 board/stage visual polish (Mint board as stage)
 
 ### Why
-- UX polish direction requires the interface to acknowledge input at press start (0ms illusion of speed), while keeping strong effects rare and respecting reduced-motion.
-- `mint-pressable` class usage was already widespread, but global feedback behavior was not yet standardized.
+- Card visuals were already strong, but board/stage surfaces still felt flatter than intended.
+- WO007 targets "material depth + visual hierarchy" without changing gameplay logic.
 
 ### What
-- Updated `apps/web/src/styles.css`:
-  - Added motion tokens for press acknowledgement/release (`--mint-press-*`).
-  - Added `.mint-hit` baseline (44x44 hit area + touch tuning).
-  - Added `.mint-pressable` interaction layer:
-    - immediate pressed state for `:active`, `[data-pressed="true"]`, `[data-press-ack="true"]`
-    - 0ms acknowledgement path for `[data-press-ack="true"]`
-    - subtle sheen overlay for hover/focus/press (micro-delight)
-  - Added guardrails:
-    - disables sheen under `:root[data-vfx="off"|"low"]`
-    - reduced-motion branch removes transform animation and keeps minimal brightness response
+- Updated `apps/web/src/components/DuelStageMint.tsx`
+  - Added lightweight stage layers: `mint-stage__rim` and `mint-stage__atmo`.
+- Updated `apps/web/src/mint-theme/mint-theme.css`
+  - Board/frame polish:
+    - added subtle frame pattern + rim depth
+    - added `mint-board-sheen` motion layer on `.mint-board-inner::after`
+  - Cell polish:
+    - added `.mint-cell::after` specular/depth layer
+    - added warning-mode visual treatment (`.mint-cell--warning-mode`) for non-color-only affordance
+  - Stage polish:
+    - added rim/atmosphere styles and animation (`mint-stage-atmo-float`)
+  - Performance/accessibility gates:
+    - added reduced-motion fallback for board sheen/atmo
+    - extended `[data-vfx=off|low|medium|high]` branching for new layers
+  - Mobile tuning:
+    - added ≤560px sizing adjustments for stage/board/frame/grid density.
+- Added `apps/web/src/components/__tests__/DuelStageMint.test.tsx`
+  - verifies stage layer presence and impact class composition.
 
 ### Verify
-- `pnpm.cmd lint:text` OK
-- `pnpm.cmd -C apps/web lint` OK
-- `pnpm.cmd -C apps/web test -- MintPressable MatchShareActionsRow replayUiHelpers` OK (one sandbox `spawn EPERM` retry required)
-- `pnpm.cmd -C apps/web test --` OK (221 files / 1752 tests)
-- `pnpm.cmd -C apps/web build` OK
+- `pnpm -C apps/web test` OK
+- `pnpm -C apps/web typecheck` OK
+- `pnpm -C apps/web build` OK
 
-## 2026-02-21 - WO046 follow-up: make share-action class names effective + ready-state guidance
+## 2026-02-14 - WO010 UX regression guardrails (E2E)
 
 ### Why
-- `mint-share-actions` / `mint-share-action__btn` class names were present in Match/Replay flows but had no concrete CSS behavior, so share-path polish depended only on generic button styles.
-- Share motivation should appear when action unlocks, while keeping strong emphasis rare and respecting VFX/reduced-motion constraints.
+- WO010 requires minimum UX guardrails that fail fast when setup flow or layout stability regresses.
+- The highest-risk points are Match Setup URL sync and Nyano comment-slot layout stability.
 
 ### What
-- `apps/web/src/features/match/MatchShareActionsRow.tsx`
-  - Added conditional `mint-share-actions__row--ready` class when `canFinalize=true` in mint mode.
-- `apps/web/src/features/match/MatchGuestPostGamePanel.tsx`
-  - Added same `mint-share-actions__row--ready` class logic for guest post-game share row.
-- `apps/web/src/styles.css`
-  - Implemented concrete styles for:
-    - `.mint-share-actions`
-    - `.mint-share-actions__row`
-    - `.mint-share-action__btn`
-    - `.mint-share-actions__hint`
-    - `.mint-share-actions__ready`
-  - Added one-shot callout animation on ready-state first share button:
-    - `.mint-share-actions__row--ready .mint-share-action__btn:first-child`
-  - Added guardrails:
-    - disable callout animation for `:root[data-vfx="off"|"low"]`
-    - disable callout animation under `prefers-reduced-motion: reduce`
-- Tests
-  - `apps/web/src/features/match/__tests__/MatchShareActionsRow.test.tsx`
-    - added assertions for locked/ready state class + hint/ready note switching
-  - `apps/web/src/features/match/__tests__/MatchGuestPostGamePanel.test.tsx`
-    - added ready-row class assertion and ready-note assertion
+- Added `apps/web/e2e/ux-guardrails.spec.ts`.
+- Added guardrail test 1:
+  - Match Setup primary controls update URL params consistently (`rk`, `opp`, `ai`, `ui`).
+- Added guardrail test 2:
+  - Nyano reaction slot keeps non-zero stable height while reactions appear during live play.
+  - Includes bounded height-delta assertion and CSS clamp/overflow assertion for reaction line.
 
 ### Verify
-- `pnpm.cmd -C apps/web test -- MatchShareActionsRow MatchGuestPostGamePanel replayUiHelpers MintPressable` OK (one sandbox `spawn EPERM` retry required)
-- `pnpm.cmd lint:text` OK
-- `pnpm.cmd -C apps/web lint` OK
-- `pnpm.cmd -C apps/web test --` OK (221 files / 1752 tests)
-- `pnpm.cmd -C apps/web build` OK
+- `pnpm -C apps/web test` OK
+- `pnpm -C apps/web build` OK
+- `pnpm -C apps/web e2e -- e2e/ux-guardrails.spec.ts` blocked in this environment:
+  - Playwright worker spawn fails with `Error: spawn EPERM`.
+- `pnpm -C apps/web typecheck` currently fails in this environment with missing module resolution:
+  - `Cannot find module 'pixi.js'`
+  - `Cannot find module 'fflate'`
 
-## 2026-02-21 - WO043 follow-up: reduce share-row CLS with persistent status slot
+## 2026-02-14 - WO008 Match Setup progressive disclosure + setup summary
 
 ### Why
-- Mint share rows switched between separate hint/ready blocks during finalize transitions, which could trigger small layout shifts and reduce perceived polish.
+- Match setup controls in `Match.tsx` had grown into a long monolithic block that was hard to scan and harder to change safely.
+- WO008 requires a setup UI that is understandable by interaction, while preserving URL-param compatibility and existing match semantics.
 
 ### What
-- `apps/web/src/features/match/MatchShareActionsRow.tsx`
-  - Replaced conditional dual note rendering with one persistent status node using:
-    - `mint-share-actions__status`
-    - variant class: `mint-share-actions__hint` or `mint-share-actions__ready`
-- `apps/web/src/features/match/MatchGuestPostGamePanel.tsx`
-  - Applied the same persistent status-slot pattern.
-- `apps/web/src/styles.css`
-  - Added slot reservation rule:
-    - `.mint-share-actions__status { min-height: 38px; }`
-- Tests
-  - Updated assertions in:
-    - `apps/web/src/features/match/__tests__/MatchShareActionsRow.test.tsx`
-    - `apps/web/src/features/match/__tests__/MatchGuestPostGamePanel.test.tsx`
-  - to validate persistent slot classes across locked/ready states.
+- Added `apps/web/src/components/match/MatchSetupPanelMint.tsx` and moved setup rendering there.
+- Replaced legacy in-page setup block in `apps/web/src/pages/Match.tsx` with `MatchSetupPanelMint`.
+- Introduced Primary / Secondary / Advanced structure:
+  - Primary: deck, ruleset, opponent selection
+  - Secondary: board, first-player mode, data mode, stream toggle
+  - Advanced (drawer): chain cap and first-player advanced inputs
+- Added one-line setup summary and `Copy Setup Link` action.
+- Kept URL update logic in `Match.tsx` (`setParam`, `setParams`, canonical first-player patch) and passed callbacks down.
+- Added helper tests:
+  - `apps/web/src/components/match/__tests__/MatchSetupPanelMint.test.ts`
+- During integration, fixed multiple malformed string literals in `apps/web/src/pages/Match.tsx` to restore compile-safe source.
 
 ### Verify
-- `pnpm.cmd lint:text` OK
-- `pnpm.cmd -C apps/web test -- MatchShareActionsRow MatchGuestPostGamePanel replayUiHelpers` OK (one sandbox `spawn EPERM` retry required)
-- `pnpm.cmd -C apps/web lint` OK
-- `pnpm.cmd -C apps/web build` OK
-- `pnpm.cmd -C apps/web test --` OK (221 files / 1753 tests)
+- `pnpm -C apps/web test` OK
+- `pnpm -C apps/web typecheck` OK
+- `pnpm -C apps/web build` OK
 
-## 2026-02-21 - WO041 follow-up: Nyano cut-in de-emphasis and rare strong burst
+## 2026-02-14 - WO009 Rulesets page: recommended + summary + play CTA
 
 ### Why
-- UX feedback asked to keep Nyano cut-in as a supporting effect, not the main actor.
-- Strong effects should remain rare and meaningful, while preserving responsiveness and readability.
+- `/rulesets` listed registry entries but did not clearly guide users to a good default or direct match flow.
+- WO009 requires explicit discovery rails: recommendation, summary, and one-click move to `/match`.
 
 ### What
-- `apps/web/src/components/NyanoReaction.tsx`
-  - Shortened cut-in timing to reduce visual occupation time:
-    - `high`: `burstMs 760` / `visibleMs 2800`
-    - `mid`: `burstMs 620` / `visibleMs 2500`
-    - `low`: `burstMs 500` / `visibleMs 2100`
-  - Added `showBurstBanner` guard so high-impact burst banner appears only when `vfxQuality === "high"`.
-  - Reduced mint cut-in footprint:
-    - panel padding `12x18 -> 10x14`
-    - border radius `20 -> 18`
-    - avatar size `44 -> 40`
-- `apps/web/src/mint-theme/mint-theme.css`
-  - Reduced cut-in text emphasis:
-    - `.mint-nyano-reaction__line` `clamp(18px,1.6vw,26px) -> clamp(16px,1.4vw,22px)`
-    - stage-focus override `clamp(20px,1.9vw,30px) -> clamp(18px,1.7vw,24px)`
-    - stage-focus badge font `14px -> 13px`
-- `apps/web/src/components/__tests__/NyanoReaction.timing.test.ts`
-  - Updated expected timing values to match tuned durations.
+- Rebuilt `apps/web/src/pages/Rulesets.tsx` with:
+  - Recommended section (`おすすめ`) using top curated presets.
+  - One-line summary surfaced for each ruleset row.
+  - Direct CTA `このルールで対戦` linking to `/match?ui=mint&rk=<rulesetKey>`.
+  - URL-backed filter/selection via `q` and `rk` query params.
+- Added `apps/web/src/lib/ruleset_discovery.ts`:
+  - `rulesetId -> rulesetKey` resolver
+  - UX metadata (summary/tags/recommended)
+  - match-link builder helper
+- Added test `apps/web/src/lib/__tests__/ruleset_discovery.test.ts`.
 
 ### Verify
-- `pnpm.cmd lint:text` OK
-- `pnpm.cmd -C apps/web test -- NyanoReaction.timing motionTransitionTokenGuard` OK (one sandbox `spawn EPERM` retry required)
-- `pnpm.cmd -C apps/web lint` OK
-- `pnpm.cmd -C apps/web build` OK
+- `pnpm -C apps/web test` OK
+- `pnpm -C apps/web typecheck` OK
+- `pnpm -C apps/web build` OK
 
-## 2026-02-21 - WO042 follow-up: idle-only next-action guidance on Home/Arena
+## 2026-02-15 - WO010 follow-up: guardrail E2E hardening and green run
 
 ### Why
-- WO042 requires guidance to appear only during inactivity and only on primary actions, so users get direction without constant motion noise.
-- Hero CTA shimmer was always-on, which weakened the “idle-only” principle and made emphasis less meaningful.
+- Initial WO010 spec existed, but execution was unstable due runtime overlays and actionability flakiness.
+- We needed the guardrail to be runnable and reliable, not just present.
 
 ### What
-- `apps/web/src/pages/Home.tsx`
-  - Added `useIdle` integration (`timeoutMs: 3800`, disabled while quick-guide modal is open).
-  - Hero quick-play CTA now conditionally applies `home-hero__cta--idle` only when idle.
-- `apps/web/src/pages/Arena.tsx`
-  - Added `useIdle` integration (`timeoutMs: 4200`).
-  - Quick Play `Play Now` button now conditionally applies `mint-idle-attention` only when idle.
-- `apps/web/src/styles.css`
-  - Converted hero CTA shimmer from always-on to opt-in class (`home-hero__cta--idle`).
-  - Added shared idle attention animation:
-    - `@keyframes mint-idle-attention-breathe`
-    - `.mint-idle-attention`
-  - Added suppression guardrails:
-    - disable idle animations under `:root[data-vfx="off"|"low"]`
-    - disable idle animations under `prefers-reduced-motion: reduce`
+- Updated `apps/web/e2e/ux-guardrails.spec.ts`:
+  - Added tutorial suppression via `localStorage` init script (`nytl.tutorial.seen=true`).
+  - Added fallback dismiss helper for guest tutorial modal (`Got it!` / `Skip tutorial`).
+  - Switched Match Setup URL-sync case to non-guest route so setup panel is guaranteed visible.
+  - Hardened move commit helper:
+    - force-click board cells / quick-commit button for animation-heavy state
+    - fallback to explicit hand selection + exact commit selector when needed
+  - Kept assertions focused on guardrail intent:
+    - URL param sync (`rk`, `opp`, `ai`, `ui`)
+    - Nyano reaction slot layout stability (`min-height` behavior, bounded delta, 2-line clamp)
 
 ### Verify
-- `pnpm.cmd lint:text` OK
-- `pnpm.cmd -C apps/web typecheck` OK
-- `pnpm.cmd -C apps/web lint` OK
-- `pnpm.cmd -C apps/web build` OK
-- `pnpm.cmd -C apps/web test --` OK (221 files / 1753 tests)
+- `pnpm.cmd -C apps/web e2e -- e2e/ux-guardrails.spec.ts` OK (2 passed).
 
-## 2026-02-21 - WO042 follow-up: extend idle guidance to Deck Studio primary CTA
+## 2026-02-15 - WO010 follow-up: CI operational guardrail step
 
 ### Why
-- WO042 targets Home/Arena/Decks; after Home and Arena were covered, Deck Studio still lacked idle-only “next action” guidance.
-- Decks page has multiple controls, so guidance should stay on one primary CTA to avoid visual noise.
+- WO010 guardrail spec is stable, but needed explicit CI wiring so key UX regressions fail early.
 
 ### What
-- `apps/web/src/pages/Decks.tsx`
-  - Added `useIdle` integration (`timeoutMs: 4200`, disabled while preview is loading).
-  - Applied `mint-idle-attention` only to the `Save deck` button so the next action is clear when the user pauses.
+- Updated `apps/web/package.json`:
+  - Added `e2e:ux` script: `playwright test e2e/ux-guardrails.spec.ts`.
+- Updated `.github/workflows/ci.yml`:
+  - Added `E2E UX guardrails` step before full `E2E tests`.
+- Updated planning/docs alignment:
+  - `codex/work_orders/010_ux_regression_guardrails.md` checklist completed.
+  - `codex/execplans/007_visual_polish_and_setup_ux.md` Milestone D marked complete.
+  - `docs/ux/UX_SCORECARD.md` status updated with WO010 guardrail and CI step.
 
 ### Verify
-- `pnpm.cmd -C apps/web typecheck` OK
-- `pnpm.cmd -C apps/web lint` OK
-- `pnpm.cmd -C apps/web build` OK
-- `pnpm.cmd -C apps/web test --` OK (221 files / 1753 tests)
+- `pnpm.cmd -C apps/web e2e:ux` (local run for script validation).
 
-## 2026-02-21 - WO042 follow-up: extend idle-only guidance to Match placement flow
+## 2026-02-15 - WO007 follow-up: visual manual checks converted to E2E guardrails
 
 ### Why
-- WO042 scope includes Match as the highest-frequency decision surface; Home/Arena/Decks guidance was in place, but Match still lacked a unified idle-only "next action" cue across hand select and board place steps.
-- Guidance must remain contextual and quiet, so animation only appears during inactivity and only on currently relevant targets.
+- WO007 still had manual verification points (`mobile / reduced-motion / vfx=off`) that could regress silently.
+- We converted these into deterministic browser checks and attached them to the existing UX guardrail run.
 
 ### What
-- `apps/web/src/pages/Match.tsx`
-  - Added `useIdle`-driven `stageIdleGuidance` with explicit disable guards (non-mint/rpg mode, no hand cards, AI turn, game over, drag state, active board animation, inline error).
-  - Split idle focus into two mutually exclusive hints:
-    - `idleGuideHand`: no selected card yet (guide hand selection).
-    - `idleGuideBoard`: card selected, no target cell yet (guide board placement).
-  - Wired class hooks:
-    - hand wrapper: `mint-hand-area--idle-guide`
-    - board wrapper: `mint-board--idle-guide`
-    - engine drop targets: `idleGuideDroppable`
-    - hand component prop: `idleGuide`
-- `apps/web/src/components/HandDisplayMint.tsx`
-  - Added optional `idleGuide` prop and class application (`mint-hand--idle-guide`) without behavior changes.
-- `apps/web/src/engine/components/BattleStageEngine.tsx`
-  - Added optional `idleGuideDroppable` prop and class application (`engine-drop-grid--idle-guide`) on drop grid root only.
-- `apps/web/src/mint-theme/mint-theme.css`
-  - Added Match idle cue animations for hand area, selectable board cells, and droppable cells.
-  - Added suppression guardrails for `prefers-reduced-motion` and `data-vfx="off"|"low"`.
-- `apps/web/src/features/match/__tests__/MatchHandInteractionArea.test.tsx`
-  - Added regression test to ensure hand interaction wrapper applies/removes `mint-hand-area--idle-guide` correctly.
+- Added `apps/web/e2e/mint-stage-visual-guardrails.spec.ts`:
+  - `vfx=off` keeps board usable while heavy stage-atmosphere layer is hidden
+  - `prefers-reduced-motion` resolves document visual tier to `data-vfx=off`
+  - `390px` viewport keeps mint stage/commit flow reachable and avoids horizontal overflow
+- Updated `apps/web/package.json`:
+  - `e2e:ux` now runs:
+    - `e2e/ux-guardrails.spec.ts`
+    - `e2e/mint-stage-visual-guardrails.spec.ts`
 
 ### Verify
-- `pnpm.cmd -C apps/web test -- MatchHandInteractionArea` OK (one sandbox `spawn EPERM` retry required)
-- `pnpm.cmd -C apps/web test --` OK (221 files / 1753 tests)
-- `pnpm.cmd -C apps/web typecheck` OK
-- `pnpm.cmd -C apps/web lint` OK
-- `pnpm.cmd lint:text` OK
-- `pnpm.cmd -C apps/web build` OK
+- `pnpm.cmd -C apps/web e2e:ux` OK (`5 passed`)
 
-## 2026-02-21 - WO042 follow-up: make Match idle guidance deterministic and testable
+## 2026-02-15 - WO009 follow-up: Rulesets discovery flow E2E guardrails
 
 ### Why
-- Match idle guidance logic had grown as inline conditions in `Match.tsx`, which made branch consistency harder to validate as follow-up polish continued.
-- Extracting these rules into pure functions reduces drift risk and makes regressions detectable without rendering the full page component.
+- WO009 UI was implemented, but discovery flow regressions (`おすすめ` visibility and `/match` CTA routing) were not guarded by browser E2E.
 
 ### What
-- Added `apps/web/src/features/match/matchStageIdleGuidance.ts`:
-  - `shouldDisableMatchStageIdleGuidance(...)`
-  - `resolveMatchStageIdleGuidanceTargets(...)`
-- Updated `apps/web/src/pages/Match.tsx`:
-  - Replaced inline `useIdle().disabled` condition with `shouldDisableMatchStageIdleGuidance`.
-  - Replaced inline `idleGuideHand` / `idleGuideBoard` branching with `resolveMatchStageIdleGuidanceTargets`.
-  - Kept behavior parity while centralizing logic.
-- Added `apps/web/src/features/match/__tests__/matchStageIdleGuidance.test.ts`:
-  - covers disable gating and hand/board target resolution branches.
+- Updated `apps/web/src/pages/Rulesets.tsx` with stable `data-testid` hooks for E2E:
+  - recommended section/cards/play CTA/select
+  - selected summary / list table / list play CTA
+- Added `apps/web/e2e/rulesets-ux-guardrails.spec.ts`:
+  - verifies recommended cards/summary/CTA are visible
+  - verifies clicking CTA navigates to `/match` with `ui=mint` and preserved `rk`
+- Updated `apps/web/package.json`:
+  - `e2e:ux` now includes `e2e/rulesets-ux-guardrails.spec.ts`
 
 ### Verify
-- `pnpm.cmd -C apps/web test -- matchStageIdleGuidance MatchHandInteractionArea` OK (one sandbox `spawn EPERM` retry required)
-- `pnpm.cmd lint:text` OK
-- `pnpm.cmd -C apps/web typecheck` OK
-- `pnpm.cmd -C apps/web lint` OK
-- `pnpm.cmd -C apps/web test --` OK (222 files / 1761 tests)
-- `pnpm.cmd -C apps/web build` OK
+- `pnpm.cmd -C apps/web e2e:ux` OK (`7 passed`)
 
-## 2026-02-21 - WO043 follow-up: unify focus-action press/hit UX across Match/Replay
+## 2026-02-15 - WO008 follow-up: Match Setup progressive-disclosure E2E guardrails
 
 ### Why
-- WO043 baseline (`hit targets / pressed affordance`) was partially implemented, but high-frequency focus controls still mixed old `btn btn-sm` classes and did not consistently opt into `mint-pressable` + `mint-hit` feedback.
-- Replay had duplicated transport class logic in `Replay.tsx`, diverging from helper/tested state resolution.
+- WO008 setup redesign was implemented, but progressive-disclosure behavior and summary/URL sync still needed browser-level regression coverage.
 
 ### What
-- `apps/web/src/features/match/MatchFocusHandDockActions.tsx`
-  - Added `mint-pressable mint-hit` to Commit/Undo buttons in focus hand dock actions.
-- `apps/web/src/features/match/replayTransportState.ts`
-  - Updated stage-focus transport classes to include `mint-pressable mint-hit` for both normal and primary transport buttons.
-- `apps/web/src/pages/Replay.tsx`
-  - Switched transport/focus class resolution to `resolveReplayTransportState(...)`.
-  - Reused resolved `replayTransportButtonClass` / `replayTransportPrimaryButtonClass` across focus toolbar controls and focus-empty fallback controls.
-- `apps/web/src/pages/Match.tsx`
-  - Added focus-toolbar class constants to apply `mint-pressable mint-hit` (+ 40px-height sizing) consistently across focus actions (`Commit/Undo/Nyano Move/Fullscreen/Controls/HUD/Exit/Replay`) when route is stage focus.
-- Tests:
-  - `apps/web/src/features/match/__tests__/MatchFocusHandDockActions.test.tsx`: assert `mint-pressable` / `mint-hit` presence.
-  - `apps/web/src/features/match/__tests__/replayTransportState.test.ts`: update expected class strings for stage-focus transport buttons.
+- Updated `apps/web/src/components/match/MatchSetupPanelMint.tsx` with stable test hooks:
+  - `match-setup-summary-line`
+  - `match-setup-first-player-mode`
+  - `match-setup-advanced-toggle`
+  - `match-setup-advanced-content`
+  - `match-setup-chain-cap`
+- Added `apps/web/e2e/match-setup-ux-guardrails.spec.ts`:
+  - summary reflects URL-backed key setup choices
+  - advanced section auto-opens when first-player mode becomes non-manual
+  - chain-cap control keeps `ccap` in URL
+- Updated `apps/web/package.json`:
+  - `e2e:ux` now includes `e2e/match-setup-ux-guardrails.spec.ts`
 
 ### Verify
-- `pnpm.cmd -C apps/web test -- MatchFocusHandDockActions replayTransportState replayUiHelpers` OK (one sandbox `spawn EPERM` retry required)
-- `pnpm.cmd lint:text` OK
-- `pnpm.cmd -C apps/web lint` OK
-- `pnpm.cmd -C apps/web typecheck` OK
-- `pnpm.cmd -C apps/web test --` OK (222 files / 1761 tests)
-- `pnpm.cmd -C apps/web build` OK
-
-## 2026-02-21 - WO043 follow-up: extend press/hit consistency to page-level CTAs
-
-### Why
-- WO043 already aligned stage-focus controls, but page-level flows (Home/Arena/Decks/Replay) still had mixed `btn` usage without `mint-pressable`/`mint-hit`.
-- This inconsistency weakened the 0ms press-response illusion and left some tap targets without the shared hit-area baseline.
-
-### What
-- `apps/web/src/pages/Home.tsx`
-  - Added `mint-pressable mint-hit` to hero quick-play CTA, difficulty selectors, secondary action links, and utility/settings buttons.
-- `apps/web/src/pages/Arena.tsx`
-  - Added `mint-pressable mint-hit` to quick-play/stage/event links and supporting navigation CTAs.
-- `apps/web/src/pages/Decks.tsx`
-  - Added `mint-pressable mint-hit` to save/preview/reset, strategy chips, import/export, and deck action controls.
-- `apps/web/src/pages/Replay.tsx`
-  - Added `mint-pressable mint-hit` to remaining non-focus action rows (`load/retry/share/copy/challenge/home/events` paths) so replay flow behavior matches stage-focus controls.
-
-### Verify
-- `pnpm.cmd lint:text` OK
-- `pnpm.cmd -C apps/web test -- replayUiActions replayUiHelpers replayTransportState` OK (one sandbox `spawn EPERM` retry required)
-- `pnpm.cmd -C apps/web lint` OK
-- `pnpm.cmd -C apps/web typecheck` OK
-- `pnpm.cmd -C apps/web test --` OK (222 files / 1761 tests)
-- `pnpm.cmd -C apps/web build` OK
-
-## 2026-02-21 - WO043 follow-up: complete pages-wide btn class parity
-
-### Why
-- After CTA-focused updates, several pages still had legacy `btn` class usage without `mint-pressable`/`mint-hit`, which left interaction affordance inconsistent depending on route.
-- WO043 objective is sitewide consistency, so parity had to be enforced across all page-level button/link surfaces.
-
-### What
-- Updated remaining `btn` controls to include `mint-pressable mint-hit` in:
-  - `apps/web/src/pages/Match.tsx`
-  - `apps/web/src/pages/Events.tsx`
-  - `apps/web/src/pages/Stream.tsx`
-  - `apps/web/src/pages/Overlay.tsx`
-  - `apps/web/src/pages/Nyano.tsx`
-  - `apps/web/src/pages/Playground.tsx`
-  - `apps/web/src/pages/Rulesets.tsx`
-  - `apps/web/src/pages/_design/Home.tsx`
-- Scope was class-only UX wiring (press/hit affordance); no game logic, URL/protocol, or engine behavior changes.
-
-### Verify
-- `rg -n -P 'className=\"(?=[^\"]*\\bbtn\\b)(?![^\"]*mint-pressable)[^\"]*\"' apps/web/src/pages` returned no matches (tests excluded).
-- `pnpm.cmd lint:text` OK
-- `pnpm.cmd -C apps/web lint` OK
-- `pnpm.cmd -C apps/web typecheck` OK
-- `pnpm.cmd -C apps/web test --` OK (222 files / 1761 tests)
-- `pnpm.cmd -C apps/web build` OK
-
-## 2026-02-21 - Telemetry follow-up: add "time to first result reveal" metric
-
-### Why
-- DEV TODO's operations-quality track requires observability for "勝敗表示までの時間", but current telemetry only tracked first interaction / first place / quick-play-to-first-place / Home LCP.
-- Without a result-reveal metric, tuning gamefeel around match closure and share timing lacks quantitative feedback.
-
-### What
-- `apps/web/src/lib/telemetry.ts`
-  - Added session metric: `first_result_ms`.
-  - Added cumulative metric: `avg_first_result_ms` with new sum/count storage keys.
-  - Included result metric in cumulative read path, snapshot parsing, and markdown export (`Avg first result reveal`).
-  - Extended tracker API with `recordResult()`.
-- `apps/web/src/pages/Match.tsx`
-  - Added effect to call `telemetry.recordResult()` when result state becomes visible (`turns.length >= 9` and `sim.ok`).
-- `apps/web/src/pages/Home.tsx`
-  - Added telemetry card for `Avg first result reveal`.
-- `apps/web/src/lib/__tests__/telemetry.test.ts`
-  - Added tests for `recordResult` and cumulative averaging.
-  - Updated existing expectations/literals to include `avg_first_result_ms`.
-
-### Verify
-- `pnpm.cmd -C apps/web test -- telemetry` OK (one sandbox `spawn EPERM` retry required)
-- `pnpm.cmd lint:text` OK
-- `pnpm.cmd -C apps/web lint` OK
-- `pnpm.cmd -C apps/web typecheck` OK
-- `pnpm.cmd -C apps/web test --` OK (222 files / 1763 tests)
-- `pnpm.cmd -C apps/web build` OK
-
-## 2026-02-21 - WO010 follow-up: stabilize major-flow E2E guardrail
-
-### Why
-- The in-progress `home-arena-match-replay-flow` E2E was flaky because it depended on completing nine interactive match turns in real time.
-- DEV TODO requires a durable major-flow regression guardrail (`Home -> Arena -> Match` and Replay viewing) that can run reliably in CI/local reruns.
-
-### What
-- Reworked `apps/web/e2e/home-arena-match-replay-flow.spec.ts` into a deterministic guardrail:
-  - Verifies navigation `Home -> Arena -> Match` using stable route-based locators.
-  - Confirms Match pre-result gating (`Share URL` / `Replay` disabled before finalize).
-  - Loads Replay with a deterministic transcript fixture (`z` gzip payload, `step=9`) and verifies replay UI + URL params.
-- Added local transcript encoding helper (`gzipSync` + base64url) directly in the spec to avoid runtime dependency on in-page state.
-
-### Verify
-- `pnpm.cmd -C apps/web e2e -- e2e/home-arena-match-replay-flow.spec.ts` (passed)
-- `pnpm.cmd -C apps/web lint` (passed)
-- `pnpm.cmd lint:text` (passed)
+- `pnpm.cmd -C apps/web e2e:ux` OK (`9 passed`)

@@ -106,3 +106,13 @@
 
 - 何が良くなったか（ユーザー体験）
 - 追加でやるべき次タスク
+
+## Phase D — Motion Language / “Cute Pack”
+
+- 目的：かわいいモーションを「再利用できる言語」にして、UI全体へ統一的に適用する
+- 入口：`codex/work_orders/011_motion_language_cute_pack.md`
+
+## Phase E — Deploy (Vercel + Railway)
+
+- ドキュメント：`docs/04_ops/DEPLOYMENT_VERCEL_RAILWAY_v1_ja.md`
+- Vercel SPA fallback：`vercel.json`

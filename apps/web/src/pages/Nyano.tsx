@@ -182,7 +182,7 @@ export function NyanoPage() {
               </div>
             </div>
             <div className="flex flex-wrap items-center gap-2">
-              <button className="btn btn-soft mint-pressable mint-hit" onClick={openNyanoMint} title="Nyano公式Mintサイトを開きます">
+              <button className="btn btn-soft" onClick={openNyanoMint} title="Nyano公式Mintサイトを開きます">
                 Open mint.nyano.ai
               </button>
             </div>
@@ -203,11 +203,11 @@ export function NyanoPage() {
             />
 
             <div className="flex flex-wrap gap-2">
-              <button className="btn btn-sm mint-pressable mint-hit" onClick={loadSampleMinted} disabled={sampleLoading}>
+              <button className="btn btn-sm" onClick={loadSampleMinted} disabled={sampleLoading}>
                 {sampleLoading ? "Loading…" : "サンプル（存在するtokenId）を取得"}
               </button>
               {EXAMPLES.map((ex) => (
-                <button key={ex.label} className="btn btn-sm mint-pressable mint-hit" onClick={() => setInput(ex.value)}>
+                <button key={ex.label} className="btn btn-sm" onClick={() => setInput(ex.value)}>
                   {ex.label}
                 </button>
               ))}
@@ -218,7 +218,7 @@ export function NyanoPage() {
 
           <div className="grid gap-2">
             <div className="text-xs font-medium text-slate-600">Actions</div>
-            <button className="btn btn-primary mint-pressable mint-hit" onClick={load} disabled={loading}>
+            <button className="btn btn-primary" onClick={load} disabled={loading}>
               {loading ? "Loading…" : "Load from chain"}
             </button>
             {error ? <div className="callout callout-warn">{error}</div> : null}
@@ -257,20 +257,20 @@ export function NyanoPage() {
 
               <div className="flex flex-wrap gap-2">
                 {rpcCandidates.slice(0, 6).map((u) => (
-                  <button key={u} className="btn btn-sm mint-pressable mint-hit" onClick={() => setRpcDraft(u)} title={u}>
+                  <button key={u} className="btn btn-sm" onClick={() => setRpcDraft(u)} title={u}>
                     {rpcLabel(u)}
                   </button>
                 ))}
               </div>
 
               <div className="flex flex-wrap gap-2">
-                <button className="btn btn-sm mint-pressable mint-hit" onClick={testRpc} disabled={rpcProbing}>
+                <button className="btn btn-sm" onClick={testRpc} disabled={rpcProbing}>
                   {rpcProbing ? "Testing…" : "Test"}
                 </button>
-                <button className="btn btn-primary btn-sm mint-pressable mint-hit" onClick={applyRpc} disabled={!rpcDraft.trim()}>
+                <button className="btn btn-primary btn-sm" onClick={applyRpc} disabled={!rpcDraft.trim()}>
                   Use this RPC
                 </button>
-                <button className="btn btn-soft btn-sm mint-pressable mint-hit" onClick={resetRpc} disabled={!userOverride}>
+                <button className="btn btn-soft btn-sm" onClick={resetRpc} disabled={!userOverride}>
                   Reset
                 </button>
               </div>
@@ -301,7 +301,7 @@ export function NyanoPage() {
                   <span className="badge badge-nyano">Nyano Peace</span>
                 </div>
                 <div className="flex flex-wrap items-center gap-2">
-                  <button className="btn mint-pressable mint-hit" onClick={() => openEtherscan(it.tokenId)}>
+                  <button className="btn" onClick={() => openEtherscan(it.tokenId)}>
                     Etherscan
                   </button>
                 </div>
@@ -352,13 +352,13 @@ export function NyanoPage() {
                     </div>
 
                     <div className="flex flex-wrap items-center gap-2">
-                      <button className="btn mint-pressable mint-hit" onClick={() => copyWithToast("CardData", stringifyWithBigInt(it.data.card))}>
+                      <button className="btn" onClick={() => copyWithToast("CardData", stringifyWithBigInt(it.data.card))}>
                         Copy CardData JSON
                       </button>
-                      <button className="btn mint-pressable mint-hit" onClick={() => copyWithToast("tokenId", it.tokenId.toString())}>
+                      <button className="btn" onClick={() => copyWithToast("tokenId", it.tokenId.toString())}>
                         Copy tokenId
                       </button>
-                      <button className="btn btn-sm mint-pressable mint-hit" onClick={() => copyWithToast("owner", it.data.owner)}>
+                      <button className="btn btn-sm" onClick={() => copyWithToast("owner", it.data.owner)}>
                         Copy owner
                       </button>
                     </div>

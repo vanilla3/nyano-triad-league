@@ -25,22 +25,17 @@ import { ScoreBar } from "@/components/ScoreBar";
 import { LastMoveFeedback, useBoardFlipAnimation } from "@/components/BoardFlipAnimator";
 import { CardFlight } from "@/components/CardFlight";
 import { useCardFlight } from "@/hooks/useCardFlight";
-import { useIdle } from "@/hooks/useIdle";
-import {
-  resolveMatchStageIdleGuidanceTargets,
-  shouldDisableMatchStageIdleGuidance,
-} from "@/features/match/matchStageIdleGuidance";
 import { NyanoImage } from "@/components/NyanoImage";
 import { CardMini } from "@/components/CardMini";
 import { HiddenDeckPreviewCard } from "@/components/HiddenDeckPreviewCard";
 import { TurnLog } from "@/components/TurnLog";
 import { GameResultOverlay, type GameResult } from "@/components/GameResultOverlay";
 import {
-  NyanoReaction,
   pickReactionKind,
   resolveReactionCutInImpact,
   type NyanoReactionInput,
 } from "@/components/NyanoReaction";
+import { NyanoReactionSlot } from "@/components/NyanoReactionSlot";
 import { flipTracesSummary } from "@/components/flipTraceDescribe";
 import { base64UrlEncodeUtf8, tryGzipCompressUtf8ToBase64Url } from "@/lib/base64url";
 import { getDeck, listDecks, upsertDeck, type DeckV1 } from "@/lib/deck_store";
@@ -72,6 +67,7 @@ import { createSfxEngine, type SfxEngine, type SfxName } from "@/lib/sfx";
 import { readUiDensity, readVfxQuality, writeUiDensity, writeVfxQuality, type UiDensity, type VfxPreference } from "@/lib/local_settings";
 import type { FlipTraceArrow } from "@/components/FlipArrowOverlay";
 import { MatchDrawerMint, DrawerToggleButton } from "@/components/MatchDrawerMint";
+import { MatchSetupPanelMint } from "@/components/match/MatchSetupPanelMint";
 import { writeClipboardText } from "@/lib/clipboard";
 import { appAbsoluteUrl, buildReplayShareUrl } from "@/lib/appUrl";
 import { computeStageBoardSizing, shouldShowStageSecondaryControls } from "@/lib/stage_layout";
@@ -84,6 +80,7 @@ import {
   parseFirstPlayerResolutionMode,
   randomBytes32Hex,
   resolveFirstPlayer,
+  type FirstPlayerResolutionMode,
 } from "@/lib/first_player_resolve";
 import {
   applySearchParamPatch,
@@ -138,7 +135,7 @@ function turnPlayer(firstPlayer: PlayerIndex, turnIndex: number): PlayerIndex {
 
 function looksLikeRpcError(message: string): boolean {
   const m = message.toLowerCase();
-  return m.includes("failed to fetch") || m.includes("http request failed") || m.includes("rpc接続") || m.includes("cors") || m.includes("429");
+  return m.includes("failed to fetch") || m.includes("http request failed") || m.includes("rpc") || m.includes("cors") || m.includes("429");
 }
 
 function parseDeckTokenIds(d: DeckV1 | null): bigint[] {
@@ -278,7 +275,7 @@ function parseMatchBoardUi(v: string | null): MatchBoardUi {
   return "mint";
 }
 
-/** Lazy QR code for share URL — avoids computing gzip in render */
+/** Lazy QR code for share URL - avoids computing gzip in render */
 function ShareQrCode({ sim, event, ui }: { sim: SimState; event: EventV1 | null; ui?: string }) {
   const [url, setUrl] = React.useState<string | null>(null);
   React.useEffect(() => {
@@ -300,42 +297,9 @@ function ShareQrCode({ sim, event, ui }: { sim: SimState; event: EventV1 | null;
   return <QrCode value={url} size={160} />;
 }
 
-/* ═══════════════════════════════════════════════════════════════════════════
-   COLLAPSIBLE SECTION
-   ═══════════════════════════════════════════════════════════════════════════ */
-
-function CollapsibleSection({
-  title,
-  subtitle,
-  defaultOpen = true,
-  children,
-}: {
-  title: string;
-  subtitle?: string;
-  defaultOpen?: boolean;
-  children: React.ReactNode;
-}) {
-  const [open, setOpen] = React.useState(defaultOpen);
-  return (
-    <section className="card">
-      <div
-        className="card-hd flex cursor-pointer items-center justify-between"
-        onClick={() => setOpen(!open)}
-      >
-        <div>
-          <div className="text-base font-semibold">{title}</div>
-          {subtitle && <div className="text-xs text-slate-500">{subtitle}</div>}
-        </div>
-        <span className="text-sm text-slate-400">{open ? "▲" : "▼"}</span>
-      </div>
-      {open && <div className="card-bd grid gap-4 text-sm">{children}</div>}
-    </section>
-  );
-}
-
-/* ═══════════════════════════════════════════════════════════════════════════
+/* ==========================================================================
    MATCH PAGE
-   ═══════════════════════════════════════════════════════════════════════════ */
+   ========================================================================== */
 
 export function MatchPage() {
   const navigate = useNavigate();
@@ -746,7 +710,7 @@ export function MatchPage() {
     } catch {
       // ignore
     }
-    // Cards and deck tokens are NOT reset — same decks reused
+    // Cards and deck tokens are NOT reset - same decks reused
     // eslint-disable-next-line react-hooks/exhaustive-deps -- boardAnim is declared later (forward ref); stable hook return
   }, []);
 
@@ -828,6 +792,29 @@ export function MatchPage() {
     }
     if (changed) setSearchParams(next, { replace: true });
   }, [searchParams, setSearchParams, isBattleStageRoute, navigate]);
+
+  const handleBoardUiChange = (nextUi: MatchBoardUi) => {
+    if (nextUi === "engine") {
+      setParam("ui", nextUi);
+      return;
+    }
+    setParams({ ui: nextUi, focus: undefined, layout: undefined });
+  };
+
+  const handleFirstPlayerModeChange = (nextMode: FirstPlayerResolutionMode) => {
+    setParams({
+      ...buildFirstPlayerModeCanonicalParamPatch(nextMode, searchParams, randomBytes32Hex),
+    });
+  };
+
+  const handleCopySetupLink = async () => {
+    const query = searchParams.toString();
+    const path = location.pathname.replace(/^\//, "");
+    const url = appAbsoluteUrl(query ? `${path}?${query}` : path);
+    const ok = await writeClipboardText(url);
+    if (ok) toast.success("Copied", "Setup link copied");
+    else toast.warn("Copy failed", "Please copy the URL manually.");
+  };
 
   React.useEffect(() => {
     if (isEngine || !isFocusMode) return;
@@ -945,6 +932,74 @@ export function MatchPage() {
 
   const canLoad = isGuestMode || Boolean(deckA && deckATokens.length === 5 && deckBTokens.length === 5);
 
+  const classicSwapLabel = classicSwapIndices
+    ? `Classic Swap: A${classicSwapIndices.aIndex + 1} / B${classicSwapIndices.bIndex + 1}`
+    : null;
+  const classicOpenLabel = classicOpenCardIndices
+    ? classicOpenCardIndices.mode === "all_open"
+      ? "Classic Open: all cards revealed"
+      : `Classic Three Open: A[${formatClassicOpenSlots(classicOpenCardIndices.playerA)}] / B[${formatClassicOpenSlots(classicOpenCardIndices.playerB)}]`
+    : null;
+
+  const handleRandomizeCommitReveal = () => {
+    setParams({
+      fps: randomBytes32Hex(),
+      fra: randomBytes32Hex(),
+      frb: randomBytes32Hex(),
+      fca: "",
+      fcb: "",
+    });
+  };
+
+  const handleDeriveCommitRevealCommits = () => {
+    const commitA = deriveRevealCommitHex(commitRevealSaltParam, commitRevealAParam);
+    const commitB = deriveRevealCommitHex(commitRevealSaltParam, commitRevealBParam);
+    if (!commitA || !commitB) {
+      toast.warn("Commit derive failed", "matchSalt/revealA/revealB must be bytes32 hex.");
+      return;
+    }
+    setParams({ fca: commitA, fcb: commitB });
+    toast.success("Commits derived", "commitA/commitB updated from reveals.");
+  };
+
+  const handleRandomizeCommittedMutualChoice = () => {
+    setParams({
+      fps: randomBytes32Hex(),
+      fpna: randomBytes32Hex(),
+      fpnb: randomBytes32Hex(),
+      fcoa: "",
+      fcob: "",
+    });
+  };
+
+  const handleDeriveCommittedMutualChoiceCommits = () => {
+    const commitA = deriveChoiceCommitHex({
+      matchSalt: commitRevealSaltParam,
+      player: committedMutualPlayerAParam,
+      firstPlayer: mutualChoiceAParam,
+      nonce: committedMutualNonceAParam,
+    });
+    const commitB = deriveChoiceCommitHex({
+      matchSalt: commitRevealSaltParam,
+      player: committedMutualPlayerBParam,
+      firstPlayer: mutualChoiceBParam,
+      nonce: committedMutualNonceBParam,
+    });
+    if (!commitA || !commitB) {
+      toast.warn("Commit derive failed", "matchSalt/player/choice/nonce values must be valid.");
+      return;
+    }
+    setParams({ fcoa: commitA, fcob: commitB });
+    toast.success("Commits derived", "Committed mutual choice commits were updated.");
+  };
+
+  const handleRandomizeSeedResolution = () => {
+    setParams({
+      fps: randomBytes32Hex(),
+      fpsd: randomBytes32Hex(),
+    });
+  };
+
   const loadCardsFromIndex = async () => {
     setError(null);
     setStatus(null);
@@ -958,7 +1013,7 @@ export function MatchPage() {
       setOwners(null);
       setPlayerA("0x0000000000000000000000000000000000000001" as `0x${string}`);
       setPlayerB("0x0000000000000000000000000000000000000002" as `0x${string}`);
-      setError(`Game Index の読み込みに失敗しました。フォールバック用のゲストカードで続行します。(${reason})`);
+      setError(`Game Index load failed; fallback guest deck was used. (${reason})`);
       setStatus(`Guest mode: fallback deck loaded (${fallback.cardsByTokenId.size} cards)`);
       toast.warn("Game Index unavailable", "Fallback guest cards loaded");
     };
@@ -970,7 +1025,7 @@ export function MatchPage() {
           applyGuestFallback("index unavailable");
           return;
         }
-        setError("Game Index の読み込みに失敗しました。ネットワーク接続を確認してください。");
+        setError("Game Index unavailable. Please try Verified mode.");
         return;
       }
 
@@ -996,7 +1051,7 @@ export function MatchPage() {
 
         if (cardMap.size < allTokenIds.length) {
           const missing = allTokenIds.filter((id) => !cardMap.has(BigInt(id)));
-          setError(`Game Index に存在しない tokenId: ${missing.join(", ")}. Verified mode をお試しください。`);
+          setError(`Missing tokenIds in Game Index: ${missing.join(", ")}. Please try Verified mode.`);
           return;
         }
 
@@ -1032,11 +1087,11 @@ export function MatchPage() {
     setStatus(null);
 
     if (!deckA || deckATokens.length !== 5) {
-      setError("Deck A を選択してください（5枚）");
+      setError("Please select Deck A (5 cards).");
       return;
     }
     if (deckBTokens.length !== 5) {
-      setError("Deck B が不正です（5枚）");
+      setError("Deck B is invalid (must contain 5 cards).");
       return;
     }
 
@@ -1086,10 +1141,10 @@ export function MatchPage() {
       setError(msg);
       rpcStatusRef.current = { ok: false, message: msg, timestampMs: Date.now() };
 
-      if (msg.includes("存在しない tokenId")) {
-        toast.warn("カード読込失敗", "存在しない tokenId が含まれています。/nyano で確認してください。");
+      if (msg.includes("missing tokenid")) {
+        toast.warn("Card load failed", "Missing tokenId found. Please verify it on /nyano.");
       } else if (looksLikeRpcError(msg)) {
-        toast.warn("カード読込失敗", "RPC 接続に失敗しました。/nyano の RPC Settings で切替できます。");
+        toast.warn("Card load failed", "RPC request failed. Check /nyano RPC Settings.");
       }
     } finally {
       setLoading(false);
@@ -1112,8 +1167,8 @@ export function MatchPage() {
   }, [isGuestMode]);
 
   const sim: SimState = React.useMemo(() => {
-    if (!cards) return { ok: false, error: "カードが未ロードです（Load Cards を実行してください）" };
-    if (effectiveDeckATokens.length !== 5 || effectiveDeckBTokens.length !== 5) return { ok: false, error: "Deck A/B は 5 枚必要です" };
+    if (!cards) return { ok: false, error: "Cards are not loaded. Press Load Cards first." };
+    if (effectiveDeckATokens.length !== 5 || effectiveDeckBTokens.length !== 5) return { ok: false, error: "Deck A/B must each have 5 cards." };
 
     try {
       const header = {
@@ -1370,41 +1425,41 @@ export function MatchPage() {
       setStatus(null);
 
       if (turns.length >= 9) {
-        setError("すでに 9 手が確定しています（Reset してください）");
+        setError("All 9 turns are already committed. Reset the match to continue.");
         telemetry.recordInvalidAction();
         return;
       }
 
       if (next.cell < 0 || next.cell > 8) {
-        setError("cell は 0..8 です");
+        setError("cell must be in range 0..8.");
         telemetry.recordInvalidAction();
         return;
       }
       if (used.cells.has(next.cell)) {
-        setError(`cell ${next.cell} はすでに使用済みです`);
+        setError(`cell ${next.cell} is already used.`);
         telemetry.recordInvalidAction();
         return;
       }
 
       if (next.cardIndex < 0 || next.cardIndex > 4) {
-        setError("cardIndex は 0..4 です");
+        setError("cardIndex must be in range 0..4.");
         telemetry.recordInvalidAction();
         return;
       }
       if (classicForcedCardIndex !== null && next.cardIndex !== classicForcedCardIndex) {
-        setError(`このターンは cardIndex ${classicForcedCardIndex} を選んでください`);
+        setError(`This turn requires cardIndex ${classicForcedCardIndex}.`);
         telemetry.recordInvalidAction();
         return;
       }
       if (currentUsed.has(next.cardIndex)) {
-        setError(`cardIndex ${next.cardIndex} はすでに使用済みです`);
+        setError(`cardIndex ${next.cardIndex} is already used.`);
         telemetry.recordInvalidAction();
         return;
       }
 
       if (next.warningMarkCell !== undefined) {
         if (currentWarnRemaining <= 0) {
-          setError("warning mark の使用回数上限（3回）に達しています");
+          setError("No warning marks remaining.");
           telemetry.recordInvalidAction();
           return;
         }
@@ -1414,12 +1469,12 @@ export function MatchPage() {
           return;
         }
         if (next.warningMarkCell < 0 || next.warningMarkCell > 8) {
-          setError("warningMarkCell は 0..8 です");
+          setError("warningMarkCell must be in range 0..8.");
           telemetry.recordInvalidAction();
           return;
         }
         if (used.cells.has(next.warningMarkCell)) {
-          setError(`warningMarkCell ${next.warningMarkCell} はすでに使用済み cell です`);
+          setError(`warningMarkCell ${next.warningMarkCell} is already occupied.`);
           telemetry.recordInvalidAction();
           return;
         }
@@ -1478,7 +1533,7 @@ export function MatchPage() {
     if (isAiTurn) return;
 
     if (draftCell === null) {
-      setError("cell を選択してください（盤面をクリック）");
+      setError("Choose a cell before committing the move.");
       telemetry.recordInvalidAction();
       return;
     }
@@ -1582,7 +1637,7 @@ export function MatchPage() {
 
     const resolvedCardIndex = classicForcedCardIndex ?? move.cardIndex;
     const tid = effectiveDeckBTokens[resolvedCardIndex];
-    const note = `Nyano chose cell ${move.cell}, cardIndex ${resolvedCardIndex}${tid !== undefined ? ` (#${tid.toString()})` : ""} — ${move.reason}`;
+    const note = `Nyano chose cell ${move.cell}, cardIndex ${resolvedCardIndex}${tid !== undefined ? ` (#${tid.toString()})` : ""} - ${move.reason}`;
     setAiNotes((prev) => ({ ...prev, [turns.length]: { reason: note, reasonCode: move.reasonCode } }));
     setStatus(note);
 
@@ -1702,7 +1757,7 @@ export function MatchPage() {
     setError(null);
     try {
       const url = buildReplayUrl(true);
-      if (!url) { toast.warn("Share", "Match not ready — play 9 turns first"); return; }
+      if (!url) { toast.warn("Share", "Match not ready - play 9 turns first"); return; }
       await copyToClipboard(url);
       toast.success("Copied!", "Share URL copied to clipboard");
     } catch (e: unknown) {
@@ -1715,7 +1770,7 @@ export function MatchPage() {
     setStatus(null);
     try {
       const url = buildReplayUrl(false);
-      if (!url) { toast.warn("Replay", "Match not ready — play 9 turns first"); return; }
+      if (!url) { toast.warn("Replay", "Match not ready - play 9 turns first"); return; }
       // SPA navigation via react-router (popup-safe, preserves client state)
       navigate(url);
     } catch (e: unknown) {
@@ -1871,15 +1926,10 @@ export function MatchPage() {
     if (!sfx || turns.length < 9 || !sim.ok) return;
     const winner = sim.full.winner;
     if (winner === "draw") return; // no fanfare for draw
-    // Perspective = player A → victory if A wins, defeat if B wins
+    // Perspective = player A: victory if A wins, defeat if B wins
     if (winner === 0) sfx.play("victory_fanfare");
     else sfx.play("defeat_sad");
   }, [sfx, turns.length, sim]);
-
-  React.useEffect(() => {
-    if (!sim.ok || turns.length < 9) return;
-    telemetry.recordResult();
-  }, [sim, telemetry, turns.length]);
 
   // D-3: SFX error buzz on validation error
   React.useEffect(() => {
@@ -1905,43 +1955,15 @@ export function MatchPage() {
     && turns.length < 9
     && (draftCardIndex !== null || draftCell !== null)
     && !isStageFocusRoute;
-  const disableStageIdleGuidance = shouldDisableMatchStageIdleGuidance({
-    useMintUi,
-    isRpg,
-    hasCardSource: Boolean(cards),
-    isAiTurn,
-    isGameOver: turns.length >= 9,
-    isHandDragging,
-    isBoardAnimating: boardAnim.isAnimating,
-    hasInlineError: Boolean(error),
-  });
-  const stageIdleGuidance = useIdle({
-    timeoutMs: 4200,
-    disabled: disableStageIdleGuidance,
-  });
   const showFocusHandDock = isEngineFocus
     && useMintUi
     && !isRpg
     && turns.length < 9
     && currentDeckTokens.length > 0;
-  const { idleGuideHand, idleGuideBoard } = resolveMatchStageIdleGuidanceTargets({
-    stageIdleGuidance,
-    isStageFocusRoute,
-    showStageControls,
-    showFocusHandDock,
-    draftCardIndex,
-    draftCell,
-  });
   const showFocusToolbarActions = isStageFocusRoute && showFocusHandDock && showStageControls;
   const canCommitFromFocusToolbar = !isAiTurn && draftCell !== null && draftCardIndex !== null;
   const canUndoFromFocusToolbar = !isAiTurn && turns.length > 0;
   const canManualAiMoveFromFocusToolbar = isVsNyanoAi && !aiAutoPlay && isAiTurn;
-  const stageFocusToolbarButtonClass = isStageFocusRoute
-    ? "btn btn-sm h-10 px-4 mint-pressable mint-hit"
-    : "btn btn-sm";
-  const stageFocusToolbarPrimaryButtonClass = isStageFocusRoute
-    ? "btn btn-sm btn-primary h-10 px-4 mint-pressable mint-hit"
-    : "btn btn-sm btn-primary";
 
   React.useEffect(() => {
     if (!isStageFocusRoute || typeof window === "undefined") return;
@@ -2004,9 +2026,9 @@ export function MatchPage() {
     undoMove,
   ]);
 
-  /* ═══════════════════════════════════════════════════════════════════════
+  /* ======================================================================
      RENDER
-     ═══════════════════════════════════════════════════════════════════════ */
+     ====================================================================== */
 
   return (
     <div
@@ -2095,7 +2117,7 @@ export function MatchPage() {
                     </select>
                   </label>
                   <button
-                    className={stageFocusToolbarPrimaryButtonClass}
+                    className="btn btn-sm btn-primary"
                     onClick={commitMove}
                     disabled={!canCommitFromFocusToolbar}
                     aria-label="Commit move from focus toolbar"
@@ -2103,7 +2125,7 @@ export function MatchPage() {
                     Commit
                   </button>
                   <button
-                    className={stageFocusToolbarButtonClass}
+                    className="btn btn-sm"
                     onClick={undoMove}
                     disabled={!canUndoFromFocusToolbar}
                     aria-label="Undo move from focus toolbar"
@@ -2112,7 +2134,7 @@ export function MatchPage() {
                   </button>
                   {canManualAiMoveFromFocusToolbar ? (
                     <button
-                      className={stageFocusToolbarPrimaryButtonClass}
+                      className="btn btn-sm btn-primary"
                       onClick={doAiMoveWithFeedback}
                       aria-label="Nyano AI move from focus toolbar"
                     >
@@ -2158,27 +2180,27 @@ export function MatchPage() {
                         sfxMuted && "mint-sfx-toggle--muted",
                       ].filter(Boolean).join(" ")}
                       onClick={handleSfxToggle}
-                      title={sfxMuted ? "サウンド ON" : "サウンド OFF"}
+                      title={sfxMuted ? "Sound ON" : "Sound OFF"}
                       aria-label={sfxMuted ? "Unmute sound effects" : "Mute sound effects"}
                     >
                       {sfxMuted ? "🔇" : "🔊"}
                     </button>
                   ) : null}
-                  <button className={stageFocusToolbarButtonClass} onClick={toggleStageFullscreenWithFeedback}>
+                  <button className="btn btn-sm" onClick={toggleStageFullscreenWithFeedback}>
                     {isStageFullscreen ? "Exit Fullscreen" : "Fullscreen"}
                   </button>
-                  <button className={stageFocusToolbarButtonClass} onClick={toggleStageControlsWithFeedback}>
+                  <button className="btn btn-sm" onClick={toggleStageControlsWithFeedback}>
                     {showStageControls ? "Hide Controls" : "Show Controls"}
                   </button>
-                  <button className={stageFocusToolbarButtonClass} onClick={toggleStageAssistWithFeedback}>
+                  <button className="btn btn-sm" onClick={toggleStageAssistWithFeedback}>
                     {showStageAssist ? "Hide HUD" : "Show HUD"}
                   </button>
                 </>
               ) : null}
-              <button className={stageFocusToolbarButtonClass} onClick={exitFocusModeWithFeedback}>
+              <button className="btn btn-sm" onClick={exitFocusModeWithFeedback}>
                 Exit Focus
               </button>
-              <button className={stageFocusToolbarButtonClass} onClick={openReplayWithFeedback} disabled={!canFinalize}>
+              <button className="btn btn-sm" onClick={openReplayWithFeedback} disabled={!canFinalize}>
                 Replay
               </button>
             </div>
@@ -2193,7 +2215,7 @@ export function MatchPage() {
           <div className="min-w-0">
             <div className="text-xl font-semibold">Nyano Triad League</div>
             <div className="mt-1 text-sm text-slate-600">
-              Nyano NFTで遊ぶ、コミュニティ主導のトライアド対戦。対局ログ（transcript）を共有して、配信・投票にも繋げられます。
+              Play Nyano NFT cards in a community-driven triad battle. Share transcripts, stream matches, and gather votes.
             </div>
             <div className="mt-3 flex flex-wrap gap-2 text-xs text-slate-500">
               <span className="rounded-full border border-slate-200 bg-slate-50 px-2 py-1">ETH on-chain</span>
@@ -2215,8 +2237,8 @@ export function MatchPage() {
               </div>
             </div>
             <div className="flex flex-wrap items-center gap-2">
-              <Link className="btn no-underline mint-pressable mint-hit" to="/events">All events</Link>
-              <button className="btn mint-pressable mint-hit" onClick={clearEvent}>Leave event</button>
+              <Link className="btn no-underline" to="/events">All events</Link>
+              <button className="btn" onClick={clearEvent}>Leave event</button>
             </div>
           </div>
           <div className="card-bd grid gap-2 text-sm text-slate-700">
@@ -2236,7 +2258,7 @@ export function MatchPage() {
             <div>
               <div className="font-semibold text-nyano-800">Guest Quick Play</div>
               <div className="text-xs text-nyano-600">
-                ランダムデッキでお試しプレイ中。自分のデッキで遊ぶには <Link className="font-medium underline" to="/decks">Decks</Link> でデッキを作成してください。
+                Trying a random deck in guest mode. To play with your own deck, create one in <Link className="font-medium underline" to="/decks">Decks</Link>.
               </div>
             </div>
           </div>
@@ -2246,540 +2268,77 @@ export function MatchPage() {
       {/* ── Mini Tutorial (guest mode, first visit only) ── */}
       {!isEngineFocus && isGuestMode && <MiniTutorial />}
 
-      {/* ── Match Setup (collapsed in guest mode, collapsible after cards are loaded) ── */}
-      {!isEngineFocus && !isGuestMode && (
-      <CollapsibleSection
-        title="Match Setup"
-        subtitle="デッキ選択・ルールセット・対戦設定"
-        defaultOpen={!cards}
-      >
-        <div className="grid gap-3 md:grid-cols-2">
-          <div className="grid gap-2">
-            <div className="text-xs font-medium text-slate-600">Deck A</div>
-            <select className="input" value={deckAId} onChange={(e) => setParam("a", e.target.value)} aria-label="Deck A">
-              <option value="">Select…</option>
-              {decks.map((d) => (
-                <option key={d.id} value={d.id}>{d.name}</option>
-              ))}
-            </select>
-            {deckA ? (
-              <div className="text-xs text-slate-500">{deckA.tokenIds.join(", ")}</div>
-            ) : (
-              <div className="text-xs text-slate-400">
-                まずは <Link className="underline" to="/decks">Decks</Link> で作成してください
-              </div>
-            )}
-          </div>
-
-          <div className="grid gap-2">
-            <div className="text-xs font-medium text-slate-600">Deck B</div>
-            {event ? (
-              <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-700">
-                Event deck (fixed): <span className="font-mono">{event.nyanoDeckTokenIds.join(", ")}</span>
-              </div>
-            ) : (
-              <>
-                <select className="input" value={deckBId} onChange={(e) => setParam("b", e.target.value)} aria-label="Deck B">
-                  <option value="">Select…</option>
-                  {decks.map((d) => (
-                    <option key={d.id} value={d.id}>{d.name}</option>
-                  ))}
-                </select>
-                {deckB ? <div className="text-xs text-slate-500">{deckB.tokenIds.join(", ")}</div> : <div className="text-xs text-slate-400">Deck B を選択してください</div>}
-              </>
-            )}
-          </div>
-        </div>
-
-        <div className="grid gap-3 md:grid-cols-4">
-          <div className="grid gap-2">
-            <div className="text-xs font-medium text-slate-600">Opponent</div>
-            <select className="input" value={opponentMode} disabled={isEvent} onChange={(e) => setParam("opp", e.target.value)} aria-label="Opponent mode">
-              <option value="pvp">Human vs Human（両方手動）</option>
-              <option value="vs_nyano_ai">Vs Nyano（AIがBを操作）</option>
-            </select>
-          </div>
-
-          {isVsNyanoAi ? (
-            <>
-              <div className="grid gap-2">
-                <div className="text-xs font-medium text-slate-600">AI Difficulty</div>
-                <select className="input" value={aiDifficulty} disabled={isEvent} onChange={(e) => setParam("ai", e.target.value)} aria-label="AI difficulty">
-                  <option value="easy">Easy（最小手）</option>
-                  <option value="normal">Normal（即時flip最大）</option>
-                  <option value="hard">Hard（minimax d2）</option>
-                  <option value="expert">Expert（alpha-beta d3）</option>
-                </select>
-              </div>
-
-              <div className="grid gap-2">
-                <div className="text-xs font-medium text-slate-600">AI Auto</div>
-                <label className="flex items-center gap-2 text-xs text-slate-700">
-                  <input type="checkbox" checked={aiAutoPlay} onChange={(e) => setParam("auto", e.target.checked ? "1" : "0")} aria-label="AI auto play" />
-                  Nyano turn を自動で進める
-                </label>
-              </div>
-            </>
-          ) : null}
-        </div>
-
-        <div className="grid gap-3 md:grid-cols-3">
-          <div className="grid gap-2">
-            <div className="text-xs font-medium text-slate-600">Stream mode</div>
-            <label className="flex items-center gap-2 text-xs text-slate-700">
-              <input type="checkbox" checked={streamMode} onChange={(e) => setParam("stream", e.target.checked ? "1" : "0")} aria-label="Stream mode" />
-              /stream からの投票結果を反映
-            </label>
-            {streamMode ? (
-              <select className="input" value={streamCtrlParam} onChange={(e) => setParam("ctrl", e.target.value)} aria-label="Chat controlled side">
-                <option value="A">Chat controls A</option>
-                <option value="B">Chat controls B</option>
-              </select>
-            ) : null}
-          </div>
-
-          <div className="grid gap-2">
-            <div className="text-xs font-medium text-slate-600">Board</div>
-            <select
-              className="input"
-              value={ui}
-              onChange={(e) => {
-                const nextUi = parseMatchBoardUi(e.target.value);
-                if (nextUi === "engine") {
-                  setParam("ui", nextUi);
-                } else {
-                  setParams({ ui: nextUi, focus: undefined, layout: undefined });
-                }
-              }}
-              aria-label="Board renderer"
-            >
-              <option value="mint">mint</option>
-              <option value="engine">engine (pixi)</option>
-              <option value="rpg">rpg</option>
-            </select>
-            {isEngine ? (
-              <div className="flex flex-wrap items-center gap-2">
-                <button className="btn btn-sm mint-pressable mint-hit" onClick={() => setFocusMode(true)}>
-                  Enter Pixi Focus
-                </button>
-                <Link className="btn btn-sm no-underline mint-pressable mint-hit" to={stageMatchUrl}>
-                  Open Stage Page
-                </Link>
-              </div>
-            ) : null}
-          </div>
-
-          <div className="grid gap-2">
-            <div className="text-xs font-medium text-slate-600">Ruleset</div>
-            <select className="input" value={rulesetKey} disabled={isEvent} onChange={(e) => setParam("rk", e.target.value)} aria-label="Ruleset">
-              <option value="v1">v1 (core+tactics)</option>
-              <option value="v2">v2 (shadow ignores warning mark)</option>
-              <option value="full">full (tactics+traits+formations)</option>
-              <option value="classic_plus_same">classic (plus+same)</option>
-              <option value="classic_order">classic (order)</option>
-              <option value="classic_chaos">classic (chaos)</option>
-              <option value="classic_swap">classic (swap)</option>
-              <option value="classic_all_open">classic (all open)</option>
-              <option value="classic_three_open">classic (three open)</option>
-            </select>
-            <select
-              className="input"
-              value={chainCapPerTurnParam === null ? "" : String(chainCapPerTurnParam)}
-              disabled={isEvent}
-              onChange={(e) => setParam("ccap", e.target.value)}
-              aria-label="Chain cap per turn"
-            >
-              <option value="">Layer4 chain cap: off</option>
-              {Array.from({ length: MAX_CHAIN_CAP_PER_TURN + 1 }, (_, n) => (
-                <option key={n} value={String(n)}>
-                  chain cap = {n}
-                </option>
-              ))}
-            </select>
-            {chainCapRawParam !== null && chainCapPerTurnParam === null ? (
-              <div className="text-xs text-rose-600">Invalid ccap parameter (allowed: 0..{MAX_CHAIN_CAP_PER_TURN})</div>
-            ) : (
-              <div className="text-xs text-slate-500">Layer4 experimental knob (engine-only, rulesetId unchanged)</div>
-            )}
-            {classicSwapIndices ? (
-              <div className="text-xs text-amber-700">
-                Classic Swap: A{classicSwapIndices.aIndex + 1} ↔ B{classicSwapIndices.bIndex + 1}
-              </div>
-            ) : null}
-            {classicOpenCardIndices ? (
-              <div className="text-xs text-emerald-700">
-                {classicOpenCardIndices.mode === "all_open"
-                  ? "Classic Open: all cards revealed"
-                  : `Classic Three Open: A[${formatClassicOpenSlots(classicOpenCardIndices.playerA)}] / B[${formatClassicOpenSlots(classicOpenCardIndices.playerB)}]`}
-              </div>
-            ) : null}
-            <div className="text-xs text-slate-500 font-mono truncate">rulesetId: {rulesetId}</div>
-          </div>
-
-          <div className="grid gap-2">
-            <div className="text-xs font-medium text-slate-600">First Player</div>
-            <select
-              className="input"
-              value={firstPlayerMode}
-              disabled={isEvent}
-              onChange={(e) => {
-                const nextMode = parseFirstPlayerResolutionMode(e.target.value);
-                setParams({
-                  ...buildFirstPlayerModeCanonicalParamPatch(nextMode, searchParams, randomBytes32Hex),
-                });
-              }}
-              aria-label="First player mode"
-            >
-              <option value="manual">Manual</option>
-              <option value="mutual">Mutual choice</option>
-              <option value="committed_mutual_choice">Committed mutual choice</option>
-              <option value="seed">Seed</option>
-              <option value="commit_reveal">Commit-reveal</option>
-            </select>
-
-            {firstPlayerMode === "manual" ? (
-              <select
-                className="input"
-                value={String(manualFirstPlayerParam)}
-                disabled={isEvent}
-                onChange={(e) => setParam("fp", e.target.value)}
-                aria-label="Manual first player"
-              >
-                <option value="0">A first</option>
-                <option value="1">B first</option>
-              </select>
-            ) : null}
-
-            {firstPlayerMode === "mutual" ? (
-              <div className="grid grid-cols-2 gap-2">
-                <select
-                  className="input"
-                  value={String(mutualChoiceAParam)}
-                  disabled={isEvent}
-                  onChange={(e) => setParam("fpa", e.target.value)}
-                  aria-label="Mutual choice A"
-                >
-                  <option value="0">A chooses A first</option>
-                  <option value="1">A chooses B first</option>
-                </select>
-                <select
-                  className="input"
-                  value={String(mutualChoiceBParam)}
-                  disabled={isEvent}
-                  onChange={(e) => setParam("fpb", e.target.value)}
-                  aria-label="Mutual choice B"
-                >
-                  <option value="0">B chooses A first</option>
-                  <option value="1">B chooses B first</option>
-                </select>
-              </div>
-            ) : null}
-
-            {firstPlayerMode === "commit_reveal" ? (
-              <div className="grid gap-2">
-                <input
-                  className="input font-mono text-xs"
-                  placeholder="matchSalt (bytes32 hex)"
-                  value={commitRevealSaltParam}
-                  disabled={isEvent}
-                  onChange={(e) => setParam("fps", e.target.value.trim())}
-                  aria-label="Commit reveal match salt"
-                />
-                <input
-                  className="input font-mono text-xs"
-                  placeholder="revealA (bytes32 hex)"
-                  value={commitRevealAParam}
-                  disabled={isEvent}
-                  onChange={(e) => setParam("fra", e.target.value.trim())}
-                  aria-label="Commit reveal A"
-                />
-                <input
-                  className="input font-mono text-xs"
-                  placeholder="revealB (bytes32 hex)"
-                  value={commitRevealBParam}
-                  disabled={isEvent}
-                  onChange={(e) => setParam("frb", e.target.value.trim())}
-                  aria-label="Commit reveal B"
-                />
-                <input
-                  className="input font-mono text-xs"
-                  placeholder="commitA (bytes32 hex; set A/B together if used)"
-                  value={commitRevealCommitAParam}
-                  disabled={isEvent}
-                  onChange={(e) => setParam("fca", e.target.value.trim())}
-                  aria-label="Commit A (optional)"
-                />
-                <input
-                  className="input font-mono text-xs"
-                  placeholder="commitB (bytes32 hex; set A/B together if used)"
-                  value={commitRevealCommitBParam}
-                  disabled={isEvent}
-                  onChange={(e) => setParam("fcb", e.target.value.trim())}
-                  aria-label="Commit B (optional)"
-                />
-                <div className="text-[11px] text-slate-500">
-                  If you provide commits, set both Commit A and Commit B.
-                </div>
-                <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    className="btn btn-sm mint-pressable mint-hit"
-                    disabled={isEvent}
-                    onClick={() => {
-                      setParams({
-                        fps: randomBytes32Hex(),
-                        fra: randomBytes32Hex(),
-                        frb: randomBytes32Hex(),
-                        fca: "",
-                        fcb: "",
-                      });
-                    }}
-                  >
-                    Randomize Inputs
-                  </button>
-                  <button
-                    type="button"
-                    className="btn btn-sm mint-pressable mint-hit"
-                    disabled={isEvent}
-                    onClick={() => {
-                      const commitA = deriveRevealCommitHex(commitRevealSaltParam, commitRevealAParam);
-                      const commitB = deriveRevealCommitHex(commitRevealSaltParam, commitRevealBParam);
-                      if (!commitA || !commitB) {
-                        toast.warn("Commit derive failed", "matchSalt/revealA/revealB must be bytes32 hex.");
-                        return;
-                      }
-                      setParams({ fca: commitA, fcb: commitB });
-                      toast.success("Commits derived", "commitA/commitB updated from reveals.");
-                    }}
-                  >
-                    Derive Commits
-                  </button>
-                </div>
-              </div>
-            ) : null}
-
-            {firstPlayerMode === "committed_mutual_choice" ? (
-              <div className="grid gap-2">
-                <input
-                  className="input font-mono text-xs"
-                  placeholder="matchSalt (bytes32 hex)"
-                  value={commitRevealSaltParam}
-                  disabled={isEvent}
-                  onChange={(e) => setParam("fps", e.target.value.trim())}
-                  aria-label="Committed mutual match salt"
-                />
-                <div className="grid grid-cols-2 gap-2">
-                  <select
-                    className="input"
-                    value={String(mutualChoiceAParam)}
-                    disabled={isEvent}
-                    onChange={(e) => setParam("fpa", e.target.value)}
-                    aria-label="Committed mutual choice A"
-                  >
-                    <option value="0">A chooses A first</option>
-                    <option value="1">A chooses B first</option>
-                  </select>
-                  <select
-                    className="input"
-                    value={String(mutualChoiceBParam)}
-                    disabled={isEvent}
-                    onChange={(e) => setParam("fpb", e.target.value)}
-                    aria-label="Committed mutual choice B"
-                  >
-                    <option value="0">B chooses A first</option>
-                    <option value="1">B chooses B first</option>
-                  </select>
-                </div>
-                <input
-                  className="input font-mono text-xs"
-                  placeholder="playerA (0x address)"
-                  value={committedMutualPlayerAParam}
-                  disabled={isEvent}
-                  onChange={(e) => setParam("fpoa", e.target.value.trim())}
-                  aria-label="Committed mutual player A"
-                />
-                <input
-                  className="input font-mono text-xs"
-                  placeholder="nonceA (bytes32 hex)"
-                  value={committedMutualNonceAParam}
-                  disabled={isEvent}
-                  onChange={(e) => setParam("fpna", e.target.value.trim())}
-                  aria-label="Committed mutual nonce A"
-                />
-                <input
-                  className="input font-mono text-xs"
-                  placeholder="commitA (bytes32 hex)"
-                  value={committedMutualCommitAParam}
-                  disabled={isEvent}
-                  onChange={(e) => setParam("fcoa", e.target.value.trim())}
-                  aria-label="Committed mutual commit A"
-                />
-                <input
-                  className="input font-mono text-xs"
-                  placeholder="playerB (0x address)"
-                  value={committedMutualPlayerBParam}
-                  disabled={isEvent}
-                  onChange={(e) => setParam("fpob", e.target.value.trim())}
-                  aria-label="Committed mutual player B"
-                />
-                <input
-                  className="input font-mono text-xs"
-                  placeholder="nonceB (bytes32 hex)"
-                  value={committedMutualNonceBParam}
-                  disabled={isEvent}
-                  onChange={(e) => setParam("fpnb", e.target.value.trim())}
-                  aria-label="Committed mutual nonce B"
-                />
-                <input
-                  className="input font-mono text-xs"
-                  placeholder="commitB (bytes32 hex)"
-                  value={committedMutualCommitBParam}
-                  disabled={isEvent}
-                  onChange={(e) => setParam("fcob", e.target.value.trim())}
-                  aria-label="Committed mutual commit B"
-                />
-                <div className="text-[11px] text-slate-500">
-                  Choice A and Choice B must match to resolve first player.
-                </div>
-                <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    className="btn btn-sm mint-pressable mint-hit"
-                    disabled={isEvent}
-                    onClick={() => {
-                      setParams({
-                        fps: randomBytes32Hex(),
-                        fpna: randomBytes32Hex(),
-                        fpnb: randomBytes32Hex(),
-                        fcoa: "",
-                        fcob: "",
-                      });
-                    }}
-                  >
-                    Randomize Inputs
-                  </button>
-                  <button
-                    type="button"
-                    className="btn btn-sm mint-pressable mint-hit"
-                    disabled={isEvent}
-                    onClick={() => {
-                      const commitA = deriveChoiceCommitHex({
-                        matchSalt: commitRevealSaltParam,
-                        player: committedMutualPlayerAParam,
-                        firstPlayer: mutualChoiceAParam,
-                        nonce: committedMutualNonceAParam,
-                      });
-                      const commitB = deriveChoiceCommitHex({
-                        matchSalt: commitRevealSaltParam,
-                        player: committedMutualPlayerBParam,
-                        firstPlayer: mutualChoiceBParam,
-                        nonce: committedMutualNonceBParam,
-                      });
-                      if (!commitA || !commitB) {
-                        toast.warn(
-                          "Commit derive failed",
-                          "matchSalt/player/choice/nonce values must be valid.",
-                        );
-                        return;
-                      }
-                      setParams({ fcoa: commitA, fcob: commitB });
-                      toast.success("Commits derived", "Committed mutual choice commits were updated.");
-                    }}
-                  >
-                    Derive Commits
-                  </button>
-                </div>
-              </div>
-            ) : null}
-
-            {firstPlayerMode === "seed" ? (
-              <div className="grid gap-2">
-                <input
-                  className="input font-mono text-xs"
-                  placeholder="matchSalt (bytes32 hex)"
-                  value={commitRevealSaltParam}
-                  disabled={isEvent}
-                  onChange={(e) => setParam("fps", e.target.value.trim())}
-                  aria-label="Seed mode match salt"
-                />
-                <input
-                  className="input font-mono text-xs"
-                  placeholder="seed (bytes32 hex)"
-                  value={seedResolutionParam}
-                  disabled={isEvent}
-                  onChange={(e) => setParam("fpsd", e.target.value.trim())}
-                  aria-label="Seed mode seed"
-                />
-                <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    className="btn btn-sm mint-pressable mint-hit"
-                    disabled={isEvent}
-                    onClick={() => {
-                      setParams({
-                        fps: randomBytes32Hex(),
-                        fpsd: randomBytes32Hex(),
-                      });
-                    }}
-                  >
-                    Randomize Inputs
-                  </button>
-                </div>
-              </div>
-            ) : null}
-
-            <div className={`text-xs ${!isEvent && !firstPlayerResolution.valid ? "text-rose-600" : "text-slate-500"}`}>
-              resolved: {firstPlayer === 0 ? "A first" : "B first"}
-              {!isEvent && !firstPlayerResolution.valid && firstPlayerResolution.error ? ` (${firstPlayerResolution.error})` : ""}
-            </div>
-          </div>
-        </div>
-
-        <div className="grid gap-2">
-          <div className="grid gap-2">
-            <div className="text-xs font-medium text-slate-600">Data Mode</div>
-            <div className="flex items-center gap-2">
-              <select className="input w-auto" value={dataMode} onChange={(e) => setDataMode(e.target.value as DataMode)} aria-label="Data mode">
-                <option value="fast">Fast (Game Index)</option>
-                <option value="verified">Verified (on-chain RPC)</option>
-              </select>
-            </div>
-          </div>
-        </div>
-
-        <div className="flex flex-wrap items-center gap-2">
-          <button className="btn btn-primary mint-pressable mint-hit" disabled={!canLoad || loading} onClick={loadCards}>
-            {loading ? "Loading…" : dataMode === "fast" ? "Load Cards (Fast)" : "Load Cards (Verified)"}
-          </button>
-          <button className="btn mint-pressable mint-hit" onClick={resetMatch}>Reset Match</button>
-          <button className="btn mint-pressable mint-hit" onClick={() => setSalt(randomSalt())}>New Salt</button>
-          <a
-            className="btn mint-pressable mint-hit"
-            href={overlayUrl}
-            target="_blank"
-            rel="noreferrer noopener"
-          >
-            Open Overlay
-          </a>
-        </div>
-
-        {status ? <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs text-emerald-900">{status}</div> : null}
-        {error && !cards ? (
-          <div className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-xs text-rose-900">
-            <div>{error}</div>
-            {looksLikeRpcError(error) ? (
-              <div className="mt-2 flex flex-wrap gap-2">
-                <Link className="btn btn-sm mint-pressable mint-hit" to="/nyano">RPC Settings</Link>
-              </div>
-            ) : null}
-          </div>
-        ) : null}
-      </CollapsibleSection>
-      )}
-
-      {/* ═══════════════════════════════════════════════════════════════════
-         GAME ARENA — unified play section (P0-1 / P0-2)
-         ═══════════════════════════════════════════════════════════════════ */}
+            {/* Match Setup */}
+      {!isEngineFocus && !isGuestMode ? (
+        <MatchSetupPanelMint
+          defaultOpen={!cards}
+          decks={decks}
+          deckAId={deckAId}
+          deckBId={deckBId}
+          deckA={deckA}
+          deckB={deckB}
+          eventDeckTokenIds={event ? event.nyanoDeckTokenIds : null}
+          isEvent={isEvent}
+          opponentMode={opponentMode}
+          isVsNyanoAi={isVsNyanoAi}
+          aiDifficulty={aiDifficulty}
+          aiAutoPlay={aiAutoPlay}
+          streamMode={streamMode}
+          streamCtrlParam={streamCtrlParam}
+          ui={ui}
+          isEngine={isEngine}
+          stageMatchUrl={stageMatchUrl}
+          rulesetKey={rulesetKey}
+          chainCapPerTurnParam={chainCapPerTurnParam}
+          chainCapRawParam={chainCapRawParam}
+          maxChainCapPerTurn={MAX_CHAIN_CAP_PER_TURN}
+          classicSwapLabel={classicSwapLabel}
+          classicOpenLabel={classicOpenLabel}
+          rulesetId={rulesetId}
+          firstPlayerMode={firstPlayerMode}
+          manualFirstPlayerParam={manualFirstPlayerParam}
+          mutualChoiceAParam={mutualChoiceAParam}
+          mutualChoiceBParam={mutualChoiceBParam}
+          commitRevealSaltParam={commitRevealSaltParam}
+          seedResolutionParam={seedResolutionParam}
+          committedMutualPlayerAParam={committedMutualPlayerAParam}
+          committedMutualPlayerBParam={committedMutualPlayerBParam}
+          committedMutualNonceAParam={committedMutualNonceAParam}
+          committedMutualNonceBParam={committedMutualNonceBParam}
+          committedMutualCommitAParam={committedMutualCommitAParam}
+          committedMutualCommitBParam={committedMutualCommitBParam}
+          commitRevealAParam={commitRevealAParam}
+          commitRevealBParam={commitRevealBParam}
+          commitRevealCommitAParam={commitRevealCommitAParam}
+          commitRevealCommitBParam={commitRevealCommitBParam}
+          firstPlayerResolution={firstPlayerResolution}
+          firstPlayer={firstPlayer}
+          dataMode={dataMode}
+          canLoad={canLoad}
+          loading={loading}
+          status={status}
+          error={!cards ? error : null}
+          showRpcSettingsCta={Boolean(!cards && error && looksLikeRpcError(error))}
+          overlayUrl={overlayUrl}
+          onSetParam={setParam}
+          onSetFocusMode={setFocusMode}
+          onFirstPlayerModeChange={handleFirstPlayerModeChange}
+          onBoardUiChange={handleBoardUiChange}
+          onSetDataMode={setDataMode}
+          onLoadCards={loadCards}
+          onResetMatch={resetMatch}
+          onNewSalt={() => setSalt(randomSalt())}
+          onCopySetupLink={handleCopySetupLink}
+          onRandomizeCommitReveal={handleRandomizeCommitReveal}
+          onDeriveCommitRevealCommits={handleDeriveCommitRevealCommits}
+          onRandomizeCommittedMutualChoice={handleRandomizeCommittedMutualChoice}
+          onDeriveCommittedMutualChoiceCommits={handleDeriveCommittedMutualChoiceCommits}
+          onRandomizeSeedResolution={handleRandomizeSeedResolution}
+        />
+      ) : null}
+{/* ==================================================================
+         GAME ARENA - unified play section (P0-1 / P0-2)
+         ================================================================== */}
       <section
         className={
           isEngineFocus
@@ -2816,10 +2375,10 @@ export function MatchPage() {
             </div>
             {isEngine ? (
               <div className="flex flex-wrap items-center gap-2">
-                <button className="btn btn-sm mint-pressable mint-hit" onClick={() => setFocusMode(true)}>
+                <button className="btn btn-sm" onClick={() => setFocusMode(true)}>
                   Enter Pixi Focus
                 </button>
-                <Link className="btn btn-sm no-underline mint-pressable mint-hit" to={stageMatchUrl}>
+                <Link className="btn btn-sm no-underline" to={stageMatchUrl}>
                   Open Stage Page
                 </Link>
               </div>
@@ -2845,9 +2404,9 @@ export function MatchPage() {
                   <div className="text-center text-xs text-surface-400">Loading cards...</div>
                 </div>
               ) : isGuestMode ? (
-                <button className="btn btn-primary mint-pressable mint-hit" onClick={() => void loadCardsFromIndex()}>Start Guest Match</button>
+                <button className="btn btn-primary" onClick={() => void loadCardsFromIndex()}>Start Guest Match</button>
               ) : (
-                <>まずは Match Setup でデッキを選択し、<strong>Load Cards</strong> を実行してください</>
+                <>Select decks in Match Setup, then press <strong>Load Cards</strong>.</>
               )}
             </div>
           ) : (
@@ -2931,7 +2490,7 @@ export function MatchPage() {
                             sfxMuted && "mint-sfx-toggle--muted",
                           ].filter(Boolean).join(" ")}
                           onClick={handleSfxToggle}
-                          title={sfxMuted ? "サウンド ON" : "サウンド OFF"}
+                          title={sfxMuted ? "Sound ON" : "Sound OFF"}
                           aria-label={sfxMuted ? "Unmute sound effects" : "Mute sound effects"}
                         >
                           {sfxMuted ? "🔇" : "🔊"}
@@ -2974,7 +2533,7 @@ export function MatchPage() {
                     </span>
                     <button
                       type="button"
-                      className="btn btn-sm mint-pressable mint-hit"
+                      className="btn btn-sm"
                       onClick={handleRetryEngineRenderer}
                       aria-label="Retry Pixi renderer"
                     >
@@ -3000,7 +2559,6 @@ export function MatchPage() {
                           selectedCell={draftCell}
                           placedCell={boardAnim.placedCell}
                           flippedCells={boardAnim.flippedCells}
-                          className={idleGuideBoard ? "mint-board--idle-guide" : ""}
                           selectableCells={selectableCells}
                           onCellSelect={(cell) => { telemetry.recordInteraction(); handleCellSelect(cell); }}
                           currentPlayer={currentPlayer}
@@ -3027,7 +2585,6 @@ export function MatchPage() {
                           board={boardNow}
                           selectedCell={draftCell}
                           selectableCells={selectableCells}
-                          idleGuideDroppable={idleGuideBoard}
                           onCellSelect={(cell) => { telemetry.recordInteraction(); handleCellSelect(cell); }}
                           currentPlayer={currentPlayer}
                           boardMaxWidthPx={engineBoardMaxWidthPx}
@@ -3095,7 +2652,7 @@ export function MatchPage() {
                         Quick Commit
                       </div>
                       <div style={{ color: "var(--mint-text-secondary, #4B5563)" }}>
-                        card {draftCardIndex !== null ? draftCardIndex + 1 : "-"} → cell {draftCell ?? "-"}
+                        card {draftCardIndex !== null ? draftCardIndex + 1 : "-"} to cell {draftCell ?? "-"}
                       </div>
                     </div>
 
@@ -3124,7 +2681,7 @@ export function MatchPage() {
                         </select>
                       </label>
                       <button
-                        className="btn btn-primary h-10 px-4 mint-pressable mint-hit"
+                        className="btn btn-primary h-10 px-4"
                         onClick={commitMove}
                         disabled={turns.length >= 9 || isAiTurn || draftCell === null || draftCardIndex === null}
                         aria-label="Quick commit move"
@@ -3132,7 +2689,7 @@ export function MatchPage() {
                         Commit Move
                       </button>
                       <button
-                        className="btn h-10 px-4 mint-pressable mint-hit"
+                        className="btn h-10 px-4"
                         onClick={undoMove}
                         disabled={turns.length === 0}
                         aria-label="Quick undo move"
@@ -3170,22 +2727,20 @@ export function MatchPage() {
                     : undefined
                   }
                   >
-                    ⚔ {lastFlipSummaryText}
+                    Battle: {lastFlipSummaryText}
                   </div>
                 )}
 
-                {/* P1-2: Nyano Reaction (always visible in RPG/Mint/Pixi) */}
-                {nyanoReactionInput && (
-                  <NyanoReaction
-                    input={nyanoReactionInput}
-                    turnIndex={turns.length}
-                    rpg={isRpg}
-                    mint={useMintUi}
-                    tone={isEngine ? "pixi" : "mint"}
-                    aiReasonCode={currentAiReasonCode}
-                    className={isStageFocusRoute ? "stage-focus-cutin" : ""}
-                  />
-                )}
+                {/* P1-2: Nyano Reaction (stable slot prevents layout jump) */}
+                <NyanoReactionSlot
+                  input={nyanoReactionInput}
+                  turnIndex={turns.length}
+                  rpg={isRpg}
+                  mint={useMintUi}
+                  tone={isEngine ? "pixi" : "mint"}
+                  aiReasonCode={currentAiReasonCode}
+                  stageFocus={isStageFocusRoute}
+                />
 
                 {showFocusHandDock && (
                   <div
@@ -3197,7 +2752,7 @@ export function MatchPage() {
                     <div className="flex items-center justify-between gap-2">
                       <div className="text-[11px] font-semibold text-slate-700">Hand Dock</div>
                       <div className="text-[10px] text-slate-500">
-                        {isAiTurn ? "Nyano is thinking..." : `${draftCardIndex !== null ? `card ${draftCardIndex + 1}` : "pick card"} → ${draftCell !== null ? `cell ${draftCell}` : "tap cell"}`}
+                        {isAiTurn ? "Nyano is thinking..." : `${draftCardIndex !== null ? `card ${draftCardIndex + 1}` : "pick card"} to ${draftCell !== null ? `cell ${draftCell}` : "tap cell"}`}
                       </div>
                     </div>
 
@@ -3292,7 +2847,7 @@ export function MatchPage() {
                       </select>
 
                       <button
-                        className="btn btn-primary h-9 px-3 text-xs mint-pressable mint-hit"
+                        className="btn btn-primary h-9 px-3 text-xs"
                         onClick={commitMove}
                         disabled={isAiTurn || draftCell === null || draftCardIndex === null}
                         aria-label="Commit move from focus hand dock"
@@ -3300,7 +2855,7 @@ export function MatchPage() {
                         Commit
                       </button>
                       <button
-                        className="btn h-9 px-3 text-xs mint-pressable mint-hit"
+                        className="btn h-9 px-3 text-xs"
                         onClick={undoMove}
                         disabled={isAiTurn || turns.length === 0}
                         aria-label="Undo move from focus hand dock"
@@ -3315,7 +2870,7 @@ export function MatchPage() {
                     P0-2: Hand Display (RPG or standard)
                     ──────────────────────────────────────────── */}
                 {(!isStageFocusRoute || showStageControls) && !showFocusHandDock ? (
-                  <div className={["grid gap-3", useMintUi && idleGuideHand ? "mint-hand-area--idle-guide" : ""].filter(Boolean).join(" ")}>
+                  <div className="grid gap-3">
                     <div className={
                       useMintUi ? "text-xs font-semibold text-mint-text-secondary"
                       : isRpg ? "text-xs font-bold uppercase tracking-wider"
@@ -3335,7 +2890,6 @@ export function MatchPage() {
                         owner={currentPlayer}
                         usedIndices={effectiveUsedCardIndices}
                         selectedIndex={draftCardIndex}
-                        idleGuide={idleGuideHand}
                         onSelect={(idx) => { telemetry.recordInteraction(); setDraftCardIndex(idx); }}
                         disabled={turns.length >= 9 || isAiTurn}
                         enableDragDrop={enableHandDragDrop}
@@ -3436,7 +2990,7 @@ export function MatchPage() {
                     Controls are hidden for board focus.
                     {draftCardIndex !== null || draftCell !== null ? (
                       <span className="ml-1">
-                        (selected: card {draftCardIndex !== null ? draftCardIndex + 1 : "-"}, cell {draftCell ?? "-"})
+                        (selected: card {draftCardIndex !== null ? draftCardIndex + 1 : "-"} to cell {draftCell ?? "-"})
                       </span>
                     ) : null}
                   </div>
@@ -3466,7 +3020,7 @@ export function MatchPage() {
                           }}
                           onClick={() => handleDensityChange(d)}
                         >
-                          {d === "minimal" ? "シンプル" : d === "standard" ? "ふつう" : "すべて"}
+                          {d === "minimal" ? "Simple" : d === "standard" ? "Balanced" : "Full"}
                         </button>
                       ))}
                     </div>
@@ -3482,7 +3036,7 @@ export function MatchPage() {
                         boardAdvantages={boardAdvantages}
                       />
                     ) : (
-                      <div className="text-xs" style={{ color: "var(--mint-text-hint)" }}>—</div>
+                      <div className="text-xs" style={{ color: "var(--mint-text-hint)" }}>Load cards to see turn log.</div>
                     )}
 
                     {/* Winner / Match info */}
@@ -3493,16 +3047,16 @@ export function MatchPage() {
                       </div>
                     ) : (
                       <div className="rounded-xl border px-3 py-2 text-xs" style={{ background: "var(--mint-surface-dim)", borderColor: "var(--mint-accent-muted)", color: "var(--mint-text-secondary)" }}>
-                        9手確定後に勝敗が確定します
+                        Winner info appears after all 9 turns.
                       </div>
                     )}
 
                     {/* Share buttons */}
                     <div className="grid gap-2">
                       <div className="flex flex-wrap items-center gap-2">
-                        <button className="btn mint-pressable mint-hit" onClick={copyTranscriptJson} disabled={!sim.ok}>Copy JSON</button>
-                        <button className="btn mint-pressable mint-hit" onClick={copyShareUrl} disabled={!canFinalize}>Share URL</button>
-                        <button className="btn mint-pressable mint-hit" onClick={openReplay} disabled={!canFinalize}>Replay</button>
+                        <button className="btn" onClick={copyTranscriptJson} disabled={!sim.ok}>Copy JSON</button>
+                        <button className="btn" onClick={copyShareUrl} disabled={!canFinalize}>Share URL</button>
+                        <button className="btn" onClick={openReplay} disabled={!canFinalize}>Replay</button>
                       </div>
                     </div>
 
@@ -3531,7 +3085,7 @@ export function MatchPage() {
                       onSelect={(i) => setSelectedTurnIndex(i)}
                     />
                   ) : (
-                    <div className="text-xs text-slate-600">—</div>
+                    <div className="text-xs text-slate-600">Load cards to see turn log.</div>
                   )
                 )}
 
@@ -3555,7 +3109,7 @@ export function MatchPage() {
                   }
                   style={isRpg ? { background: "rgba(0,0,0,0.3)", color: "var(--rpg-text-dim, #8A7E6B)" } : undefined}
                   >
-                    9手確定後に勝敗が確定します
+                    Winner info appears after all 9 turns.
                   </div>
                 )}
 
@@ -3579,15 +3133,15 @@ export function MatchPage() {
                   <div className={["grid gap-2 rounded-lg border border-nyano-200 bg-nyano-50 p-3", isStageFocusRoute ? "stage-focus-side-panel" : ""].filter(Boolean).join(" ")}>
                     <div className="text-sm font-medium text-nyano-800">Ready for the real thing?</div>
                     <div className="flex flex-wrap gap-2">
-                      <Link className="btn btn-primary no-underline text-xs mint-pressable mint-hit" to="/decks">Create Your Own Deck</Link>
-                      <button className="btn btn-primary text-xs mint-pressable mint-hit" onClick={handleRematch}>
+                      <Link className="btn btn-primary no-underline text-xs" to="/decks">Create Your Own Deck</Link>
+                      <button className="btn btn-primary text-xs" onClick={handleRematch}>
                         Rematch (same decks)
                       </button>
-                      <button className="btn text-xs mint-pressable mint-hit" onClick={() => { resetMatch(); void loadCardsFromIndex(); }}>
+                      <button className="btn text-xs" onClick={() => { resetMatch(); void loadCardsFromIndex(); }}>
                         New Decks
                       </button>
                       <button
-                        className="btn text-xs mint-pressable mint-hit"
+                        className="btn text-xs"
                         onClick={handleSaveGuestDeck}
                         disabled={guestDeckSaved}
                       >
@@ -3596,14 +3150,14 @@ export function MatchPage() {
                     </div>
                     <div className="grid gap-2 border-t border-nyano-200 pt-2">
                       <div className="flex flex-wrap gap-2">
-                        <button className="btn text-xs mint-pressable mint-hit" onClick={copyShareUrl} disabled={!canFinalize}>
+                        <button className="btn text-xs" onClick={copyShareUrl} disabled={!canFinalize}>
                           Share URL
                         </button>
-                        <button className="btn text-xs mint-pressable mint-hit" onClick={async () => {
+                        <button className="btn text-xs" onClick={async () => {
                           try {
                             const url = buildReplayUrl(true);
                             if (!url) { toast.warn("Share", "Match not ready"); return; }
-                            const msg = `Nyano Triad で対戦したにゃ！\n${url}`;
+                            const msg = `Nyano Triad match!\n${url}`;
                             await copyToClipboard(msg);
                             toast.success("Copied", "share template");
                           } catch (e: unknown) {
@@ -3612,7 +3166,7 @@ export function MatchPage() {
                         }} disabled={!canFinalize}>
                           Share Template
                         </button>
-                        <button className="btn text-xs mint-pressable mint-hit" onClick={openReplay} disabled={!canFinalize}>
+                        <button className="btn text-xs" onClick={openReplay} disabled={!canFinalize}>
                           Replay
                         </button>
                       </div>
@@ -3652,3 +3206,4 @@ export function MatchPage() {
     </div>
   );
 }
+
