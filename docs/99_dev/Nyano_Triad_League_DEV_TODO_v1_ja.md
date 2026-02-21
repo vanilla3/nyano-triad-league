@@ -51,6 +51,8 @@ Detailed historical logs remain in `docs/99_dev/_archive/` and `docs/99_dev/IMPL
 - [x] Continue Next Priority #2 (Round 3): align Replay labels (Ruleset ID / Match ID / Winner capitalization) with Match.
 - [x] Continue Next Priority #2 (Round 4): align Replay ruleset-registry label wording to `Ruleset ID`.
 - [x] Continue Next Priority #2 (Round 5): unify remaining `matchId`/`rulesetId` user-facing labels in Match/Replay helper surfaces.
+- [x] Continue Next Priority #2 (Round 6): normalize Replay mismatch warning copy from `rulesetId` to `Ruleset ID`.
+- [x] Continue Next Priority #2 (Round 7): align Replay `Classic Swap/Open` label capitalization with Match terminology.
 - [x] Recover ExecPlan 014 readability for reliable roadmap operations.
 - [x] Integrate `pnpm lint:text` into CI web job and `release:check`.
 

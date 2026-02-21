@@ -2167,12 +2167,12 @@ protocolV1: {
                         </div>
                         {replayClassicSwap ? (
                           <div>
-                            <span className="font-medium">Classic swap</span>: A{replayClassicSwap.aIndex + 1} ↔ B{replayClassicSwap.bIndex + 1}
+                            <span className="font-medium">Classic Swap</span>: A{replayClassicSwap.aIndex + 1} ↔ B{replayClassicSwap.bIndex + 1}
                           </div>
                         ) : null}
                         {replayClassicOpen ? (
                           <div>
-                            <span className="font-medium">Classic open</span>: {replayClassicOpen.mode === "all_open"
+                            <span className="font-medium">Classic Open</span>: {replayClassicOpen.mode === "all_open"
                               ? "all cards revealed"
                               : `A[${formatClassicOpenSlots(replayClassicOpen.playerA)}] / B[${formatClassicOpenSlots(replayClassicOpen.playerB)}]`}
                           </div>

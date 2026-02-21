@@ -2735,3 +2735,39 @@
 - `pnpm -C apps/web lint` OK (existing warnings only in `MatchSetupPanelMint.tsx`)
 - `pnpm -C apps/web typecheck` OK
 - `pnpm -C apps/web build` OK
+
+## 2026-02-21 - Match/Replay copy quality pass (round 6)
+
+### Why
+- Replay の fallback mismatch 警告に `rulesetId` の技術語表記が残っており、他の UI 表記 (`Ruleset ID`) とトーンが揃っていなかった。
+
+### What
+- `apps/web/src/features/match/replayRulesetContext.ts`
+  - `REPLAY_RULESET_ID_MISMATCH_WARNING` の文言を更新:
+    - `transcript rulesetId` -> `transcript Ruleset ID`
+- 既存の判定ロジック/URL パラメータ/プロトコルキーは変更なし（表示文言のみ）。
+
+### Verify
+- `pnpm lint:text` OK
+- `pnpm -C apps/web test -- replayRulesetContext replayLoadAction replaySimulationState replayResultSelection` OK
+- `pnpm -C apps/web lint` OK (existing warnings only in `MatchSetupPanelMint.tsx`)
+
+## 2026-02-21 - Match/Replay copy quality pass (round 7)
+
+### Why
+- Replay summary panel still used `Classic swap` / `Classic open` while Match terminology had already been normalized.
+- Capitalization consistency helps share-ready polish and quick visual scanning.
+
+### What
+- `apps/web/src/pages/Replay.tsx`
+  - `Classic swap` -> `Classic Swap`
+  - `Classic open` -> `Classic Open`
+- No selector-sensitive labels changed.
+- No URL/protocol/state key changes.
+
+### Verify
+- `pnpm lint:text` OK
+- `pnpm -C apps/web test --` OK (`222 files / 1764 tests`)
+- `pnpm -C apps/web lint` OK (existing warnings only in `MatchSetupPanelMint.tsx`)
+- `pnpm -C apps/web typecheck` OK
+- `pnpm -C apps/web build` OK

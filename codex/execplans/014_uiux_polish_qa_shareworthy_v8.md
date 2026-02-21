@@ -61,6 +61,8 @@ Follow-up continuity (post WO-046):
 - [x] active TODO snapshot rewritten to clean readable form.
 - [x] Match/Replay copy quality pass started and continued (label normalization, no E2E selector break).
 - [x] Match/Replay copy quality pass round 5 complete (`matchId`/`rulesetId` casing normalization on remaining UI helper surfaces).
+- [x] Match/Replay copy quality pass round 6 complete (Replay mismatch warning copy normalized to `Ruleset ID`).
+- [x] Match/Replay copy quality pass round 7 complete (`Classic Swap/Open` capitalization alignment in Replay summary).
 
 ---
 

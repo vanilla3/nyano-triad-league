@@ -4,7 +4,7 @@ import { pickDefaultReplayMode } from "@/features/match/replayRulesetParams";
 import type { ReplayMode } from "@/features/match/replayModeParams";
 
 export const REPLAY_RULESET_ID_MISMATCH_WARNING =
-  "URL の classic 設定が transcript rulesetId と一致しません。URL fallback ルールで再生しています。";
+  "URL の classic 設定が transcript Ruleset ID と一致しません。URL fallback ルールで再生しています。";
 
 export function resolveReplayRulesetIdMismatchWarning(input: {
   rulesetById: RulesetConfig | null;
