@@ -9,7 +9,7 @@ describe("resolveReactionCutInTiming", () => {
     });
     expect(timing.allowBurst).toBe(false);
     expect(timing.burstMs).toBe(0);
-    expect(timing.visibleMs).toBe(1200);
+    expect(timing.visibleMs).toBe(1800);
   });
 
   it("disables burst and shortens visibility for vfx=off", () => {
@@ -19,7 +19,7 @@ describe("resolveReactionCutInTiming", () => {
     });
     expect(timing.allowBurst).toBe(false);
     expect(timing.burstMs).toBe(0);
-    expect(timing.visibleMs).toBe(1200);
+    expect(timing.visibleMs).toBe(1800);
   });
 
   it("keeps burst for standard tiers", () => {
@@ -28,8 +28,8 @@ describe("resolveReactionCutInTiming", () => {
       vfxQuality: "high",
     });
     expect(timing.allowBurst).toBe(true);
-    expect(timing.burstMs).toBe(620);
-    expect(timing.visibleMs).toBe(2200);
+    expect(timing.burstMs).toBe(760);
+    expect(timing.visibleMs).toBe(2800);
   });
 
   it("suppresses burst and trims durations for vfx=low", () => {
@@ -38,7 +38,7 @@ describe("resolveReactionCutInTiming", () => {
       vfxQuality: "low",
     });
     expect(timing.allowBurst).toBe(false);
-    expect(timing.burstMs).toBe(0);
-    expect(timing.visibleMs).toBe(1404);
+    expect(timing.burstMs).toBe(360);
+    expect(timing.visibleMs).toBe(1800);
   });
 });

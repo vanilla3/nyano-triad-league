@@ -1,13 +1,20 @@
-﻿import React from "react";
+import React from "react";
 import { useToast } from "@/components/Toast";
 import { Disclosure } from "@/components/Disclosure";
 import { Link, useLocation, useNavigate, useSearchParams } from "react-router-dom";
-import { GlassPanel } from "@/components/mint/GlassPanel";
-import { MintPageGuide } from "@/components/mint/MintPageGuide";
-import { MintPressable } from "@/components/mint/MintPressable";
-import { MintIcon, type MintIconName } from "@/components/mint/icons/MintIcon";
 
-import type { MatchResultWithHistory } from "@nyano/triad-engine";
+import type { BoardCell, CardData, MatchResultWithHistory, RulesetConfig, TranscriptV1, TurnSummary } from "@nyano/triad-engine";
+import {
+  resolveClassicOpenCardIndices,
+  resolveClassicSwapIndices,
+  simulateMatchV1WithHistory,
+  verifyReplayV1,
+  ONCHAIN_CORE_TACTICS_RULESET_CONFIG_V1,
+  ONCHAIN_CORE_TACTICS_SHADOW_RULESET_CONFIG_V2,
+} from "@nyano/triad-engine";
+
+import OFFICIAL from "@root/rulesets/official_onchain_rulesets.json";
+
 import { BoardView } from "@/components/BoardView";
 import { BoardViewMint } from "@/components/BoardViewMint";
 import { BoardViewRPG } from "@/components/BoardViewRPG";
@@ -19,25 +26,36 @@ import { HiddenDeckPreviewCard } from "@/components/HiddenDeckPreviewCard";
 import { TurnLog } from "@/components/TurnLog";
 import { GameResultBanner } from "@/components/GameResultOverlay";
 import {
+  NyanoReaction,
   pickReactionKind,
+  resolveReactionCutInImpact,
+  type NyanoReactionInput,
 } from "@/components/NyanoReaction";
-import { NyanoReactionSlot } from "@/components/NyanoReactionSlot";
 import { NyanoAvatar } from "@/components/NyanoAvatar";
 import { BattleStageEngine } from "@/engine/components/BattleStageEngine";
 import { reactionToExpression } from "@/lib/expression_map";
+import {
+  base64UrlEncodeUtf8,
+  tryGzipCompressUtf8ToBase64Url,
+} from "@/lib/base64url";
 import { errorMessage } from "@/lib/errorMessage";
 import { stringifyWithBigInt } from "@/lib/json";
 import { formatEventPeriod, getEventById, getEventStatus } from "@/lib/events";
-import { hasEventAttempt, upsertEventAttempt } from "@/lib/event_attempts";
+import { hasEventAttempt, upsertEventAttempt, type EventAttemptV1 } from "@/lib/event_attempts";
+import { resolveCards } from "@/lib/resolveCards";
+import { publishOverlayState } from "@/lib/streamer_bus";
+import { parseReplayPayload } from "@/lib/replay_bundle";
 import { annotateReplayMoves } from "@/lib/ai/replay_annotations";
 import { assessBoardAdvantage, type BoardAdvantage } from "@/lib/ai/board_advantage";
 import { AdvantageBadge } from "@/components/AdvantageBadge";
-import { appAbsoluteUrl, appPath } from "@/lib/appUrl";
-import { tryNativeShare } from "@/lib/webShare";
-import { shouldShowStageSecondaryControls } from "@/lib/stage_layout";
+import { resolveRulesetById } from "@/lib/ruleset_registry";
+import { writeClipboardText } from "@/lib/clipboard";
+import { appAbsoluteUrl, appPath, buildReplayShareUrl } from "@/lib/appUrl";
+import { computeStageBoardSizing, shouldShowStageSecondaryControls } from "@/lib/stage_layout";
 import { createSfxEngine, type SfxEngine, type SfxName } from "@/lib/sfx";
-import type { VfxPreference } from "@/lib/local_settings";
-import { decodeReplaySharePayload, hasReplaySharePayload } from "@/lib/replay_share_params";
+import { readVfxQuality, writeVfxQuality, type VfxPreference } from "@/lib/local_settings";
+import { applyVfxQualityToDocument, resolveVfxQuality, type VfxQuality } from "@/lib/visual/visualSettings";
+import { decodeReplaySharePayload, hasReplaySharePayload, stripReplayShareParams } from "@/lib/replay_share_params";
 import {
   detectReplayHighlights,
   formatReplayWinnerLabel,
@@ -47,86 +65,199 @@ import {
 } from "@/lib/replay_highlights";
 import {
   REPLAY_PLAYBACK_SPEED_OPTIONS,
+  nextReplayAutoplayStep,
   normalizeReplayPlaybackSpeed,
   replayPhaseInfo,
   replayStepProgress,
   replayStepStatusText,
   type ReplayPhaseInfo,
 } from "@/lib/replay_timeline";
-import { MINT_PAGE_GUIDES } from "@/lib/mint_page_guides";
-import { appendThemeToPath, resolveAppTheme } from "@/lib/theme";
-import { parseFocusMode } from "@/features/match/urlParams";
-import { turnPlayer } from "@/features/match/matchTurnUtils";
-import {
-  parseReplayBoardUi,
-  toMatchBoardUi,
-} from "@/features/match/replayUrlParams";
-import {
-  parseReplayMode,
-  parseReplayStepParam,
-  parseSignedInt32Param,
-  replayModeDisplay,
-  type ReplayMode,
-} from "@/features/match/replayModeParams";
-import {
-  shouldAutoCompareByRulesetId,
-} from "@/features/match/replayRulesetParams";
-import {
-  resolveReplayCompareDiverged,
-  resolveReplayCompareMode,
-} from "@/features/match/replayCompareState";
-import { resolveReplayPreloadTokenIds } from "@/features/match/replayPreloadTokenIds";
-import { formatClassicOpenSlots, resolveReplayClassicState } from "@/features/match/replayClassicState";
-import {
-  replayBoardEquals,
-  resolveReplayBoardDelta,
-  resolveReplayNyanoReactionInput,
-} from "@/features/match/replayDerivedState";
-import { buildReplayCanonicalShareLink, buildReplayCurrentShareLink } from "@/features/match/replayShareLinkBuilders";
-import { assertReplayAttemptCanBeSaved, buildReplayEventAttempt } from "@/features/match/replayEventAttempts";
-import { runReplayOverlayPublishAction } from "@/features/match/replayOverlayActions";
-import { runReplayCopyAction, runReplaySaveAttemptAction, runReplayShareCopyAction } from "@/features/match/replayActionRunners";
-import { createReplayCopyWithToast, runReplayVerifyAction } from "@/features/match/replayUiActions";
-import { runReplayLoadAction } from "@/features/match/replayLoadAction";
-import {
-  formatReplayToolbarHighlightStatus,
-  resolveNextReplayHighlightStep,
-  resolvePrevReplayHighlightStep,
-  resolveReplayCurrentHighlightIndex,
-} from "@/features/match/replayHighlightNavigation";
-import { resolveReplayTransportState } from "@/features/match/replayTransportState";
-import { useEngineRendererFallback } from "@/features/match/useEngineRendererFallback";
-import { useMatchStageActionFeedback } from "@/features/match/useMatchStageActionFeedback";
-import { useMatchStageFullscreen } from "@/features/match/useMatchStageFullscreen";
-import { useMatchStageUi } from "@/features/match/useMatchStageUi";
-import { useReplayStageFocusShortcuts } from "@/features/match/useReplayStageFocusShortcuts";
-import { useReplayStageBoardSizing } from "@/features/match/useReplayStageBoardSizing";
-import { useReplayStageActionCallbacks } from "@/features/match/useReplayStageActionCallbacks";
-import { useReplayStagePanelVisibility } from "@/features/match/useReplayStagePanelVisibility";
-import { useReplayStageRouteState } from "@/features/match/replayStageRouteState";
-import { useReplaySearchMutators } from "@/features/match/useReplaySearchMutators";
-import { useReplayStepModeUrlSync } from "@/features/match/useReplayStepModeUrlSync";
-import { useReplayEngineFocusGuard } from "@/features/match/useReplayEngineFocusGuard";
-import { useReplayBroadcastToggle } from "@/features/match/useReplayBroadcastToggle";
-import { useReplayAutoplay } from "@/features/match/useReplayAutoplay";
-import { resolveReplayNyanoReactionImpact, useReplayStageImpactBurst } from "@/features/match/useReplayStageImpactBurst";
-import { useReplayTransportActionCallbacks } from "@/features/match/useReplayTransportActionCallbacks";
-import { resolveStageVfxOptionLabel, STAGE_VFX_OPTIONS } from "@/features/match/stageVfxUi";
-import { useStageVfxPreference } from "@/features/match/useStageVfxPreference";
-import {
-  runReplayClearShareParamsFlow,
-  runReplayInitialAutoLoadFlow,
-  runReplayRetryLoadFlow,
-} from "@/features/match/replayLoadRecovery";
-import { resolveReplayMintButtonClass } from "@/features/match/replayUiHelpers";
-import {
-  REPLAY_INPUT_PROMPT_ERROR,
-  buildReplaySimErrorState,
-  buildReplaySimSuccessState,
-  type ReplaySimState,
-} from "@/features/match/replaySimState";
 
-type Mode = ReplayMode;
+type Mode = "auto" | "v1" | "v2" | "compare";
+
+type SimState =
+  | { ok: false; error: string }
+  | {
+      ok: true;
+      transcript: TranscriptV1;
+      cards: Map<bigint, CardData>;
+      owners: Map<bigint, `0x${string}`>;
+      currentRulesetLabel: string;
+      current: MatchResultWithHistory;
+      v1: MatchResultWithHistory;
+      v2: MatchResultWithHistory;
+    };
+
+function clampInt(n: number, min: number, max: number): number {
+  if (Number.isNaN(n)) return min;
+  return Math.max(min, Math.min(max, n));
+}
+
+function parseInt32Param(v: string | null): number | null {
+  if (!v) return null;
+  if (!/^-?\d+$/.test(v)) return null;
+  const n = Number(v);
+  if (!Number.isInteger(n)) return null;
+  if (n < -2147483648 || n > 2147483647) return null;
+  return n;
+}
+
+
+function turnPlayer(firstPlayer: 0 | 1, turnIndex: number): 0 | 1 {
+  return ((firstPlayer + (turnIndex % 2)) % 2) as 0 | 1;
+}
+
+
+function parseMode(v: string | null): Mode {
+  if (v === "auto" || v === "v1" || v === "v2" || v === "compare") return v;
+  return "auto";
+}
+
+type ReplayBoardUi = "classic" | "rpg" | "engine";
+type MatchBoardUi = "mint" | "rpg" | "engine";
+const STAGE_VFX_OPTIONS: ReadonlyArray<{ value: VfxPreference; label: string }> = [
+  { value: "auto", label: "auto" },
+  { value: "off", label: "off" },
+  { value: "low", label: "low" },
+  { value: "medium", label: "medium" },
+  { value: "high", label: "high" },
+];
+
+function formatStageVfxLabel(pref: VfxPreference, resolved: VfxQuality): string {
+  if (pref === "auto") return `auto (${resolved})`;
+  return pref;
+}
+
+function parseReplayBoardUi(v: string | null): ReplayBoardUi {
+  if (v === "rpg") return "rpg";
+  if (v === "engine") return "engine";
+  return "classic";
+}
+
+function parseFocusMode(v: string | null): boolean {
+  if (!v) return false;
+  const normalized = v.toLowerCase();
+  return normalized === "1" || normalized === "focus";
+}
+
+function toMatchBoardUi(v: ReplayBoardUi): MatchBoardUi {
+  if (v === "classic") return "mint";
+  return v;
+}
+
+function boardEquals(a: ReadonlyArray<BoardCell | null>, b: ReadonlyArray<BoardCell | null>): boolean {
+  if (a === b) return true;
+  if (!a || !b) return false;
+  if (a.length !== b.length) return false;
+  for (let i = 0; i < a.length; i++) {
+    const ca = a[i];
+    const cb = b[i];
+    if (ca === null && cb === null) continue;
+    if (ca === null || cb === null) return false;
+    if (ca.owner !== cb.owner) return false;
+    if (String(ca.card?.tokenId) !== String(cb.card?.tokenId)) return false;
+  }
+  return true;
+}
+
+function computeDelta(boardPrev: ReadonlyArray<BoardCell | null>, boardNow: ReadonlyArray<BoardCell | null>): { placedCell: number | null; flippedCells: number[] } {
+  let placedCell: number | null = null;
+  const flippedCells: number[] = [];
+
+  for (let i = 0; i < boardNow.length; i++) {
+    const a = boardPrev[i];
+    const b = boardNow[i];
+
+    if (a === null && b !== null) {
+      placedCell = i;
+      continue;
+    }
+    if (a !== null && b !== null && a.owner !== b.owner) {
+      flippedCells.push(i);
+    }
+  }
+  return { placedCell, flippedCells };
+}
+
+function buildNyanoReactionInput(res: MatchResultWithHistory, step: number): NyanoReactionInput | null {
+  // Nyano reaction is based on the *last executed turn* at the given step.
+  // step: 0 = initial, 1 = after turn 1, ... 9 = finished
+  if (step <= 0) return null;
+  if (!res.turns || res.turns.length === 0) return null;
+
+  const lastIdx = Math.min(step - 1, res.turns.length - 1);
+  const last = res.turns[lastIdx];
+  const boardNow = res.boardHistory?.[step] ?? res.board;
+
+  // Count current tiles
+  let tilesA = 0;
+  let tilesB = 0;
+  for (const cell of boardNow) {
+    if (!cell) continue;
+    if (cell.owner === 0) tilesA++;
+    else tilesB++;
+  }
+
+  return {
+    flipCount: Number(last.flipCount ?? 0),
+    hasChain: Boolean(last.flipTraces?.some((t) => t.isChain)),
+    comboEffect: last.comboEffect ?? "none",
+    warningTriggered: Boolean(last.warningTriggered),
+    tilesA,
+    tilesB,
+    // Replay is a spectator experience: keep neutral perspective.
+    perspective: null,
+    finished: step >= 9,
+    winner: step >= 9 ? res.winner : null,
+  };
+}
+
+function rulesetLabelFromConfig(cfg: RulesetConfig): string {
+  if (cfg === ONCHAIN_CORE_TACTICS_SHADOW_RULESET_CONFIG_V2) return "engine v2 (shadow ignores warning)";
+  return "engine v1 (core+tactics)";
+}
+
+function rulesetLabelFromRegistryConfig(cfg: RulesetConfig): string {
+  if (cfg.version === 2) {
+    const c = cfg.classic;
+    const tags = [
+      c.order && "order",
+      c.chaos && "chaos",
+      c.swap && "swap",
+      c.reverse && "reverse",
+      c.aceKiller && "aceKiller",
+      c.plus && "plus",
+      c.same && "same",
+      c.typeAscend && "typeAscend",
+      c.typeDescend && "typeDescend",
+      c.allOpen && "allOpen",
+      c.threeOpen && "threeOpen",
+    ].filter(Boolean) as string[];
+    if (tags.length > 0) return `rulesetId registry (classic: ${tags.join(", ")})`;
+    return "rulesetId registry (v2)";
+  }
+  return "rulesetId registry (v1)";
+}
+
+function pickDefaultMode(rulesetId: string): Mode {
+  try {
+    const rulesets = (OFFICIAL as { rulesets: Array<{ rulesetId: string; engineId: number }> }).rulesets;
+    const hit = rulesets.find((r) => r.rulesetId.toLowerCase() === rulesetId.toLowerCase());
+    if (!hit) return "compare";
+    return hit.engineId === 2 ? "v2" : "v1";
+  } catch {
+    return "compare";
+  }
+}
+
+function shouldAutoCompareByRulesetId(rulesetId: string): boolean {
+  if (resolveRulesetById(rulesetId)) return false;
+  return pickDefaultMode(rulesetId) === "compare";
+}
+
+function formatClassicOpenSlots(indices: readonly number[]): string {
+  return indices.map((idx) => String(idx + 1)).join(", ");
+}
 
 const HIGHLIGHT_KIND_ORDER: ReplayHighlightKind[] = ["big_flip", "chain", "combo", "warning"];
 
@@ -134,9 +265,6 @@ export function ReplayPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
-  const appTheme = resolveAppTheme(searchParams);
-  const isMintTheme = appTheme === "mint";
-  const themed = React.useCallback((path: string) => appendThemeToPath(path, appTheme), [appTheme]);
   const uiMode = parseReplayBoardUi((searchParams.get("ui") || "").toLowerCase());
   const uiParam = uiMode === "classic" ? undefined : uiMode;
   const matchUi = toMatchBoardUi(uiMode);
@@ -145,35 +273,49 @@ export function ReplayPage() {
   const focusParam = searchParams.get("focus") ?? searchParams.get("layout");
   const isFocusMode = parseFocusMode(focusParam);
   const isEngineFocus = isEngine && isFocusMode;
-  const {
-    stageReplayUrl,
-    isReplayStageRoute,
-    isStageFocusRoute: isStageFocus,
-  } = useReplayStageRouteState({
-    pathname: location.pathname,
-    searchParams,
-    isEngineFocus,
-  });
-  const replayQuickActions = React.useMemo<Array<{ to: string; label: string; subtitle: string; icon: MintIconName }>>(
-    () => [
-      { to: themed("/match?ui=mint"), label: "対戦 (Match)", subtitle: "新しい対戦を開始", icon: "match" },
-      { to: themed("/events"), label: "イベント (Events)", subtitle: "シーズン挑戦", icon: "events" },
-      { to: themed("/stream"), label: "配信 (Stream)", subtitle: "配信ツール", icon: "stream" },
-      { to: themed(stageReplayUrl), label: "Pixiステージ", subtitle: "集中表示", icon: "replay" },
-    ],
-    [stageReplayUrl, themed],
-  );
+  const stageReplayUrl = React.useMemo(() => {
+    const next = new URLSearchParams(searchParams);
+    next.set("ui", "engine");
+    next.set("focus", "1");
+    next.delete("layout");
+    const query = next.toString();
+    return query ? `/replay-stage?${query}` : "/replay-stage";
+  }, [searchParams]);
+  const isReplayStageRoute = /\/replay-stage$/.test(location.pathname);
+  const isStageFocus = isEngineFocus && isReplayStageRoute;
   const stageViewportRef = React.useRef<HTMLDivElement>(null);
-  const stageBoardSizing = useReplayStageBoardSizing({
-    isReplayStageRoute,
-  });
+  const [stageBoardSizing, setStageBoardSizing] = React.useState(() =>
+    computeStageBoardSizing({
+      viewportWidthPx: typeof window === "undefined" ? 1366 : window.innerWidth,
+      viewportHeightPx: typeof window === "undefined" ? 900 : window.innerHeight,
+      kind: "replay",
+    })
+  );
   const engineBoardMaxWidthPx = isReplayStageRoute ? stageBoardSizing.maxWidthPx : undefined;
   const engineBoardMinHeightPx = isReplayStageRoute ? stageBoardSizing.minHeightPx : undefined;
+
+  React.useEffect(() => {
+    if (!isReplayStageRoute) return;
+
+    const updateSizing = () => {
+      setStageBoardSizing(
+        computeStageBoardSizing({
+          viewportWidthPx: window.innerWidth,
+          viewportHeightPx: window.innerHeight,
+          kind: "replay",
+        })
+      );
+    };
+
+    updateSizing();
+    window.addEventListener("resize", updateSizing);
+    return () => window.removeEventListener("resize", updateSizing);
+  }, [isReplayStageRoute]);
 
   const eventId = searchParams.get("event") ?? "";
   const event = React.useMemo(() => (eventId ? getEventById(eventId) : null), [eventId]);
   const eventStatus = event ? getEventStatus(event) : null;
-  const pointsDeltaA = React.useMemo(() => parseSignedInt32Param(searchParams.get("pda")), [searchParams]);
+  const pointsDeltaA = React.useMemo(() => parseInt32Param(searchParams.get("pda")), [searchParams]);
 
 
   // Initial values from shareable URL
@@ -191,30 +333,23 @@ export function ReplayPage() {
     : "";
   const hasSharePayload = hasReplaySharePayload(searchParams);
 
-  const initialMode = parseReplayMode(searchParams.get("mode"));
-  const initialStep = parseReplayStepParam(searchParams.get("step"));
+  const initialMode = parseMode(searchParams.get("mode"));
+  const initialStep = clampInt(Number(searchParams.get("step") ?? "0"), 0, 9);
 
   const [mode, setMode] = React.useState<Mode>(initialMode);
   const [text, setText] = React.useState<string>(initialZ ? "" : initialTextFromT);
 
   const [loading, setLoading] = React.useState(false);
-  const [sim, setSim] = React.useState<ReplaySimState>(buildReplaySimErrorState(REPLAY_INPUT_PROMPT_ERROR));
+  const [sim, setSim] = React.useState<SimState>({ ok: false, error: "Paste transcript JSON and load." });
 
   const [step, setStep] = React.useState<number>(initialStep);
   const [isPlaying, setIsPlaying] = React.useState<boolean>(false);
   const [replayRevealHiddenSlots, setReplayRevealHiddenSlots] = React.useState(false);
   const [playbackSpeed, setPlaybackSpeed] = React.useState<number>(1);
   const toast = useToast();
-  const {
-    engineRendererFailed,
-    engineRendererError,
-    useEngineRenderer,
-    handleEngineRendererInitError,
-    handleRetryEngineRenderer,
-  } = useEngineRendererFallback({
-    isEngine,
-    onWarn: toast.warn,
-  });
+  const [engineRendererFailed, setEngineRendererFailed] = React.useState(false);
+  const [engineRendererError, setEngineRendererError] = React.useState<string | null>(null);
+  const useEngineRenderer = isEngine && !engineRendererFailed;
   const initialBroadcast = searchParams.get("broadcast") === "1";
   const [broadcastOverlay, setBroadcastOverlay] = React.useState<boolean>(initialBroadcast);
   const sfx = React.useMemo<SfxEngine | null>(() => (isEngine ? createSfxEngine() : null), [isEngine]);
@@ -238,109 +373,236 @@ export function ReplayPage() {
   }, [sfx]);
 
   const [verifyStatus, setVerifyStatus] = React.useState<"idle" | "ok" | "mismatch">("idle");
-  const {
-    showStagePanels,
-    setShowStagePanels,
-    showStageSetup,
-    setShowStageSetup,
-  } = useReplayStagePanelVisibility({
-    isStageFocusRoute: isStageFocus,
+  const [showStagePanels, setShowStagePanels] = React.useState(() => !isStageFocus);
+  const [showStageSetup, setShowStageSetup] = React.useState(() => !isStageFocus);
+  const stageTransportManualOverrideRef = React.useRef(false);
+  const stageActionFeedbackTimerRef = React.useRef<number | null>(null);
+  const [stageActionFeedback, setStageActionFeedback] = React.useState("");
+  const [stageActionFeedbackTone, setStageActionFeedbackTone] = React.useState<"info" | "success" | "warn">("info");
+  const [vfxPreference, setVfxPreference] = React.useState<VfxPreference>(() => readVfxQuality("auto"));
+  const [resolvedVfxQuality, setResolvedVfxQuality] = React.useState<VfxQuality>(() => resolveVfxQuality());
+  const [showStageTransport, setShowStageTransport] = React.useState(() => {
+    if (!isStageFocus) return true;
+    if (typeof window === "undefined") return true;
+    return shouldShowStageSecondaryControls(window.innerWidth);
   });
-  const {
-    stageActionFeedback,
-    stageActionFeedbackTone,
-    pushStageActionFeedback,
-  } = useMatchStageActionFeedback({
-    isStageFocusRoute: isStageFocus,
-  });
-  const {
-    showStageControls: showStageTransport,
-    toggleStageControls: toggleStageTransport,
-  } = useMatchStageUi({
-    isStageFocusRoute: isStageFocus,
-  });
-  const { isStageFullscreen, toggleStageFullscreen } = useMatchStageFullscreen({
-    isStageFocusRoute: isStageFocus,
-    stageViewportRef,
-    onWarn: toast.warn,
-  });
-  const {
-    vfxPreference,
-    resolvedVfxQuality,
-    handleStageVfxChange,
-  } = useStageVfxPreference({
-    playVfxChangeSfx: () => playReplaySfx("card_place"),
-    pushStageActionFeedback,
-  });
-
-  const handleVerify = React.useCallback(() => {
-    runReplayVerifyAction({
-      payload: sim.ok
-        ? {
-            transcript: sim.transcript,
-            cards: sim.cards,
-            matchId: sim.current.matchId,
-          }
-        : null,
-      setVerifyStatus,
-      playReplaySfx,
-    });
-  }, [playReplaySfx, sim]);
-
-  const copyWithToast = React.useMemo(
-    () =>
-      createReplayCopyWithToast({
-        toast: {
-          success: toast.success,
-          error: toast.error,
-        },
-      }),
-    [toast.error, toast.success],
+  const [isStageFullscreen, setIsStageFullscreen] = React.useState(
+    () => typeof document !== "undefined" && Boolean(document.fullscreenElement),
   );
 
+  React.useEffect(() => {
+    if (!isStageFocus) {
+      setShowStagePanels(true);
+      return;
+    }
+    setShowStagePanels(false);
+  }, [isStageFocus]);
 
-  const { setReplayBoardUi, setFocusMode } = useReplaySearchMutators({
-    searchParams,
-    setSearchParams,
-    navigate,
-    isReplayStageRoute,
-  });
+  React.useEffect(() => {
+    if (isEngine) return;
+    setEngineRendererFailed(false);
+    setEngineRendererError(null);
+  }, [isEngine]);
 
-  const {
-    toggleStageFullscreenWithFeedback,
-    toggleStageTransportWithFeedback,
-    toggleStageSetupWithFeedback,
-    toggleStagePanelsWithFeedback,
-    exitFocusModeWithFeedback,
-  } = useReplayStageActionCallbacks({
-    isStageFocus,
-    isStageFullscreen,
-    showStageTransport,
-    pushStageActionFeedback,
-    playReplaySfx,
-    toggleStageFullscreen,
-    toggleStageTransport,
-    setShowStageSetup,
-    setShowStagePanels,
-    setFocusMode,
-    enterFullscreenMessage: "全画面を開始",
-    exitFullscreenMessage: "全画面を終了",
-    hideControlsMessage: "操作を隠しました (Controls hidden)",
-    showControlsMessage: "操作を表示しました (Controls shown)",
-    setupShownMessage: "Setup shown",
-    setupHiddenMessage: "Setup hidden",
-    panelsShownMessage: "タイムラインを表示",
-    panelsHiddenMessage: "タイムラインを非表示",
-    exitFocusMessage: "フォーカスを終了します",
-  });
+  const handleEngineRendererInitError = React.useCallback((message: string) => {
+    setEngineRendererFailed(true);
+    setEngineRendererError(message);
+    toast.warn("Pixi renderer unavailable", "Switched to Mint fallback board");
+  }, [toast]);
 
+  const handleRetryEngineRenderer = React.useCallback(() => {
+    setEngineRendererFailed(false);
+    setEngineRendererError(null);
+  }, []);
 
-  useReplayEngineFocusGuard({
-    searchParams,
-    isEngine,
-    isFocusMode,
-    setSearchParams,
-  });
+  React.useEffect(() => {
+    if (!isStageFocus) {
+      setShowStageSetup(true);
+      return;
+    }
+    setShowStageSetup(false);
+  }, [isStageFocus]);
+
+  React.useEffect(() => {
+    stageTransportManualOverrideRef.current = false;
+    if (!isStageFocus) {
+      setShowStageTransport(true);
+      return;
+    }
+    if (typeof window === "undefined") {
+      setShowStageTransport(true);
+      return;
+    }
+    setShowStageTransport(shouldShowStageSecondaryControls(window.innerWidth));
+  }, [isStageFocus]);
+
+  React.useEffect(() => {
+    if (!isStageFocus || typeof window === "undefined") return;
+    const handleResize = () => {
+      if (stageTransportManualOverrideRef.current) return;
+      setShowStageTransport(shouldShowStageSecondaryControls(window.innerWidth));
+    };
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, [isStageFocus]);
+
+  const toggleStageTransport = React.useCallback(() => {
+    stageTransportManualOverrideRef.current = true;
+    setShowStageTransport((prev) => !prev);
+  }, []);
+
+  const pushStageActionFeedback = React.useCallback((message: string, tone: "info" | "success" | "warn" = "info") => {
+    if (!isStageFocus) return;
+    setStageActionFeedback(message);
+    setStageActionFeedbackTone(tone);
+    if (typeof window === "undefined") return;
+    if (stageActionFeedbackTimerRef.current !== null) {
+      window.clearTimeout(stageActionFeedbackTimerRef.current);
+    }
+    stageActionFeedbackTimerRef.current = window.setTimeout(() => {
+      stageActionFeedbackTimerRef.current = null;
+      setStageActionFeedback("");
+      setStageActionFeedbackTone("info");
+    }, 1800);
+  }, [isStageFocus]);
+
+  React.useEffect(() => {
+    if (isStageFocus) return;
+    setStageActionFeedback("");
+    setStageActionFeedbackTone("info");
+    if (typeof window !== "undefined" && stageActionFeedbackTimerRef.current !== null) {
+      window.clearTimeout(stageActionFeedbackTimerRef.current);
+      stageActionFeedbackTimerRef.current = null;
+    }
+  }, [isStageFocus]);
+
+  React.useEffect(() => () => {
+    if (typeof window !== "undefined" && stageActionFeedbackTimerRef.current !== null) {
+      window.clearTimeout(stageActionFeedbackTimerRef.current);
+    }
+  }, []);
+
+  const handleStageVfxChange = React.useCallback((nextPreference: VfxPreference) => {
+    setVfxPreference(nextPreference);
+    writeVfxQuality(nextPreference);
+    const nextResolved = resolveVfxQuality();
+    setResolvedVfxQuality(nextResolved);
+    applyVfxQualityToDocument(nextResolved);
+    playReplaySfx("card_place");
+    pushStageActionFeedback(`VFX ${formatStageVfxLabel(nextPreference, nextResolved)}`, "info");
+  }, [playReplaySfx, pushStageActionFeedback]);
+
+  React.useEffect(() => {
+    const handleFullscreenChange = () => setIsStageFullscreen(Boolean(document.fullscreenElement));
+    document.addEventListener("fullscreenchange", handleFullscreenChange);
+    return () => document.removeEventListener("fullscreenchange", handleFullscreenChange);
+  }, []);
+
+  const handleVerify = React.useCallback(() => {
+    if (!sim.ok) return;
+    const result = verifyReplayV1(sim.transcript, sim.cards, sim.current.matchId);
+    setVerifyStatus(result.ok ? "ok" : "mismatch");
+    playReplaySfx(result.ok ? "victory_fanfare" : "error_buzz");
+  }, [playReplaySfx, sim]);
+
+  const copy = async (v: string) => {
+    await writeClipboardText(v);
+  };
+
+  const copyWithToast = async (label: string, v: string) => {
+    try {
+      await copy(v);
+      toast.success("Copied", label);
+    } catch (e: unknown) {
+      toast.error("Copy failed", errorMessage(e));
+    }
+  };
+
+  const toggleStageFullscreen = React.useCallback(async () => {
+    if (!isStageFocus) return;
+    try {
+      if (document.fullscreenElement) {
+        await document.exitFullscreen();
+        return;
+      }
+      const target = stageViewportRef.current;
+      if (!target) return;
+      await target.requestFullscreen();
+    } catch (e: unknown) {
+      toast.warn("Fullscreen", errorMessage(e));
+    }
+  }, [isStageFocus, toast]);
+
+  const setReplayBoardUi = React.useCallback((nextUi: ReplayBoardUi) => {
+    const next = new URLSearchParams(searchParams);
+    if (nextUi === "classic") next.delete("ui");
+    else next.set("ui", nextUi);
+    if (nextUi !== "engine") {
+      next.delete("focus");
+      next.delete("layout");
+    }
+    setSearchParams(next, { replace: true });
+  }, [searchParams, setSearchParams]);
+
+  const setFocusMode = React.useCallback((enabled: boolean) => {
+    const next = new URLSearchParams(searchParams);
+    if (enabled) next.set("focus", "1");
+    else next.delete("focus");
+    next.delete("layout");
+    if (!enabled && isReplayStageRoute) {
+      const query = next.toString();
+      navigate(query ? `/replay?${query}` : "/replay", { replace: true });
+      return;
+    }
+    setSearchParams(next, { replace: true });
+  }, [searchParams, setSearchParams, isReplayStageRoute, navigate]);
+
+  const toggleStageFullscreenWithFeedback = React.useCallback(() => {
+    pushStageActionFeedback(isStageFullscreen ? "Exit fullscreen" : "Enter fullscreen");
+    playReplaySfx("card_place");
+    void toggleStageFullscreen();
+  }, [isStageFullscreen, playReplaySfx, pushStageActionFeedback, toggleStageFullscreen]);
+
+  const toggleStageTransportWithFeedback = React.useCallback(() => {
+    pushStageActionFeedback(showStageTransport ? "Controls hidden" : "Controls shown");
+    playReplaySfx("card_place");
+    toggleStageTransport();
+  }, [playReplaySfx, pushStageActionFeedback, showStageTransport, toggleStageTransport]);
+
+  const toggleStageSetupWithFeedback = React.useCallback(() => {
+    setShowStageSetup((prev) => {
+      const next = !prev;
+      if (isStageFocus) {
+        pushStageActionFeedback(next ? "Setup shown" : "Setup hidden");
+        playReplaySfx("card_place");
+      }
+      return next;
+    });
+  }, [isStageFocus, playReplaySfx, pushStageActionFeedback]);
+
+  const toggleStagePanelsWithFeedback = React.useCallback(() => {
+    setShowStagePanels((prev) => {
+      const next = !prev;
+      if (isStageFocus) {
+        pushStageActionFeedback(next ? "Timeline shown" : "Timeline hidden");
+        playReplaySfx("card_place");
+      }
+      return next;
+    });
+  }, [isStageFocus, playReplaySfx, pushStageActionFeedback]);
+
+  const exitFocusModeWithFeedback = React.useCallback(() => {
+    pushStageActionFeedback("Exiting focus mode", "warn");
+    setFocusMode(false);
+  }, [pushStageActionFeedback, setFocusMode]);
+
+  React.useEffect(() => {
+    if (isEngine || !isFocusMode) return;
+    const next = new URLSearchParams(searchParams);
+    next.delete("focus");
+    next.delete("layout");
+    setSearchParams(next, { replace: true });
+  }, [isEngine, isFocusMode, searchParams, setSearchParams]);
 
   const overlayUrl = React.useMemo(() => appAbsoluteUrl("overlay?controls=0"), []);
   const overlayPath = React.useMemo(() => appPath("overlay"), []);
@@ -348,27 +610,135 @@ export function ReplayPage() {
 
   const pushOverlay = React.useCallback(
     (opts?: { silent?: boolean }) => {
-      runReplayOverlayPublishAction({
-        sim,
-        step,
-        eventId: event?.id ?? (eventId || undefined),
-        eventTitle: event?.title,
-        silent: opts?.silent,
-        notify: {
-          success: (message) => toast.success("Overlay", message),
-          warn: (message) => toast.warn("Overlay", message),
-          error: (message) => toast.error("Overlay", message),
-        },
-      });
+      const updatedAtMs = Date.now();
+      try {
+        if (!sim.ok) {
+          publishOverlayState({
+            version: 1,
+            updatedAtMs,
+            mode: "replay",
+            eventId: event?.id ?? (eventId || undefined),
+            eventTitle: event?.title,
+            error: sim.error || "Replay not loaded",
+          });
+          if (!opts?.silent) toast.warn("Overlay", "Replay not ready");
+          return;
+        }
+
+        const res = sim.current;
+        const transcript = sim.transcript;
+
+        const lastIndex = step - 1;
+        const last: TurnSummary | null = lastIndex >= 0 ? (res.turns[lastIndex] ?? null) : null;
+
+        const lastMove =
+          last && typeof last.cell === "number"
+            ? {
+                turnIndex: lastIndex,
+                by: turnPlayer(transcript.header.firstPlayer as 0 | 1, lastIndex),
+                cell: last.cell,
+                cardIndex: last.cardIndex,
+                warningMarkCell: typeof last.warningPlaced === "number" ? last.warningPlaced : null,
+              }
+            : undefined;
+
+const lastTurnSummary =
+  last
+    ? {
+        flipCount: last.flipCount,
+        comboCount: last.comboCount,
+        comboEffect: last.comboEffect ?? "none",
+        triadPlus: last.appliedBonus?.triadPlus ?? 0,
+        ignoreWarningMark: Boolean(last.appliedBonus?.ignoreWarningMark),
+        warningTriggered: Boolean(last.warningTriggered),
+        warningPlaced: typeof last.warningPlaced === "number" ? last.warningPlaced : null,
+        flips: last.flipTraces
+          ? last.flipTraces.map((f) => ({
+              from: f.from,
+              to: f.to,
+              isChain: f.isChain,
+              kind: f.kind,
+              dir: f.dir as "up" | "right" | "down" | "left" | undefined,
+              vert: f.vert as "up" | "down" | undefined,
+              horiz: f.horiz as "left" | "right" | undefined,
+              aVal: f.aVal,
+              dVal: f.dVal,
+              tieBreak: f.tieBreak,
+              winBy: f.winBy,
+            }))
+          : undefined,
+      }
+    : undefined;
+
+
+        publishOverlayState({
+          version: 1,
+          updatedAtMs,
+          mode: "replay",
+          eventId: event?.id ?? (eventId || undefined),
+          eventTitle: event?.title,
+          turn: step,
+          firstPlayer: transcript.header.firstPlayer as 0 | 1,
+          playerA: transcript.header.playerA,
+          playerB: transcript.header.playerB,
+          rulesetId: transcript.header.rulesetId,
+          seasonId: transcript.header.seasonId,
+          deckA: transcript.header.deckA.map((x) => x.toString()),
+deckB: transcript.header.deckB.map((x) => x.toString()),
+protocolV1: {
+  header: {
+    version: Number(transcript.header.version),
+    rulesetId: String(transcript.header.rulesetId),
+    seasonId: Number(transcript.header.seasonId),
+    playerA: String(transcript.header.playerA),
+    playerB: String(transcript.header.playerB),
+    deckA: transcript.header.deckA.map((x) => x.toString()),
+    deckB: transcript.header.deckB.map((x) => x.toString()),
+    firstPlayer: transcript.header.firstPlayer as 0 | 1,
+    deadline: Number(transcript.header.deadline),
+    salt: String(transcript.header.salt),
+  },
+  turns: transcript.turns.slice(0, step).map((t) => ({
+    cell: Number(t.cell),
+    cardIndex: Number(t.cardIndex),
+    ...(typeof t.warningMarkCell === "number" ? { warningMarkCell: Number(t.warningMarkCell) } : {}),
+  })),
+},
+          board: res.boardHistory[step],
+          lastMove,
+          lastTurnSummary,
+          status: {
+            finished: step >= 9,
+            winner: res.winner === "draw" ? "draw" : res.winner === 0 ? "A" : "B",
+            tilesA: Number(res.tiles.A),
+            tilesB: Number(res.tiles.B),
+            matchId: res.matchId,
+          },
+        });
+
+        if (!opts?.silent) toast.success("Overlay", "Sent to OBS overlay");
+      } catch (e: unknown) {
+        publishOverlayState({
+          version: 1,
+          updatedAtMs,
+          mode: "replay",
+          eventId: event?.id ?? (eventId || undefined),
+          eventTitle: event?.title,
+          error: errorMessage(e),
+        });
+        if (!opts?.silent) toast.error("Overlay", errorMessage(e));
+      }
     },
-    [sim, step, event?.id, event?.title, eventId, toast],
+    [sim, step, event?.id, event?.title, eventId, toast]
   );
 
-  const { setBroadcastOverlayWithUrl } = useReplayBroadcastToggle({
-    searchParams,
-    setSearchParams,
-    setBroadcastOverlay,
-  });
+  const setBroadcastOverlayWithUrl = (nextOn: boolean) => {
+    setBroadcastOverlay(nextOn);
+    const next = new URLSearchParams(searchParams);
+    if (nextOn) next.set("broadcast", "1");
+    else next.delete("broadcast");
+    setSearchParams(next, { replace: true });
+  };
 
   React.useEffect(() => {
     if (!broadcastOverlay) return;
@@ -379,68 +749,79 @@ export function ReplayPage() {
 
   const load = async (override?: { text?: string; mode?: Mode; step?: number }) => {
     setLoading(true);
-    setSim(buildReplaySimErrorState(""));
+    setSim({ ok: false, error: "" });
     setVerifyStatus("idle");
     try {
-      const {
-        transcript,
-        cards,
-        owners,
-        currentRulesetLabel: label,
-        resolvedRuleset: resolvedReplayRuleset,
-        rulesetIdMismatchWarning,
-        current,
-        v1,
-        v2,
-        startStep,
-      } = await runReplayLoadAction({
-        text,
-        mode,
-        searchParams,
-        override,
-      });
+      const inputText = (override?.text ?? text).trim();
+      if (!inputText) throw new Error("transcript JSON is empty");
 
-      setSim(buildReplaySimSuccessState({
-        transcript,
-        cards,
-        owners,
-        currentRulesetLabel: label,
-        resolvedRuleset: resolvedReplayRuleset,
-        rulesetIdMismatchWarning,
-        current,
-        v1,
-        v2,
-      }));
+      const parsed = parseReplayPayload(inputText);
+      const transcript = parsed.transcript;
+
+      // Determine preferred mode from rulesetId if mode=auto.
+      const mode0 = override?.mode ?? mode;
+      const rulesetById = resolveRulesetById(transcript.header.rulesetId);
+      const useRegistryRuleset = mode0 === "auto" && rulesetById !== null;
+      const effectiveMode: Mode = mode0 === "auto" ? pickDefaultMode(transcript.header.rulesetId) : mode0;
+
+      // v2: use embedded card data (no network calls needed)
+      // v1: resolve via game index first (fast/cached), RPC fallback for missing
+      let cards: Map<bigint, CardData>;
+      let owners: Map<bigint, `0x${string}`>;
+      if (parsed.version === 2) {
+        cards = parsed.cards;
+        owners = new Map();
+      } else {
+        const tokenIds = [...transcript.header.deckA, ...transcript.header.deckB];
+        const resolved = await resolveCards(tokenIds);
+        cards = resolved.cards;
+        owners = resolved.owners;
+
+        // Verify all cards were resolved — resolveCards silently swallows
+        // RPC errors and returns an incomplete map. Surface the failure here
+        // so the user sees a clear error instead of a broken replay.
+        const unique = new Set(tokenIds.map((t) => t.toString()));
+        if (cards.size < unique.size) {
+          const missing = [...unique].filter((id) => !cards.has(BigInt(id)));
+          throw new Error(
+            `Could not resolve ${missing.length} card(s): ${missing.slice(0, 5).join(", ")}${missing.length > 5 ? "…" : ""}. Check your network connection.`,
+          );
+        }
+      }
+
+      // Always compute both (cheap compared to RPC reads)
+      const v1 = simulateMatchV1WithHistory(transcript, cards, ONCHAIN_CORE_TACTICS_RULESET_CONFIG_V1);
+      const v2 = simulateMatchV1WithHistory(transcript, cards, ONCHAIN_CORE_TACTICS_SHADOW_RULESET_CONFIG_V2);
+      const byId = rulesetById ? simulateMatchV1WithHistory(transcript, cards, rulesetById) : null;
+
+      let current: MatchResultWithHistory = v1;
+      let label = rulesetLabelFromConfig(ONCHAIN_CORE_TACTICS_RULESET_CONFIG_V1);
+
+      if (useRegistryRuleset && byId) {
+        current = byId;
+        label = rulesetLabelFromRegistryConfig(rulesetById!);
+      } else if (effectiveMode === "v2") {
+        current = v2;
+        label = rulesetLabelFromConfig(ONCHAIN_CORE_TACTICS_SHADOW_RULESET_CONFIG_V2);
+      } else if (effectiveMode === "compare") {
+        // pick one as "current" for right-side panels; keep label explicit
+        current = v1;
+        label = "compare v1 vs v2";
+      } else if (effectiveMode === "v1") {
+        current = v1;
+        label = rulesetLabelFromConfig(ONCHAIN_CORE_TACTICS_RULESET_CONFIG_V1);
+      }
+
+      setSim({ ok: true, transcript, cards, owners, currentRulesetLabel: label, current, v1, v2 });
+
+      const stepMax = current.boardHistory.length - 1;
+      const startStep = clampInt(override?.step ?? 0, 0, stepMax);
       setStep(startStep);
     } catch (e: unknown) {
-      setSim(buildReplaySimErrorState(errorMessage(e)));
+      setSim({ ok: false, error: errorMessage(e) });
     } finally {
       setLoading(false);
     }
-  };
-
-  const setReplayError = React.useCallback((error: string) => {
-    setSim(buildReplaySimErrorState(error));
-  }, []);
-
-  const handleRetryLoad = () => {
-    void runReplayRetryLoadFlow({
-      searchParams,
-      mode,
-      step,
-      load,
-      setText,
-      setReplayError,
-    });
-  };
-
-  const handleClearShareParams = () => {
-    runReplayClearShareParamsFlow({
-      searchParams,
-      setSearchParams,
-      setReplayError,
-      replayInputPromptError: REPLAY_INPUT_PROMPT_ERROR,
-    });
   };
 
   // If this page is opened via a share link (?t=... or ?z=...), auto-load once.
@@ -449,14 +830,17 @@ export function ReplayPage() {
     if (didAutoLoadRef.current) return;
     didAutoLoadRef.current = true;
 
-    void runReplayInitialAutoLoadFlow({
-      initialSharePayload,
-      initialMode,
-      initialStep,
-      load,
-      setText,
-      setReplayError,
-    });
+    const auto = async () => {
+      if (initialSharePayload.kind === "none") return;
+      if (initialSharePayload.kind === "error") {
+        setSim({ ok: false, error: initialSharePayload.error });
+        return;
+      }
+      setText(initialSharePayload.text);
+      await load({ text: initialSharePayload.text, mode: initialMode, step: initialStep });
+    };
+
+    void auto();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   const stepMax = sim.ok ? sim.current.boardHistory.length - 1 : 0;
@@ -468,12 +852,23 @@ export function ReplayPage() {
     if (step > stepMaxNow) setStep(stepMaxNow);
   }, [sim.ok, sim, step]);
 
-  useReplayStepModeUrlSync({
-    searchParams,
-    mode,
-    step,
-    setSearchParams,
-  });
+  // Keep URL step/mode in sync IF a share param exists (so links can point to a specific step).
+  React.useEffect(() => {
+    if (!hasReplaySharePayload(searchParams)) return;
+
+    const curMode = searchParams.get("mode") ?? "auto";
+    const curStep = searchParams.get("step") ?? "0";
+
+    const nextMode = mode;
+    const nextStep = String(step);
+
+    if (curMode === nextMode && curStep === nextStep) return;
+
+    const next = new URLSearchParams(searchParams);
+    next.set("mode", nextMode);
+    next.set("step", nextStep);
+    setSearchParams(next, { replace: true });
+  }, [mode, step, searchParams, setSearchParams]);
 
   const highlights = React.useMemo(
     () => (sim.ok ? detectReplayHighlights(sim.current) : []),
@@ -486,62 +881,47 @@ export function ReplayPage() {
     [highlights, step],
   );
   const stepProgress = replayStepProgress(step, stepMax);
-  const {
-    canStepBack,
-    canStepForward,
-    canPlay,
-    showStageToolbarTransport,
-    replayTransportButtonClass,
-    replayTransportPrimaryButtonClass,
-    replaySpeedSelectClass,
-  } = React.useMemo(
-    () =>
-      resolveReplayTransportState({
-        step,
-        stepMax,
-        simOk: sim.ok,
-        isStageFocus,
-        showStageTransport,
-        viewportWidth: typeof window === "undefined" ? null : window.innerWidth,
-      resolveShouldShowStageSecondaryControls: shouldShowStageSecondaryControls,
-      }),
-    [step, stepMax, sim.ok, isStageFocus, showStageTransport],
-  );
-  const replayShareButtonClass = React.useMemo(
-    () => resolveReplayMintButtonClass({ baseClassName: "btn", isMintTheme, isShareAction: true }),
-    [isMintTheme],
-  );
-  const replayShareButtonSmClass = React.useMemo(
-    () => resolveReplayMintButtonClass({ baseClassName: "btn btn-sm", isMintTheme, isShareAction: true }),
-    [isMintTheme],
-  );
-  const replaySharePrimaryButtonSmClass = React.useMemo(
-    () =>
-      resolveReplayMintButtonClass({
-        baseClassName: "btn btn-sm btn-primary",
-        isMintTheme,
-        isShareAction: true,
-      }),
-    [isMintTheme],
-  );
+  const canStepBack = step > 0;
+  const canStepForward = step < stepMax;
+  const canPlay = sim.ok && stepMax > 0;
+  const showStageToolbarTransport = isStageFocus
+    && sim.ok
+    && showStageTransport
+    && (typeof window === "undefined" || shouldShowStageSecondaryControls(window.innerWidth));
   const phaseInfo: ReplayPhaseInfo = React.useMemo(() => replayPhaseInfo(step, stepMax), [step, stepMax]);
   const stepStatusText = replayStepStatusText(step);
-  const {
-    replayClassicSwap,
-    replayClassicOpen,
-    replayOpenVisibleA,
-    replayOpenVisibleB,
-    shouldMaskReplayDeckSlots,
-  } = React.useMemo(
-    () =>
-      resolveReplayClassicState({
-        simOk: sim.ok,
-        ruleset: sim.ok ? sim.resolvedRuleset : null,
-        header: sim.ok ? sim.transcript.header : null,
-        replayRevealHiddenSlots,
-      }),
-    [sim, replayRevealHiddenSlots],
-  );
+  const replayClassicSwap = React.useMemo(() => {
+    if (!sim.ok) return null;
+    const ruleset = resolveRulesetById(sim.transcript.header.rulesetId);
+    if (!ruleset) return null;
+    return resolveClassicSwapIndices({
+      ruleset,
+      header: sim.transcript.header,
+    });
+  }, [sim]);
+  const replayClassicOpen = React.useMemo(() => {
+    if (!sim.ok) return null;
+    const ruleset = resolveRulesetById(sim.transcript.header.rulesetId);
+    if (!ruleset) return null;
+    return resolveClassicOpenCardIndices({
+      ruleset,
+      header: sim.transcript.header,
+    });
+  }, [sim]);
+  const replayOpenVisibleA = React.useMemo(() => {
+    if (!replayClassicOpen) return null;
+    return new Set<number>(replayClassicOpen.playerA);
+  }, [replayClassicOpen]);
+  const replayOpenVisibleB = React.useMemo(() => {
+    if (!replayClassicOpen) return null;
+    return new Set<number>(replayClassicOpen.playerB);
+  }, [replayClassicOpen]);
+  const shouldMaskReplayDeckSlots = replayClassicOpen?.mode === "three_open" && !replayRevealHiddenSlots;
+  const replayTransportButtonClass = isStageFocus ? "btn h-10 px-4" : "btn btn-sm";
+  const replayTransportPrimaryButtonClass = isStageFocus ? "btn btn-primary h-10 px-4" : "btn btn-sm btn-primary";
+  const replaySpeedSelectClass = isStageFocus
+    ? "rounded-md border border-surface-300 bg-white h-10 px-2 text-sm"
+    : "rounded-md border border-surface-300 bg-white px-2 py-1 text-xs";
 
   React.useEffect(() => {
     if (canPlay || !isPlaying) return;
@@ -550,62 +930,161 @@ export function ReplayPage() {
 
   // Highlight jump helpers
   const jumpToNextHighlight = React.useCallback(() => {
-    const nextStep = resolveNextReplayHighlightStep(highlights, step);
-    if (nextStep === null) return;
+    if (highlights.length === 0) return;
+    const next = highlights.find((h) => h.step > step);
     setIsPlaying(false);
-    setStep(nextStep);
+    setStep(next ? next.step : highlights[0].step);
   }, [highlights, step]);
 
   const jumpToPrevHighlight = React.useCallback(() => {
-    const prevStep = resolvePrevReplayHighlightStep(highlights, step);
-    if (prevStep === null) return;
+    if (highlights.length === 0) return;
+    const prev = [...highlights].reverse().find((h) => h.step < step);
     setIsPlaying(false);
-    setStep(prevStep);
+    setStep(prev ? prev.step : highlights[highlights.length - 1].step);
   }, [highlights, step]);
 
   const currentHighlightIdx = React.useMemo(() => {
-    return resolveReplayCurrentHighlightIndex(highlights, step);
+    if (highlights.length === 0) return -1;
+    return highlights.findIndex((h) => h.step === step);
   }, [highlights, step]);
   const focusToolbarHighlightStatus = React.useMemo(() => {
-    return formatReplayToolbarHighlightStatus({
-      highlightCount: highlights.length,
-      currentHighlightIdx,
-    });
+    if (highlights.length === 0) return "0 highlights";
+    if (currentHighlightIdx >= 0) return `${currentHighlightIdx + 1}/${highlights.length} highlights`;
+    return `${highlights.length} highlights`;
   }, [highlights.length, currentHighlightIdx]);
 
-  const {
-    jumpToStartWithFeedback,
-    jumpToPrevStepWithFeedback,
-    toggleReplayPlayWithFeedback,
-    jumpToNextStepWithFeedback,
-    jumpToEndWithFeedback,
-    jumpToPrevHighlightWithFeedback,
-    jumpToNextHighlightWithFeedback,
-  } = useReplayTransportActionCallbacks({
-    canPlay,
-    isPlaying,
-    isStageFocus,
-    stepMax,
-    highlightsCount: highlights.length,
-    setIsPlaying,
-    setStep,
-    jumpToPrevHighlight,
-    jumpToNextHighlight,
-    playReplaySfx,
-    pushStageActionFeedback,
-    jumpedToStartMessage: "Jumped to start",
-    stepBackMessage: "1手戻る",
-    playStartMessage: "再生開始",
-    playStopMessage: "再生停止",
-    stepForwardMessage: "1手進む",
-    jumpToEndMessage: "末尾へ移動",
-    prevHighlightMessage: "前の見どころへ移動",
-    nextHighlightMessage: "次の見どころへ移動",
-  });
+  const jumpToStartWithFeedback = React.useCallback(() => {
+    setIsPlaying(false);
+    setStep(0);
+    playReplaySfx("card_place");
+    if (isStageFocus) {
+      pushStageActionFeedback("Jumped to start", "success");
+    }
+  }, [isStageFocus, playReplaySfx, pushStageActionFeedback]);
 
-  useReplayStageFocusShortcuts({
-    isStageFocus,
+  const jumpToPrevStepWithFeedback = React.useCallback(() => {
+    setIsPlaying(false);
+    setStep((s) => Math.max(0, s - 1));
+    playReplaySfx("flip");
+    if (isStageFocus) {
+      pushStageActionFeedback("Step back");
+    }
+  }, [isStageFocus, playReplaySfx, pushStageActionFeedback]);
+
+  const toggleReplayPlayWithFeedback = React.useCallback(() => {
+    if (!canPlay) return;
+    const nextIsPlaying = !isPlaying;
+    setIsPlaying(nextIsPlaying);
+    playReplaySfx(nextIsPlaying ? "card_place" : "flip");
+    if (isStageFocus) {
+      pushStageActionFeedback(nextIsPlaying ? "Playback started" : "Playback paused", nextIsPlaying ? "success" : "info");
+    }
+  }, [canPlay, isPlaying, isStageFocus, playReplaySfx, pushStageActionFeedback]);
+
+  const jumpToNextStepWithFeedback = React.useCallback(() => {
+    setIsPlaying(false);
+    setStep((s) => Math.min(stepMax, s + 1));
+    playReplaySfx("flip");
+    if (isStageFocus) {
+      pushStageActionFeedback("Step forward");
+    }
+  }, [isStageFocus, playReplaySfx, pushStageActionFeedback, stepMax]);
+
+  const jumpToEndWithFeedback = React.useCallback(() => {
+    setIsPlaying(false);
+    setStep(stepMax);
+    playReplaySfx("card_place");
+    if (isStageFocus) {
+      pushStageActionFeedback("Jumped to end");
+    }
+  }, [isStageFocus, playReplaySfx, pushStageActionFeedback, stepMax]);
+
+  const jumpToPrevHighlightWithFeedback = React.useCallback(() => {
+    if (highlights.length === 0) return;
+    jumpToPrevHighlight();
+    playReplaySfx("chain_flip");
+    if (isStageFocus) {
+      pushStageActionFeedback("Previous highlight", "success");
+    }
+  }, [highlights.length, isStageFocus, jumpToPrevHighlight, playReplaySfx, pushStageActionFeedback]);
+
+  const jumpToNextHighlightWithFeedback = React.useCallback(() => {
+    if (highlights.length === 0) return;
+    jumpToNextHighlight();
+    playReplaySfx("chain_flip");
+    if (isStageFocus) {
+      pushStageActionFeedback("Next highlight", "success");
+    }
+  }, [highlights.length, isStageFocus, jumpToNextHighlight, playReplaySfx, pushStageActionFeedback]);
+
+  // keyboard
+  React.useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement | null;
+      const tag = target?.tagName;
+      if (tag === "TEXTAREA" || tag === "INPUT" || tag === "SELECT" || target?.isContentEditable) return;
+      if (e.altKey || e.ctrlKey || e.metaKey) return;
+      const lower = e.key.toLowerCase();
+      if (isStageFocus && e.key === "Escape") {
+        e.preventDefault();
+        exitFocusModeWithFeedback();
+        return;
+      }
+
+      if (isStageFocus && lower === "f") {
+        e.preventDefault();
+        toggleStageFullscreenWithFeedback();
+        return;
+      }
+      if (isStageFocus && lower === "c") {
+        e.preventDefault();
+        toggleStageTransportWithFeedback();
+        return;
+      }
+      if (isStageFocus && lower === "s") {
+        e.preventDefault();
+        toggleStageSetupWithFeedback();
+        return;
+      }
+      if (isStageFocus && lower === "d") {
+        e.preventDefault();
+        toggleStagePanelsWithFeedback();
+        return;
+      }
+
+      if (e.key === "ArrowLeft") {
+        jumpToPrevStepWithFeedback();
+      }
+      if (e.key === "ArrowRight") {
+        jumpToNextStepWithFeedback();
+      }
+      if (e.key === " ") {
+        if (!canPlay) return;
+        e.preventDefault();
+        toggleReplayPlayWithFeedback();
+      }
+      if (e.key === "Home") {
+        e.preventDefault();
+        jumpToStartWithFeedback();
+      }
+      if (e.key === "End") {
+        e.preventDefault();
+        jumpToEndWithFeedback();
+      }
+      if (e.key === "[") {
+        e.preventDefault();
+        jumpToPrevHighlightWithFeedback();
+      }
+      if (e.key === "]") {
+        e.preventDefault();
+        jumpToNextHighlightWithFeedback();
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [
     canPlay,
+    isStageFocus,
     exitFocusModeWithFeedback,
     toggleStageFullscreenWithFeedback,
     toggleStageTransportWithFeedback,
@@ -618,48 +1097,51 @@ export function ReplayPage() {
     jumpToEndWithFeedback,
     jumpToPrevHighlightWithFeedback,
     jumpToNextHighlightWithFeedback,
-  });
+  ]);
 
-  useReplayAutoplay({
-    isPlaying,
-    simOk: sim.ok,
-    canPlay,
-    playbackSpeed,
-    stepMax,
-    setStep,
-    setIsPlaying,
-  });
+  // Autoplay timer
+  React.useEffect(() => {
+    if (!isPlaying || !sim.ok || !canPlay) return;
+    const ms = 1000 / normalizeReplayPlaybackSpeed(playbackSpeed);
+    const timer = window.setInterval(() => {
+      setStep((s) => {
+        const next = nextReplayAutoplayStep(s, stepMax);
+        if (next === null) {
+          setIsPlaying(false);
+          return s;
+        }
+        return next;
+      });
+    }, ms);
+    return () => window.clearInterval(timer);
+  }, [isPlaying, playbackSpeed, stepMax, sim.ok, canPlay]);
 
-  const compare = resolveReplayCompareMode({
-    simOk: sim.ok,
-    mode,
-    resolvedRuleset: sim.ok ? sim.resolvedRuleset : null,
-    rulesetId: sim.ok ? sim.transcript.header.rulesetId : null,
-    shouldAutoCompareByRulesetId,
-  });
-  const diverged = resolveReplayCompareDiverged({
-    simOk: sim.ok,
-    v1Board: sim.ok ? (sim.v1.boardHistory[step] ?? null) : null,
-    v2Board: sim.ok ? (sim.v2.boardHistory[step] ?? null) : null,
-    boardEquals: replayBoardEquals,
-  });
+  const compare = sim.ok && (mode === "compare" || (mode === "auto" && shouldAutoCompareByRulesetId(sim.transcript.header.rulesetId)));
+  const diverged = sim.ok ? !boardEquals(sim.v1.boardHistory[step], sim.v2.boardHistory[step]) : false;
   const replayNyanoReactionInput = React.useMemo(
-    () => (sim.ok ? resolveReplayNyanoReactionInput({ result: sim.current, step }) : null),
+    () => (sim.ok ? buildNyanoReactionInput(sim.current, step) : null),
     [sim, step],
   );
   const replayNyanoReactionImpact = React.useMemo(() => {
-    return resolveReplayNyanoReactionImpact({
-      nyanoReactionInput: replayNyanoReactionInput,
-    });
+    if (!replayNyanoReactionInput) return "low" as const;
+    return resolveReactionCutInImpact(pickReactionKind(replayNyanoReactionInput));
   }, [replayNyanoReactionInput]);
-  const replayStageImpactBurst = useReplayStageImpactBurst({
-    isEngine,
-    isEngineFocus,
-    compare,
-    nyanoReactionInput: replayNyanoReactionInput,
-    nyanoReactionImpact: replayNyanoReactionImpact,
-    step,
-  });
+  const [replayStageImpactBurst, setReplayStageImpactBurst] = React.useState(false);
+
+  React.useEffect(() => {
+    if (!isEngineFocus || !isEngine || compare || !replayNyanoReactionInput) {
+      setReplayStageImpactBurst(false);
+      return;
+    }
+    if (replayNyanoReactionImpact === "low") {
+      setReplayStageImpactBurst(false);
+      return;
+    }
+    setReplayStageImpactBurst(true);
+    const burstMs = replayNyanoReactionImpact === "high" ? 960 : 760;
+    const timer = window.setTimeout(() => setReplayStageImpactBurst(false), burstMs);
+    return () => window.clearTimeout(timer);
+  }, [isEngineFocus, isEngine, compare, replayNyanoReactionInput, replayNyanoReactionImpact, step]);
 
   const annotations = React.useMemo(
     () => sim.ok ? annotateReplayMoves(sim.current, sim.transcript.header.firstPlayer as 0 | 1) : [],
@@ -678,18 +1160,23 @@ export function ReplayPage() {
 
   const replayPreloadTokenIds = React.useMemo(() => {
     if (!sim.ok) return [] as bigint[];
-    return resolveReplayPreloadTokenIds({
-      deckA: sim.transcript.header.deckA,
-      deckB: sim.transcript.header.deckB,
-    });
+    const out: bigint[] = [];
+    const seen = new Set<string>();
+    for (const tid of [...sim.transcript.header.deckA, ...sim.transcript.header.deckB]) {
+      const key = tid.toString();
+      if (seen.has(key)) continue;
+      seen.add(key);
+      out.push(tid);
+    }
+    return out;
   }, [sim]);
   const replayFirstPlayer: 0 | 1 = sim.ok ? (sim.transcript.header.firstPlayer as 0 | 1) : 0;
 
   const renderReplay = (label: string, res: MatchResultWithHistory) => {
     const boardNow = res.boardHistory[step];
     const boardPrev = step === 0 ? res.boardHistory[0] : res.boardHistory[step - 1];
-    const { placedCell, flippedCells } = step === 0 ? { placedCell: null, flippedCells: [] } : resolveReplayBoardDelta({ boardPrev, boardNow });
-    const nyanoReactionInput = resolveReplayNyanoReactionInput({ result: res, step });
+    const { placedCell, flippedCells } = step === 0 ? { placedCell: null, flippedCells: [] } : computeDelta(boardPrev, boardNow);
+    const nyanoReactionInput = buildNyanoReactionInput(res, step);
     const focusCell = focusTurnIndex !== null ? (res.turns[focusTurnIndex]?.cell ?? null) : null;
     const replayCurrentPlayer = turnPlayer(replayFirstPlayer, Math.min(step, 8));
     const isPrimaryReplay = sim.ok && res === sim.current;
@@ -701,7 +1188,7 @@ export function ReplayPage() {
         <div className="flex items-center justify-between">
           <div className="text-sm font-semibold">{label}</div>
           <div className="text-xs text-slate-500">
-            勝者: {formatReplayWinnerLabel(res.winner)}
+            winner: {formatReplayWinnerLabel(res.winner)}
           </div>
         </div>
 
@@ -728,27 +1215,29 @@ export function ReplayPage() {
                 <ScoreBar board={boardNow} moveCount={step} maxMoves={9} winner={res.winner} />
                 {boardAdvantages[step] && (
                   <div className="mt-1 flex items-center gap-1.5">
-                    <span className="text-[10px] text-slate-400">盤面評価</span>
+                    <span className="text-[10px] text-slate-400">Advantage</span>
                     <AdvantageBadge advantage={boardAdvantages[step]} size="sm" showScore />
                   </div>
                 )}
               </div>
             </div>
           )}
-          <NyanoReactionSlot
-            input={nyanoReactionInput}
-            turnIndex={step}
-            rpg={isRpg}
-            mint={isEngine}
-            tone={isEngine ? "pixi" : "mint"}
-            stageFocus={isStageFocus}
-          />
+          {nyanoReactionInput ? (
+            <NyanoReaction
+              input={nyanoReactionInput}
+              turnIndex={step}
+              rpg={isRpg}
+              mint={isEngine}
+              tone={isEngine ? "pixi" : "mint"}
+              className={isStageFocus ? "stage-focus-cutin" : ""}
+            />
+          ) : null}
         </div>
 
         {isEngine && !compare && engineRendererFailed ? (
           <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900">
             <span title={engineRendererError ?? undefined}>
-              Pixi renderer が利用できないため、Mint fallback board を表示しています。Pixi renderer is unavailable.
+              Pixi renderer is unavailable. Showing Mint fallback board.
             </span>
             <button
               type="button"
@@ -756,7 +1245,7 @@ export function ReplayPage() {
               onClick={handleRetryEngineRenderer}
               aria-label="Retry Pixi renderer in replay"
             >
-              Pixi 再試行
+              Retry Pixi
             </button>
           </div>
         ) : null}
@@ -787,7 +1276,6 @@ export function ReplayPage() {
                 currentPlayer={replayCurrentPlayer}
                 showCoordinates
                 showActionPrompt
-                className="mint-board-view mint-board-view--replay"
                 gamePhase={step >= 9 ? "game_over" : "select_cell"}
               />
             </DuelStageMint>
@@ -801,18 +1289,6 @@ export function ReplayPage() {
               showCandles
               showParticles
             />
-          ) : isMintTheme ? (
-            <BoardViewMint
-              board={boardNow}
-              selectedCell={focusCell}
-              placedCell={placedCell}
-              flippedCells={flippedCells}
-              currentPlayer={replayCurrentPlayer}
-              showCoordinates
-              showActionPrompt
-              className="mint-board-view mint-board-view--replay"
-              gamePhase={step >= 9 ? "game_over" : "select_cell"}
-            />
           ) : (
             <BoardView
               board={boardNow}
@@ -825,47 +1301,45 @@ export function ReplayPage() {
 
         {step > 0 ? (
           <div className="flex flex-wrap gap-2 text-xs text-slate-600">
-            <span className="rounded-md border border-slate-200 bg-slate-50 px-2 py-0.5">配置: {placedCell !== null ? placedCell : "-"}</span>
-            <span className="rounded-md border border-amber-200 bg-amber-50 px-2 py-0.5">反転: {flippedCells.length}</span>
+            <span className="rounded-md border border-slate-200 bg-slate-50 px-2 py-0.5">placed: {placedCell !== null ? placedCell : "-"}</span>
+            <span className="rounded-md border border-amber-200 bg-amber-50 px-2 py-0.5">flipped: {flippedCells.length}</span>
           </div>
         ) : (
-          <div className="text-xs text-slate-500">初期盤面</div>
+          <div className="text-xs text-slate-500">initial board</div>
         )}
       </div>
     );
   };
 
   
-  const replayShareBaseInput = {
-    text,
-    transcript: sim.ok ? sim.transcript : null,
-    eventId: eventId || undefined,
-    pointsDeltaA: pointsDeltaA ?? undefined,
-    ui: uiParam,
-    rulesetKey: searchParams.get("rk") ?? undefined,
-    classicMask: searchParams.get("cr") ?? undefined,
-    absolute: true,
-  };
-
   const buildCanonicalReplayLink = (): string => {
-    return buildReplayCanonicalShareLink({
-      ...replayShareBaseInput,
-      emptyError: "transcript JSON が空です",
+    const trimmed = text.trim() || (sim.ok ? stringifyWithBigInt(sim.transcript) : "");
+    if (!trimmed) throw new Error("transcript JSON is empty");
+
+    const z = tryGzipCompressUtf8ToBase64Url(trimmed);
+    return buildReplayShareUrl({
+      data: z ? { key: "z", value: z } : { key: "t", value: base64UrlEncodeUtf8(trimmed) },
+      eventId: eventId || undefined,
+      pointsDeltaA: pointsDeltaA ?? undefined,
+      mode: "auto",
+      ui: uiParam,
+      step: 9,
+      absolute: true,
     });
   };
 
   const saveToMyAttempts = async () => {
-    assertReplayAttemptCanBeSaved({
-      eventId,
-      replayReady: sim.ok,
-      winner: sim.ok ? sim.current.winner : -1,
-    });
-    if (!sim.ok || (sim.current.winner !== 0 && sim.current.winner !== 1)) return;
+    if (!eventId) throw new Error("eventId is missing");
+    if (!sim.ok) throw new Error("replay is not ready");
+    if (sim.current.winner !== 0 && sim.current.winner !== 1) {
+      throw new Error("draw matches are not eligible for event attempts");
+    }
 
     const replayUrl = buildCanonicalReplayLink();
 
-    const a = buildReplayEventAttempt({
-      createdAtIso: new Date().toISOString(),
+    const a: EventAttemptV1 = {
+      id: sim.current.matchId,
+      createdAt: new Date().toISOString(),
       eventId,
       replayUrl,
       matchId: sim.current.matchId,
@@ -873,112 +1347,67 @@ export function ReplayPage() {
       tilesA: Number(sim.current.tiles.A),
       tilesB: Number(sim.current.tiles.B),
       rulesetLabel: sim.currentRulesetLabel,
-      deckA: sim.transcript.header.deckA,
-      deckB: sim.transcript.header.deckB,
-      pointsDeltaA,
-    });
+      deckA: sim.transcript.header.deckA.map((x) => x.toString()),
+      deckB: sim.transcript.header.deckB.map((x) => x.toString()),
+      ...(pointsDeltaA !== null
+        ? {
+            pointsDeltaA,
+            pointsDeltaSource: "settled_attested" as const,
+          }
+        : {}),
+    };
 
     upsertEventAttempt(a);
   };
 
   const buildShareLink = (): string => {
-    return buildReplayCurrentShareLink({
-      ...replayShareBaseInput,
-      emptyError: "transcript JSON が空です。先に transcript を貼り付けるか、共有リンクを読み込んでください。",
+    // Use sim transcript when text state is empty (e.g., loaded via ?z= share link)
+    const trimmed = text.trim() || (sim.ok ? stringifyWithBigInt(sim.transcript) : "");
+    if (!trimmed) throw new Error("transcript JSON is empty - paste a transcript or load a share link first");
+
+    const z = tryGzipCompressUtf8ToBase64Url(trimmed);
+    return buildReplayShareUrl({
+      data: z ? { key: "z", value: z } : { key: "t", value: base64UrlEncodeUtf8(trimmed) },
+      eventId: eventId || undefined,
+      pointsDeltaA: pointsDeltaA ?? undefined,
       mode,
+      ui: uiParam,
       step,
+      absolute: true,
     });
   };
-  const shareWithNative = React.useCallback(
-    (url: string) =>
-      tryNativeShare({
-        url,
-        title: "Nyano Triad League",
-        text: "Replay share link",
-      }),
-    [],
-  );
   const showReplaySetupPanel = !isStageFocus || !sim.ok || showStageSetup;
-  const replayPageClassName = [
-    "replay-page",
-    isStageFocus
-      ? "stage-focus-root replay-page--stage-focus"
-      : isEngineFocus
-        ? "grid gap-4 replay-page--focus"
-        : "grid gap-6 replay-page--standard",
-  ].join(" ");
 
   return (
     <div
       ref={stageViewportRef}
-      className={replayPageClassName}
+      className={
+        isStageFocus
+          ? "stage-focus-root"
+          : isEngineFocus
+            ? "grid gap-4"
+            : "grid gap-6"
+      }
     >
-      {isMintTheme && !isStageFocus ? (
-        <section className="mint-replay-quicknav" aria-label="Replay quick navigation">
-          {replayQuickActions.map((action) => (
-            <GlassPanel key={action.label} variant="card" className="mint-replay-quicknav__card">
-              <MintPressable to={action.to} className="mint-replay-quicknav__action" fullWidth>
-                <MintIcon name={action.icon} size={18} />
-                <span className="mint-replay-quicknav__label">{action.label}</span>
-                <span className="mint-replay-quicknav__sub">{action.subtitle}</span>
-              </MintPressable>
-            </GlassPanel>
-          ))}
-        </section>
-      ) : null}
-      {isMintTheme && !isStageFocus ? (
-        <section className="mint-replay-summary" aria-label="Replay overview">
-          <GlassPanel variant="pill" className="mint-replay-summary__item">
-            <span className="mint-replay-summary__label">状態</span>
-            <span className="mint-replay-summary__value">{sim.ok ? "読み込み済み" : "リプレイ待機"}</span>
-          </GlassPanel>
-          <GlassPanel variant="pill" className="mint-replay-summary__item">
-            <span className="mint-replay-summary__label">進行</span>
-            <span className="mint-replay-summary__value">{step}/{stepMax}</span>
-          </GlassPanel>
-          <GlassPanel variant="pill" className="mint-replay-summary__item">
-            <span className="mint-replay-summary__label">見どころ</span>
-            <span className="mint-replay-summary__value">{highlights.length}</span>
-          </GlassPanel>
-          <GlassPanel variant="pill" className="mint-replay-summary__item">
-            <span className="mint-replay-summary__label">検証</span>
-            <span className="mint-replay-summary__value">
-              {verifyStatus === "ok" ? "検証OK" : verifyStatus === "mismatch" ? "不一致" : "未検証"}
-            </span>
-          </GlassPanel>
-          <GlassPanel variant="pill" className="mint-replay-summary__item mint-replay-summary__item--wide">
-            <span className="mint-replay-summary__label">モード</span>
-            <span className="mint-replay-summary__value">{replayModeDisplay(mode)} | {phaseInfo.label} | {isPlaying ? "再生中" : "停止中"}</span>
-          </GlassPanel>
-          <GlassPanel variant="pill" className="mint-replay-summary__item mint-replay-summary__item--wide">
-            <span className="mint-replay-summary__label">手順状態</span>
-            <span className="mint-replay-summary__value">{stepStatusText}</span>
-          </GlassPanel>
-        </section>
-      ) : null}
-      {isMintTheme && !isStageFocus ? (
-        <MintPageGuide spec={MINT_PAGE_GUIDES.replay} className="mint-replay-guide" />
-      ) : null}
-
       {isEngineFocus ? (
         <section
           className={[
-            "replay-page__focus-toolbar",
             "rounded-2xl border px-3 py-2",
             isStageFocus ? "stage-focus-toolbar" : "",
           ].filter(Boolean).join(" ")}
           aria-label={isStageFocus ? "Replay focus toolbar" : "Engine replay toolbar"}
+          style={{ background: "var(--mint-surface, #fff)", borderColor: "var(--mint-accent-muted, #A7F3D0)" }}
         >
           <div className="flex flex-wrap items-center justify-between gap-2">
-            <div className="replay-page__focus-label text-xs font-semibold">
-              Pixiフォーカス · 手順 {step}/{stepMax}
+            <div className="text-xs font-semibold" style={{ color: "var(--mint-text-secondary, #4B5563)" }}>
+              Pixi Focus Mode · step {step}/{stepMax}
             </div>
             <div className="flex flex-wrap items-center gap-2">
               {showStageToolbarTransport ? (
                 <div className="stage-focus-toolbar-actions stage-focus-toolbar-actions--replay">
                   <span className="stage-focus-toolbar-status">{stepStatusText} · {phaseInfo.label}</span>
                   <span className="stage-focus-toolbar-hint" aria-label="Replay focus toolbar hint">
-                    キー操作: ← → space [ ] · F/C/S/D/Esc
+                    hotkeys: ← → space [ ] · F/C/S/D/Esc
                   </span>
                   <button
                     className="btn btn-sm"
@@ -986,7 +1415,7 @@ export function ReplayPage() {
                     disabled={!canStepBack}
                     aria-label="Replay start from focus toolbar"
                   >
-                    先頭
+                    start
                   </button>
                   <button
                     className="btn btn-sm"
@@ -994,7 +1423,7 @@ export function ReplayPage() {
                     disabled={!canStepBack}
                     aria-label="Replay previous from focus toolbar"
                   >
-                    前へ
+                    prev
                   </button>
                   <button
                     className="btn btn-sm btn-primary"
@@ -1002,7 +1431,7 @@ export function ReplayPage() {
                     disabled={!canPlay}
                     aria-label={isPlaying ? "Pause replay from focus toolbar" : "Play replay from focus toolbar"}
                   >
-                    {isPlaying ? "停止" : "再生"}
+                    {isPlaying ? "pause" : "play"}
                   </button>
                   <button
                     className="btn btn-sm"
@@ -1010,7 +1439,7 @@ export function ReplayPage() {
                     disabled={!canStepForward}
                     aria-label="Replay next from focus toolbar"
                   >
-                    次へ
+                    next
                   </button>
                   <button
                     className="btn btn-sm"
@@ -1018,7 +1447,7 @@ export function ReplayPage() {
                     disabled={!canStepForward}
                     aria-label="Replay end from focus toolbar"
                   >
-                    末尾
+                    end
                   </button>
                   <button
                     className="btn btn-sm"
@@ -1026,7 +1455,7 @@ export function ReplayPage() {
                     disabled={highlights.length === 0}
                     aria-label="Previous highlight from focus toolbar"
                   >
-                    前の見どころ
+                    prev hl
                   </button>
                   <button
                     className="btn btn-sm"
@@ -1034,13 +1463,13 @@ export function ReplayPage() {
                     disabled={highlights.length === 0}
                     aria-label="Next highlight from focus toolbar"
                   >
-                    次の見どころ
+                    next hl
                   </button>
                   <span className="stage-focus-toolbar-hint" aria-label="Replay highlight status in focus toolbar">
                     {focusToolbarHighlightStatus}
                   </span>
                   <label className="stage-focus-toolbar-speed">
-                    速度
+                    speed
                     <select
                       className="stage-focus-toolbar-speed-select"
                       value={playbackSpeed}
@@ -1067,7 +1496,7 @@ export function ReplayPage() {
                   aria-live="polite"
                   aria-label="Replay focus action feedback"
                 >
-                  {stageActionFeedback || "準備完了"}
+                  {stageActionFeedback || "Ready"}
                 </span>
               ) : null}
               {isStageFocus ? (
@@ -1082,7 +1511,7 @@ export function ReplayPage() {
                     >
                       {STAGE_VFX_OPTIONS.map((option) => (
                         <option key={option.value} value={option.value}>
-                          {resolveStageVfxOptionLabel(option, resolvedVfxQuality)}
+                          {option.value === "auto" ? `auto (${resolvedVfxQuality})` : option.label}
                         </option>
                       ))}
                     </select>
@@ -1101,36 +1530,22 @@ export function ReplayPage() {
                     </button>
                   ) : null}
                   <button className="btn btn-sm" onClick={toggleStageFullscreenWithFeedback}>
-                    {isStageFullscreen ? "全画面解除" : "全画面"}
+                    {isStageFullscreen ? "Exit Fullscreen" : "Fullscreen"}
                   </button>
                   <button className="btn btn-sm" onClick={toggleStageTransportWithFeedback}>
-                    {showStageTransport ? "操作を隠す (Hide controls)" : "操作を表示 (Show controls)"}
+                    {showStageTransport ? "Hide controls" : "Show controls"}
                   </button>
                   <button className="btn btn-sm" onClick={toggleStageSetupWithFeedback}>
-                    {showStageSetup ? "設定を隠す" : "設定を表示"}
+                    {showStageSetup ? "Hide setup" : "Show setup"}
                   </button>
                 </>
               ) : null}
               <button className="btn btn-sm" onClick={exitFocusModeWithFeedback}>
-                フォーカス終了
+                Exit Focus
               </button>
               {sim.ok ? (
-                <button
-                  className={replayShareButtonSmClass}
-                  onClick={() => {
-                    void runReplayShareCopyAction({
-                      shareLabel: "共有URL",
-                      buildShareLink,
-                      copyWithToast,
-                      onError: (e: unknown) => toast.error("共有失敗", errorMessage(e)),
-                      shareWithNative,
-                      onShared: () => toast.success("共有しました", "Share URL"),
-                    });
-                  }}
-                  aria-label="Share URL"
-                  title="Share URL"
-                >
-                  共有URL
+                <button className="btn btn-sm" onClick={() => copyWithToast("share link", buildShareLink())}>
+                  Copy Share
                 </button>
               ) : null}
             </div>
@@ -1139,18 +1554,18 @@ export function ReplayPage() {
       ) : null}
 
       {!isEngineFocus && eventId ? (
-        <section className="card replay-page__event-card">
+        <section className="card">
           <div className="card-hd flex flex-wrap items-center justify-between gap-2">
             <div className="grid gap-1">
-              <div className="text-base font-semibold">イベントリプレイ</div>
+              <div className="text-base font-semibold">Replay Event</div>
               <div className="text-xs text-slate-500">
                 {event ? (
                   <>
-                    <span className="font-medium">{event.title}</span> | 状態: <span className="font-medium">{eventStatus}</span> | {formatEventPeriod(event)}
+                    <span className="font-medium">{event.title}</span> | status: <span className="font-medium">{eventStatus}</span> | {formatEventPeriod(event)}
                   </>
                 ) : (
                   <>
-                    eventId: <span className="font-mono">{eventId}</span>（不明）
+                    eventId: <span className="font-mono">{eventId}</span> (unknown)
                   </>
                 )}
               </div>
@@ -1158,11 +1573,11 @@ export function ReplayPage() {
 
             <div className="flex flex-wrap items-center gap-2">
               <Link className="btn no-underline" to="/events">
-                イベント一覧
+                Events
               </Link>
               {event ? (
                 <Link className="btn btn-primary no-underline" to={`/match?event=${encodeURIComponent(event.id)}&ui=${matchUi}`}>
-                  再挑戦
+                  Challenge again
                 </Link>
               ) : null}
             </div>
@@ -1173,15 +1588,15 @@ export function ReplayPage() {
               <p>{event.description}</p>
               {pointsDeltaA !== null ? (
                 <div className="rounded-lg border border-sky-200 bg-sky-50 px-3 py-2 text-xs text-sky-800">
-                  URL から確定 pointsDeltaA を検出: <span className="font-mono">{pointsDeltaA}</span>
+                  Settled pointsDeltaA detected from URL: <span className="font-mono">{pointsDeltaA}</span>
                 </div>
               ) : (
                 <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600">
-                  pointsDeltaA は未設定です。このリプレイはローカルの仮シーズンポイントで集計されます。
+                  pointsDeltaA is not set. This replay will be scored with provisional local season points.
                 </div>
               )}
               <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-700">
-                Nyanoデッキ tokenIds: <span className="font-mono">{event.nyanoDeckTokenIds.join(", ")}</span>
+                Nyano deck tokenIds: <span className="font-mono">{event.nyanoDeckTokenIds.join(", ")}</span>
               </div>
             </div>
           ) : null}
@@ -1189,71 +1604,69 @@ export function ReplayPage() {
       ) : null}
 
       {showReplaySetupPanel && (
-      <section className="card replay-page__setup-card">
+      <section className="card">
         <div className="card-hd">
-          <div className="text-base font-semibold">リプレイ読込 (Replay from transcript)</div>
+          <div className="text-base font-semibold">Replay from transcript</div>
           <div className="text-xs text-slate-500">
-            transcript JSON を貼り付けると、on-chain カード情報（読み取り専用）でリプレイできます。共有リンク <span className="font-mono">?z=...</span> / <span className="font-mono">?t=...</span> も利用でき、盤面UIは <span className="font-mono">?ui=engine</span> / <span className="font-mono">?ui=rpg</span> で切り替えられます。
+            Paste transcript JSON to replay with on-chain card metadata (read-only). You can also open share links via <span className="font-mono">?z=...</span> or <span className="font-mono">?t=...</span>, and switch board renderer with <span className="font-mono">?ui=engine</span> / <span className="font-mono">?ui=rpg</span>.
           </div>
         </div>
 
         <div className="card-bd grid gap-4">
           <div className="grid gap-2">
             <div className="flex flex-wrap items-center justify-between gap-2">
-              <div className="text-xs font-medium text-slate-600">Transcript JSON（対局ログ）</div>
+              <div className="text-xs font-medium text-slate-600">Transcript JSON</div>
 
               <div className="flex flex-wrap items-center gap-2 text-xs text-slate-600">
-                <span>モード</span>
-                <select className="select w-48" value={mode} onChange={(e) => setMode(parseReplayMode(e.target.value))}>
-                  <option value="auto">自動（登録済み rulesetId / official）</option>
-                  <option value="v1">エンジン v1 (engine v1)</option>
-                  <option value="v2">エンジン v2 (engine v2)</option>
-                  <option value="compare">比較</option>
+                <span>mode</span>
+                <select className="select w-48" value={mode} onChange={(e) => setMode(parseMode(e.target.value))}>
+                  <option value="auto">auto (rulesetId registry/official)</option>
+                  <option value="v1">engine v1</option>
+                  <option value="v2">engine v2</option>
+                  <option value="compare">compare</option>
                 </select>
-                <span>盤面UI</span>
+                <span>board</span>
                 <select
                   className="select w-40"
                   value={uiMode}
                   onChange={(e) => setReplayBoardUi(parseReplayBoardUi(e.target.value))}
                 >
-                  <option value="classic">クラシック (classic)</option>
-                  <option value="rpg">RPG (rpg)</option>
-                  <option value="engine">エンジン (engine / pixi)</option>
+                  <option value="classic">classic</option>
+                  <option value="rpg">rpg</option>
+                  <option value="engine">engine (pixi)</option>
                 </select>
                 {isEngine && compare ? (
-                  <span className="text-[11px] text-slate-500">比較モードでは classic 盤面を表示します。</span>
+                  <span className="text-[11px] text-slate-500">compare mode renders classic board.</span>
                 ) : null}
                 {isEngine && !isEngineFocus ? (
                   <div className="flex flex-wrap items-center gap-2">
                     <button className="btn btn-sm" onClick={() => setFocusMode(true)}>
-                      Pixiフォーカスへ
+                      Enter Pixi Focus
                     </button>
                     <Link className="btn btn-sm no-underline" to={stageReplayUrl}>
-                      Stageページを開く
+                      Open Stage Page
                     </Link>
                   </div>
                 ) : null}
 
                 <button className="btn btn-primary" onClick={() => load()} disabled={loading}>
-                  {loading ? "読み込み中..." : "読み込む (Load replay)"}
+                  {loading ? "Loading..." : "Load & replay"}
                 </button>
 
                 <button
-                  className={replayShareButtonClass}
+                  className="btn"
                   onClick={() => {
-                    void runReplayShareCopyAction({
-                      shareLabel: "共有URL",
-                      buildShareLink,
-                      copyWithToast,
-                      onError: (e: unknown) => setSim(buildReplaySimErrorState(errorMessage(e))),
-                      shareWithNative,
-                      onShared: () => toast.success("共有しました", "Share URL"),
-                    });
+                    void (async () => {
+                      try {
+                        const link = buildShareLink();
+                        await copyWithToast("share link", link);
+                      } catch (e: unknown) {
+                        setSim({ ok: false, error: errorMessage(e) });
+                      }
+                    })();
                   }}
-                  aria-label="Share URL"
-                  title="Share URL"
                 >
-                  共有URL
+                  Copy share link
                 </button>
 
                 {eventId ? (
@@ -1264,14 +1677,17 @@ export function ReplayPage() {
                         className="btn"
                         disabled={!sim.ok || saved}
                         onClick={() => {
-                          void runReplaySaveAttemptAction({
-                            saveToMyAttempts,
-                            onSuccess: () => toast.success("保存しました", "My Attempts に追加しました"),
-                            onError: (e: unknown) => setSim(buildReplaySimErrorState(errorMessage(e))),
-                          });
+                          (async () => {
+                            try {
+                              await saveToMyAttempts();
+                              toast.success("Saved", "Added to My Attempts");
+                            } catch (e: unknown) {
+                              setSim({ ok: false, error: errorMessage(e) });
+                            }
+                          })();
                         }}
                       >
-                        {saved ? "保存済み" : "保存"}
+                        {saved ? "Saved" : "Save"}
                       </button>
                     );
                   })()
@@ -1286,14 +1702,14 @@ export function ReplayPage() {
               rows={10}
               value={text}
               onChange={(e) => setText(e.target.value)}
-              placeholder="Playground の transcript JSON を貼り付けるか、共有リンクを開いてください。"
+              placeholder="Paste transcript JSON from Playground, or open a share link."
             />
 
             <div className="mt-3">
-              <Disclosure title={<span>配信連携ツール（オーバーレイ連携）(Streamer tools / Overlay)</span>}>
-                <div className="grid grid-cols-1 gap-3">
+              <Disclosure title={<span>Streamer tools (Overlay)</span>}>
+                <div className="grid gap-3">
                   <div className="text-xs text-slate-600">
-                    <span className="font-mono">{overlayPath}</span> を開くと、リプレイの <span className="font-mono">手順 (step)</span> 移動とオーバーレイスナップショットが同期されます。
+                    Open <span className="font-mono">{overlayPath}</span>, then moving replay <span className="font-mono">step</span> will sync the overlay snapshot.
                   </div>
 
                   <div className="flex flex-wrap items-center gap-2">
@@ -1303,11 +1719,11 @@ export function ReplayPage() {
                         checked={broadcastOverlay}
                         onChange={(e) => setBroadcastOverlayWithUrl(e.target.checked)}
                       />
-                      オーバーレイへ送信（手順同期）
+                      Broadcast to overlay (sync step)
                     </label>
 
                     <button className="btn btn-sm" onClick={() => pushOverlay()}>
-                      スナップショット送信
+                      Send snapshot
                     </button>
 
                     <a
@@ -1316,26 +1732,21 @@ export function ReplayPage() {
                       target="_blank"
                       rel="noreferrer noopener"
                     >
-                      オーバーレイを開く (Open Overlay)
+                      Open overlay
                     </a>
 
                     <button
                       className="btn btn-sm"
                       onClick={() => {
-                        void runReplayCopyAction({
-                          label: "overlay URL",
-                          resolveValue: () => overlayUrl,
-                          copyWithToast,
-                          onError: (e: unknown) => toast.error("コピー失敗", errorMessage(e)),
-                        });
+                        void copyWithToast("overlay URL", overlayUrl);
                       }}
                     >
-                      Overlay URLをコピー
+                      Copy overlay URL
                     </button>
                   </div>
 
                   <div className="text-[11px] text-slate-500">
-                    ヒント: <span className="font-mono">{replayBroadcastPath}</span> を開くと手順同期ONで開始できます。
+                    Tip: open <span className="font-mono">{replayBroadcastPath}</span> to start with overlay step sync enabled.
                   </div>
                 </div>
               </Disclosure>
@@ -1345,39 +1756,57 @@ export function ReplayPage() {
 
             {!sim.ok && sim.error ? (
               <div className="rounded-lg border border-rose-200 bg-rose-50 p-3 text-sm text-rose-800">
-                <div className="font-medium">エラー / Error: {sim.error}</div>
+                <div className="font-medium">Error: {sim.error}</div>
                 <div className="mt-1 text-xs text-rose-700">
                   {hasSharePayload
-                    ? "共有リンクが無効または不完全の可能性があります。再読込するか、共有パラメータを消して transcript JSON を貼り付けてください。"
-                    : "transcript JSON を確認して再読込してください。"}
+                    ? "This share link may be invalid or incomplete. Retry loading, or clear share params and paste transcript JSON."
+                    : "Check transcript JSON and retry loading."}
                 </div>
                 <div className="mt-2 flex flex-wrap items-center gap-2">
                   <button
                     className="btn btn-sm"
-                    onClick={handleRetryLoad}
+                    onClick={() => {
+                      void (async () => {
+                        const decoded = decodeReplaySharePayload(searchParams);
+                        if (decoded.kind === "error") {
+                          setSim({ ok: false, error: decoded.error });
+                          return;
+                        }
+                        if (decoded.kind === "ok") {
+                          setText(decoded.text);
+                          await load({ text: decoded.text, mode, step });
+                          return;
+                        }
+                        await load();
+                      })();
+                    }}
                     disabled={loading}
                   >
-                    {loading ? "再試行中... (Retrying...)" : "再試行 (Retry load)"}
+                    {loading ? "Retrying..." : "Retry load"}
                   </button>
                   {hasSharePayload ? (
                     <button
                       className="btn btn-sm"
-                      onClick={handleClearShareParams}
+                      onClick={() => {
+                        const next = stripReplayShareParams(searchParams);
+                        setSearchParams(next, { replace: true });
+                        setSim({ ok: false, error: "Paste transcript JSON and load." });
+                      }}
                     >
-                      共有パラメータをクリア (Clear share params)
+                      Clear share params
                     </button>
                   ) : null}
                   <Link className="btn btn-sm no-underline" to="/">
-                    ホーム
+                    Home
                   </Link>
                 </div>
               </div>
             ) : null}
 
             <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500">
-              <span className="kbd">Left</span>/<span className="kbd">Right</span> 手順移動
-              <span className="kbd">Space</span> 再生/停止
-              <span className="kbd">Home</span>/<span className="kbd">End</span> 先頭/末尾
+              <span className="kbd">Left</span>/<span className="kbd">Right</span> step
+              <span className="kbd">Space</span> play/pause
+              <span className="kbd">Home</span>/<span className="kbd">End</span> jump
             </div>
           </div>
         </div>
@@ -1385,13 +1814,13 @@ export function ReplayPage() {
       )}
 
       {isEngineFocus && !sim.ok ? (
-        <section className="replay-page__focus-empty rounded-2xl border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">
+        <section className="rounded-2xl border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">
           <div className="flex flex-wrap items-center justify-between gap-2">
-            <div>Pixiフォーカスはリプレイ読込後に利用できます。先に transcript を読み込むか、フォーカスを終了してください。(Pixi focus needs a loaded replay)</div>
+            <div>Pixi focus needs a loaded replay. Load transcript first, or exit focus mode.</div>
             <div className="flex flex-wrap items-center gap-2">
-              <button className="btn btn-sm" onClick={() => setFocusMode(false)}>フォーカス終了</button>
+              <button className="btn btn-sm" onClick={() => setFocusMode(false)}>Exit Focus</button>
               <button className="btn btn-sm btn-primary" onClick={() => load()} disabled={loading}>
-                {loading ? "読み込み中..." : "再読込"}
+                {loading ? "Loading..." : "Load replay"}
               </button>
             </div>
           </div>
@@ -1401,7 +1830,7 @@ export function ReplayPage() {
       {sim.ok ? (
         <>
           {step >= 9 ? (
-            <section className="animate-banner-enter replay-page__result-banner">
+            <section className="animate-banner-enter">
               <div className="relative overflow-hidden rounded-2xl border-2 border-surface-200 bg-white shadow-soft">
                 {sim.current.winner !== null ? (
                   <div
@@ -1422,71 +1851,58 @@ export function ReplayPage() {
                   />
                   <div className="flex flex-wrap items-center justify-between gap-2 border-t border-surface-100 bg-surface-50/80 px-4 py-3">
                     <div className="text-xs text-slate-600">
-                      <span className="font-medium">完了</span> | 手順 {step}/{stepMax}
+                      <span className="font-medium">Finished</span> | step {step}/{stepMax}
                     </div>
                     <div className="flex flex-wrap items-center gap-2">
                       <button
                         className="btn btn-sm"
-                        onClick={() => {
-                          void runReplayCopyAction({
-                            label: "matchId",
-                            resolveValue: () => sim.current.matchId,
-                            copyWithToast,
-                            onError: (e: unknown) => toast.error("コピー失敗", errorMessage(e)),
-                          });
-                        }}
+                        onClick={() => copyWithToast("matchId", sim.current.matchId)}
                       >
-                        matchIdをコピー
+                        Copy matchId
                       </button>
                       <button
                         className={`btn btn-sm ${verifyStatus === "ok" ? "border-emerald-400 bg-emerald-50 text-emerald-700" : verifyStatus === "mismatch" ? "btn-danger" : ""}`}
                         onClick={handleVerify}
                       >
-                        {verifyStatus === "ok" ? "検証OK" : verifyStatus === "mismatch" ? "不一致!" : "検証"}
+                        {verifyStatus === "ok" ? "Verified" : verifyStatus === "mismatch" ? "Mismatch!" : "Verify"}
                       </button>
                       <button
                         className="btn btn-sm"
-                        onClick={() => {
-                          void runReplayCopyAction({
-                            label: "transcript",
-                            resolveValue: () => stringifyWithBigInt(sim.transcript),
-                            copyWithToast,
-                            onError: (e: unknown) => toast.error("コピー失敗", errorMessage(e)),
-                          });
-                        }}
+                        onClick={() => copyWithToast("transcript", stringifyWithBigInt(sim.transcript))}
                       >
-                        対局ログをコピー (Transcript)
+                        Copy transcript
                       </button>
                       <button
-                        className={replaySharePrimaryButtonSmClass}
+                        className="btn btn-sm btn-primary"
                         onClick={() => {
-                          void runReplayShareCopyAction({
-                            shareLabel: "共有URL",
-                            buildShareLink,
-                            copyWithToast,
-                            onError: (e: unknown) => toast.error("共有失敗", errorMessage(e)),
-                            shareWithNative,
-                            onShared: () => toast.success("共有しました", "Share URL"),
-                          });
+                          void (async () => {
+                            try {
+                              const link = buildShareLink();
+                              await copyWithToast("share link", link);
+                            } catch (e: unknown) {
+                              toast.error("Share failed", errorMessage(e));
+                            }
+                          })();
                         }}
-                        aria-label="Share URL"
-                        title="Share URL"
                       >
-                        共有
+                        Share
                       </button>
                       {eventId ? (
                         <button
                           className="btn btn-sm"
                           disabled={hasEventAttempt(eventId, sim.current.matchId)}
                           onClick={() => {
-                            void runReplaySaveAttemptAction({
-                              saveToMyAttempts,
-                              onSuccess: () => toast.success("保存しました", "My Attempts に追加しました"),
-                              onError: (e: unknown) => setSim(buildReplaySimErrorState(errorMessage(e))),
-                            });
+                            (async () => {
+                              try {
+                                await saveToMyAttempts();
+                                toast.success("Saved", "Added to My Attempts");
+                              } catch (e: unknown) {
+                                setSim({ ok: false, error: errorMessage(e) });
+                              }
+                            })();
                           }}
                         >
-                          {hasEventAttempt(eventId, sim.current.matchId) ? "保存済み" : "保存"}
+                          {hasEventAttempt(eventId, sim.current.matchId) ? "Saved" : "Save"}
                         </button>
                       ) : null}
                     </div>
@@ -1497,15 +1913,16 @@ export function ReplayPage() {
           ) : null}
 
           <section
-            className={[
-              "replay-page__main",
-              isEngineFocus ? "grid gap-4" : "grid gap-6 lg:grid-cols-2",
-            ].join(" ")}
+            className={
+              isEngineFocus
+                ? "grid gap-4"
+                : "grid gap-6 lg:grid-cols-2"
+            }
           >
-            <div className="card replay-page__board-card">
+            <div className="card">
               <div className="card-hd replay-header-grid">
                 <div className="flex items-center gap-3">
-                  <div className="text-base font-semibold">リプレイ</div>
+                  <div className="text-base font-semibold">Replay</div>
                   <div className="text-xs text-slate-500">{sim.currentRulesetLabel}</div>
                   <div className="text-xs text-slate-500">
                     step {step}/{stepMax}
@@ -1517,7 +1934,7 @@ export function ReplayPage() {
                         diverged ? "border-amber-300 bg-amber-50 text-amber-800" : "border-slate-200 bg-slate-50 text-slate-600",
                       ].join(" ")}
                     >
-                      {diverged ? "差分あり" : "一致"}
+                      {diverged ? "diverged" : "same"}
                     </span>
                   ) : null}
                 </div>
@@ -1530,9 +1947,9 @@ export function ReplayPage() {
                         setStep(0);
                       }}
                       disabled={!canStepBack}
-                      title="先頭へ移動"
+                      title="Jump to start"
                     >
-                      先頭
+                      start
                     </button>
                     <button
                       className={replayTransportButtonClass}
@@ -1543,17 +1960,17 @@ export function ReplayPage() {
                       disabled={!canStepBack}
                       aria-label="Previous step"
                     >
-                      前へ
+                      prev
                     </button>
 
                     <button
                       className={replayTransportPrimaryButtonClass}
                       onClick={() => setIsPlaying((p) => !p)}
                       disabled={!canPlay}
-                      title="自動再生"
+                      title="Auto play"
                       aria-label={isPlaying ? "Pause replay" : "Play replay"}
                     >
-                      {isPlaying ? "停止" : "再生"}
+                      {isPlaying ? "pause" : "play"}
                     </button>
 
                     <button
@@ -1565,7 +1982,7 @@ export function ReplayPage() {
                       disabled={!canStepForward}
                       aria-label="Next step"
                     >
-                      次へ
+                      next
                     </button>
 
                     <button
@@ -1575,13 +1992,13 @@ export function ReplayPage() {
                         setStep(stepMax);
                       }}
                       disabled={!canStepForward}
-                      title="末尾へ移動"
+                      title="Jump to end"
                     >
-                      末尾
+                      end
                     </button>
 
                     <label className="replay-speed">
-                      速度
+                      speed
                       <select
                         className={replaySpeedSelectClass}
                         value={playbackSpeed}
@@ -1605,14 +2022,14 @@ export function ReplayPage() {
                       isStageFocus ? "stage-focus-side-panel stage-focus-side-panel--muted" : "",
                     ].filter(Boolean).join(" ")}
                   >
-                    board focus 中はリプレイ操作を非表示にしています。(Replay controls are hidden for board focus.)
+                    Replay controls are hidden for board focus.
                   </div>
                 )}
               </div>
 
               <div className={["card-bd grid gap-4", isStageFocus ? "stage-focus-arena-inner stage-focus-replay-shell" : ""].filter(Boolean).join(" ")}>
                 <div className="sr-only" aria-live="polite">
-                  {`${stepStatusText}。${phaseInfo.label}フェーズ。進行率 ${stepProgress} パーセント。`}
+                  {`${stepStatusText}. ${phaseInfo.label} phase. Progress ${stepProgress} percent.`}
                 </div>
                 {compare ? (
                   <div className="grid gap-6 md:grid-cols-2">
@@ -1626,7 +2043,7 @@ export function ReplayPage() {
                 {isStageFocus ? (
                   <div className="flex justify-end">
                     <button className={replayTransportButtonClass} onClick={toggleStagePanelsWithFeedback}>
-                      {showStagePanels ? "タイムライン/詳細を隠す" : "タイムライン/詳細を表示"}
+                      {showStagePanels ? "Hide timeline/details" : "Show timeline/details"}
                     </button>
                   </div>
                 ) : null}
@@ -1636,7 +2053,7 @@ export function ReplayPage() {
                     <div className={["replay-timeline-shell", isStageFocus ? "stage-focus-side-panel stage-focus-side-panel--timeline" : ""].filter(Boolean).join(" ")}>
                       <div className="replay-timeline-head">
                         <div className="flex flex-wrap items-center gap-2">
-                          <span className="replay-step-pill">{step === 0 ? "初期盤面" : `${step}手目の後`}</span>
+                          <span className="replay-step-pill">{step === 0 ? "Initial board" : `After turn ${step}`}</span>
                           <span className={`replay-phase replay-phase--${phaseInfo.tone}`}>{phaseInfo.label}</span>
                           <span className="text-xs text-slate-500">
                             {step}/{stepMax} | {stepProgress}%
@@ -1648,22 +2065,22 @@ export function ReplayPage() {
                               className={replayTransportButtonClass}
                               onClick={jumpToPrevHighlight}
                               disabled={highlights.length === 0}
-                              title="前の見どころ ([)"
+                              title="Previous highlight ([)"
                             >
-                              前
+                              Prev
                             </button>
                             <span className="replay-highlight-index">
                               {currentHighlightIdx >= 0
                                 ? `${currentHighlightIdx + 1}/${highlights.length}`
-                                : `${highlights.length}件の見どころ`}
+                                : `${highlights.length} highlights`}
                             </span>
                             <button
                               className={replayTransportButtonClass}
                               onClick={jumpToNextHighlight}
                               disabled={highlights.length === 0}
-                              title="次の見どころ (])"
+                              title="Next highlight (])"
                             >
-                              次
+                              Next
                             </button>
                           </div>
                         ) : null}
@@ -1689,8 +2106,8 @@ export function ReplayPage() {
                             className="replay-highlight-marker"
                             data-kind={highlight.kind}
                             style={{ left: `${(highlight.step / stepMax) * 100}%` }}
-                            title={`${highlight.step}手目: ${highlight.label}`}
-                            aria-label={`${highlight.step}手目へ移動 (${replayHighlightKindLabel(highlight.kind)})`}
+                            title={`Turn ${highlight.step}: ${highlight.label}`}
+                            aria-label={`Jump to turn ${highlight.step} (${replayHighlightKindLabel(highlight.kind)})`}
                             onClick={() => { setIsPlaying(false); setStep(highlight.step); }}
                           />
                         ))}
@@ -1714,15 +2131,15 @@ export function ReplayPage() {
                           })}
                         </div>
                       ) : (
-                        <div className="text-xs text-slate-500">まだ戦術ハイライトはありません。</div>
+                        <div className="text-xs text-slate-500">No tactical highlights yet.</div>
                       )}
                       <div className="text-[11px] text-slate-500">
-                        キー操作: <span className="font-mono">[</span>/<span className="font-mono">]</span> で見どころ移動、<span className="font-mono">Space</span> で再生/停止。
+                        Keyboard: <span className="font-mono">[</span>/<span className="font-mono">]</span> jump highlights, <span className="font-mono">Space</span> play/pause.
                       </div>
 
                       {activeHighlights.length > 0 ? (
                         <div className="replay-highlight-callout">
-                          <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">現在の注目ポイント</div>
+                          <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Now highlighted</div>
                           <div className="mt-1 flex flex-wrap gap-1.5">
                             {activeHighlights.map((highlight, i) => (
                               <span
@@ -1741,89 +2158,61 @@ export function ReplayPage() {
                     <div className={["rounded-lg border border-slate-200 bg-white p-3 text-sm", isStageFocus ? "stage-focus-side-panel" : ""].filter(Boolean).join(" ")}>
                       <div className="flex flex-wrap items-center justify-between gap-2">
                         <div className="font-medium">
-                          現在の勝者: {formatReplayWinnerLabel(sim.current.winner)} | タイル A:{sim.current.tiles.A} / B:{sim.current.tiles.B}
+                          current winner: {formatReplayWinnerLabel(sim.current.winner)} | tiles A:{sim.current.tiles.A} / B:{sim.current.tiles.B}
                         </div>
-                        <div className="text-xs text-slate-500">タイブレーク: {sim.current.tieBreak}</div>
+                        <div className="text-xs text-slate-500">tieBreak: {sim.current.tieBreak}</div>
                       </div>
 
-                      <div className="mt-2 grid min-w-0 gap-2 text-xs text-slate-600">
-                        <div className="min-w-0">
-                          <span className="font-medium">rulesetId</span>: <code className="font-mono break-all">{sim.transcript.header.rulesetId}</code>
+                      <div className="mt-2 grid gap-2 text-xs text-slate-600">
+                        <div>
+                          <span className="font-medium">rulesetId</span>: <code>{sim.transcript.header.rulesetId}</code>
                         </div>
-                        {sim.rulesetIdMismatchWarning ? (
-                          <div
-                            className="rounded-md border border-amber-300 bg-amber-50 px-2 py-1 text-[11px] font-medium text-amber-800"
-                            data-testid="replay-ruleset-mismatch-warning"
-                          >
-                            {sim.rulesetIdMismatchWarning}
-                          </div>
-                        ) : null}
                         {replayClassicSwap ? (
                           <div>
-                            <span className="font-medium">classic swap（入替）</span>: A{replayClassicSwap.aIndex + 1} ↔ B{replayClassicSwap.bIndex + 1}
+                            <span className="font-medium">classic swap</span>: A{replayClassicSwap.aIndex + 1} ↔ B{replayClassicSwap.bIndex + 1}
                           </div>
                         ) : null}
                         {replayClassicOpen ? (
                           <div>
-                            <span className="font-medium">classic open（公開）</span>: {replayClassicOpen.mode === "all_open"
-                              ? "全カード公開"
+                            <span className="font-medium">classic open</span>: {replayClassicOpen.mode === "all_open"
+                              ? "all cards revealed"
                               : `A[${formatClassicOpenSlots(replayClassicOpen.playerA)}] / B[${formatClassicOpenSlots(replayClassicOpen.playerB)}]`}
                           </div>
                         ) : null}
-                        <div className="flex min-w-0 flex-wrap items-center gap-2">
-                          <span className="font-medium">matchId</span>: <code className="font-mono break-all">{sim.current.matchId}</code>
-                          {verifyStatus === "ok" && <span className="text-emerald-600 font-semibold" title="リプレイ検証OK">検証OK</span>}
-                          {verifyStatus === "mismatch" && <span className="text-red-600 font-semibold" title="リプレイ不一致">不一致</span>}
+                        <div className="flex items-center gap-2">
+                          <span className="font-medium">matchId</span>: <code>{sim.current.matchId}</code>
+                          {verifyStatus === "ok" && <span className="text-emerald-600 font-semibold" title="Replay verified">Verified</span>}
+                          {verifyStatus === "mismatch" && <span className="text-red-600 font-semibold" title="Replay mismatch">Mismatch</span>}
                         </div>
                       </div>
 
                       <div className="mt-3 flex flex-wrap items-center gap-2">
-                        <button
-                          className="btn"
-                          onClick={() => {
-                            void runReplayCopyAction({
-                              label: "transcript",
-                              resolveValue: () => stringifyWithBigInt(sim.transcript),
-                              copyWithToast,
-                              onError: (e: unknown) => toast.error("コピー失敗", errorMessage(e)),
-                            });
-                          }}
-                        >
-                          対局ログJSONをコピー (transcript JSON)
+                        <button className="btn" onClick={() => copyWithToast("transcript", stringifyWithBigInt(sim.transcript))}>
+                          Copy transcript JSON
                         </button>
-                        <button
-                          className="btn"
-                          onClick={() => {
-                            void runReplayCopyAction({
-                              label: "result",
-                              resolveValue: () => stringifyWithBigInt(sim.current),
-                              copyWithToast,
-                              onError: (e: unknown) => toast.error("コピー失敗", errorMessage(e)),
-                            });
-                          }}
-                        >
-                          結果JSONをコピー (result JSON)
+                        <button className="btn" onClick={() => copyWithToast("result", stringifyWithBigInt(sim.current))}>
+                          Copy result JSON
                         </button>
                         <button
                           className={`btn ${verifyStatus === "ok" ? "border-emerald-400 bg-emerald-50 text-emerald-700" : verifyStatus === "mismatch" ? "btn-danger" : ""}`}
                           onClick={handleVerify}
                         >
-                          {verifyStatus === "ok" ? "検証OK" : verifyStatus === "mismatch" ? "不一致!" : "リプレイ検証"}
+                          {verifyStatus === "ok" ? "Verified" : verifyStatus === "mismatch" ? "Mismatch!" : "Verify Replay"}
                         </button>
                       </div>
 
                       <div className="mt-3">
-                        <Disclosure title={<span>詳細JSONを表示</span>}>
-                          <div className="grid grid-cols-1 gap-3">
-                            <div className="min-w-0">
-                              <div className="text-xs font-medium text-slate-600">対局ログ (transcript)</div>
-                              <pre className="mt-1 w-full max-w-full overflow-x-auto rounded-xl border border-slate-200 bg-white/70 p-3 text-xs">
+                        <Disclosure title={<span>Show raw JSON (debug)</span>}>
+                          <div className="grid gap-3">
+                            <div>
+                              <div className="text-xs font-medium text-slate-600">transcript</div>
+                              <pre className="mt-1 overflow-x-auto rounded-xl border border-slate-200 bg-white/70 p-3 text-xs">
                                 {stringifyWithBigInt(sim.transcript)}
                               </pre>
                             </div>
-                            <div className="min-w-0">
-                              <div className="text-xs font-medium text-slate-600">結果 (result)</div>
-                              <pre className="mt-1 w-full max-w-full overflow-x-auto rounded-xl border border-slate-200 bg-white/70 p-3 text-xs">
+                            <div>
+                              <div className="text-xs font-medium text-slate-600">result</div>
+                              <pre className="mt-1 overflow-x-auto rounded-xl border border-slate-200 bg-white/70 p-3 text-xs">
                                 {stringifyWithBigInt(sim.current)}
                               </pre>
                             </div>
@@ -1837,10 +2226,10 @@ export function ReplayPage() {
             </div>
 
             {!isEngineFocus && (
-            <div className="card replay-page__turnlog-card">
+            <div className="card">
               <div className="card-hd">
-                <div className="text-base font-semibold">ターンログ</div>
-                <div className="text-xs text-slate-500">ターンをクリックすると、その手順へ移動します。</div>
+                <div className="text-base font-semibold">Turn log</div>
+                <div className="text-xs text-slate-500">Click a turn to jump the replay step.</div>
               </div>
               <div className="card-bd replay-turnlog-body">
                 <TurnLog
@@ -1857,10 +2246,10 @@ export function ReplayPage() {
           </section>
 
           {!isEngineFocus && (
-          <section className="card replay-page__deck-card">
+          <section className="card">
             <div className="card-hd">
-              <div className="text-base font-semibold">デッキ確認</div>
-              <div className="text-xs text-slate-500">on-chain データから読み込んだ読み取り専用デッキです。</div>
+              <div className="text-base font-semibold">Deck inspector</div>
+              <div className="text-xs text-slate-500">Read-only deck cards loaded from on-chain data.</div>
               {replayClassicOpen?.mode === "three_open" ? (
                 <label className="mt-2 inline-flex items-center gap-2 text-xs text-slate-600">
                   <input
@@ -1868,19 +2257,19 @@ export function ReplayPage() {
                     checked={replayRevealHiddenSlots}
                     onChange={(e) => setReplayRevealHiddenSlots(e.target.checked)}
                   />
-                  非公開スロットを表示（対戦後分析）
+                  Show hidden slots (post-match analysis)
                 </label>
               ) : null}
             </div>
 
             <div className="card-bd grid gap-6 md:grid-cols-2">
               <div className="grid gap-2">
-                <div className="text-xs font-medium text-slate-600">プレイヤーA デッキ</div>
+                <div className="text-xs font-medium text-slate-600">playerA deck</div>
                 {replayClassicOpen ? (
                   <div className="text-[11px] text-slate-500">
                     {replayClassicOpen.mode === "all_open"
-                      ? "Openルール: 全カード公開"
-                      : `Openルール: スロット ${formatClassicOpenSlots(replayClassicOpen.playerA)} を公開`}
+                      ? "Open rule: all cards revealed"
+                      : `Open rule: slots ${formatClassicOpenSlots(replayClassicOpen.playerA)} revealed`}
                   </div>
                 ) : null}
                 <div className="deck-preview-grid grid grid-cols-3 gap-2 sm:grid-cols-5">
@@ -1896,12 +2285,12 @@ export function ReplayPage() {
               </div>
 
               <div className="grid gap-2">
-                <div className="text-xs font-medium text-slate-600">プレイヤーB デッキ</div>
+                <div className="text-xs font-medium text-slate-600">playerB deck</div>
                 {replayClassicOpen ? (
                   <div className="text-[11px] text-slate-500">
                     {replayClassicOpen.mode === "all_open"
-                      ? "Openルール: 全カード公開"
-                      : `Openルール: スロット ${formatClassicOpenSlots(replayClassicOpen.playerB)} を公開`}
+                      ? "Open rule: all cards revealed"
+                      : `Open rule: slots ${formatClassicOpenSlots(replayClassicOpen.playerB)} revealed`}
                   </div>
                 ) : null}
                 <div className="deck-preview-grid grid grid-cols-3 gap-2 sm:grid-cols-5">
@@ -1918,10 +2307,10 @@ export function ReplayPage() {
 
               <div className="md:col-span-2 grid gap-2 text-xs text-slate-600">
                 <div className="rounded-lg border border-slate-200 bg-white p-3">
-                  <div className="font-medium text-slate-700">所有者一覧（読み取り専用）</div>
+                  <div className="font-medium text-slate-700">owners (read-only)</div>
                   {shouldMaskReplayDeckSlots ? (
                     <div className="mt-2 text-[11px] text-slate-500">
-                      Three Open により非表示です。「非公開スロットを表示」をONにすると所有者対応を確認できます。
+                      Hidden by Three Open. Enable "Show hidden slots" to inspect full owner mapping.
                     </div>
                   ) : (
                     <div className="mt-2 grid max-h-56 gap-1 overflow-auto font-mono">

@@ -13,8 +13,7 @@
     "lint:fix": "eslint src --fix",
     "format": "prettier --write src",
     "typecheck": "tsc --noEmit",
-    "e2e": "playwright test",
-    "e2e:ux": "playwright test e2e/ux-guardrails.spec.ts e2e/mint-stage-visual-guardrails.spec.ts e2e/engine-stage-visual-regression.spec.ts e2e/rulesets-ux-guardrails.spec.ts e2e/match-setup-ux-guardrails.spec.ts e2e/replay-ruleset-fallback-guardrails.spec.ts"
+    "e2e": "playwright test"
   },
   "dependencies": {
     "@nyano/triad-engine": "workspace:*",

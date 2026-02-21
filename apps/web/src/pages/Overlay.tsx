@@ -34,6 +34,7 @@ import {
 } from "@/lib/streamer_bus";
 import { readStringSetting, writeStringSetting } from "@/lib/local_settings";
 import { appAbsoluteUrl, appPath } from "@/lib/appUrl";
+import { resolveClassicMetadataFromOverlayState } from "@/lib/classic_ruleset_visibility";
 import type { CardData, FlipTraceV1, PlayerIndex } from "@nyano/triad-engine";
 
 // ── Overlay Theme System ──────────────────────────────────────────────
@@ -174,6 +175,14 @@ function sideLabel(side: PlayerSide | null): "A" | "B" | null {
   return null;
 }
 
+function formatClassicOpenSlots(indices: readonly number[]): string {
+  return indices.map((idx) => String(idx + 1)).join(", ");
+}
+
+function formatClassicSwapSlots(aIndex: number, bIndex: number): string {
+  return `A${aIndex + 1} <-> B${bIndex + 1}`;
+}
+
 export function OverlayPage() {
   const [searchParams] = useSearchParams();
   const controls = searchParams.get("controls") !== "0";
@@ -305,6 +314,8 @@ export function OverlayPage() {
   const toPlayLabel = sideLabel(toPlay);
 
   const strictAllowed = React.useMemo(() => computeStrictAllowed(state), [state]);
+  const overlayClassic = React.useMemo(() => resolveClassicMetadataFromOverlayState(state), [state]);
+  const overlayClassicOpen = overlayClassic?.open ?? null;
 
   const lastCell = typeof state?.lastMove?.cell === "number" ? state.lastMove.cell : null;
   const markCell = typeof state?.lastMove?.warningMarkCell === "number" ? state.lastMove.warningMarkCell : null;
@@ -665,6 +676,21 @@ export function OverlayPage() {
                   </span>
                 ) : null}
               </div>
+              {overlayClassicOpen ? (
+                <div className={controls ? "mt-1 text-xs text-slate-500" : "mt-1 ol-detail-text text-slate-300"}>
+                  Classic Open:{" "}
+                  <span className="font-mono">
+                    {overlayClassicOpen.mode === "all_open"
+                      ? "all cards revealed"
+                      : `A[${formatClassicOpenSlots(overlayClassicOpen.playerA)}] / B[${formatClassicOpenSlots(overlayClassicOpen.playerB)}]`}
+                  </span>
+                </div>
+              ) : null}
+              {overlayClassic?.swap ? (
+                <div className={controls ? "mt-1 text-xs text-slate-500" : "mt-1 ol-detail-text text-slate-300"}>
+                  Classic Swap: <span className="font-mono">{formatClassicSwapSlots(overlayClassic.swap.aIndex, overlayClassic.swap.bIndex)}</span>
+                </div>
+              ) : null}
 
               <div className="mt-2" style={{ fontSize: controls ? undefined : "var(--ol-score, 22px)" }}>
                 <ScoreBar

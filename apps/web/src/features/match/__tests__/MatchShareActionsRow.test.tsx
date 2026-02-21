@@ -100,6 +100,7 @@ describe("features/match/MatchShareActionsRow", () => {
     });
     expect(collectElementsByClass(lockedTree, "mint-share-actions__hint")).toHaveLength(1);
     expect(collectElementsByClass(lockedTree, "mint-share-actions__ready")).toHaveLength(0);
+    expect(collectElementsByClass(lockedTree, "mint-share-actions__status")).toHaveLength(1);
     expect(collectElementsByClass(lockedTree, "mint-share-actions__row--ready")).toHaveLength(0);
 
     const readyTree = MatchShareActionsRow({
@@ -112,6 +113,7 @@ describe("features/match/MatchShareActionsRow", () => {
     });
     expect(collectElementsByClass(readyTree, "mint-share-actions__hint")).toHaveLength(0);
     expect(collectElementsByClass(readyTree, "mint-share-actions__ready")).toHaveLength(1);
+    expect(collectElementsByClass(readyTree, "mint-share-actions__status")).toHaveLength(1);
     expect(collectElementsByClass(readyTree, "mint-share-actions__row--ready")).toHaveLength(1);
   });
 });

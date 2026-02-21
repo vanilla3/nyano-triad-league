@@ -95,60 +95,18 @@ test.describe("stage routes", () => {
     await expect(page.getByLabel("Commit move from focus hand dock")).toBeVisible({ timeout: 10_000 });
   });
 
-  test("/battle-stage keeps dock commit action visible on desktop", async ({ page }) => {
+  test("/battle-stage keeps top commit action visible on desktop", async ({ page }) => {
     await page.setViewportSize({ width: 1366, height: 768 });
     await page.goto("/battle-stage?mode=guest&opp=vs_nyano_ai&ai=normal&rk=v2&ui=engine&focus=1&fpm=manual&fp=0");
 
-    const dockCommitVisible = page.locator('button[aria-label="Commit move from focus hand dock"]:visible').first();
-    await expect(dockCommitVisible).toBeVisible({ timeout: 10_000 });
-    await expect(page.getByLabel("Focus dock warning mark cell")).toBeVisible({ timeout: 10_000 });
-    await expect(page.getByLabel("Battle focus toolbar hint")).toHaveCount(0);
-
-    const retryPixiButton = page.getByLabel("Retry Pixi renderer");
-    if (!(await retryPixiButton.isVisible().catch(() => false))) {
-      const board = page.getByLabel("Game board (engine renderer)");
-      await expect(board).toBeVisible({ timeout: 10_000 });
-      await expect(board).toBeInViewport();
-    }
+    const toolbarCommit = page.getByLabel("Commit move from focus toolbar");
+    await expect(toolbarCommit).toBeVisible({ timeout: 10_000 });
+    await expect(toolbarCommit).toBeInViewport();
+    await expect(page.getByLabel("Warning mark from focus toolbar")).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByLabel("Battle focus toolbar hint")).toBeVisible({ timeout: 10_000 });
 
     const overflowPx = await readHorizontalOverflowPx(page);
     expect(overflowPx).toBeLessThanOrEqual(1);
-  });
-
-  test("/battle-stage keeps commentary/status stack above board and hand dock", async ({ page }) => {
-    await page.setViewportSize({ width: 1366, height: 768 });
-    await page.goto("/battle-stage?mode=guest&opp=vs_nyano_ai&ai=normal&rk=v2&ui=engine&focus=1&fpm=manual&fp=0");
-
-    const announcer = page.locator(".stage-focus-announcer-stack").first();
-    const boardShell = page.locator(".stage-focus-board-shell").first();
-    const handDock = page.locator(".mint-focus-hand-dock--stage").first();
-
-    await expect(announcer).toBeVisible({ timeout: 10_000 });
-    await expect(boardShell).toBeVisible({ timeout: 10_000 });
-    await expect(handDock).toBeVisible({ timeout: 10_000 });
-
-    const verticalOrder = await page.evaluate(() => {
-      const announcerEl = document.querySelector<HTMLElement>(".stage-focus-announcer-stack");
-      const boardShellEl = document.querySelector<HTMLElement>(".stage-focus-board-shell");
-      const handDockEl = document.querySelector<HTMLElement>(".mint-focus-hand-dock--stage");
-      if (!announcerEl || !boardShellEl || !handDockEl) return null;
-      const announcerRect = announcerEl.getBoundingClientRect();
-      const boardRect = boardShellEl.getBoundingClientRect();
-      const dockRect = handDockEl.getBoundingClientRect();
-      return {
-        announcerAboveBoard: announcerRect.bottom <= boardRect.top + 2,
-        announcerAboveDock: announcerRect.bottom <= dockRect.top + 2,
-        boardAboveDock: boardRect.bottom <= dockRect.top + 2,
-        boardBottom: boardRect.bottom,
-        dockTop: dockRect.top,
-        overlapPx: boardRect.bottom - dockRect.top,
-      };
-    });
-
-    expect(verticalOrder).not.toBeNull();
-    expect(verticalOrder?.announcerAboveBoard).toBe(true);
-    expect(verticalOrder?.announcerAboveDock).toBe(true);
-    expect(verticalOrder?.boardAboveDock, JSON.stringify(verticalOrder)).toBe(true);
   });
 
   test("/battle-stage keeps focus toolbar visible after scroll", async ({ page }) => {
@@ -255,10 +213,10 @@ test.describe("stage routes", () => {
     }
     const actionFeedback = page.getByLabel("Replay focus action feedback");
 
-    await expect(page.getByRole("button", { name: /Hide controls|操作を隠す/ })).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByRole("button", { name: "Hide controls" })).toBeVisible({ timeout: 10_000 });
     await page.keyboard.press("c");
-    await expect(page.getByRole("button", { name: /Show controls|操作を表示/ })).toBeVisible({ timeout: 10_000 });
-    await expect(actionFeedback).toContainText(/Controls hidden|操作を隠しました/);
+    await expect(page.getByRole("button", { name: "Show controls" })).toBeVisible({ timeout: 10_000 });
+    await expect(actionFeedback).toContainText("Controls hidden");
 
     await page.keyboard.press("s");
     await expect(page.getByText("Replay from transcript")).toBeVisible({ timeout: 10_000 });
@@ -289,8 +247,8 @@ test.describe("stage routes", () => {
     const zParam = encodeTranscriptZ(REPLAY_TRANSCRIPT_JSON);
     await page.goto(`/replay-stage?ui=engine&focus=1&z=${zParam}`);
 
-    await expect(page.getByText(/Replay controls are hidden for board focus\.|board focus 中はリプレイ操作を非表示にしています。/)).toBeVisible({ timeout: 10_000 });
-    await page.getByRole("button", { name: /Show controls|操作を表示/ }).click();
+    await expect(page.getByText("Replay controls are hidden for board focus.")).toBeVisible({ timeout: 10_000 });
+    await page.getByRole("button", { name: "Show controls" }).click();
     await expect(page.getByLabel("Replay speed")).toBeVisible({ timeout: 10_000 });
   });
 
@@ -341,15 +299,13 @@ test.describe("stage routes", () => {
     const zParam = encodeTranscriptZ(REPLAY_TRANSCRIPT_JSON);
     await page.goto(`/replay-stage?ui=engine&focus=1&z=${zParam}`);
 
-    const loadReplayButton = page.getByRole("button", { name: /Load replay|読み込む/ });
-    if (await loadReplayButton.count()) {
-      await expect(loadReplayButton.first()).toBeVisible({ timeout: 10_000 });
-      await loadReplayButton.first().click();
-    }
+    const loadReplayButton = page.getByRole("button", { name: "Load replay" });
+    await expect(loadReplayButton).toBeVisible({ timeout: 10_000 });
+    await loadReplayButton.click();
 
-    await expect(page.getByText(/Error:|エラー\s*\/\s*Error:/).first()).toBeVisible({ timeout: 30_000 });
-    await expect(page.getByRole("button", { name: /Retry load|再試行/ })).toBeVisible({ timeout: 10_000 });
-    await expect(page.getByRole("button", { name: /Clear share params|共有パラメータをクリア/ })).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByText("Error:").first()).toBeVisible({ timeout: 30_000 });
+    await expect(page.getByRole("button", { name: "Retry load" })).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByRole("button", { name: "Clear share params" })).toBeVisible({ timeout: 10_000 });
   });
 
   test("/battle-stage guest mode falls back when game index load fails", async ({ page }) => {
@@ -365,7 +321,6 @@ test.describe("stage routes", () => {
     await page.goto("/battle-stage?mode=guest&opp=vs_nyano_ai&ai=normal&rk=v2&ui=engine&focus=1&fpm=manual&fp=0");
 
     await expect(page.getByLabel("Commit move from focus hand dock")).toBeVisible({ timeout: 10_000 });
-    await expect(page.getByLabel("Focus hand card 1")).toBeVisible({ timeout: 10_000 });
-    await expect(page.getByRole("region", { name: "Stage focus toolbar" })).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByText(/フォールバック用のゲストカードで続行します。/).first()).toBeVisible({ timeout: 10_000 });
   });
 });

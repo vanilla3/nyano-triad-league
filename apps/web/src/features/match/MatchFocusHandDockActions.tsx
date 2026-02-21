@@ -41,7 +41,7 @@ export function MatchFocusHandDockActions(input: {
         {availableCells
           .filter((cell) => cell !== draftCell)
           .map((cell) => (
-            <option key={`focus-w-${cell}`} value={String(cell)}>隴ｦ蜻・{cell}</option>
+            <option key={`focus-w-${cell}`} value={String(cell)}>Cell {cell}</option>
           ))}
       </select>
 
@@ -51,7 +51,7 @@ export function MatchFocusHandDockActions(input: {
         disabled={!canCommit}
         aria-label="Commit move from focus hand dock"
       >
-        遒ｺ螳・
+        Commit
       </button>
       <button
         className="btn h-9 px-3 text-xs"
@@ -59,7 +59,7 @@ export function MatchFocusHandDockActions(input: {
         disabled={!canUndo}
         aria-label="Undo move from focus hand dock"
       >
-        蜿悶ｊ豸医＠
+        Undo
       </button>
     </div>
   );

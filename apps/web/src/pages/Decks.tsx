@@ -11,6 +11,7 @@ import { errorMessage } from "@/lib/errorMessage";
 import { writeClipboardText } from "@/lib/clipboard";
 import { fetchGameIndex, type GameIndexV1 } from "@/lib/nyano/gameIndex";
 import { generateRecommendedDeck, strategyLabel, type DeckStrategy } from "@/lib/demo_decks";
+import { useIdle } from "@/hooks/useIdle";
 
 function parseTokenIds(text: string): bigint[] {
   const parts = text
@@ -54,6 +55,7 @@ export function DecksPage() {
 
   const [previewLoading, setPreviewLoading] = React.useState(false);
   const [previewCards, setPreviewCards] = React.useState<Map<bigint, CardData> | null>(null);
+  const saveDeckIdle = useIdle({ timeoutMs: 4200, disabled: previewLoading });
 
   // Game index for CardBrowser and recommended decks
   const [gameIndex, setGameIndex] = React.useState<GameIndexV1 | null>(null);
@@ -196,7 +198,7 @@ export function DecksPage() {
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
-            <button className="btn btn-primary" onClick={doSave}>
+            <button className={["btn btn-primary", saveDeckIdle ? "mint-idle-attention" : ""].join(" ").trim()} onClick={doSave}>
               Save deck
             </button>
             <button className="btn" onClick={doPreview} disabled={previewLoading}>

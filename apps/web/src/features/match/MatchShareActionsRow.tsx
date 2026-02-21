@@ -18,6 +18,15 @@ export function MatchShareActionsRow(input: {
   } = input;
   const baseButtonClassName = isRpg ? "rpg-result__btn" : "btn";
   const buttonClassName = isRpg ? baseButtonClassName : `${baseButtonClassName} mint-pressable mint-hit mint-share-action__btn`;
+  const shareStatusClassName = !isRpg
+    ? [
+      "mint-share-actions__status",
+      canFinalize ? "mint-share-actions__ready" : "mint-share-actions__hint",
+    ].join(" ")
+    : "";
+  const shareStatusMessage = canFinalize
+    ? "Best shot: capture the result panel now, then tap Share URL."
+    : "Share and replay unlock after turn 9.";
   const shareRowClassName = [
     "flex flex-wrap items-center gap-2",
     !isRpg ? "mint-share-actions__row" : "",
@@ -54,14 +63,9 @@ export function MatchShareActionsRow(input: {
           Open replay
         </button>
       </div>
-      {!isRpg && !canFinalize ? (
-        <div className="mint-share-actions__hint" role="status" aria-live="polite">
-          Share and replay unlock after turn 9.
-        </div>
-      ) : null}
-      {!isRpg && canFinalize ? (
-        <div className="mint-share-actions__ready" role="note">
-          Best shot: capture the result panel now, then tap Share URL.
+      {!isRpg ? (
+        <div className={shareStatusClassName} role="status" aria-live="polite">
+          {shareStatusMessage}
         </div>
       ) : null}
     </div>

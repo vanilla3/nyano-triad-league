@@ -28,6 +28,7 @@ import {
 import { writeClipboardText } from "@/lib/clipboard";
 import { errorMessage } from "@/lib/errorMessage";
 import type { ExpressionName } from "@/lib/expression_map";
+import { useIdle } from "@/hooks/useIdle";
 
 /* ═══════════════════════════════════════════════════════════════════════════
    HOME PAGE — Polished Landing Page (M08)
@@ -277,6 +278,7 @@ export function HomePage() {
   const toast = useToast();
   const [difficulty, setDifficulty] = React.useState<string>("normal");
   const [showQuickGuide, setShowQuickGuide] = React.useState(false);
+  const heroCtaIdle = useIdle({ timeoutMs: 3800, disabled: showQuickGuide });
   const [uxStats, setUxStats] = React.useState(() => readCumulativeStats());
   const [uxSnapshotHistory, setUxSnapshotHistory] = React.useState(() =>
     readUxTelemetrySnapshotHistory(5),
@@ -462,6 +464,7 @@ export function HomePage() {
                 onClick={handleQuickPlayStart}
                 className={[
                   "home-hero__cta",
+                  heroCtaIdle ? "home-hero__cta--idle" : "",
                   "inline-flex items-center gap-3",
                   "px-10 py-4 rounded-3xl",
                   "text-white text-xl font-bold font-display",
@@ -512,9 +515,9 @@ export function HomePage() {
               </div>
               <div className="flex items-center gap-2">
                 {onboardingProgress.steps.read_quick_guide ? (
-                  <span className="text-[11px] font-semibold text-emerald-600">完了</span>
+                  <span className="text-[11px] font-semibold text-emerald-600">DONE</span>
                 ) : (
-                  <span className="text-[11px] font-semibold text-surface-400">未完了</span>
+                  <span className="text-[11px] font-semibold text-surface-400">TODO</span>
                 )}
                 <button className="btn text-xs" onClick={openQuickGuide}>
                   ルールを開く
@@ -529,9 +532,9 @@ export function HomePage() {
               </div>
               <div className="flex items-center gap-2">
                 {onboardingProgress.steps.start_first_match ? (
-                  <span className="text-[11px] font-semibold text-emerald-600">完了</span>
+                  <span className="text-[11px] font-semibold text-emerald-600">DONE</span>
                 ) : (
-                  <span className="text-[11px] font-semibold text-surface-400">未完了</span>
+                  <span className="text-[11px] font-semibold text-surface-400">TODO</span>
                 )}
                 <Link
                   to={quickPlayUrl}
@@ -549,9 +552,9 @@ export function HomePage() {
                 <span className="text-sm text-surface-700">Match で最初の手を確定する</span>
               </div>
               {onboardingProgress.steps.commit_first_move ? (
-                <span className="text-[11px] font-semibold text-emerald-600">完了</span>
+                <span className="text-[11px] font-semibold text-emerald-600">DONE</span>
               ) : (
-                <span className="text-[11px] font-semibold text-surface-400">自動 (Matchで更新)</span>
+                <span className="text-[11px] font-semibold text-surface-400">AUTO (Matchで更新)</span>
               )}
             </div>
           </div>

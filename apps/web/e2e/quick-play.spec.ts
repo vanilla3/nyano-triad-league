@@ -22,14 +22,3 @@ test("Home → Quick Play loads the match board", async ({ page }) => {
   await expect(page.locator("text=RPC Error")).not.toBeVisible();
   await expect(page.locator("text=Failed to fetch")).not.toBeVisible();
 });
-
-test("Arena difficulty card starts guest match immediately", async ({ page }) => {
-  await page.goto("/arena?theme=mint");
-
-  const easyCard = page.getByRole("button", { name: /はじめて/i });
-  await expect(easyCard).toBeVisible();
-  await easyCard.click();
-
-  await expect(page).toHaveURL(/\/match.*mode=guest.*opp=vs_nyano_ai.*ai=easy/);
-  await expect(page.locator("text=Guest Quick Play")).toBeVisible({ timeout: 10_000 });
-});

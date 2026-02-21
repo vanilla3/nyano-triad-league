@@ -27,9 +27,9 @@ function clampInt(value: number, min: number, max: number): number {
 }
 
 function reserveHeightPx(kind: StageLayoutKind, viewportWidthPx: number): number {
-  if (viewportWidthPx >= 1200) return kind === "battle" ? 400 : 300;
-  if (viewportWidthPx >= 768) return kind === "battle" ? 286 : 280;
-  return kind === "battle" ? 248 : 248;
+  if (viewportWidthPx >= 1200) return kind === "battle" ? 380 : 300;
+  if (viewportWidthPx >= 768) return kind === "battle" ? 340 : 280;
+  return kind === "battle" ? 304 : 248;
 }
 
 function sideGutterPx(viewportWidthPx: number): number {
@@ -50,7 +50,7 @@ export function computeStageBoardSizing({
   const availableByWidth = safeW - sideGutterPx(safeW);
   const availableByHeight = safeH - reserveHeightPx(kind, safeW);
   const edge = clampInt(Math.min(cap, availableByWidth, availableByHeight), 260, cap);
-  const minHeight = clampInt(edge * (kind === "battle" ? 0.82 : 0.82), 220, edge);
+  const minHeight = clampInt(edge * (kind === "battle" ? 0.82 : 0.76), 220, edge);
 
   return {
     maxWidthPx: edge,

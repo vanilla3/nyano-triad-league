@@ -3,7 +3,7 @@ import React from "react";
 /* ═══════════════════════════════════════════════════════════════════════════
    Skeleton — shimmer-based loading placeholders.
 
-   Uses the `skeleton-base` CSS class (index.css) which provides:
+   Uses the `skeleton-base` CSS class (styles.css) which provides:
    - bg-surface-200 background
    - rounded-xl corners
    - animated shimmer overlay via ::after pseudo-element

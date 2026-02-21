@@ -4,7 +4,6 @@
  * Web Audio API oscillator-based sounds. No audio files needed.
  * Synthesizes game event sounds:
  *   - card_place:     440Hz triangle pop (100ms)
- *   - tap_soft:       560→420Hz soft tap (70ms)
  *   - flip:           330→660Hz sine sweep (200ms)
  *   - chain_flip:     C5-E5-G5 arpeggio (chain combo)
  *   - error_buzz:     100Hz square buzz (150ms)
@@ -22,7 +21,6 @@ import { readBoolSetting, readNumberSetting, writeBoolSetting, writeNumberSettin
 
 export type SfxName =
   | "card_place"
-  | "tap_soft"
   | "flip"
   | "chain_flip"
   | "error_buzz"
@@ -87,20 +85,6 @@ export function createSfxEngine(): SfxEngine {
     osc.start(audioCtx.currentTime);
     g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.1);
     osc.stop(audioCtx.currentTime + 0.1);
-  }
-
-  function playTapSoft(audioCtx: AudioContext) {
-    const g = makeGain(audioCtx);
-    g.gain.setValueAtTime(volume * 0.45, audioCtx.currentTime);
-    g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.07);
-
-    const osc = audioCtx.createOscillator();
-    osc.type = "sine";
-    osc.frequency.setValueAtTime(560, audioCtx.currentTime);
-    osc.frequency.exponentialRampToValueAtTime(420, audioCtx.currentTime + 0.07);
-    osc.connect(g);
-    osc.start(audioCtx.currentTime);
-    osc.stop(audioCtx.currentTime + 0.07);
   }
 
   function playFlip(audioCtx: AudioContext) {
@@ -186,7 +170,6 @@ export function createSfxEngine(): SfxEngine {
 
   const SOUNDS: Record<SfxName, (ctx: AudioContext) => void> = {
     card_place: playCardPlace,
-    tap_soft: playTapSoft,
     flip: playFlip,
     chain_flip: playChainFlip,
     error_buzz: playErrorBuzz,

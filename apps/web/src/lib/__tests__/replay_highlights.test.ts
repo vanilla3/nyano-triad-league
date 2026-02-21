@@ -45,9 +45,9 @@ describe("detectReplayHighlights", () => {
     const highlights = detectReplayHighlights({ turns });
 
     expect(highlights).toEqual([
-      { step: 1, kind: "big_flip", label: "3枚反転" },
-      { step: 2, kind: "chain", label: "連鎖" },
-      { step: 2, kind: "warning", label: "警告!" },
+      { step: 1, kind: "big_flip", label: "3 flips" },
+      { step: 2, kind: "chain", label: "Chain" },
+      { step: 2, kind: "warning", label: "Warning!" },
       { step: 3, kind: "combo", label: "momentum" },
     ]);
   });
@@ -56,10 +56,10 @@ describe("detectReplayHighlights", () => {
 describe("summarizeReplayHighlights", () => {
   it("counts per highlight kind", () => {
     const summary = summarizeReplayHighlights([
-      { step: 1, kind: "big_flip", label: "3枚反転" },
-      { step: 2, kind: "chain", label: "連鎖" },
-      { step: 2, kind: "warning", label: "警告!" },
-      { step: 3, kind: "warning", label: "警告!" },
+      { step: 1, kind: "big_flip", label: "3 flips" },
+      { step: 2, kind: "chain", label: "Chain" },
+      { step: 2, kind: "warning", label: "Warning!" },
+      { step: 3, kind: "warning", label: "Warning!" },
     ]);
 
     expect(summary).toEqual({
@@ -82,9 +82,9 @@ describe("formatReplayWinnerLabel", () => {
 
 describe("replayHighlightKindLabel", () => {
   it("returns UI labels for every highlight kind", () => {
-    expect(replayHighlightKindLabel("big_flip")).toBe("大量反転");
-    expect(replayHighlightKindLabel("chain")).toBe("連鎖");
-    expect(replayHighlightKindLabel("combo")).toBe("コンボ");
-    expect(replayHighlightKindLabel("warning")).toBe("警告");
+    expect(replayHighlightKindLabel("big_flip")).toBe("Big Flip");
+    expect(replayHighlightKindLabel("chain")).toBe("Chain");
+    expect(replayHighlightKindLabel("combo")).toBe("Combo");
+    expect(replayHighlightKindLabel("warning")).toBe("Warning");
   });
 });

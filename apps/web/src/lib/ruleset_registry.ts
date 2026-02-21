@@ -5,7 +5,7 @@
  * Eliminates duplicated inline switches in Match.tsx / Playground.tsx.
  */
 
-import type { RulesetConfig } from "@nyano/triad-engine";
+import type { ClassicRulesConfigV1, RulesetConfig } from "@nyano/triad-engine";
 import {
   CLASSIC_PLUS_SAME_RULESET_CONFIG_V2,
   computeRulesetId,
@@ -54,6 +54,44 @@ export const RULESET_KEYS: readonly RulesetKey[] = [
   "classic_three_open",
 ] as const;
 
+function withClassicFlags(flags: Partial<ClassicRulesConfigV1>): RulesetConfig {
+  return {
+    ...DEFAULT_RULESET_CONFIG_V2,
+    classic: {
+      ...DEFAULT_RULESET_CONFIG_V2.classic,
+      ...flags,
+    },
+  };
+}
+
+const CLASSIC_CUSTOM_RULESET_CONFIG_V2: RulesetConfig = {
+  ...DEFAULT_RULESET_CONFIG_V2,
+};
+
+const CLASSIC_PLUS_RULESET_CONFIG_V2: RulesetConfig = withClassicFlags({
+  plus: true,
+});
+
+const CLASSIC_SAME_RULESET_CONFIG_V2: RulesetConfig = withClassicFlags({
+  same: true,
+});
+
+const CLASSIC_REVERSE_RULESET_CONFIG_V2: RulesetConfig = withClassicFlags({
+  reverse: true,
+});
+
+const CLASSIC_ACE_KILLER_RULESET_CONFIG_V2: RulesetConfig = withClassicFlags({
+  aceKiller: true,
+});
+
+const CLASSIC_TYPE_ASCEND_RULESET_CONFIG_V2: RulesetConfig = withClassicFlags({
+  typeAscend: true,
+});
+
+const CLASSIC_TYPE_DESCEND_RULESET_CONFIG_V2: RulesetConfig = withClassicFlags({
+  typeDescend: true,
+});
+
 const CLASSIC_ORDER_RULESET_CONFIG_V2: RulesetConfig = {
   ...DEFAULT_RULESET_CONFIG_V2,
   classic: {
@@ -67,54 +105,6 @@ const CLASSIC_CHAOS_RULESET_CONFIG_V2: RulesetConfig = {
   classic: {
     ...DEFAULT_RULESET_CONFIG_V2.classic,
     chaos: true,
-  },
-};
-
-const CLASSIC_PLUS_RULESET_CONFIG_V2: RulesetConfig = {
-  ...DEFAULT_RULESET_CONFIG_V2,
-  classic: {
-    ...DEFAULT_RULESET_CONFIG_V2.classic,
-    plus: true,
-  },
-};
-
-const CLASSIC_SAME_RULESET_CONFIG_V2: RulesetConfig = {
-  ...DEFAULT_RULESET_CONFIG_V2,
-  classic: {
-    ...DEFAULT_RULESET_CONFIG_V2.classic,
-    same: true,
-  },
-};
-
-const CLASSIC_REVERSE_RULESET_CONFIG_V2: RulesetConfig = {
-  ...DEFAULT_RULESET_CONFIG_V2,
-  classic: {
-    ...DEFAULT_RULESET_CONFIG_V2.classic,
-    reverse: true,
-  },
-};
-
-const CLASSIC_ACE_KILLER_RULESET_CONFIG_V2: RulesetConfig = {
-  ...DEFAULT_RULESET_CONFIG_V2,
-  classic: {
-    ...DEFAULT_RULESET_CONFIG_V2.classic,
-    aceKiller: true,
-  },
-};
-
-const CLASSIC_TYPE_ASCEND_RULESET_CONFIG_V2: RulesetConfig = {
-  ...DEFAULT_RULESET_CONFIG_V2,
-  classic: {
-    ...DEFAULT_RULESET_CONFIG_V2.classic,
-    typeAscend: true,
-  },
-};
-
-const CLASSIC_TYPE_DESCEND_RULESET_CONFIG_V2: RulesetConfig = {
-  ...DEFAULT_RULESET_CONFIG_V2,
-  classic: {
-    ...DEFAULT_RULESET_CONFIG_V2.classic,
-    typeDescend: true,
   },
 };
 
@@ -147,7 +137,7 @@ const REGISTRY: Record<RulesetKey, RulesetConfig> = {
   v2: ONCHAIN_CORE_TACTICS_SHADOW_RULESET_CONFIG_V2,
   full: DEFAULT_RULESET_CONFIG_V1,
   classic_plus_same: CLASSIC_PLUS_SAME_RULESET_CONFIG_V2,
-  classic_custom: DEFAULT_RULESET_CONFIG_V2,
+  classic_custom: CLASSIC_CUSTOM_RULESET_CONFIG_V2,
   classic_plus: CLASSIC_PLUS_RULESET_CONFIG_V2,
   classic_same: CLASSIC_SAME_RULESET_CONFIG_V2,
   classic_reverse: CLASSIC_REVERSE_RULESET_CONFIG_V2,

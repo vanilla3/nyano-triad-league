@@ -256,6 +256,8 @@ a {
 }
 
 .mint-share-actions__hint {
+  display: flex;
+  align-items: center;
   border-radius: 12px;
   border: 1px solid rgba(251, 191, 36, 0.34);
   padding: 6px 10px;
@@ -266,6 +268,8 @@ a {
 }
 
 .mint-share-actions__ready {
+  display: flex;
+  align-items: center;
   border-radius: 12px;
   border: 1px solid rgba(16, 185, 129, 0.34);
   padding: 6px 10px;
@@ -273,6 +277,10 @@ a {
   font-weight: 700;
   color: rgb(6, 95, 70);
   background: linear-gradient(165deg, rgba(236, 253, 245, 0.9), rgba(209, 250, 229, 0.84));
+}
+
+.mint-share-actions__status {
+  min-height: 38px;
 }
 
 @keyframes mint-share-ready-callout {
@@ -500,7 +508,6 @@ a {
 .home-hero__cta {
   background: linear-gradient(135deg, #FF8A50 0%, #E67340 50%, #FF8A50 100%);
   background-size: 200% 100%;
-  animation: cta-shimmer 3s ease-in-out infinite;
   box-shadow: 0 4px 24px -4px rgba(255, 138, 80, 0.5), 0 0 0 0 rgba(255, 138, 80, 0);
 }
 
@@ -508,9 +515,43 @@ a {
   box-shadow: 0 8px 32px -4px rgba(255, 138, 80, 0.6), 0 0 48px -8px rgba(255, 138, 80, 0.3);
 }
 
+.home-hero__cta--idle {
+  animation: cta-shimmer 2.8s ease-in-out infinite, mint-idle-attention-breathe 2.4s ease-in-out infinite;
+}
+
 @keyframes cta-shimmer {
   0%, 100% { background-position: 0% 50%; }
   50% { background-position: 100% 50%; }
+}
+
+@keyframes mint-idle-attention-breathe {
+  0%, 100% {
+    transform: translateY(0) scale(1);
+    box-shadow: 0 4px 24px -4px rgba(255, 138, 80, 0.5), 0 0 0 0 rgba(255, 138, 80, 0);
+  }
+  55% {
+    transform: translateY(-1px) scale(1.012);
+    box-shadow: 0 10px 28px -6px rgba(255, 138, 80, 0.62), 0 0 26px -8px rgba(255, 138, 80, 0.38);
+  }
+}
+
+.mint-idle-attention {
+  animation: mint-idle-attention-breathe 2.4s ease-in-out infinite;
+}
+
+:root[data-vfx="off"] .home-hero__cta--idle,
+:root[data-vfx="off"] .mint-idle-attention,
+:root[data-vfx="low"] .home-hero__cta--idle,
+:root[data-vfx="low"] .mint-idle-attention {
+  animation: none !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .home-hero__cta--idle,
+  .mint-idle-attention {
+    animation: none !important;
+    transform: none !important;
+  }
 }
 
 /* ── Classic theme fallback (rose) — ?theme=classic で有効化 ─────────── */

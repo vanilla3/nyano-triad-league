@@ -47,6 +47,7 @@ import { postNyanoWarudoSnapshot } from "@/lib/nyano_warudo_bridge";
 import { errorMessage } from "@/lib/errorMessage";
 import { writeClipboardText } from "@/lib/clipboard";
 import { formatViewerMoveText, parseChatMoveLoose, parseViewerMoveText } from "@/lib/triad_viewer_command";
+import { resolveClassicMetadataFromOverlayState, type ClassicResolvedMetadata } from "@/lib/classic_ruleset_visibility";
 import {
   cellIndexToCoord,
   computeEmptyCells,
@@ -93,6 +94,51 @@ function moveDisplay(m: ViewerMove, side: 0 | 1): string {
     cell: m.cell,
     warningMarkCell: typeof m.warningMarkCell === "number" ? m.warningMarkCell : null,
   });
+}
+
+function formatClassicOpenSlots(indices: readonly number[]): string {
+  return indices.map((idx) => String(idx + 1)).join(", ");
+}
+
+function formatClassicSwapSlots(aIndex: number, bIndex: number): string {
+  return `A${aIndex + 1} <-> B${bIndex + 1}`;
+}
+
+type ClassicStateJsonOpen = {
+  mode: "all_open" | "three_open";
+  playerA: number[];
+  playerB: number[];
+};
+
+type ClassicStateJsonSwap = {
+  playerA: number;
+  playerB: number;
+};
+
+type ClassicStateJson = {
+  rulesetId: string;
+  open: ClassicStateJsonOpen | null;
+  swap: ClassicStateJsonSwap | null;
+};
+
+function toClassicStateJson(classic: ClassicResolvedMetadata | null): ClassicStateJson | null {
+  if (!classic) return null;
+  return {
+    rulesetId: classic.rulesetId,
+    open: classic.open
+      ? {
+          mode: classic.open.mode,
+          playerA: [...classic.open.playerA],
+          playerB: [...classic.open.playerB],
+        }
+      : null,
+    swap: classic.swap
+      ? {
+          playerA: classic.swap.aIndex,
+          playerB: classic.swap.bIndex,
+        }
+      : null,
+  };
 }
 
 
@@ -331,6 +377,7 @@ interface StateJsonContent {
   legalMoves: LegalMoveEntry[];
   strictAllowed: { allowlist: string[]; hash: string } | null;
   warningMark: { used: number; remaining: number; candidates: string[] } | null;
+  classic: ClassicStateJson | null;
 }
 
 function buildStateJsonContent(state: OverlayStateV1 | null, controlled: 0 | 1): StateJsonContent {
@@ -355,6 +402,7 @@ function buildStateJsonContent(state: OverlayStateV1 | null, controlled: 0 | 1):
   const usedB = computeRemainingCardIndices(state, 1);
   const remainA = new Set(usedA);
   const remainB = new Set(usedB);
+  const classic = toClassicStateJson(resolveClassicMetadataFromOverlayState(state));
 
   return {
     protocol: "triad_league_state_json_v1",
@@ -392,6 +440,7 @@ function buildStateJsonContent(state: OverlayStateV1 | null, controlled: 0 | 1):
     warningMark: strict
       ? { used: strict.warningMark.used, remaining: strict.warningMark.remaining, candidates: strict.warningMark.candidates }
       : null,
+    classic,
   };
 }
 
@@ -399,16 +448,27 @@ function buildAiPrompt(state: OverlayStateV1 | null, controlled: 0 | 1): string 
   const turn = typeof state?.turn === "number" ? Number(state!.turn) : null;
   const toPlay = computeToPlay(state);
 
-  const _strict = computeStrictAllowed(state);
+  const strict = computeStrictAllowed(state);
   const emptyCells = computeEmptyCells(state);
   const remain = toPlay !== null ? computeRemainingCardIndices(state, toPlay) : [];
   const wUsed = toPlay !== null ? computeWarningMarksUsed(state, toPlay) : 0;
   const wRemain = toPlay !== null ? computeWarningMarksRemaining(state, toPlay) : 0;
 
   const boardMini = bestEffortBoardToProtocolBoard(state);
+  const classic = resolveClassicMetadataFromOverlayState(state);
 
   const lines: string[] = [];
   lines.push("Nyano Triad League snapshot (ai_prompt)");
+  if (classic?.open) {
+    if (classic.open.mode === "all_open") {
+      lines.push("classic_open: all_open");
+    } else {
+      lines.push(`classic_open: three_open A[${formatClassicOpenSlots(classic.open.playerA)}] / B[${formatClassicOpenSlots(classic.open.playerB)}]`);
+    }
+  }
+  if (classic?.swap) {
+    lines.push(`classic_swap: A${classic.swap.aIndex + 1} <-> B${classic.swap.bIndex + 1}`);
+  }
   lines.push(`event: ${state?.eventTitle ?? state?.eventId ?? "—"}`);
   lines.push(`mode: ${state?.mode ?? "—"}  turn: ${turn ?? "—"}/9`);
   lines.push(`to_play: ${toPlay === 0 ? "A" : toPlay === 1 ? "B" : "—"}  controlled: ${controlled === 0 ? "A" : "B"}`);
@@ -435,21 +495,22 @@ function buildAiPrompt(state: OverlayStateV1 | null, controlled: 0 | 1): string 
   lines.push("");
   lines.push(`Empty cells: ${emptyCells.map(cellIndexToCoord).join(", ")}`);
   lines.push(`Remaining hand slots for to_play: ${remain.map((i) => `A${i + 1}`).join(", ") || "—"}`);
-  lines.push(`WarningMark: remaining=${wRemain} (used=${wUsed}) candidates=${wRemain > 0 ? emptyCells.map(cellIndexToCoord).join(", ") : "—"}`);
+  lines.push(
+    `WarningMark: remaining=${wRemain} (used=${wUsed}) candidates=${
+      wRemain > 0 ? (strict?.warningMark.candidates.join(", ") ?? emptyCells.map(cellIndexToCoord).join(", ")) : "—"
+    }`
+  );
   lines.push("");
   lines.push("Legal moves (cell+slot):");
   // Print up to 30 moves to keep prompt readable
   const max = 30;
-  let printed = 0;
-  for (const cell of emptyCells) {
-    for (const cardIndex of remain) {
-      if (printed >= max) break;
-      lines.push(`- ${formatViewerMoveText({ side: 0, slot: cardIndex + 1, cell })}`);
-      printed += 1;
-    }
-    if (printed >= max) break;
+  const legalMoves = strict?.allowlist ?? [];
+  if (legalMoves.length === 0) {
+    lines.push("- (none)");
+  } else {
+    for (const move of legalMoves.slice(0, max)) lines.push(`- ${move}`);
+    if (legalMoves.length > max) lines.push(`... (${legalMoves.length} total)`);
   }
-  if (emptyCells.length * remain.length > max) lines.push(`... (${emptyCells.length * remain.length} total)`);
   lines.push("");
   lines.push("Return format: ONLY one line, e.g. '#triad A2->B2' or '#triad A2->B2 wm=C1'");
 
@@ -575,6 +636,8 @@ const downloadAiPrompt = React.useCallback(() => {
 
   const liveTurn = typeof live?.turn === "number" ? live.turn : null;
   const liveCurrent = computeToPlay(live);
+  const liveClassic = React.useMemo(() => resolveClassicMetadataFromOverlayState(live), [live]);
+  const liveClassicOpen = liveClassic?.open ?? null;
 
 const canVoteNow =
   live?.mode === "live" &&
@@ -1221,6 +1284,21 @@ return (
                   Turn: <span className="font-mono">{typeof liveTurn === "number" ? liveTurn : "—"}</span> · to play:{" "}
                   <span className="font-mono">{liveCurrent === 0 ? "A" : liveCurrent === 1 ? "B" : "—"}</span>
                 </div>
+                {liveClassicOpen ? (
+                  <div className="mt-1 text-xs text-slate-700">
+                    Classic Open:{" "}
+                    <span className="font-mono">
+                      {liveClassicOpen.mode === "all_open"
+                        ? "all cards revealed"
+                        : `A[${formatClassicOpenSlots(liveClassicOpen.playerA)}] / B[${formatClassicOpenSlots(liveClassicOpen.playerB)}]`}
+                    </span>
+                  </div>
+                ) : null}
+                {liveClassic?.swap ? (
+                  <div className="mt-1 text-xs text-slate-700">
+                    Classic Swap: <span className="font-mono">{formatClassicSwapSlots(liveClassic.swap.aIndex, liveClassic.swap.bIndex)}</span>
+                  </div>
+                ) : null}
                 {live?.lastMove ? (
                   <div className="mt-1 text-xs text-slate-700">
                     Last: <span className="font-mono">{live.lastMove.by === 0 ? "A" : "B"}{" "}

@@ -1,10 +1,12 @@
 import React from "react";
 import { Link } from "react-router-dom";
+import { useIdle } from "@/hooks/useIdle";
 
 const DIFFICULTIES = ["easy", "normal", "hard", "expert"] as const;
 
 export function ArenaPage() {
   const [difficulty, setDifficulty] = React.useState<string>("normal");
+  const quickPlayIdle = useIdle({ timeoutMs: 4200 });
   const quickPlayUrl = `/match?mode=guest&opp=vs_nyano_ai&ai=${difficulty}&rk=v2&ui=mint`;
   const quickStageUrl = `/battle-stage?mode=guest&opp=vs_nyano_ai&ai=${difficulty}&rk=v2`;
 
@@ -43,7 +45,7 @@ export function ArenaPage() {
               </div>
               <div className="mt-3">
                 <div className="flex flex-wrap items-center gap-2">
-                  <Link className="btn btn-primary no-underline" to={quickPlayUrl}>
+                  <Link className={["btn btn-primary no-underline", quickPlayIdle ? "mint-idle-attention" : ""].join(" ").trim()} to={quickPlayUrl}>
                     Play Now
                   </Link>
                   <Link className="btn no-underline" to={quickStageUrl}>

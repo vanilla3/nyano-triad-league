@@ -1,5 +1,5 @@
 import React from "react";
-import type { BoardCell, BoardState, CardData, PlayerIndex } from "@nyano/triad-engine";
+import type { BoardCell, BoardState, PlayerIndex } from "@nyano/triad-engine";
 import { CardNyanoDuel } from "./CardNyanoDuel";
 import { CardPreviewPanel } from "./CardPreviewPanel";
 import { useCardPreview } from "@/hooks/useCardPreview";
@@ -31,7 +31,6 @@ export interface BoardViewMintProps {
   onCellSelect?: (cell: number) => void;
   onClickCell?: (cell: number) => void;
   selectableCells?: Set<number> | readonly number[] | null;
-  idleGuideSelectables?: boolean | Set<number> | readonly number[] | null;
   currentPlayer?: PlayerIndex | null;
   disabled?: boolean;
   size?: "sm" | "md" | "lg";
@@ -57,7 +56,6 @@ export interface BoardViewMintProps {
   onCellDrop?: (cell: number) => void;
   /** Called when dragging over a cell (or null when leaving) */
   onCellDragHover?: (cell: number | null) => void;
-  selectedCardPreview?: CardData | null;
 }
 
 // ── Helpers ────────────────────────────────────────────────────────────
@@ -287,7 +285,6 @@ export function BoardViewMint({
   flippedCells = [],
   warningMarks = [],
   selectableCells,
-  idleGuideSelectables,
   onCellSelect,
   onClickCell,
   currentPlayer,
@@ -305,14 +302,7 @@ export function BoardViewMint({
   onCellDragHover,
 }: BoardViewMintProps) {
   const gridRef = React.useRef<HTMLDivElement>(null);
-  const selectableSet = new Set<number>([
-    ...toSelectableSet(selectableCells),
-    ...(idleGuideSelectables === true
-      ? toSelectableSet(selectableCells)
-      : idleGuideSelectables
-        ? toSelectableSet(idleGuideSelectables)
-        : []),
-  ]);
+  const selectableSet = toSelectableSet(selectableCells);
   const score = calcScore(board);
   const inspect = useCardPreview();
 

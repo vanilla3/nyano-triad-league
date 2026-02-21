@@ -13,7 +13,6 @@ export interface DuelStageMintProps {
   className?: string;
   impact?: CutInImpact | null;
   impactBurst?: boolean;
-  impactBurstLevel?: "soft" | "medium" | "hard" | "win" | null;
 }
 
 /** Paw print SVG path (reused across decorative watermarks). */
@@ -24,13 +23,11 @@ export function DuelStageMint({
   className = "",
   impact = null,
   impactBurst = false,
-  impactBurstLevel = null,
 }: DuelStageMintProps) {
   const stageClassName = [
     "mint-stage",
     impact ? `mint-stage--impact-${impact}` : "",
     impactBurst ? "mint-stage--impact-burst" : "",
-    impactBurstLevel ? `mint-stage--impact-burst-${impactBurstLevel}` : "",
     className,
   ].filter(Boolean).join(" ");
 

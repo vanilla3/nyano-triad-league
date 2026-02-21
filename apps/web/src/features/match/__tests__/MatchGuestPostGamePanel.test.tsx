@@ -79,6 +79,7 @@ describe("features/match/MatchGuestPostGamePanel", () => {
       .filter((child): child is React.ReactElement => React.isValidElement(child) && child.type === "button");
     expect(actionButtons[2]?.props.children).toBe("Saved");
     expect(collectElementsByClass(tree, "mint-share-actions__hint")).toHaveLength(1);
+    expect(collectElementsByClass(tree, "mint-share-actions__status")).toHaveLength(1);
 
     expect(collectElementsByType(tree, "details")).toHaveLength(0);
   });
@@ -140,5 +141,6 @@ describe("features/match/MatchGuestPostGamePanel", () => {
     expect(summary.props.children).toContain("QR Code");
     expect(collectElementsByClass(tree, "mint-share-actions__hint")).toHaveLength(0);
     expect(collectElementsByClass(tree, "mint-share-actions__ready")).toHaveLength(1);
+    expect(collectElementsByClass(tree, "mint-share-actions__status")).toHaveLength(1);
   });
 });

@@ -24,22 +24,22 @@ test.describe("Page smoke tests", () => {
 
   test("/arena loads", async ({ page }) => {
     await page.goto("/arena");
-    await expect(page.getByRole("main").getByText(/Arena|アリーナ/).first()).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByRole("main").getByText("Arena")).toBeVisible({ timeout: 10_000 });
   });
 
   test("/decks loads", async ({ page }) => {
-    await page.goto("/decks?theme=mint");
-    await expect(page.getByText(/Deck Builder|デッキビルダー/).first()).toBeVisible({ timeout: 10_000 });
+    await page.goto("/decks");
+    await expect(page.getByText("Deck Studio")).toBeVisible({ timeout: 10_000 });
   });
 
   test("/replay loads", async ({ page }) => {
     await page.goto("/replay");
-    await expect(page.getByText(/Replay from transcript|リプレイ読込/).first()).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByText("Replay from transcript")).toBeVisible({ timeout: 10_000 });
   });
 
   test("/rulesets loads", async ({ page }) => {
     await page.goto("/rulesets");
-    await expect(page.getByText(/Ruleset Registry|ルールセット一覧/).first()).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByText("Ruleset Registry")).toBeVisible({ timeout: 10_000 });
   });
 
   test("/overlay?controls=0 loads", async ({ page }) => {
@@ -52,7 +52,7 @@ test.describe("Page smoke tests", () => {
 
   test("/events loads", async ({ page }) => {
     await page.goto("/events");
-    await expect(page.getByRole("main").getByText(/Events|イベント/).first()).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByRole("main").getByText("Events", { exact: true })).toBeVisible({ timeout: 10_000 });
   });
 
   test("/playground loads", async ({ page }) => {
@@ -62,7 +62,7 @@ test.describe("Page smoke tests", () => {
 
   test("/stream loads", async ({ page }) => {
     await page.goto("/stream");
-    await expect(page.getByText(/Nyano Stream Studio|配信スタジオ/).first()).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByText("Nyano Stream Studio")).toBeVisible({ timeout: 10_000 });
   });
 
   test("/nyano loads", async ({ page }) => {

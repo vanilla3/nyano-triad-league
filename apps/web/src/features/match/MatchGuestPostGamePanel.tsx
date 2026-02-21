@@ -33,6 +33,15 @@ export function MatchGuestPostGamePanel(input: {
   const actionButtonClassName = isRpg ? "btn text-xs" : "btn text-xs mint-pressable mint-hit";
   const primaryActionButtonClassName = isRpg ? "btn btn-primary text-xs" : "btn btn-primary text-xs mint-pressable mint-hit";
   const shareButtonClassName = isRpg ? actionButtonClassName : `${actionButtonClassName} mint-share-action__btn`;
+  const shareStatusClassName = !isRpg
+    ? [
+      "mint-share-actions__status",
+      canFinalize ? "mint-share-actions__ready" : "mint-share-actions__hint",
+    ].join(" ")
+    : "";
+  const shareStatusMessage = canFinalize
+    ? "Best shot: capture the victory panel now, then share."
+    : "Share and replay unlock after turn 9.";
   const shareRowClassName = [
     "flex flex-wrap gap-2",
     !isRpg ? "mint-share-actions__row" : "",
@@ -88,14 +97,9 @@ export function MatchGuestPostGamePanel(input: {
             Open replay
           </button>
         </div>
-        {!isRpg && !canFinalize ? (
-          <div className="mint-share-actions__hint" role="status" aria-live="polite">
-            Share and replay unlock after turn 9.
-          </div>
-        ) : null}
-        {!isRpg && canFinalize ? (
-          <div className="mint-share-actions__ready" role="note">
-            Best shot: capture the victory panel now, then share.
+        {!isRpg ? (
+          <div className={shareStatusClassName} role="status" aria-live="polite">
+            {shareStatusMessage}
           </div>
         ) : null}
         {canFinalize ? (

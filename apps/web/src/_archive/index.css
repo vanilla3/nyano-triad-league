@@ -1,0 +1,1294 @@
+/**
+ * Nyano Triad League - Global Styles
+ * 
+ * This file defines the core visual language of the game.
+ * All custom utility classes are defined here for consistency.
+ */
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   FONT IMPORTS
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800&family=Noto+Sans+JP:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Cinzel:wght@400;700;900&display=swap');
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   CSS CUSTOM PROPERTIES (Design Tokens)
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+:root {
+  /* Brand colors */
+  --nyano-primary: #FF8A50;
+  --nyano-primary-light: #FFA67A;
+  --nyano-primary-dark: #E67340;
+  
+  /* Player colors */
+  --player-a: #0EA5E9;
+  --player-a-light: #38BDF8;
+  --player-a-bg: #F0F9FF;
+  --player-b: #F43F5E;
+  --player-b-light: #FB7185;
+  --player-b-bg: #FFF1F2;
+  
+  /* Game event colors */
+  --color-flip: #F59E0B;
+  --color-chain: #8B5CF6;
+  --color-victory: #10B981;
+  --color-defeat: #EF4444;
+  
+  /* Surface colors */
+  --surface-bg: #FAFAF9;
+  --surface-card: #FFFFFF;
+  --surface-elevated: #FFFFFF;
+  --surface-overlay: rgba(255, 255, 255, 0.95);
+  
+  /* Text colors */
+  --text-primary: #1C1917;
+  --text-secondary: #57534E;
+  --text-tertiary: #A8A29E;
+  --text-inverse: #FFFFFF;
+  
+  /* Borders */
+  --border-light: #E7E5E4;
+  --border-medium: #D6D3D1;
+  --border-focus: var(--nyano-primary);
+  
+  /* Shadows */
+  --shadow-sm: 0 2px 8px -2px rgba(0, 0, 0, 0.06);
+  --shadow-md: 0 4px 16px -4px rgba(0, 0, 0, 0.08);
+  --shadow-lg: 0 8px 32px -8px rgba(0, 0, 0, 0.12);
+  
+  /* Spacing */
+  --radius-sm: 0.5rem;
+  --radius-md: 0.75rem;
+  --radius-lg: 1rem;
+  --radius-xl: 1.25rem;
+  --radius-2xl: 1.5rem;
+  
+  /* Transitions */
+  --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-normal: 200ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-slow: 300ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-bounce: 300ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* Dark mode overrides (for OBS transparent overlays) */
+[data-theme="dark"],
+.dark {
+  --surface-bg: #1C1917;
+  --surface-card: #292524;
+  --surface-elevated: #44403C;
+  --surface-overlay: rgba(28, 25, 23, 0.95);
+  
+  --text-primary: #FAFAF9;
+  --text-secondary: #D6D3D1;
+  --text-tertiary: #78716C;
+  
+  --border-light: #44403C;
+  --border-medium: #57534E;
+}
+
+/* Transparent mode for OBS overlays */
+[data-theme="transparent"] {
+  --surface-bg: transparent;
+  --surface-card: rgba(255, 255, 255, 0.9);
+  --surface-overlay: rgba(255, 255, 255, 0.85);
+}
+
+/* ── Overlay Theme Presets ─────────────────────────────────────────────── */
+
+.overlay-theme-720p-minimal {
+  --ol-font: 11px;
+  --ol-font-lg: 15px;
+  --ol-detail-font: 10px;
+  --ol-card: 56px;
+  --ol-gap: 6px;
+  --ol-pad: 8px;
+  --ol-radius: 12px;
+  --ol-avatar: 22px;
+  --ol-badge-font: 11px;
+  --ol-cell-label: 10px;
+  --ol-text-shadow: 0 1px 4px rgba(0,0,0,0.8);
+  --ol-countdown: 20px;
+  --ol-score: 16px;
+  --ol-turn: 14px;
+  font-size: var(--ol-font);
+}
+
+.overlay-theme-720p-standard {
+  --ol-font: 12px;
+  --ol-font-lg: 16px;
+  --ol-detail-font: 11px;
+  --ol-card: 64px;
+  --ol-gap: 8px;
+  --ol-pad: 10px;
+  --ol-radius: 14px;
+  --ol-avatar: 26px;
+  --ol-badge-font: 11px;
+  --ol-cell-label: 11px;
+  --ol-text-shadow: 0 1px 3px rgba(0,0,0,0.7);
+  --ol-countdown: 24px;
+  --ol-score: 18px;
+  --ol-turn: 15px;
+  font-size: var(--ol-font);
+}
+
+.overlay-theme-1080p-standard {
+  --ol-font: 13px;
+  --ol-font-lg: 17px;
+  --ol-detail-font: 12px;
+  --ol-card: 80px;
+  --ol-gap: 10px;
+  --ol-pad: 14px;
+  --ol-radius: 16px;
+  --ol-avatar: 32px;
+  --ol-badge-font: 11px;
+  --ol-cell-label: 11px;
+  --ol-text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+  --ol-countdown: 28px;
+  --ol-score: 22px;
+  --ol-turn: 16px;
+  font-size: var(--ol-font);
+}
+
+.overlay-theme-1080p-full {
+  --ol-font: 16px;
+  --ol-font-lg: 20px;
+  --ol-detail-font: 14px;
+  --ol-card: 96px;
+  --ol-gap: 12px;
+  --ol-pad: 16px;
+  --ol-radius: 20px;
+  --ol-avatar: 38px;
+  --ol-badge-font: 12px;
+  --ol-cell-label: 12px;
+  --ol-text-shadow: 0 1px 2px rgba(0,0,0,0.4);
+  --ol-countdown: 36px;
+  --ol-score: 28px;
+  --ol-turn: 18px;
+  font-size: var(--ol-font);
+}
+
+/* Apply text-shadow to overlay HUD panels for constant visibility on OBS */
+[class*="overlay-theme-"] .ol-panel-primary,
+[class*="overlay-theme-"] .ol-panel-secondary,
+[class*="overlay-theme-"] .ol-panel-tertiary,
+[class*="overlay-theme-"] .overlay-hud-panel {
+  text-shadow: var(--ol-text-shadow, none);
+}
+
+/* OBS-0501: Theme-aware padding for overlay panels */
+[class*="overlay-theme-"] .ol-pad {
+  padding: var(--ol-pad, 14px);
+}
+
+/* OBS-0841: Theme-aware detail text for secondary info (flip readout, vote details) */
+[class*="overlay-theme-"] .ol-detail-text {
+  font-size: var(--ol-detail-font, 12px);
+  text-shadow: var(--ol-text-shadow, none);
+}
+
+/* OBS-0842: Theme-aware vote display text (top vote list, tallies) */
+[class*="overlay-theme-"] .ol-vote-display {
+  font-size: var(--ol-font-lg, 16px);
+  text-shadow: var(--ol-text-shadow, none);
+  font-variant-numeric: tabular-nums;
+}
+
+/* OBS-0502: Theme-aware badge font for overlay mode */
+[class*="overlay-theme-"] .badge {
+  font-size: var(--ol-badge-font, 10px);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
+}
+
+/* OBS-0401: Scale duel card internal elements per overlay theme */
+[class*="overlay-theme-"] .mint-duel-card__edge {
+  font-size: max(9px, calc(var(--ol-card, 80px) * 0.12));
+}
+[class*="overlay-theme-"] .mint-duel-card__janken {
+  font-size: max(11px, calc(var(--ol-card, 80px) * 0.15));
+}
+[class*="overlay-theme-"] .mint-duel-card__token-id {
+  font-size: max(7px, calc(var(--ol-card, 80px) * 0.08));
+}
+
+/* ── Overlay Panel Hierarchy (Phase 1 spectator experience) ────────────── */
+
+.ol-panel-primary {
+  border-left: 4px solid theme('colors.rose.400');
+  background: rgba(255, 255, 255, 0.95);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.ol-panel-secondary {
+  border-left: 3px solid theme('colors.slate.300');
+  background: rgba(255, 255, 255, 0.90);
+}
+
+.ol-panel-tertiary {
+  border-left: 2px solid transparent;
+  background: rgba(255, 255, 255, 0.75);
+  opacity: 0.85;
+}
+
+.ol-panel-dramatic {
+  border-left: 4px solid theme('colors.nyano.400');
+  background: rgba(255, 255, 255, 0.98);
+  box-shadow: 0 2px 20px rgba(255, 138, 80, 0.2);
+  animation: ol-dramatic-entrance 0.6s ease-out;
+}
+
+@keyframes ol-dramatic-entrance {
+  0% {
+    box-shadow: 0 0 32px rgba(255, 138, 80, 0.5);
+    transform: scale(1.02);
+  }
+  100% {
+    box-shadow: 0 2px 20px rgba(255, 138, 80, 0.2);
+    transform: scale(1);
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   BASE STYLES
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+@layer base {
+  html {
+    font-family: 'Noto Sans JP', 'Hiragino Sans', sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+  
+  body {
+    @apply bg-surface-50 text-surface-900;
+    background-color: var(--surface-bg);
+    color: var(--text-primary);
+  }
+  
+  /* Headings use display font */
+  h1, h2, h3, h4, h5, h6,
+  .font-display {
+    font-family: 'Nunito', 'Rounded Mplus 1c', sans-serif;
+  }
+  
+  /* Code and technical info */
+  code, pre, .font-mono {
+    font-family: 'JetBrains Mono', 'SF Mono', monospace;
+  }
+  
+  /* Focus styles */
+  *:focus-visible {
+    @apply outline-none ring-2 ring-nyano-500 ring-offset-2;
+  }
+  
+  /* Selection */
+  ::selection {
+    @apply bg-nyano-200 text-nyano-900;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   CARD COMPONENT
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+@layer components {
+  .card {
+    @apply relative bg-white rounded-2xl border border-surface-200;
+    box-shadow: var(--shadow-sm);
+    transition: box-shadow var(--transition-normal), transform var(--transition-normal);
+  }
+  
+  .card:hover {
+    box-shadow: var(--shadow-md);
+  }
+  
+  .card-hd {
+    @apply px-4 py-3 border-b border-surface-100;
+  }
+  
+  .card-bd {
+    @apply px-4 py-4;
+  }
+  
+  .card-ft {
+    @apply px-4 py-3 border-t border-surface-100 bg-surface-50/50;
+  }
+  
+  /* Card variants */
+  .card-flat {
+    @apply card shadow-none;
+  }
+  
+  .card-elevated {
+    @apply card;
+    box-shadow: var(--shadow-md);
+  }
+  
+  .card-glass {
+    @apply card bg-white/80 backdrop-blur-sm;
+  }
+  
+  /* Interactive card */
+  .card-interactive {
+    @apply card cursor-pointer;
+  }
+  
+  .card-interactive:hover {
+    @apply -translate-y-0.5;
+    box-shadow: var(--shadow-lg);
+  }
+  
+  .card-interactive:active {
+    @apply translate-y-0;
+    box-shadow: var(--shadow-sm);
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   BUTTON COMPONENT
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+@layer components {
+  .btn {
+    @apply inline-flex items-center justify-center gap-2;
+    @apply px-4 py-2 rounded-xl;
+    @apply text-sm font-semibold;
+    @apply bg-surface-100 text-surface-700;
+    @apply border border-surface-200;
+    @apply transition-all;
+    transition-duration: var(--transition-fast);
+    font-family: 'Nunito', sans-serif;
+  }
+  
+  .btn:hover:not(:disabled) {
+    @apply bg-surface-200 border-surface-300;
+  }
+  
+  .btn:active:not(:disabled) {
+    @apply scale-[0.98];
+  }
+  
+  .btn:disabled {
+    @apply opacity-50 cursor-not-allowed;
+  }
+  
+  /* Primary button - Nyano brand color */
+  .btn-primary {
+    @apply bg-nyano-500 text-white border-nyano-600;
+    box-shadow: 0 2px 8px -2px rgba(255, 138, 80, 0.4);
+  }
+  
+  .btn-primary:hover:not(:disabled) {
+    @apply bg-nyano-600 border-nyano-700;
+    box-shadow: 0 4px 12px -2px rgba(255, 138, 80, 0.5);
+  }
+  
+  /* Secondary button */
+  .btn-secondary {
+    @apply bg-white text-surface-700 border-surface-300;
+  }
+  
+  .btn-secondary:hover:not(:disabled) {
+    @apply bg-surface-50 border-surface-400;
+  }
+  
+  /* Ghost button */
+  .btn-ghost {
+    @apply bg-transparent border-transparent text-surface-600;
+  }
+  
+  .btn-ghost:hover:not(:disabled) {
+    @apply bg-surface-100 text-surface-900;
+  }
+  
+  /* Player-specific buttons */
+  .btn-player-a {
+    @apply bg-player-a-500 text-white border-player-a-600;
+    box-shadow: 0 2px 8px -2px rgba(14, 165, 233, 0.4);
+  }
+  
+  .btn-player-a:hover:not(:disabled) {
+    @apply bg-player-a-600;
+  }
+  
+  .btn-player-b {
+    @apply bg-player-b-500 text-white border-player-b-600;
+    box-shadow: 0 2px 8px -2px rgba(244, 63, 94, 0.4);
+  }
+  
+  .btn-player-b:hover:not(:disabled) {
+    @apply bg-player-b-600;
+  }
+  
+  /* Danger button */
+  .btn-danger {
+    @apply bg-red-500 text-white border-red-600;
+  }
+  
+  .btn-danger:hover:not(:disabled) {
+    @apply bg-red-600;
+  }
+  
+  /* Size variants */
+  .btn-xs {
+    @apply px-2.5 py-1 text-xs rounded-lg;
+  }
+  
+  .btn-sm {
+    @apply px-3 py-1.5 text-xs rounded-lg;
+  }
+  
+  .btn-lg {
+    @apply px-6 py-3 text-base rounded-2xl;
+  }
+  
+  /* Icon button */
+  .btn-icon {
+    @apply p-2 aspect-square;
+  }
+  
+  .btn-icon.btn-sm {
+    @apply p-1.5;
+  }
+  
+  .btn-icon.btn-lg {
+    @apply p-3;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   BADGE COMPONENT
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+@layer components {
+  .badge {
+    @apply inline-flex items-center gap-1;
+    @apply px-2 py-0.5 rounded-md;
+    @apply text-xs font-medium;
+    @apply bg-surface-100 text-surface-600;
+    @apply border border-surface-200;
+  }
+  
+  /* Color variants */
+  .badge-nyano {
+    @apply bg-nyano-100 text-nyano-700 border-nyano-200;
+  }
+  
+  .badge-sky {
+    @apply bg-sky-100 text-sky-700 border-sky-200;
+  }
+  
+  .badge-rose {
+    @apply bg-rose-100 text-rose-700 border-rose-200;
+  }
+  
+  .badge-emerald {
+    @apply bg-emerald-100 text-emerald-700 border-emerald-200;
+  }
+  
+  .badge-amber {
+    @apply bg-amber-100 text-amber-700 border-amber-200;
+  }
+  
+  .badge-violet {
+    @apply bg-violet-100 text-violet-700 border-violet-200;
+  }
+  
+  .badge-red {
+    @apply bg-red-100 text-red-700 border-red-200;
+  }
+  
+  /* Player badges */
+  .badge-player-a {
+    @apply bg-player-a-100 text-player-a-700 border-player-a-200;
+  }
+  
+  .badge-player-b {
+    @apply bg-player-b-100 text-player-b-700 border-player-b-200;
+  }
+  
+  /* Solid variants */
+  .badge-solid {
+    @apply border-transparent;
+  }
+  
+  .badge-solid.badge-nyano {
+    @apply bg-nyano-500 text-white;
+  }
+  
+  .badge-solid.badge-emerald {
+    @apply bg-emerald-500 text-white;
+  }
+  
+  /* Size variants */
+  .badge-sm {
+    @apply px-1.5 py-0.5 text-[10px];
+  }
+  
+  .badge-lg {
+    @apply px-3 py-1 text-sm;
+  }
+  
+  /* Pill variant */
+  .badge-pill {
+    @apply rounded-full;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   INPUT COMPONENT
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+@layer components {
+  .input {
+    @apply w-full px-3 py-2 rounded-xl;
+    @apply text-sm text-surface-900;
+    @apply bg-white border border-surface-300;
+    @apply placeholder:text-surface-400;
+    @apply transition-colors;
+    transition-duration: var(--transition-fast);
+  }
+  
+  .input:hover {
+    @apply border-surface-400;
+  }
+  
+  .input:focus {
+    @apply border-nyano-500 ring-2 ring-nyano-500/20;
+  }
+  
+  .input:disabled {
+    @apply bg-surface-100 text-surface-500 cursor-not-allowed;
+  }
+  
+  /* Variants */
+  .input-sm {
+    @apply px-2.5 py-1.5 text-xs rounded-lg;
+  }
+  
+  .input-lg {
+    @apply px-4 py-3 text-base rounded-2xl;
+  }
+  
+  .input-error {
+    @apply border-red-500 focus:border-red-500 focus:ring-red-500/20;
+  }
+  
+  /* Select */
+  select.input {
+    @apply appearance-none cursor-pointer;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2378716C' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.75rem center;
+    padding-right: 2.5rem;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   CALLOUT COMPONENT
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+@layer components {
+  .callout {
+    @apply relative px-4 py-3 rounded-2xl;
+    @apply border-l-4;
+    @apply bg-surface-50;
+  }
+  
+  .callout-info {
+    @apply bg-sky-50/50 border-l-sky-500;
+  }
+  
+  .callout-success {
+    @apply bg-emerald-50/50 border-l-emerald-500;
+  }
+  
+  .callout-warning {
+    @apply bg-amber-50/50 border-l-amber-500;
+  }
+  
+  .callout-error {
+    @apply bg-red-50/50 border-l-red-500;
+  }
+  
+  .callout-nyano {
+    @apply bg-nyano-50/50 border-l-nyano-500;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   GAME-SPECIFIC COMPONENTS
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+@layer components {
+  /* Game board cell */
+  .board-cell {
+    @apply relative aspect-square rounded-2xl;
+    @apply bg-white border-2 border-surface-200;
+    @apply transition-all;
+    transition-duration: var(--transition-normal);
+  }
+  
+  .board-cell:hover:not(.board-cell-occupied):not(:disabled) {
+    @apply border-surface-300 bg-surface-50;
+    box-shadow: var(--shadow-sm);
+  }
+  
+  .board-cell-occupied {
+    @apply cursor-default;
+  }
+  
+  .board-cell-selected {
+    @apply border-nyano-500 bg-nyano-50;
+    box-shadow: 0 0 0 3px rgba(255, 138, 80, 0.2);
+  }
+  
+  .board-cell-owner-a {
+    @apply border-player-a-400 bg-player-a-50;
+  }
+  
+  .board-cell-owner-b {
+    @apply border-player-b-400 bg-player-b-50;
+  }
+  
+  .board-cell-placed {
+    animation: card-place 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  
+  .board-cell-flipped {
+    animation: card-flip 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  
+  /* Game card (Nyano card in play) */
+  .game-card {
+    @apply relative w-full h-full rounded-xl;
+    @apply bg-white border-2;
+    @apply overflow-hidden;
+    @apply transition-all;
+    transition-duration: var(--transition-fast);
+  }
+  
+  .game-card-owner-a {
+    @apply border-player-a-400;
+    box-shadow: 0 2px 8px -2px rgba(14, 165, 233, 0.2);
+  }
+  
+  .game-card-owner-b {
+    @apply border-player-b-400;
+    box-shadow: 0 2px 8px -2px rgba(244, 63, 94, 0.2);
+  }
+  
+  /* Turn indicator */
+  .turn-indicator {
+    @apply inline-flex items-center gap-2;
+    @apply px-3 py-1.5 rounded-full;
+    @apply text-sm font-semibold;
+    @apply animate-pulse-soft;
+  }
+  
+  .turn-indicator-a {
+    @apply bg-player-a-100 text-player-a-700;
+  }
+  
+  .turn-indicator-b {
+    @apply bg-player-b-100 text-player-b-700;
+  }
+  
+  /* Score display */
+  .score-display {
+    @apply flex items-center gap-4;
+    @apply px-4 py-2 rounded-2xl;
+    @apply bg-surface-100;
+  }
+  
+  .score-value {
+    @apply text-2xl font-bold font-display tabular-nums;
+  }
+  
+  .score-value-a {
+    @apply text-player-a-600;
+  }
+  
+  .score-value-b {
+    @apply text-player-b-600;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   OVERLAY STYLES (OBS-specific)
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+@layer components {
+  .overlay-container {
+    @apply min-h-screen;
+    background: transparent;
+  }
+  
+  .overlay-panel {
+    @apply bg-white/95 backdrop-blur-sm rounded-2xl;
+    box-shadow: 0 8px 32px -8px rgba(0, 0, 0, 0.15);
+  }
+  
+  .overlay-panel-dark {
+    @apply bg-surface-900/95 text-white;
+  }
+  
+  /* Vote countdown */
+  .vote-countdown {
+    @apply relative overflow-hidden rounded-full;
+    @apply bg-surface-100;
+  }
+  
+  .vote-countdown-bar {
+    @apply absolute inset-y-0 left-0;
+    @apply bg-nyano-500;
+    transition: width 1s linear;
+  }
+  
+  .vote-countdown-text {
+    @apply relative z-10 px-4 py-2;
+    @apply text-sm font-bold font-display;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   UTILITY CLASSES
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+@layer utilities {
+  /* Text gradients */
+  .text-gradient-nyano {
+    @apply bg-gradient-to-r from-nyano-500 to-nyano-400 bg-clip-text text-transparent;
+  }
+  
+  .text-gradient-player-a {
+    @apply bg-gradient-to-r from-player-a-600 to-player-a-400 bg-clip-text text-transparent;
+  }
+  
+  .text-gradient-player-b {
+    @apply bg-gradient-to-r from-player-b-600 to-player-b-400 bg-clip-text text-transparent;
+  }
+  
+  /* Glassmorphism */
+  .glass {
+    @apply bg-white/80 backdrop-blur-sm;
+  }
+  
+  .glass-dark {
+    @apply bg-surface-900/80 backdrop-blur-sm;
+  }
+  
+  /* Glow effects */
+  .glow-nyano {
+    box-shadow: 0 0 24px -4px rgba(255, 138, 80, 0.5);
+  }
+  
+  .glow-a {
+    box-shadow: 0 0 20px -4px rgba(14, 165, 233, 0.4);
+  }
+  
+  .glow-b {
+    box-shadow: 0 0 20px -4px rgba(244, 63, 94, 0.4);
+  }
+  
+  /* Shimmer loading effect */
+  .shimmer {
+    background: linear-gradient(
+      90deg,
+      transparent 0%,
+      rgba(255, 255, 255, 0.4) 50%,
+      transparent 100%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 2s linear infinite;
+  }
+  
+  /* Hide scrollbar but keep functionality */
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+  
+  /* Custom scrollbar */
+  .scrollbar-custom {
+    scrollbar-width: thin;
+    scrollbar-color: var(--border-medium) transparent;
+  }
+  
+  .scrollbar-custom::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  
+  .scrollbar-custom::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  
+  .scrollbar-custom::-webkit-scrollbar-thumb {
+    background-color: var(--border-medium);
+    border-radius: 3px;
+  }
+  
+  /* Interaction states */
+  .interactive {
+    @apply cursor-pointer transition-all;
+    transition-duration: var(--transition-fast);
+  }
+  
+  .interactive:hover {
+    @apply opacity-80;
+  }
+  
+  .interactive:active {
+    @apply scale-[0.98];
+  }
+  
+  /* Link styles */
+  .link {
+    @apply text-nyano-600 hover:text-nyano-700;
+    @apply underline underline-offset-2 decoration-nyano-300;
+    @apply transition-colors;
+  }
+  
+  .link:hover {
+    @apply decoration-nyano-500;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   ANIMATIONS (Additional)
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+@layer utilities {
+  /* Staggered fade-in for lists */
+  .animate-stagger > * {
+    animation: fade-in-up 0.3s ease-out both;
+  }
+  
+  .animate-stagger > *:nth-child(1) { animation-delay: 0ms; }
+  .animate-stagger > *:nth-child(2) { animation-delay: 50ms; }
+  .animate-stagger > *:nth-child(3) { animation-delay: 100ms; }
+  .animate-stagger > *:nth-child(4) { animation-delay: 150ms; }
+  .animate-stagger > *:nth-child(5) { animation-delay: 200ms; }
+  .animate-stagger > *:nth-child(6) { animation-delay: 250ms; }
+  .animate-stagger > *:nth-child(7) { animation-delay: 300ms; }
+  .animate-stagger > *:nth-child(8) { animation-delay: 350ms; }
+  .animate-stagger > *:nth-child(9) { animation-delay: 400ms; }
+  
+  /* Victory celebration */
+  @keyframes victory-pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+  }
+  
+  .animate-victory {
+    animation: victory-pulse 0.6s ease-in-out 3;
+  }
+  
+  /* Defeat shake */
+  .animate-defeat {
+    animation: shake 0.4s ease-in-out;
+  }
+  
+  /* Flip chain highlight */
+  @keyframes chain-pulse {
+    0% { box-shadow: 0 0 0 0 rgba(139, 92, 246, 0.6); }
+    70% { box-shadow: 0 0 0 8px rgba(139, 92, 246, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(139, 92, 246, 0); }
+  }
+  
+  .animate-chain {
+    animation: chain-pulse 0.6s ease-out;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   RESPONSIVE ADJUSTMENTS
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+@media (max-width: 640px) {
+  .card {
+    @apply rounded-xl;
+  }
+  
+  .card-hd,
+  .card-bd,
+  .card-ft {
+    @apply px-3;
+  }
+  
+  .btn {
+    @apply px-3 py-1.5 text-xs;
+  }
+  
+  .btn-lg {
+    @apply px-4 py-2 text-sm;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   PRINT STYLES
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+@media print {
+  .card,
+  .btn,
+  .badge {
+    box-shadow: none !important;
+  }
+  
+  .no-print {
+    display: none !important;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   GAME ANIMATIONS (commit-0063)
+   Imported from UI improvement pack.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/**
+ * game-animations.css
+ * 
+ * Additional CSS for the three UI improvements.
+ * Add to index.css (after existing @layer utilities block).
+ */
+
+@layer utilities {
+  /* ═══════════════════════════════════════════════════════════════
+     BOARD FLIP ANIMATION ENHANCEMENTS
+     ═══════════════════════════════════════════════════════════════ */
+
+  /* Placed cell: pop-in with glow */
+  @keyframes cell-place {
+    0% {
+      transform: scale(0.85);
+      opacity: 0.5;
+      box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.6);
+    }
+    40% {
+      transform: scale(1.08);
+      opacity: 1;
+      box-shadow: 0 0 24px -2px rgba(245, 158, 11, 0.5);
+    }
+    100% {
+      transform: scale(1);
+      opacity: 1;
+      box-shadow: 0 0 8px -2px rgba(245, 158, 11, 0.2);
+    }
+  }
+
+  .animate-cell-place {
+    animation: cell-place 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  }
+
+  /* Flipped cell: owner-color swap flash */
+  @keyframes cell-flip {
+    0% {
+      transform: perspective(400px) rotateY(0deg);
+      filter: brightness(1);
+    }
+    30% {
+      transform: perspective(400px) rotateY(90deg);
+      filter: brightness(1.3);
+    }
+    60% {
+      transform: perspective(400px) rotateY(180deg);
+      filter: brightness(1.1);
+    }
+    100% {
+      transform: perspective(400px) rotateY(360deg);
+      filter: brightness(1);
+    }
+  }
+
+  .animate-cell-flip {
+    animation: cell-flip 0.55s cubic-bezier(0.4, 0, 0.2, 1) both;
+  }
+
+  /* Staggered flip delays for chain effects */
+  .flip-delay-1 { animation-delay: 150ms; }
+  .flip-delay-2 { animation-delay: 300ms; }
+  .flip-delay-3 { animation-delay: 450ms; }
+
+  /* Flip glow ring */
+  @keyframes flip-glow {
+    0% { box-shadow: 0 0 0 0 rgba(139, 92, 246, 0.7); }
+    50% { box-shadow: 0 0 16px 4px rgba(139, 92, 246, 0.3); }
+    100% { box-shadow: 0 0 0 0 rgba(139, 92, 246, 0); }
+  }
+
+  .animate-flip-glow {
+    animation: flip-glow 0.8s ease-out;
+  }
+
+  /* ═══════════════════════════════════════════════════════════════
+     RESULT BANNER (PERSISTENT) ANIMATIONS
+     ═══════════════════════════════════════════════════════════════ */
+
+  @keyframes banner-slide-in {
+    0% {
+      transform: translateY(-16px);
+      opacity: 0;
+      max-height: 0;
+    }
+    100% {
+      transform: translateY(0);
+      opacity: 1;
+      max-height: 200px;
+    }
+  }
+
+  .animate-banner-enter {
+    animation: banner-slide-in 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  }
+
+  /* Winner shimmer effect */
+  @keyframes winner-shimmer {
+    0% { background-position: -200% center; }
+    100% { background-position: 200% center; }
+  }
+
+  .result-banner-shimmer {
+    background-size: 200% auto;
+    animation: winner-shimmer 3s linear infinite;
+  }
+
+  /* ═══════════════════════════════════════════════════════════════
+     STREAM OPS HUD EFFECTS
+     ═══════════════════════════════════════════════════════════════ */
+
+  /* Pulsing border for active vote */
+  @keyframes hud-border-pulse {
+    0%, 100% {
+      border-color: rgba(255, 138, 80, 0.6);
+      box-shadow: 0 0 12px -2px rgba(255, 138, 80, 0.3);
+    }
+    50% {
+      border-color: rgba(255, 138, 80, 1);
+      box-shadow: 0 0 24px -2px rgba(255, 138, 80, 0.5);
+    }
+  }
+
+  .hud-vote-active {
+    animation: hud-border-pulse 1.5s ease-in-out infinite;
+  }
+
+  /* Counter tick animation */
+  @keyframes counter-tick {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.15); }
+    100% { transform: scale(1); }
+  }
+
+  .animate-counter-tick {
+    animation: counter-tick 0.2s ease-out;
+  }
+
+  /* Live indicator dot */
+  @keyframes live-dot {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.4; transform: scale(0.8); }
+  }
+
+  .animate-live-dot {
+    animation: live-dot 2s ease-in-out infinite;
+  }
+
+  /* ═══════════════════════════════════════════════════════════════════════
+     M08: LANDING PAGE & VISUAL POLISH
+     ═══════════════════════════════════════════════════════════════════════ */
+
+  /* Floating animation (hero mascot bobbing) */
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-8px); }
+  }
+
+  .animate-float {
+    animation: float 3s ease-in-out infinite;
+  }
+
+  /* Animated gradient text (hero title) */
+  @keyframes gradient-x {
+    0%, 100% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+  }
+
+  .text-gradient-animated {
+    background: linear-gradient(
+      90deg,
+      var(--nyano-primary) 0%,
+      #F43F5E 25%,
+      #8B5CF6 50%,
+      var(--nyano-primary) 75%,
+      #0EA5E9 100%
+    );
+    background-size: 200% auto;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    animation: gradient-x 6s linear infinite;
+  }
+
+  /* Skeleton shimmer base (loading placeholders) */
+  .skeleton-base {
+    @apply bg-surface-200 rounded-xl relative overflow-hidden;
+  }
+
+  .skeleton-base::after {
+    content: '';
+    @apply absolute inset-0;
+    background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.4) 50%, transparent 100%);
+    background-size: 200% 100%;
+    animation: shimmer 2s linear infinite;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   OVERLAY BOOST (OBS controls=0)
+   Font hierarchy and contrast adjustments for 720p/1080p readability.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+@layer components {
+  /* Vote countdown with progress bar */
+  .vote-countdown-inline {
+    @apply relative overflow-hidden rounded-full;
+    @apply h-6;
+    @apply bg-surface-100;
+  }
+
+  .vote-countdown-inline-bar {
+    @apply absolute inset-y-0 left-0;
+    @apply rounded-full;
+    transition: width 1s linear;
+  }
+
+  .vote-countdown-inline-text {
+    @apply relative z-10 flex h-full items-center justify-center;
+    @apply text-xs font-bold;
+  }
+
+  /* toPlay indicator pill */
+  .to-play-pill {
+    @apply inline-flex items-center gap-1.5;
+    @apply px-3 py-1 rounded-full;
+    @apply text-sm font-bold;
+    @apply shadow-sm;
+  }
+
+  .to-play-pill-a {
+    @apply bg-player-a-100 text-player-a-700 border border-player-a-300;
+    box-shadow: 0 0 8px rgba(14, 165, 233, 0.35);
+    animation: ol-to-play-pulse 2s ease-in-out infinite alternate;
+  }
+
+  .to-play-pill-b {
+    @apply bg-player-b-100 text-player-b-700 border border-player-b-300;
+    box-shadow: 0 0 8px rgba(244, 63, 94, 0.35);
+    animation: ol-to-play-pulse 2s ease-in-out infinite alternate;
+  }
+
+  @keyframes ol-to-play-pulse {
+    0% { opacity: 1; }
+    100% { opacity: 0.8; }
+  }
+
+  /* Card frame enhancement for overlay board cells */
+  .overlay-cell-a {
+    @apply border-player-a-400;
+    box-shadow:
+      inset 0 0 0 1px rgba(14, 165, 233, 0.15),
+      0 2px 8px -2px rgba(14, 165, 233, 0.25);
+  }
+
+  .overlay-cell-b {
+    @apply border-player-b-400;
+    box-shadow:
+      inset 0 0 0 1px rgba(244, 63, 94, 0.15),
+      0 2px 8px -2px rgba(244, 63, 94, 0.25);
+  }
+
+  .overlay-cell-empty {
+    @apply border-surface-200;
+    background: linear-gradient(135deg, rgba(255,255,255,0.9) 0%, rgba(250,250,249,0.95) 100%);
+  }
+
+  /* Overlay panel with subtle gradient border */
+  .overlay-hud-panel {
+    @apply rounded-2xl px-4 py-3 shadow-sm;
+    background: rgba(255, 255, 255, 0.92);
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    backdrop-filter: blur(4px);
+  }
+
+  /* ── OBS Visibility Enhancements (P2-084) ─────────────────────────── */
+
+  /* Vote countdown — large, pulsing, high contrast for OBS viewers */
+  .ol-vote-countdown {
+    @apply font-display font-black tabular-nums;
+    @apply text-emerald-600;
+    text-shadow: 0 2px 6px rgba(16, 185, 129, 0.3);
+  }
+
+  .ol-vote-countdown--urgent {
+    @apply text-rose-600;
+    text-shadow: 0 2px 6px rgba(225, 29, 72, 0.4);
+    animation: ol-countdown-pulse 0.5s ease-in-out infinite alternate;
+  }
+
+  @keyframes ol-countdown-pulse {
+    0% { opacity: 1; transform: scale(1); }
+    100% { opacity: 0.85; transform: scale(1.04); }
+  }
+
+  /* Transparent BG mode — boost panel contrast for OBS chroma-key */
+  .ol-transparent-boost .ol-panel-primary,
+  .ol-transparent-boost .ol-panel-secondary {
+    background: rgba(255, 255, 255, 0.97);
+    backdrop-filter: blur(8px);
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+  }
+
+  .ol-transparent-boost .ol-panel-tertiary {
+    background: rgba(255, 255, 255, 0.92);
+    backdrop-filter: blur(6px);
+    opacity: 1;
+  }
+
+  /* Transparent mode badge boost — thicker border + bold for chroma-key visibility */
+  .ol-transparent-boost .badge {
+    border-width: 2px;
+    font-weight: 700;
+  }
+
+  /* Score emphasis for OBS readability */
+  .ol-score-big {
+    @apply font-display font-black tabular-nums;
+    letter-spacing: -0.02em;
+  }
+
+  .ol-score-big--a {
+    @apply text-player-a-600;
+    text-shadow: 0 1px 4px rgba(14, 165, 233, 0.25);
+  }
+
+  .ol-score-big--b {
+    @apply text-player-b-600;
+    text-shadow: 0 1px 4px rgba(244, 63, 94, 0.25);
+  }
+
+  /* Turn indicator scaling per theme */
+  .ol-turn-label {
+    @apply font-display font-bold;
+  }
+}
