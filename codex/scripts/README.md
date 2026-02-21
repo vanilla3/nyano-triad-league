@@ -1,40 +1,35 @@
-# Codex Runner Scripts
+# Codex Scripts
 
-This folder contains scripts to run *all* Work Orders under `codex/work_orders/` sequentially.
+## run_all_work_orders
 
-It also includes a script to run **a single Work Order** by id.
+全ての Work Order を番号順に実行します。
 
-## PowerShell (Windows)
-Run from repo root:
-
-```powershell
-pwsh -ExecutionPolicy Bypass -File codex/scripts/run_all_work_orders.ps1 -ApprovalMode on-request
-```
-
-Fully automatic (no prompts):
-```powershell
-pwsh -ExecutionPolicy Bypass -File codex/scripts/run_all_work_orders.ps1 -ApprovalMode never -CreatePR
-```
-
-Run a single Work Order:
-```powershell
-pwsh -ExecutionPolicy Bypass -File codex/scripts/run_work_order.ps1 -WorkOrder 006 -ApprovalMode on-request
-```
-
-## Bash (macOS/Linux)
 ```bash
-chmod +x codex/scripts/run_all_work_orders.sh
-APPROVAL_MODE=on-request CREATE_PR=1 codex/scripts/run_all_work_orders.sh
+./codex/scripts/run_all_work_orders.sh
 ```
 
-Run a single Work Order:
+環境変数:
+- `MODEL` (default: gpt-5.3-codex)
+- `APPROVAL_MODE` (on-request|never|untrusted)
+- `SANDBOX_MODE` (read-only|workspace-write|danger-full-access)
+- `START_ID` (例: 006 から開始)
+- `INCLUDE_GLOB` (grep -E に渡す regex。例: motion|board)
+- `GIT_REMOTE` (default: origin)
+- `CREATE_PR` (1 で gh pr create を試みる。remote がある場合のみ)
+
+> remote（既定: origin）が無い場合は fetch/pull/push を行いません（ローカルだけで進められます）。
+
+例：Motion系だけ 006 から実行
 ```bash
-chmod +x codex/scripts/run_work_order.sh
-APPROVAL_MODE=on-request CREATE_PR=0 codex/scripts/run_work_order.sh 006
+START_ID=006 INCLUDE_GLOB=motion ./codex/scripts/run_all_work_orders.sh
 ```
 
-## Notes
-- If your Codex execution policy rules block `git push`, either:
-  1) set ApprovalMode to `on-request`, approve when prompted, OR
-  2) change `codex/rules/nyano.project.rules` so `git commit`/`git push` are `allow`.
-- The runner stops on the first failed Work Order and keeps the branch for inspection.
+## run_work_order
+
+単発で Work Order を実行します。
+
+```bash
+./codex/scripts/run_work_order.sh 006
+```
+
+> push は人間レビュー後に手動で行う運用を推奨します。

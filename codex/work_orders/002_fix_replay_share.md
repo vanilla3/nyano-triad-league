@@ -1,4 +1,4 @@
-﻿# Work Order: 002 Fix Replay & Share reliability (subpath-safe)
+# Work Order: 002 Fix Replay & Share reliability (subpath-safe)
 
 ## 1) 背景 / 目的
 現象：
@@ -9,9 +9,9 @@
 - **シェアURLはサブパス配信でも壊れない**（BASE_URL / Router basename）
 
 ## 2) 成果物
-- [x] share URL生成が base path を考慮
-- [x] Replayの読み込みが失敗しても復帰導線がある（再試行/説明）
-- [x] E2E または unit に再発防止テスト
+- [ ] share URL生成が base path を考慮
+- [ ] Replayの読み込みが失敗しても復帰導線がある（再試行/説明）
+- [ ] E2E または unit に再発防止テスト
 
 ## 3) 要件
 ### MUST
@@ -42,10 +42,10 @@
 - Replayは “必要なスナップショット” を同梱できるようにし、RPC依存を削る（段階導入）
 
 ## 8) タスク
-- [x] 002-A: share URL生成のユーティリティ化 + base path 対応
-- [x] 002-B: Replayの失敗UI（再試行/説明/ホームへ）
-- [x] 002-C: Replayデータの versioning（破壊的変更はしない）
-- [x] 002-D: テスト（unit/e2e）
+- [ ] 002-A: share URL生成のユーティリティ化 + base path 対応
+- [ ] 002-B: Replayの失敗UI（再試行/説明/ホームへ）
+- [ ] 002-C: Replayデータの versioning（破壊的変更はしない）
+- [ ] 002-D: テスト（unit/e2e）
 
 ## 9) 検証
 - `pnpm -C apps/web test`

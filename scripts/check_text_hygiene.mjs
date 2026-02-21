@@ -1,171 +1,159 @@
-#!/usr/bin/env node
-/**
- * Text Hygiene Checker
- *
- * Detects:
- * - mojibake signature strings (common UTF-8/CP932 corruption artifacts)
- * - control characters (C0 + C1 controls, excluding \n \r \t)
- * - Private Use Area characters (PUA) that rely on special fonts and often render as tofu
- *
- * Usage:
- *   node scripts/check_text_hygiene.mjs
- *   node scripts/check_text_hygiene.mjs --root apps/web/src --root docs
- */
 import fs from "node:fs";
 import path from "node:path";
 
-const argv = process.argv.slice(2);
+const REPO_ROOT = process.cwd();
+const INCLUDE_EXT = new Set([".md", ".ts", ".tsx", ".js", ".mjs", ".css", ".json", ".toml"]);
+const EXCLUDE_DIRS = new Set(["node_modules", ".git", "dist", "build", ".next", ".turbo", "coverage"]);
+const EXCLUDE_PATH_CONTAINS = [
+  `${path.sep}docs${path.sep}99_dev${path.sep}commit-`,
+  `${path.sep}docs${path.sep}99_dev${path.sep}_archive${path.sep}`,
+  `${path.sep}apps${path.sep}web${path.sep}src${path.sep}_archive${path.sep}`,
+  `${path.sep}scripts${path.sep}check_text_hygiene.mjs`,
+];
 
-function readArgValues(flag) {
-  const values = [];
-  for (let i = 0; i < argv.length; i += 1) {
-    if (argv[i] === flag && typeof argv[i + 1] === "string") {
-      values.push(argv[i + 1]);
+// Keep this strict enough to avoid false positives when docs mention
+// single-character examples like `繧`/`縺`/`繝`.
+const MOJIBAKE_PATTERNS = [
+  /[繧縺繝荳譛逶隕鬘蜿螳遒邱][ｦ-ﾟ]/u,
+  /(?:繧.{0,2}縺|縺.{0,2}繧|繝.{0,2}繧|譛.{0,2}荳|荳.{0,2}譛)/u,
+];
+
+function parseRootsFromArgs(argv) {
+  const roots = [];
+  for (let i = 0; i < argv.length; i++) {
+    if (argv[i] !== "--root") continue;
+    const next = argv[i + 1];
+    if (typeof next === "string" && next.length > 0) {
+      roots.push(path.resolve(REPO_ROOT, next));
       i += 1;
     }
   }
-  return values;
+  if (roots.length > 0) return roots;
+  return [REPO_ROOT];
 }
 
-const roots = readArgValues("--root");
-// Default to product source only. Use --root for broader scans.
-const scanRoots = roots.length ? roots : ["apps/web/src"];
-
-const exts = new Set([".ts", ".tsx", ".css", ".md", ".json"]);
-
-const mojibakeSignatures = [
-  "郢ｧ",
-  "邵ｺ",
-  "驛｢・ｧ",
-  "驍ｵ・ｺ",
-  "髫ｨ貂・",
-  "髯ｷ闌ｨ",
-  "蟇ｾ謌ｦ蜈ｱ譛",
-  "噂nhttps://",
-  "噂nhttp://",
-];
-
-function isControl(codePoint) {
-  // Exclude \n \r \t. We flag other C0 controls and all C1 controls.
-  if (codePoint === 0x0a || codePoint === 0x0d || codePoint === 0x09) return false;
-  if (codePoint < 0x20) return true;
-  if (codePoint >= 0x7f && codePoint <= 0x9f) return true;
-  return false;
-}
-
-function isPua(codePoint) {
-  // BMP Private Use Area + supplementary PUAs.
-  if (codePoint >= 0xe000 && codePoint <= 0xf8ff) return true;
-  if (codePoint >= 0xf0000 && codePoint <= 0xffffd) return true;
-  if (codePoint >= 0x100000 && codePoint <= 0x10fffd) return true;
-  return false;
-}
-
-function walk(dir, out) {
-  if (!fs.existsSync(dir)) return;
-  const stat = fs.statSync(dir);
-  if (!stat.isDirectory()) return;
-
+function walk(dir, out = []) {
+  if (!fs.existsSync(dir)) return out;
   const entries = fs.readdirSync(dir, { withFileTypes: true });
-  for (const entry of entries) {
-    const full = path.join(dir, entry.name);
-    if (entry.isDirectory()) {
-      if (entry.name === "node_modules" || entry.name === "dist" || entry.name === ".next" || entry.name === ".git") continue;
-      walk(full, out);
-    } else if (entry.isFile()) {
-      const ext = path.extname(entry.name).toLowerCase();
-      if (!exts.has(ext)) continue;
-      out.push(full);
+  for (const ent of entries) {
+    const p = path.join(dir, ent.name);
+    if (ent.isDirectory()) {
+      if (EXCLUDE_DIRS.has(ent.name)) continue;
+      walk(p, out);
+      continue;
     }
+    out.push(p);
   }
+  return out;
 }
 
-function findIssues(text) {
-  const issues = [];
-
-  // Mojibake signatures
-  for (const sig of mojibakeSignatures) {
-    const idx = text.indexOf(sig);
-    if (idx !== -1) {
-      issues.push({ type: "mojibake", idx, detail: sig });
-      break;
-    }
-  }
-
-  // Control chars + PUA scan
-  for (let i = 0; i < text.length; i += 1) {
-    const codePoint = text.codePointAt(i);
-    if (codePoint === undefined) continue;
-
-    if (isControl(codePoint)) {
-      issues.push({ type: "control", idx: i, detail: `U+${codePoint.toString(16).toUpperCase().padStart(4, "0")}` });
-      break;
-    }
-    if (isPua(codePoint)) {
-      issues.push({ type: "pua", idx: i, detail: `U+${codePoint.toString(16).toUpperCase().padStart(4, "0")}` });
-      break;
-    }
-
-    // codePointAt advances for surrogate pairs; skip the next code unit if needed.
-    if (codePoint > 0xffff) i += 1;
-  }
-
-  return issues;
+function shouldSkip(filePath) {
+  const rel = path.relative(REPO_ROOT, filePath);
+  const relWithLeadingSep = `${path.sep}${rel}`;
+  return EXCLUDE_PATH_CONTAINS.some((frag) => relWithLeadingSep.includes(frag));
 }
 
-function idxToLineCol(text, idx) {
+function isControlChar(code) {
+  return (
+    (code >= 0x00 && code <= 0x08) ||
+    code === 0x0b ||
+    code === 0x0c ||
+    (code >= 0x0e && code <= 0x1f) ||
+    code === 0x7f ||
+    code === 0x80
+  );
+}
+
+function findFirstControlCharIndex(text) {
+  for (let i = 0; i < text.length; i++) {
+    if (isControlChar(text.charCodeAt(i))) return i;
+  }
+  return -1;
+}
+
+function findFirstPuaIndex(text) {
+  for (let i = 0; i < text.length; i++) {
+    const cp = text.codePointAt(i);
+    if (typeof cp !== "number") continue;
+    if (cp >= 0xe000 && cp <= 0xf8ff) return i;
+    if (cp > 0xffff) i += 1;
+  }
+  return -1;
+}
+
+function lineInfo(text, index) {
+  const safeIndex = Math.max(0, Math.min(index, Math.max(0, text.length - 1)));
   let line = 1;
-  let lastNl = -1;
-  for (let i = 0; i < idx; i += 1) {
+  let lineStart = 0;
+  for (let i = 0; i < safeIndex; i++) {
     if (text.charCodeAt(i) === 10) {
       line += 1;
-      lastNl = i;
+      lineStart = i + 1;
     }
   }
-  const col = idx - lastNl;
-  return { line, col };
+  const lineEndPos = text.indexOf("\n", lineStart);
+  const lineEnd = lineEndPos === -1 ? text.length : lineEndPos;
+  const sourceLineRaw = text.slice(lineStart, lineEnd).replace(/\r/g, "");
+  const sourceLine = sourceLineRaw.length > 180 ? `${sourceLineRaw.slice(0, 180)}...` : sourceLineRaw;
+  return {
+    line,
+    col: safeIndex - lineStart + 1,
+    sourceLine,
+  };
 }
 
-const files = [];
-for (const r of scanRoots) walk(r, files);
+function report(type, filePath, text, index, extra = "") {
+  const relPath = path.relative(REPO_ROOT, filePath);
+  const info = lineInfo(text, index);
+  const extraSuffix = extra ? ` ${extra}` : "";
+  console.error(
+    `[text-hygiene] ${type}${extraSuffix} in ${relPath}:${info.line}:${info.col}\n  ${info.sourceLine}`,
+  );
+}
 
-const problems = [];
+const roots = parseRootsFromArgs(process.argv.slice(2));
+const files = roots
+  .flatMap((root) => walk(root))
+  .filter((f) => INCLUDE_EXT.has(path.extname(f)))
+  .filter((f) => !shouldSkip(f));
 
-for (const file of files) {
-  let text = "";
-  try {
-    text = fs.readFileSync(file, "utf8");
-  } catch {
-    continue;
+let bad = 0;
+
+for (const filePath of files) {
+  const text = fs.readFileSync(filePath, "utf8");
+
+  const replacementIndex = text.indexOf("\uFFFD");
+  if (replacementIndex !== -1) {
+    report("replacement-char", filePath, text, replacementIndex, "(U+FFFD)");
+    bad += 1;
   }
 
-  const issues = findIssues(text);
-  if (!issues.length) continue;
+  const controlIndex = findFirstControlCharIndex(text);
+  if (controlIndex !== -1) {
+    const hex = text.charCodeAt(controlIndex).toString(16).padStart(2, "0");
+    report("control-char", filePath, text, controlIndex, `(0x${hex})`);
+    bad += 1;
+  }
 
-  for (const issue of issues) {
-    const { line, col } = idxToLineCol(text, issue.idx);
-    const lines = text.split(/\r?\n/);
-    const contextLine = lines[Math.max(0, line - 1)] ?? "";
-    problems.push({
-      file,
-      line,
-      col,
-      type: issue.type,
-      detail: issue.detail,
-      context: contextLine.slice(0, 200),
-    });
+  const puaIndex = findFirstPuaIndex(text);
+  if (puaIndex !== -1) {
+    const cp = text.codePointAt(puaIndex).toString(16).toUpperCase();
+    report("private-use-char", filePath, text, puaIndex, `(U+${cp})`);
+    bad += 1;
+  }
+
+  const mojibakeHit = MOJIBAKE_PATTERNS
+    .map((pattern) => ({ pattern, match: pattern.exec(text) }))
+    .find((item) => item.match);
+  if (mojibakeHit?.match && typeof mojibakeHit.match.index === "number") {
+    report("mojibake-pattern", filePath, text, mojibakeHit.match.index);
+    bad += 1;
   }
 }
 
-if (problems.length) {
-  console.error("Text hygiene check failed. Problems found:\n");
-  for (const p of problems) {
-    console.error(`- ${p.type.toUpperCase()} ${p.detail} at ${p.file}:${p.line}:${p.col}`);
-    if (p.context) console.error(`  ${p.context}`);
-  }
-  console.error(`\nTotal problems: ${problems.length}`);
+if (bad > 0) {
+  console.error(`\n[text-hygiene] FAIL: ${bad} issue(s) found.`);
   process.exit(1);
 }
 
-console.log("Text hygiene check passed.");
-process.exit(0);
+console.log("[text-hygiene] OK");

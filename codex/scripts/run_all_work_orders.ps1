@@ -1,24 +1,32 @@
 <#
 .SYNOPSIS
-  Run ALL Codex Work Orders sequentially (one branch + commit + push per Work Order).
+  Run ALL Codex Work Orders sequentially (one branch per Work Order).
 
 USAGE (PowerShell):
   pwsh -ExecutionPolicy Bypass -File codex/scripts/run_all_work_orders.ps1 -ApprovalMode on-request
-  pwsh -ExecutionPolicy Bypass -File codex/scripts/run_all_work_orders.ps1 -ApprovalMode never -CreatePR
+
+FILTERING:
+  - Start from WO006:
+      pwsh -ExecutionPolicy Bypass -File codex/scripts/run_all_work_orders.ps1 -StartId 006
+  - Only run motion-related work orders:
+      pwsh -ExecutionPolicy Bypass -File codex/scripts/run_all_work_orders.ps1 -IncludeRegex 'motion|board'
 
 NOTES:
-  - "ApprovalMode never" aims for full automation, but your Codex rules may still prompt/deny git push.
-    If git push is blocked, change codex/rules/nyano.project.rules to allow git commit/push, or run with on-request.
+  - If git remote (default: origin) does not exist, this script will NOT fetch/pull/push.
+  - Codex rules may still prompt/deny git push depending on your setup.
 #>
 
 param(
   [string]$Model = "gpt-5.3-codex",
   [string]$BaseBranch = "main",
-  [ValidateSet("on-request","never","on-failure","untrusted")]
+  [ValidateSet("on-request","never","untrusted")]
   [string]$ApprovalMode = "on-request",
   [switch]$CreatePR,
   [string]$WorkOrderDir = "codex/work_orders",
-  [string]$RulesFile = "codex/rules/nyano.project.rules"
+  [string]$RulesFile = "codex/rules/nyano.project.rules",
+  [string]$StartId = "",
+  [string]$IncludeRegex = "",
+  [string]$GitRemote = "origin"
 )
 
 Set-StrictMode -Version Latest
@@ -39,8 +47,25 @@ function Write-Section([string]$title) {
 
 function Get-WorkOrders([string]$dir) {
   if (-not (Test-Path $dir)) { throw "Work order directory not found: $dir" }
-  $files = Get-ChildItem $dir -Filter "*.md" | Where-Object { $_.Name -notmatch "^000_TEMPLATE\.md$" } | Sort-Object Name
-  if ($files.Count -eq 0) { throw "No work orders found in $dir" }
+
+  $files = Get-ChildItem $dir -Filter "*.md" |
+    Where-Object { $_.Name -notmatch "^000_TEMPLATE\.md$" } |
+    Sort-Object Name
+
+  if (-not [string]::IsNullOrEmpty($IncludeRegex)) {
+    $files = $files | Where-Object { $_.FullName -match $IncludeRegex }
+  }
+
+  if (-not [string]::IsNullOrEmpty($StartId)) {
+    $files = $files | Where-Object {
+      $name = $_.Name
+      if ($name.Length -lt 3) { return $false }
+      $id = $name.Substring(0,3)
+      return ($id -ge $StartId)
+    }
+  }
+
+  if ($files.Count -eq 0) { throw "No work orders found in $dir (after filters)." }
   return $files
 }
 
@@ -49,6 +74,7 @@ function Parse-WorkOrderHeader([string]$path) {
   $firstLine = ($raw -split "`n")[0].Trim()
   $id = ""
   $title = ""
+
   if ($firstLine -match "#\s*Work\s*Order:\s*([0-9A-Za-z_-]+)\s*[-—]\s*(.+)$") {
     $id = $matches[1].Trim()
     $title = $matches[2].Trim()
@@ -59,8 +85,10 @@ function Parse-WorkOrderHeader([string]$path) {
     $id = (Split-Path $path -Leaf).Split("_")[0]
     $title = (Split-Path $path -Leaf).Replace(".md","")
   }
+
   $slug = ($title.ToLower() -replace "[^a-z0-9]+","-").Trim("-")
   if ($slug.Length -gt 40) { $slug = $slug.Substring(0,40).Trim("-") }
+
   return @{ Raw=$raw; Id=$id; Title=$title; Slug=$slug }
 }
 
@@ -69,10 +97,21 @@ function Git-CleanCheck() {
   if ($status) { throw "Working tree is not clean. Commit/stash your changes first." }
 }
 
-function Git-CheckoutBase([string]$base) {
-  git fetch origin | Out-Null
+function Has-Remote([string]$remote) {
+  $null = git remote get-url $remote 2>$null
+  return ($LASTEXITCODE -eq 0)
+}
+
+function Git-CheckoutBase([string]$base, [string]$remote, [bool]$hasRemote) {
+  if ($hasRemote) {
+    git fetch $remote | Out-Null
+  }
+
   git checkout $base | Out-Null
-  git pull --ff-only origin $base | Out-Null
+
+  if ($hasRemote) {
+    git pull --ff-only $remote $base | Out-Null
+  }
 }
 
 function Git-NewBranch([string]$branch) {
@@ -84,12 +123,34 @@ function Git-NewBranch([string]$branch) {
 
 function Has-GH() { return [bool](Get-Command gh -ErrorAction SilentlyContinue) }
 
-function Run-Codex([string]$workOrderPath, [string]$id, [string]$title, [string]$branch) {
+function Run-Codex([
+  string]$workOrderPath,
+  string]$id,
+  [string]$title,
+  [string]$branch,
+  [bool]$hasRemote,
+  [string]$remote
+) {
   $wo = Parse-WorkOrderHeader $workOrderPath
   $raw = $wo.Raw
 
-  $prBlock = "6) PR creation is optional; skip if 'gh' is not available."
-  if ($CreatePR -and (Has-GH)) {
+  $pushBlock = @"
+5) Commit (push is optional):
+   - git add -A
+   - git commit -m "WO-${id}: $title"
+   - (optional) git push -u $remote HEAD
+"@
+  if ($hasRemote) {
+    $pushBlock = @"
+5) Commit and push:
+   - git add -A
+   - git commit -m "WO-${id}: $title"
+   - git push -u $remote HEAD
+"@
+  }
+
+  $prBlock = "6) PR creation is optional; skip if 'gh' is not available or no remote exists."
+  if ($CreatePR -and (Has-GH) -and $hasRemote) {
     $prBlock = @"
 6) If GitHub CLI is available, open a PR:
    - gh pr create --title "WO-${id}: $title" --body "Implements Work Order $id." --base $BaseBranch --head $branch
@@ -115,10 +176,7 @@ STEPS (in order):
    - pnpm -C apps/web test
    - pnpm -C apps/web e2e (only if relevant to your changes)
 4) Show git status and summarize the diff (high level).
-5) Commit and push:
-   - git add -A
-   - git commit -m "WO-${id}: $title"
-   - git push -u origin HEAD
+$pushBlock
 $prBlock
 
 ---- WORK ORDER ----
@@ -126,7 +184,7 @@ $raw
 "@
 
   Write-Section "Codex running: WO-$id ($title)"
-  $prompt | codex exec --model $Model --full-auto --sandbox workspace-write --ask-for-approval $ApprovalMode - | Out-Host
+  $prompt | codex exec --model $Model --sandbox workspace-write --ask-for-approval $ApprovalMode - | Out-Host
 }
 
 # ---------- main ----------
@@ -134,10 +192,14 @@ Assert-Command "git"
 Assert-Command "codex"
 
 if (-not (Test-Path $RulesFile)) {
-  Write-Host "WARNING: rules file not found at $RulesFile. git push may prompt/deny depending on your setup."
+  Write-Host "WARNING: rules file not found at $RulesFile. Command approvals may prompt/deny depending on your setup."
 }
 
 Git-CleanCheck
+
+$hasRemote = Has-Remote $GitRemote
+if (-not $hasRemote) {
+  Write-Host "[info] No git remote '$GitRemote' detected. Will NOT fetch/pull/push." }
 
 $workOrders = Get-WorkOrders $WorkOrderDir
 Write-Section "Found Work Orders"
@@ -151,11 +213,11 @@ foreach ($f in $workOrders) {
   $branch = "codex/wo-$id-$slug"
 
   Write-Section "Start Work Order $id — $title"
-  Git-CheckoutBase $BaseBranch
+  Git-CheckoutBase $BaseBranch $GitRemote $hasRemote
   Git-NewBranch $branch
 
   try {
-    Run-Codex $f.FullName $id $title $branch
+    Run-Codex $f.FullName $id $title $branch $hasRemote $GitRemote
   } catch {
     Write-Host ""
     Write-Host "ERROR: Work Order $id failed. Keeping branch '$branch' for manual inspection."

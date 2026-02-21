@@ -27,8 +27,8 @@
 - `apps/web/src/pages/Match.tsx`
 
 ### 1-2. PUA（Private Use Area）文字が見つかったファイル
-- `apps/web/src/features/match/MatchGuestModeIntro.tsx` ()
-- `apps/web/src/pages/Match.tsx` ()
+- `apps/web/src/features/match/MatchGuestModeIntro.tsx` (U+F8F0)
+- `apps/web/src/pages/Match.tsx` (U+E05E)
 
 ### 1-3. 制御文字（U+0080）が見つかったファイル
 - `apps/web/src/features/match/MatchEventPanel.tsx`

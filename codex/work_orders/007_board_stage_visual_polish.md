@@ -1,82 +1,53 @@
-# Work Order: 007  E盤面/スチE�Eジのビジュアル磨き込み�E�カードに負けなぁE���E台”を作る�E�E
-## 1) 背景 / 目皁E��ユーザー視点�E�E
-カード�Eかなり良くなってきた一方で、盤面�E��Eード）や周辺の舞台�E�スチE�Eジ/背景/枠�E�が
-まだ “検証チE�Eル感 Eを残してぁE��す、E
-ユーザーが最も長く見るのは盤面なので、Eここが弱ぁE��ゲーム全体�E品質印象が頭打ちになります、E
-狙いは「派手にする」ではなく、E**素材感・奥行き・視線誘導�E統一愁E*を上げて “置きたくなる�E台 Eにすることです、E
-## 2) 成果物�E�Eeliverables�E�E
-- [x] Mint UI の盤面�E�EoardViewMint + DuelStageMint�E��E背景/フレーム/セルを上品にアチE�EチE�EチE- [x] 重要状態（置ける/置けなぁE選抁E確宁EフリチE�E/連鎖）�E視覚階層が�E確なまま、質感が上がめE- [x] `data-vfx` に応じて演�E寁E��が変わる！Eff/low は軽量、medium/high は少し豪華�E�E- [x] モバイル幁E��E90px�E�で破綻しなぁE- [x] 既存�E reduced-motion 尊重が崩れなぁE
-## 3) 要件�E�Eequirements�E�E
-### MUST
+﻿# Work Order 007: Board / Stage Visual Polish
 
-- セルの可読性を落とさなぁE��数孁Eアイコンが読める�E�E- “置けるセル Eと “置けなぁE��ル Eの差は色だけに依存しなぁE��形/陰影/動き�E�E- 新規�E画像アセチE��導�Eは原則なし（忁E��なめE**自佁E権利クリア**のみ�E�E- パフォーマンスを悪化させなぁE��重ぁEfilter めE��大 box-shadow の多用を避ける�E�E
-### SHOULD
+## Goal
+- Improve the visual quality of the Mint board and stage so the board does not look weaker than cards.
+- Focus on material feel, depth, and clarity without harming readability or performance.
 
-- 盤面全体が 1 つのオブジェクトに見えるフレーム�E�縁E角丸/冁E�Eハイライト！E- 背景は “�Eタ塗り Eを避け、薄ぁE��ラチE+ 控えめなパターンで空気感
-- 選抁E確宁EフリチE�Eの視覚がより気持ちよく�E�短く�E明快�E�E
-### COULD
+## Deliverables
+- [x] Mint board/stage visuals were polished (BoardViewMint + DuelStageMint + mint-theme).
+- [x] Important states (selectable, blocked, selected, place, flip, chain) remain readable.
+- [x] VFX quality tiers are respected (`off|low|medium|high`).
+- [x] Mobile width (around 390px) remains usable.
+- [x] Reduced-motion behavior is preserved.
 
-- `vfx=high` のみ、微細なグリントやパルスなどを追加�E�ESS だけで�E�E
-## 4) 非要件�E�Eon-goals�E�E
-- ルール/エンジンの変更
-- Pixi renderer 側の大規模改修�E�忁E��なら別 WO�E�E- カードデザインの再調整�E�今回は盤面優先！E
-## 5) 受け入れ条件�E�Ecceptance Criteria�E�E
-1. `/match?ui=mint` の盤面が、E   - 背景/枠/セルに素材感があり、カードに負けなぁE   - 置けるセルぁE“触りたくなる E形状で刁E��めE   - 置けなぁE��ルぁE“押せなぁE��Eと刁E��めE
-2. `data-vfx=off` また�E reduced-motion でも、E   - 過剰なアニメ/グリントが無効化され、軽ぁE   - それでも盤面の見た目が�E立すめE
-3. チE��チEビルドが通る
+## Requirements
+### Must
+- Keep card number/icon readability on all board cells.
+- Differentiate selectable vs non-selectable using shape/contrast/depth, not color only.
+- Avoid introducing heavy assets unless necessary and license-safe.
+- Avoid expensive visual effects that can degrade frame rate.
 
-## 6) 調査ポイント！Envestigation�E�E
+### Should
+- Make board feel like one object (frame/rim/highlight consistency).
+- Avoid flat background-only look; use subtle gradient/pattern depth.
+- Keep place/flip feedback short and clear.
+
+### Could
+- Add subtle glint/pulse only on `vfx=high`.
+
+## Non-goals
+- Engine rule/logic changes.
+- Large Pixi renderer refactor.
+- Card art redesign.
+
+## Implementation Focus
 - `apps/web/src/components/BoardViewMint.tsx`
 - `apps/web/src/components/DuelStageMint.tsx`
 - `apps/web/src/mint-theme/mint-theme.css`
-  - `.mint-stage*`, `.mint-board*`, `.mint-cell*` 系
 
-現状の設計思想:
+## Acceptance Criteria
+1. `/match?ui=mint` board has stronger material/depth and clear interaction affordance.
+2. `vfx=off` and reduced-motion stay lightweight and stable.
+3. Build/typecheck/tests remain green.
 
-- “任天堂レベルUX Eの affordance�E��Eらみ/沈み/呼吸�E�を既に持ってぁE��
-- ここに **素材感/統一愁E*を足して、情報設計を壊さず質を上げめE
-## 7) 実裁E��針！Epproach�E�E
-### 盤面�E�Eoard�E�E
-- `mint-board` に、E  - 冁E�EハイライチE+ ぁE��すら格孁Eノイズ�E�ESS パターン�E�E  - 角�Eアクセント！Eorner glow�E�E  を追加
-
-### セル�E�Eell�E�E
-- selectable: “柔らかぁE�Eらみ E+ 軽ぁE��ペキュラ
-- flat: “沈み E+ クリチE��できなぁE��愁E- selected/placed: 強すぎなぁE�� “勝ち確の気持ちよさ Eが�Eる短ぁE��調
-
-### VFX tier
-
-- `data-vfx` を参照して
-  - off/low: アニメ/影の強さを抑えめE  - medium/high: ほん�E少しだぁE“�E Eを足ぁE
-## 8) タスクリスト（細刁E���E�E
-- [x] `mint-theme.css` に “Board Surface / Frame Eセクションを追加
-- [x] `mint-cell` の shadow / highlight を整琁E��状態別に一貫性�E�E- [x] `data-vfx` 条件で裁E��量を刁E��E- [x] 既孁EUI�E�EcoreBar/Hand/Overlay�E�との馴染みを確誁E- [x] 手動確認（モバイル/ reduced-motion / vfx=off�E�E
-## 9) 検証�E�Eerification�E�E
-### 自勁E
+## Verification
 - `pnpm -C apps/web test`
 - `pnpm -C apps/web typecheck`
 - `pnpm -C apps/web build`
+- Manual checks on mobile width and VFX quality modes.
 
-### 手動
-
-- `/match?ui=mint` で 1、E 試吁E- `?vfx=off` / `?vfx=low` / `?vfx=high` の見え方比輁E��重くならなぁE��E- 390px 幁E��も盤面が詰まりすぎなぁE
-## 10) リスク / ロールバック
-
-- リスク: CSS の視認性低下、影が強すぎてチ�EプになめE  - 対筁E “控えめ Eを原剁E��、強調は短く�E局所
-- ロールバック: 新要ECSS セクションめErevert、旧スタイルへ
-
-## 11) PR説明！ER body 雛形�E�E
-- What: Mint 盤面/スチE�Eジの背景・枠・セルの素材感と統一感を向丁E- Why: カードに比べ盤面が弱く、�E体�E品質印象が頭打ちだったためE- How: CSS パターン/冁E�EハイライチE状態別 shadow 整琁E+ vfx tier 刁E��E- Test: `pnpm -C apps/web test && pnpm -C apps/web build` + 手動�E�Efx/reduced-motion/モバイル�E�E
-## 12) 2026-02-15 Follow-up (Manual Checks -> E2E Guardrails)
-
-- [x] Added `apps/web/e2e/mint-stage-visual-guardrails.spec.ts`
-  - `vfx=off` keeps board usable while hiding heavy atmosphere layers.
-  - `prefers-reduced-motion` resolves document `data-vfx=off`.
-  - `390px` mobile viewport keeps stage/commit flow reachable and avoids horizontal overflow.
-- [x] Added to fast guardrail command:
-  - `pnpm -C apps/web e2e:ux` now runs both
-    - `e2e/ux-guardrails.spec.ts`
-    - `e2e/mint-stage-visual-guardrails.spec.ts`
-- [x] Verification:
-  - `pnpm.cmd -C apps/web e2e:ux` -> 5 passed
-
-
+## 2026-02-15 Follow-up
+- [x] Added `apps/web/e2e/mint-stage-visual-guardrails.spec.ts`.
+- [x] Included in `pnpm -C apps/web e2e:ux`.
+- [x] Verified guardrails pass.

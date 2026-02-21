@@ -1,92 +1,48 @@
 Param(
   [Parameter(Mandatory=$true)][string]$WorkOrder,
   [string]$Model = $env:MODEL,
-  [string]$BaseBranch = $env:BASE_BRANCH,
   [string]$ApprovalMode = $env:APPROVAL_MODE,
-  [switch]$CreatePR
+  [string]$SandboxMode = $env:SANDBOX_MODE,
+  [string]$WorkOrderDir = $env:WORK_ORDER_DIR
 )
 
-if (-not $Model) { $Model = "gpt-5.3-codex" }
-if (-not $BaseBranch) { $BaseBranch = "main" }
-if (-not $ApprovalMode) { $ApprovalMode = "on-request" }
+if ([string]::IsNullOrEmpty($Model)) { $Model = "gpt-5.3-codex" }
+if ([string]::IsNullOrEmpty($ApprovalMode)) { $ApprovalMode = "on-request" }
+if ([string]::IsNullOrEmpty($SandboxMode)) { $SandboxMode = "workspace-write" }
+if ([string]::IsNullOrEmpty($WorkOrderDir)) { $WorkOrderDir = "codex/work_orders" }
 
-$WorkOrderDir = $env:WORK_ORDER_DIR
-if (-not $WorkOrderDir) { $WorkOrderDir = "codex/work_orders" }
-
-function Need([string]$cmd) {
-  if (-not (Get-Command $cmd -ErrorAction SilentlyContinue)) {
-    Write-Error "Missing command: $cmd"
-    exit 1
+function Find-WorkOrderFile($arg) {
+  if ($arg -match "^[0-9]{3}$") {
+    $match = Get-ChildItem -Path $WorkOrderDir -Filter ("$arg`_*.md") -ErrorAction SilentlyContinue | Select-Object -First 1
+    if ($null -ne $match) { return $match.FullName }
+    return $null
   }
+  if (Test-Path $arg) { return (Resolve-Path $arg).Path }
+  return $null
 }
 
-Need git
-Need codex
-
-function Resolve-WorkOrderFile([string]$input) {
-  if (Test-Path $input) { return $input }
-  # Accept 6, 06, 006
-  $id = [int]$input
-  $idNorm = $id.ToString("000")
-  $matches = Get-ChildItem -Path $WorkOrderDir -Filter "$idNorm*.md" | Select-Object -First 1
-  if (-not $matches) {
-    Write-Error "Work order not found for id: $idNorm (dir: $WorkOrderDir)"
-    exit 2
-  }
-  return $matches.FullName
-}
-
-$file = Resolve-WorkOrderFile $WorkOrder
-
-$status = git status --porcelain
-if ($status) {
-  Write-Error "Working tree not clean. Commit/stash first."
+$woPath = Find-WorkOrderFile $WorkOrder
+if ($null -eq $woPath) {
+  Write-Error "Work Order not found: $WorkOrder"
   exit 1
 }
 
-$firstLine = (Get-Content $file -TotalCount 1)
-$id = ""
-$title = ""
-if ($firstLine -match "^# Work Order: ([^\s]+)\s+[-—]\s+(.+)$") {
+$first = (Get-Content $woPath -TotalCount 1).TrimEnd("`r")
+$id = (Split-Path $woPath -Leaf).Substring(0,3)
+$title = (Split-Path $woPath -LeafBase)
+
+if ($first -match "^# Work Order: ([^\s]+)\s+[-—]\s+(.+)$") {
   $id = $Matches[1]
   $title = $Matches[2]
-} elseif ($firstLine -match "^# Work Order: ([^\s]+)\s+(.+)$") {
+} elseif ($first -match "^# Work Order: ([^\s]+)\s+(.+)$") {
   $id = $Matches[1]
   $title = $Matches[2]
-} else {
-  $base = [System.IO.Path]::GetFileNameWithoutExtension($file)
-  $id = $base.Split('_')[0]
-  $title = $base
 }
 
-$slug = ($title.ToLower() -replace "[^a-z0-9]+","-" -replace "(^-+|-+$)","")
-if ($slug.Length -gt 40) { $slug = $slug.Substring(0,40) }
-$branch = "codex/wo-$id-$slug"
-
 Write-Host "============================================================"
-Write-Host "Start Work Order $id — $title"
-Write-Host "File: $file"
+Write-Host "Run Work Order $id — $title"
+Write-Host "File: $woPath"
 Write-Host "============================================================"
-
-git fetch origin | Out-Null
-git checkout $BaseBranch | Out-Null
-git pull --ff-only origin $BaseBranch | Out-Null
-
-git branch --list $branch | ForEach-Object { git branch -D $branch | Out-Null }
-git checkout -b $branch | Out-Null
-
-$prBlock = "6) PR creation is optional; skip if 'gh' is not available."
-if ($CreatePR) {
-  $hasGh = Get-Command gh -ErrorAction SilentlyContinue
-  if ($hasGh) {
-    $prBlock = @"
-6) If GitHub CLI is available, open a PR:
-   - gh pr create --title \"WO-$id: $title\" --body \"Implements Work Order $id.\" --base $BaseBranch --head $branch
-"@
-  }
-}
-
-$workOrderText = Get-Content $file -Raw
 
 $prompt = @"
 You are an implementation agent working inside a git repository.
@@ -95,7 +51,7 @@ CRITICAL RULES:
 - Implement ONLY what is required by the Work Order (keep scope tight).
 - Keep changes safe and incremental. No large refactors unless explicitly requested.
 - Do NOT add assets with unclear licenses.
-- Always run verification before committing.
+- Always run verification before finishing.
 
 STEPS (in order):
 1) Read the Work Order below carefully.
@@ -107,18 +63,10 @@ STEPS (in order):
    - pnpm -C apps/web test
    - pnpm -C apps/web e2e (only if relevant)
 4) Show git status and summarize the diff (high level).
-5) Commit and push:
-   - git add -A
-   - git commit -m \"WO-$id: $title\"
-   - git push -u origin HEAD
-$prBlock
+5) Stop and WAIT for human review before pushing. (Commit is OK, push is optional.)
 
 ---- WORK ORDER ----
-$workOrderText
+$(Get-Content $woPath -Raw)
 "@
 
-$prompt | codex exec --model $Model --full-auto --sandbox workspace-write --ask-for-approval $ApprovalMode -
-
-Write-Host "============================================================"
-Write-Host "Completed Work Order $id — $title"
-Write-Host "============================================================"
+$prompt | codex exec --model $Model --sandbox $SandboxMode --ask-for-approval $ApprovalMode -

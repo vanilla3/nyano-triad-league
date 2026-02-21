@@ -13,7 +13,7 @@
     "typecheck": "pnpm -C packages/triad-engine build && pnpm -C apps/web typecheck",
     "dev:web": "pnpm -C apps/web dev",
     "build:web": "pnpm -C packages/triad-engine build && pnpm -C apps/web build",
-    "release:check": "pnpm -C packages/triad-engine lint && pnpm -C packages/triad-engine build && pnpm -C apps/web typecheck && pnpm -C apps/web lint && pnpm -C apps/web build",
+    "release:check": "pnpm -C packages/triad-engine lint && pnpm -C packages/triad-engine build && pnpm -C apps/web typecheck && pnpm -C apps/web lint && pnpm -C apps/web build && pnpm lint:text",
     "test:engine": "pnpm -C packages/triad-engine test",
     "build:game-index": "node scripts/build_game_index_v1.mjs",
     "lint:text": "node scripts/check_text_hygiene.mjs"
