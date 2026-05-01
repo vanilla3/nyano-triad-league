@@ -2870,3 +2870,23 @@
   - Mint theme active.
   - Battle CTA and 3x3 board preview visible.
   - No horizontal overflow (`scrollWidth === clientWidth`).
+
+## 2026-05-01 - Mint Arena/Events/Stream game-page pass with Mini Nyano
+
+### Why
+- Arena, Events, and Stream still read like utility/admin screens after the Mint shell and home pass.
+- The provided Mini Nyano character should appear in mascot/thumb slots so the secondary routes feel like player-facing game facilities.
+
+### What
+- Added `apps/web/public/nyano/mini-nyano.png` and exported `NYANO_MINI_IMAGE_URL`.
+- Rebuilt Arena as an arena-gate surface with Nyano AI, difficulty cards, a 3x3 mini board, and player-facing Japanese CTAs.
+- Added Events and Stream hero surfaces, Mini Nyano mascot art, page guides, status chips, and friendlier copy while preserving existing routes, event attempt data, overlay links, and stream controls.
+- Added shared Mint game-page CSS with responsive width guards to prevent long stream URLs from causing horizontal overflow.
+
+### Verify
+- `pnpm -C apps/web typecheck` OK
+- `pnpm -C apps/web build` OK
+- Playwright MCP local preview smoke at 1280px and 390px OK:
+  - `/arena?theme=mint`, `/events?theme=mint`, `/stream?theme=mint`
+  - Hero, guide, and Mini Nyano image present.
+  - No horizontal overflow (`scrollWidth === clientWidth`).

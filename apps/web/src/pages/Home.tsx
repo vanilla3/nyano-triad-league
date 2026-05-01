@@ -30,6 +30,7 @@ import { MintTitleText, MintLabel } from "@/components/mint/MintTypography";
 import { MintIcon } from "@/components/mint/icons/MintIcon";
 import { appendThemeToPath, resolveAppTheme } from "@/lib/theme";
 import { isDebugMode } from "@/lib/debug";
+import { NYANO_MINI_IMAGE_URL } from "@/lib/nyano_assets";
 
 const DIFFICULTIES = [
   { key: "easy", label: "ゆるめ", labelJa: "はじめて" },
@@ -251,7 +252,7 @@ export function HomePage() {
             ))}
           </div>
           <div className="mint-home-battle-card__footer">
-            <img src="/favicon-32.png" alt="" width={28} height={28} />
+            <img src={NYANO_MINI_IMAGE_URL} alt="" width={28} height={28} />
             <span>Nyano AI が待機中</span>
           </div>
         </div>
