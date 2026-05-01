@@ -2911,3 +2911,21 @@
 - Playwright local preview DOM smoke OK:
   - `/events?theme=mint`
   - `/replay?theme=mint`
+
+## 2026-05-01 - Nyano favicon asset refresh
+
+### Why
+- The browser/tab icon should match the current Mini Nyano character branding instead of the older generic favicon.
+- Small favicon sizes need a face-focused crop so the character remains recognizable at 16px/32px.
+
+### What
+- Regenerated `favicon.ico`, `favicon-16.png`, `favicon-32.png`, `favicon-192.png`, `favicon-512.webp`, and `apple-touch-icon.png` from `apps/web/public/nyano/mini-nyano.png`.
+- Used a rounded Mint background, blue rim, and head-focused crop to keep Nyano readable in browser tabs and mobile home-screen contexts.
+- Added the 512px WebP favicon link to `apps/web/index.html`.
+
+### Verify
+- Generated asset dimension check OK:
+  - `favicon.ico`: 16/32/48/64
+  - `favicon-16.png`, `favicon-32.png`, `favicon-192.png`, `favicon-512.webp`, `apple-touch-icon.png`
+- `pnpm -C apps/web build` OK
+- `pnpm lint:text` OK
