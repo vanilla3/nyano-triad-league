@@ -265,7 +265,6 @@ function ActionPrompt({
     <div className={["mint-prompt", isWarningMode && "mint-prompt--warning"].filter(Boolean).join(" ")}>
       <div className={["mint-prompt__text", isAi && "mint-prompt__text--ai"].filter(Boolean).join(" ")}>
         {prompt.ja}
-        <span style={{ marginLeft: 8, fontSize: 12, opacity: 0.6 }}>{prompt.en}</span>
       </div>
     </div>
   );

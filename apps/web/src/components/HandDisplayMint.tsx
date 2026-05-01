@@ -4,17 +4,6 @@ import { CardNyanoDuel } from "./CardNyanoDuel";
 import { CardPreviewPanel } from "./CardPreviewPanel";
 import { useCardPreview } from "@/hooks/useCardPreview";
 
-/* ═══════════════════════════════════════════════════════════════════════════
-   HAND DISPLAY MINT — Nintendo-level UX Hand (NIN-UX-022)
-
-   Features:
-   - Horizontal card row with touch-friendly sizing
-   - Selected card lifts up with visual feedback
-   - Mobile confirm flow: tap → preview → confirm (NIN-UX-022)
-   - Used cards greyed out and shrunk
-   - Fully compatible with HandDisplayRPGProps interface
-   ═══════════════════════════════════════════════════════════════════════════ */
-
 export interface HandDisplayMintProps {
   cards: CardData[];
   owner: PlayerIndex;
@@ -42,9 +31,13 @@ export function HandDisplayMint({
   onCardDragEnd,
 }: HandDisplayMintProps) {
   const preview = useCardPreview();
+  const handClassName = [
+    "mint-hand",
+    selectedIndex !== null && "mint-hand--has-selection",
+  ].filter(Boolean).join(" ");
 
   return (
-    <div className="mint-hand" role="listbox" aria-label={`Player ${owner === 0 ? "A" : "B"} hand`}>
+    <div className={handClassName} role="listbox" aria-label={`プレイヤー${owner === 0 ? "A" : "B"}の手札`}>
       {cards.map((card, idx) => {
         const isUsed = usedIndices.has(idx);
         const isSelected = selectedIndex === idx;
@@ -95,7 +88,6 @@ export function HandDisplayMint({
             onTouchMove={lp?.onTouchMove}
             onContextMenu={lp?.onContextMenu}
           >
-            {/* Slot number badge */}
             <div
               className={[
                 "mint-hand-card__slot",
@@ -105,23 +97,20 @@ export function HandDisplayMint({
               {idx + 1}
             </div>
 
-            {/* Card content */}
             <CardNyanoDuel card={card} owner={owner} className={!isSelected ? "opacity-80" : ""} />
 
-            {/* Used overlay */}
             {isUsed && (
               <div
                 className="absolute inset-0 flex items-center justify-center rounded-xl"
                 style={{ background: "rgba(255,255,255,0.5)" }}
               >
-                <span className="text-lg text-surface-400">✓</span>
+                <span className="mint-hand-card__used-label">使用済み</span>
               </div>
             )}
           </button>
         );
       })}
 
-      {/* Card preview popover (PREV-0501) */}
       {preview.state.visible && preview.state.card && preview.state.anchorRect && (
         <CardPreviewPanel
           card={preview.state.card}

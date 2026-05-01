@@ -118,6 +118,21 @@ type SimOk = {
 type SimState = { ok: false; error: string } | SimOk;
 
 const EMPTY_BOARD: BoardState = Array.from({ length: 9 }, () => null);
+const CELL_LABELS = ["A1", "B1", "C1", "A2", "B2", "C2", "A3", "B3", "C3"] as const;
+
+function formatCellLabel(cell: number | null | undefined): string {
+  if (cell === null || cell === undefined) return "マス未選択";
+  return CELL_LABELS[cell] ?? `マス${cell}`;
+}
+
+function formatCardSelection(cardIndex: number | null | undefined): string {
+  if (cardIndex === null || cardIndex === undefined) return "カード未選択";
+  return `カード${cardIndex + 1}`;
+}
+
+function formatWarningOption(cell: number): string {
+  return `警戒 ${formatCellLabel(cell)}`;
+}
 
 function toHexBytes32(bytes: Uint8Array): `0x${string}` {
   return ("0x" + Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join("")) as `0x${string}`;
@@ -1459,22 +1474,22 @@ export function MatchPage() {
 
       if (next.warningMarkCell !== undefined) {
         if (currentWarnRemaining <= 0) {
-          setError("No warning marks remaining.");
+          setError("警戒マークの残り回数がありません。");
           telemetry.recordInvalidAction();
           return;
         }
         if (next.warningMarkCell === next.cell) {
-          setError("warningMarkCell は placed cell と同じにできません");
+          setError("警戒マークはカードを置くマスとは別のマスにしてください。");
           telemetry.recordInvalidAction();
           return;
         }
         if (next.warningMarkCell < 0 || next.warningMarkCell > 8) {
-          setError("warningMarkCell must be in range 0..8.");
+          setError("警戒マークは盤面内のマスを選んでください。");
           telemetry.recordInvalidAction();
           return;
         }
         if (used.cells.has(next.warningMarkCell)) {
-          setError(`warningMarkCell ${next.warningMarkCell} is already occupied.`);
+          setError(`${formatCellLabel(next.warningMarkCell)} はすでに埋まっています。`);
           telemetry.recordInvalidAction();
           return;
         }
@@ -1533,12 +1548,12 @@ export function MatchPage() {
     if (isAiTurn) return;
 
     if (draftCell === null) {
-      setError("Choose a cell before committing the move.");
+      setError("先に置くマスを選んでください。");
       telemetry.recordInvalidAction();
       return;
     }
     if (draftCardIndex === null) {
-      setError("card を選択してください");
+      setError("先に手札からカードを選んでください。");
       telemetry.recordInvalidAction();
       return;
     }
@@ -1569,7 +1584,7 @@ export function MatchPage() {
     if (!enableHandDragDrop || isAiTurn || turns.length >= 9) return;
     const resolvedCardIndex = classicForcedCardIndex ?? dragCardIndex ?? draftCardIndex;
     if (resolvedCardIndex === null) {
-      setError("card を選択してください");
+      setError("先に手札からカードを選んでください。");
       telemetry.recordInvalidAction();
       return;
     }
@@ -1708,7 +1723,7 @@ export function MatchPage() {
           warningMarkCell: typeof wm === "number" ? wm : undefined,
         });
 
-        toast.success("Stream move", `cell ${cmd.move.cell} · cardIndex ${resolvedCardIndex}`);
+        toast.success("配信コマンド", `${formatCellLabel(cmd.move.cell)} · カード${resolvedCardIndex + 1}`);
       } catch {
         // ignore
       }
@@ -2091,13 +2106,13 @@ export function MatchPage() {
               {showFocusToolbarActions ? (
                 <div className="stage-focus-toolbar-actions">
                   <span className="stage-focus-toolbar-status">
-                    {draftCardIndex !== null ? `card ${draftCardIndex + 1}` : "pick card"} | {draftCell !== null ? `cell ${draftCell}` : "pick cell"}
+                    {formatCardSelection(draftCardIndex)} | {formatCellLabel(draftCell)}
                   </span>
                   <span className="stage-focus-toolbar-hint" aria-label="Battle focus toolbar hint">
-                    tap/drag then commit · Enter/Backspace · F/C/H/R/Esc
+                    タップ/ドラッグで選択 · Enterで確定 · Backspaceで戻す
                   </span>
                   <label className="stage-focus-toolbar-speed">
-                    warning
+                    警戒
                     <select
                       className="stage-focus-toolbar-speed-select"
                       value={draftWarningMarkCell === null ? "" : String(draftWarningMarkCell)}
@@ -2108,11 +2123,11 @@ export function MatchPage() {
                       disabled={isAiTurn || turns.length >= 9 || currentWarnRemaining <= 0}
                       aria-label="Warning mark from focus toolbar"
                     >
-                      <option value="">none</option>
+                      <option value="">なし</option>
                       {availableCells
                         .filter((c) => c !== draftCell)
                         .map((c) => (
-                          <option key={`focus-toolbar-w-${c}`} value={String(c)}>cell {c}</option>
+                          <option key={`focus-toolbar-w-${c}`} value={String(c)}>{formatWarningOption(c)}</option>
                         ))}
                     </select>
                   </label>
@@ -2122,7 +2137,7 @@ export function MatchPage() {
                     disabled={!canCommitFromFocusToolbar}
                     aria-label="Commit move from focus toolbar"
                   >
-                    Commit
+                    確定
                   </button>
                   <button
                     className="btn btn-sm"
@@ -2130,7 +2145,7 @@ export function MatchPage() {
                     disabled={!canUndoFromFocusToolbar}
                     aria-label="Undo move from focus toolbar"
                   >
-                    Undo
+                    戻す
                   </button>
                   {canManualAiMoveFromFocusToolbar ? (
                     <button
@@ -2138,7 +2153,7 @@ export function MatchPage() {
                       onClick={doAiMoveWithFeedback}
                       aria-label="Nyano AI move from focus toolbar"
                     >
-                      Nyano Move
+                      Nyanoの一手
                     </button>
                   ) : null}
                 </div>
@@ -2153,13 +2168,13 @@ export function MatchPage() {
                   aria-live="polite"
                   aria-label="Battle focus action feedback"
                 >
-                  {stageActionFeedback || "Ready"}
+                  {stageActionFeedback || "準備OK"}
                 </span>
               ) : null}
               {isStageFocusRoute ? (
                 <>
                   <label className="stage-focus-toolbar-speed">
-                    vfx
+                    演出
                     <select
                       className="stage-focus-toolbar-speed-select"
                       value={vfxPreference}
@@ -2187,21 +2202,21 @@ export function MatchPage() {
                     </button>
                   ) : null}
                   <button className="btn btn-sm" onClick={toggleStageFullscreenWithFeedback}>
-                    {isStageFullscreen ? "Exit Fullscreen" : "Fullscreen"}
+                    {isStageFullscreen ? "全画面を終了" : "全画面"}
                   </button>
                   <button className="btn btn-sm" onClick={toggleStageControlsWithFeedback}>
-                    {showStageControls ? "Hide Controls" : "Show Controls"}
+                    {showStageControls ? "操作を隠す" : "操作を表示"}
                   </button>
                   <button className="btn btn-sm" onClick={toggleStageAssistWithFeedback}>
-                    {showStageAssist ? "Hide HUD" : "Show HUD"}
+                    {showStageAssist ? "HUDを隠す" : "HUDを表示"}
                   </button>
                 </>
               ) : null}
               <button className="btn btn-sm" onClick={exitFocusModeWithFeedback}>
-                Exit Focus
+                盤面集中を終了
               </button>
               <button className="btn btn-sm" onClick={openReplayWithFeedback} disabled={!canFinalize}>
-                Replay
+                リプレイ
               </button>
             </div>
           </div>
@@ -2359,16 +2374,16 @@ export function MatchPage() {
           <div className="card-hd flex flex-wrap items-start justify-between gap-2">
             <div>
             <div className="text-base font-semibold">
-              Game · turn {currentTurnIndex}/9
-              {isAiTurn ? " · Nyano AI" : ` · Player ${currentPlayer === 0 ? "A" : "B"}`}
+              バトル · {currentTurnIndex}/9手目
+              {isAiTurn ? " · Nyano AIの番" : ` · プレイヤー${currentPlayer === 0 ? "A" : "B"}の番`}
             </div>
             <div className="text-xs text-slate-500">
-              warning marks left: {currentWarnRemaining}
-              {streamMode ? " · stream mode ON" : ""}
-              {isGuestMode ? " · guest" : ""}
+              警戒マーク残り: {currentWarnRemaining}
+              {streamMode ? " · 配信モードON" : ""}
+              {isGuestMode ? " · ゲスト" : ""}
               {!isGuestMode && (
                 <span className={`ml-1 rounded-full border px-1.5 py-0.5 text-[10px] font-medium ${dataMode === "fast" ? "border-amber-200 bg-amber-50 text-amber-700" : "border-emerald-200 bg-emerald-50 text-emerald-700"}`}>
-                  {dataMode === "fast" ? "Fast (index)" : "Verified (on-chain)"}
+                  {dataMode === "fast" ? "高速取得" : "オンチェーン確認"}
                 </span>
               )}
             </div>
@@ -2376,10 +2391,10 @@ export function MatchPage() {
             {isEngine ? (
               <div className="flex flex-wrap items-center gap-2">
                 <button className="btn btn-sm" onClick={() => setFocusMode(true)}>
-                  Enter Pixi Focus
+                  集中モードへ
                 </button>
                 <Link className="btn btn-sm no-underline" to={stageMatchUrl}>
-                  Open Stage Page
+                  ステージで開く
                 </Link>
               </div>
             ) : null}
@@ -2512,11 +2527,11 @@ export function MatchPage() {
                   <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900">
                     {aiAutoPlay ? (
                       <span>
-                        <span className="font-semibold animate-pulse">Nyano is thinking...</span>
+                        <span className="font-semibold animate-pulse">Nyanoが考え中...</span>
                         {aiCountdownMs !== null ? ` ${Math.max(0.1, aiCountdownMs / 1000).toFixed(1)}s` : ""}
                       </span>
                     ) : (
-                      "Nyano turn. Press \"Nyano Move\"."
+                      "Nyanoの番です。「Nyanoの一手」を押してください。"
                     )}
                   </div>
                 )}
@@ -2529,7 +2544,7 @@ export function MatchPage() {
                     ].join(" ")}
                   >
                     <span title={engineRendererError ?? undefined}>
-                      Pixi renderer is unavailable. Showing Mint fallback board.
+                      Pixiの表示を準備できませんでした。Mint盤面で続行できます。
                     </span>
                     <button
                       type="button"
@@ -2537,7 +2552,7 @@ export function MatchPage() {
                       onClick={handleRetryEngineRenderer}
                       aria-label="Retry Pixi renderer"
                     >
-                      Retry Pixi
+                      Pixiを再試行
                     </button>
                   </div>
                 )}
@@ -2644,15 +2659,14 @@ export function MatchPage() {
 
                 {showDesktopQuickCommit ? (
                   <div
-                    className="hidden lg:flex flex-wrap items-center justify-between gap-3 rounded-xl border px-3 py-2"
-                    style={{ background: "var(--mint-surface, #ffffff)", borderColor: "var(--mint-accent-muted, #A7F3D0)" }}
+                    className="mint-match-quick-commit hidden lg:flex flex-wrap items-center justify-between gap-3 rounded-xl border px-3 py-2"
                   >
                     <div className="grid gap-0.5 text-xs">
-                      <div className="font-semibold" style={{ color: "var(--mint-text, #111827)" }}>
-                        Quick Commit
+                      <div className="mint-match-quick-commit__title font-semibold">
+                        この一手
                       </div>
-                      <div style={{ color: "var(--mint-text-secondary, #4B5563)" }}>
-                        card {draftCardIndex !== null ? draftCardIndex + 1 : "-"} to cell {draftCell ?? "-"}
+                      <div className="mint-match-quick-commit__hint">
+                        {formatCardSelection(draftCardIndex)} → {formatCellLabel(draftCell)}
                       </div>
                     </div>
 
@@ -2661,7 +2675,7 @@ export function MatchPage() {
                         className="inline-flex items-center gap-2 text-xs font-semibold"
                         style={{ color: "var(--mint-text-secondary, #4B5563)" }}
                       >
-                        warning
+                        警戒
                         <select
                           className="input h-10 min-w-[170px]"
                           value={draftWarningMarkCell === null ? "" : String(draftWarningMarkCell)}
@@ -2672,11 +2686,11 @@ export function MatchPage() {
                           disabled={turns.length >= 9 || isAiTurn || currentWarnRemaining <= 0}
                           aria-label="Quick warning mark cell"
                         >
-                          <option value="">None</option>
+                          <option value="">なし</option>
                           {availableCells
                             .filter((c) => c !== draftCell)
                             .map((c) => (
-                              <option key={`quick-${c}`} value={String(c)}>cell {c}</option>
+                              <option key={`quick-${c}`} value={String(c)}>{formatWarningOption(c)}</option>
                             ))}
                         </select>
                       </label>
@@ -2686,7 +2700,7 @@ export function MatchPage() {
                         disabled={turns.length >= 9 || isAiTurn || draftCell === null || draftCardIndex === null}
                         aria-label="Quick commit move"
                       >
-                        Commit Move
+                        この手を確定
                       </button>
                       <button
                         className="btn h-10 px-4"
@@ -2694,7 +2708,7 @@ export function MatchPage() {
                         disabled={turns.length === 0}
                         aria-label="Quick undo move"
                       >
-                        Undo
+                        1手戻す
                       </button>
                     </div>
                   </div>
@@ -2750,9 +2764,9 @@ export function MatchPage() {
                     ].filter(Boolean).join(" ")}
                   >
                     <div className="flex items-center justify-between gap-2">
-                      <div className="text-[11px] font-semibold text-slate-700">Hand Dock</div>
-                      <div className="text-[10px] text-slate-500">
-                        {isAiTurn ? "Nyano is thinking..." : `${draftCardIndex !== null ? `card ${draftCardIndex + 1}` : "pick card"} to ${draftCell !== null ? `cell ${draftCell}` : "tap cell"}`}
+                      <div className="mint-focus-hand-dock__title text-[11px] font-semibold">手札</div>
+                      <div className="mint-focus-hand-dock__status text-[10px]">
+                        {isAiTurn ? "Nyanoが考え中" : `${formatCardSelection(draftCardIndex)} → ${formatCellLabel(draftCell)}`}
                       </div>
                     </div>
 
@@ -2838,11 +2852,11 @@ export function MatchPage() {
                         disabled={currentWarnRemaining <= 0 || isAiTurn}
                         aria-label="Focus dock warning mark cell"
                       >
-                        <option value="">Warning: none</option>
+                        <option value="">警戒なし</option>
                         {availableCells
                           .filter((c) => c !== draftCell)
                           .map((c) => (
-                            <option key={`focus-w-${c}`} value={String(c)}>warning {c}</option>
+                            <option key={`focus-w-${c}`} value={String(c)}>{formatWarningOption(c)}</option>
                           ))}
                       </select>
 
@@ -2852,7 +2866,7 @@ export function MatchPage() {
                         disabled={isAiTurn || draftCell === null || draftCardIndex === null}
                         aria-label="Commit move from focus hand dock"
                       >
-                        Commit
+                        確定
                       </button>
                       <button
                         className="btn h-9 px-3 text-xs"
@@ -2860,7 +2874,7 @@ export function MatchPage() {
                         disabled={isAiTurn || turns.length === 0}
                         aria-label="Undo move from focus hand dock"
                       >
-                        Undo
+                        戻す
                       </button>
                     </div>
                   </div>
@@ -2870,7 +2884,7 @@ export function MatchPage() {
                     P0-2: Hand Display (RPG or standard)
                     ──────────────────────────────────────────── */}
                 {(!isStageFocusRoute || showStageControls) && !showFocusHandDock ? (
-                  <div className="grid gap-3">
+                  <div className={useMintUi ? "mint-match-operations grid gap-3" : "grid gap-3"}>
                     <div className={
                       useMintUi ? "text-xs font-semibold text-mint-text-secondary"
                       : isRpg ? "text-xs font-bold uppercase tracking-wider"
@@ -2878,9 +2892,9 @@ export function MatchPage() {
                     }
                       style={isRpg ? { fontFamily: "'Cinzel', serif", color: "var(--rpg-text-gold, #E8D48B)" } : undefined}
                     >
-                      {currentPlayer === 0 ? "Player A" : "Player B"} Hand
-                      {draftCell !== null && <span className={isRpg ? "" : " text-slate-400"}> · placing on cell {draftCell}</span>}
-                      {isHandDragging && <span className={isRpg ? "" : " text-cyan-500"}> · drop on board to commit</span>}
+                      プレイヤー{currentPlayer === 0 ? "A" : "B"}の手札
+                      {draftCell !== null && <span className={isRpg ? "" : " text-slate-400"}> · {formatCellLabel(draftCell)}に配置予定</span>}
+                      {isHandDragging && <span className={isRpg ? "" : " text-cyan-500"}> · 盤面へドロップで確定</span>}
                     </div>
 
                     {useMintUi && currentHandCards.length > 0 ? (
@@ -2939,7 +2953,7 @@ export function MatchPage() {
                         <div className={isRpg ? "text-[10px] uppercase tracking-wider" : "text-[11px] text-slate-600"}
                           style={isRpg ? { fontFamily: "'Cinzel', serif", color: "var(--rpg-text-dim, #8A7E6B)" } : undefined}
                         >
-                          Warning Mark ({currentWarnRemaining} left)
+                          警戒マーク（残り{currentWarnRemaining}）
                         </div>
                         <select
                           className={["input", isStageFocusRoute ? "h-10 min-w-[180px]" : ""].join(" ").trim()}
@@ -2951,11 +2965,11 @@ export function MatchPage() {
                           disabled={turns.length >= 9 || isAiTurn || currentWarnRemaining <= 0}
                           aria-label="Warning mark cell"
                         >
-                          <option value="">None</option>
+                          <option value="">なし</option>
                           {availableCells
                             .filter((c) => c !== draftCell)
                             .map((c) => (
-                              <option key={c} value={String(c)}>cell {c}</option>
+                              <option key={c} value={String(c)}>{formatWarningOption(c)}</option>
                             ))}
                         </select>
                       </div>
@@ -2967,7 +2981,7 @@ export function MatchPage() {
                           disabled={turns.length >= 9 || isAiTurn || draftCell === null || draftCardIndex === null}
                           aria-label="Commit move"
                         >
-                          Commit Move
+                          この手を確定
                         </button>
                         <button
                           className={isRpg ? "rpg-result__btn" : ["btn", isStageFocusRoute ? "h-10 px-4" : ""].join(" ").trim()}
@@ -2975,11 +2989,11 @@ export function MatchPage() {
                           disabled={turns.length === 0}
                           aria-label="Undo last move"
                         >
-                          Undo
+                          1手戻す
                         </button>
                         {isVsNyanoAi && !aiAutoPlay && isAiTurn ? (
                           <button className={isRpg ? "rpg-result__btn rpg-result__btn--primary" : ["btn btn-primary", isStageFocusRoute ? "h-10 px-4" : ""].join(" ").trim()} onClick={doAiMove} aria-label="Nyano AI move">
-                            Nyano Move
+                            Nyanoの一手
                           </button>
                         ) : null}
                       </div>
@@ -2987,10 +3001,10 @@ export function MatchPage() {
                   </div>
                 ) : (
                   <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600">
-                    Controls are hidden for board focus.
+                    盤面集中のため操作パネルを隠しています。
                     {draftCardIndex !== null || draftCell !== null ? (
                       <span className="ml-1">
-                        (selected: card {draftCardIndex !== null ? draftCardIndex + 1 : "-"} to cell {draftCell ?? "-"})
+                        （選択中: {formatCardSelection(draftCardIndex)} → {formatCellLabel(draftCell)}）
                       </span>
                     ) : null}
                   </div>

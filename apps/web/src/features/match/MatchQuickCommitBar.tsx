@@ -1,5 +1,17 @@
 import React from "react";
 
+const CELL_LABELS = ["A1", "B1", "C1", "A2", "B2", "C2", "A3", "B3", "C3"] as const;
+
+function formatCellLabel(cell: number | null): string {
+  if (cell === null) return "マス未選択";
+  return CELL_LABELS[cell] ?? `マス${cell}`;
+}
+
+function formatCardLabel(cardIndex: number | null): string {
+  if (cardIndex === null) return "カード未選択";
+  return `カード${cardIndex + 1}`;
+}
+
 export function MatchQuickCommitBar(input: {
   draftCardIndex: number | null;
   draftCell: number | null;
@@ -35,10 +47,10 @@ export function MatchQuickCommitBar(input: {
     >
       <div className="grid gap-0.5 text-xs">
         <div className="mint-match-quick-commit__title font-semibold">
-          Quick commit
+          この一手
         </div>
         <div className="mint-match-quick-commit__hint">
-          Card {draftCardIndex !== null ? draftCardIndex + 1 : "-"} | Cell {draftCell ?? "-"}
+          {formatCardLabel(draftCardIndex)} → {formatCellLabel(draftCell)}
         </div>
       </div>
 
@@ -47,7 +59,7 @@ export function MatchQuickCommitBar(input: {
           className="inline-flex items-center gap-2 text-xs font-semibold"
           style={{ color: "var(--mint-text-secondary, #4B5563)" }}
         >
-          Warning mark
+          警戒
           <select
             className="input h-10 min-w-[170px]"
             value={draftWarningMarkCell === null ? "" : String(draftWarningMarkCell)}
@@ -58,11 +70,11 @@ export function MatchQuickCommitBar(input: {
             disabled={isBoardFull || isAiTurn || currentWarnRemaining <= 0}
             aria-label="Quick warning mark cell"
           >
-            <option value="">None</option>
+            <option value="">なし</option>
             {availableCells
               .filter((c) => c !== draftCell)
               .map((c) => (
-                <option key={`quick-${c}`} value={String(c)}>Cell {c}</option>
+                <option key={`quick-${c}`} value={String(c)}>警戒 {formatCellLabel(c)}</option>
               ))}
           </select>
         </label>
@@ -72,7 +84,7 @@ export function MatchQuickCommitBar(input: {
           disabled={!canCommit}
           aria-label="Quick commit move"
         >
-          Commit move
+          この手を確定
         </button>
         <button
           className="btn h-10 px-4"
@@ -80,7 +92,7 @@ export function MatchQuickCommitBar(input: {
           disabled={!canUndo}
           aria-label="Quick undo move"
         >
-          Undo 1 move
+          1手戻す
         </button>
       </div>
     </div>
