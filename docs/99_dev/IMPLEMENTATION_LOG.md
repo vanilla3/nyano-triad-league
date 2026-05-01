@@ -2890,3 +2890,24 @@
   - `/arena?theme=mint`, `/events?theme=mint`, `/stream?theme=mint`
   - Hero, guide, and Mini Nyano image present.
   - No horizontal overflow (`scrollWidth === clientWidth`).
+
+## 2026-05-01 - Events/Replay Japanese copy cleanup
+
+### Why
+- Events and Replay still had English labels in visible controls, toasts, and helper text.
+- The Mint theme needs readable player-facing Japanese across secondary game pages.
+
+### What
+- Localized Events season summaries, challenge history, settled-point import labels, and event metadata.
+- Localized Replay setup, playback controls, event replay panel, sharing/saving actions, result details, timeline highlights, streamer overlay tools, and deck inspector text.
+- Localized replay timeline/highlight helpers and Mint page guides used by Events/Replay.
+- Localized replay share-link errors and season reward tier labels shown on Events.
+
+### Verify
+- `pnpm -C apps/web typecheck` OK
+- `pnpm -C apps/web test` OK
+- `pnpm -C apps/web build` OK
+- `pnpm lint:text` OK
+- Playwright local preview DOM smoke OK:
+  - `/events?theme=mint`
+  - `/replay?theme=mint`

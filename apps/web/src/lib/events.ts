@@ -43,52 +43,36 @@ export function isValidEventV1(e: unknown): e is EventV1 {
   if (typeof e !== "object" || e === null) return false;
   const r = e as Record<string, unknown>;
 
-  // Required string fields
   if (typeof r.id !== "string" || r.id.length === 0) return false;
   if (typeof r.title !== "string") return false;
   if (typeof r.description !== "string") return false;
 
-  // kind must be "nyano_ai_challenge"
   if (r.kind !== "nyano_ai_challenge") return false;
-
-  // rulesetKey must be a valid registry key
   if (!isValidRulesetKey(r.rulesetKey)) return false;
-
-  // seasonId must be an integer
   if (typeof r.seasonId !== "number" || !Number.isInteger(r.seasonId)) return false;
-
-  // firstPlayer must be 0 or 1
   if (r.firstPlayer !== 0 && r.firstPlayer !== 1) return false;
-
-  // aiDifficulty must be "easy" or "normal"
   if (r.aiDifficulty !== "easy" && r.aiDifficulty !== "normal") return false;
 
-  // nyanoDeckTokenIds must be string[] of length 5
   if (!Array.isArray(r.nyanoDeckTokenIds)) return false;
   if (r.nyanoDeckTokenIds.length !== 5) return false;
   if (!r.nyanoDeckTokenIds.every((t: unknown) => typeof t === "string")) return false;
 
-  // Optional fields: startAt/endAt must be string if present
   if (r.startAt !== undefined && typeof r.startAt !== "string") return false;
   if (r.endAt !== undefined && typeof r.endAt !== "string") return false;
 
-  // Optional: tags must be string[] if present
   if (r.tags !== undefined) {
     if (!Array.isArray(r.tags)) return false;
     if (!r.tags.every((t: unknown) => typeof t === "string")) return false;
   }
 
-  // Optional: voteTimeSeconds must be a positive integer if present
   if (r.voteTimeSeconds !== undefined) {
     if (typeof r.voteTimeSeconds !== "number" || !Number.isInteger(r.voteTimeSeconds) || r.voteTimeSeconds <= 0) return false;
   }
 
-  // Optional: maxAttempts must be a positive integer if present
   if (r.maxAttempts !== undefined) {
     if (typeof r.maxAttempts !== "number" || !Number.isInteger(r.maxAttempts) || r.maxAttempts <= 0) return false;
   }
 
-  // Optional: deckRestriction must be a non-empty string if present
   if (r.deckRestriction !== undefined) {
     if (typeof r.deckRestriction !== "string" || r.deckRestriction.length === 0) return false;
   }
@@ -99,9 +83,9 @@ export function isValidEventV1(e: unknown): e is EventV1 {
 export const EVENTS: EventV1[] = [
   {
     id: "nyano-open-challenge",
-    title: "Nyano Open Challenge",
+    title: "Nyanoオープンチャレンジ",
     description:
-      "いつでも挑戦できる常設イベント。Nyano（AI）がB側を操作します。まずは off-chain（Replay共有）で盛り上げる前提。",
+      "いつでも挑戦できる常設イベントです。Nyano AIがB側を操作します。まずはオフチェーン対戦とリプレイ共有で腕試ししましょう。",
     kind: "nyano_ai_challenge",
     // always-active
     rulesetKey: "v2",
@@ -152,8 +136,8 @@ export function getEventStatus(e: EventV1, nowMs: number = Date.now()): EventSta
 }
 
 export function formatEventPeriod(e: EventV1): string {
-  if (!e.startAt && !e.endAt) return "Always";
-  if (e.startAt && !e.endAt) return `From ${e.startAt}`;
-  if (!e.startAt && e.endAt) return `Until ${e.endAt}`;
-  return `${e.startAt} → ${e.endAt}`;
+  if (!e.startAt && !e.endAt) return "いつでも挑戦可";
+  if (e.startAt && !e.endAt) return `${e.startAt} から`;
+  if (!e.startAt && e.endAt) return `${e.endAt} まで`;
+  return `${e.startAt} から ${e.endAt} まで`;
 }

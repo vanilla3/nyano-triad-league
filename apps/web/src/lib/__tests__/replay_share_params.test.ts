@@ -66,7 +66,7 @@ describe("decodeReplaySharePayload", () => {
     expect(decodeReplaySharePayload(params)).toEqual({
       kind: "error",
       param: "z",
-      error: "Invalid share link (z parameter could not be decompressed).",
+      error: "共有リンクが正しくありません（zパラメータを展開できません）。",
     });
   });
 
@@ -76,7 +76,7 @@ describe("decodeReplaySharePayload", () => {
     expect(decodeReplaySharePayload(params)).toEqual({
       kind: "error",
       param: "t",
-      error: "Invalid share link (t parameter could not be decoded).",
+      error: "共有リンクが正しくありません（tパラメータを読み取れません）。",
     });
   });
 });

@@ -11,10 +11,10 @@ export type ReplayStepHighlight = {
 export type ReplayHighlightSummary = Record<ReplayHighlightKind, number>;
 
 const HIGHLIGHT_KIND_LABELS: Record<ReplayHighlightKind, string> = {
-  big_flip: "Big Flip",
-  chain: "Chain",
-  combo: "Combo",
-  warning: "Warning",
+  big_flip: "大量反転",
+  chain: "連鎖",
+  combo: "コンボ",
+  warning: "警戒",
 };
 
 export function detectReplayHighlights(
@@ -30,15 +30,15 @@ export function detectReplayHighlights(
     const warningTriggered = Boolean(turn.warningTriggered);
 
     if (flipCount >= 3) {
-      highlights.push({ step, kind: "big_flip", label: `${flipCount} flips` });
+      highlights.push({ step, kind: "big_flip", label: `${flipCount}枚反転` });
     } else if (hasChain) {
-      highlights.push({ step, kind: "chain", label: "Chain" });
+      highlights.push({ step, kind: "chain", label: "連鎖" });
     } else if (comboEffect !== "none") {
       highlights.push({ step, kind: "combo", label: comboEffect });
     }
 
     if (warningTriggered) {
-      highlights.push({ step, kind: "warning", label: "Warning!" });
+      highlights.push({ step, kind: "warning", label: "警戒発動" });
     }
   }
   return highlights;
@@ -65,8 +65,8 @@ export function replayHighlightKindLabel(kind: ReplayHighlightKind): string {
 
 export function formatReplayWinnerLabel(
   winner: MatchResultWithHistory["winner"] | null | undefined,
-): "A" | "B" | "DRAW" {
+): "A" | "B" | "引き分け" {
   if (winner === 0) return "A";
   if (winner === 1) return "B";
-  return "DRAW";
+  return "引き分け";
 }
