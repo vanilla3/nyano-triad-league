@@ -376,6 +376,136 @@ html[data-vfx="off"] .mint-arena-difficulty__card--active {
   min-height: 44px;
 }
 
+/* ── Board View HUD ───────────────────────────────────────────────────── */
+
+.mint-board-view {
+  display: grid;
+  gap: 12px;
+  position: relative;
+}
+
+.mint-turn-track {
+  display: grid;
+  grid-template-columns: auto minmax(120px, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border: 1px solid rgba(125, 211, 252, 0.68);
+  border-radius: 18px;
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.92), rgba(230, 248, 255, 0.74)),
+    var(--mint-material-noise-url),
+    var(--mint-material-noise-fallback);
+  background-size: auto, 96px 96px, auto;
+  box-shadow:
+    0 14px 24px -22px rgba(14, 116, 144, 0.62),
+    inset 0 1px 0 rgba(255, 255, 255, 0.78);
+}
+
+.mint-turn-track__summary {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: max-content;
+}
+
+.mint-turn-track__eyebrow {
+  color: var(--mint-text-hint);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+}
+
+.mint-turn-track__round {
+  color: var(--mint-text-primary);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 18px;
+  line-height: 1;
+}
+
+.mint-turn-track__round span {
+  color: var(--mint-text-hint);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.mint-turn-track__player {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 30px;
+  min-height: 24px;
+  border-radius: 999px;
+  border: 1px solid rgba(148, 163, 184, 0.32);
+  background: rgba(255, 255, 255, 0.72);
+  color: var(--mint-text-secondary);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.mint-turn-track__player--a {
+  border-color: rgba(56, 189, 248, 0.56);
+  background: rgba(224, 242, 254, 0.92);
+  color: var(--mint-pa);
+  box-shadow: 0 0 12px rgba(14, 165, 233, 0.18);
+}
+
+.mint-turn-track__player--b {
+  border-color: rgba(251, 113, 133, 0.48);
+  background: rgba(255, 241, 242, 0.92);
+  color: var(--mint-pb);
+  box-shadow: 0 0 12px rgba(244, 63, 94, 0.14);
+}
+
+.mint-turn-track__pips {
+  display: grid;
+  grid-template-columns: repeat(9, minmax(8px, 1fr));
+  gap: 5px;
+  align-items: center;
+}
+
+.mint-turn-track__pip {
+  height: 8px;
+  border-radius: 999px;
+  background: rgba(186, 230, 253, 0.58);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.64);
+}
+
+.mint-turn-track__pip--done {
+  background: linear-gradient(90deg, #0ea5e9, #14b8a6);
+  box-shadow: 0 0 10px rgba(14, 165, 233, 0.24);
+}
+
+.mint-turn-track__pip--next {
+  background: #fbbf24;
+  box-shadow: 0 0 0 3px rgba(251, 191, 36, 0.16), 0 0 14px rgba(245, 158, 11, 0.28);
+}
+
+.mint-turn-track__phase {
+  justify-self: end;
+  min-width: max-content;
+  border-radius: 999px;
+  border: 1px solid rgba(125, 211, 252, 0.52);
+  background: rgba(255, 255, 255, 0.72);
+  color: var(--mint-text-accent);
+  padding: 4px 10px;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+@media (max-width: 520px) {
+  .mint-turn-track {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  .mint-turn-track__phase {
+    justify-self: stretch;
+    text-align: center;
+  }
+}
+
 /* ── Board Frame ─────────────────────────────────────────────────────── */
 
 .mint-board-frame {
@@ -450,6 +580,31 @@ html[data-vfx="off"] .mint-arena-difficulty__card--active {
   mix-blend-mode: screen;
   opacity: 0.56;
   animation: mint-board-sheen 22s ease-in-out infinite;
+}
+
+.mint-board-frame--player-a {
+  border-color: rgba(56, 189, 248, 0.86);
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.54),
+    0 16px 38px -22px rgba(14, 165, 233, 0.66),
+    0 0 28px rgba(14, 165, 233, 0.14),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    inset 0 -1px 0 rgba(14, 116, 144, 0.08);
+}
+
+.mint-board-frame--player-b {
+  border-color: rgba(251, 113, 133, 0.72);
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.54),
+    0 16px 38px -22px rgba(244, 63, 94, 0.48),
+    0 0 28px rgba(244, 63, 94, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    inset 0 -1px 0 rgba(190, 18, 60, 0.08);
+}
+
+.mint-board-frame--phase-select_cell .mint-board-inner::before,
+.mint-board-frame--phase-warning .mint-board-inner::before {
+  opacity: 0.9;
 }
 
 .mint-board-inner {
@@ -624,6 +779,10 @@ html[data-vfx="off"] .mint-arena-difficulty__card--active {
   -webkit-backdrop-filter: blur(2px);
   animation: mint-breathe 3.6s ease-in-out infinite;
   will-change: transform, box-shadow;
+}
+
+.mint-cell--empty {
+  isolation: isolate;
 }
 
 .mint-cell--selectable::after {
@@ -963,14 +1122,34 @@ html[data-vfx="high"] .mint-cell--spotlight {
 
 /* Empty cell label */
 .mint-cell__empty-label {
-  font-size: 11px;
-  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  min-height: 26px;
+  border-radius: 999px;
+  border: 1px solid rgba(125, 211, 252, 0.32);
+  background: rgba(255, 255, 255, 0.62);
   color: var(--mint-text-hint);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  line-height: 1;
+  box-shadow: 0 8px 16px -14px rgba(14, 116, 144, 0.45);
   user-select: none;
+  z-index: 2;
 }
 
 .mint-cell--selectable .mint-cell__empty-label {
+  border-color: rgba(56, 189, 248, 0.48);
+  background: rgba(240, 249, 255, 0.82);
   color: var(--mint-text-accent);
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.8);
+}
+
+.mint-cell--warning-mode .mint-cell__empty-label {
+  border-color: rgba(245, 158, 11, 0.44);
+  background: rgba(255, 251, 235, 0.86);
 }
 
 
@@ -2618,6 +2797,8 @@ html[data-vfx="high"] .mint-cell--spotlight {
 .stage-focus-arena-shell {
   border-color: var(--stage-shell-border, rgba(125, 211, 252, 0.46)) !important;
   background:
+    radial-gradient(circle at 50% 92%, rgba(125, 211, 252, 0.22), transparent 36%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.64), rgba(238, 250, 255, 0.42) 54%, rgba(213, 243, 250, 0.34)),
     linear-gradient(180deg, rgba(255, 255, 255, 0.64), rgba(238, 250, 255, 0.42)),
     var(--stage-shell-bg, linear-gradient(165deg, rgba(255, 255, 255, 0.96), rgba(235, 248, 255, 0.92))) !important;
   box-shadow: var(--stage-shell-shadow, 0 20px 40px -26px rgba(2, 132, 199, 0.46));
@@ -2626,6 +2807,47 @@ html[data-vfx="high"] .mint-cell--spotlight {
   position: relative;
   backdrop-filter: blur(12px) saturate(1.06);
   -webkit-backdrop-filter: blur(12px) saturate(1.06);
+}
+
+.stage-focus-arena-shell::before {
+  content: "";
+  position: absolute;
+  left: 8%;
+  right: 8%;
+  bottom: 38px;
+  height: 26%;
+  border-radius: 999px;
+  pointer-events: none;
+  z-index: 0;
+  background:
+    radial-gradient(ellipse at center, rgba(56, 189, 248, 0.16), transparent 64%),
+    repeating-linear-gradient(
+      90deg,
+      rgba(14, 165, 233, 0.08) 0px,
+      rgba(14, 165, 233, 0.08) 1px,
+      transparent 1px,
+      transparent 22px
+    );
+  filter: blur(0.2px);
+  opacity: 0.78;
+}
+
+.stage-focus-arena-shell::after {
+  content: "";
+  position: absolute;
+  inset: auto 10% 18px;
+  height: 2px;
+  border-radius: 999px;
+  pointer-events: none;
+  z-index: 0;
+  background: linear-gradient(90deg, transparent, rgba(14, 165, 233, 0.22), rgba(255, 255, 255, 0.8), rgba(14, 165, 233, 0.22), transparent);
+  box-shadow: 0 0 22px rgba(14, 165, 233, 0.22);
+  opacity: 0.78;
+}
+
+.stage-focus-arena-inner {
+  position: relative;
+  z-index: 1;
 }
 
 .stage-focus-root--with-hand-dock .stage-focus-arena-shell {
