@@ -12,6 +12,7 @@ export function MintGameShell({ children, className }: MintGameShellProps) {
       <div className="mint-app-shell__grid" aria-hidden="true" />
       <div className="mint-app-shell__noise" aria-hidden="true" />
       <div className="mint-app-shell__sparkles" aria-hidden="true" />
+      <div className="mint-app-shell__mascot" aria-hidden="true" />
       <div className="mint-app-shell__safe">{children}</div>
     </div>
   );

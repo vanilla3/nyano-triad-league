@@ -32,8 +32,7 @@ type Props = {
 };
 
 /**
- * A mini 3-step tutorial shown on first guest match.
- * Stored in localStorage so it only appears once.
+ * First-battle tutorial shown once per browser.
  */
 export function MiniTutorial({ onDismiss }: Props) {
   const [visible, setVisible] = React.useState(() => !isTutorialSeen());
@@ -47,31 +46,31 @@ export function MiniTutorial({ onDismiss }: Props) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-      <div className="w-full max-w-md rounded-2xl border border-surface-200 bg-white p-6 shadow-lg">
-        <div className="text-lg font-bold text-surface-900">3 Steps to Play Triad</div>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 p-4 backdrop-blur-sm">
+      <div className="mint-tutorial-modal w-full max-w-md rounded-2xl border border-surface-200 bg-white p-6 shadow-lg">
+        <div className="text-lg font-bold text-surface-900">はじめての3ステップ</div>
 
         <div className="mt-4 grid gap-3">
-          <Step n={1} title="Choose a cell" desc="Tap an empty cell on the 3x3 board to place your card." />
-          <Step n={2} title="Pick a card" desc="Select a card from your hand (5 cards total)." />
-          <Step n={3} title="Commit" desc="Press the Commit button to lock in your move. Higher edges flip adjacent opponent cards!" />
+          <Step n={1} title="マスを選ぶ" desc="3x3盤面の空いているマスをタップします。" />
+          <Step n={2} title="カードを選ぶ" desc="手札5枚から、そのマスに置くカードを選びます。" />
+          <Step n={3} title="この手を確定" desc="確定すると手番が進み、強い辺で隣の相手カードをひっくり返します。" />
         </div>
 
         <div className="mt-2 text-xs text-surface-500">
-          Tip: When edge values tie, janken (Rock/Paper/Scissors) breaks it.
+          同じ数字でぶつかった時は、ジャンケン相性で勝負が決まります。
         </div>
 
         <button
           className="btn btn-primary mt-4 w-full"
           onClick={dismiss}
         >
-          Got it!
+          バトルへ進む
         </button>
         <button
           className="mt-2 w-full text-center text-xs text-surface-400 hover:text-surface-600 underline"
           onClick={dismiss}
         >
-          Skip tutorial
+          今はスキップ
         </button>
       </div>
     </div>

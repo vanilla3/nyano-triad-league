@@ -5959,7 +5959,8 @@ html[data-vfx="high"] .mint-cell--spotlight {
 .mint-app-shell__bg,
 .mint-app-shell__grid,
 .mint-app-shell__noise,
-.mint-app-shell__sparkles {
+.mint-app-shell__sparkles,
+.mint-app-shell__mascot {
   position: fixed;
   inset: 0;
   pointer-events: none;
@@ -6011,6 +6012,19 @@ html[data-vfx="high"] .mint-cell--spotlight {
   animation: mint-app-sparkle 16s ease-in-out infinite;
 }
 
+.mint-app-shell__mascot {
+  z-index: -1;
+  opacity: 0.16;
+  background-image:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.16), transparent 36%),
+    url("/assets/gen/nyano_ui_cameo_512_v1.webp");
+  background-repeat: no-repeat;
+  background-position: right clamp(10px, 4vw, 54px) bottom clamp(66px, 8vw, 106px);
+  background-size: min(34vw, 360px) min(34vw, 360px);
+  filter: drop-shadow(0 28px 36px rgba(15, 23, 42, 0.16));
+  transform: translateZ(0);
+}
+
 .mint-app-shell__safe {
   min-height: 100dvh;
   padding:
@@ -6035,13 +6049,30 @@ html[data-vfx="high"] .mint-cell--spotlight {
 }
 
 .mint-app-chrome__brand {
+  position: relative;
+  overflow: hidden;
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 10px 14px;
 }
 
+.mint-app-chrome__brand::after {
+  content: "";
+  position: absolute;
+  inset: 8px 12px;
+  border-radius: 18px;
+  pointer-events: none;
+  background:
+    linear-gradient(to right, rgba(14, 165, 233, 0.16) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(167, 139, 250, 0.12) 1px, transparent 1px);
+  background-size: 34px 34px;
+  mask-image: linear-gradient(90deg, transparent, rgba(0, 0, 0, 0.32) 24%, transparent 78%);
+}
+
 .mint-app-chrome__brand-link {
+  position: relative;
+  z-index: 1;
   display: inline-flex;
   align-items: center;
   gap: 9px;
@@ -6061,6 +6092,15 @@ html[data-vfx="high"] .mint-cell--spotlight {
   box-shadow:
     0 12px 20px -16px rgba(30, 41, 59, 0.65),
     inset 0 1px 0 rgba(255, 255, 255, 0.82);
+}
+
+.mint-app-chrome__logo-mark img {
+  width: 34px;
+  height: 34px;
+  max-width: none;
+  border-radius: 999px;
+  object-fit: cover;
+  transform: scale(1.08);
 }
 
 .mint-app-chrome__logo-text {
@@ -6136,6 +6176,21 @@ html[data-vfx="high"] .mint-cell--spotlight {
   pointer-events: none;
 }
 
+.mint-glass::after,
+[data-theme="mint"] .card::after {
+  content: "";
+  position: absolute;
+  inset: 9px;
+  border-radius: 18px;
+  pointer-events: none;
+  background:
+    linear-gradient(90deg, rgba(34, 211, 238, 0.46) 0 22px, transparent 22px calc(100% - 22px), rgba(167, 139, 250, 0.38) calc(100% - 22px)) top left / 100% 2px no-repeat,
+    linear-gradient(90deg, rgba(167, 139, 250, 0.38) 0 22px, transparent 22px calc(100% - 22px), rgba(34, 211, 238, 0.44) calc(100% - 22px)) bottom left / 100% 2px no-repeat,
+    linear-gradient(180deg, rgba(34, 211, 238, 0.42) 0 22px, transparent 22px calc(100% - 22px), rgba(167, 139, 250, 0.34) calc(100% - 22px)) top left / 2px 100% no-repeat,
+    linear-gradient(180deg, rgba(167, 139, 250, 0.34) 0 22px, transparent 22px calc(100% - 22px), rgba(34, 211, 238, 0.42) calc(100% - 22px)) top right / 2px 100% no-repeat;
+  opacity: 0.52;
+}
+
 .mint-glass--panel {
   border-radius: 24px;
 }
@@ -6193,8 +6248,8 @@ html[data-vfx="high"] .mint-cell--spotlight {
   position: relative;
   isolation: isolate;
   overflow: hidden;
-  border: 1px solid rgba(255, 255, 255, 0.72);
-  border-radius: 16px;
+  border: 1px solid rgba(125, 211, 252, 0.58);
+  border-radius: 14px;
   font-family: "Nunito", "Rounded Mplus 1c", sans-serif;
   font-weight: 800;
   letter-spacing: 0.01em;
@@ -6208,10 +6263,13 @@ html[data-vfx="high"] .mint-cell--spotlight {
   text-shadow: 0 1px 0 rgba(255, 255, 255, 0.56);
   min-width: 44px;
   min-height: 44px;
-  background: linear-gradient(160deg, rgba(255, 255, 255, 0.78), rgba(229, 244, 255, 0.62));
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.9), rgba(226, 247, 255, 0.66)),
+    linear-gradient(135deg, rgba(34, 211, 238, 0.18), rgba(167, 139, 250, 0.16));
   box-shadow:
     0 16px 28px -24px rgba(15, 23, 42, 0.86),
-    inset 0 1px 0 rgba(255, 255, 255, 0.84);
+    inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    inset 0 -2px 0 rgba(14, 116, 144, 0.1);
   transition:
     transform var(--mint-press-transition),
     box-shadow var(--mint-press-transition),
@@ -6232,7 +6290,11 @@ html[data-vfx="high"] .mint-cell--spotlight {
   z-index: 0;
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.72),
-    inset 0 -1px 0 rgba(2, 6, 23, 0.1);
+    inset 0 -2px 0 rgba(2, 6, 23, 0.12);
+  background:
+    linear-gradient(90deg, rgba(34, 211, 238, 0.42) 0 18px, transparent 18px calc(100% - 18px), rgba(167, 139, 250, 0.34) calc(100% - 18px)) top left / 100% 2px no-repeat,
+    linear-gradient(90deg, rgba(167, 139, 250, 0.34) 0 18px, transparent 18px calc(100% - 18px), rgba(34, 211, 238, 0.42) calc(100% - 18px)) bottom left / 100% 2px no-repeat;
+  opacity: 0.88;
 }
 
 .mint-ui-pressable::after {
@@ -6301,10 +6363,13 @@ html[data-vfx="high"] .mint-cell--spotlight {
 .mint-ui-pressable--primary {
   color: #ffffff;
   border-color: rgba(103, 232, 249, 0.65);
-  background: linear-gradient(145deg, #38bdf8 0%, #22d3ee 42%, #a78bfa 100%);
+  background:
+    radial-gradient(circle at 18% 0%, rgba(255, 255, 255, 0.42), transparent 42%),
+    linear-gradient(180deg, #67e8f9 0%, #06b6d4 52%, #818cf8 100%);
   box-shadow:
     0 20px 30px -24px rgba(3, 105, 161, 0.85),
-    0 0 0 1px rgba(186, 230, 253, 0.35);
+    0 0 0 1px rgba(186, 230, 253, 0.35),
+    inset 0 -3px 0 rgba(15, 23, 42, 0.16);
 }
 
 .mint-ui-pressable--soft {
@@ -6402,16 +6467,20 @@ html[data-vfx="high"] .mint-cell--spotlight {
   grid-template-columns: auto minmax(0, 1fr);
   align-items: center;
   text-align: left;
-  border-radius: 28px;
+  border-radius: 20px;
   min-height: 110px;
   padding-inline: 16px;
   gap: 12px;
+  border-color: rgba(125, 211, 252, 0.58);
+  background:
+    radial-gradient(circle at 6% 4%, rgba(255, 255, 255, 0.52), transparent 34%),
+    linear-gradient(160deg, rgba(255, 255, 255, 0.84), rgba(224, 242, 254, 0.62));
 }
 
 .mint-big-button__icon-wrap {
   width: 58px;
   height: 58px;
-  border-radius: 18px;
+  border-radius: 14px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -6461,7 +6530,7 @@ html[data-vfx="high"] .mint-cell--spotlight {
 .mint-tab-nav__item {
   min-height: 42px;
   padding: 8px 14px;
-  border-radius: 999px;
+  border-radius: 13px;
   font-size: 14px;
 }
 
@@ -6482,8 +6551,14 @@ html[data-vfx="high"] .mint-cell--spotlight {
 
 .mint-tab-nav__item--active {
   color: #155e75;
-  border-color: rgba(167, 139, 250, 0.5);
-  background: linear-gradient(145deg, rgba(255, 255, 255, 0.92), rgba(221, 214, 254, 0.7));
+  border-color: rgba(34, 211, 238, 0.68);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(207, 250, 254, 0.72)),
+    linear-gradient(135deg, rgba(167, 139, 250, 0.2), rgba(34, 211, 238, 0.14));
+  box-shadow:
+    0 14px 22px -18px rgba(8, 145, 178, 0.58),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    inset 0 -2px 0 rgba(14, 116, 144, 0.12);
   animation: mint-tab-activate var(--mint-motion-12f) var(--mint-motion-ease-out) both;
 }
 
@@ -6521,8 +6596,17 @@ html[data-vfx="high"] .mint-cell--spotlight {
     height: 28px;
   }
 
+  .mint-app-chrome__logo-mark img {
+    width: 30px;
+    height: 30px;
+  }
+
   .mint-app-chrome__logo-text {
     font-size: 1.42rem;
+  }
+
+  .mint-app-shell__mascot {
+    display: none;
   }
 
   .mint-tab-nav {
@@ -6573,7 +6657,8 @@ html[data-vfx="high"] .mint-cell--spotlight {
 [data-vfx="off"] .mint-app-shell__bg,
 [data-vfx="off"] .mint-app-shell__grid,
 [data-vfx="off"] .mint-app-shell__noise,
-[data-vfx="off"] .mint-app-shell__sparkles {
+[data-vfx="off"] .mint-app-shell__sparkles,
+[data-vfx="off"] .mint-app-shell__mascot {
   animation: none !important;
 }
 
@@ -6616,6 +6701,8 @@ html[data-vfx="high"] .mint-cell--spotlight {
   padding: clamp(18px, 3vw, 28px);
   border: 1px solid rgba(255, 255, 255, 0.78);
   background:
+    radial-gradient(circle at 86% 28%, rgba(255, 255, 255, 0.72), transparent 22%),
+    radial-gradient(circle at 84% 34%, rgba(34, 211, 238, 0.18), transparent 34%),
     linear-gradient(120deg, rgba(255, 255, 255, 0.78), rgba(236, 253, 245, 0.68) 44%, rgba(255, 247, 237, 0.64)),
     linear-gradient(145deg, rgba(125, 211, 252, 0.28), rgba(196, 181, 253, 0.24));
   box-shadow:
@@ -6726,7 +6813,7 @@ html[data-vfx="high"] .mint-cell--spotlight {
   gap: 12px;
   justify-self: end;
   width: min(100%, 340px);
-  border-radius: 26px;
+  border-radius: 18px;
   padding: 13px;
   transform: rotate(1.5deg);
   background:
@@ -6739,8 +6826,22 @@ html[data-vfx="high"] .mint-cell--spotlight {
     inset 0 1px 0 rgba(255, 255, 255, 0.92);
 }
 
+.mint-home-battle-card::before {
+  content: "";
+  position: absolute;
+  inset: -26px -18px auto auto;
+  width: 138px;
+  height: 138px;
+  pointer-events: none;
+  background: url("/assets/gen/nyano_ui_cameo_512_v1.webp") center / contain no-repeat;
+  opacity: 0.28;
+  filter: drop-shadow(0 16px 20px rgba(15, 23, 42, 0.18));
+}
+
 .mint-home-battle-card__top,
 .mint-home-battle-card__footer {
+  position: relative;
+  z-index: 1;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -6768,6 +6869,7 @@ html[data-vfx="high"] .mint-cell--spotlight {
 }
 
 .mint-home-board-preview {
+  position: relative;
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 8px;
@@ -6782,12 +6884,22 @@ html[data-vfx="high"] .mint-cell--spotlight {
     inset 0 -18px 28px rgba(15, 23, 42, 0.08);
 }
 
+.mint-home-board-preview::before {
+  content: "";
+  position: absolute;
+  inset: 6px;
+  border-radius: 17px;
+  pointer-events: none;
+  border: 1px solid rgba(255, 255, 255, 0.46);
+  box-shadow: inset 0 0 22px rgba(34, 211, 238, 0.16);
+}
+
 .mint-home-board-cell {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   min-width: 0;
-  border-radius: 16px;
+  border-radius: 12px;
   font-size: 1.5rem;
   font-weight: 950;
   color: #334155;
@@ -7331,12 +7443,29 @@ html[data-vfx="high"] .mint-cell--spotlight {
 }
 
 .mint-page-guide {
+  position: relative;
+  overflow: hidden;
   padding: 12px;
   display: grid;
   gap: 10px;
 }
 
+.mint-page-guide::after {
+  content: "";
+  position: absolute;
+  right: -44px;
+  top: -62px;
+  width: 190px;
+  height: 190px;
+  pointer-events: none;
+  background: url("/assets/gen/nyano_ui_cameo_512_v1.webp") center / contain no-repeat;
+  opacity: 0.12;
+  filter: drop-shadow(0 20px 24px rgba(15, 23, 42, 0.14));
+}
+
 .mint-page-guide__head {
+  position: relative;
+  z-index: 1;
   display: grid;
   gap: 4px;
 }
@@ -7361,6 +7490,8 @@ html[data-vfx="high"] .mint-cell--spotlight {
 }
 
 .mint-page-guide__item {
+  position: relative;
+  overflow: hidden;
   min-height: 76px;
   padding: 10px;
   display: grid;
@@ -7369,7 +7500,19 @@ html[data-vfx="high"] .mint-cell--spotlight {
   gap: 8px;
 }
 
+.mint-page-guide__item::before {
+  content: "";
+  position: absolute;
+  inset: 6px;
+  border-radius: 14px;
+  pointer-events: none;
+  border: 1px solid rgba(255, 255, 255, 0.45);
+  box-shadow: inset 0 -1px 0 rgba(14, 116, 144, 0.08);
+}
+
 .mint-page-guide__item-copy {
+  position: relative;
+  z-index: 1;
   display: grid;
   gap: 2px;
 }
@@ -7393,13 +7536,25 @@ html[data-vfx="high"] .mint-cell--spotlight {
 }
 
 .mint-arena-difficulty__card {
+  position: relative;
+  overflow: hidden;
   min-height: 126px;
-  border-radius: 28px;
+  border-radius: 18px;
   display: grid;
   align-content: center;
   justify-items: center;
   gap: 6px;
   color: #334155;
+}
+
+.mint-arena-difficulty__card::after {
+  content: "";
+  position: absolute;
+  inset: 8px;
+  border-radius: 14px;
+  pointer-events: none;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  opacity: 0.72;
 }
 
 .mint-arena-difficulty__card--active {
@@ -8225,6 +8380,104 @@ html[data-vfx="high"] .mint-cell--spotlight {
    Mint Secondary Screens (Events / Replay / Stream)
    ============================================================ */
 
+[data-theme="mint"] .btn,
+[data-theme="mint"] button.btn,
+[data-theme="mint"] a.btn {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  min-height: 42px;
+  border-radius: 14px;
+  border: 1px solid rgba(103, 232, 249, 0.62);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(214, 245, 255, 0.68)),
+    linear-gradient(135deg, rgba(34, 211, 238, 0.18), rgba(167, 139, 250, 0.18));
+  color: #0f4c5c;
+  font-weight: 850;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.74);
+  box-shadow:
+    0 12px 20px -18px rgba(15, 23, 42, 0.68),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    inset 0 -2px 0 rgba(14, 116, 144, 0.12);
+  transition:
+    transform var(--mint-press-transition),
+    box-shadow var(--mint-press-transition),
+    border-color var(--mint-press-transition),
+    filter var(--mint-press-transition);
+}
+
+[data-theme="mint"] .btn::before,
+[data-theme="mint"] button.btn::before,
+[data-theme="mint"] a.btn::before {
+  content: "";
+  position: absolute;
+  inset: 3px;
+  z-index: -1;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.52);
+  background:
+    linear-gradient(105deg, transparent 0%, rgba(255, 255, 255, 0.46) 45%, transparent 64%) -120% 0 / 220% 100% no-repeat;
+  opacity: 0.72;
+}
+
+[data-theme="mint"] .btn:hover:not(:disabled),
+[data-theme="mint"] button.btn:hover:not(:disabled),
+[data-theme="mint"] a.btn:hover {
+  border-color: rgba(34, 211, 238, 0.84);
+  filter: saturate(1.08) brightness(1.02);
+  transform: translateY(-2px);
+  box-shadow:
+    0 18px 28px -22px rgba(8, 145, 178, 0.72),
+    0 0 0 2px rgba(125, 211, 252, 0.16),
+    inset 0 1px 0 rgba(255, 255, 255, 0.94),
+    inset 0 -2px 0 rgba(14, 116, 144, 0.16);
+}
+
+[data-theme="mint"] .btn:active:not(:disabled),
+[data-theme="mint"] button.btn:active:not(:disabled),
+[data-theme="mint"] a.btn:active {
+  transform: translateY(1px);
+  box-shadow:
+    0 8px 14px -14px rgba(15, 23, 42, 0.64),
+    inset 0 2px 4px rgba(15, 23, 42, 0.1);
+}
+
+[data-theme="mint"] .btn-primary,
+[data-theme="mint"] button.btn-primary,
+[data-theme="mint"] a.btn-primary {
+  border-color: rgba(186, 230, 253, 0.88);
+  background:
+    linear-gradient(180deg, rgba(125, 211, 252, 0.98), rgba(6, 182, 212, 0.92) 56%, rgba(129, 140, 248, 0.95)),
+    radial-gradient(circle at 20% 0%, rgba(255, 255, 255, 0.46), transparent 50%);
+  color: #ffffff;
+  text-shadow: 0 1px 0 rgba(8, 47, 73, 0.24);
+  box-shadow:
+    0 18px 30px -22px rgba(3, 105, 161, 0.9),
+    0 0 0 2px rgba(255, 255, 255, 0.18),
+    inset 0 1px 0 rgba(255, 255, 255, 0.62),
+    inset 0 -3px 0 rgba(15, 23, 42, 0.16);
+}
+
+[data-theme="mint"] .card {
+  position: relative;
+  overflow: hidden;
+  border-radius: 20px;
+  border-color: rgba(186, 230, 253, 0.58);
+  background:
+    radial-gradient(circle at 12% -20%, rgba(167, 243, 208, 0.22), transparent 48%),
+    radial-gradient(circle at 100% 0%, rgba(196, 181, 253, 0.18), transparent 42%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.9), rgba(237, 249, 255, 0.72));
+  box-shadow:
+    0 20px 34px -28px rgba(15, 23, 42, 0.68),
+    inset 0 1px 0 rgba(255, 255, 255, 0.92);
+}
+
+[data-theme="mint"] .card-hd,
+[data-theme="mint"] .card-bd {
+  position: relative;
+  z-index: 1;
+}
+
 [data-theme="mint"] .events-page,
 [data-theme="mint"] .replay-page--standard,
 [data-theme="mint"] .replay-page--focus,
@@ -8236,12 +8489,15 @@ html[data-vfx="high"] .mint-cell--spotlight {
 [data-theme="mint"] .replay-page--standard .card,
 [data-theme="mint"] .replay-page--focus .card,
 [data-theme="mint"] .stream-page .card {
-  border: 1px solid rgba(255, 255, 255, 0.74);
+  border: 1px solid rgba(186, 230, 253, 0.62);
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.82), rgba(236, 247, 255, 0.7));
+    radial-gradient(circle at 12% -22%, rgba(167, 243, 208, 0.24), transparent 48%),
+    radial-gradient(circle at 100% 0%, rgba(196, 181, 253, 0.18), transparent 42%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.88), rgba(236, 247, 255, 0.72));
   box-shadow:
-    0 12px 30px rgba(15, 23, 42, 0.08),
-    inset 0 1px 0 rgba(255, 255, 255, 0.92);
+    0 18px 34px -28px rgba(15, 23, 42, 0.66),
+    inset 0 1px 0 rgba(255, 255, 255, 0.92),
+    inset 0 -2px 0 rgba(14, 116, 144, 0.08);
 }
 
 [data-theme="mint"] .events-page .card-hd,
@@ -8253,19 +8509,14 @@ html[data-vfx="high"] .mint-cell--spotlight {
 [data-theme="mint"] .events-page .btn,
 [data-theme="mint"] .replay-page .btn,
 [data-theme="mint"] .stream-page .btn {
-  border-radius: 999px;
-  border-color: rgba(134, 239, 213, 0.64);
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.9), rgba(209, 250, 229, 0.7));
+  border-color: rgba(134, 239, 213, 0.68);
   color: #115e59;
-  font-weight: 700;
 }
 
 [data-theme="mint"] .events-page .btn:hover,
 [data-theme="mint"] .replay-page .btn:hover,
 [data-theme="mint"] .stream-page .btn:hover {
   border-color: rgba(45, 212, 191, 0.7);
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(167, 243, 208, 0.74));
-  transform: translateY(-1px);
 }
 
 [data-theme="mint"] .events-page .btn:active,
@@ -8386,7 +8637,18 @@ html[data-vfx="high"] .mint-cell--spotlight {
 .mint-events-quicknav__card,
 .mint-replay-quicknav__card,
 .mint-stream-quicknav__card {
+  position: relative;
+  overflow: hidden;
   min-height: 88px;
+  border-radius: 16px;
+  border-color: rgba(125, 211, 252, 0.56);
+  background:
+    radial-gradient(circle at 12% -20%, rgba(255, 255, 255, 0.58), transparent 42%),
+    linear-gradient(165deg, rgba(255, 255, 255, 0.82), rgba(224, 242, 254, 0.66));
+  box-shadow:
+    0 16px 26px -24px rgba(15, 23, 42, 0.66),
+    inset 0 1px 0 rgba(255, 255, 255, 0.86),
+    inset 0 -2px 0 rgba(14, 116, 144, 0.08);
 }
 
 .mint-events-quicknav__action,
@@ -9163,6 +9425,13 @@ html[data-vfx="high"] .mint-cell--spotlight {
 }
 
 @media (max-width: 480px) {
+  .mint-game-page-hero__title {
+    font-size: 2rem;
+    line-height: 1.08;
+    word-break: keep-all;
+    overflow-wrap: normal;
+  }
+
   .mint-home-hero {
     padding: 14px;
     gap: 10px;
@@ -9216,4 +9485,30 @@ html[data-vfx="high"] .mint-cell--spotlight {
     border-radius: 11px;
     font-size: 1.08rem;
   }
+}
+
+[data-theme="mint"] .mint-tutorial-modal {
+  position: relative;
+  overflow: hidden;
+  border-color: rgba(125, 211, 252, 0.54);
+  background:
+    radial-gradient(circle at 8% -12%, rgba(167, 243, 208, 0.4), transparent 48%),
+    radial-gradient(circle at 96% 0%, rgba(221, 214, 254, 0.34), transparent 42%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(239, 250, 255, 0.9));
+  box-shadow:
+    0 24px 58px -34px rgba(15, 23, 42, 0.84),
+    0 0 0 1px rgba(255, 255, 255, 0.72) inset,
+    0 -3px 0 rgba(14, 116, 144, 0.08) inset;
+}
+
+[data-theme="mint"] .mint-tutorial-modal::after {
+  content: "";
+  position: absolute;
+  inset: 8px;
+  pointer-events: none;
+  border-radius: 18px;
+  border: 1px solid rgba(103, 232, 249, 0.38);
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.58) inset,
+    0 0 24px rgba(103, 232, 249, 0.12) inset;
 }
