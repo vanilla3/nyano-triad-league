@@ -30,7 +30,8 @@ import { MintTitleText, MintLabel } from "@/components/mint/MintTypography";
 import { MintIcon } from "@/components/mint/icons/MintIcon";
 import { appendThemeToPath, resolveAppTheme } from "@/lib/theme";
 import { isDebugMode } from "@/lib/debug";
-import { NYANO_MINI_IMAGE_URL } from "@/lib/nyano_assets";
+
+const NYANO_BATTLE_TOKEN_URL = "/assets/gen/nyano_battle_token_256_v1.webp";
 
 const DIFFICULTIES = [
   { key: "easy", label: "ゆるめ", labelJa: "はじめて" },
@@ -238,8 +239,20 @@ export function HomePage() {
 
         <div className="mint-home-battle-card" aria-label="Nyano battle board preview">
           <div className="mint-home-battle-card__top">
-            <span>VS NYANO AI</span>
-            <span>READY</span>
+            <span className="mint-home-battle-card__opponent">
+              <img
+                className="mint-home-battle-card__opponent-token"
+                src={NYANO_BATTLE_TOKEN_URL}
+                alt=""
+                width={58}
+                height={58}
+              />
+              <span>
+                <strong>VS NYANO AI</strong>
+                <small>盤面待機中</small>
+              </span>
+            </span>
+            <span className="mint-home-battle-card__ready">READY</span>
           </div>
           <div className="mint-home-board-preview" aria-hidden="true">
             {HOME_BOARD_CELLS.map((cell, index) => (
@@ -252,8 +265,8 @@ export function HomePage() {
             ))}
           </div>
           <div className="mint-home-battle-card__footer">
-            <img src={NYANO_MINI_IMAGE_URL} alt="" width={28} height={28} />
-            <span>Nyano AI が待機中</span>
+            <span className="mint-home-battle-card__status-dot" aria-hidden="true" />
+            <span>先攻を選んで、9ターン勝負へ</span>
           </div>
         </div>
       </section>

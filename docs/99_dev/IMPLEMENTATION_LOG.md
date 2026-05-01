@@ -2994,3 +2994,23 @@
   - `/`, `/arena`, `/events`, `/replay`, `/stream`, `/match`
   - 1440px and 390px viewports
   - horizontal overflow: 0px on checked pages
+
+## 2026-05-01 - Nyano image presentation refinement
+
+### Why
+- The home battle preview used a large translucent Nyano cameo over the board, which reduced board clarity and made the visual feel less polished.
+- Character art should support the game UI without covering the playfield or competing with the card grid.
+
+### What
+- Removed the global large mascot watermark and the home battle-card image overlay.
+- Generated a local `nyano_battle_token_256_v1.webp` UI token from the existing Mini Nyano asset, using a Mint rim and transparent WebP output instead of a live image API call.
+- Moved Nyano presence into a compact opponent token in the battle card header, leaving the 3x3 board unobstructed.
+- Replaced the page guide cameo watermark with an abstract Mint ring decoration so text panels stay clean.
+
+### Verify
+- `pnpm -C apps/web typecheck` OK
+- `pnpm lint:text` OK
+- `pnpm -C apps/web lint` OK
+- `pnpm -C apps/web build` OK
+- `pnpm -C apps/web e2e:ux` OK
+- Playwright local battle-card screenshot smoke OK, horizontal overflow: 0px
