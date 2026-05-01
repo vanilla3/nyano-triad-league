@@ -29,3 +29,7 @@ apps/web/test-results/
 /nul
 /apps/web/nul
 /contracts/cache/test-failures
+
+.vercel
+
+.vercel

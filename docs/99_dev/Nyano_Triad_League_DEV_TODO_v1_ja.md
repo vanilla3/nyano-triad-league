@@ -57,6 +57,8 @@ Detailed historical logs remain in `docs/99_dev/_archive/` and `docs/99_dev/IMPL
 - [x] Integrate `pnpm lint:text` into CI web job and `release:check`.
 - [x] Integrate `pnpm lint:text` into root `pnpm lint` local workflow.
 - [x] Resolve remaining `apps/web lint` warnings by splitting Match setup helper exports into a dedicated utility module.
+- [x] 2026-05-01 Vercel production deploy recovery: root `vercel.json` now builds the monorepo web app with `pnpm build:web`, serves `apps/web/dist`, and keeps SPA rewrites for deep links.
+- [x] 2026-05-01 Production verification: deployed and verified `https://v0-nyano-triad-league.vercel.app`, `/match`, `/replay`, and `/battle-stage`.
 
 ---
 
