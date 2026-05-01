@@ -36,7 +36,15 @@ function StatusBadge(props: { status: string }) {
         ? "badge-sky"
         : "badge-slate";
 
-  return <span className={["badge", variant].join(" ")}>{props.status}</span>;
+  return <span className={["badge", variant].join(" ")}>{eventStatusLabel(props.status)}</span>;
+}
+
+function eventStatusLabel(status: string): string {
+  if (status === "always") return "常設";
+  if (status === "active") return "開催中";
+  if (status === "upcoming") return "近日開催";
+  if (status === "ended") return "終了";
+  return status;
 }
 
 function formatIsoShort(iso: string): string {
@@ -48,6 +56,12 @@ function formatIsoShort(iso: string): string {
 
 function winnerLabel(w: number): string {
   return w === 0 ? "A" : "B";
+}
+
+function aiDifficultyLabel(v: string): string {
+  if (v === "easy") return "やさしい";
+  if (v === "normal") return "ふつう";
+  return v;
 }
 
 function formatPercent(v: number): string {
@@ -133,7 +147,7 @@ export function EventsPage() {
 
   const copyWithToast = async (label: string, v: string) => {
     await writeClipboardText(v);
-    toast.success("Copied", label);
+    toast.success("コピーしました", label);
   };
 
   const copySeasonSummary = async () => {
@@ -141,7 +155,7 @@ export function EventsPage() {
     const chunks = [formatSeasonArchiveMarkdown(selectedSeason)];
     if (selectedSeasonProgress) chunks.push(formatSeasonProgressMarkdown(selectedSeasonProgress));
     await writeClipboardText(chunks.join("\n\n"));
-    toast.success("Copied", "season archive + progress markdown");
+    toast.success("コピーしました", "シーズン集計と進行メモ");
   };
 
   const loadDefaultSettledJson = async () => {
@@ -150,16 +164,16 @@ export function EventsPage() {
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const text = await res.text();
       setSettledImportText(text);
-      toast.success("Loaded", "Fetched /game/settled_events.json");
+      toast.success("読み込みました", "/game/settled_events.json を取得しました");
     } catch (error: unknown) {
-      toast.error("Load failed", error instanceof Error ? error.message : "Could not fetch /game/settled_events.json");
+      toast.error("読み込みに失敗しました", error instanceof Error ? error.message : "/game/settled_events.json を取得できませんでした");
     }
   };
 
   const applySettledImport = () => {
     const text = settledImportText.trim();
     if (!text) {
-      toast.warn("Import skipped", "Paste import JSON first.");
+      toast.warn("取り込みを中止しました", "先に取り込み用JSONを貼り付けてください。");
       return;
     }
 
@@ -177,8 +191,8 @@ export function EventsPage() {
         mismatchCount: 0,
         issues: parsed.issues,
       });
-      const message = parsed.issues[0]?.message ?? "No valid import records found.";
-      toast.error("Import failed", message);
+      const message = parsed.issues[0]?.message ?? "有効な取り込み記録が見つかりませんでした。";
+      toast.error("取り込みに失敗しました", message);
       return;
     }
 
@@ -208,9 +222,9 @@ export function EventsPage() {
     });
 
     if (applied.updatedCount > 0) {
-      toast.success("Settled import applied", `Updated ${applied.updatedCount} local attempt(s).`);
+      toast.success("確定ポイントを反映しました", `${applied.updatedCount}件のローカル記録を更新しました。`);
     } else {
-      toast.warn("Settled import applied", "No local attempts were updated.");
+      toast.warn("確定ポイントを確認しました", "更新できるローカル記録はありませんでした。");
     }
   };
 
@@ -225,7 +239,7 @@ export function EventsPage() {
         <div className="mint-game-page-hero__copy">
           <div className="mint-game-page-kicker">
             <MintIcon name="events" size={16} />
-            <span>Challenge Board</span>
+            <span>挑戦ボード</span>
           </div>
           <MintTitleText as="h2" className="mint-game-page-hero__title">
             今日の挑戦を選ぼう
@@ -247,7 +261,7 @@ export function EventsPage() {
         <div className="mint-game-page-mascot mint-game-page-mascot--events" aria-hidden="true">
           <img src={NYANO_MINI_IMAGE_URL} alt="" loading="lazy" />
         </div>
-        <div className="mint-game-page-scoreboard" aria-label="Event summary">
+        <div className="mint-game-page-scoreboard" aria-label="イベント概要">
           <span>
             <strong>{EVENTS.length}</strong>
             挑戦
@@ -274,19 +288,19 @@ export function EventsPage() {
             </div>
             <div className="flex flex-wrap items-center gap-2">
               <button className="btn" onClick={() => void copySeasonSummary()} disabled={!selectedSeason}>
-                Copy summary
+                集計をコピー
               </button>
               <button
                 className="btn"
                 onClick={() => {
-                  if (!window.confirm("Clear all local event attempts across all seasons?")) return;
+                  if (!window.confirm("すべてのローカル挑戦記録を削除しますか？")) return;
                   clearAllEventAttempts();
                   setRefresh((v) => v + 1);
-                  toast.success("Cleared", "all local event attempts");
+                  toast.success("削除しました", "すべてのローカル挑戦記録を消しました");
                 }}
                 disabled={seasonArchive.length === 0}
               >
-                Clear all local
+                ローカル記録を全削除
               </button>
             </div>
           </div>
@@ -295,17 +309,17 @@ export function EventsPage() {
             <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <div>
-                  <div className="text-xs font-semibold text-slate-700">Settled points import (local)</div>
+                  <div className="text-xs font-semibold text-slate-700">確定ポイント取り込み（ローカル）</div>
                   <div className="text-[11px] text-slate-500">
-                    settled event 直取り込みと、署名検証付き ladder records 取り込みを切り替えて適用できます。
+                    確定イベントの高速取り込みと、署名検証付き記録の取り込みを切り替えて適用できます。
                   </div>
                 </div>
                 <div className="flex flex-wrap gap-2">
                   <button className="btn" onClick={() => void loadDefaultSettledJson()}>
-                    Load /game/settled_events.json
+                    /game/settled_events.json を読み込む
                   </button>
                   <button className="btn" onClick={applySettledImport}>
-                    Apply import JSON
+                    JSONを適用
                   </button>
                   <button
                     className="btn"
@@ -314,7 +328,7 @@ export function EventsPage() {
                       setSettledImportReport(null);
                     }}
                   >
-                    Clear input
+                    入力をクリア
                   </button>
                 </div>
               </div>
@@ -328,7 +342,7 @@ export function EventsPage() {
                   ].join(" ")}
                   onClick={() => setSettledImportMode("settled_events")}
                 >
-                  Settled events (fast)
+                  確定イベント（高速）
                 </button>
                 <button
                   className={[
@@ -339,7 +353,7 @@ export function EventsPage() {
                   ].join(" ")}
                   onClick={() => setSettledImportMode("verified_records")}
                 >
-                  Verified records (domain + signatures)
+                  検証済み記録（ドメイン + 署名）
                 </button>
               </div>
               <textarea
@@ -347,7 +361,7 @@ export function EventsPage() {
                 placeholder={
                   settledImportMode === "verified_records"
                     ? '{"domain":{"chainId":8453,"verifyingContract":"0x..."}, "records":[{"transcript":...,"settled":...,"signatureA":"0x...","signatureB":"0x..."}]}'
-                    : '{"settledEvents":[...]} or [{"matchId":"0x...","pointsDeltaA":...}]'
+                    : '{"settledEvents":[...]} または [{"matchId":"0x...","pointsDeltaA":...}]'
                 }
                 value={settledImportText}
                 onChange={(e) => setSettledImportText(e.target.value)}
@@ -356,17 +370,17 @@ export function EventsPage() {
               {settledImportReport ? (
                 <div className="mt-2 rounded-md border border-slate-200 bg-white px-2 py-1.5 text-[11px] text-slate-600">
                   <div className="flex flex-wrap items-center gap-3">
-                    <span>input {settledImportReport.inputCount}</span>
-                    <span>valid {settledImportReport.validCount}</span>
-                    <span>updated {settledImportReport.updatedCount}</span>
-                    <span>matched {settledImportReport.matchedCount}</span>
-                    <span>unchanged {settledImportReport.unchangedCount}</span>
-                    <span>no-local {settledImportReport.noLocalAttemptCount}</span>
-                    <span>mismatch {settledImportReport.mismatchCount}</span>
+                    <span>入力 {settledImportReport.inputCount}</span>
+                    <span>有効 {settledImportReport.validCount}</span>
+                    <span>更新 {settledImportReport.updatedCount}</span>
+                    <span>一致 {settledImportReport.matchedCount}</span>
+                    <span>変更なし {settledImportReport.unchangedCount}</span>
+                    <span>ローカル未発見 {settledImportReport.noLocalAttemptCount}</span>
+                    <span>不一致 {settledImportReport.mismatchCount}</span>
                   </div>
                   {settledImportReport.issues.length > 0 ? (
                     <div className="mt-1 text-[10px] text-amber-700">
-                      issues: {settledImportReport.issues.slice(0, 3).map((issue) => issue.message).join(" | ")}
+                      注意: {settledImportReport.issues.slice(0, 3).map((issue) => issue.message).join(" | ")}
                       {settledImportReport.issues.length > 3 ? ` | ... +${settledImportReport.issues.length - 3}` : ""}
                     </div>
                   ) : null}
@@ -376,7 +390,7 @@ export function EventsPage() {
 
             {seasonArchive.length === 0 || !selectedSeason ? (
               <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600">
-                まだローカルアーカイブがありません。Event をプレイして Replay で Save するとここに集計されます。
+                まだローカルアーカイブがありません。イベントをプレイして、リプレイ画面で保存するとここに集計されます。
               </div>
             ) : (
               <>
@@ -394,7 +408,7 @@ export function EventsPage() {
                         ].join(" ")}
                         onClick={() => setSelectedSeasonId(s.seasonId)}
                       >
-                        Season {s.seasonId}
+                        シーズン {s.seasonId}
                       </button>
                     );
                   })}
@@ -402,21 +416,21 @@ export function EventsPage() {
 
                 <div className="grid gap-2 md:grid-cols-4">
                   <div className="rounded-lg border border-slate-200 bg-white p-3">
-                    <div className="text-[11px] text-slate-500">Attempts</div>
+                    <div className="text-[11px] text-slate-500">挑戦回数</div>
                     <div className="mt-1 text-sm font-semibold text-slate-800">{selectedSeason.totalAttempts}</div>
                   </div>
                   <div className="rounded-lg border border-slate-200 bg-white p-3">
-                    <div className="text-[11px] text-slate-500">Win / Loss</div>
+                    <div className="text-[11px] text-slate-500">勝ち / 負け</div>
                     <div className="mt-1 text-sm font-semibold text-slate-800">
                       {selectedSeason.totalWins} / {selectedSeason.totalLosses}
                     </div>
                   </div>
                   <div className="rounded-lg border border-slate-200 bg-white p-3">
-                    <div className="text-[11px] text-slate-500">Win rate</div>
+                    <div className="text-[11px] text-slate-500">勝率</div>
                     <div className="mt-1 text-sm font-semibold text-slate-800">{formatPercent(selectedSeason.winRatePercent)}</div>
                   </div>
                   <div className="rounded-lg border border-slate-200 bg-white p-3">
-                    <div className="text-[11px] text-slate-500">Latest</div>
+                    <div className="text-[11px] text-slate-500">最新</div>
                     <div className="mt-1 text-xs font-mono text-slate-700">{selectedSeason.latestAttemptAt ?? "—"}</div>
                   </div>
                 </div>
@@ -424,26 +438,26 @@ export function EventsPage() {
                 {selectedSeasonProgress ? (
                   <div className="rounded-lg border border-slate-200 bg-white p-3">
                     <div className="flex flex-wrap items-center justify-between gap-2">
-                      <div className="text-xs font-semibold text-slate-700">Local season points (provisional)</div>
+                      <div className="text-xs font-semibold text-slate-700">ローカルシーズンポイント（仮）</div>
                       <span className="badge badge-nyano">{selectedSeasonProgress.currentTier.label}</span>
                     </div>
                     <div className="mt-2 grid gap-2 md:grid-cols-4">
                       <div>
-                        <div className="text-[11px] text-slate-500">Points</div>
+                        <div className="text-[11px] text-slate-500">ポイント</div>
                         <div className="text-sm font-semibold text-slate-800">{selectedSeasonProgress.totalPoints}</div>
                       </div>
                       <div>
-                        <div className="text-[11px] text-slate-500">Clears</div>
+                        <div className="text-[11px] text-slate-500">クリア数</div>
                         <div className="text-sm font-semibold text-slate-800">{selectedSeasonProgress.clearCount}</div>
                       </div>
                       <div>
-                        <div className="text-[11px] text-slate-500">Next</div>
+                        <div className="text-[11px] text-slate-500">次のランク</div>
                         <div className="text-sm font-semibold text-slate-800">
-                          {selectedSeasonProgress.nextTier ? selectedSeasonProgress.nextTier.label : "MAX"}
+                          {selectedSeasonProgress.nextTier ? selectedSeasonProgress.nextTier.label : "最高ランク"}
                         </div>
                       </div>
                       <div>
-                        <div className="text-[11px] text-slate-500">To next</div>
+                        <div className="text-[11px] text-slate-500">次まで</div>
                         <div className="text-sm font-semibold text-slate-800">
                           {selectedSeasonProgress.nextTier ? `+${selectedSeasonProgress.pointsToNextTier}` : "0"}
                         </div>
@@ -456,19 +470,19 @@ export function EventsPage() {
                       />
                     </div>
                     <div className="mt-2 text-[11px] text-slate-500">
-                      Source mix: pointsDelta {selectedSeasonProgress.pointsDeltaEvents} / provisional {selectedSeasonProgress.provisionalEvents}
+                      内訳: 確定ポイント {selectedSeasonProgress.pointsDeltaEvents} / 仮ポイント {selectedSeasonProgress.provisionalEvents}
                     </div>
                     <div className="mt-2 text-[11px] text-slate-500">
-                      Rule: Win +{selectedSeasonProgress.scoringRule.winPoints} / Loss +{selectedSeasonProgress.scoringRule.lossPoints} / Event clear +
+                      ルール: 勝ち +{selectedSeasonProgress.scoringRule.winPoints} / 負け +{selectedSeasonProgress.scoringRule.lossPoints} / イベントクリア +
                       {selectedSeasonProgress.scoringRule.clearBonusPoints}
                     </div>
                     {selectedSeasonProgress.nextTier ? (
                       <div className="mt-1 text-[11px] text-slate-500">
-                        Reward hint: {selectedSeasonProgress.nextTier.rewardHint}
+                        報酬ヒント: {selectedSeasonProgress.nextTier.rewardHint}
                       </div>
                     ) : (
                       <div className="mt-1 text-[11px] text-slate-500">
-                        Reward hint: {selectedSeasonProgress.currentTier.rewardHint}
+                        報酬ヒント: {selectedSeasonProgress.currentTier.rewardHint}
                       </div>
                     )}
                   </div>
@@ -476,7 +490,7 @@ export function EventsPage() {
 
                 {selectedSeasonProgress ? (
                   <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2">
-                    <div className="text-xs font-semibold text-slate-700">Season points board (local provisional)</div>
+                    <div className="text-xs font-semibold text-slate-700">シーズンポイント表（ローカル仮集計）</div>
                     <div className="mt-2 grid gap-1">
                       {selectedSeasonProgress.rankedEvents.map((entry) => (
                         <div
@@ -488,19 +502,19 @@ export function EventsPage() {
                             <span className="font-medium text-slate-800">{entry.eventTitle}</span>
                           </div>
                           <div className="flex flex-wrap items-center gap-2">
-                            <span className="font-semibold text-slate-800">{entry.points} pts</span>
+                            <span className="font-semibold text-slate-800">{entry.points}ポイント</span>
                             {entry.pointsSource === "points_delta" ? (
-                              <span className="badge badge-sky">delta</span>
+                              <span className="badge badge-sky">確定差分</span>
                             ) : (
-                              <span className="badge badge-slate">provisional</span>
+                              <span className="badge badge-slate">仮集計</span>
                             )}
                             <span>
-                              W/L {entry.wins}/{entry.losses}
+                              勝敗 {entry.wins}/{entry.losses}
                             </span>
                             {entry.pointsSource === "provisional" && entry.pointsDeltaTotal !== null ? (
-                              <span>delta coverage {entry.pointsDeltaCoveragePercent.toFixed(0)}%</span>
+                              <span>差分反映 {entry.pointsDeltaCoveragePercent.toFixed(0)}%</span>
                             ) : null}
-                            {entry.clearAchieved ? <span className="badge badge-emerald">clear</span> : null}
+                            {entry.clearAchieved ? <span className="badge badge-emerald">クリア</span> : null}
                           </div>
                         </div>
                       ))}
@@ -519,19 +533,19 @@ export function EventsPage() {
                         <div className="flex flex-wrap items-center gap-2">
                           {eventSummary.latestReplayUrl ? (
                             <a className="btn no-underline" href={eventSummary.latestReplayUrl} target="_blank" rel="noreferrer">
-                              Latest replay
+                              最新リプレイ
                             </a>
                           ) : null}
                         </div>
                       </div>
                       <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-slate-600">
-                        <span>attempts: <span className="font-medium text-slate-800">{eventSummary.attemptCount}</span></span>
-                        <span>win/loss: <span className="font-medium text-slate-800">{eventSummary.winCount}/{eventSummary.lossCount}</span></span>
-                        <span>win rate: <span className="font-medium text-slate-800">{formatPercent(eventSummary.winRatePercent)}</span></span>
-                        <span>best diff: <span className="font-medium text-slate-800">{eventSummary.bestTileDiff ?? "—"}</span></span>
-                        <span>delta A total: <span className="font-medium text-slate-800">{eventSummary.pointsDeltaTotal ?? "—"}</span></span>
-                        <span>delta coverage: <span className="font-medium text-slate-800">{eventSummary.pointsDeltaCoveragePercent.toFixed(1)}%</span></span>
-                        <span>latest: <span className="font-mono text-slate-700">{eventSummary.latestAttemptAt ?? "—"}</span></span>
+                        <span>挑戦: <span className="font-medium text-slate-800">{eventSummary.attemptCount}</span></span>
+                        <span>勝ち/負け: <span className="font-medium text-slate-800">{eventSummary.winCount}/{eventSummary.lossCount}</span></span>
+                        <span>勝率: <span className="font-medium text-slate-800">{formatPercent(eventSummary.winRatePercent)}</span></span>
+                        <span>最高盤面差: <span className="font-medium text-slate-800">{eventSummary.bestTileDiff ?? "—"}</span></span>
+                        <span>A側ポイント差分: <span className="font-medium text-slate-800">{eventSummary.pointsDeltaTotal ?? "—"}</span></span>
+                        <span>差分反映: <span className="font-medium text-slate-800">{eventSummary.pointsDeltaCoveragePercent.toFixed(1)}%</span></span>
+                        <span>最新: <span className="font-mono text-slate-700">{eventSummary.latestAttemptAt ?? "—"}</span></span>
                       </div>
                     </div>
                   ))}
@@ -561,20 +575,20 @@ export function EventsPage() {
 
                 <div className="grid gap-2 md:grid-cols-4">
                   <div className="rounded-lg border border-slate-200 bg-white p-3">
-                    <div className="text-[11px] text-slate-500">Ruleset</div>
+                    <div className="text-[11px] text-slate-500">ルール</div>
                     <div className="mt-1 font-mono text-xs">{e.rulesetKey}</div>
                   </div>
                   <div className="rounded-lg border border-slate-200 bg-white p-3">
-                    <div className="text-[11px] text-slate-500">Season</div>
+                    <div className="text-[11px] text-slate-500">シーズン</div>
                     <div className="mt-1 font-mono text-xs">{e.seasonId}</div>
                   </div>
                   <div className="rounded-lg border border-slate-200 bg-white p-3">
-                    <div className="text-[11px] text-slate-500">First Player</div>
-                    <div className="mt-1 font-mono text-xs">{e.firstPlayer === 0 ? "A first" : "B first"}</div>
+                    <div className="text-[11px] text-slate-500">先攻</div>
+                    <div className="mt-1 font-mono text-xs">{e.firstPlayer === 0 ? "A先攻" : "B先攻"}</div>
                   </div>
                   <div className="rounded-lg border border-slate-200 bg-white p-3">
-                    <div className="text-[11px] text-slate-500">AI</div>
-                    <div className="mt-1 font-mono text-xs">{e.aiDifficulty}</div>
+                    <div className="text-[11px] text-slate-500">AIの強さ</div>
+                    <div className="mt-1 font-mono text-xs">{aiDifficultyLabel(e.aiDifficulty)}</div>
                   </div>
                 </div>
 
@@ -586,7 +600,7 @@ export function EventsPage() {
                 )}
 
                 <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-700">
-                  Nyano deck tokenIds: <span className="font-mono">{e.nyanoDeckTokenIds.join(", ")}</span>
+                  NyanoデッキのトークンID: <span className="font-mono">{e.nyanoDeckTokenIds.join(", ")}</span>
                 </div>
 
                 {(() => {
@@ -595,7 +609,7 @@ export function EventsPage() {
                   if (attempts.length === 0) {
                     return (
                       <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600">
-                        My Pawprints 🐾: まだ足跡がありません。Replay 画面で <span className="font-medium">Save</span> するとここに表示されます。
+                        私の足跡: まだ記録がありません。リプレイ画面で「保存」するとここに表示されます。
                       </div>
                     );
                   }
@@ -605,17 +619,17 @@ export function EventsPage() {
                   return (
                     <div className="rounded-lg border border-slate-200 bg-white p-3 text-xs text-slate-700">
                       <div className="flex flex-wrap items-center justify-between gap-2">
-                        <div className="text-xs font-medium text-slate-600">My Pawprints 🐾 ({attempts.length})</div>
+                        <div className="text-xs font-medium text-slate-600">私の足跡 ({attempts.length})</div>
                         <button
                           className="btn"
                           onClick={() => {
-                            if (!window.confirm("Clear all local attempts for this event?")) return;
+                            if (!window.confirm("このイベントのローカル挑戦記録を削除しますか？")) return;
                             clearEventAttempts(e.id);
                             setRefresh((v) => v + 1);
-                            toast.success("Cleared", "local attempts");
+                            toast.success("削除しました", "ローカル挑戦記録を消しました");
                           }}
                         >
-                          Clear local
+                          ローカル記録を削除
                         </button>
                       </div>
 
@@ -637,45 +651,45 @@ export function EventsPage() {
                                 <div className="text-[11px] text-slate-500">{formatIsoShort(a.createdAt)}</div>
                                 {isBest && (
                                   <span className="inline-flex items-center gap-0.5 rounded-full border border-amber-300 bg-amber-100 px-1.5 py-0.5 text-[10px] font-bold text-amber-700">
-                                    ⭐ BEST
+                                    おすすめ
                                   </span>
                                 )}
                               </div>
                               <div className="text-xs">
-                                winner: <span className="font-medium">{winnerLabel(a.winner)}</span> · tiles A:{a.tilesA}/B:{a.tilesB}
-                                {a.winner === 0 && <span className="ml-1 text-emerald-600 font-medium">WIN</span>}
+                                勝者: <span className="font-medium">{winnerLabel(a.winner)}</span> ・ 盤面 A:{a.tilesA}/B:{a.tilesB}
+                                {a.winner === 0 && <span className="ml-1 text-emerald-600 font-medium">勝利</span>}
                                 {typeof a.pointsDeltaA === "number" ? (
                                   <span className="ml-1 rounded-full border border-sky-300 bg-sky-100 px-1.5 py-0.5 text-[10px] font-semibold text-sky-700">
-                                    deltaA {a.pointsDeltaA}
+                                    A側差分 {a.pointsDeltaA}
                                   </span>
                                 ) : null}
                               </div>
-                              <div className="text-[11px] text-slate-500 font-mono">matchId: {a.matchId}</div>
+                              <div className="text-[11px] text-slate-500 font-mono">対戦ID: {a.matchId}</div>
                             </div>
 
                             <div className="flex flex-wrap items-center gap-2">
                               <a className="btn no-underline" href={a.replayUrl} target="_blank" rel="noreferrer">
-                                Open
+                                開く
                               </a>
-                              <button className="btn" onClick={() => void copyWithToast("replay url", a.replayUrl)}>
-                                Copy
+                              <button className="btn" onClick={() => void copyWithToast("リプレイURL", a.replayUrl)}>
+                                コピー
                               </button>
                               <button
                                 className="btn"
                                 onClick={() => {
-                                  if (!window.confirm("Remove this attempt from local storage?")) return;
+                                  if (!window.confirm("この挑戦記録をローカル保存から削除しますか？")) return;
                                   deleteEventAttempt(e.id, a.id);
                                   setRefresh((v) => v + 1);
-                                  toast.success("Removed", "attempt");
+                                  toast.success("削除しました", "挑戦記録");
                                 }}
                               >
-                                Remove
+                                削除
                               </button>
                             </div>
                           </div>
                           );
                         })}
-                        {attempts.length > 5 ? <div className="text-[11px] text-slate-500">…and {attempts.length - 5} more</div> : null}
+                        {attempts.length > 5 ? <div className="text-[11px] text-slate-500">ほか {attempts.length - 5} 件</div> : null}
                       </div>
                     </div>
                   );
@@ -704,12 +718,13 @@ export function EventsPage() {
         </div>
         <div className="card-bd grid gap-2 text-sm text-slate-700">
           <ul className="list-disc pl-6 text-slate-600">
-            <li>Event を増やす場合は <span className="font-mono">apps/web/src/lib/events.ts</span> に追記します。</li>
-            <li>“公式Nyanoデッキ” は後で差し替え可能ですが、Event ID はできるだけ固定してください（共有リンクのため）。</li>
-            <li>将来オンチェーン提出をする場合、Nyanoデッキの所有者（playerB）問題が出ます（ERC-6551/1271設計へ）。</li>
+            <li>イベントを増やす場合は <span className="font-mono">apps/web/src/lib/events.ts</span> に追記します。</li>
+            <li>“公式Nyanoデッキ” は後で差し替え可能ですが、イベントIDはできるだけ固定してください（共有リンクのため）。</li>
+            <li>将来オンチェーン提出をする場合、Nyanoデッキの所有者（B側プレイヤー）問題が出ます（ERC-6551/1271設計へ）。</li>
           </ul>
         </div>
       </section>
     </div>
   );
 }
+

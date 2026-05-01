@@ -17,10 +17,10 @@ export type MintPageGuideKey = "arena" | "events" | "replay" | "stream";
 export const MINT_PAGE_GUIDES: Record<MintPageGuideKey, MintPageGuideSpec> = {
   arena: {
     title: "アリーナの遊び方",
-    subtitle: "強さを選んで、Nyano AIとの一戦へすぐ入れます。",
+    subtitle: "強さを選んで、Nyano AIとの一戦にすぐ入れます。",
     items: [
-      { icon: "rules", title: "強さを選ぶ", detail: "はじめてから真剣勝負まで、今の気分で選択。" },
-      { icon: "arena", title: "すぐ遊ぶ", detail: "ゲスト対戦でそのまま盤面へジャンプ。" },
+      { icon: "rules", title: "強さを選ぶ", detail: "はじめてから真剣勝負まで、今の気分で選べます。" },
+      { icon: "arena", title: "すぐ遊ぶ", detail: "ゲスト対戦でそのまま盤面へジャンプします。" },
       { icon: "replay", title: "あとで見る", detail: "リプレイで勝ち筋と分岐を振り返れます。" },
     ],
   },
@@ -34,22 +34,21 @@ export const MINT_PAGE_GUIDES: Record<MintPageGuideKey, MintPageGuideSpec> = {
     ],
   },
   replay: {
-    title: "Replay In 3 Steps",
-    subtitle: "Load transcript, scan highlights, verify outcome.",
+    title: "リプレイの見方",
+    subtitle: "対戦ログを読み込み、見どころを追い、結果を確認します。",
     items: [
-      { icon: "replay", title: "Load", detail: "Paste transcript or open share link." },
-      { icon: "sparkle", title: "Scan", detail: "Jump through tactical highlight markers." },
-      { icon: "rules", title: "Verify", detail: "Confirm match result and copy summary." },
+      { icon: "replay", title: "読み込む", detail: "対戦ログを貼るか、共有リンクを開きます。" },
+      { icon: "sparkle", title: "見どころへ飛ぶ", detail: "大きな反転や連鎖のマーカーをたどれます。" },
+      { icon: "rules", title: "結果を確認", detail: "勝敗、ルール、対戦IDを確認できます。" },
     ],
   },
   stream: {
     title: "配信卓の流れ",
     subtitle: "イベントを選び、視聴者投票とオーバーレイをつなぎます。",
     items: [
-      { icon: "events", title: "お題を決める", detail: "配信で扱うイベントを先に固定。" },
-      { icon: "stream", title: "画面をつなぐ", detail: "Match、Overlay、Replay のURLを用意。" },
-      { icon: "match", title: "投票を進める", detail: "ターンと投票結果を見ながら一手を確定。" },
+      { icon: "events", title: "お題を決める", detail: "配信で扱うイベントを先に固定します。" },
+      { icon: "stream", title: "画面をつなぐ", detail: "Match、Overlay、Replay のURLを用意します。" },
+      { icon: "match", title: "投票を進める", detail: "ターンと投票結果を見ながら一手を確定します。" },
     ],
   },
 };
-

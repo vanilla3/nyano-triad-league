@@ -213,8 +213,8 @@ function buildNyanoReactionInput(res: MatchResultWithHistory, step: number): Nya
 }
 
 function rulesetLabelFromConfig(cfg: RulesetConfig): string {
-  if (cfg === ONCHAIN_CORE_TACTICS_SHADOW_RULESET_CONFIG_V2) return "engine v2 (shadow ignores warning)";
-  return "engine v1 (core+tactics)";
+  if (cfg === ONCHAIN_CORE_TACTICS_SHADOW_RULESET_CONFIG_V2) return "エンジン v2（警戒無効）";
+  return "エンジン v1（コア+タクティクス）";
 }
 
 function rulesetLabelFromRegistryConfig(cfg: RulesetConfig): string {
@@ -233,10 +233,10 @@ function rulesetLabelFromRegistryConfig(cfg: RulesetConfig): string {
       c.allOpen && "allOpen",
       c.threeOpen && "threeOpen",
     ].filter(Boolean) as string[];
-    if (tags.length > 0) return `Ruleset ID registry (classic: ${tags.join(", ")})`;
-    return "Ruleset ID registry (v2)";
+    if (tags.length > 0) return `ルール登録表（クラシック: ${tags.join(", ")}）`;
+    return "ルール登録表（v2）";
   }
-  return "Ruleset ID registry (v1)";
+  return "ルール登録表（v1）";
 }
 
 function pickDefaultMode(rulesetId: string): Mode {
@@ -257,6 +257,14 @@ function shouldAutoCompareByRulesetId(rulesetId: string): boolean {
 
 function formatClassicOpenSlots(indices: readonly number[]): string {
   return indices.map((idx) => String(idx + 1)).join(", ");
+}
+
+function eventStatusLabel(status: string | null): string {
+  if (status === "always") return "常設";
+  if (status === "active") return "開催中";
+  if (status === "upcoming") return "近日開催";
+  if (status === "ended") return "終了";
+  return status ?? "不明";
 }
 
 const HIGHLIGHT_KIND_ORDER: ReplayHighlightKind[] = ["big_flip", "chain", "combo", "warning"];
@@ -340,7 +348,7 @@ export function ReplayPage() {
   const [text, setText] = React.useState<string>(initialZ ? "" : initialTextFromT);
 
   const [loading, setLoading] = React.useState(false);
-  const [sim, setSim] = React.useState<SimState>({ ok: false, error: "Paste transcript JSON and load." });
+  const [sim, setSim] = React.useState<SimState>({ ok: false, error: "対戦ログJSONを貼り付けて読み込んでください。" });
 
   const [step, setStep] = React.useState<number>(initialStep);
   const [isPlaying, setIsPlaying] = React.useState<boolean>(false);
@@ -407,7 +415,7 @@ export function ReplayPage() {
   const handleEngineRendererInitError = React.useCallback((message: string) => {
     setEngineRendererFailed(true);
     setEngineRendererError(message);
-    toast.warn("Pixi renderer unavailable", "Switched to Mint fallback board");
+    toast.warn("Pixi描画を使えません", "Mint盤面表示に切り替えました");
   }, [toast]);
 
   const handleRetryEngineRenderer = React.useCallback(() => {
@@ -512,9 +520,9 @@ export function ReplayPage() {
   const copyWithToast = async (label: string, v: string) => {
     try {
       await copy(v);
-      toast.success("Copied", label);
+      toast.success("コピーしました", label);
     } catch (e: unknown) {
-      toast.error("Copy failed", errorMessage(e));
+      toast.error("コピーに失敗しました", errorMessage(e));
     }
   };
 
@@ -573,7 +581,7 @@ export function ReplayPage() {
     setShowStageSetup((prev) => {
       const next = !prev;
       if (isStageFocus) {
-        pushStageActionFeedback(next ? "Setup shown" : "Setup hidden");
+        pushStageActionFeedback(next ? "設定を表示しました" : "設定を隠しました");
         playReplaySfx("card_place");
       }
       return next;
@@ -584,7 +592,7 @@ export function ReplayPage() {
     setShowStagePanels((prev) => {
       const next = !prev;
       if (isStageFocus) {
-        pushStageActionFeedback(next ? "Timeline shown" : "Timeline hidden");
+        pushStageActionFeedback(next ? "タイムラインを表示しました" : "タイムラインを隠しました");
         playReplaySfx("card_place");
       }
       return next;
@@ -592,7 +600,7 @@ export function ReplayPage() {
   }, [isStageFocus, playReplaySfx, pushStageActionFeedback]);
 
   const exitFocusModeWithFeedback = React.useCallback(() => {
-    pushStageActionFeedback("Exiting focus mode", "warn");
+    pushStageActionFeedback("集中表示を終了します", "warn");
     setFocusMode(false);
   }, [pushStageActionFeedback, setFocusMode]);
 
@@ -619,9 +627,9 @@ export function ReplayPage() {
             mode: "replay",
             eventId: event?.id ?? (eventId || undefined),
             eventTitle: event?.title,
-            error: sim.error || "Replay not loaded",
+            error: sim.error || "リプレイが読み込まれていません",
           });
-          if (!opts?.silent) toast.warn("Overlay", "Replay not ready");
+          if (!opts?.silent) toast.warn("オーバーレイ", "リプレイの準備ができていません");
           return;
         }
 
@@ -716,7 +724,7 @@ protocolV1: {
           },
         });
 
-        if (!opts?.silent) toast.success("Overlay", "Sent to OBS overlay");
+        if (!opts?.silent) toast.success("オーバーレイ", "OBSオーバーレイへ送信しました");
       } catch (e: unknown) {
         publishOverlayState({
           version: 1,
@@ -726,7 +734,7 @@ protocolV1: {
           eventTitle: event?.title,
           error: errorMessage(e),
         });
-        if (!opts?.silent) toast.error("Overlay", errorMessage(e));
+        if (!opts?.silent) toast.error("オーバーレイ", errorMessage(e));
       }
     },
     [sim, step, event?.id, event?.title, eventId, toast]
@@ -753,7 +761,7 @@ protocolV1: {
     setVerifyStatus("idle");
     try {
       const inputText = (override?.text ?? text).trim();
-      if (!inputText) throw new Error("transcript JSON is empty");
+      if (!inputText) throw new Error("対戦ログJSONが空です");
 
       const parsed = parseReplayPayload(inputText);
       const transcript = parsed.transcript;
@@ -1188,7 +1196,7 @@ protocolV1: {
         <div className="flex items-center justify-between">
           <div className="text-sm font-semibold">{label}</div>
           <div className="text-xs text-slate-500">
-            Winner: {formatReplayWinnerLabel(res.winner)}
+            勝者: {formatReplayWinnerLabel(res.winner)}
           </div>
         </div>
 
@@ -1215,7 +1223,7 @@ protocolV1: {
                 <ScoreBar board={boardNow} moveCount={step} maxMoves={9} winner={res.winner} />
                 {boardAdvantages[step] && (
                   <div className="mt-1 flex items-center gap-1.5">
-                    <span className="text-[10px] text-slate-400">Advantage</span>
+                    <span className="text-[10px] text-slate-400">優勢</span>
                     <AdvantageBadge advantage={boardAdvantages[step]} size="sm" showScore />
                   </div>
                 )}
@@ -1235,7 +1243,7 @@ protocolV1: {
         {isEngine && !compare && engineRendererFailed ? (
           <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900">
             <span title={engineRendererError ?? undefined}>
-              Pixi renderer is unavailable. Showing Mint fallback board.
+              Pixi描画を使えないため、Mint盤面で表示しています。
             </span>
             <button
               type="button"
@@ -1243,7 +1251,7 @@ protocolV1: {
               onClick={handleRetryEngineRenderer}
               aria-label="Retry Pixi renderer in replay"
             >
-              Retry Pixi
+              Pixiを再試行
             </button>
           </div>
         ) : null}
@@ -1299,11 +1307,11 @@ protocolV1: {
 
         {step > 0 ? (
           <div className="flex flex-wrap gap-2 text-xs text-slate-600">
-            <span className="rounded-md border border-slate-200 bg-slate-50 px-2 py-0.5">placed: {placedCell !== null ? placedCell : "-"}</span>
-            <span className="rounded-md border border-amber-200 bg-amber-50 px-2 py-0.5">flipped: {flippedCells.length}</span>
+            <span className="rounded-md border border-slate-200 bg-slate-50 px-2 py-0.5">配置: {placedCell !== null ? placedCell : "-"}</span>
+            <span className="rounded-md border border-amber-200 bg-amber-50 px-2 py-0.5">反転: {flippedCells.length}</span>
           </div>
         ) : (
-          <div className="text-xs text-slate-500">initial board</div>
+          <div className="text-xs text-slate-500">初期盤面</div>
         )}
       </div>
     );
@@ -1312,7 +1320,7 @@ protocolV1: {
   
   const buildCanonicalReplayLink = (): string => {
     const trimmed = text.trim() || (sim.ok ? stringifyWithBigInt(sim.transcript) : "");
-    if (!trimmed) throw new Error("transcript JSON is empty");
+    if (!trimmed) throw new Error("対戦ログJSONが空です");
 
     const z = tryGzipCompressUtf8ToBase64Url(trimmed);
     return buildReplayShareUrl({
@@ -1327,10 +1335,10 @@ protocolV1: {
   };
 
   const saveToMyAttempts = async () => {
-    if (!eventId) throw new Error("eventId is missing");
-    if (!sim.ok) throw new Error("replay is not ready");
+    if (!eventId) throw new Error("イベントIDがありません");
+    if (!sim.ok) throw new Error("リプレイの準備ができていません");
     if (sim.current.winner !== 0 && sim.current.winner !== 1) {
-      throw new Error("draw matches are not eligible for event attempts");
+      throw new Error("引き分けの対戦はイベント挑戦記録として保存できません");
     }
 
     const replayUrl = buildCanonicalReplayLink();
@@ -1361,7 +1369,7 @@ protocolV1: {
   const buildShareLink = (): string => {
     // Use sim transcript when text state is empty (e.g., loaded via ?z= share link)
     const trimmed = text.trim() || (sim.ok ? stringifyWithBigInt(sim.transcript) : "");
-    if (!trimmed) throw new Error("transcript JSON is empty - paste a transcript or load a share link first");
+    if (!trimmed) throw new Error("対戦ログJSONが空です。対戦ログを貼るか、共有リンクを先に読み込んでください");
 
     const z = tryGzipCompressUtf8ToBase64Url(trimmed);
     return buildReplayShareUrl({
@@ -1398,14 +1406,14 @@ protocolV1: {
         >
           <div className="flex flex-wrap items-center justify-between gap-2">
             <div className="text-xs font-semibold" style={{ color: "var(--mint-text-secondary, #4B5563)" }}>
-              Pixi Focus Mode · step {step}/{stepMax}
+              Pixi集中表示 ・ {step}/{stepMax}手
             </div>
             <div className="flex flex-wrap items-center gap-2">
               {showStageToolbarTransport ? (
                 <div className="stage-focus-toolbar-actions stage-focus-toolbar-actions--replay">
                   <span className="stage-focus-toolbar-status">{stepStatusText} · {phaseInfo.label}</span>
                   <span className="stage-focus-toolbar-hint" aria-label="Replay focus toolbar hint">
-                    hotkeys: ← → space [ ] · F/C/S/D/Esc
+                    ショートカット: ← → Space [ ] ・ F/C/S/D/Esc
                   </span>
                   <button
                     className="btn btn-sm"
@@ -1413,7 +1421,7 @@ protocolV1: {
                     disabled={!canStepBack}
                     aria-label="Replay start from focus toolbar"
                   >
-                    start
+                    最初
                   </button>
                   <button
                     className="btn btn-sm"
@@ -1421,7 +1429,7 @@ protocolV1: {
                     disabled={!canStepBack}
                     aria-label="Replay previous from focus toolbar"
                   >
-                    prev
+                    前へ
                   </button>
                   <button
                     className="btn btn-sm btn-primary"
@@ -1429,7 +1437,7 @@ protocolV1: {
                     disabled={!canPlay}
                     aria-label={isPlaying ? "Pause replay from focus toolbar" : "Play replay from focus toolbar"}
                   >
-                    {isPlaying ? "pause" : "play"}
+                    {isPlaying ? "一時停止" : "再生"}
                   </button>
                   <button
                     className="btn btn-sm"
@@ -1437,7 +1445,7 @@ protocolV1: {
                     disabled={!canStepForward}
                     aria-label="Replay next from focus toolbar"
                   >
-                    next
+                    次へ
                   </button>
                   <button
                     className="btn btn-sm"
@@ -1445,7 +1453,7 @@ protocolV1: {
                     disabled={!canStepForward}
                     aria-label="Replay end from focus toolbar"
                   >
-                    end
+                    最後
                   </button>
                   <button
                     className="btn btn-sm"
@@ -1453,7 +1461,7 @@ protocolV1: {
                     disabled={highlights.length === 0}
                     aria-label="Previous highlight from focus toolbar"
                   >
-                    prev hl
+                    前へ hl
                   </button>
                   <button
                     className="btn btn-sm"
@@ -1461,13 +1469,13 @@ protocolV1: {
                     disabled={highlights.length === 0}
                     aria-label="Next highlight from focus toolbar"
                   >
-                    next hl
+                    次へ hl
                   </button>
                   <span className="stage-focus-toolbar-hint" aria-label="Replay highlight status in focus toolbar">
                     {focusToolbarHighlightStatus}
                   </span>
                   <label className="stage-focus-toolbar-speed">
-                    speed
+                    速度
                     <select
                       className="stage-focus-toolbar-speed-select"
                       value={playbackSpeed}
@@ -1500,7 +1508,7 @@ protocolV1: {
               {isStageFocus ? (
                 <>
                   <label className="stage-focus-toolbar-speed">
-                    vfx
+                    演出
                     <select
                       className="stage-focus-toolbar-speed-select"
                       value={vfxPreference}
@@ -1528,22 +1536,22 @@ protocolV1: {
                     </button>
                   ) : null}
                   <button className="btn btn-sm" onClick={toggleStageFullscreenWithFeedback}>
-                    {isStageFullscreen ? "Exit Fullscreen" : "Fullscreen"}
+                    {isStageFullscreen ? "全画面を終了" : "全画面"}
                   </button>
                   <button className="btn btn-sm" onClick={toggleStageTransportWithFeedback}>
-                    {showStageTransport ? "Hide controls" : "Show controls"}
+                    {showStageTransport ? "操作を隠す" : "操作を表示"}
                   </button>
                   <button className="btn btn-sm" onClick={toggleStageSetupWithFeedback}>
-                    {showStageSetup ? "Hide setup" : "Show setup"}
+                    {showStageSetup ? "設定を隠す" : "設定を表示"}
                   </button>
                 </>
               ) : null}
               <button className="btn btn-sm" onClick={exitFocusModeWithFeedback}>
-                Exit Focus
+                集中表示を終了
               </button>
               {sim.ok ? (
-                <button className="btn btn-sm" onClick={() => copyWithToast("share link", buildShareLink())}>
-                  Copy Share
+                <button className="btn btn-sm" onClick={() => copyWithToast("共有リンク", buildShareLink())}>
+                  共有リンクをコピー
                 </button>
               ) : null}
             </div>
@@ -1555,15 +1563,15 @@ protocolV1: {
         <section className="card">
           <div className="card-hd flex flex-wrap items-center justify-between gap-2">
             <div className="grid gap-1">
-              <div className="text-base font-semibold">Replay Event</div>
+              <div className="text-base font-semibold">イベントリプレイ</div>
               <div className="text-xs text-slate-500">
                 {event ? (
                   <>
-                    <span className="font-medium">{event.title}</span> | status: <span className="font-medium">{eventStatus}</span> | {formatEventPeriod(event)}
+                    <span className="font-medium">{event.title}</span> | 状態: <span className="font-medium">{eventStatusLabel(eventStatus)}</span> | {formatEventPeriod(event)}
                   </>
                 ) : (
                   <>
-                    eventId: <span className="font-mono">{eventId}</span> (unknown)
+                    イベントID: <span className="font-mono">{eventId}</span>（未登録）
                   </>
                 )}
               </div>
@@ -1571,11 +1579,11 @@ protocolV1: {
 
             <div className="flex flex-wrap items-center gap-2">
               <Link className="btn no-underline" to="/events">
-                Events
+                イベントへ
               </Link>
               {event ? (
                 <Link className="btn btn-primary no-underline" to={`/match?event=${encodeURIComponent(event.id)}&ui=${matchUi}`}>
-                  Challenge again
+                  もう一度挑戦
                 </Link>
               ) : null}
             </div>
@@ -1586,15 +1594,15 @@ protocolV1: {
               <p>{event.description}</p>
               {pointsDeltaA !== null ? (
                 <div className="rounded-lg border border-sky-200 bg-sky-50 px-3 py-2 text-xs text-sky-800">
-                  Settled pointsDeltaA detected from URL: <span className="font-mono">{pointsDeltaA}</span>
+                  URLから確定ポイント差分を読み込みました: <span className="font-mono">{pointsDeltaA}</span>
                 </div>
               ) : (
                 <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600">
-                  pointsDeltaA is not set. This replay will be scored with provisional local season points.
+                  pointsDeltaA は未設定です。このリプレイはローカルの仮シーズンポイントとして集計されます。
                 </div>
               )}
               <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-700">
-                Nyano deck tokenIds: <span className="font-mono">{event.nyanoDeckTokenIds.join(", ")}</span>
+                NyanoデッキのトークンID: <span className="font-mono">{event.nyanoDeckTokenIds.join(", ")}</span>
               </div>
             </div>
           ) : null}
@@ -1604,51 +1612,51 @@ protocolV1: {
       {showReplaySetupPanel && (
       <section className="card">
         <div className="card-hd">
-          <div className="text-base font-semibold">Replay from transcript</div>
+          <div className="text-base font-semibold">対戦ログからリプレイ</div>
           <div className="text-xs text-slate-500">
-            Paste transcript JSON to replay with on-chain card metadata (read-only). You can also open share links via <span className="font-mono">?z=...</span> or <span className="font-mono">?t=...</span>, and switch board renderer with <span className="font-mono">?ui=engine</span> / <span className="font-mono">?ui=rpg</span>.
+            対戦ログJSONを貼り付けると、オンチェーンカード情報を使って読み取り専用で再生できます。<span className="font-mono">?z=...</span> や <span className="font-mono">?t=...</span> の共有リンクにも対応し、<span className="font-mono">?ui=engine</span> / <span className="font-mono">?ui=rpg</span> で盤面表示を切り替えられます。
           </div>
         </div>
 
         <div className="card-bd grid gap-4">
           <div className="grid gap-2">
             <div className="flex flex-wrap items-center justify-between gap-2">
-              <div className="text-xs font-medium text-slate-600">Transcript JSON</div>
+              <div className="text-xs font-medium text-slate-600">対戦ログJSON</div>
 
               <div className="flex flex-wrap items-center gap-2 text-xs text-slate-600">
-                <span>mode</span>
+                <span>検証モード</span>
                 <select className="select w-48" value={mode} onChange={(e) => setMode(parseMode(e.target.value))}>
-                  <option value="auto">auto (Ruleset ID registry/official)</option>
-                  <option value="v1">engine v1</option>
-                  <option value="v2">engine v2</option>
-                  <option value="compare">compare</option>
+                  <option value="auto">自動（ルール登録表 / 公式）</option>
+                  <option value="v1">エンジン v1</option>
+                  <option value="v2">エンジン v2</option>
+                  <option value="compare">比較</option>
                 </select>
-                <span>board</span>
+                <span>盤面表示</span>
                 <select
                   className="select w-40"
                   value={uiMode}
                   onChange={(e) => setReplayBoardUi(parseReplayBoardUi(e.target.value))}
                 >
-                  <option value="classic">classic</option>
-                  <option value="rpg">rpg</option>
-                  <option value="engine">engine (pixi)</option>
+                  <option value="classic">クラシック</option>
+                  <option value="rpg">RPG風</option>
+                  <option value="engine">Pixi演出</option>
                 </select>
                 {isEngine && compare ? (
-                  <span className="text-[11px] text-slate-500">compare mode renders classic board.</span>
+                  <span className="text-[11px] text-slate-500">比較モードではクラシック盤面で表示します。</span>
                 ) : null}
                 {isEngine && !isEngineFocus ? (
                   <div className="flex flex-wrap items-center gap-2">
                     <button className="btn btn-sm" onClick={() => setFocusMode(true)}>
-                      Enter Pixi Focus
+                      Pixi集中表示へ
                     </button>
                     <Link className="btn btn-sm no-underline" to={stageReplayUrl}>
-                      Open Stage Page
+                      ステージページを開く
                     </Link>
                   </div>
                 ) : null}
 
                 <button className="btn btn-primary" onClick={() => load()} disabled={loading}>
-                  {loading ? "Loading..." : "Load & replay"}
+                  {loading ? "読み込み中..." : "読み込んで再生"}
                 </button>
 
                 <button
@@ -1657,14 +1665,14 @@ protocolV1: {
                     void (async () => {
                       try {
                         const link = buildShareLink();
-                        await copyWithToast("share link", link);
+                        await copyWithToast("共有リンク", link);
                       } catch (e: unknown) {
                         setSim({ ok: false, error: errorMessage(e) });
                       }
                     })();
                   }}
                 >
-                  Copy share link
+                  共有リンクをコピー
                 </button>
 
                 {eventId ? (
@@ -1678,14 +1686,14 @@ protocolV1: {
                           (async () => {
                             try {
                               await saveToMyAttempts();
-                              toast.success("Saved", "Added to My Attempts");
+                              toast.success("保存しました", "私の足跡に追加しました");
                             } catch (e: unknown) {
                               setSim({ ok: false, error: errorMessage(e) });
                             }
                           })();
                         }}
                       >
-                        {saved ? "Saved" : "Save"}
+                        {saved ? "保存済み" : "保存"}
                       </button>
                     );
                   })()
@@ -1700,14 +1708,14 @@ protocolV1: {
               rows={10}
               value={text}
               onChange={(e) => setText(e.target.value)}
-              placeholder="Paste transcript JSON from Playground, or open a share link."
+              placeholder="Playgroundの対戦ログJSONを貼るか、共有リンクを開いてください。"
             />
 
             <div className="mt-3">
-              <Disclosure title={<span>Streamer tools (Overlay)</span>}>
+              <Disclosure title={<span>配信用ツール（オーバーレイ）</span>}>
                 <div className="grid gap-3">
                   <div className="text-xs text-slate-600">
-                    Open <span className="font-mono">{overlayPath}</span>, then moving replay <span className="font-mono">step</span> will sync the overlay snapshot.
+                    <span className="font-mono">{overlayPath}</span> を開いてからリプレイの手順を動かすと、オーバーレイの盤面も同期されます。
                   </div>
 
                   <div className="flex flex-wrap items-center gap-2">
@@ -1717,11 +1725,11 @@ protocolV1: {
                         checked={broadcastOverlay}
                         onChange={(e) => setBroadcastOverlayWithUrl(e.target.checked)}
                       />
-                      Broadcast to overlay (sync step)
+                      オーバーレイへ同期する
                     </label>
 
                     <button className="btn btn-sm" onClick={() => pushOverlay()}>
-                      Send snapshot
+                      現在の盤面を送る
                     </button>
 
                     <a
@@ -1730,21 +1738,21 @@ protocolV1: {
                       target="_blank"
                       rel="noreferrer noopener"
                     >
-                      Open overlay
+                      オーバーレイを開く
                     </a>
 
                     <button
                       className="btn btn-sm"
                       onClick={() => {
-                        void copyWithToast("overlay URL", overlayUrl);
+                        void copyWithToast("オーバーレイURL", overlayUrl);
                       }}
                     >
-                      Copy overlay URL
+                      オーバーレイURLをコピー
                     </button>
                   </div>
 
                   <div className="text-[11px] text-slate-500">
-                    Tip: open <span className="font-mono">{replayBroadcastPath}</span> to start with overlay step sync enabled.
+                    ヒント: <span className="font-mono">{replayBroadcastPath}</span> を開くと、最初からオーバーレイ同期を有効にできます。
                   </div>
                 </div>
               </Disclosure>
@@ -1754,11 +1762,11 @@ protocolV1: {
 
             {!sim.ok && sim.error ? (
               <div className="rounded-lg border border-rose-200 bg-rose-50 p-3 text-sm text-rose-800">
-                <div className="font-medium">Error: {sim.error}</div>
+                <div className="font-medium">エラー: {sim.error}</div>
                 <div className="mt-1 text-xs text-rose-700">
                   {hasSharePayload
-                    ? "This share link may be invalid or incomplete. Retry loading, or clear share params and paste transcript JSON."
-                    : "Check transcript JSON and retry loading."}
+                    ? "この共有リンクは壊れているか、情報が足りない可能性があります。再読み込みするか、共有パラメータを消して対戦ログJSONを貼り直してください。"
+                    : "対戦ログJSONを確認して、もう一度読み込んでください。"}
                 </div>
                 <div className="mt-2 flex flex-wrap items-center gap-2">
                   <button
@@ -1780,7 +1788,7 @@ protocolV1: {
                     }}
                     disabled={loading}
                   >
-                    {loading ? "Retrying..." : "Retry load"}
+                    {loading ? "再読み込み中..." : "もう一度読み込む"}
                   </button>
                   {hasSharePayload ? (
                     <button
@@ -1788,23 +1796,23 @@ protocolV1: {
                       onClick={() => {
                         const next = stripReplayShareParams(searchParams);
                         setSearchParams(next, { replace: true });
-                        setSim({ ok: false, error: "Paste transcript JSON and load." });
+                        setSim({ ok: false, error: "対戦ログJSONを貼り付けて読み込んでください。" });
                       }}
                     >
-                      Clear share params
+                      共有パラメータを消す
                     </button>
                   ) : null}
                   <Link className="btn btn-sm no-underline" to="/">
-                    Home
+                    ホーム
                   </Link>
                 </div>
               </div>
             ) : null}
 
             <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500">
-              <span className="kbd">Left</span>/<span className="kbd">Right</span> step
-              <span className="kbd">Space</span> play/pause
-              <span className="kbd">Home</span>/<span className="kbd">End</span> jump
+              <span className="kbd">Left</span>/<span className="kbd">Right</span> 手順移動
+              <span className="kbd">Space</span> 再生/一時停止
+              <span className="kbd">Home</span>/<span className="kbd">End</span> 最初/最後へ
             </div>
           </div>
         </div>
@@ -1814,11 +1822,11 @@ protocolV1: {
       {isEngineFocus && !sim.ok ? (
         <section className="rounded-2xl border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">
           <div className="flex flex-wrap items-center justify-between gap-2">
-            <div>Pixi focus needs a loaded replay. Load transcript first, or exit focus mode.</div>
+            <div>Pixi集中表示にはリプレイの読み込みが必要です。先に対戦ログを読み込むか、集中表示を終了してください。</div>
             <div className="flex flex-wrap items-center gap-2">
-              <button className="btn btn-sm" onClick={() => setFocusMode(false)}>Exit Focus</button>
+              <button className="btn btn-sm" onClick={() => setFocusMode(false)}>集中表示を終了</button>
               <button className="btn btn-sm btn-primary" onClick={() => load()} disabled={loading}>
-                {loading ? "Loading..." : "Load replay"}
+                {loading ? "読み込み中..." : "リプレイを読み込む"}
               </button>
             </div>
           </div>
@@ -1849,26 +1857,26 @@ protocolV1: {
                   />
                   <div className="flex flex-wrap items-center justify-between gap-2 border-t border-surface-100 bg-surface-50/80 px-4 py-3">
                     <div className="text-xs text-slate-600">
-                      <span className="font-medium">Finished</span> | step {step}/{stepMax}
+                      <span className="font-medium">決着</span> | {step}/{stepMax}手
                     </div>
                     <div className="flex flex-wrap items-center gap-2">
                       <button
                         className="btn btn-sm"
-                        onClick={() => copyWithToast("Match ID", sim.current.matchId)}
+                        onClick={() => copyWithToast("対戦ID", sim.current.matchId)}
                       >
-                        Copy Match ID
+                        対戦IDをコピー
                       </button>
                       <button
                         className={`btn btn-sm ${verifyStatus === "ok" ? "border-emerald-400 bg-emerald-50 text-emerald-700" : verifyStatus === "mismatch" ? "btn-danger" : ""}`}
                         onClick={handleVerify}
                       >
-                        {verifyStatus === "ok" ? "Verified" : verifyStatus === "mismatch" ? "Mismatch!" : "Verify"}
+                        {verifyStatus === "ok" ? "検証OK" : verifyStatus === "mismatch" ? "不一致" : "検証"}
                       </button>
                       <button
                         className="btn btn-sm"
-                        onClick={() => copyWithToast("transcript", stringifyWithBigInt(sim.transcript))}
+                        onClick={() => copyWithToast("対戦ログ", stringifyWithBigInt(sim.transcript))}
                       >
-                        Copy transcript
+                        対戦ログをコピー
                       </button>
                       <button
                         className="btn btn-sm btn-primary"
@@ -1876,14 +1884,14 @@ protocolV1: {
                           void (async () => {
                             try {
                               const link = buildShareLink();
-                              await copyWithToast("share link", link);
+                              await copyWithToast("共有リンク", link);
                             } catch (e: unknown) {
-                              toast.error("Share failed", errorMessage(e));
+                              toast.error("共有に失敗しました", errorMessage(e));
                             }
                           })();
                         }}
                       >
-                        Share
+                        共有
                       </button>
                       {eventId ? (
                         <button
@@ -1893,14 +1901,14 @@ protocolV1: {
                             (async () => {
                               try {
                                 await saveToMyAttempts();
-                                toast.success("Saved", "Added to My Attempts");
+                                toast.success("保存しました", "私の足跡に追加しました");
                               } catch (e: unknown) {
                                 setSim({ ok: false, error: errorMessage(e) });
                               }
                             })();
                           }}
                         >
-                          {hasEventAttempt(eventId, sim.current.matchId) ? "Saved" : "Save"}
+                          {hasEventAttempt(eventId, sim.current.matchId) ? "保存済み" : "保存"}
                         </button>
                       ) : null}
                     </div>
@@ -1920,7 +1928,7 @@ protocolV1: {
             <div className="card">
               <div className="card-hd replay-header-grid">
                 <div className="flex items-center gap-3">
-                  <div className="text-base font-semibold">Replay</div>
+                  <div className="text-base font-semibold">リプレイ</div>
                   <div className="text-xs text-slate-500">{sim.currentRulesetLabel}</div>
                   <div className="text-xs text-slate-500">
                     step {step}/{stepMax}
@@ -1947,7 +1955,7 @@ protocolV1: {
                       disabled={!canStepBack}
                       title="Jump to start"
                     >
-                      start
+                      最初
                     </button>
                     <button
                       className={replayTransportButtonClass}
@@ -1958,7 +1966,7 @@ protocolV1: {
                       disabled={!canStepBack}
                       aria-label="Previous step"
                     >
-                      prev
+                      前へ
                     </button>
 
                     <button
@@ -1968,7 +1976,7 @@ protocolV1: {
                       title="Auto play"
                       aria-label={isPlaying ? "Pause replay" : "Play replay"}
                     >
-                      {isPlaying ? "pause" : "play"}
+                      {isPlaying ? "一時停止" : "再生"}
                     </button>
 
                     <button
@@ -1980,7 +1988,7 @@ protocolV1: {
                       disabled={!canStepForward}
                       aria-label="Next step"
                     >
-                      next
+                      次へ
                     </button>
 
                     <button
@@ -1992,11 +2000,11 @@ protocolV1: {
                       disabled={!canStepForward}
                       title="Jump to end"
                     >
-                      end
+                      最後
                     </button>
 
                     <label className="replay-speed">
-                      speed
+                      速度
                       <select
                         className={replaySpeedSelectClass}
                         value={playbackSpeed}
@@ -2020,7 +2028,7 @@ protocolV1: {
                       isStageFocus ? "stage-focus-side-panel stage-focus-side-panel--muted" : "",
                     ].filter(Boolean).join(" ")}
                   >
-                    Replay controls are hidden for board focus.
+                    盤面集中表示のため、リプレイ操作は隠れています。
                   </div>
                 )}
               </div>
@@ -2031,8 +2039,8 @@ protocolV1: {
                 </div>
                 {compare ? (
                   <div className="grid gap-6 md:grid-cols-2">
-                    {renderReplay("engine v1", sim.v1)}
-                    {renderReplay("engine v2", sim.v2)}
+                    {renderReplay("エンジン v1", sim.v1)}
+                    {renderReplay("エンジン v2", sim.v2)}
                   </div>
                 ) : (
                   renderReplay(sim.currentRulesetLabel, sim.current)
@@ -2041,7 +2049,7 @@ protocolV1: {
                 {isStageFocus ? (
                   <div className="flex justify-end">
                     <button className={replayTransportButtonClass} onClick={toggleStagePanelsWithFeedback}>
-                      {showStagePanels ? "Hide timeline/details" : "Show timeline/details"}
+                      {showStagePanels ? "タイムラインを隠す" : "タイムラインを表示"}
                     </button>
                   </div>
                 ) : null}
@@ -2051,7 +2059,7 @@ protocolV1: {
                     <div className={["replay-timeline-shell", isStageFocus ? "stage-focus-side-panel stage-focus-side-panel--timeline" : ""].filter(Boolean).join(" ")}>
                       <div className="replay-timeline-head">
                         <div className="flex flex-wrap items-center gap-2">
-                          <span className="replay-step-pill">{step === 0 ? "Initial board" : `After turn ${step}`}</span>
+                          <span className="replay-step-pill">{step === 0 ? "初期盤面" : `${step}手目のあと`}</span>
                           <span className={`replay-phase replay-phase--${phaseInfo.tone}`}>{phaseInfo.label}</span>
                           <span className="text-xs text-slate-500">
                             {step}/{stepMax} | {stepProgress}%
@@ -2065,12 +2073,12 @@ protocolV1: {
                               disabled={highlights.length === 0}
                               title="Previous highlight ([)"
                             >
-                              Prev
+                              前へ
                             </button>
                             <span className="replay-highlight-index">
                               {currentHighlightIdx >= 0
                                 ? `${currentHighlightIdx + 1}/${highlights.length}`
-                                : `${highlights.length} highlights`}
+                                : `${highlights.length}件の見どころ`}
                             </span>
                             <button
                               className={replayTransportButtonClass}
@@ -2078,7 +2086,7 @@ protocolV1: {
                               disabled={highlights.length === 0}
                               title="Next highlight (])"
                             >
-                              Next
+                              次へ
                             </button>
                           </div>
                         ) : null}
@@ -2129,15 +2137,15 @@ protocolV1: {
                           })}
                         </div>
                       ) : (
-                        <div className="text-xs text-slate-500">No tactical highlights yet.</div>
+                        <div className="text-xs text-slate-500">まだ見どころはありません。</div>
                       )}
                       <div className="text-[11px] text-slate-500">
-                        Keyboard: <span className="font-mono">[</span>/<span className="font-mono">]</span> jump highlights, <span className="font-mono">Space</span> play/pause.
+                        キーボード: <span className="font-mono">[</span>/<span className="font-mono">]</span>で見どころ移動、<span className="font-mono">Space</span>で再生/一時停止。
                       </div>
 
                       {activeHighlights.length > 0 ? (
                         <div className="replay-highlight-callout">
-                          <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Now highlighted</div>
+                          <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">いまの見どころ</div>
                           <div className="mt-1 flex flex-wrap gap-1.5">
                             {activeHighlights.map((highlight, i) => (
                               <span
@@ -2156,60 +2164,60 @@ protocolV1: {
                     <div className={["rounded-lg border border-slate-200 bg-white p-3 text-sm", isStageFocus ? "stage-focus-side-panel" : ""].filter(Boolean).join(" ")}>
                       <div className="flex flex-wrap items-center justify-between gap-2">
                         <div className="font-medium">
-                          Winner: {formatReplayWinnerLabel(sim.current.winner)} | tiles A:{sim.current.tiles.A} / B:{sim.current.tiles.B}
+                          勝者: {formatReplayWinnerLabel(sim.current.winner)} | 盤面 A:{sim.current.tiles.A} / B:{sim.current.tiles.B}
                         </div>
-                        <div className="text-xs text-slate-500">Tie-break: {sim.current.tieBreak}</div>
+                        <div className="text-xs text-slate-500">同点判定: {sim.current.tieBreak}</div>
                       </div>
 
                       <div className="mt-2 grid gap-2 text-xs text-slate-600">
                         <div>
-                          <span className="font-medium">Ruleset ID</span>: <code>{sim.transcript.header.rulesetId}</code>
+                          <span className="font-medium">ルールID</span>: <code>{sim.transcript.header.rulesetId}</code>
                         </div>
                         {replayClassicSwap ? (
                           <div>
-                            <span className="font-medium">Classic Swap</span>: A{replayClassicSwap.aIndex + 1} ↔ B{replayClassicSwap.bIndex + 1}
+                            <span className="font-medium">クラシックスワップ</span>: A{replayClassicSwap.aIndex + 1} ↔ B{replayClassicSwap.bIndex + 1}
                           </div>
                         ) : null}
                         {replayClassicOpen ? (
                           <div>
-                            <span className="font-medium">Classic Open</span>: {replayClassicOpen.mode === "all_open"
-                              ? "all cards revealed"
+                            <span className="font-medium">クラシックオープン</span>: {replayClassicOpen.mode === "all_open"
+                              ? "全カード公開"
                               : `A[${formatClassicOpenSlots(replayClassicOpen.playerA)}] / B[${formatClassicOpenSlots(replayClassicOpen.playerB)}]`}
                           </div>
                         ) : null}
                         <div className="flex items-center gap-2">
-                          <span className="font-medium">Match ID</span>: <code>{sim.current.matchId}</code>
-                          {verifyStatus === "ok" && <span className="text-emerald-600 font-semibold" title="Replay verified">Verified</span>}
-                          {verifyStatus === "mismatch" && <span className="text-red-600 font-semibold" title="Replay mismatch">Mismatch</span>}
+                          <span className="font-medium">対戦ID</span>: <code>{sim.current.matchId}</code>
+                          {verifyStatus === "ok" && <span className="text-emerald-600 font-semibold" title="リプレイ検証済み">検証OK</span>}
+                          {verifyStatus === "mismatch" && <span className="text-red-600 font-semibold" title="リプレイ不一致">不一致</span>}
                         </div>
                       </div>
 
                       <div className="mt-3 flex flex-wrap items-center gap-2">
-                        <button className="btn" onClick={() => copyWithToast("transcript", stringifyWithBigInt(sim.transcript))}>
-                          Copy transcript JSON
+                        <button className="btn" onClick={() => copyWithToast("対戦ログ", stringifyWithBigInt(sim.transcript))}>
+                          対戦ログJSONをコピー
                         </button>
-                        <button className="btn" onClick={() => copyWithToast("result", stringifyWithBigInt(sim.current))}>
-                          Copy result JSON
+                        <button className="btn" onClick={() => copyWithToast("結果", stringifyWithBigInt(sim.current))}>
+                          結果JSONをコピー
                         </button>
                         <button
                           className={`btn ${verifyStatus === "ok" ? "border-emerald-400 bg-emerald-50 text-emerald-700" : verifyStatus === "mismatch" ? "btn-danger" : ""}`}
                           onClick={handleVerify}
                         >
-                          {verifyStatus === "ok" ? "Verified" : verifyStatus === "mismatch" ? "Mismatch!" : "Verify Replay"}
+                          {verifyStatus === "ok" ? "検証OK" : verifyStatus === "mismatch" ? "不一致" : "リプレイを検証"}
                         </button>
                       </div>
 
                       <div className="mt-3">
-                        <Disclosure title={<span>Show raw JSON (debug)</span>}>
+                        <Disclosure title={<span>生JSONを表示（確認用）</span>}>
                           <div className="grid gap-3">
                             <div>
-                              <div className="text-xs font-medium text-slate-600">transcript</div>
+                              <div className="text-xs font-medium text-slate-600">対戦ログ</div>
                               <pre className="mt-1 overflow-x-auto rounded-xl border border-slate-200 bg-white/70 p-3 text-xs">
                                 {stringifyWithBigInt(sim.transcript)}
                               </pre>
                             </div>
                             <div>
-                              <div className="text-xs font-medium text-slate-600">result</div>
+                              <div className="text-xs font-medium text-slate-600">結果</div>
                               <pre className="mt-1 overflow-x-auto rounded-xl border border-slate-200 bg-white/70 p-3 text-xs">
                                 {stringifyWithBigInt(sim.current)}
                               </pre>
@@ -2226,8 +2234,8 @@ protocolV1: {
             {!isEngineFocus && (
             <div className="card">
               <div className="card-hd">
-                <div className="text-base font-semibold">Turn log</div>
-                <div className="text-xs text-slate-500">Click a turn to jump the replay step.</div>
+                <div className="text-base font-semibold">手順ログ</div>
+                <div className="text-xs text-slate-500">手をクリックすると、その場面へ移動します。</div>
               </div>
               <div className="card-bd replay-turnlog-body">
                 <TurnLog
@@ -2246,8 +2254,8 @@ protocolV1: {
           {!isEngineFocus && (
           <section className="card">
             <div className="card-hd">
-              <div className="text-base font-semibold">Deck inspector</div>
-              <div className="text-xs text-slate-500">Read-only deck cards loaded from on-chain data.</div>
+              <div className="text-base font-semibold">デッキ確認</div>
+              <div className="text-xs text-slate-500">オンチェーン情報から読み込んだデッキカードを確認できます。</div>
               {replayClassicOpen?.mode === "three_open" ? (
                 <label className="mt-2 inline-flex items-center gap-2 text-xs text-slate-600">
                   <input
@@ -2255,19 +2263,19 @@ protocolV1: {
                     checked={replayRevealHiddenSlots}
                     onChange={(e) => setReplayRevealHiddenSlots(e.target.checked)}
                   />
-                  Show hidden slots (post-match analysis)
+                  非公開スロットを表示（対戦後分析）
                 </label>
               ) : null}
             </div>
 
             <div className="card-bd grid gap-6 md:grid-cols-2">
               <div className="grid gap-2">
-                <div className="text-xs font-medium text-slate-600">Player A deck</div>
+                <div className="text-xs font-medium text-slate-600">A側デッキ</div>
                 {replayClassicOpen ? (
                   <div className="text-[11px] text-slate-500">
                     {replayClassicOpen.mode === "all_open"
-                      ? "Open rule: all cards revealed"
-                      : `Open rule: slots ${formatClassicOpenSlots(replayClassicOpen.playerA)} are revealed`}
+                      ? "オープンルール: 全カード公開"
+                      : `オープンルール: ${formatClassicOpenSlots(replayClassicOpen.playerA)}番スロットを公開`}
                   </div>
                 ) : null}
                 <div className="deck-preview-grid grid grid-cols-3 gap-2 sm:grid-cols-5">
@@ -2283,12 +2291,12 @@ protocolV1: {
               </div>
 
               <div className="grid gap-2">
-                <div className="text-xs font-medium text-slate-600">Player B deck</div>
+                <div className="text-xs font-medium text-slate-600">B側デッキ</div>
                 {replayClassicOpen ? (
                   <div className="text-[11px] text-slate-500">
                     {replayClassicOpen.mode === "all_open"
-                      ? "Open rule: all cards revealed"
-                      : `Open rule: slots ${formatClassicOpenSlots(replayClassicOpen.playerB)} are revealed`}
+                      ? "オープンルール: 全カード公開"
+                      : `オープンルール: ${formatClassicOpenSlots(replayClassicOpen.playerB)}番スロットを公開`}
                   </div>
                 ) : null}
                 <div className="deck-preview-grid grid grid-cols-3 gap-2 sm:grid-cols-5">
@@ -2305,10 +2313,10 @@ protocolV1: {
 
               <div className="md:col-span-2 grid gap-2 text-xs text-slate-600">
                 <div className="rounded-lg border border-slate-200 bg-white p-3">
-                  <div className="font-medium text-slate-700">Owners (read-only)</div>
+                  <div className="font-medium text-slate-700">所有者（読み取り専用）</div>
                   {shouldMaskReplayDeckSlots ? (
                     <div className="mt-2 text-[11px] text-slate-500">
-                      Hidden by Three Open. Enable "Show hidden slots" to inspect full owner mapping.
+                      Three Openで非公開です。「非公開スロットを表示」を有効にすると、全スロットの所有者を確認できます。
                     </div>
                   ) : (
                     <div className="mt-2 grid max-h-56 gap-1 overflow-auto font-mono">
@@ -2329,3 +2337,4 @@ protocolV1: {
     </div>
   );
 }
+

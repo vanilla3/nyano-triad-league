@@ -24,7 +24,7 @@ export function decodeReplaySharePayload(params: URLSearchParams): ReplaySharePa
   if (z) {
     const decoded = safeGzipDecompressUtf8FromBase64Url(z);
     if (!decoded) {
-      return { kind: "error", param: "z", error: "Invalid share link (z parameter could not be decompressed)." };
+      return { kind: "error", param: "z", error: "共有リンクが正しくありません（zパラメータを展開できません）。" };
     }
     return { kind: "ok", param: "z", text: decoded };
   }
@@ -33,7 +33,7 @@ export function decodeReplaySharePayload(params: URLSearchParams): ReplaySharePa
   if (t) {
     const decoded = safeBase64UrlDecodeUtf8(t);
     if (!decoded) {
-      return { kind: "error", param: "t", error: "Invalid share link (t parameter could not be decoded)." };
+      return { kind: "error", param: "t", error: "共有リンクが正しくありません（tパラメータを読み取れません）。" };
     }
     return { kind: "ok", param: "t", text: decoded };
   }
