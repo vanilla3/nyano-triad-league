@@ -18,7 +18,7 @@ type MintTabNavProps = {
 export function MintTabNav({
   items,
   className,
-  ariaLabel = "Mint navigation tabs",
+  ariaLabel = "ページ切り替え",
 }: MintTabNavProps) {
   return (
     <nav className={["mint-tab-nav", className ?? ""].join(" ").trim()} aria-label={ariaLabel}>

@@ -2826,3 +2826,20 @@
 - `pnpm release:check` OK
 - `vercel build --prod` OK
 - Production alias verified at `https://v0-nyano-triad-league.vercel.app`
+
+## 2026-05-01 - Mint theme app shell enablement
+
+### Why
+- Production was serving the older app chrome even though Mint theme assets and components existed in the repo.
+- The Mint app shell CSS was not loaded globally by the top-level app layout, so the default `theme=mint` setting did not change the site chrome/home surface.
+
+### What
+- Updated `apps/web/src/App.tsx` to resolve the app theme through `resolveAppTheme`, load `@/mint-theme/mint-theme.css`, and render `MintGameShell` / `MintAppChrome` for non-focus Mint routes.
+- Updated `apps/web/src/lib/theme.ts` to sanitize allowed themes and migrate legacy stored `classic` theme values back to `mint`.
+- Brought the current Mint CSS/home surface forward so the production bundle includes the Mint shell and home classes.
+
+### Verify
+- `pnpm -C apps/web typecheck` OK
+- `pnpm build:web` OK
+- `pnpm -C apps/web e2e:ux -- --reporter=line` OK
+- Built bundle contains `mint-app-footer`, `mint-app-main`, `mint-app-shell`, and `mint-home`.
