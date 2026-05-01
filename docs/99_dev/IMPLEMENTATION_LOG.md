@@ -2929,3 +2929,27 @@
   - `favicon-16.png`, `favicon-32.png`, `favicon-192.png`, `favicon-512.webp`, `apple-touch-icon.png`
 - `pnpm -C apps/web build` OK
 - `pnpm lint:text` OK
+
+## 2026-05-01 - Mint board gamefeel polish
+
+### Why
+- The Mint battle board was visually soft but still needed clearer player feedback and a stronger game-like progression layer.
+- Pixi focus mode had large white stage space that felt more like an empty app panel than an arena.
+
+### What
+- Added a Mint round track above the board with 1/9 progress pips, active player chip, and Japanese phase label.
+- Reworded board prompts and engine prompts into clear player-facing Japanese while preserving existing English assist text.
+- Replaced selectable empty-cell markers with a pill-style "置く" / "警戒" affordance so available cells read as actionable.
+- Added active-player board rim treatments and a subtle arena-floor layer for engine focus mode.
+- Added a focused `BoardViewMint` unit test for the new round track and placement prompt.
+
+### Verify
+- `pnpm -C apps/web test -- src/components/__tests__/BoardViewMint.test.tsx src/components/__tests__/DuelStageMint.test.tsx` OK
+- `pnpm -C apps/web typecheck` OK
+- `pnpm -C apps/web build` OK
+- `pnpm lint:text` OK
+- `pnpm -C apps/web e2e mint-stage-visual-guardrails.spec.ts --project=chromium` OK
+- Playwright local screenshot smoke OK:
+  - `/match?mode=guest&opp=pvp&auto=0&rk=v2&ui=mint&fpm=manual&fp=0`
+  - `/match?mode=guest&opp=pvp&auto=0&rk=v2&ui=engine&focus=1&fpm=manual&fp=0`
+  - 390px Mint match viewport horizontal overflow: 0px

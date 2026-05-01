@@ -83,12 +83,31 @@ function calcScore(board: BoardState): { a: number; b: number } {
 
 const PROMPTS: Record<string, { ja: string; en: string }> = {
   select_card: { ja: "カードを選んでください", en: "Choose a card" },
-  select_cell: { ja: "置きたいマスをタップ", en: "Tap a cell to place" },
-  warning: { ja: "警戒マークを置くマスをタップ", en: "Tap a cell for warning mark" },
-  ai_turn: { ja: "にゃーのの番…", en: "Nyano is thinking..." },
-  game_over: { ja: "対戦終了！", en: "Game over!" },
-  idle: { ja: "準備中…", en: "Getting ready..." },
+  select_cell: { ja: "光っているマスにカードを置けます", en: "Pick a glowing cell" },
+  warning: { ja: "警戒マークを置くマスを選んでください", en: "Place a warning mark" },
+  ai_turn: { ja: "Nyanoが次の一手を考えています", en: "Nyano is thinking" },
+  game_over: { ja: "対戦終了。結果を確認しましょう", en: "Game over" },
+  idle: { ja: "対戦準備中です", en: "Getting ready" },
 };
+
+const PHASE_CHIPS: Record<string, string> = {
+  select_card: "カード選択",
+  select_cell: "配置チャンス",
+  warning: "警戒配置",
+  ai_turn: "Nyano思考中",
+  game_over: "決着",
+  idle: "準備中",
+};
+
+function countOccupiedCells(board: BoardState): number {
+  return board.reduce((count, cell) => count + (cell ? 1 : 0), 0);
+}
+
+function playerLabel(player?: PlayerIndex | null): string {
+  if (player === 0) return "A";
+  if (player === 1) return "B";
+  return "-";
+}
 
 // ── MintCell ───────────────────────────────────────────────────────────
 
@@ -145,10 +164,10 @@ function MintCell({
   if (hasCard) {
     classes.push(owner === 0 ? "mint-cell--owner-a" : "mint-cell--owner-b");
   } else if (isSelectable) {
-    classes.push("mint-cell--selectable");
+    classes.push("mint-cell--empty", "mint-cell--selectable");
     if (isWarningMode) classes.push("mint-cell--warning-mode");
   } else {
-    classes.push("mint-cell--flat");
+    classes.push("mint-cell--empty", "mint-cell--flat");
   }
 
   if (isSelected && !hasCard) classes.push("mint-cell--selected");
@@ -161,8 +180,8 @@ function MintCell({
   if (isFocus && !isPlaced) classes.push("mint-cell--focus");
 
   const cellLabel = hasCard
-    ? `${coord}: Player ${owner === 0 ? "A" : "B"} card, edges ${cell.card.edges.up}/${cell.card.edges.right}/${cell.card.edges.down}/${cell.card.edges.left}`
-    : `${coord}: ${isSelectable ? "empty, available" : "empty"}`;
+    ? `${coord}: プレイヤー${owner === 0 ? "A" : "B"}のカード。辺 ${cell.card.edges.up}/${cell.card.edges.right}/${cell.card.edges.down}/${cell.card.edges.left}`
+    : `${coord}: ${isSelectable ? "配置できます" : "空きマス"}`;
 
   return (
     <div
@@ -223,7 +242,7 @@ function MintCell({
         />
       ) : (
         <div className="mint-cell__empty-label">
-          {isSelectable ? (isWarningMode ? "⚠" : "＋") : ""}
+          {isSelectable ? (isWarningMode ? "警戒" : "置く") : ""}
         </div>
       )}
     </div>
@@ -248,6 +267,52 @@ function ActionPrompt({
         {prompt.ja}
         <span style={{ marginLeft: 8, fontSize: 12, opacity: 0.6 }}>{prompt.en}</span>
       </div>
+    </div>
+  );
+}
+
+function BoardTurnTrack({
+  occupiedCount,
+  currentPlayer,
+  gamePhase,
+}: {
+  occupiedCount: number;
+  currentPlayer?: PlayerIndex | null;
+  gamePhase: string;
+}) {
+  const nextTurn = Math.min(occupiedCount + 1, 9);
+  const phaseLabel = PHASE_CHIPS[gamePhase] ?? PHASE_CHIPS.idle;
+
+  return (
+    <div className="mint-turn-track" aria-label={`Round ${nextTurn} of 9`}>
+      <div className="mint-turn-track__summary">
+        <span className="mint-turn-track__eyebrow">ROUND</span>
+        <strong className="mint-turn-track__round">
+          {nextTurn}<span>/9</span>
+        </strong>
+        <span
+          className={[
+            "mint-turn-track__player",
+            currentPlayer === 0 ? "mint-turn-track__player--a" : "",
+            currentPlayer === 1 ? "mint-turn-track__player--b" : "",
+          ].filter(Boolean).join(" ")}
+        >
+          {playerLabel(currentPlayer)}
+        </span>
+      </div>
+      <div className="mint-turn-track__pips" aria-hidden="true">
+        {Array.from({ length: 9 }, (_, index) => (
+          <span
+            key={index}
+            className={[
+              "mint-turn-track__pip",
+              index < occupiedCount ? "mint-turn-track__pip--done" : "",
+              index === occupiedCount && occupiedCount < 9 ? "mint-turn-track__pip--next" : "",
+            ].filter(Boolean).join(" ")}
+          />
+        ))}
+      </div>
+      <div className="mint-turn-track__phase">{phaseLabel}</div>
     </div>
   );
 }
@@ -304,6 +369,7 @@ export function BoardViewMint({
   const gridRef = React.useRef<HTMLDivElement>(null);
   const selectableSet = toSelectableSet(selectableCells);
   const score = calcScore(board);
+  const occupiedCount = countOccupiedCells(board);
   const inspect = useCardPreview();
 
   const focus = typeof focusCell === "number" ? focusCell : null;
@@ -325,7 +391,21 @@ export function BoardViewMint({
   };
 
   return (
-    <div className={["grid gap-3", className].join(" ")}>
+    <div
+      className={[
+        "mint-board-view",
+        `mint-board-view--phase-${gamePhase}`,
+        currentPlayer === 0 ? "mint-board-view--player-a" : "",
+        currentPlayer === 1 ? "mint-board-view--player-b" : "",
+        className,
+      ].filter(Boolean).join(" ")}
+    >
+      <BoardTurnTrack
+        occupiedCount={occupiedCount}
+        currentPlayer={currentPlayer}
+        gamePhase={gamePhase}
+      />
+
       {/* ── Score Bar ── */}
       <div className="mint-scorebar">
         <div className="mint-scorebar__player">
@@ -348,7 +428,14 @@ export function BoardViewMint({
       </div>
 
       {/* ── Board Grid ── */}
-      <div className="mint-board-frame">
+      <div
+        className={[
+          "mint-board-frame",
+          currentPlayer === 0 ? "mint-board-frame--player-a" : "",
+          currentPlayer === 1 ? "mint-board-frame--player-b" : "",
+          `mint-board-frame--phase-${gamePhase}`,
+        ].filter(Boolean).join(" ")}
+      >
         <div className="mint-board-inner">
           <div className="mint-grid" ref={gridRef} role="grid" aria-label="Game board">
             {board.map((cell, idx) => {
