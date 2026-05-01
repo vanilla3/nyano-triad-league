@@ -1,4 +1,5 @@
 import React from "react";
+import { createPortal } from "react-dom";
 import { useToast } from "@/components/Toast";
 import { Link, useLocation, useNavigate, useSearchParams } from "react-router-dom";
 
@@ -342,6 +343,7 @@ export function MatchPage() {
   const isBattleStageRoute = /\/battle-stage$/.test(location.pathname);
   const isStageFocusRoute = isBattleStageRoute && isEngineFocus;
   const stageViewportRef = React.useRef<HTMLDivElement>(null);
+  const battleBoardShellRef = React.useRef<HTMLDivElement>(null);
   const [stageBoardSizing, setStageBoardSizing] = React.useState(() =>
     computeStageBoardSizing({
       viewportWidthPx: typeof window === "undefined" ? 1366 : window.innerWidth,
@@ -1970,11 +1972,40 @@ export function MatchPage() {
     && turns.length < 9
     && (draftCardIndex !== null || draftCell !== null)
     && !isStageFocusRoute;
+  const canUseBattleHandDock = useMintUi
+    && !isRpg
+    && !isEngineFocus
+    && turns.length < 9
+    && currentDeckTokens.length > 0;
   const showFocusHandDock = isEngineFocus
     && useMintUi
     && !isRpg
     && turns.length < 9
     && currentDeckTokens.length > 0;
+  const [battleHandDockActive, setBattleHandDockActive] = React.useState(false);
+  React.useEffect(() => {
+    if (!canUseBattleHandDock) {
+      setBattleHandDockActive(false);
+      return;
+    }
+    if (typeof window === "undefined") {
+      setBattleHandDockActive(true);
+      return;
+    }
+    const target = battleBoardShellRef.current;
+    if (!target || typeof IntersectionObserver === "undefined") {
+      setBattleHandDockActive(true);
+      return;
+    }
+    const observer = new IntersectionObserver(
+      ([entry]) => setBattleHandDockActive(entry.isIntersecting),
+      { root: null, rootMargin: "220px 0px 260px 0px", threshold: 0.01 },
+    );
+    observer.observe(target);
+    return () => observer.disconnect();
+  }, [canUseBattleHandDock]);
+  const showBattleHandDock = canUseBattleHandDock && battleHandDockActive;
+  const showCommandHandDock = showFocusHandDock || showBattleHandDock;
   const showFocusToolbarActions = isStageFocusRoute && showFocusHandDock && showStageControls;
   const canCommitFromFocusToolbar = !isAiTurn && draftCell !== null && draftCardIndex !== null;
   const canUndoFromFocusToolbar = !isAiTurn && turns.length > 0;
@@ -2438,7 +2469,7 @@ export function MatchPage() {
               <div className={["grid gap-4", isStageFocusRoute ? "stage-focus-main-column" : ""].filter(Boolean).join(" ")}>
                 {/* Guest deck preview */}
                 {!isEngineFocus && isGuestMode && cards && (
-                  <details open={turns.length === 0} className="rounded-lg border border-surface-200 bg-surface-50 p-3">
+                  <details className="rounded-lg border border-surface-200 bg-surface-50 p-3">
                     <summary className="cursor-pointer text-sm font-medium text-surface-700">
                       デッキ確認
                     </summary>
@@ -2565,10 +2596,14 @@ export function MatchPage() {
                     - selectedCell = draftCell
                     - onCellSelect = handleCellSelect
                     ──────────────────────────────────────────── */}
-                <div className={isStageFocusRoute ? "stage-focus-board-shell" : ""}>
+                <div ref={battleBoardShellRef} className={isStageFocusRoute ? "stage-focus-board-shell" : ""}>
                   {sim.ok ? (
                     isMint || (isEngine && engineRendererFailed) ? (
-                      <DuelStageMint impact={nyanoReactionImpact} impactBurst={stageImpactBurst}>
+                      <DuelStageMint
+                        className={canUseBattleHandDock ? "mint-stage--battle-compact" : ""}
+                        impact={nyanoReactionImpact}
+                        impactBurst={stageImpactBurst}
+                      >
                         <BoardViewMint
                           board={boardNow}
                           selectedCell={draftCell}
@@ -2595,7 +2630,11 @@ export function MatchPage() {
                         />
                       </DuelStageMint>
                     ) : useEngineRenderer ? (
-                      <DuelStageMint impact={nyanoReactionImpact} impactBurst={stageImpactBurst}>
+                      <DuelStageMint
+                        className={canUseBattleHandDock ? "mint-stage--battle-compact" : ""}
+                        impact={nyanoReactionImpact}
+                        impactBurst={stageImpactBurst}
+                      >
                         <BattleStageEngine
                           board={boardNow}
                           selectedCell={draftCell}
@@ -2756,17 +2795,23 @@ export function MatchPage() {
                   stageFocus={isStageFocusRoute}
                 />
 
-                {showFocusHandDock && (
-                  <div
+                {showCommandHandDock && (() => {
+                  const dock = (
+                    <div
                     className={[
                       "mint-focus-hand-dock sticky bottom-2 z-20 grid gap-2 rounded-2xl border p-2 shadow-xl backdrop-blur",
                       isStageFocusRoute ? "mint-focus-hand-dock--stage" : "",
+                      showBattleHandDock ? "mint-focus-hand-dock--battle" : "",
                     ].filter(Boolean).join(" ")}
                   >
                     <div className="flex items-center justify-between gap-2">
-                      <div className="mint-focus-hand-dock__title text-[11px] font-semibold">手札</div>
+                      <div className="mint-focus-hand-dock__title text-[11px] font-semibold">手札 / 操作</div>
                       <div className="mint-focus-hand-dock__status text-[10px]">
-                        {isAiTurn ? "Nyanoが考え中" : `${formatCardSelection(draftCardIndex)} → ${formatCellLabel(draftCell)}`}
+                        {isAiTurn
+                          ? "Nyanoが考え中"
+                          : draftCardIndex === null && draftCell === null
+                            ? "カードを選んで盤面をタップ"
+                            : `${formatCardSelection(draftCardIndex)} → ${formatCellLabel(draftCell)}`}
                       </div>
                     </div>
 
@@ -2796,7 +2841,7 @@ export function MatchPage() {
                                 dockDisabled && "mint-focus-hand-card--used",
                               ].join(" ")}
                               style={fanStyle}
-                              aria-label={`Focus hand card ${idx + 1} loading`}
+                              aria-label={`手札カード${idx + 1}を読み込み中`}
                               disabled
                             >
                               <div className="text-[10px] font-semibold text-slate-500">#{tid.toString()}</div>
@@ -2814,7 +2859,7 @@ export function MatchPage() {
                               dockDisabled && "mint-focus-hand-card--used",
                             ].join(" ")}
                             style={fanStyle}
-                            aria-label={`Focus hand card ${idx + 1}${usedHere ? " (used)" : ""}${selected ? " (selected)" : ""}`}
+                            aria-label={`手札カード${idx + 1}${usedHere ? " 使用済み" : ""}${selected ? " 選択中" : ""}`}
                             data-hand-card={idx}
                             disabled={dockDisabled}
                             draggable={enableHandDragDrop && !dockDisabled}
@@ -2850,7 +2895,7 @@ export function MatchPage() {
                           setDraftWarningMarkCell(v === "" ? null : Number(v));
                         }}
                         disabled={currentWarnRemaining <= 0 || isAiTurn}
-                        aria-label="Focus dock warning mark cell"
+                        aria-label="警戒マークを置くマス"
                       >
                         <option value="">警戒なし</option>
                         {availableCells
@@ -2864,26 +2909,30 @@ export function MatchPage() {
                         className="btn btn-primary h-9 px-3 text-xs"
                         onClick={commitMove}
                         disabled={isAiTurn || draftCell === null || draftCardIndex === null}
-                        aria-label="手札ドックからこの手を確定"
+                        aria-label="この手を確定"
                       >
-                        確定
+                        この手で勝負
                       </button>
                       <button
                         className="btn h-9 px-3 text-xs"
                         onClick={undoMove}
                         disabled={isAiTurn || turns.length === 0}
-                        aria-label="手札ドックで1手戻す"
+                        aria-label="1手戻す"
                       >
                         戻す
                       </button>
                     </div>
-                  </div>
-                )}
+                    </div>
+                  );
+                  return showBattleHandDock && typeof document !== "undefined"
+                    ? createPortal(dock, document.body)
+                    : dock;
+                })()}
 
                 {/* ────────────────────────────────────────────
                     P0-2: Hand Display (RPG or standard)
                     ──────────────────────────────────────────── */}
-                {(!isStageFocusRoute || showStageControls) && !showFocusHandDock ? (
+                {(!isStageFocusRoute || showStageControls) && !showCommandHandDock ? (
                   <div className={useMintUi ? "mint-match-operations grid gap-3" : "grid gap-3"}>
                     <div className={
                       useMintUi ? "text-xs font-semibold text-mint-text-secondary"

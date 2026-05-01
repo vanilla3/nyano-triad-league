@@ -2954,6 +2954,22 @@
   - `/match?mode=guest&opp=pvp&auto=0&rk=v2&ui=engine&focus=1&fpm=manual&fp=0`
   - 390px Mint match viewport horizontal overflow: 0px
 
+## 2026-05-01 - Battle hand-to-board UX pass
+
+### Why
+- In the normal Mint battle flow, the hand lived below the board, so players had to scroll away from the board to choose a card and confirm the move.
+- On wide screens the Mint stage could grow too large, making the playable board harder to scan and pushing controls out of view.
+
+### What
+- Added a battle command hand dock that appears while the board is near the viewport, rendered through a body portal so it stays anchored on mobile and desktop.
+- Reused the existing game-like focus hand rail for normal Mint battles, with compact cards, Japanese command copy, warning selection, commit, and undo in one panel.
+- Hid the old full-width hand panel when the command dock is active and collapsed the guest deck preview by default.
+- Capped the normal Mint battle stage width so the board reads as a game board instead of a huge page panel on desktop.
+
+### Verify
+- In-app browser smoke OK at 390px: board visible, hand dock fixed at bottom, card -> cell -> commit advanced to turn 1/9, horizontal overflow 0px.
+- In-app browser smoke OK at desktop width: board capped at 720px and command dock is fixed to the viewport from `document.body`, horizontal overflow 0px.
+
 ## 2026-05-01 - Match operation readability polish
 
 ### Why
