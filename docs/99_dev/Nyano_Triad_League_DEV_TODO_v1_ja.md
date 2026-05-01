@@ -61,13 +61,14 @@ Detailed historical logs remain in `docs/99_dev/_archive/` and `docs/99_dev/IMPL
 - [x] 2026-05-01 Production verification: deployed and verified `https://v0-nyano-triad-league.vercel.app`, `/match`, `/replay`, and `/battle-stage`.
 - [x] 2026-05-01 Mint theme enablement: default Mint app shell, Mint theme CSS, and Mint home surface are wired into the app build.
 - [x] 2026-05-01 Mint home visual gamefeel/copy pass: home now opens as a soft game lobby with a battle CTA, 3x3 board preview, and player-facing Japanese copy.
+- [x] 2026-05-01 Mint Arena/Events/Stream game-page pass: Mini Nyano mascot art, page guides, and player-facing Japanese copy now replace admin-like secondary surfaces.
 
 ---
 
 ## Next Priority
 
 1. Keep `pnpm lint:text` green in CI/local workflow.
-2. Verify Mint home gamefeel pass on desktop/mobile and carry the same player-facing tone into Match/Replay where selectors allow.
+2. Carry the same player-facing Mint tone into remaining Match/Replay details where selectors allow.
 3. Continue roadmap tasks from latest approved request/work order queue.
 
 ---

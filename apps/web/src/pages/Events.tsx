@@ -1,8 +1,14 @@
 import React from "react";
 import { useToast } from "@/components/Toast";
 import { Link } from "react-router-dom";
+import { MintPageGuide } from "@/components/mint/MintPageGuide";
+import { MintPressable } from "@/components/mint/MintPressable";
+import { MintTitleText } from "@/components/mint/MintTypography";
+import { MintIcon } from "@/components/mint/icons/MintIcon";
 
 import { EVENTS, formatEventPeriod, getEventStatus } from "@/lib/events";
+import { MINT_PAGE_GUIDES } from "@/lib/mint_page_guides";
+import { NYANO_MINI_IMAGE_URL } from "@/lib/nyano_assets";
 import { parseDeckRestriction } from "@/lib/deck_restriction";
 import {
   clearAllEventAttempts,
@@ -208,33 +214,63 @@ export function EventsPage() {
     }
   };
 
+  const activeEvents = EVENTS.filter((event) => {
+    const status = getEventStatus(event);
+    return status === "active" || status === "always";
+  }).length;
+
   return (
-    <div className="grid gap-6">
-      <section className="card">
-        <div className="card-hd">
-          <div className="text-base font-semibold">Events</div>
-          <div className="text-xs text-slate-500">挑戦 → Replay共有 → 議論、が勝手に回る仕組みを作る</div>
-        </div>
-
-        <div className="card-bd grid gap-3 text-sm text-slate-700">
-          <p>
-            Event は「運営がいなくなっても盛り上がる」ための装置です。まずは off-chain（transcript共有）で成立させ、
-            将来オンチェーン提出・ランキングへ段階的に拡張します。
+    <div className="events-page mint-game-page">
+      <section className="mint-game-page-hero mint-game-page-hero--events events-page__hero">
+        <div className="mint-game-page-hero__copy">
+          <div className="mint-game-page-kicker">
+            <MintIcon name="events" size={16} />
+            <span>Challenge Board</span>
+          </div>
+          <MintTitleText as="h2" className="mint-game-page-hero__title">
+            今日の挑戦を選ぼう
+          </MintTitleText>
+          <p className="mint-game-page-hero__lead">
+            ルール固定のイベントに挑んで、勝ち筋をリプレイとして残そう。
           </p>
-
-          <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600">
-            ポイント：<span className="font-medium">ルール（rulesetId）</span>と<span className="font-medium">相手（Nyano AI）</span>が固定されると、
-            Replay が比較可能になり、自然に議論が起きます。
+          <div className="mint-game-page-hero__actions">
+            <MintPressable to={`/match?event=${encodeURIComponent(EVENTS[0]?.id ?? "")}&ui=mint`} tone="primary">
+              <MintIcon name="match" size={18} />
+              <span>挑戦する</span>
+            </MintPressable>
+            <MintPressable to="/replay?theme=mint" tone="soft">
+              <MintIcon name="replay" size={18} />
+              <span>足跡を見る</span>
+            </MintPressable>
           </div>
         </div>
+        <div className="mint-game-page-mascot mint-game-page-mascot--events" aria-hidden="true">
+          <img src={NYANO_MINI_IMAGE_URL} alt="" loading="lazy" />
+        </div>
+        <div className="mint-game-page-scoreboard" aria-label="Event summary">
+          <span>
+            <strong>{EVENTS.length}</strong>
+            挑戦
+          </span>
+          <span>
+            <strong>{activeEvents}</strong>
+            開催中
+          </span>
+          <span>
+            <strong>{seasonArchive.length}</strong>
+            シーズン記録
+          </span>
+        </div>
       </section>
+
+      <MintPageGuide spec={MINT_PAGE_GUIDES.events} />
 
       <section className="grid gap-3">
         <div className="card">
           <div className="card-hd flex flex-wrap items-center justify-between gap-2">
             <div>
-              <div className="text-base font-semibold">Season Archive (local)</div>
-              <div className="text-xs text-slate-500">ローカル保存された挑戦ログを、season単位で振り返り</div>
+              <div className="text-base font-semibold">挑戦の足跡</div>
+              <div className="text-xs text-slate-500">保存したリプレイを、シーズンごとに振り返ります</div>
             </div>
             <div className="flex flex-wrap items-center gap-2">
               <button className="btn" onClick={() => void copySeasonSummary()} disabled={!selectedSeason}>
@@ -508,7 +544,7 @@ export function EventsPage() {
         {EVENTS.map((e) => {
           const status = getEventStatus(e);
           return (
-            <div key={e.id} className="card">
+          <div key={e.id} className="card events-page__event-card">
               <div className="card-hd flex flex-wrap items-center justify-between gap-2">
                 <div className="grid gap-1">
                   <div className="text-base font-semibold">{e.title}</div>
@@ -647,13 +683,13 @@ export function EventsPage() {
 
                 <div className="flex flex-wrap items-center gap-2">
                   <Link className="btn btn-primary no-underline" to={`/match?event=${encodeURIComponent(e.id)}&ui=mint`}>
-                    Start (Match)
+                    挑戦開始
                   </Link>
                   <Link className="btn no-underline" to="/decks">
-                    Prepare your deck
+                    デッキ準備
                   </Link>
                   <Link className="btn no-underline" to="/replay">
-                    Watch replays
+                    リプレイを見る
                   </Link>
                 </div>
               </div>

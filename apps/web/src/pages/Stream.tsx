@@ -2,8 +2,10 @@ import React from "react";
 import { Link } from "react-router-dom";
 
 import { StreamOperationsHUD, computeConnectionHealth, type ExternalResult, type OpsLogEntry } from "@/components/StreamOperationsHUD";
-
-import { NyanoImage } from "@/components/NyanoImage";
+import { MintPageGuide } from "@/components/mint/MintPageGuide";
+import { MintPressable } from "@/components/mint/MintPressable";
+import { MintTitleText } from "@/components/mint/MintTypography";
+import { MintIcon } from "@/components/mint/icons/MintIcon";
 import { useToast } from "@/components/Toast";
 import { EVENTS, fetchEventConfig, getEventStatus, type EventV1 } from "@/lib/events";
 import { executeRecovery, recoveryActionLabel } from "@/lib/stream_recovery";
@@ -60,6 +62,8 @@ import {
   type ViewerMove,
 } from "@/lib/triad_vote_utils";
 import { publishOverlayState, publishStreamCommand, makeStreamCommandId, publishStreamVoteState, readStoredOverlayState, subscribeOverlayState, type OverlayStateV1 } from "@/lib/streamer_bus";
+import { MINT_PAGE_GUIDES } from "@/lib/mint_page_guides";
+import { NYANO_MINI_IMAGE_URL } from "@/lib/nyano_assets";
 
 function pickDefaultEvent(events: EventV1[]): string {
   const now = Date.now();
@@ -1148,7 +1152,51 @@ const copyViewerInstructions = React.useCallback(() => {
 }, [controlledSide, toast]);
 
 return (
-    <div className="space-y-6">
+    <div className="stream-page mint-game-page">
+      <section className="mint-game-page-hero mint-game-page-hero--stream stream-page__hero">
+        <div className="mint-game-page-hero__copy">
+          <div className="mint-game-page-kicker">
+            <MintIcon name="stream" size={16} />
+            <span>Broadcast Booth</span>
+          </div>
+          <MintTitleText as="h2" className="mint-game-page-hero__title">
+            Nyano配信卓
+          </MintTitleText>
+          <p className="mint-game-page-hero__lead">
+            視聴者の一票を盤面へ。イベント、投票、オーバーレイをここでつなぎます。
+          </p>
+          <div className="mint-game-page-hero__actions">
+            <MintPressable to={hostMatchUrl} tone="primary">
+              <MintIcon name="match" size={18} />
+              <span>ホスト対戦を開く</span>
+            </MintPressable>
+            <MintPressable to={overlayUrl} tone="soft" target="_blank" rel="noreferrer noopener">
+              <MintIcon name="stream" size={18} />
+              <span>Overlay</span>
+            </MintPressable>
+          </div>
+        </div>
+        <div className="mint-game-page-mascot mint-game-page-mascot--stream" aria-hidden="true">
+          <img src={NYANO_MINI_IMAGE_URL} alt="" loading="lazy" />
+        </div>
+        <div className="mint-game-page-scoreboard" aria-label="Stream status">
+          <span>
+            <strong>{voteOpen ? "OPEN" : "CLOSED"}</strong>
+            投票
+          </span>
+          <span>
+            <strong>{Object.keys(votesByUser).length}</strong>
+            票
+          </span>
+          <span>
+            <strong>{typeof liveTurn === "number" ? liveTurn : "—"}</strong>
+            Turn
+          </span>
+        </div>
+      </section>
+
+      <MintPageGuide spec={MINT_PAGE_GUIDES.stream} />
+
       <StreamOperationsHUD
         live={live}
         controlledSide={controlledSide}
@@ -1163,7 +1211,7 @@ return (
         lastError={lastError}
         onDismissError={() => setLastError(null)}
       />
-      <div className="flex items-center justify-end gap-3">
+      <div className="stream-page__lock-row flex items-center justify-end gap-3">
         {settingsLocked && lockTimestamp > 0 && (
           <span className="text-xs text-slate-500">
             Locked {ageLabel(lockTimestamp)}
@@ -1186,11 +1234,11 @@ return (
         <div className="card-hd">
           <div>
             <div className="flex items-center gap-3">
-              <NyanoImage size={56} className="shrink-0" alt="Nyano" />
-              <div className="text-lg font-semibold">🎥 Nyano Stream Studio</div>
+              <img src={NYANO_MINI_IMAGE_URL} alt="" width={54} height={54} className="stream-page__mini-thumb" loading="lazy" />
+              <div className="text-lg font-semibold">配信スタジオ</div>
             </div>
             <div className="text-sm text-slate-600">
-              Twitch配信に向けた「導線・見せ方・共有」を整えます。まずは OBS Overlay → その次に Chat voting。
+              配信で使う画面と投票を準備します。まずはお題を決めて、Overlay と Match を開きましょう。
             </div>
           </div>
         </div>
