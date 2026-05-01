@@ -2972,3 +2972,25 @@
 - `pnpm -C apps/web typecheck` OK
 - `pnpm -C apps/web build` OK
 - `pnpm lint:text` OK
+
+## 2026-05-01 - Mint game-site visual polish
+
+### Why
+- The Mint site already had a soft cute direction, but buttons, frames, tabs, and secondary panels still needed stronger game-site affordance.
+- Nyano character presence was visible on some pages, but the global shell and navigation mark needed a more recognizable mascot cue.
+
+### What
+- Added a generated UI cameo asset (`apps/web/public/assets/gen/nyano_ui_cameo_512_v1.webp`) derived from the existing Mini Nyano public asset, with a Mint frame for favicon-like UI use.
+- Replaced the Mint chrome mark with the cameo and added a low-opacity mascot watermark to the app shell and key panels.
+- Upgraded Mint buttons, cards, tabs, guide panels, quick navigation cards, arena difficulty cards, and home battle panels with beveled rims, inner highlights, pressed states, and subtle game-board decoration.
+- Localized the first Match tutorial modal into Japanese and gave it a Mint game-panel frame.
+- Tuned mobile hero heading size so event-style Japanese headings do not wrap awkwardly.
+
+### Verify
+- `pnpm -C apps/web typecheck` OK
+- `pnpm lint:text` OK
+- `pnpm -C apps/web build` OK
+- Playwright local screenshot smoke OK:
+  - `/`, `/arena`, `/events`, `/replay`, `/stream`, `/match`
+  - 1440px and 390px viewports
+  - horizontal overflow: 0px on checked pages
