@@ -2953,3 +2953,22 @@
   - `/match?mode=guest&opp=pvp&auto=0&rk=v2&ui=mint&fpm=manual&fp=0`
   - `/match?mode=guest&opp=pvp&auto=0&rk=v2&ui=engine&focus=1&fpm=manual&fp=0`
   - 390px Mint match viewport horizontal overflow: 0px
+
+## 2026-05-01 - Match operation readability polish
+
+### Why
+- The Match play surface still felt hard to operate because card/cell/warning selections were split across dense, app-like controls.
+- Focus mode and the normal hand controls still had visible English labels, making the in-battle flow harder for Japanese players to read quickly.
+
+### What
+- Reworked Match command copy around the hand dock, quick commit bar, warning mark selector, focus toolbar, Pixi fallback notice, and AI turn notice into player-facing Japanese.
+- Added A1/B1/C1-style cell labels and card selection summaries so the current move reads as a battle command instead of raw cell/card indexes.
+- Wrapped the normal Mint hand controls in a game-like operation panel, tightened the Mint board width, and made used/selected hand-card states clearer.
+- Removed the remaining English helper text from the Mint board action prompt and fixed the closed details drawer so it no longer creates horizontal scroll.
+- Updated the shared `MatchQuickCommitBar` component so future usage matches the same Japanese command language.
+
+### Verify
+- `pnpm -C apps/web test -- src/features/match/__tests__/MatchQuickCommitBar.test.tsx` OK
+- `pnpm -C apps/web typecheck` OK
+- `pnpm -C apps/web build` OK
+- `pnpm lint:text` OK

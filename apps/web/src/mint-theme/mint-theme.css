@@ -2292,6 +2292,17 @@ html[data-vfx="high"] .mint-cell--spotlight {
   filter: grayscale(0.6);
 }
 
+.mint-hand-card__used-label {
+  border-radius: 999px;
+  border: 1px solid rgba(148, 163, 184, 0.48);
+  background: rgba(255, 255, 255, 0.9);
+  color: #475569;
+  font-size: 10px;
+  font-weight: 800;
+  padding: 3px 7px;
+  box-shadow: 0 4px 10px rgba(15, 23, 42, 0.12);
+}
+
 .mint-hand-card--forced:not(.mint-hand-card--used) {
   border-color: rgba(245, 158, 11, 0.82);
   box-shadow:
@@ -2533,6 +2544,22 @@ html[data-vfx="high"] .mint-cell--spotlight {
 .mint-focus-hand-actions {
   position: relative;
   z-index: 1;
+}
+
+.mint-focus-hand-dock__title {
+  position: relative;
+  z-index: 1;
+  color: var(--mint-text-primary, #1f2937);
+}
+
+.mint-focus-hand-dock__status {
+  position: relative;
+  z-index: 1;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.66);
+  color: var(--mint-text-secondary, #475569);
+  font-weight: 700;
+  padding: 3px 8px;
 }
 
 .mint-focus-hand-dock--inline {
@@ -4060,12 +4087,13 @@ html[data-vfx="high"] .mint-cell--spotlight {
   box-shadow: -4px 0 24px rgba(0, 0, 0, 0.08);
   transform: translateX(100%);
   transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-  display: flex;
+  display: none;
   flex-direction: column;
   font-family: 'Nunito', system-ui, sans-serif;
 }
 
 .mint-drawer--open {
+  display: flex;
   transform: translateX(0);
 }
 
@@ -8486,6 +8514,16 @@ html[data-vfx="high"] .mint-cell--spotlight {
 }
 
 /* Match board-side visual polish for Mint mode */
+[data-theme="mint"] {
+  overflow-x: clip;
+}
+
+@supports not (overflow: clip) {
+  [data-theme="mint"] {
+    overflow-x: hidden;
+  }
+}
+
 [data-theme="mint"] .mint-match-board-shell {
   border-radius: 20px;
   padding: 8px;
@@ -8500,6 +8538,32 @@ html[data-vfx="high"] .mint-cell--spotlight {
 
 [data-theme="mint"] .mint-match-board-center {
   min-width: 0;
+}
+
+[data-theme="mint"] .mint-match-board-center .mint-board-frame {
+  max-width: min(100%, 880px);
+  margin-inline: auto;
+}
+
+[data-theme="mint"] .mint-match-operations {
+  border-radius: 20px;
+  border: 1px solid rgba(125, 211, 252, 0.54);
+  background:
+    radial-gradient(circle at 92% -28%, rgba(14, 165, 233, 0.14), transparent 46%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.94), rgba(236, 253, 245, 0.78));
+  padding: 12px;
+  box-shadow:
+    0 16px 26px -24px rgba(15, 23, 42, 0.54),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+
+[data-theme="mint"] .mint-match-operations .input,
+[data-theme="mint"] .mint-match-operations .btn {
+  min-height: 42px;
+}
+
+[data-theme="mint"] .mint-match-operations .btn-primary {
+  font-weight: 800;
 }
 
 [data-theme="mint"] .mint-match-quick-commit {
