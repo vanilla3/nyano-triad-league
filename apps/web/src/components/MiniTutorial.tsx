@@ -67,7 +67,7 @@ export function MiniTutorial({ onDismiss }: Props) {
           バトルへ進む
         </button>
         <button
-          className="mt-2 w-full text-center text-xs text-surface-400 hover:text-surface-600 underline"
+          className="mt-2 w-full text-center text-xs text-surface-400 underline hover:text-surface-600"
           onClick={dismiss}
         >
           今はスキップ

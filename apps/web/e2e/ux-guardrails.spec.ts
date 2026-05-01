@@ -18,12 +18,12 @@ async function disableGuestTutorial(page: Page): Promise<void> {
 }
 
 async function dismissGuestTutorialIfPresent(page: Page): Promise<void> {
-  const gotItButton = page.getByRole("button", { name: "Got it!" });
+  const gotItButton = page.getByRole("button", { name: "バトルへ進む" });
   if (await gotItButton.isVisible().catch(() => false)) {
     await gotItButton.click();
     return;
   }
-  const skipButton = page.getByRole("button", { name: "Skip tutorial" });
+  const skipButton = page.getByRole("button", { name: "今はスキップ" });
   if (await skipButton.isVisible().catch(() => false)) {
     await skipButton.click();
   }
@@ -56,7 +56,7 @@ test.describe("UX regression guardrails", () => {
     await page.goto("/match?mode=guest&opp=pvp&auto=0&rk=v2&ui=mint");
     await dismissGuestTutorialIfPresent(page);
 
-    await expect(page.getByText("Guest Quick Play")).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByText("ゲストですぐ対戦")).toBeVisible({ timeout: 15_000 });
     await expect(page.getByRole("option", { name: /^Card 1:/ }).first()).toBeVisible({ timeout: 15_000 });
 
     const slot = page.getByTestId("nyano-reaction-slot").first();

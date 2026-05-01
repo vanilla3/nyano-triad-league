@@ -42,7 +42,7 @@ export function MatchTurnActionPanel(input: {
           className={isRpg ? "text-[10px] uppercase tracking-wider" : "text-[11px] text-slate-600"}
           style={isRpg ? { fontFamily: "'Cinzel', serif", color: "var(--rpg-text-dim, #8A7E6B)" } : undefined}
         >
-          Warning mark (remaining {currentWarnRemaining})
+          警戒マーク (残り {currentWarnRemaining})
         </div>
         <select
           className={["input", isStageFocusRoute ? "h-10 min-w-[180px]" : ""].join(" ").trim()}
@@ -52,13 +52,13 @@ export function MatchTurnActionPanel(input: {
             onChangeDraftWarningMarkCell(value === "" ? null : Number(value));
           }}
           disabled={isBoardFull || isAiTurn || currentWarnRemaining <= 0}
-          aria-label="Warning mark cell"
+          aria-label="警戒マークを置くマス"
         >
-          <option value="">None</option>
+          <option value="">なし</option>
           {availableCells
             .filter((cell) => cell !== draftCell)
             .map((cell) => (
-              <option key={cell} value={String(cell)}>Cell {cell}</option>
+              <option key={cell} value={String(cell)}>{cell + 1}番のマス</option>
             ))}
         </select>
       </div>
@@ -68,25 +68,25 @@ export function MatchTurnActionPanel(input: {
           className={isRpg ? "rpg-result__btn rpg-result__btn--primary" : ["btn btn-primary", isStageFocusRoute ? "h-10 px-4" : ""].join(" ").trim()}
           onClick={onCommitMove}
           disabled={!canCommit}
-          aria-label="Commit move"
+          aria-label="この手を確定"
         >
-          Commit move
+          この手を確定
         </button>
         <button
           className={isRpg ? "rpg-result__btn" : ["btn", isStageFocusRoute ? "h-10 px-4" : ""].join(" ").trim()}
           onClick={onUndoMove}
           disabled={!canUndo}
-          aria-label="Undo last move"
+          aria-label="1手戻す"
         >
-          Undo 1 move
+          1手戻す
         </button>
         {showAiMoveAction ? (
           <button
             className={isRpg ? "rpg-result__btn rpg-result__btn--primary" : ["btn btn-primary", isStageFocusRoute ? "h-10 px-4" : ""].join(" ").trim()}
             onClick={onAiMove}
-            aria-label="Nyano AI move"
+            aria-label="Nyano AIの手を進める"
           >
-            Nyano Move
+            Nyanoの手を進める
           </button>
         ) : null}
       </div>

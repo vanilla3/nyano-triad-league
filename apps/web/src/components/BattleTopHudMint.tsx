@@ -35,7 +35,7 @@ export function BattleTopHudMint({
     <div
       className={["mint-top-hud", className].filter(Boolean).join(" ")}
       role="region"
-      aria-label="Match top HUD"
+      aria-label="対戦トップHUD"
     >
       <div className="mint-top-hud__logo" aria-label="Nyano Triad League">
         <span className="mint-top-hud__logo-main">Nyano Triad</span>
@@ -61,7 +61,7 @@ export function BattleTopHudMint({
           <span className="mint-top-hud__score-label">B</span>
           <span className="mint-top-hud__score-value">{tiles.b}</span>
         </span>
-        <span className="mint-top-hud__current-player" aria-label={`Current player ${currentPlayerLabel}`}>
+        <span className="mint-top-hud__current-player" aria-label={`現在の手番 ${currentPlayerLabel}`}>
           {currentPlayerLabel}
         </span>
       </div>
@@ -70,9 +70,9 @@ export function BattleTopHudMint({
         className="mint-top-hud__turn"
         role="status"
         aria-live="polite"
-        aria-label={`Turn ${clampedTurn} of ${maxTurns}`}
+        aria-label={`ターン ${clampedTurn} / ${maxTurns}`}
       >
-        <span className="mint-top-hud__turn-label">TURN</span>
+        <span className="mint-top-hud__turn-label">ターン</span>
         <span className="mint-top-hud__turn-value">
           {clampedTurn}/{maxTurns}
         </span>

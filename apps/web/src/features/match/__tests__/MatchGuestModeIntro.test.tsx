@@ -43,8 +43,8 @@ describe("features/match/MatchGuestModeIntro", () => {
     if (!tree) return;
 
     const text = flattenText(tree);
-    expect(text).toContain("Guest Quick Play");
-    expect(text).toContain("Decks");
+    expect(text).toContain("ゲストですぐ対戦");
+    expect(text).toContain("デッキ");
     const sections = collectElements(tree).filter((element) => element.type === "section");
     expect(sections).toHaveLength(1);
   });

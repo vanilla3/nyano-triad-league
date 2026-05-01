@@ -41,7 +41,7 @@ describe("BattleTopHudMint", () => {
 
     expect(tree.type).toBe("div");
     expect(tree.props.className).toContain("mint-top-hud");
-    expect(tree.props["aria-label"]).toBe("Match top HUD");
+    expect(tree.props["aria-label"]).toBe("対戦トップHUD");
 
     const children = React.Children.toArray(tree.props.children) as React.ReactElement[];
     const score = children.find((child) => (child.props as { className?: string }).className === "mint-top-hud__score");
@@ -50,6 +50,6 @@ describe("BattleTopHudMint", () => {
     expect(score).toBeTruthy();
     expect(turn).toBeTruthy();
     expect(score?.props["aria-label"]).toBe("Score A 1, B 2");
-    expect(turn?.props["aria-label"]).toBe("Turn 3 of 9");
+    expect(turn?.props["aria-label"]).toBe("ターン 3 / 9");
   });
 });
