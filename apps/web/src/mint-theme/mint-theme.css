@@ -2566,6 +2566,51 @@ html[data-vfx="high"] .mint-cell--spotlight {
   position: sticky;
 }
 
+.mint-focus-hand-dock--battle {
+  position: fixed !important;
+  right: max(18px, env(safe-area-inset-right)) !important;
+  bottom: max(18px, env(safe-area-inset-bottom)) !important;
+  z-index: 45 !important;
+  width: min(324px, calc(100vw - 36px));
+  margin-top: -4px;
+  border-radius: 20px;
+  backdrop-filter: blur(14px) saturate(1.08);
+  -webkit-backdrop-filter: blur(14px) saturate(1.08);
+}
+
+.mint-focus-hand-dock--battle .mint-focus-hand-row {
+  justify-content: center;
+  flex-wrap: wrap;
+  overflow: visible;
+  gap: 6px;
+  padding: 2px 0 5px;
+}
+
+.mint-focus-hand-dock--battle .mint-focus-hand-card {
+  width: 54px;
+  border-radius: 12px;
+}
+
+.mint-focus-hand-dock--battle .mint-focus-hand-actions {
+  display: grid;
+  grid-template-columns: minmax(132px, 1fr) auto auto;
+  align-items: center;
+  gap: 8px;
+}
+
+.mint-focus-hand-dock--battle .mint-focus-hand-actions .input {
+  width: 100%;
+  min-width: 0;
+  height: 34px;
+  min-height: 34px;
+}
+
+.mint-focus-hand-dock--battle .mint-focus-hand-actions .btn {
+  min-height: 34px;
+  padding: 0 10px;
+  white-space: nowrap;
+}
+
 .mint-focus-hand-dock--stage {
   position: fixed;
   left: 50%;
@@ -2609,6 +2654,62 @@ html[data-vfx="high"] .mint-cell--spotlight {
   min-height: 32px;
   padding: 0 10px;
   font-size: 11px;
+}
+
+@media (max-width: 680px) {
+  .mint-focus-hand-dock--battle {
+    position: fixed !important;
+    left: max(10px, env(safe-area-inset-left)) !important;
+    right: max(10px, env(safe-area-inset-right)) !important;
+    bottom: max(8px, env(safe-area-inset-bottom)) !important;
+    z-index: 45 !important;
+    width: auto;
+    margin-inline: -4px;
+    padding: 5px 6px 6px !important;
+    border-radius: 18px;
+  }
+
+  .mint-focus-hand-dock--battle .mint-focus-hand-dock__status {
+    max-width: 190px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .mint-focus-hand-dock--battle .mint-focus-hand-row {
+    gap: 5px;
+    flex-wrap: nowrap;
+    justify-content: flex-start;
+    overflow-x: auto;
+    overflow-y: visible;
+    padding-bottom: 3px;
+  }
+
+  .mint-focus-hand-dock--battle .mint-focus-hand-card {
+    width: 58px;
+    padding: 3px;
+    border-radius: 11px;
+  }
+
+  .mint-focus-hand-dock--battle .mint-focus-hand-card--selected {
+    transform: translateY(-8px) scale(1.04) rotate(var(--focus-hand-rot));
+  }
+
+  .mint-focus-hand-dock--battle .mint-focus-hand-actions {
+    grid-template-columns: minmax(0, 1fr) auto auto;
+    gap: 6px;
+  }
+
+  .mint-focus-hand-dock--battle .mint-focus-hand-actions .input,
+  .mint-focus-hand-dock--battle .mint-focus-hand-actions .btn {
+    min-height: 32px;
+    height: 32px;
+    font-size: 11px;
+  }
+
+  .mint-focus-hand-dock--battle .mint-focus-hand-actions .btn {
+    padding-inline: 9px;
+  }
 }
 
 /* Stage page hierarchy */
@@ -4300,6 +4401,11 @@ html[data-vfx="high"] .mint-cell--spotlight {
     inset 0 2px 4px rgba(255, 255, 255, 0.4),
     var(--mint-gamefeel-floor-shadow),
     0 2px 12px rgba(0, 0, 0, 0.08);
+}
+
+.mint-stage--battle-compact {
+  max-width: min(720px, 100%);
+  margin-inline: auto;
 }
 
 .mint-stage__rim {
