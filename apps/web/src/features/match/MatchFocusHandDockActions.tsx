@@ -35,13 +35,13 @@ export function MatchFocusHandDockActions(input: {
           onChangeDraftWarningMarkCell(value === "" ? null : Number(value));
         }}
         disabled={currentWarnRemaining <= 0 || isAiTurn}
-        aria-label="Focus dock warning mark cell"
+        aria-label="フォーカス手札の警戒マーク"
       >
-        <option value="">Warning mark: none</option>
+        <option value="">警戒マーク: なし</option>
         {availableCells
           .filter((cell) => cell !== draftCell)
           .map((cell) => (
-            <option key={`focus-w-${cell}`} value={String(cell)}>Cell {cell}</option>
+            <option key={`focus-w-${cell}`} value={String(cell)}>{cell + 1}番のマス</option>
           ))}
       </select>
 
@@ -49,17 +49,17 @@ export function MatchFocusHandDockActions(input: {
         className="btn btn-primary h-9 px-3 text-xs mint-pressable mint-hit"
         onClick={onCommitMove}
         disabled={!canCommit}
-        aria-label="Commit move from focus hand dock"
+        aria-label="フォーカス手札からこの手を確定"
       >
-        Commit
+        確定
       </button>
       <button
         className="btn h-9 px-3 text-xs mint-pressable mint-hit"
         onClick={onUndoMove}
         disabled={!canUndo}
-        aria-label="Undo move from focus hand dock"
+        aria-label="フォーカス手札で1手戻す"
       >
-        Undo
+        戻す
       </button>
     </div>
   );

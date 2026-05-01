@@ -58,7 +58,7 @@ export function BattleHudMint({
     <div className={["mint-battle-hud", tone === "pixi" ? "mint-battle-hud--pixi" : ""].filter(Boolean).join(" ")}>
       {/* Turn counter + progress */}
       <div className="mint-battle-hud__turn">
-        <span className="mint-battle-hud__turn-label">TURN</span>
+        <span className="mint-battle-hud__turn-label">ターン</span>
         <span className="mint-battle-hud__turn-value">
           {turnCount}/{maxTurns}
         </span>
@@ -117,7 +117,7 @@ export function BattleHudMint({
               ? "mint-battle-hud__player-tag--a"
               : "mint-battle-hud__player-tag--b",
           ].join(" ")}
-          aria-label={`Current player: ${currentPlayer === 0 ? "A" : "B"}`}
+          aria-label={`現在の手番: ${currentPlayer === 0 ? "A" : "B"}`}
         >
           {gamePhase === "ai_turn" ? "🐱 Nyano" : currentPlayer === 0 ? "A" : "B"}
         </span>

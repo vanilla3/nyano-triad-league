@@ -3014,3 +3014,23 @@
 - `pnpm -C apps/web build` OK
 - `pnpm -C apps/web e2e:ux` OK
 - Playwright local battle-card screenshot smoke OK, horizontal overflow: 0px
+
+## 2026-05-01 - Battle copy Japanese localization pass
+
+### Why
+- The post-entry Match screen still had English player-facing copy in the hero, guest-mode banner, first tutorial modal, deck preview labels, and battle action controls.
+- The local dev server could keep an old module graph, so the visible tutorial needed a clean Japanese source and a server restart for verification.
+
+### What
+- Replaced the first Match tutorial modal text with Japanese battle instructions.
+- Localized Match hero copy, feature chips, guest quick play banner, deck preview headings, open-rule helper text, setup panel labels, turn labels, and commit/undo/action labels.
+- Updated focused component and E2E expectations to use the new Japanese labels.
+
+### Verify
+- `pnpm -C apps/web test -- src/components/__tests__/BattleTopHudMint.test.tsx src/components/match/__tests__/MatchSetupPanelMint.test.ts src/features/match/__tests__/MatchGuestModeIntro.test.tsx src/features/match/__tests__/MatchTurnActionPanel.test.tsx src/features/match/__tests__/matchStageActionCallbacks.test.ts src/features/match/__tests__/useMatchStageActionCallbacks.test.ts` OK
+- `pnpm -C apps/web typecheck` OK
+- `pnpm lint:text` OK
+- `pnpm -C apps/web lint` OK
+- `pnpm -C apps/web build` OK
+- `pnpm -C apps/web e2e:ux` OK
+- Local Playwright smoke OK on `/match?mode=guest&opp=pvp&auto=0&rk=v2&ui=mint&theme=mint`; tutorial rendered Japanese and horizontal overflow stayed 0px.

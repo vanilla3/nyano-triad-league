@@ -1829,7 +1829,7 @@ export function MatchPage() {
   }, [openReplay, playMatchUiSfx, pushStageActionFeedback]);
 
   const doAiMoveWithFeedback = React.useCallback(() => {
-    pushStageActionFeedback("Nyano move requested");
+    pushStageActionFeedback("Nyanoの手を進めます");
     playMatchUiSfx("card_place");
     doAiMove();
   }, [doAiMove, playMatchUiSfx, pushStageActionFeedback]);
@@ -2135,7 +2135,7 @@ export function MatchPage() {
                     className="btn btn-sm btn-primary"
                     onClick={commitMove}
                     disabled={!canCommitFromFocusToolbar}
-                    aria-label="Commit move from focus toolbar"
+                    aria-label="フォーカス操作でこの手を確定"
                   >
                     確定
                   </button>
@@ -2143,7 +2143,7 @@ export function MatchPage() {
                     className="btn btn-sm"
                     onClick={undoMove}
                     disabled={!canUndoFromFocusToolbar}
-                    aria-label="Undo move from focus toolbar"
+                    aria-label="フォーカス操作で1手戻す"
                   >
                     戻す
                   </button>
@@ -2230,12 +2230,12 @@ export function MatchPage() {
           <div className="min-w-0">
             <div className="text-xl font-semibold">Nyano Triad League</div>
             <div className="mt-1 text-sm text-slate-600">
-              Play Nyano NFT cards in a community-driven triad battle. Share transcripts, stream matches, and gather votes.
+              Nyano NFTカードで3x3盤面を取り合う、すぐ遊べるトライアドバトルです。対戦ログの共有や配信連携にも対応しています。
             </div>
             <div className="mt-3 flex flex-wrap gap-2 text-xs text-slate-500">
-              <span className="rounded-full border border-slate-200 bg-slate-50 px-2 py-1">ETH on-chain</span>
-              <span className="rounded-full border border-slate-200 bg-slate-50 px-2 py-1">Replay share</span>
-              <span className="rounded-full border border-slate-200 bg-slate-50 px-2 py-1">Twitch voting</span>
+              <span className="rounded-full border border-slate-200 bg-slate-50 px-2 py-1">公式戦はオンチェーン</span>
+              <span className="rounded-full border border-slate-200 bg-slate-50 px-2 py-1">リプレイ共有</span>
+              <span className="rounded-full border border-slate-200 bg-slate-50 px-2 py-1">配信投票</span>
             </div>
           </div>
         </div>
@@ -2271,9 +2271,9 @@ export function MatchPage() {
           <div className="flex items-center gap-3">
             <NyanoAvatar size={48} expression="playful" />
             <div>
-              <div className="font-semibold text-nyano-800">Guest Quick Play</div>
+              <div className="font-semibold text-nyano-800">ゲストですぐ対戦</div>
               <div className="text-xs text-nyano-600">
-                Trying a random deck in guest mode. To play with your own deck, create one in <Link className="font-medium underline" to="/decks">Decks</Link>.
+                ゲスト用のランダムデッキで始めます。自分のデッキで遊ぶ場合は、<Link className="font-medium underline" to="/decks">デッキ</Link>で作成してください。
               </div>
             </div>
           </div>
@@ -2440,11 +2440,11 @@ export function MatchPage() {
                 {!isEngineFocus && isGuestMode && cards && (
                   <details open={turns.length === 0} className="rounded-lg border border-surface-200 bg-surface-50 p-3">
                     <summary className="cursor-pointer text-sm font-medium text-surface-700">
-                      Deck Preview
+                      デッキ確認
                     </summary>
                     <div className="mt-2 grid gap-3 md:grid-cols-2">
                       <div>
-                        <div className="text-xs font-medium text-player-a-600 mb-1">Your Deck (A)</div>
+                        <div className="text-xs font-medium text-player-a-600 mb-1">あなたのデッキ (A)</div>
                         <div className="deck-preview-grid grid grid-cols-5 gap-2">
                           {guestDeckATokens.map((tid, i) => {
                             const c = cards.get(tid);
@@ -2453,12 +2453,12 @@ export function MatchPage() {
                         </div>
                       </div>
                       <div>
-                        <div className="text-xs font-medium text-player-b-600 mb-1">Nyano Deck (B)</div>
+                        <div className="text-xs font-medium text-player-b-600 mb-1">Nyanoのデッキ (B)</div>
                         {classicOpenCardIndices ? (
                           <div className="mb-1 text-[11px] text-slate-500">
                             {classicOpenCardIndices.mode === "all_open"
-                              ? "Open rule: all cards revealed"
-                              : `Open rule: slots ${formatClassicOpenSlots(classicOpenCardIndices.playerB)} are revealed`}
+                              ? "公開ルール: すべてのカードを表示"
+                              : `公開ルール: ${formatClassicOpenSlots(classicOpenCardIndices.playerB)}番のカードを表示`}
                           </div>
                         ) : null}
                         <div className="deck-preview-grid grid grid-cols-5 gap-2">
@@ -2698,7 +2698,7 @@ export function MatchPage() {
                         className="btn btn-primary h-10 px-4"
                         onClick={commitMove}
                         disabled={turns.length >= 9 || isAiTurn || draftCell === null || draftCardIndex === null}
-                        aria-label="Quick commit move"
+                        aria-label="この手を確定"
                       >
                         この手を確定
                       </button>
@@ -2706,7 +2706,7 @@ export function MatchPage() {
                         className="btn h-10 px-4"
                         onClick={undoMove}
                         disabled={turns.length === 0}
-                        aria-label="Quick undo move"
+                        aria-label="1手戻す"
                       >
                         1手戻す
                       </button>
@@ -2864,7 +2864,7 @@ export function MatchPage() {
                         className="btn btn-primary h-9 px-3 text-xs"
                         onClick={commitMove}
                         disabled={isAiTurn || draftCell === null || draftCardIndex === null}
-                        aria-label="Commit move from focus hand dock"
+                        aria-label="手札ドックからこの手を確定"
                       >
                         確定
                       </button>
@@ -2872,7 +2872,7 @@ export function MatchPage() {
                         className="btn h-9 px-3 text-xs"
                         onClick={undoMove}
                         disabled={isAiTurn || turns.length === 0}
-                        aria-label="Undo move from focus hand dock"
+                        aria-label="手札ドックで1手戻す"
                       >
                         戻す
                       </button>
@@ -2979,7 +2979,7 @@ export function MatchPage() {
                           className={isRpg ? "rpg-result__btn rpg-result__btn--primary" : ["btn btn-primary", isStageFocusRoute ? "h-10 px-4" : ""].join(" ").trim()}
                           onClick={commitMove}
                           disabled={turns.length >= 9 || isAiTurn || draftCell === null || draftCardIndex === null}
-                          aria-label="Commit move"
+                          aria-label="この手を確定"
                         >
                           この手を確定
                         </button>
@@ -2987,12 +2987,12 @@ export function MatchPage() {
                           className={isRpg ? "rpg-result__btn" : ["btn", isStageFocusRoute ? "h-10 px-4" : ""].join(" ").trim()}
                           onClick={undoMove}
                           disabled={turns.length === 0}
-                          aria-label="Undo last move"
+                          aria-label="1手戻す"
                         >
                           1手戻す
                         </button>
                         {isVsNyanoAi && !aiAutoPlay && isAiTurn ? (
-                          <button className={isRpg ? "rpg-result__btn rpg-result__btn--primary" : ["btn btn-primary", isStageFocusRoute ? "h-10 px-4" : ""].join(" ").trim()} onClick={doAiMove} aria-label="Nyano AI move">
+                          <button className={isRpg ? "rpg-result__btn rpg-result__btn--primary" : ["btn btn-primary", isStageFocusRoute ? "h-10 px-4" : ""].join(" ").trim()} onClick={doAiMove} aria-label="Nyano AIの手を進める">
                             Nyanoの一手
                           </button>
                         ) : null}

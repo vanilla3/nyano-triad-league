@@ -183,8 +183,8 @@ export function MatchSetupPanelMint(props: MatchSetupPanelMintProps) {
         aria-expanded={open}
       >
         <div>
-          <div className="text-base font-semibold">Match Setup</div>
-          <div className="text-xs text-slate-500">Pick deck, ruleset, and opponent with progressive controls</div>
+          <div className="text-base font-semibold">対戦準備</div>
+          <div className="text-xs text-slate-500">デッキ、ルール、対戦相手を順番に選びます</div>
         </div>
         <span className="text-sm text-slate-400">{open ? "▲" : "▼"}</span>
       </button>
@@ -251,7 +251,7 @@ export function MatchSetupPanelMint(props: MatchSetupPanelMintProps) {
 
             <div className="grid gap-3 md:grid-cols-2">
               <div className="grid gap-2">
-                <div className="text-xs font-medium text-slate-600">Opponent</div>
+                <div className="text-xs font-medium text-slate-600">対戦相手</div>
                 <div className="inline-flex w-full rounded-lg border border-slate-200 bg-white p-1">
                   <button
                     type="button"
@@ -260,7 +260,7 @@ export function MatchSetupPanelMint(props: MatchSetupPanelMintProps) {
                     disabled={isEvent}
                     data-testid="match-setup-opponent-pvp"
                   >
-                    Human vs Human
+                    プレイヤー同士
                   </button>
                   <button
                     type="button"
@@ -269,7 +269,7 @@ export function MatchSetupPanelMint(props: MatchSetupPanelMintProps) {
                     disabled={isEvent}
                     data-testid="match-setup-opponent-ai"
                   >
-                    Vs Nyano AI
+                    Nyano AIと対戦
                   </button>
                 </div>
                 {isVsNyanoAi ? (
@@ -282,14 +282,14 @@ export function MatchSetupPanelMint(props: MatchSetupPanelMintProps) {
                       aria-label="AI difficulty"
                       data-testid="match-setup-ai-difficulty"
                     >
-                      <option value="easy">Easy</option>
-                      <option value="normal">Normal</option>
-                      <option value="hard">Hard</option>
-                      <option value="expert">Expert</option>
+                      <option value="easy">はじめて</option>
+                      <option value="normal">ふつう</option>
+                      <option value="hard">つよい</option>
+                      <option value="expert">めっちゃつよい</option>
                     </select>
                     <label className="flex items-center gap-2 text-xs text-slate-700">
                       <input type="checkbox" checked={aiAutoPlay} onChange={(e) => onSetParam("auto", e.target.checked ? "1" : "0")} aria-label="AI auto play" />
-                      Auto-play Nyano turn
+                      Nyanoの手を自動で進める
                     </label>
                   </div>
                 ) : null}

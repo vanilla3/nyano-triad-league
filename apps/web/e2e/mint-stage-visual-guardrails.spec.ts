@@ -23,7 +23,7 @@ test.describe("Mint stage visual guardrails", () => {
     await prepareMintMatchDefaults(page, "off");
     await page.goto("/match?mode=guest&opp=vs_nyano_ai&ai=normal&rk=v2&ui=mint&auto=0");
 
-    await expect(page.getByText("Guest Quick Play")).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByText("ゲストですぐ対戦")).toBeVisible({ timeout: 15_000 });
     await expect(page.locator(".mint-stage").first()).toBeVisible({ timeout: 15_000 });
 
     await expect
@@ -31,7 +31,7 @@ test.describe("Mint stage visual guardrails", () => {
       .toBe("off");
 
     await expect(page.locator(".mint-stage__atmo").first()).toBeHidden();
-    await expect(page.getByRole("button", { name: "Commit move", exact: true })).toBeVisible();
+    await expect(page.getByRole("button", { name: "この手を確定", exact: true })).toBeVisible();
   });
 
   test("prefers-reduced-motion resolves visual quality to off", async ({ page }) => {
@@ -39,7 +39,7 @@ test.describe("Mint stage visual guardrails", () => {
     await prepareMintMatchDefaults(page, "auto");
     await page.goto("/match?mode=guest&opp=vs_nyano_ai&ai=normal&rk=v2&ui=mint&auto=0");
 
-    await expect(page.getByText("Guest Quick Play")).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByText("ゲストですぐ対戦")).toBeVisible({ timeout: 15_000 });
     await expect
       .poll(() => page.evaluate(() => document.documentElement.dataset.vfx ?? ""))
       .toBe("off");
@@ -56,7 +56,7 @@ test.describe("Mint stage visual guardrails", () => {
     await expect(stage).toBeVisible({ timeout: 15_000 });
     await stage.scrollIntoViewIfNeeded();
     await expect(stage).toBeInViewport();
-    await expect(page.getByRole("button", { name: "Commit move", exact: true })).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByRole("button", { name: "この手を確定", exact: true })).toBeVisible({ timeout: 15_000 });
 
     const overflowPx = await readHorizontalOverflowPx(page);
     expect(overflowPx).toBeLessThanOrEqual(1);

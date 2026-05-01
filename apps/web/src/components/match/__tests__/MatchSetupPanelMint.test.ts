@@ -19,12 +19,12 @@ describe("MatchSetupPanelMint helpers", () => {
       ui: "mint",
     });
 
-    expect(line).toContain("Starter A");
-    expect(line).toContain("Deck B: event fixed");
+    expect(line).toContain("デッキA: Starter A");
+    expect(line).toContain("デッキB: イベント固定");
     expect(line).toContain("v2 shadow+tactics");
-    expect(line).toContain("Nyano AI");
-    expect(line).toContain("first=manual");
-    expect(line).toContain("board=mint");
+    expect(line).toContain("対戦相手: Nyano AI");
+    expect(line).toContain("先攻: manual");
+    expect(line).toContain("盤面: mint");
   });
 
   it("opens advanced setup when stream mode is enabled or mode is non-manual", () => {

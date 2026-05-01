@@ -78,7 +78,7 @@ export function runDoAiMoveWithFeedback(input: {
   playMatchUiSfx: PlayMatchUiSfx;
   doAiMove: () => void;
 }): void {
-  input.pushStageActionFeedback("Nyano move requested");
+  input.pushStageActionFeedback("Nyanoの手を進めます");
   input.playMatchUiSfx("card_place");
   input.doAiMove();
 }
