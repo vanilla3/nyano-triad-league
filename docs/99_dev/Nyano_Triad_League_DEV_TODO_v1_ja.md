@@ -63,6 +63,7 @@ Detailed historical logs remain in `docs/99_dev/_archive/` and `docs/99_dev/IMPL
 - [x] 2026-05-01 Mint home visual gamefeel/copy pass: home now opens as a soft game lobby with a battle CTA, 3x3 board preview, and player-facing Japanese copy.
 - [x] 2026-05-01 Mint Arena/Events/Stream game-page pass: Mini Nyano mascot art, page guides, and player-facing Japanese copy now replace admin-like secondary surfaces.
 - [x] 2026-05-01 Events/Replay Japanese copy cleanup: visible controls, toasts, helper text, and replay/event guide labels now read as player-facing Japanese.
+- [x] 2026-05-01 Nyano favicon refresh: favicon and Apple touch icon now use a Mini Nyano face crop with Mint framing.
 
 ---
 
