@@ -2809,3 +2809,20 @@
 - `pnpm lint` OK (warning-free)
 - `pnpm -C apps/web test -- MatchSetupPanelMint MintRulesetPicker` OK
 - `pnpm -C apps/web typecheck` OK
+
+## 2026-05-01 - Vercel production deploy recovery
+
+### Why
+- Production Vercel deployments were completing without running the monorepo Vite build, leaving the public app URL serving an empty 404-like deployment.
+- The root `vercel.json` only defined SPA rewrites and did not tell Vercel where the web app build output lives.
+
+### What
+- Updated root `vercel.json` to install with `pnpm install --frozen-lockfile`, build with `pnpm build:web`, and serve `apps/web/dist`.
+- Kept the existing SPA rewrite to preserve deep links such as `/match`, `/replay`, and `/battle-stage`.
+- Added `.vercel` to `.gitignore` so local project linkage and pulled env files are not committed.
+
+### Verify
+- `pnpm test` OK
+- `pnpm release:check` OK
+- `vercel build --prod` OK
+- Production alias verified at `https://v0-nyano-triad-league.vercel.app`
