@@ -1,6 +1,6 @@
 # Nyano Triad League DEV TODO (v1)
 
-Last updated: 2026-02-21
+Last updated: 2026-05-01
 Owner: Codex + Team
 
 This document is the active, readable roadmap snapshot.
@@ -60,13 +60,14 @@ Detailed historical logs remain in `docs/99_dev/_archive/` and `docs/99_dev/IMPL
 - [x] 2026-05-01 Vercel production deploy recovery: root `vercel.json` now builds the monorepo web app with `pnpm build:web`, serves `apps/web/dist`, and keeps SPA rewrites for deep links.
 - [x] 2026-05-01 Production verification: deployed and verified `https://v0-nyano-triad-league.vercel.app`, `/match`, `/replay`, and `/battle-stage`.
 - [x] 2026-05-01 Mint theme enablement: default Mint app shell, Mint theme CSS, and Mint home surface are wired into the app build.
+- [x] 2026-05-01 Mint home visual gamefeel/copy pass: home now opens as a soft game lobby with a battle CTA, 3x3 board preview, and player-facing Japanese copy.
 
 ---
 
 ## Next Priority
 
 1. Keep `pnpm lint:text` green in CI/local workflow.
-2. Run targeted UI quality pass on Match/Replay user-visible copy and labels.
+2. Verify Mint home gamefeel pass on desktop/mobile and carry the same player-facing tone into Match/Replay where selectors allow.
 3. Continue roadmap tasks from latest approved request/work order queue.
 
 ---

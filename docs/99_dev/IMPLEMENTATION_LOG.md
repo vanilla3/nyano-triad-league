@@ -2843,3 +2843,30 @@
 - `pnpm build:web` OK
 - `pnpm -C apps/web e2e:ux -- --reporter=line` OK
 - Built bundle contains `mint-app-footer`, `mint-app-main`, `mint-app-shell`, and `mint-home`.
+
+## 2026-05-01 - Mint home visual gamefeel and player copy pass
+
+### Why
+- Mint theme was enabled, but the home screen still read like a navigation/admin surface instead of a game lobby.
+- The first viewport needed a visible board fantasy, a clearer play action, and friendlier player-facing Japanese copy.
+
+### What
+- Updated `apps/web/src/pages/Home.tsx`:
+  - Added a Mint lobby hero with primary battle action, 3x3 board preview, and compact play highlights.
+  - Reworded menu, difficulty, quick-play, onboarding, and info-bar copy around player actions.
+- Updated `apps/web/src/mint-theme/mint-theme.css`:
+  - Added the hero/battle-card/board-preview styling and responsive mobile constraints.
+  - Tuned the quick-play panel to feel like a match card while preserving existing routes.
+- Updated `apps/web/src/App.tsx`:
+  - Renamed Mint shell labels from tool-like wording to player-facing lobby/footer wording.
+
+### Verify
+- `pnpm lint:text` OK
+- `pnpm -C apps/web typecheck` OK
+- `pnpm -C apps/web build` OK
+- `pnpm -C apps/web lint` OK
+- `pnpm release:check` OK
+- Playwright local preview smoke at 1280px and 390px OK:
+  - Mint theme active.
+  - Battle CTA and 3x3 board preview visible.
+  - No horizontal overflow (`scrollWidth === clientWidth`).
