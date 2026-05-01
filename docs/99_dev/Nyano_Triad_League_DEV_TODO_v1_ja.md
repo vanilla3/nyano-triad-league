@@ -67,6 +67,7 @@ Detailed historical logs remain in `docs/99_dev/_archive/` and `docs/99_dev/IMPL
 - [x] 2026-05-01 Mint board gamefeel polish: board round track, active-player rim, actionable cell labels, and engine focus arena-floor treatment improve battle readability.
 - [x] 2026-05-01 Match operation readability polish: hand dock, quick commit, warning selectors, board prompt, drawer behavior, and focus controls now use Japanese battle-command copy with clearer card/cell summaries.
 - [x] 2026-05-01 Mint game-site visual polish: buttons, frames, tabs, page panels, mascot UI cameo, and first-match tutorial now read more like a cute game site.
+- [x] 2026-05-01 Nyano image presentation refinement: mascot imagery no longer overlays the board; a local Mint-framed opponent token keeps character presence cleaner.
 
 ---
 
