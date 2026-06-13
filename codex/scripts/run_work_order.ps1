@@ -2,7 +2,7 @@ Param(
   [Parameter(Mandatory=$true)][string]$WorkOrder,
   [string]$Model = $env:MODEL,
   [string]$BaseBranch = $env:BASE_BRANCH,
-  [ValidateSet("on-request","never","untrusted")][string]$ApprovalMode = $env:APPROVAL_MODE,
+  [string]$ApprovalMode = $env:APPROVAL_MODE,
   [switch]$CreatePR
 )
 
@@ -23,17 +23,31 @@ function Need([string]$cmd) {
 Need git
 Need codex
 
+$HasOriginRemote = $false
+try {
+  git remote get-url origin | Out-Null
+  $HasOriginRemote = $true
+} catch {
+  $HasOriginRemote = $false
+}
+
 function Resolve-WorkOrderFile([string]$input) {
   if (Test-Path $input) { return $input }
   # Accept 6, 06, 006
   $id = [int]$input
   $idNorm = $id.ToString("000")
-  $matches = Get-ChildItem -Path $WorkOrderDir -Filter "$idNorm*.md" | Select-Object -First 1
-  if (-not $matches) {
+  $matches = Get-ChildItem -Path $WorkOrderDir -Filter "$idNorm*.md"
+  if (-not $matches -or $matches.Count -eq 0) {
     Write-Error "Work order not found for id: $idNorm (dir: $WorkOrderDir)"
     exit 2
   }
-  return $matches.FullName
+  if ($matches.Count -gt 1) {
+    Write-Error "Multiple work orders match id prefix: $idNorm"
+    $matches | ForEach-Object { Write-Error "- $($_.FullName)" }
+    Write-Error "Pass the full file path to disambiguate."
+    exit 2
+  }
+  return $matches[0].FullName
 }
 
 $file = Resolve-WorkOrderFile $WorkOrder
@@ -68,15 +82,36 @@ Write-Host "Start Work Order $id — $title"
 Write-Host "File: $file"
 Write-Host "============================================================"
 
-git fetch origin | Out-Null
-git checkout $BaseBranch | Out-Null
-git pull --ff-only origin $BaseBranch | Out-Null
+if ($HasOriginRemote) {
+  git fetch origin | Out-Null
+  git checkout $BaseBranch | Out-Null
+  git pull --ff-only origin $BaseBranch | Out-Null
+} else {
+  Write-Host "NOTE: git remote 'origin' not found. Skipping fetch/pull/push steps."
+  git checkout $BaseBranch | Out-Null
+}
 
 git branch --list $branch | ForEach-Object { git branch -D $branch | Out-Null }
 git checkout -b $branch | Out-Null
 
+$pushBlock = @"
+5) Commit:
+   - git add -A
+   - git commit -m \"WO-$id: $title\"
+   - (No git remote 'origin' found; skip push/PR and leave the branch locally.)
+"@
+
+if ($HasOriginRemote) {
+  $pushBlock = @"
+5) Commit and push:
+   - git add -A
+   - git commit -m \"WO-$id: $title\"
+   - git push -u origin HEAD
+"@
+}
+
 $prBlock = "6) PR creation is optional; skip if 'gh' is not available."
-if ($CreatePR) {
+if ($CreatePR -and $HasOriginRemote) {
   $hasGh = Get-Command gh -ErrorAction SilentlyContinue
   if ($hasGh) {
     $prBlock = @"
@@ -107,10 +142,7 @@ STEPS (in order):
    - pnpm -C apps/web test
    - pnpm -C apps/web e2e (only if relevant)
 4) Show git status and summarize the diff (high level).
-5) Commit and push:
-   - git add -A
-   - git commit -m \"WO-$id: $title\"
-   - git push -u origin HEAD
+$pushBlock
 $prBlock
 
 ---- WORK ORDER ----

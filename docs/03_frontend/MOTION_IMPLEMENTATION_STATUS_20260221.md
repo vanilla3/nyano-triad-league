@@ -1,6 +1,6 @@
 # かわいいモーション（モーション言語）実装状況 2026-02-21
 
-対象：`nyano-triad-league-main (17).zip` の現状実装 + 今回の整備差分（`motions.css` 追加）
+対象：リポジトリ現状（モーション言語 v1 / `motions.css` 導入後）
 
 ---
 
@@ -8,13 +8,18 @@
 
 ### 1-1. **index.css が読み込まれていない**
 - `apps/web/src/index.css` に「盤面のセル配置/反転」や「バナー」「勝利演出」などのユーティリティが定義されています。
-- しかしエントリ（`apps/web/src/main.tsx`）は `styles.css` のみ import しており、`index.css` は実運用で読み込まれていません。
+- しかし以前はエントリ（`apps/web/src/main.tsx`）が `styles.css` のみ import していたため、`index.css` 由来のユーティリティが効かない期間がありました。
+- 現状は `main.tsx` で `motions.css` も import され、問題は解消されています。
 - その結果、`BoardView.tsx` / `Replay.tsx` / `Home.tsx` 等が参照する一部クラスが **実際には効いていない**可能性がありました。
 
 ### 1-2. 対応：`motions.css` を導入（今回の整備）
 - `apps/web/src/motions.css` を新設し、上記の「参照されているが死んでいた」モーションユーティリティを移植。
 - `main.tsx` で `styles.css` の次に `motions.css` を import。
 - さらに `prefers-reduced-motion` と `data-vfx="off"` で **一括停止できる**ようにしてあります。
+
+補足：
+- `data-vfx="off"` は“演出ゼロ”扱いなので、盤面セルの呼吸（`mint-cell--selectable` の `mint-breathe`）も停止するのが自然です。
+- 現状は `apps/web/src/mint-theme/mint-theme.css` 側で `[data-vfx="off"] .mint-cell--selectable { animation: none !important; }` を追加し、ティア整合を取りました。
 
 > これで「かわいいモーション以前に、効いてないモーション」が発生しにくい土台になりました。
 
@@ -78,4 +83,3 @@
 
 4) **モーション・ショーケース画面**
 - `/_design/motions` のようなページで、全モーションを並べてチューニング可能にする
-

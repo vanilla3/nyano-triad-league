@@ -14,7 +14,7 @@ const HIGHLIGHT_KIND_LABELS: Record<ReplayHighlightKind, string> = {
   big_flip: "大量反転",
   chain: "連鎖",
   combo: "コンボ",
-  warning: "警戒",
+  warning: "警告",
 };
 
 export function detectReplayHighlights(
@@ -38,7 +38,7 @@ export function detectReplayHighlights(
     }
 
     if (warningTriggered) {
-      highlights.push({ step, kind: "warning", label: "警戒発動" });
+      highlights.push({ step, kind: "warning", label: "警告!" });
     }
   }
   return highlights;
@@ -65,8 +65,8 @@ export function replayHighlightKindLabel(kind: ReplayHighlightKind): string {
 
 export function formatReplayWinnerLabel(
   winner: MatchResultWithHistory["winner"] | null | undefined,
-): "A" | "B" | "引き分け" {
+): "A" | "B" | "DRAW" {
   if (winner === 0) return "A";
   if (winner === 1) return "B";
-  return "引き分け";
+  return "DRAW";
 }

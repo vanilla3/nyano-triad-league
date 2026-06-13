@@ -13,6 +13,7 @@ export interface DuelStageMintProps {
   className?: string;
   impact?: CutInImpact | null;
   impactBurst?: boolean;
+  impactBurstLevel?: "soft" | "medium" | "hard" | "win" | null;
 }
 
 /** Paw print SVG path (reused across decorative watermarks). */
@@ -23,26 +24,29 @@ export function DuelStageMint({
   className = "",
   impact = null,
   impactBurst = false,
+  impactBurstLevel = null,
 }: DuelStageMintProps) {
   const stageClassName = [
     "mint-stage",
     impact ? `mint-stage--impact-${impact}` : "",
     impactBurst ? "mint-stage--impact-burst" : "",
+    // NOTE: Level-specific burst classes are `mint-stage--burst-*`.
+    // (A previous naming mismatch used `mint-stage--impact-burst-*`.)
+    impactBurstLevel ? `mint-stage--burst-${impactBurstLevel}` : "",
     className,
   ].filter(Boolean).join(" ");
 
   return (
     <div className={stageClassName}>
-      {/* Stage rim + atmosphere layers (kept lightweight and CSS-driven). */}
-      <div className="mint-stage__rim" aria-hidden="true" />
-      <div className="mint-stage__atmo" aria-hidden="true" />
-
       {/* Holo grid background (pure CSS, no image assets) */}
       <div className="mint-stage__holo" aria-hidden="true" />
 
       {/* Ambient edge glows */}
       <div className="mint-stage__glow mint-stage__glow--top" aria-hidden="true" />
       <div className="mint-stage__glow mint-stage__glow--bottom" aria-hidden="true" />
+
+      {/* Particle burst overlay (pure CSS via ::before/::after). */}
+      <div className="mint-stage__burst-particles" aria-hidden="true" />
 
       {/* Decorative paw print watermarks — playful Nyano identity */}
       <svg

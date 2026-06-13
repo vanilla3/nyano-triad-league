@@ -1,5 +1,5 @@
 import React from "react";
-import type { BoardCell, BoardState, PlayerIndex } from "@nyano/triad-engine";
+import type { BoardCell, BoardState, CardData, PlayerIndex } from "@nyano/triad-engine";
 import { CardNyanoDuel } from "./CardNyanoDuel";
 import { CardPreviewPanel } from "./CardPreviewPanel";
 import { useCardPreview } from "@/hooks/useCardPreview";
@@ -31,6 +31,7 @@ export interface BoardViewMintProps {
   onCellSelect?: (cell: number) => void;
   onClickCell?: (cell: number) => void;
   selectableCells?: Set<number> | readonly number[] | null;
+  idleGuideSelectables?: boolean | Set<number> | readonly number[] | null;
   currentPlayer?: PlayerIndex | null;
   disabled?: boolean;
   size?: "sm" | "md" | "lg";
@@ -56,6 +57,7 @@ export interface BoardViewMintProps {
   onCellDrop?: (cell: number) => void;
   /** Called when dragging over a cell (or null when leaving) */
   onCellDragHover?: (cell: number | null) => void;
+  selectedCardPreview?: CardData | null;
 }
 
 // ── Helpers ────────────────────────────────────────────────────────────
@@ -83,31 +85,12 @@ function calcScore(board: BoardState): { a: number; b: number } {
 
 const PROMPTS: Record<string, { ja: string; en: string }> = {
   select_card: { ja: "カードを選んでください", en: "Choose a card" },
-  select_cell: { ja: "光っているマスにカードを置けます", en: "Pick a glowing cell" },
-  warning: { ja: "警戒マークを置くマスを選んでください", en: "Place a warning mark" },
-  ai_turn: { ja: "Nyanoが次の一手を考えています", en: "Nyano is thinking" },
-  game_over: { ja: "対戦終了。結果を確認しましょう", en: "Game over" },
-  idle: { ja: "対戦準備中です", en: "Getting ready" },
+  select_cell: { ja: "置きたいマスをタップ", en: "Tap a cell to place" },
+  warning: { ja: "警戒マークを置くマスをタップ", en: "Tap a cell for warning mark" },
+  ai_turn: { ja: "にゃーのの番…", en: "Nyano is thinking..." },
+  game_over: { ja: "対戦終了！", en: "Game over!" },
+  idle: { ja: "準備中…", en: "Getting ready..." },
 };
-
-const PHASE_CHIPS: Record<string, string> = {
-  select_card: "カード選択",
-  select_cell: "配置チャンス",
-  warning: "警戒配置",
-  ai_turn: "Nyano思考中",
-  game_over: "決着",
-  idle: "準備中",
-};
-
-function countOccupiedCells(board: BoardState): number {
-  return board.reduce((count, cell) => count + (cell ? 1 : 0), 0);
-}
-
-function playerLabel(player?: PlayerIndex | null): string {
-  if (player === 0) return "A";
-  if (player === 1) return "B";
-  return "-";
-}
 
 // ── MintCell ───────────────────────────────────────────────────────────
 
@@ -121,6 +104,13 @@ interface MintCellProps {
   flipDelayClass?: string;
   isFocus: boolean;
   isSelectable: boolean;
+  isIdleGuide: boolean;
+  /** Spotlight highlight (used when user should pick a cell) */
+  isSpotlight: boolean;
+  ghostCard?: CardData | null;
+  ghostOwner?: PlayerIndex | null;
+  /** Trace pulse delay (ms) for flip/chain readability */
+  traceDelayMs?: number | null;
   warningMark?: PlayerIndex | null;
   onSelect?: () => void;
   /** Long-press / right-click inspect handlers for cards on board */
@@ -147,6 +137,11 @@ function MintCell({
   flipDelayClass,
   isFocus,
   isSelectable,
+  isIdleGuide,
+  isSpotlight,
+  ghostCard,
+  ghostOwner,
+  traceDelayMs,
   warningMark,
   onSelect,
   inspectHandlers,
@@ -158,17 +153,22 @@ function MintCell({
 }: MintCellProps) {
   const hasCard = !!cell?.card;
   const owner = hasCard ? (cell.owner as PlayerIndex) : null;
+  const showGhost = !hasCard && !!ghostCard && isSelectable && (isSelected || isFocus);
 
   const classes = ["mint-cell"];
 
   if (hasCard) {
     classes.push(owner === 0 ? "mint-cell--owner-a" : "mint-cell--owner-b");
   } else if (isSelectable) {
-    classes.push("mint-cell--empty", "mint-cell--selectable");
+    classes.push("mint-cell--selectable", "mint-pressable", "mint-pressable--cell");
+    if (isIdleGuide) classes.push("mint-cell--idle-guide");
     if (isWarningMode) classes.push("mint-cell--warning-mode");
+    if (isSpotlight && !isWarningMode) classes.push("mint-cell--spotlight");
   } else {
-    classes.push("mint-cell--empty", "mint-cell--flat");
+    classes.push("mint-cell--flat");
   }
+
+  if (showGhost) classes.push("mint-cell--hover-ghost");
 
   if (isSelected && !hasCard) classes.push("mint-cell--selected");
   if (dragDropEnabled && !hasCard && isSelectable) classes.push("mint-cell--drop-ready");
@@ -180,8 +180,10 @@ function MintCell({
   if (isFocus && !isPlaced) classes.push("mint-cell--focus");
 
   const cellLabel = hasCard
-    ? `${coord}: プレイヤー${owner === 0 ? "A" : "B"}のカード。辺 ${cell.card.edges.up}/${cell.card.edges.right}/${cell.card.edges.down}/${cell.card.edges.left}`
-    : `${coord}: ${isSelectable ? "配置できます" : "空きマス"}`;
+    ? `${coord}: Player ${owner === 0 ? "A" : "B"} card, edges ${cell.card.edges.up}/${cell.card.edges.right}/${cell.card.edges.down}/${cell.card.edges.left}`
+    : `${coord}: ${isSelectable ? "empty, available" : "empty"}`;
+
+  const interactive = isSelectable && !hasCard;
 
   return (
     <div
@@ -190,7 +192,18 @@ function MintCell({
       aria-selected={isSelected || undefined}
       className={classes.join(" ")}
       data-board-cell={index}
-      onClick={isSelectable && !hasCard ? onSelect : undefined}
+      tabIndex={interactive ? 0 : undefined}
+      onClick={interactive ? onSelect : undefined}
+      onKeyDown={
+        interactive
+          ? (e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                onSelect?.();
+              }
+            }
+          : undefined
+      }
       onDragEnter={(e) => {
         if (!dragDropEnabled || hasCard || !isSelectable) return;
         e.preventDefault();
@@ -241,10 +254,34 @@ function MintCell({
           isFlipped={isFlipped}
         />
       ) : (
-        <div className="mint-cell__empty-label">
-          {isSelectable ? (isWarningMode ? "警戒" : "置く") : ""}
-        </div>
+        <>
+          {showGhost && ghostCard ? (
+            <div className="mint-cell__ghost mint-motion-enter" aria-hidden="true">
+              <CardNyanoDuel
+                card={ghostCard}
+                owner={typeof ghostOwner === "number" ? ghostOwner : 0}
+                className="mint-cell__ghost-card"
+              />
+            </div>
+          ) : null}
+          <div className="mint-cell__empty-label" aria-hidden={showGhost || undefined}>
+            {showGhost ? "" : isSelectable ? (isWarningMode ? "⚠" : "＋") : ""}
+          </div>
+        </>
       )}
+
+      {/* Micro VFX overlays (gated by [data-vfx] + reduced-motion in CSS) */}
+      {isPlaced ? <span className="mint-cell__ripple" aria-hidden="true" /> : null}
+      {isFlipped ? <span className="mint-cell__burst" aria-hidden="true" /> : null}
+      {typeof traceDelayMs === "number" ? (
+        <span
+          className="mint-cell__trace"
+          style={{
+            ["--mint-trace-delay" as any]: `${Math.max(0, traceDelayMs)}ms`,
+          }}
+          aria-hidden="true"
+        />
+      ) : null}
     </div>
   );
 }
@@ -261,57 +298,18 @@ function ActionPrompt({
   const prompt = PROMPTS[gamePhase] ?? PROMPTS.idle;
   const isAi = gamePhase === "ai_turn";
 
+  const lang =
+    typeof document !== "undefined" &&
+    (document.documentElement.lang || "").toLowerCase().startsWith("en")
+      ? "en"
+      : "ja";
+  const promptText = lang === "en" ? prompt.en : prompt.ja;
+
   return (
     <div className={["mint-prompt", isWarningMode && "mint-prompt--warning"].filter(Boolean).join(" ")}>
       <div className={["mint-prompt__text", isAi && "mint-prompt__text--ai"].filter(Boolean).join(" ")}>
-        {prompt.ja}
+        {promptText}
       </div>
-    </div>
-  );
-}
-
-function BoardTurnTrack({
-  occupiedCount,
-  currentPlayer,
-  gamePhase,
-}: {
-  occupiedCount: number;
-  currentPlayer?: PlayerIndex | null;
-  gamePhase: string;
-}) {
-  const nextTurn = Math.min(occupiedCount + 1, 9);
-  const phaseLabel = PHASE_CHIPS[gamePhase] ?? PHASE_CHIPS.idle;
-
-  return (
-    <div className="mint-turn-track" aria-label={`Round ${nextTurn} of 9`}>
-      <div className="mint-turn-track__summary">
-        <span className="mint-turn-track__eyebrow">ROUND</span>
-        <strong className="mint-turn-track__round">
-          {nextTurn}<span>/9</span>
-        </strong>
-        <span
-          className={[
-            "mint-turn-track__player",
-            currentPlayer === 0 ? "mint-turn-track__player--a" : "",
-            currentPlayer === 1 ? "mint-turn-track__player--b" : "",
-          ].filter(Boolean).join(" ")}
-        >
-          {playerLabel(currentPlayer)}
-        </span>
-      </div>
-      <div className="mint-turn-track__pips" aria-hidden="true">
-        {Array.from({ length: 9 }, (_, index) => (
-          <span
-            key={index}
-            className={[
-              "mint-turn-track__pip",
-              index < occupiedCount ? "mint-turn-track__pip--done" : "",
-              index === occupiedCount && occupiedCount < 9 ? "mint-turn-track__pip--next" : "",
-            ].filter(Boolean).join(" ")}
-          />
-        ))}
-      </div>
-      <div className="mint-turn-track__phase">{phaseLabel}</div>
     </div>
   );
 }
@@ -349,6 +347,7 @@ export function BoardViewMint({
   flippedCells = [],
   warningMarks = [],
   selectableCells,
+  idleGuideSelectables,
   onCellSelect,
   onClickCell,
   currentPlayer,
@@ -364,11 +363,17 @@ export function BoardViewMint({
   dragDropEnabled = false,
   onCellDrop,
   onCellDragHover,
+  selectedCardPreview = null,
 }: BoardViewMintProps) {
   const gridRef = React.useRef<HTMLDivElement>(null);
-  const selectableSet = toSelectableSet(selectableCells);
+  const baseSelectable = toSelectableSet(selectableCells);
+  const idleGuideSet = idleGuideSelectables === true
+    ? baseSelectable
+    : idleGuideSelectables
+      ? toSelectableSet(idleGuideSelectables)
+      : new Set<number>();
+  const selectableSet = new Set<number>([...baseSelectable, ...idleGuideSet]);
   const score = calcScore(board);
-  const occupiedCount = countOccupiedCells(board);
   const inspect = useCardPreview();
 
   const focus = typeof focusCell === "number" ? focusCell : null;
@@ -383,6 +388,14 @@ export function BoardViewMint({
 
   const isWarningMode = gamePhase === "warning";
 
+  // Spotlight: when the user is expected to pick a cell, gently guide the eyes.
+  // - select_cell: only when a hand card is selected (selectedCardPreview)
+  // - warning: always (warning mark placement)
+  const spotlightOn =
+    !disabled &&
+    baseSelectable.size > 0 &&
+    ((gamePhase === "select_cell" && !!selectedCardPreview) || gamePhase === "warning");
+
   const handleSelect = (cell: number) => {
     if (disabled) return;
     const fn = onCellSelect ?? onClickCell;
@@ -390,21 +403,7 @@ export function BoardViewMint({
   };
 
   return (
-    <div
-      className={[
-        "mint-board-view",
-        `mint-board-view--phase-${gamePhase}`,
-        currentPlayer === 0 ? "mint-board-view--player-a" : "",
-        currentPlayer === 1 ? "mint-board-view--player-b" : "",
-        className,
-      ].filter(Boolean).join(" ")}
-    >
-      <BoardTurnTrack
-        occupiedCount={occupiedCount}
-        currentPlayer={currentPlayer}
-        gamePhase={gamePhase}
-      />
-
+    <div className={["grid gap-3", className].join(" ")}>
       {/* ── Score Bar ── */}
       <div className="mint-scorebar">
         <div className="mint-scorebar__player">
@@ -427,15 +426,11 @@ export function BoardViewMint({
       </div>
 
       {/* ── Board Grid ── */}
-      <div
-        className={[
-          "mint-board-frame",
-          currentPlayer === 0 ? "mint-board-frame--player-a" : "",
-          currentPlayer === 1 ? "mint-board-frame--player-b" : "",
-          `mint-board-frame--phase-${gamePhase}`,
-        ].filter(Boolean).join(" ")}
-      >
-        <div className="mint-board-inner">
+      <div className="mint-board-frame">
+        <div
+          className={["mint-board-inner", spotlightOn ? "mint-board-inner--spotlight" : ""].filter(Boolean).join(" ")}
+          data-spotlight={spotlightOn ? "on" : undefined}
+        >
           <div className="mint-grid" ref={gridRef} role="grid" aria-label="Game board">
             {board.map((cell, idx) => {
               const coord = CELL_COORDS[idx] ?? String(idx);
@@ -447,6 +442,26 @@ export function BoardViewMint({
               const isFocus = focus === idx;
               const isSel = effectiveSelected === idx;
               const warning = warnMap.get(idx) ?? null;
+              const hasCard = !!cell?.card;
+              const isIdleGuide = !hasCard && !spotlightOn && idleGuideSet.has(idx);
+              const ghostCard = selectedCardPreview && !hasCard && isSelectable && (isSel || isFocus)
+                ? selectedCardPreview
+                : null;
+
+              // Spotlight highlight (only for empty selectable cells; warning mode uses its own amber styling)
+              const isSpotlight = spotlightOn && !hasCard && isSelectable;
+
+              // Chain/flip trace pulse — align delays with flip stagger so causality is readable.
+              const traceDelayMs = (() => {
+                const traceActive =
+                  (Array.isArray(flippedCells) && (flippedCells?.length ?? 0) > 0) ||
+                  (Array.isArray(flipTraces) && (flipTraces?.length ?? 0) > 0);
+                if (!traceActive) return null;
+                if (!(isPlaced || isFlipped)) return null;
+                if (isPlaced) return 0;
+                if (flipIndex >= 0) return flipIndex * 200;
+                return 0;
+              })();
 
               // Inspect handlers for placed cards (long-press / right-click)
               const cellInspect = cell?.card
@@ -465,6 +480,11 @@ export function BoardViewMint({
                   flipDelayClass={flipDelay}
                   isFocus={!!isFocus}
                   isSelectable={isSelectable}
+                  isIdleGuide={isIdleGuide}
+                  isSpotlight={isSpotlight}
+                  ghostCard={ghostCard}
+                  ghostOwner={currentPlayer ?? null}
+                  traceDelayMs={traceDelayMs}
                   warningMark={warning}
                   onSelect={() => handleSelect(idx)}
                   inspectHandlers={cellInspect}

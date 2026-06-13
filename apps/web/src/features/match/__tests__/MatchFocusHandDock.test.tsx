@@ -34,7 +34,7 @@ function collectElementsByType(node: React.ReactNode, type: unknown): React.Reac
 function createTree(overrides?: Partial<Parameters<typeof MatchFocusHandDock>[0]>): React.ReactElement {
   return MatchFocusHandDock({
     isStageFocusRoute: true,
-    headerLabel: "Hand Dock",
+    headerLabel: "手札ドック",
     isAiTurn: false,
     draftCardIndex: 1,
     draftCell: 2,

@@ -33,6 +33,18 @@ type TurnDelta = {
 
 const ownerLabel = (o: Owner): string => (o === 0 ? "A" : "B");
 
+const COMBO_EFFECT_LABEL: Record<string, string> = {
+  none: "なし",
+  fever: "フィーバー",
+  domination: "ドミネーション",
+  momentum: "モメンタム",
+};
+
+function comboEffectLabel(effect: string): string {
+  return COMBO_EFFECT_LABEL[effect] ?? effect;
+}
+
+
 function formatCells(cells: number[]): string {
   if (cells.length === 0) return "—";
   const coords = cells.map(cellCoord);
@@ -77,7 +89,7 @@ function computeDelta(boardPrev: BoardState, boardNow: BoardState, turn: TurnSum
 
     // Match flipTrace by target cell index
     const trace = traces.find((t) => t.to === c);
-    const explain = trace ? flipTraceFull(trace) : `${cellCoord(c)}: (trace not available)`;
+    const explain = trace ? flipTraceFull(trace) : `${cellCoord(c)}：理由不明（traceなし）`;
 
     flipped.push({
       cell: c,
@@ -135,45 +147,46 @@ export function TurnLog(props: {
           >
             <div className="flex items-center justify-between gap-3">
               <div className="flex items-center gap-2 font-medium">
-                <span>Turn {t.turnIndex + 1} · {t.player === 0 ? "A" : "B"} · {cellCoord(t.cell)} (cell {t.cell}) · card {t.cardIndex + 1}</span>
+                <span>
+                  ターン{t.turnIndex + 1} · {t.player === 0 ? "A" : "B"} · {cellCoord(t.cell)} · カード{t.cardIndex + 1}
+                </span>
                 {annotation && (
                   <span
                     className={`rounded-md border px-1.5 py-0.5 text-[10px] font-medium ${QUALITY_DISPLAY[annotation.quality].color}`}
                     title={`${QUALITY_DISPLAY[annotation.quality].en} (delta: ${annotation.delta > 0 ? "+" : ""}${annotation.delta.toFixed(0)})`}
                   >
-                    {QUALITY_DISPLAY[annotation.quality].ja} ({annotation.delta > 0 ? "+" : ""}{annotation.delta.toFixed(0)})
+                    {QUALITY_DISPLAY[annotation.quality].ja} ({annotation.delta > 0 ? "+" : ""}
+                    {annotation.delta.toFixed(0)})
                   </span>
                 )}
                 {props.boardAdvantages?.[t.turnIndex + 1] && (
                   <AdvantageBadge advantage={props.boardAdvantages[t.turnIndex + 1]} size="sm" />
                 )}
               </div>
-              <div className="text-xs text-surface-500">token #{t.tokenId.toString()}</div>
+              <div className="text-xs text-surface-500">トークン #{t.tokenId.toString()}</div>
             </div>
 
             <div className="mt-1 flex flex-wrap gap-2 text-xs text-surface-600">
-              <span className="badge">奪取: {flipTracesSummary(t.flipTraces ?? [])}</span>
+              <span className="badge">奪取：{flipTracesSummary(t.flipTraces ?? [])}</span>
               <FlipTraceBadges flipTraces={t.flipTraces} />
 
               {d ? (
                 <>
-                  <span className="badge">placed: {d.placedCell === null ? "—" : cellCoord(d.placedCell)}</span>
-                  <span className="badge badge-amber">flipped: {formatCells(d.flippedCells)}</span>
+                  <span className="badge">配置：{d.placedCell === null ? "—" : cellCoord(d.placedCell)}</span>
+                  <span className="badge badge-amber">奪取マス：{formatCells(d.flippedCells)}</span>
                 </>
               ) : null}
 
-              <span className="badge">comboCount: {t.comboCount}</span>
-              <span className="badge">combo: {t.comboEffect}</span>
-              <span className="badge">+triad: {t.appliedBonus.triadPlus}</span>
-              <span className="badge">ignoreWarning: {t.appliedBonus.ignoreWarningMark ? "yes" : "no"}</span>
+              <span className="badge">連鎖数：{t.comboCount}</span>
+              <span className="badge">連鎖：{comboEffectLabel(t.comboEffect)}</span>
+              <span className="badge">トライアド+：{t.appliedBonus.triadPlus}</span>
+              <span className="badge">警戒無視：{t.appliedBonus.ignoreWarningMark ? "はい" : "いいえ"}</span>
 
               {t.warningPlaced !== null ? (
-                <span className="rounded-md border border-slate-200 bg-slate-50 px-2 py-0.5">placed mark: {t.warningPlaced}</span>
+                <span className="rounded-md border border-slate-200 bg-slate-50 px-2 py-0.5">警戒配置：{cellCoord(t.warningPlaced)}</span>
               ) : null}
 
-              {t.warningTriggered ? (
-                <span className="badge badge-amber">stepped on warning</span>
-              ) : null}
+              {t.warningTriggered ? <span className="badge badge-amber">警戒マーク踏み</span> : null}
             </div>
 
             {selected ? (
@@ -194,14 +207,14 @@ export function TurnLog(props: {
 
                 {d ? (
                   <div className="rounded-lg border border-surface-200 bg-white p-2 text-xs text-surface-700">
-                    <div className="font-medium">Δ (board diff)</div>
+                    <div className="font-medium">差分（盤面）</div>
                     <div className="mt-1 grid gap-1 font-mono">
                       <div>
-                        placed: {d.placedCell === null ? "—" : `${cellCoord(d.placedCell)} (cell ${d.placedCell})`} {" "}
+                        配置：{d.placedCell === null ? "—" : `${cellCoord(d.placedCell)}（${d.placedCell}）`}{" "}
                         {d.placedTokenId !== null ? `(#${d.placedTokenId.toString()})` : ""}{" "}
-                        {d.placedOwner !== null ? `by ${ownerLabel(d.placedOwner)}` : ""}
+                        {d.placedOwner !== null ? `プレイヤー${ownerLabel(d.placedOwner)}` : ""}
                       </div>
-                      <div>flipped: {d.flipped.length}</div>
+                      <div>奪取：{d.flipped.length}</div>
 
                       {d.flipped.length ? (
                         <div className="mt-1 grid gap-1">

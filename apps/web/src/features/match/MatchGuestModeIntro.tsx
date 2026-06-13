@@ -15,9 +15,9 @@ export function MatchGuestModeIntro(input: {
         <div className="flex items-center gap-3">
           <NyanoAvatar size={48} expression="playful" />
           <div>
-            <div className="font-semibold text-nyano-800">ゲストですぐ対戦</div>
+            <div className="font-semibold text-nyano-800">Guest Quick Play</div>
             <div className="text-xs text-nyano-600">
-              ゲスト用のランダムデッキですぐ始められます。自分のデッキで遊ぶ場合は、<Link className="font-medium underline" to="/decks">デッキ</Link>で作成してください。
+              Start instantly with a random guest deck. To use your own deck, open <Link className="font-medium underline" to="/decks">Decks</Link> and create one.
             </div>
           </div>
         </div>

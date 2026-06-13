@@ -1,15 +1,9 @@
 import React from "react";
 
-const CELL_LABELS = ["A1", "B1", "C1", "A2", "B2", "C2", "A3", "B3", "C3"] as const;
+const CELL_COORDS = ["A1", "B1", "C1", "A2", "B2", "C2", "A3", "B3", "C3"] as const;
 
-function formatCellLabel(cell: number | null): string {
-  if (cell === null) return "マス未選択";
-  return CELL_LABELS[cell] ?? `マス${cell}`;
-}
-
-function formatCardLabel(cardIndex: number | null): string {
-  if (cardIndex === null) return "カード未選択";
-  return `カード${cardIndex + 1}`;
+function cellCoord(cell: number): string {
+  return CELL_COORDS[cell] ?? String(cell);
 }
 
 export function MatchQuickCommitBar(input: {
@@ -42,15 +36,11 @@ export function MatchQuickCommitBar(input: {
   } = input;
 
   return (
-    <div
-      className="mint-match-quick-commit hidden lg:flex flex-wrap items-center justify-between gap-3 rounded-xl border px-3 py-2"
-    >
+    <div className="mint-match-quick-commit hidden lg:flex flex-wrap items-center justify-between gap-3 rounded-xl border px-3 py-2">
       <div className="grid gap-0.5 text-xs">
-        <div className="mint-match-quick-commit__title font-semibold">
-          この一手
-        </div>
+        <div className="mint-match-quick-commit__title font-semibold">クイック確定</div>
         <div className="mint-match-quick-commit__hint">
-          {formatCardLabel(draftCardIndex)} → {formatCellLabel(draftCell)}
+          カード{draftCardIndex !== null ? draftCardIndex + 1 : "-"} ｜ マス{draftCell !== null ? cellCoord(draftCell) : "-"}
         </div>
       </div>
 
@@ -59,7 +49,7 @@ export function MatchQuickCommitBar(input: {
           className="inline-flex items-center gap-2 text-xs font-semibold"
           style={{ color: "var(--mint-text-secondary, #4B5563)" }}
         >
-          警戒
+          警戒マーク（残り{currentWarnRemaining}）
           <select
             className="input h-10 min-w-[170px]"
             value={draftWarningMarkCell === null ? "" : String(draftWarningMarkCell)}
@@ -68,13 +58,15 @@ export function MatchQuickCommitBar(input: {
               onChangeDraftWarningMarkCell(v === "" ? null : Number(v));
             }}
             disabled={isBoardFull || isAiTurn || currentWarnRemaining <= 0}
-            aria-label="Quick warning mark cell"
+            aria-label="警戒マークの配置先"
           >
             <option value="">なし</option>
             {availableCells
               .filter((c) => c !== draftCell)
               .map((c) => (
-                <option key={`quick-${c}`} value={String(c)}>警戒 {formatCellLabel(c)}</option>
+                <option key={`quick-${c}`} value={String(c)}>
+                  {cellCoord(c)}
+                </option>
               ))}
           </select>
         </label>
@@ -82,17 +74,17 @@ export function MatchQuickCommitBar(input: {
           className="btn btn-primary h-10 px-4"
           onClick={onCommitMove}
           disabled={!canCommit}
-          aria-label="Quick commit move"
+          aria-label="手を確定"
         >
-          この手を確定
+          確定
         </button>
         <button
           className="btn h-10 px-4"
           onClick={onUndoMove}
           disabled={!canUndo}
-          aria-label="Quick undo move"
+          aria-label="1手取り消し"
         >
-          1手戻す
+          取り消し
         </button>
       </div>
     </div>

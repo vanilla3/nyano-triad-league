@@ -1,4 +1,9 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
+
+// Dynamic-import export-integrity checks can exceed the 5s default under
+// full-suite parallel load (vite transform contention). Same fix as
+// useNyanoTokenMetadata.test.ts.
+vi.setConfig({ testTimeout: 30_000 });
 
 describe("CardBrowserMint", () => {
   it("exports CardBrowserMint component", async () => {

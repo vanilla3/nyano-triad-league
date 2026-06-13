@@ -45,7 +45,7 @@ export function MatchBoardFeedbackPanels(input: {
               : undefined
           }
         >
-          Battle: {lastFlipSummaryText}
+          対戦：{lastFlipSummaryText}
         </div>
       ) : null}
     </>

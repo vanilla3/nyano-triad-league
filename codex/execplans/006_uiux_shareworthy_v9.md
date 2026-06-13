@@ -34,9 +34,9 @@ Make Nyano Triad League feel like a *game* even before you start a match:
 
 ## 4) Work Order mapping
 
-- WO006: Audit + motion tokens (foundation)
-- WO007: Cut-in stability + catharsis pack
-- WO008: Alive background + shareworthy micro-features
+- WO048: Audit + motion tokens (foundation)
+- WO050: Cut-in stability + catharsis pack
+- WO051: Alive background + shareworthy micro-features
 
 ## 5) Verification
 

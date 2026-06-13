@@ -11,11 +11,11 @@
 
 ## 2) 成果物（Deliverables）
 
-- [ ] Match Setup を “ガイド付き” に再構成（初心者でも迷わず開始）
-- [ ] 既存の URL param 互換を維持したまま UI を刷新（内部状態は param が真実）
-- [ ] 高度な設定は折りたたみ/Drawer に隔離（ただし機能は削らない）
-- [ ] 主要設定の 1 行サマリ（今の設定が一目で分かる）
-- [ ] 最低 1 つ回帰防止テスト（unit か e2e）
+- [x] Match Setup を “ガイド付き” に再構成（初心者でも迷わず開始）
+- [x] 既存の URL param 互換を維持したまま UI を刷新（内部状態は param が真実）
+- [x] 高度な設定は折りたたみ/Drawer に隔離（ただし機能は削らない）
+- [x] 主要設定の 1 行サマリ（今の設定が一目で分かる）
+- [x] 最低 1 つ回帰防止テスト（unit か e2e）
 
 ## 3) 要件（Requirements）
 
@@ -98,13 +98,13 @@
 
 ## 8) タスクリスト（細分化）
 
-- [ ] `MatchSetupPanelMint` を新規作成し、Match.tsx の Setup 部分を移植
-- [ ] Primary UI を card/segmented ベースに置き換え
-  - [ ] ルール “おすすめ” を最上段に
-  - [ ] 初心者が理解できる短文ラベル + 1行説明
-- [ ] Advanced を折りたたみへ
-- [ ] 1行サマリ（Deck/Rule/Opponent）を常に表示
-- [ ] 回帰防止テスト
+- [x] `MatchSetupPanelMint` を新規作成し、Match.tsx の Setup 部分を移植
+- [x] Primary UI を card/segmented ベースに置き換え
+  - [x] ルール “おすすめ” を最上段に
+  - [x] 初心者が理解できる短文ラベル + 1行説明
+- [x] Advanced を折りたたみへ
+- [x] 1行サマリ（Deck/Rule/Opponent）を常に表示
+- [x] 回帰防止テスト
   - 例: Setup UI を触ると URL param が更新されること
 
 ## 9) 検証（Verification）

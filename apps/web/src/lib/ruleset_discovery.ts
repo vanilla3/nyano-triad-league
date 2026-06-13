@@ -1,12 +1,6 @@
 import { computeRulesetId } from "@nyano/triad-engine";
 
-import {
-  RULESET_KEYS,
-  resolveRulesetOrThrow,
-  type CanonicalRulesetKey,
-  type LegacyRulesetKey,
-  type RulesetKey,
-} from "@/lib/ruleset_registry";
+import { RULESET_KEYS, resolveRulesetOrThrow, type RulesetKey } from "@/lib/ruleset_registry";
 
 export type RulesetDiscoveryMeta = {
   title: string;
@@ -15,104 +9,101 @@ export type RulesetDiscoveryMeta = {
   recommended: boolean;
 };
 
-const RULESET_META: Record<CanonicalRulesetKey, RulesetDiscoveryMeta> = {
+const RULESET_META: Record<RulesetKey, RulesetDiscoveryMeta> = {
   v1: {
-    title: "Core Tactics v1",
-    summary: "Baseline ruleset for deterministic on-chain compatible matches.",
-    tags: ["core", "stable"],
+    title: "コア戦術 v1",
+    summary: "決定論と互換性を重視したベースルール。",
+    tags: ["core", "stable", "v1"],
     recommended: false,
   },
   v2: {
-    title: "Core Tactics v2",
-    summary: "Default modern ruleset. Great first choice for most matches.",
-    tags: ["default", "balanced"],
+    title: "コア戦術 v2",
+    summary: "標準ルール。迷ったらまずこれ。",
+    tags: ["default", "balanced", "v2"],
     recommended: true,
   },
   full: {
-    title: "Full Rules",
-    summary: "Traits and formations enabled for maximum tactical depth.",
+    title: "フルルール",
+    summary: "特性・編成を含む、最も戦術的な構成。",
     tags: ["advanced", "deep"],
     recommended: true,
   },
   classic_plus_same: {
-    title: "Classic Plus+Same",
-    summary: "Classic flavor with Plus/Same interactions.",
+    title: "クラシック Plus+Same",
+    summary: "連鎖が起きやすい定番クラシック。",
     tags: ["classic", "combo"],
     recommended: true,
   },
+  classic_custom: {
+    title: "クラシック カスタム",
+    summary: "ルールを自由に組み合わせてURL共有。",
+    tags: ["classic", "custom"],
+    recommended: false,
+  },
+  classic_plus: {
+    title: "クラシック Plus",
+    summary: "Plus による連鎖奪取を有効化。",
+    tags: ["classic", "plus"],
+    recommended: false,
+  },
+  classic_same: {
+    title: "クラシック Same",
+    summary: "Same による連鎖奪取を有効化。",
+    tags: ["classic", "same"],
+    recommended: false,
+  },
+  classic_reverse: {
+    title: "クラシック Reverse",
+    summary: "数値の強弱関係を反転。",
+    tags: ["classic", "reverse"],
+    recommended: false,
+  },
+  classic_ace_killer: {
+    title: "クラシック Ace Killer",
+    summary: "1 が 10 に勝つ特殊ルール。",
+    tags: ["classic", "ace_killer"],
+    recommended: false,
+  },
+  classic_type_ascend: {
+    title: "クラシック Type Ascend",
+    summary: "同タイプ継続配置で補正が上昇。",
+    tags: ["classic", "type", "ascend"],
+    recommended: false,
+  },
+  classic_type_descend: {
+    title: "クラシック Type Descend",
+    summary: "同タイプ継続配置で補正が減衰。",
+    tags: ["classic", "type", "descend"],
+    recommended: false,
+  },
   classic_order: {
-    title: "Classic Order",
-    summary: "Classic mode where hand order impacts play flow.",
+    title: "クラシック Order",
+    summary: "カード使用順が固定される。",
     tags: ["classic", "order"],
     recommended: false,
   },
   classic_chaos: {
-    title: "Classic Chaos",
-    summary: "Classic mode with unpredictable play constraints each turn.",
+    title: "クラシック Chaos",
+    summary: "毎ターンの使用カードがランダム。",
     tags: ["classic", "chaos"],
     recommended: false,
   },
   classic_swap: {
-    title: "Classic Swap",
-    summary: "Classic mode with deterministic cross-side slot swap.",
+    title: "クラシック Swap",
+    summary: "開始時に手札スロットが入れ替わる。",
     tags: ["classic", "swap"],
     recommended: false,
   },
   classic_all_open: {
-    title: "Classic All Open",
-    summary: "Both hands are visible from the start.",
+    title: "クラシック All Open",
+    summary: "双方の手札を常時公開。",
     tags: ["classic", "open"],
     recommended: false,
   },
   classic_three_open: {
-    title: "Classic Three Open",
-    summary: "Three cards are visible while the rest remain hidden.",
+    title: "クラシック Three Open",
+    summary: "各手札3枚のみ公開。",
     tags: ["classic", "open"],
-    recommended: false,
-  },
-};
-
-const LEGACY_RULESET_META: Record<LegacyRulesetKey, RulesetDiscoveryMeta> = {
-  classic_custom: {
-    title: "Classic Custom",
-    summary: "Classic rules configured from URL mask parameters.",
-    tags: ["classic", "custom", "legacy"],
-    recommended: false,
-  },
-  classic_plus: {
-    title: "Classic Plus (Legacy)",
-    summary: "Legacy key for Plus-only classic rules.",
-    tags: ["classic", "legacy"],
-    recommended: false,
-  },
-  classic_same: {
-    title: "Classic Same (Legacy)",
-    summary: "Legacy key for Same-only classic rules.",
-    tags: ["classic", "legacy"],
-    recommended: false,
-  },
-  classic_reverse: {
-    title: "Classic Reverse (Legacy)",
-    summary: "Legacy key for Reverse-only classic rules.",
-    tags: ["classic", "legacy"],
-    recommended: false,
-  },
-  classic_ace_killer: {
-    title: "Classic Ace Killer (Legacy)",
-    summary: "Legacy key for Ace Killer-only classic rules.",
-    tags: ["classic", "legacy"],
-    recommended: false,
-  },
-  classic_type_ascend: {
-    title: "Classic Type Ascend (Legacy)",
-    summary: "Legacy key for Type Ascend-only classic rules.",
-    tags: ["classic", "legacy"],
-    recommended: false,
-  },
-  classic_type_descend: {
-    title: "Classic Type Descend (Legacy)",
-    summary: "Legacy key for Type Descend-only classic rules.",
-    tags: ["classic", "legacy"],
     recommended: false,
   },
 };
@@ -127,14 +118,23 @@ export function resolveRulesetKeyById(rulesetId: string | null | undefined): Rul
 }
 
 export function getRulesetMeta(key: RulesetKey): RulesetDiscoveryMeta {
-  if (key in RULESET_META) return RULESET_META[key as CanonicalRulesetKey];
-  return LEGACY_RULESET_META[key as LegacyRulesetKey];
+  return RULESET_META[key];
 }
 
 export function getRecommendedRulesetKeys(): RulesetKey[] {
   return RULESET_KEYS.filter((key) => RULESET_META[key].recommended);
 }
 
-export function buildMatchRulesetUrl(key: RulesetKey): string {
-  return `/match?ui=mint&rk=${key}`;
+type BuildMatchRulesetUrlOptions = {
+  classicMask?: string | null;
+  theme?: string | null;
+};
+
+export function buildMatchRulesetUrl(key: RulesetKey, opts?: BuildMatchRulesetUrlOptions): string {
+  const params = new URLSearchParams();
+  params.set("ui", "mint");
+  params.set("rk", key);
+  if (key === "classic_custom" && opts?.classicMask) params.set("cr", opts.classicMask);
+  if (opts?.theme) params.set("theme", opts.theme);
+  return `/match?${params.toString()}`;
 }

@@ -6,12 +6,39 @@
     <title>Nyano Triad League</title>
     <meta name="description" content="NyanoNFTを使ったカードバトルゲーム。デッキを組んで、対戦し、勝利を共有しよう。" />
 
+    <!-- Bootstrap theme & VFX early (avoid flash of wrong theme / motion) -->
+    <script>
+      (() => {
+        try {
+          const params = new URLSearchParams(location.search);
+          const theme = (params.get("theme") || localStorage.getItem("nytl.theme") || "mint").trim();
+          if (theme) document.documentElement.dataset.theme = theme;
+        } catch {}
+
+        try {
+          const reduced = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+          const rawPref = (localStorage.getItem("nytl.vfx.quality") || "auto").trim();
+          let vfx = rawPref;
+
+          if (reduced) vfx = "off";
+          if (vfx === "auto") {
+            const mem = navigator.deviceMemory;
+            const cores = navigator.hardwareConcurrency;
+            if ((typeof mem === "number" && mem < 4) || (typeof cores === "number" && cores < 4)) vfx = "low";
+            else if ((typeof mem === "number" && mem >= 8) && (typeof cores === "number" && cores >= 8)) vfx = "high";
+            else vfx = "medium";
+          }
+
+          if (vfx && vfx !== "auto") document.documentElement.dataset.vfx = vfx;
+        } catch {}
+      })();
+    </script>
+
     <!-- Favicon -->
     <link rel="icon" type="image/x-icon" href="/favicon.ico" />
     <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16.png" />
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
     <link rel="icon" type="image/png" sizes="192x192" href="/favicon-192.png" />
-    <link rel="icon" type="image/webp" sizes="512x512" href="/favicon-512.webp" />
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
 
     <!-- Open Graph -->

@@ -105,10 +105,10 @@ function hasWebGlContextSupport(): boolean {
 
 const PROMPTS: Record<string, { ja: string; en: string }> = {
   select_card: { ja: "カードを選んでください", en: "Choose a card" },
-  select_cell: { ja: "光っているマスにカードを置けます", en: "Pick a glowing cell" },
-  ai_turn: { ja: "Nyanoが次の一手を考えています", en: "Nyano is thinking" },
-  game_over: { ja: "対戦終了。結果を確認しましょう", en: "Game over" },
-  idle: { ja: "対戦準備中です", en: "Getting ready" },
+  select_cell: { ja: "置きたいマスをタップ", en: "Tap a cell to place" },
+  ai_turn: { ja: "にゃーのの番…", en: "Nyano is thinking..." },
+  game_over: { ja: "対戦終了！", en: "Game over!" },
+  idle: { ja: "準備中…", en: "Getting ready..." },
 };
 
 function EngineActionPrompt({ gamePhase }: { gamePhase?: string }) {

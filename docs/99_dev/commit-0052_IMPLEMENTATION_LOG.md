@@ -11,7 +11,7 @@
 
 ## Why
 投票開始時に ai_prompt だけ送ると、投票中に合法手 allowlist がズレる可能性がある。  
-state_json を先に送って strictAllowed を効かせることで、荒れにくい視聴者参加になる。fileciteturn1file0
+state_json を先に送って strictAllowed を効かせることで、荒れにくい視聴者参加になる。
 
 ## Manual test checklist
 - `/stream` で `vote start → state_json + ai_prompt` を ON

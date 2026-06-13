@@ -12,9 +12,9 @@ describe("features/match/MatchResultSummaryPanel", () => {
         result={{ winner: "A", tilesA: 6, tilesB: 3, matchId: "match-1" }}
       />,
     );
-    expect(html).toContain("Winner:");
-    expect(html).toContain("tiles A/B = 6/3");
-    expect(html).toContain("Match ID: match-1");
+    expect(html).toContain("勝者：");
+    expect(html).toContain("（A/B = 6/3）");
+    expect(html).toContain("matchId: match-1");
   });
 
   it("renders pending summary with stage-focus muted class when result is missing", () => {
@@ -26,7 +26,7 @@ describe("features/match/MatchResultSummaryPanel", () => {
       />,
     );
     expect(html).toContain("stage-focus-side-panel--muted");
-    expect(html).not.toContain("Winner:");
+    expect(html).not.toContain("勝者：");
   });
 
   it("uses rpg style shell in RPG mode", () => {

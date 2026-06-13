@@ -114,7 +114,7 @@ describe("features/match/useMatchReplayActions", () => {
       {
         type: "success",
         title: "Copied",
-        message: "Share URL copied to clipboard.",
+        message: "共有URLをコピーしました。",
       },
     ]);
   });
@@ -246,7 +246,7 @@ describe("features/match/useMatchReplayActions", () => {
     await actions.copyShareTemplate();
     expect(deps.copyToClipboard).toHaveBeenCalledWith("share:https://example.invalid/replay");
     expect(deps.calls).toEqual([
-      { type: "success", title: "Copied", message: "Share template copied to clipboard." },
+      { type: "success", title: "Copied", message: "共有テンプレをコピーしました。" },
     ]);
   });
 

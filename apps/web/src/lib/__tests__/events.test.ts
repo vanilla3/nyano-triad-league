@@ -1,4 +1,4 @@
-﻿import { describe, it, expect, vi, afterEach } from "vitest";
+import { describe, it, expect, vi, afterEach } from "vitest";
 import { EVENTS, getEventById, getEventStatus, formatEventPeriod, fetchEventConfig, isValidEventV1, type EventV1 } from "../events";
 
 /* ------------------------------------------------------------------ */
@@ -36,7 +36,7 @@ describe("getEventStatus", () => {
     expect(getEventStatus(e, NOW)).toBe("upcoming");
   });
 
-  it('returns "active" when startAt 竕､ now 竕､ endAt', () => {
+  it('returns "active" when startAt ≤ now ≤ endAt', () => {
     const e = makeEvent({ startAt: "2025-01-01T00:00:00Z", endAt: "2025-12-31T00:00:00Z" });
     expect(getEventStatus(e, NOW)).toBe("active");
   });
@@ -56,7 +56,7 @@ describe("getEventStatus", () => {
     expect(getEventStatus(e, NOW)).toBe("active");
   });
 
-  it('treats invalid ISO string as null (竊・"always")', () => {
+  it('treats invalid ISO string as null (→ "always")', () => {
     const e = makeEvent({ startAt: "not-a-date", endAt: "also-bad" });
     expect(getEventStatus(e, NOW)).toBe("always");
   });
@@ -84,22 +84,22 @@ describe("getEventById", () => {
 
 describe("formatEventPeriod", () => {
   it('"Always" when no dates', () => {
-    expect(formatEventPeriod(makeEvent())).toBe("いつでも挑戦可");
+    expect(formatEventPeriod(makeEvent())).toBe("Always");
   });
 
   it('"From ..." when only startAt', () => {
     const e = makeEvent({ startAt: "2025-06-01" });
-    expect(formatEventPeriod(e)).toBe("2025-06-01 から");
+    expect(formatEventPeriod(e)).toBe("From 2025-06-01");
   });
 
   it('"Until ..." when only endAt', () => {
     const e = makeEvent({ endAt: "2025-12-31" });
-    expect(formatEventPeriod(e)).toBe("2025-12-31 まで");
+    expect(formatEventPeriod(e)).toBe("Until 2025-12-31");
   });
 
-  it('"start 竊・end" when both dates', () => {
+  it('"start → end" when both dates', () => {
     const e = makeEvent({ startAt: "2025-06-01", endAt: "2025-12-31" });
-    expect(formatEventPeriod(e)).toBe("2025-06-01 から 2025-12-31 まで");
+    expect(formatEventPeriod(e)).toBe("2025-06-01 → 2025-12-31");
   });
 });
 
@@ -244,7 +244,7 @@ describe("isValidEventV1 (P2-360)", () => {
     expect(isValidEventV1(e)).toBe(false);
   });
 
-  // New optional fields (Sprint 22)
+  // ── New optional fields (Sprint 22) ──
 
   it("accepts event with voteTimeSeconds", () => {
     const e = makeEvent({ voteTimeSeconds: 30 });

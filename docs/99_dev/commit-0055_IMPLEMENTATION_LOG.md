@@ -9,7 +9,7 @@
 
 ## Why
 nyano-warudo 側が求める「実戦の state/transcript/protocol サンプル」を、現場で最短で渡せる導線が必要。  
-ボタン一つで生成→保存できるようにし、認知負荷と共有コストを下げる。fileciteturn1file0
+ボタン一つで生成→保存できるようにし、認知負荷と共有コストを下げる。
 
 ## Manual test checklist
 - pnpm -C apps/web dev → /stream

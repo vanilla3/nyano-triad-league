@@ -1,145 +1,124 @@
 import React from "react";
-import { Link, useSearchParams } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { GlassPanel } from "@/components/mint/GlassPanel";
 import { MintPageGuide } from "@/components/mint/MintPageGuide";
 import { MintPressable } from "@/components/mint/MintPressable";
-import { MintTitleText, MintLabel } from "@/components/mint/MintTypography";
+import { MintTitleText } from "@/components/mint/MintTypography";
 import { MintIcon } from "@/components/mint/icons/MintIcon";
 import { MINT_PAGE_GUIDES } from "@/lib/mint_page_guides";
 import { appendThemeToPath, resolveAppTheme } from "@/lib/theme";
-import { NYANO_MINI_IMAGE_URL } from "@/lib/nyano_assets";
 
 const DIFFICULTIES = [
-  { key: "easy", label: "はじめて", sub: "ゆるめ", hint: "まずは一手ずつ" },
-  { key: "normal", label: "ふつう", sub: "おすすめ", hint: "読み合い入門" },
-  { key: "hard", label: "つよい", sub: "勝負", hint: "取り返しに注意" },
-  { key: "expert", label: "めっちゃつよい", sub: "真剣", hint: "最後まで油断なし" },
+  { key: "easy", ja: "はじめて", en: "Easy", hint: "基本を学ぶ", icon: "rules" as const },
+  { key: "normal", ja: "ふつう", en: "Normal", hint: "バランス型", icon: "arena" as const },
+  { key: "hard", ja: "つよい", en: "Hard", hint: "先読み重視", icon: "match" as const },
+  { key: "expert", ja: "めっちゃつよい", en: "Expert", hint: "最高難度", icon: "sparkle" as const },
 ] as const;
 
 type DifficultyKey = (typeof DIFFICULTIES)[number]["key"];
 
-const ARENA_CELLS = ["A", "7", "2", "5", "N", "9", "3", "K", "8"] as const;
+function parseDifficulty(value: string | null): DifficultyKey {
+  if (value === "easy" || value === "hard" || value === "expert") return value;
+  return "normal";
+}
 
 export function ArenaPage() {
-  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const theme = resolveAppTheme(searchParams);
-  const themed = React.useCallback((to: string) => appendThemeToPath(to, theme), [theme]);
-  const [difficulty, setDifficulty] = React.useState<DifficultyKey>("normal");
+  const difficulty = parseDifficulty(searchParams.get("difficulty"));
+
+  const themed = React.useCallback((path: string) => appendThemeToPath(path, theme), [theme]);
   const quickPlayUrl = themed(`/match?mode=guest&opp=vs_nyano_ai&ai=${difficulty}&rk=v2&ui=mint`);
+  const quickPlaySetupUrl = themed(`/match?mode=guest&opp=vs_nyano_ai&ai=${difficulty}&rk=v2&ui=mint&setup=1`);
   const quickStageUrl = themed(`/battle-stage?mode=guest&opp=vs_nyano_ai&ai=${difficulty}&rk=v2`);
-  const activeDifficulty = DIFFICULTIES.find((item) => item.key === difficulty) ?? DIFFICULTIES[1];
+
+  const handleDifficultySelect = (next: DifficultyKey) => {
+    const params = new URLSearchParams(searchParams);
+    params.set("difficulty", next);
+    setSearchParams(params, { replace: true });
+    navigate(themed(`/match?mode=guest&opp=vs_nyano_ai&ai=${next}&rk=v2&ui=mint`));
+  };
+
+  const sideItems = [
+    { to: themed("/decks"), label: "デッキ", icon: "decks" as const },
+    { to: themed("/match?ui=mint"), label: "対戦設定", icon: "match" as const },
+    { to: themed("/replay"), label: "リプレイ", icon: "replay" as const },
+    { to: themed("/playground"), label: "練習場", icon: "playground" as const },
+  ];
 
   return (
-    <div className="mint-arena-screen mint-game-page">
-      <section className="mint-game-page-hero mint-game-page-hero--arena">
-        <div className="mint-game-page-hero__copy">
-          <div className="mint-game-page-kicker">
-            <MintIcon name="arena" size={16} />
-            <span>Nyano Arena</span>
-          </div>
-          <MintTitleText as="h2" className="mint-game-page-hero__title">
-            アリーナへようこそ
-          </MintTitleText>
-          <p className="mint-game-page-hero__lead">
-            Nyano AIが盤面で待機中。強さを選んで、3×3の一戦をすぐ始めよう。
-          </p>
-          <div className="mint-game-page-hero__actions">
-            <MintPressable to={quickPlayUrl} tone="primary">
-              <MintIcon name="match" size={18} />
-              <span>すぐ遊ぶ</span>
+    <div className="mint-arena-screen">
+      <section className="mint-arena-layout mint-stagger-enter">
+        <aside className="mint-arena-sidenav" aria-label="Arena navigation">
+          {sideItems.map((item) => (
+            <MintPressable key={item.label} to={item.to} className="mint-arena-sidenav__item" fullWidth>
+              <MintIcon name={item.icon} size={18} />
+              <span>{item.label}</span>
             </MintPressable>
-            <MintPressable to={themed("/decks")} tone="soft">
-              <MintIcon name="decks" size={18} />
-              <span>カードを組む</span>
-            </MintPressable>
-          </div>
-        </div>
-        <div className="mint-game-page-mascot mint-game-page-mascot--arena" aria-hidden="true">
-          <img src={NYANO_MINI_IMAGE_URL} alt="" loading="lazy" />
-        </div>
-      </section>
+          ))}
+        </aside>
 
-      <section className="mint-arena-layout">
-        <div className="mint-arena-sidenav">
-          <MintPressable to={quickPlayUrl} tone="primary" className="mint-arena-sidenav__item">
-            <MintIcon name="match" size={18} />
-            <span>対戦する</span>
-          </MintPressable>
-          <MintPressable to={themed("/events")} tone="soft" className="mint-arena-sidenav__item">
-            <MintIcon name="events" size={18} />
-            <span>イベントへ</span>
-          </MintPressable>
-          <MintPressable to={themed("/replay")} tone="soft" className="mint-arena-sidenav__item">
-            <MintIcon name="replay" size={18} />
-            <span>リプレイを見る</span>
-          </MintPressable>
-        </div>
-
-        <GlassPanel variant="panel" className="mint-arena-runway">
-          <div className="mint-arena-runway__head">
-            <div>
-              <MintLabel>対戦相手</MintLabel>
-              <MintTitleText as="h3" className="mint-arena-runway__title">
-                Nyano AI
-              </MintTitleText>
-            </div>
-            <span className="mint-arena-runway__badge">{activeDifficulty.label}</span>
+        <GlassPanel as="section" variant="panel" className="mint-arena-banner">
+          <div className="mint-arena-banner__mascot" aria-hidden="true">
+            <img src="/favicon-32.png" alt="" width={44} height={44} />
           </div>
-          <div className="mint-arena-board-mini" aria-hidden="true">
-            {ARENA_CELLS.map((cell, index) => (
-              <span key={`${cell}-${index}`} className={index === 4 ? "mint-arena-board-mini__cell mint-arena-board-mini__cell--nyano" : "mint-arena-board-mini__cell"}>
-                {cell}
-              </span>
-            ))}
+          <div className="mint-arena-banner__copy">
+            <MintTitleText as="h2" className="mint-arena-banner__title">
+              Nyano Triad League アリーナ
+            </MintTitleText>
+            <p className="mint-arena-banner__subtitle">難易度を選んで、すぐに対戦を始めよう。</p>
           </div>
-          <p className="mint-arena-difficulty__assist">
-            今の相手は「{activeDifficulty.label}」。{activeDifficulty.hint}でいこう。
-          </p>
         </GlassPanel>
 
-        <GlassPanel variant="panel" className="mint-arena-quickplay">
-          <div className="mint-arena-quickplay__header">今日の一戦</div>
-          <p className="mint-arena-quickplay__rules-summary">
-            ゲスト対戦でそのまま開始。勝っても負けてもリプレイで振り返れます。
-          </p>
-          <div className="mint-arena-quickplay__actions">
-            <MintPressable to={quickPlayUrl} tone="primary" fullWidth>
-              <MintIcon name="match" size={18} />
-              <span>バトル開始</span>
-            </MintPressable>
-            <MintPressable to={quickStageUrl} tone="soft" fullWidth>
+        <GlassPanel as="section" variant="panel" className="mint-arena-quickplay">
+          <div className="mint-arena-quickplay__header">クイック対戦</div>
+          <MintPressable to={quickPlayUrl} tone="primary" size="lg" fullWidth>
+            今すぐ遊ぶ
+          </MintPressable>
+          <MintPressable to={quickPlaySetupUrl} tone="ghost" fullWidth>
+            <span className="inline-flex items-center gap-2">
+              <MintIcon name="rules" size={18} />
+              <span>ルール変更</span>
+            </span>
+          </MintPressable>
+          <MintPressable to={quickStageUrl} tone="soft" fullWidth>
+            <span className="inline-flex items-center gap-2">
               <MintIcon name="sparkle" size={18} />
-              <span>ステージで見る</span>
-            </MintPressable>
-            <Link className="mint-arena-quickplay__link" to={themed("/rulesets")}>
-              ルールを確認
-            </Link>
-          </div>
+              <span>Pixiステージ</span>
+            </span>
+          </MintPressable>
+          <Link to={themed("/events")} className="mint-arena-quickplay__link">
+            イベント一覧を開く
+          </Link>
         </GlassPanel>
       </section>
 
-      <section className="mint-arena-difficulty" aria-label="Difficulty">
+      <MintPageGuide spec={MINT_PAGE_GUIDES.arena} className="mint-arena-guide" />
+
+      <section className="mint-arena-difficulty mint-stagger-enter" aria-label="Difficulty selection">
         {DIFFICULTIES.map((item) => (
-          <button
+          <MintPressable
             key={item.key}
+            tone="soft"
+            size="lg"
             className={[
-              "mint-pressable mint-ui-pressable mint-arena-difficulty__card",
+              "mint-arena-difficulty__card",
               difficulty === item.key ? "mint-arena-difficulty__card--active" : "",
             ].join(" ")}
-            onClick={() => setDifficulty(item.key)}
             aria-pressed={difficulty === item.key}
+            onClick={() => handleDifficultySelect(item.key)}
           >
             <span className="mint-arena-difficulty__top">
-              <MintIcon name="sparkle" size={14} />
-              {item.sub}
+              <MintIcon name={item.icon} size={18} />
+              <span className="mint-arena-difficulty__hint">{item.hint}</span>
             </span>
-            <span className="mint-arena-difficulty__ja">{item.label}</span>
-            <span className="mint-arena-difficulty__en">{item.hint}</span>
-          </button>
+            <span className="mint-arena-difficulty__ja">{item.ja}</span>
+            <span className="mint-arena-difficulty__en">{item.en}</span>
+          </MintPressable>
         ))}
       </section>
-
-      <MintPageGuide spec={MINT_PAGE_GUIDES.arena} />
+      <p className="mint-arena-difficulty__assist">難易度カードを押すと、そのまま対戦開始します。</p>
     </div>
   );
 }

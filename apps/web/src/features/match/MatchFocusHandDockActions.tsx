@@ -1,5 +1,11 @@
 import React from "react";
 
+const CELL_COORDS = ["A1", "B1", "C1", "A2", "B2", "C2", "A3", "B3", "C3"] as const;
+
+function cellCoord(cell: number): string {
+  return CELL_COORDS[cell] ?? String(cell);
+}
+
 export function MatchFocusHandDockActions(input: {
   draftWarningMarkCell: number | null;
   onChangeDraftWarningMarkCell: (value: number | null) => void;
@@ -35,31 +41,33 @@ export function MatchFocusHandDockActions(input: {
           onChangeDraftWarningMarkCell(value === "" ? null : Number(value));
         }}
         disabled={currentWarnRemaining <= 0 || isAiTurn}
-        aria-label="フォーカス手札の警戒マーク"
+        aria-label="警戒マークの配置先"
       >
-        <option value="">警戒マーク: なし</option>
+        <option value="">警戒マーク：なし</option>
         {availableCells
           .filter((cell) => cell !== draftCell)
           .map((cell) => (
-            <option key={`focus-w-${cell}`} value={String(cell)}>{cell + 1}番のマス</option>
+            <option key={`focus-w-${cell}`} value={String(cell)}>
+              {cellCoord(cell)}
+            </option>
           ))}
       </select>
 
       <button
-        className="btn btn-primary h-9 px-3 text-xs mint-pressable mint-hit"
+        className="btn btn-primary h-9 px-3 text-xs"
         onClick={onCommitMove}
         disabled={!canCommit}
-        aria-label="フォーカス手札からこの手を確定"
+        aria-label="手を確定"
       >
         確定
       </button>
       <button
-        className="btn h-9 px-3 text-xs mint-pressable mint-hit"
+        className="btn h-9 px-3 text-xs"
         onClick={onUndoMove}
         disabled={!canUndo}
-        aria-label="フォーカス手札で1手戻す"
+        aria-label="1手取り消し"
       >
-        戻す
+        取り消し
       </button>
     </div>
   );

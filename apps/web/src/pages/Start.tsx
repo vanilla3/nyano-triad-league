@@ -30,10 +30,10 @@ export function StartPage() {
   const steps: StartStep[] = [
     {
       id: "read_quick_guide",
-      title: "1) ルールを知る",
+      title: "1) ルールを選ぶ",
       icon: "rules",
-      to: themed("/rulesets"),
-      action: "ルールを開く",
+      to: themed("/match?mode=guest&opp=vs_nyano_ai&ai=normal&rk=v2&ui=mint&setup=1"),
+      action: "ルール設定へ",
     },
     {
       id: "start_first_match",
@@ -53,7 +53,7 @@ export function StartPage() {
 
   return (
     <div className="mint-start-screen">
-      <section className="mint-start-header">
+      <section className="mint-start-header mint-motion-enter">
         <MintTitleText as="h2" className="mint-start-header__title">
           はじめての1分スタート
         </MintTitleText>
@@ -62,7 +62,7 @@ export function StartPage() {
         </GlassPanel>
       </section>
 
-      <section className="mint-start-grid">
+      <section className="mint-start-grid mint-stagger-enter">
         {steps.map((step) => {
           const done = progress.steps[step.id];
           return (
@@ -90,7 +90,7 @@ export function StartPage() {
         })}
       </section>
 
-      <section className="mint-start-footer">
+      <section className="mint-start-footer mint-motion-enter">
         <GlassPanel variant="panel" className="mint-start-footer__panel">
           <div className="mint-start-footer__links">
             <MintPressable to={themed("/decks")} tone="soft">
@@ -104,7 +104,7 @@ export function StartPage() {
           </div>
           <div className="mint-start-footer__state">
             {isDone
-              ? "準備完了。Decks / Arena で遊べます。"
+              ? "準備完了。デッキ / アリーナで遊べます。"
               : "まずは 1→2 の順で進めると、すぐに対戦を始められます。3 は任意です。"}
           </div>
           <Link to={themed("/")} className="mint-start-footer__back">

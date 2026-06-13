@@ -16,7 +16,7 @@
 - まずは engine がすでに持っている turn summary を使って、  
   **COMBO / PLUS / MARK** を確定表示にします
 
-これは「プログレッシブ開示」「チャンキング」「フィードバック設計」の実践です。fileciteturn1file0
+これは「プログレッシブ開示」「チャンキング」「フィードバック設計」の実践です。
 
 ## Manual test checklist
 - /match?stream=1 を開いて1手以上進める

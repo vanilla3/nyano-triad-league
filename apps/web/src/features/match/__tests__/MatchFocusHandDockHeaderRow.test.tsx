@@ -22,34 +22,34 @@ function collectDivText(node: React.ReactNode): string[] {
 describe("features/match/MatchFocusHandDockHeaderRow", () => {
   it("shows thinking status during ai turn", () => {
     const tree = MatchFocusHandDockHeaderRow({
-      label: "Hand Dock",
+      label: "手札ドック",
       isAiTurn: true,
       draftCardIndex: 2,
       draftCell: 4,
     });
     const texts = collectDivText(tree);
-    expect(texts).toContain("Thinking...");
+    expect(texts).toContain("にゃーのの番…");
   });
 
   it("shows selected card/cell status when available", () => {
     const tree = MatchFocusHandDockHeaderRow({
-      label: "Hand Dock",
+      label: "手札ドック",
       isAiTurn: false,
       draftCardIndex: 1,
       draftCell: 7,
     });
     const texts = collectDivText(tree);
-    expect(texts).toContain("Card 2 | Cell 7");
+    expect(texts).toContain("カード2 ｜ マスB3");
   });
 
   it("shows not-selected placeholders when draft values are null", () => {
     const tree = MatchFocusHandDockHeaderRow({
-      label: "Hand Dock",
+      label: "手札ドック",
       isAiTurn: false,
       draftCardIndex: null,
       draftCell: null,
     });
     const texts = collectDivText(tree);
-    expect(texts).toContain("Card not selected | Cell not selected");
+    expect(texts).toContain("カード未選択 ｜ マス未選択");
   });
 });

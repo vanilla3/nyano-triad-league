@@ -42,6 +42,74 @@ describe("Ruleset registry (P2-370)", () => {
       expect(resolveRuleset("classic_plus_same")).toBe(CLASSIC_PLUS_SAME_RULESET_CONFIG_V2);
     });
 
+    it('"classic_custom" is v2 with classic defaults', () => {
+      const cfg = resolveRuleset("classic_custom");
+      expect(cfg).not.toBeNull();
+      expect(cfg!.version).toBe(2);
+      if (cfg!.version === 2) {
+        expect(cfg!.classic.order).toBe(false);
+        expect(cfg!.classic.plus).toBe(false);
+      }
+    });
+
+    it('"classic_plus" has plus=true', () => {
+      const cfg = resolveRuleset("classic_plus");
+      expect(cfg).not.toBeNull();
+      expect(cfg!.version).toBe(2);
+      if (cfg!.version === 2) {
+        expect(cfg!.classic.plus).toBe(true);
+        expect(cfg!.classic.same).toBe(false);
+      }
+    });
+
+    it('"classic_same" has same=true', () => {
+      const cfg = resolveRuleset("classic_same");
+      expect(cfg).not.toBeNull();
+      expect(cfg!.version).toBe(2);
+      if (cfg!.version === 2) {
+        expect(cfg!.classic.same).toBe(true);
+        expect(cfg!.classic.plus).toBe(false);
+      }
+    });
+
+    it('"classic_reverse" has reverse=true', () => {
+      const cfg = resolveRuleset("classic_reverse");
+      expect(cfg).not.toBeNull();
+      expect(cfg!.version).toBe(2);
+      if (cfg!.version === 2) {
+        expect(cfg!.classic.reverse).toBe(true);
+      }
+    });
+
+    it('"classic_ace_killer" has aceKiller=true', () => {
+      const cfg = resolveRuleset("classic_ace_killer");
+      expect(cfg).not.toBeNull();
+      expect(cfg!.version).toBe(2);
+      if (cfg!.version === 2) {
+        expect(cfg!.classic.aceKiller).toBe(true);
+      }
+    });
+
+    it('"classic_type_ascend" has typeAscend=true', () => {
+      const cfg = resolveRuleset("classic_type_ascend");
+      expect(cfg).not.toBeNull();
+      expect(cfg!.version).toBe(2);
+      if (cfg!.version === 2) {
+        expect(cfg!.classic.typeAscend).toBe(true);
+        expect(cfg!.classic.typeDescend).toBe(false);
+      }
+    });
+
+    it('"classic_type_descend" has typeDescend=true', () => {
+      const cfg = resolveRuleset("classic_type_descend");
+      expect(cfg).not.toBeNull();
+      expect(cfg!.version).toBe(2);
+      if (cfg!.version === 2) {
+        expect(cfg!.classic.typeAscend).toBe(false);
+        expect(cfg!.classic.typeDescend).toBe(true);
+      }
+    });
+
     it('"classic_order" has order=true', () => {
       const cfg = resolveRuleset("classic_order");
       expect(cfg).not.toBeNull();
@@ -119,6 +187,13 @@ describe("Ruleset registry (P2-370)", () => {
       "v2",
       "full",
       "classic_plus_same",
+      "classic_custom",
+      "classic_plus",
+      "classic_same",
+      "classic_reverse",
+      "classic_ace_killer",
+      "classic_type_ascend",
+      "classic_type_descend",
       "classic_order",
       "classic_chaos",
       "classic_swap",
@@ -166,6 +241,13 @@ describe("Ruleset registry (P2-370)", () => {
       expect(RULESET_KEYS).toContain("v2");
       expect(RULESET_KEYS).toContain("full");
       expect(RULESET_KEYS).toContain("classic_plus_same");
+      expect(RULESET_KEYS).toContain("classic_custom");
+      expect(RULESET_KEYS).toContain("classic_plus");
+      expect(RULESET_KEYS).toContain("classic_same");
+      expect(RULESET_KEYS).toContain("classic_reverse");
+      expect(RULESET_KEYS).toContain("classic_ace_killer");
+      expect(RULESET_KEYS).toContain("classic_type_ascend");
+      expect(RULESET_KEYS).toContain("classic_type_descend");
       expect(RULESET_KEYS).toContain("classic_order");
       expect(RULESET_KEYS).toContain("classic_chaos");
       expect(RULESET_KEYS).toContain("classic_swap");
@@ -173,8 +255,8 @@ describe("Ruleset registry (P2-370)", () => {
       expect(RULESET_KEYS).toContain("classic_three_open");
     });
 
-    it("has length 9", () => {
-      expect(RULESET_KEYS.length).toBe(9);
+    it("has length 16", () => {
+      expect(RULESET_KEYS.length).toBe(16);
     });
 
     it("every key resolves to a non-null config", () => {

@@ -134,7 +134,7 @@ describe("features/match/useMatchStageActionCallbacks", () => {
       { type: "sfx", value: "card_place" },
       { type: "feedback", value: "Exiting focus mode", tone: "warn" },
       { type: "sfx", value: "flip" },
-      { type: "feedback", value: "Nyanoの手を進めます", tone: undefined },
+      { type: "feedback", value: "Nyano move requested", tone: undefined },
       { type: "sfx", value: "card_place" },
     ]);
     expect(toggleStageFullscreen).toHaveBeenCalledTimes(1);

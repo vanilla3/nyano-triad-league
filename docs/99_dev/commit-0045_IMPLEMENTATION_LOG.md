@@ -16,7 +16,7 @@
 - 必要な情報だけを段階的に提示する（プログレッシブ開示）
 - 情報を意味単位で分割して見せる（チャンキング）
 
-これらは UI品質の基本原則に沿った改善です。fileciteturn1file0
+これらは UI品質の基本原則に沿った改善です。
 
 ## Manual test checklist
 - /stream を開く（host link で /match?stream=1 も開く）

@@ -27,15 +27,16 @@ const ReplayPage = React.lazy(() => import("./pages/Replay").then((m) => ({ defa
 const ReplayStagePage = React.lazy(() => import("./pages/ReplayStage").then((m) => ({ default: m.ReplayStagePage })));
 const NyanoPage = React.lazy(() => import("./pages/Nyano").then((m) => ({ default: m.NyanoPage })));
 const RulesetsPage = React.lazy(() => import("./pages/Rulesets").then((m) => ({ default: m.RulesetsPage })));
+const StartPage = React.lazy(() => import("./pages/Start").then((m) => ({ default: m.StartPage })));
 const StreamPage = React.lazy(() => import("./pages/Stream").then((m) => ({ default: m.StreamPage })));
 const OverlayPage = React.lazy(() => import("./pages/Overlay").then((m) => ({ default: m.OverlayPage })));
-const MotionsDesignPage = React.lazy(() => import("./pages/_design/Motions").then((m) => ({ default: m.MotionsDesignPage })));
+const MotionsPage = React.lazy(() => import("./pages/Motions").then((m) => ({ default: m.MotionsPage })));
 
 // ── Route-level loading fallback ────────────────────────────────────
 function RouteFallback() {
   return (
     <div className="flex min-h-[40vh] items-center justify-center">
-      <div className="animate-pulse text-sm text-slate-400">Loading…</div>
+      <div className="animate-pulse text-sm text-slate-400">読み込み中…</div>
     </div>
   );
 }
@@ -58,18 +59,19 @@ const router = createBrowserRouter([
     element: <AppLayout />,
     children: [
       { index: true, element: <HomePage /> },
+      { path: "start", element: <Lazy><StartPage /></Lazy> },
       { path: "arena", element: <Lazy><ArenaPage /></Lazy> },
       { path: "events", element: <Lazy><EventsPage /></Lazy> },
       { path: "decks", element: <Lazy><DecksPage /></Lazy> },
       { path: "match", element: <MatchPage /> },
       { path: "battle-stage", element: <BattleStagePage /> },
       { path: "playground", element: <Lazy><PlaygroundPage /></Lazy> },
+      { path: "motions", element: <Lazy><MotionsPage /></Lazy> },
       { path: "replay", element: <Lazy><ReplayPage /></Lazy> },
       { path: "replay-stage", element: <Lazy><ReplayStagePage /></Lazy> },
       { path: "nyano", element: <Lazy><NyanoPage /></Lazy> },
       { path: "rulesets", element: <Lazy><RulesetsPage /></Lazy> },
       { path: "stream", element: <Lazy><StreamPage /></Lazy> },
-      { path: "_design/motions", element: <Lazy><MotionsDesignPage /></Lazy> },
     ],
   },
 ], { basename });

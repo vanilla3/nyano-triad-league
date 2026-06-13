@@ -10,7 +10,7 @@ set -euo pipefail
 
 MODEL="${MODEL:-gpt-5.3-codex}"
 BASE_BRANCH="${BASE_BRANCH:-main}"
-APPROVAL_MODE="${APPROVAL_MODE:-on-request}"  # on-request|never|untrusted
+APPROVAL_MODE="${APPROVAL_MODE:-on-request}"  # untrusted|on-request|never
 CREATE_PR="${CREATE_PR:-0}"                    # 1 to attempt gh pr create
 WORK_ORDER_DIR="${WORK_ORDER_DIR:-codex/work_orders}"
 
@@ -18,15 +18,6 @@ need() { command -v "$1" >/dev/null 2>&1 || { echo "Missing command: $1" >&2; ex
 
 need git
 need codex
-
-case "$APPROVAL_MODE" in
-  on-request|never|untrusted) ;;
-  *)
-    echo "Invalid APPROVAL_MODE=$APPROVAL_MODE (expected: on-request|never|untrusted)" >&2
-    exit 2
-    ;;
- esac
-
 
 if [[ $# -lt 1 ]]; then
   echo "Usage: $0 <id|path>" >&2
@@ -47,12 +38,25 @@ else
     echo "Invalid work order id: $input" >&2
     exit 2
   fi
-  match=$(ls -1 "${WORK_ORDER_DIR}/${id_norm}"*.md 2>/dev/null | head -n 1 || true)
-  if [[ -z "$match" ]]; then
+  mapfile -t matches < <(ls -1 "${WORK_ORDER_DIR}/${id_norm}"*.md 2>/dev/null || true)
+
+  if [[ "${#matches[@]}" -eq 0 ]]; then
     echo "Work order not found for id: ${id_norm} (dir: ${WORK_ORDER_DIR})" >&2
     exit 2
   fi
-  file="$match"
+
+  if [[ "${#matches[@]}" -gt 1 ]]; then
+    echo "Multiple work orders match id prefix: ${id_norm}" >&2
+    for m in "${matches[@]}"; do
+      echo "- ${m}" >&2
+    done
+    echo "" >&2
+    echo "Pass the full file path to disambiguate, e.g.:" >&2
+    echo "  $0 ${matches[0]}" >&2
+    exit 2
+  fi
+
+  file="${matches[0]}"
 fi
 
 if [[ -n "$(git status --porcelain)" ]]; then
@@ -83,14 +87,24 @@ if command -v gh >/dev/null 2>&1; then
   has_gh=1
 fi
 
+has_origin=0
+if git remote get-url origin >/dev/null 2>&1; then
+  has_origin=1
+fi
+
 echo "============================================================"
 echo "Start Work Order ${id} — ${title}"
 echo "File: ${file}"
 echo "============================================================"
 
-git fetch origin
-git checkout "${BASE_BRANCH}"
-git pull --ff-only origin "${BASE_BRANCH}"
+if [[ "${has_origin}" == "1" ]]; then
+  git fetch origin
+  git checkout "${BASE_BRANCH}"
+  git pull --ff-only origin "${BASE_BRANCH}"
+else
+  echo "NOTE: git remote 'origin' not found. Skipping fetch/pull/push steps."
+  git checkout "${BASE_BRANCH}"
+fi
 
 if git rev-parse --verify "${branch}" >/dev/null 2>&1; then
   git branch -D "${branch}"
@@ -98,7 +112,26 @@ fi
 git checkout -b "${branch}"
 
 pr_block="6) PR creation is optional; skip if 'gh' is not available."
-if [[ "${CREATE_PR}" == "1" && "${has_gh}" == "1" ]]; then
+
+push_block=$(cat <<EOF
+5) Commit:
+   - git add -A
+   - git commit -m "WO-${id}: ${title}"
+   - (No git remote 'origin' found; skip push/PR and leave the branch locally.)
+EOF
+)
+
+if [[ "${has_origin}" == "1" ]]; then
+  push_block=$(cat <<EOF
+5) Commit and push:
+   - git add -A
+   - git commit -m "WO-${id}: ${title}"
+   - git push -u origin HEAD
+EOF
+)
+fi
+
+if [[ "${CREATE_PR}" == "1" && "${has_gh}" == "1" && "${has_origin}" == "1" ]]; then
   pr_block=$(cat <<EOF
 6) If GitHub CLI is available, open a PR:
    - gh pr create --title "WO-${id}: ${title}" --body "Implements Work Order ${id}." --base ${BASE_BRANCH} --head ${branch}
@@ -125,10 +158,7 @@ STEPS (in order):
    - pnpm -C apps/web test
    - pnpm -C apps/web e2e (only if relevant)
 4) Show git status and summarize the diff (high level).
-5) Commit and push:
-   - git add -A
-   - git commit -m "WO-${id}: ${title}"
-   - git push -u origin HEAD
+${push_block}
 ${pr_block}
 
 ---- WORK ORDER ----

@@ -61,20 +61,16 @@ export function buildMatchSetupSummaryLine(input: {
   firstPlayerMode: FirstPlayerResolutionMode;
   ui: MatchSetupSummaryBoardUi;
 }): string {
-  const deckA = input.deckAName ? `デッキA: ${input.deckAName}` : "デッキA: 未設定";
-  const deckB = input.isEvent
-    ? "デッキB: イベント固定"
-    : input.deckBName
-      ? `デッキB: ${input.deckBName}`
-      : "デッキB: 未設定";
-  const opponent = input.opponentMode === "vs_nyano_ai" ? "対戦相手: Nyano AI" : "対戦相手: プレイヤー";
+  const deckA = input.deckAName ?? "Deck A: unset";
+  const deckB = input.isEvent ? "Deck B: event fixed" : input.deckBName ?? "Deck B: unset";
+  const opponent = input.opponentMode === "vs_nyano_ai" ? "Nyano AI" : "Human vs Human";
   return [
     deckA,
     deckB,
-    `ルール: ${describeRulesetKey(input.rulesetKey)}`,
+    describeRulesetKey(input.rulesetKey),
     opponent,
-    `先攻: ${describeFirstPlayerMode(input.firstPlayerMode)}`,
-    `盤面: ${describeBoardUi(input.ui)}`,
+    `first=${describeFirstPlayerMode(input.firstPlayerMode)}`,
+    `board=${describeBoardUi(input.ui)}`,
   ].join(" / ");
 }
 

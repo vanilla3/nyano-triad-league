@@ -1,6 +1,6 @@
 # Work Order: 015 — NyanoReaction のレイアウト崩れ（CLS）を根絶する v2
 
-関連: 既存 `codex/work_orders/006_reaction_layout_stability.md`
+関連: 既存 `codex/work_orders/047_reaction_layout_stability.md`
 
 ## 1) 背景 / 目的（ユーザー視点）
 - Nyano のコメントが出る瞬間にコメント欄が動き、画面が一瞬ガタつく（表示が崩れる）。
@@ -46,7 +46,7 @@
 - Slot 側で「固定高さ + relative」を担保
 - Reaction 側で「absolute + inset + overflow」
 - テキスト領域は CSS line clamp を使い、最大2行に制限
-- 既存の `006_reaction_layout_stability` の方針を踏襲しつつ、
+- 既存の `047_reaction_layout_stability` の方針を踏襲しつつ、
   “inputが常に non-null で placeholder が出ない” など実装上の穴を塞ぐ
 
 ## 8) タスクリスト（細分化）

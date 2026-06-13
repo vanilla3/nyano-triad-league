@@ -38,12 +38,12 @@ describe("MintRulesetPicker", () => {
     );
 
     expect(html).toContain("mint-ruleset-picker");
-    expect(html).toContain("ルール設定 (Rules setup)");
+    expect(html).toContain("ルール設定");
     expect(html).toContain("data-testid=\"mint-ruleset-family-v2\"");
     expect(html).toContain("aria-pressed=\"true\"");
-    expect(html).toContain("現在 (Current):");
-    expect(html).toContain("v2 shadow+tactics");
-    expect(html).not.toContain("ルールのヒント (Rule help)");
+    expect(html).toContain("現在:");
+    expect(html).toContain("v2 シャドウ+戦術");
+    expect(html).not.toContain("ルールのヒント");
   });
 
   it("renders classic custom controls and japanese-first labels", () => {
@@ -60,10 +60,10 @@ describe("MintRulesetPicker", () => {
     expect(html).toContain("data-testid=\"mint-ruleset-classic-custom-mode\"");
     expect(html).toContain("data-testid=\"mint-ruleset-custom-toggle-reverse\"");
     expect(html).toContain("data-testid=\"mint-ruleset-custom-open-three\"");
-    expect(html).toContain("クラシック カスタム (classic custom: plus + same)");
-    expect(html).toContain("順番固定 (Order)");
-    expect(html).toContain("全公開 (All Open)");
-    expect(html).toContain("強化 (Type Ascend)");
-    expect(html).toContain("ルールのヒント (Rule help)");
+    expect(html).toContain("クラシック カスタム: plus + same");
+    expect(html).toContain("順番固定");
+    expect(html).toContain("全公開");
+    expect(html).toContain("強化");
+    expect(html).toContain("ルールのヒント");
   });
 });

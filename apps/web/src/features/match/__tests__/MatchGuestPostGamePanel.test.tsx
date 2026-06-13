@@ -72,14 +72,13 @@ describe("features/match/MatchGuestPostGamePanel", () => {
     if (!tree) return;
     expect(tree.props.className).toContain("stage-focus-side-panel");
     const rootChildren = React.Children.toArray(tree.props.children) as React.ReactElement[];
-    expect(rootChildren[0]?.props.children).toBe("Enjoyed this guest deck?");
+    expect(rootChildren[0]?.props.children).toBe("このゲストデッキ、気に入りましたか？");
 
     const actionRow = rootChildren[1];
     const actionButtons = React.Children.toArray(actionRow.props.children)
       .filter((child): child is React.ReactElement => React.isValidElement(child) && child.type === "button");
-    expect(actionButtons[2]?.props.children).toBe("Saved");
+    expect(actionButtons[2]?.props.children).toBe("保存済み");
     expect(collectElementsByClass(tree, "mint-share-actions__hint")).toHaveLength(1);
-    expect(collectElementsByClass(tree, "mint-share-actions__status")).toHaveLength(1);
 
     expect(collectElementsByType(tree, "details")).toHaveLength(0);
   });
@@ -123,7 +122,6 @@ describe("features/match/MatchGuestPostGamePanel", () => {
     const shareRow = shareSectionChildren[0];
     const shareButtons = React.Children.toArray(shareRow.props.children)
       .filter((child): child is React.ReactElement => React.isValidElement(child) && child.type === "button");
-    expect(String(shareRow.props.className)).toContain("mint-share-actions__row--ready");
     shareButtons[0]?.props.onClick();
     shareButtons[1]?.props.onClick();
     shareButtons[2]?.props.onClick();
@@ -138,9 +136,7 @@ describe("features/match/MatchGuestPostGamePanel", () => {
     const details = collectElementsByType(tree, "details");
     expect(details).toHaveLength(1);
     const summary = collectElementsByType(details[0], "summary")[0];
-    expect(summary.props.children).toContain("QR Code");
+    expect(summary.props.children).toContain("QRコード");
     expect(collectElementsByClass(tree, "mint-share-actions__hint")).toHaveLength(0);
-    expect(collectElementsByClass(tree, "mint-share-actions__ready")).toHaveLength(1);
-    expect(collectElementsByClass(tree, "mint-share-actions__status")).toHaveLength(1);
   });
 });

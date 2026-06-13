@@ -1,10 +1,10 @@
 /**
  * BoardFlipAnimator.tsx
- * 
+ *
  * Board transition animation manager for /match page.
  * Tracks previous board state, computes placed/flipped deltas,
  * and exposes animation state for BoardView props.
- * 
+ *
  * Usage:
  *   const anim = useBoardFlipAnimation(boardNow, sim.ok);
  *   <BoardView ... placedCell={anim.placedCell} flippedCells={anim.flippedCells} />
@@ -121,6 +121,19 @@ export function useBoardFlipAnimation(
   };
 }
 
+const CELL_COORDS = ["A1", "B1", "C1", "A2", "B2", "C2", "A3", "B3", "C3"] as const;
+
+function cellCoord(cell: number): string {
+  return CELL_COORDS[cell] ?? String(cell);
+}
+
+function formatCoordList(cells: number[]): string {
+  if (!cells.length) return "";
+  const coords = cells.map(cellCoord);
+  if (coords.length <= 4) return coords.join(", ");
+  return `${coords.slice(0, 4).join(", ")}…(+${coords.length - 4})`;
+}
+
 /**
  * Presentational: brief "Last Move" feedback strip.
  * Shows what just happened (placed cell, flipped count) with animation.
@@ -142,7 +155,8 @@ export function LastMoveFeedback({
       <div className="flex items-center gap-1.5">
         <div className="w-2 h-2 rounded-full bg-flip animate-pulse" />
         <span className="font-display font-bold text-amber-700">
-          {turnPlayer} → cell {placedCell}
+          配置：{turnPlayer}
+          {placedCell !== null ? ` → ${cellCoord(placedCell)}` : ""}
         </span>
       </div>
 
@@ -152,12 +166,8 @@ export function LastMoveFeedback({
           <div className="w-px h-4 bg-surface-200" />
           <div className="flex items-center gap-1.5">
             <div className="w-2 h-2 rounded-full bg-chain animate-pulse" />
-            <span className="font-display font-bold text-violet-700">
-              Flipped {flippedCells.length}
-            </span>
-            <span className="text-xs text-surface-400 font-mono">
-              [{flippedCells.join(", ")}]
-            </span>
+            <span className="font-display font-bold text-violet-700">奪取 {flippedCells.length}</span>
+            <span className="text-xs text-surface-400 font-mono">[{formatCoordList(flippedCells)}]</span>
           </div>
         </>
       )}

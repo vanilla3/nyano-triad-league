@@ -1,5 +1,11 @@
 import React from "react";
 
+const CELL_COORDS = ["A1", "B1", "C1", "A2", "B2", "C2", "A3", "B3", "C3"] as const;
+
+function cellCoord(cell: number): string {
+  return CELL_COORDS[cell] ?? String(cell);
+}
+
 export function MatchHandCompactHintPanel(input: {
   draftCardIndex: number | null;
   draftCell: number | null;
@@ -9,10 +15,10 @@ export function MatchHandCompactHintPanel(input: {
 
   return (
     <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600">
-      During focus mode, your draft selection appears here.
+      フォーカスモードでは、ここに「仮選択」の内容が表示されます。
       {hasDraftSelection ? (
         <span className="ml-1">
-          Selected: Card {draftCardIndex !== null ? draftCardIndex + 1 : "-"} / Cell {draftCell ?? "-"}
+          選択中：カード{draftCardIndex !== null ? draftCardIndex + 1 : "-"} ／ マス{draftCell !== null ? cellCoord(draftCell) : "-"}
         </span>
       ) : null}
     </div>

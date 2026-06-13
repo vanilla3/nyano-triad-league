@@ -1,19 +1,85 @@
 /*
-  Nyano Triad League — Motion Utilities
+ * Nyano Triad League — Motion Utilities (Cute Pack)
+ *
+ * Why this file exists:
+ * - A legacy `src/index.css` contained custom animation utility classes
+ *   (e.g. `.animate-cell-place`) used by several pages/components.
+ * - The app's global stylesheet entrypoint is now `src/styles.css`.
+ * - Therefore we re-home ONLY the still-referenced motion utilities here.
+ *
+ * Design intent:
+ * - Small, readable, “game-like” motion with tame & tsume.
+ * - Respect reduced-motion preferences.
+ * - Respect VFX quality tiers via `[data-vfx]` on <html>.
+ *
+ * Note:
+ * - Prefer Tailwind `animate-*` utilities defined in `tailwind.config.ts`
+ *   for new work. This file is for non-Tailwind bespoke motions.
+ */
 
-  NOTE
-  - This file exists because legacy `index.css` is no longer imported.
-  - Several UI components still reference classes that used to live in `index.css`
-    (e.g. BoardView / Replay banners).
-  - Keep this file small and focused: only shared motion primitives.
+/*
+ * NOTE ABOUT TAILWIND LAYERS
+ *
+ * This file is imported as a separate CSS entry from `main.tsx`.
+ * With the current Tailwind/PostCSS pipeline, using `@layer utilities`
+ * in a *separate* CSS file can throw:
+ *   "@layer utilities is used but no matching @tailwind utilities directive is present"
+ *
+ * Therefore, keep this file as plain CSS (no `@layer` blocks).
+ * If you need Tailwind layers, move the rules into `styles.css`.
+ */
 
-  Design intent:
-  - “Game-feel” micro motion (ease-out-back, pop, flip, shimmer)
-  - Respect `prefers-reduced-motion` and the app's `[data-vfx]` tiers.
-*/
+/* ──────────────────────────────────────────────────────────────
+ * Staggered fade-in for lists
+ * ────────────────────────────────────────────────────────────── */
+.animate-stagger > * {
+  animation: fade-in-up 0.3s ease-out both;
+}
 
-  /* ── Board: placement pop ─────────────────────────────────────── */
-  @keyframes nytl-cell-place {
+.animate-stagger > *:nth-child(1) { animation-delay: 0ms; }
+.animate-stagger > *:nth-child(2) { animation-delay: 50ms; }
+.animate-stagger > *:nth-child(3) { animation-delay: 100ms; }
+.animate-stagger > *:nth-child(4) { animation-delay: 150ms; }
+.animate-stagger > *:nth-child(5) { animation-delay: 200ms; }
+.animate-stagger > *:nth-child(6) { animation-delay: 250ms; }
+.animate-stagger > *:nth-child(7) { animation-delay: 300ms; }
+.animate-stagger > *:nth-child(8) { animation-delay: 350ms; }
+.animate-stagger > *:nth-child(9) { animation-delay: 400ms; }
+
+/* ──────────────────────────────────────────────────────────────
+ * Victory / Defeat
+ * ────────────────────────────────────────────────────────────── */
+@keyframes victory-pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+}
+
+.animate-victory {
+  animation: victory-pulse 0.6s ease-in-out 3;
+}
+
+/* Defeat uses Tailwind's `shake` keyframe (defined in tailwind.config.ts). */
+.animate-defeat {
+  animation: shake 0.4s ease-in-out;
+}
+
+/* ──────────────────────────────────────────────────────────────
+ * Flip chain highlight
+ * ────────────────────────────────────────────────────────────── */
+@keyframes chain-pulse {
+  0% { box-shadow: 0 0 0 0 rgba(139, 92, 246, 0.6); }
+  70% { box-shadow: 0 0 0 8px rgba(139, 92, 246, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(139, 92, 246, 0); }
+}
+
+.animate-chain {
+  animation: chain-pulse 0.6s ease-out;
+}
+
+  /* ──────────────────────────────────────────────────────────────
+   * Board: placed / flipped cell enhancements
+   * ────────────────────────────────────────────────────────────── */
+  @keyframes cell-place {
     0% {
       transform: scale(0.85);
       opacity: 0.5;
@@ -32,11 +98,10 @@
   }
 
   .animate-cell-place {
-    animation: nytl-cell-place 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+    animation: cell-place 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) both;
   }
 
-  /* ── Board: flip / ownership swap ─────────────────────────────── */
-  @keyframes nytl-cell-flip {
+  @keyframes cell-flip {
     0% {
       transform: perspective(400px) rotateY(0deg);
       filter: brightness(1);
@@ -56,7 +121,7 @@
   }
 
   .animate-cell-flip {
-    animation: nytl-cell-flip 0.55s cubic-bezier(0.4, 0, 0.2, 1) both;
+    animation: cell-flip 0.55s cubic-bezier(0.4, 0, 0.2, 1) both;
   }
 
   /* Staggered flip delays for chain effects */
@@ -64,19 +129,20 @@
   .flip-delay-2 { animation-delay: 300ms; }
   .flip-delay-3 { animation-delay: 450ms; }
 
-  /* Flip glow ring */
-  @keyframes nytl-flip-glow {
+  @keyframes flip-glow {
     0% { box-shadow: 0 0 0 0 rgba(139, 92, 246, 0.7); }
     50% { box-shadow: 0 0 16px 4px rgba(139, 92, 246, 0.3); }
     100% { box-shadow: 0 0 0 0 rgba(139, 92, 246, 0); }
   }
 
   .animate-flip-glow {
-    animation: nytl-flip-glow 0.8s ease-out;
+    animation: flip-glow 0.8s ease-out;
   }
 
-  /* ── Replay: result banner entry ───────────────────────────────── */
-  @keyframes nytl-banner-slide-in {
+  /* ──────────────────────────────────────────────────────────────
+   * Replay: persistent result banner
+   * ────────────────────────────────────────────────────────────── */
+  @keyframes banner-slide-in {
     0% {
       transform: translateY(-16px);
       opacity: 0;
@@ -90,373 +156,95 @@
   }
 
   .animate-banner-enter {
-    animation: nytl-banner-slide-in 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+    animation: banner-slide-in 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) both;
   }
 
-  @keyframes nytl-winner-shimmer {
+  @keyframes winner-shimmer {
     0% { background-position: -200% center; }
     100% { background-position: 200% center; }
   }
 
   .result-banner-shimmer {
     background-size: 200% auto;
-    animation: nytl-winner-shimmer 3s linear infinite;
+    animation: winner-shimmer 3s linear infinite;
   }
 
-  /* ── Stream/ops HUD ───────────────────────────────────────────── */
-  @keyframes nytl-hud-border-pulse {
-    0%, 100% {
-      border-color: rgba(255, 138, 80, 0.6);
-      box-shadow: 0 0 12px -2px rgba(255, 138, 80, 0.3);
-    }
-    50% {
-      border-color: rgba(255, 138, 80, 1);
-      box-shadow: 0 0 24px -2px rgba(255, 138, 80, 0.5);
-    }
-  }
-
-  .hud-vote-active {
-    animation: nytl-hud-border-pulse 1.5s ease-in-out infinite;
-  }
-
-  @keyframes nytl-counter-tick {
+  /* ──────────────────────────────────────────────────────────────
+   * Small HUD / widgets
+   * ────────────────────────────────────────────────────────────── */
+  @keyframes counter-tick {
     0% { transform: scale(1); }
     50% { transform: scale(1.15); }
     100% { transform: scale(1); }
   }
 
   .animate-counter-tick {
-    animation: nytl-counter-tick 0.2s ease-out;
+    animation: counter-tick 0.2s ease-out;
   }
 
-  @keyframes nytl-live-dot {
+  @keyframes live-dot {
     0%, 100% { opacity: 1; transform: scale(1); }
     50% { opacity: 0.4; transform: scale(0.8); }
   }
 
   .animate-live-dot {
-    animation: nytl-live-dot 2s ease-in-out infinite;
+    animation: live-dot 2s ease-in-out infinite;
   }
 
-  /* ── Landing: mascot bobbing ───────────────────────────────────── */
-  @keyframes nytl-float {
+  @keyframes float {
     0%, 100% { transform: translateY(0); }
     50% { transform: translateY(-8px); }
   }
 
   .animate-float {
-    animation: nytl-float 3s ease-in-out infinite;
+    animation: float 3s ease-in-out infinite;
   }
 
-  /* ── Result: victory pulse ─────────────────────────────────────── */
-  @keyframes nytl-victory-pulse {
-    0%, 100% { transform: scale(1); }
-    50% { transform: scale(1.05); }
-  }
-
-  .animate-victory {
-    animation: nytl-victory-pulse 0.6s ease-in-out 3;
-  }
-
-  /* Motion Language v1 primitives (WO-011) */
-  @keyframes nytl-motion-pop-in {
-    0% {
-      opacity: 0;
-      transform: translateY(8px) scale(0.94);
-    }
-    100% {
-      opacity: 1;
-      transform: translateY(0) scale(1);
-    }
-  }
-
-  @keyframes nytl-motion-pop-out {
-    0% {
-      opacity: 1;
-      transform: translateY(0) scale(1);
-    }
-    100% {
-      opacity: 0;
-      transform: translateY(6px) scale(0.98);
-    }
-  }
-
-  @keyframes nytl-motion-slide-in {
-    0% {
-      opacity: 0;
-      transform: translateY(12px);
-    }
-    100% {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
-
-  @keyframes nytl-motion-fade-in {
-    0% { opacity: 0; }
-    100% { opacity: 1; }
-  }
-
-  @keyframes nytl-motion-impact {
-    0% { transform: translateX(0); }
-    20% { transform: translateX(calc(var(--m-amp-impact-shift, 2px) * -1)); }
-    45% { transform: translateX(var(--m-amp-impact-shift, 2px)); }
-    70% { transform: translateX(calc(var(--m-amp-impact-shift, 2px) * -0.5)); }
-    100% { transform: translateX(0); }
-  }
-
-  @keyframes nytl-motion-idle {
-    0%, 100% { transform: translateY(0) scale(1); }
-    50% { transform: translateY(-1px) scale(1.008); }
-  }
-
-  @keyframes nytl-motion-shimmer {
-    0% { background-position: -160% 0; }
-    100% { background-position: 160% 0; }
-  }
-
-  @keyframes nytl-motion-flip {
-    0% {
-      transform: perspective(560px) rotateY(0deg) scale(1);
-      filter: brightness(1);
-    }
-    50% {
-      transform: perspective(560px) rotateY(180deg) scale(1.03);
-      filter: brightness(1.16);
-    }
-    100% {
-      transform: perspective(560px) rotateY(360deg) scale(1);
-      filter: brightness(1);
-    }
-  }
-
-  @keyframes nytl-motion-place {
-    0% {
-      transform: translateY(-8px) scale(0.9);
-      opacity: 0.72;
-    }
-    60% {
-      transform: translateY(0) scale(1.05);
-      opacity: 1;
-    }
-    100% {
-      transform: translateY(0) scale(1);
-      opacity: 1;
-    }
-  }
-
-  .motion-press {
-    transition:
-      transform var(--m-dur-hover) var(--m-ease-out),
-      filter var(--m-dur-hover) var(--m-ease-standard),
-      box-shadow var(--m-dur-hover) var(--m-ease-standard);
-    transform: translateY(0) scale(1);
-  }
-
-  .motion-press:active,
-  .motion-press[data-pressed="true"],
-  .motion-press[data-press-ack="true"] {
-    transform: translateY(0) scale(var(--m-amp-press-scale, 0.975));
-    filter: brightness(0.98) saturate(1.02);
-    transition-duration: var(--m-dur-press);
-    transition-timing-function: var(--m-ease-impact);
-  }
-
-  .motion-hover-lift {
-    transition:
-      transform var(--m-dur-hover) var(--m-ease-out),
-      box-shadow var(--m-dur-hover) var(--m-ease-standard),
-      border-color var(--m-dur-hover) var(--m-ease-standard);
-  }
-
-  .motion-hover-lift:hover {
-    transform: translateY(var(--m-amp-hover-lift-y, -1.5px));
-  }
-
-  .motion-magnet {
-    transition:
-      transform var(--m-dur-hover) var(--m-ease-back),
-      box-shadow var(--m-dur-hover) var(--m-ease-standard),
-      border-color var(--m-dur-hover) var(--m-ease-standard);
-    will-change: transform;
-  }
-
-  .motion-magnet:hover {
-    transform: translateY(var(--m-amp-hover-lift-y, -1.5px)) scale(var(--m-amp-magnet-scale, 1.02));
-  }
-
-  .motion-pop-in {
-    animation: nytl-motion-pop-in var(--m-dur-pop-in) var(--m-ease-back) both;
-  }
-
-  .motion-pop-out {
-    animation: nytl-motion-pop-out var(--m-dur-pop-out) var(--m-ease-standard) both;
-  }
-
-  .motion-slide-in {
-    animation: nytl-motion-slide-in var(--m-dur-pop-in) var(--m-ease-out) both;
-  }
-
-  .motion-impact {
-    animation: nytl-motion-impact var(--m-dur-impact) var(--m-ease-impact) both;
-  }
-
-  .motion-idle {
-    animation: nytl-motion-idle var(--m-dur-breathe) var(--m-ease-standard) infinite;
-    will-change: transform;
-  }
-
-  .motion-shimmer {
-    background-size: 200% 100%;
-    animation: nytl-motion-shimmer calc(var(--m-dur-breathe) * 1.2) linear infinite;
-  }
-
-  .motion-place {
-    animation: nytl-motion-place var(--m-dur-place) var(--m-ease-back) both;
-  }
-
-  .motion-flip {
-    animation: nytl-motion-flip var(--m-dur-flip) var(--m-ease-standard) both;
-    transform-style: preserve-3d;
-    backface-visibility: hidden;
-  }
-
-  .motion-card {
-    transition:
-      transform var(--m-dur-hover) var(--m-ease-out),
-      box-shadow var(--m-dur-hover) var(--m-ease-standard),
-      border-color var(--m-dur-hover) var(--m-ease-standard);
-  }
-
-  .motion-card:hover {
-    transform: translateY(var(--m-amp-hover-lift-y, -1.5px)) scale(1.005);
-  }
-
-  .motion-cell {
-    transition:
-      transform var(--m-dur-hover) var(--m-ease-out),
-      box-shadow var(--m-dur-hover) var(--m-ease-standard),
-      border-color var(--m-dur-hover) var(--m-ease-standard),
-      filter var(--m-dur-hover) var(--m-ease-standard);
-    transform: translateZ(0);
-  }
-
-  .motion-cell--interactive:hover {
-    transform: translateY(var(--m-amp-hover-lift-y, -1.5px)) scale(var(--m-amp-magnet-scale, 1.02));
-  }
-
-  .motion-modal {
-    animation: nytl-motion-pop-in var(--m-dur-pop-in) var(--m-ease-back) both;
-  }
-
-.motion-backdrop {
-  animation: nytl-motion-fade-in var(--m-dur-pop-in) var(--m-ease-standard) both;
-}
-
-/* Motion token bridge for Mint surfaces (WO-011) */
-.mint-cell {
-  transition-duration: var(--m-dur-hover), var(--m-dur-hover), var(--m-dur-hover), var(--m-dur-hover), var(--m-dur-hover) !important;
-  transition-timing-function: var(--m-ease-standard), var(--m-ease-standard), var(--m-ease-standard), var(--m-ease-standard), var(--m-ease-standard) !important;
-}
-
-.mint-cell--selectable {
-  animation-duration: var(--m-dur-breathe) !important;
-}
-
-.mint-cell--placed {
-  animation-duration: var(--m-dur-place) !important;
-  animation-timing-function: var(--m-ease-back) !important;
-}
-
-.mint-cell--flipped {
-  animation-duration: var(--m-dur-flip), var(--m-dur-flip) !important;
-}
-
-.mint-result-overlay {
-  animation-duration: var(--m-dur-pop-in) !important;
-  transition: opacity var(--m-dur-pop-in) var(--m-ease-standard);
-}
-
-.mint-result-panel {
-  animation-duration: var(--m-dur-pop-in) !important;
-  animation-timing-function: var(--m-ease-back) !important;
-  transition: transform var(--m-dur-pop-in) var(--m-ease-back);
-}
-
-.mint-result__btn {
-  transition-duration: var(--m-dur-hover) !important;
-  transition-timing-function: var(--m-ease-standard) !important;
-}
-
-.motion-rpg-reaction {
-  transition:
-    opacity var(--m-dur-pop-in) var(--m-ease-standard),
-    transform var(--m-dur-pop-in) var(--m-ease-out);
-}
-
-/* ── VFX gating ────────────────────────────────────────────────────── */
-[data-vfx="off"] .animate-cell-place,
-[data-vfx="off"] .animate-cell-flip,
-[data-vfx="off"] .animate-flip-glow,
-[data-vfx="off"] .animate-banner-enter,
-[data-vfx="off"] .result-banner-shimmer,
-[data-vfx="off"] .hud-vote-active,
-[data-vfx="off"] .animate-counter-tick,
-[data-vfx="off"] .animate-live-dot,
-[data-vfx="off"] .animate-float,
-[data-vfx="off"] .animate-victory,
-[data-vfx="off"] .motion-pop-in,
-[data-vfx="off"] .motion-pop-out,
-[data-vfx="off"] .motion-slide-in,
-[data-vfx="off"] .motion-impact,
-[data-vfx="off"] .motion-idle,
-[data-vfx="off"] .motion-shimmer,
-[data-vfx="off"] .motion-place,
-[data-vfx="off"] .motion-flip,
-[data-vfx="off"] .motion-modal,
-[data-vfx="off"] .motion-backdrop {
-  animation: none !important;
-}
-
-[data-vfx="off"] .motion-press,
-[data-vfx="off"] .motion-hover-lift,
-[data-vfx="off"] .motion-magnet,
-[data-vfx="off"] .motion-card,
-[data-vfx="off"] .motion-cell {
-  transition: none !important;
-  transform: none !important;
-}
-
+/* ────────────────────────────────────────────────────────────────
+ * Accessibility: prefers-reduced-motion
+ * ──────────────────────────────────────────────────────────────── */
 @media (prefers-reduced-motion: reduce) {
+  .animate-float,
+  .animate-live-dot,
+  .result-banner-shimmer {
+    animation: none !important;
+  }
+
   .animate-cell-place,
   .animate-cell-flip,
   .animate-flip-glow,
   .animate-banner-enter,
-  .result-banner-shimmer,
-  .hud-vote-active,
-  .animate-counter-tick,
-  .animate-live-dot,
-  .animate-float,
   .animate-victory,
-  .motion-pop-in,
-  .motion-pop-out,
-  .motion-slide-in,
-  .motion-impact,
-  .motion-idle,
-  .motion-shimmer,
-  .motion-place,
-  .motion-flip,
-  .motion-modal,
-  .motion-backdrop {
-    animation: none !important;
-  }
-
-  .motion-press,
-  .motion-hover-lift,
-  .motion-magnet,
-  .motion-card,
-  .motion-cell {
-    transition: none !important;
-    transform: none !important;
+  .animate-defeat,
+  .animate-chain,
+  .animate-counter-tick {
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
   }
 }
+
+/* ────────────────────────────────────────────────────────────────
+ * Performance: VFX quality tiers (data-vfx on <html>)
+ * ──────────────────────────────────────────────────────────────── */
+[data-vfx="off"] .animate-float,
+[data-vfx="off"] .animate-live-dot,
+[data-vfx="off"] .result-banner-shimmer,
+[data-vfx="off"] .animate-flip-glow {
+  animation: none !important;
+}
+
+[data-vfx="off"] .animate-cell-place,
+[data-vfx="off"] .animate-cell-flip,
+[data-vfx="off"] .animate-banner-enter,
+[data-vfx="off"] .animate-victory,
+[data-vfx="off"] .animate-defeat,
+[data-vfx="off"] .animate-chain,
+[data-vfx="off"] .animate-counter-tick {
+  animation-duration: 1ms !important;
+  animation-iteration-count: 1 !important;
+}
+
+[data-vfx="low"] .animate-cell-place { animation-duration: 0.3s !important; }
+[data-vfx="low"] .animate-cell-flip  { animation-duration: 0.35s !important; }
+[data-vfx="low"] .animate-flip-glow  { animation-duration: 0.45s !important; }
+[data-vfx="low"] .animate-banner-enter { animation-duration: 0.26s !important; }

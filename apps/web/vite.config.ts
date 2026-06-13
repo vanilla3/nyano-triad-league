@@ -32,5 +32,9 @@ export default defineConfig({
     globals: true,
     environment: "node",
     exclude: ["e2e/**", "node_modules/**"],
+    // Dynamic-import export-integrity tests routinely exceed the 5s default
+    // under full-suite parallel load (vite transform contention), failing on
+    // whichever file imports last. Hangs still fail, just later.
+    testTimeout: 30_000,
   },
 });

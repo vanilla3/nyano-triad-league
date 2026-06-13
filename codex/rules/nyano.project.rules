@@ -14,10 +14,15 @@ prefix_rule(
     match = [
         "pnpm dev:web",
         "pnpm lint",
+        "pnpm lint:text",
+        "pnpm lint:motion",
         "pnpm test",
         "pnpm typecheck",
         "pnpm build:web",
         "pnpm release:check",
+        "pnpm codex:doctor",
+        "pnpm codex:index",
+        "pnpm handoff:check",
         "pnpm -C apps/web dev",
         "pnpm -C apps/web test",
         "pnpm -C apps/web typecheck",
@@ -35,6 +40,9 @@ prefix_rule(
     match = [
         "node -v",
         "node scripts/build_game_index_v1.mjs",
+        "node scripts/check_text_hygiene.mjs --root apps/web/src --root codex --root docs",
+        "node scripts/audit_motion_usage_v1.mjs",
+        "node codex/scripts/doctor.mjs",
     ],
 )
 

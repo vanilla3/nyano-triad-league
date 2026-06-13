@@ -22,6 +22,8 @@ Thumbs.db
 
 # Playwright artifacts
 apps/web/test-results/
+apps/web/test-artifacts/
+.playwright-mcp/
 
 # Local temporary artifacts
 *tempall_components.txt
@@ -30,6 +32,8 @@ apps/web/test-results/
 /apps/web/nul
 /contracts/cache/test-failures
 
-.vercel
+# Local screenshots / handoff bundles (keep out of source control)
+/*.png
+/nyano-triad-league-frontend-handoff.zip
 
 .vercel

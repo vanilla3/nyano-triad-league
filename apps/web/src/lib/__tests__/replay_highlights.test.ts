@@ -47,7 +47,7 @@ describe("detectReplayHighlights", () => {
     expect(highlights).toEqual([
       { step: 1, kind: "big_flip", label: "3枚反転" },
       { step: 2, kind: "chain", label: "連鎖" },
-      { step: 2, kind: "warning", label: "警戒発動" },
+      { step: 2, kind: "warning", label: "警告!" },
       { step: 3, kind: "combo", label: "momentum" },
     ]);
   });
@@ -56,10 +56,10 @@ describe("detectReplayHighlights", () => {
 describe("summarizeReplayHighlights", () => {
   it("counts per highlight kind", () => {
     const summary = summarizeReplayHighlights([
-      { step: 1, kind: "big_flip", label: "3 flips" },
-      { step: 2, kind: "chain", label: "Chain" },
-      { step: 2, kind: "warning", label: "Warning!" },
-      { step: 3, kind: "warning", label: "Warning!" },
+      { step: 1, kind: "big_flip", label: "3枚反転" },
+      { step: 2, kind: "chain", label: "連鎖" },
+      { step: 2, kind: "warning", label: "警告!" },
+      { step: 3, kind: "warning", label: "警告!" },
     ]);
 
     expect(summary).toEqual({
@@ -75,8 +75,8 @@ describe("formatReplayWinnerLabel", () => {
   it("formats replay winner labels including draws", () => {
     expect(formatReplayWinnerLabel(0)).toBe("A");
     expect(formatReplayWinnerLabel(1)).toBe("B");
-    expect(formatReplayWinnerLabel("draw")).toBe("引き分け");
-    expect(formatReplayWinnerLabel(null)).toBe("引き分け");
+    expect(formatReplayWinnerLabel("draw")).toBe("DRAW");
+    expect(formatReplayWinnerLabel(null)).toBe("DRAW");
   });
 });
 
@@ -85,6 +85,6 @@ describe("replayHighlightKindLabel", () => {
     expect(replayHighlightKindLabel("big_flip")).toBe("大量反転");
     expect(replayHighlightKindLabel("chain")).toBe("連鎖");
     expect(replayHighlightKindLabel("combo")).toBe("コンボ");
-    expect(replayHighlightKindLabel("warning")).toBe("警戒");
+    expect(replayHighlightKindLabel("warning")).toBe("警告");
   });
 });

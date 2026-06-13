@@ -27,7 +27,7 @@ describe("replayStepProgress", () => {
 describe("replayStepStatusText", () => {
   it("formats setup and turn labels", () => {
     expect(replayStepStatusText(0)).toBe("初期盤面");
-    expect(replayStepStatusText(7)).toBe("7手目のあと");
+    expect(replayStepStatusText(7)).toBe("7手目の後");
   });
 });
 
@@ -37,13 +37,13 @@ describe("replayPhaseInfo", () => {
     expect(replayPhaseInfo(2, 9)).toEqual({ label: "序盤", tone: "opening" });
     expect(replayPhaseInfo(5, 9)).toEqual({ label: "中盤", tone: "mid" });
     expect(replayPhaseInfo(8, 9)).toEqual({ label: "終盤", tone: "end" });
-    expect(replayPhaseInfo(9, 9)).toEqual({ label: "決着", tone: "final" });
+    expect(replayPhaseInfo(9, 9)).toEqual({ label: "終局", tone: "final" });
   });
 
   it("adapts when stepMax is shorter", () => {
     expect(replayPhaseInfo(1, 3)).toEqual({ label: "序盤", tone: "opening" });
     expect(replayPhaseInfo(2, 3)).toEqual({ label: "中盤", tone: "mid" });
-    expect(replayPhaseInfo(3, 3)).toEqual({ label: "決着", tone: "final" });
+    expect(replayPhaseInfo(3, 3)).toEqual({ label: "終局", tone: "final" });
   });
 });
 

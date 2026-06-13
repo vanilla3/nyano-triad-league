@@ -89,11 +89,11 @@ test.describe("Mint app screen guardrails", () => {
     const appChrome = page.locator(".mint-app-chrome").first();
     await expect(appChrome).toBeVisible({ timeout: 10_000 });
 
-    await page.getByRole("link", { name: "Arena" }).first().click();
+    await page.getByRole("link", { name: "アリーナ" }).first().click();
     await expect(page).toHaveURL(/\/arena\?theme=mint/);
     await expect(appChrome).toBeVisible({ timeout: 10_000 });
 
-    await page.getByRole("link", { name: "Decks" }).first().click();
+    await page.getByRole("link", { name: "デッキ" }).first().click();
     await expect(page).toHaveURL(/\/decks\?theme=mint/);
     await expect(appChrome).toBeVisible({ timeout: 10_000 });
   });
@@ -197,6 +197,6 @@ test.describe("Mint app screen guardrails", () => {
     await expect(page.locator(".mint-app-footer")).toHaveCount(0);
     await expect(page.locator(".app-header")).toHaveCount(0);
     await expect(page.locator(".app-footer")).toHaveCount(0);
-    await expect(page.getByLabel("Commit move from focus hand dock")).toBeVisible({ timeout: 15_000 });
+    await expect(page.locator('.mint-focus-hand-dock button[aria-label="手を確定"]')).toBeVisible({ timeout: 15_000 });
   });
 });
