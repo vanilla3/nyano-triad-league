@@ -1,6 +1,7 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import { GlassPanel } from "@/components/mint/GlassPanel";
+import { MintIcon } from "@/components/mint/icons/MintIcon";
 import { MintTabNav, type MintTabItem } from "@/components/mint/MintTabNav";
 import { MintTitleText } from "@/components/mint/MintTypography";
 
@@ -14,7 +15,7 @@ export function MintAppChrome({ tabs }: MintAppChromeProps) {
       <GlassPanel variant="panel" className="mint-app-chrome__brand">
         <Link to={tabs[0]?.to ?? "/"} className="mint-app-chrome__brand-link">
           <span className="mint-app-chrome__logo-mark" aria-hidden="true">
-            <img src="/assets/gen/nyano_ui_cameo_512_v1.webp" alt="" width={34} height={34} />
+            <MintIcon name="sparkle" size={18} />
           </span>
           <MintTitleText as="h1" className="mint-app-chrome__logo-text">
             Nyano Triad League

@@ -38,3 +38,5 @@ APPROVAL_MODE=on-request CREATE_PR=0 codex/scripts/run_work_order.sh 006
   1) set ApprovalMode to `on-request`, approve when prompted, OR
   2) change `codex/rules/nyano.project.rules` so `git commit`/`git push` are `allow`.
 - The runner stops on the first failed Work Order and keeps the branch for inspection.
+
+ApprovalMode values (Codex CLI): `untrusted` | `on-request` | `never`.

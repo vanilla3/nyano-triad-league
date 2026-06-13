@@ -117,11 +117,11 @@ Nyano Triad League の体験は、カードの見た目は強くなってきた�
 
 ### Milestone A: Nyano コメントのレイアウト安定化
 
-- WO006: NyanoReaction slot 化・クランプ・回帰防止
+- WO047: NyanoReaction slot 化・クランプ・回帰防止
 
 ### Milestone B: 盤面/舞台のビジュアル磨き込み
 
-- WO007: Mint board + stage chrome の素材感・統一感アップ
+- WO049: Mint board + stage chrome の素材感・統一感アップ
 
 ### Milestone C: Match Setup（ルール設定）を Nintendo 品質へ
 
@@ -162,8 +162,8 @@ Nyano Triad League の体験は、カードの見た目は強くなってきた�
 
 ## 9) Progress
 
-- [x] Milestone A / WO006
-- [x] Milestone B / WO007
+- [x] Milestone A / WO047
+- [x] Milestone B / WO049
 - [x] Milestone C / WO008
 - [x] Milestone C / WO009
 - [x] Milestone D / WO010
@@ -174,7 +174,7 @@ Nyano Triad League の体験は、カードの見た目は強くなってきた�
 
 - 2026-02-14: 盤面/設定/コメントを “長期タスクの柱” として分離し、WO 単位で安全に前進する方針に決定
 - 2026-02-14: NyanoReaction は mount/unmount を許容しつつ、レイアウト側は常設 slot で固定して Layout Shift を抑える方針を採用
-- 2026-02-14: WO007 では既存構造を崩さず、CSS層（board/frame/cell/stage/vfx分岐）中心で素材感と統一感を上げる方針を採用
+- 2026-02-14: WO049 では既存構造を崩さず、CSS層（board/frame/cell/stage/vfx分岐）中心で素材感と統一感を上げる方針を採用
 
 ---
 
@@ -187,8 +187,8 @@ Nyano Triad League の体験は、カードの見た目は強くなってきた�
 
 ## 12) Outcome / Retrospective
 
-- WO006 を実装。`NyanoReactionSlot` を導入し、`Match/Replay` で常時 slot を確保。コメント文は 2 行クランプに統一。
-- WO007 を実装。`DuelStageMint` に舞台レイヤー（rim/atmo）を追加し、`mint-theme.css` で board/frame/cell の質感と VFX tier 分岐を強化。
+- WO047 を実装。`NyanoReactionSlot` を導入し、`Match/Replay` で常時 slot を確保。コメント文は 2 行クランプに統一。
+- WO049 を実装。`DuelStageMint` に舞台レイヤー（rim/atmo）を追加し、`mint-theme.css` で board/frame/cell の質感と VFX tier 分岐を強化。
 
 ---
 
@@ -235,9 +235,9 @@ Nyano Triad League の体験は、カードの見た目は強くなってきた�
   - `codex/work_orders/010_ux_regression_guardrails.md`
   - `docs/ux/UX_SCORECARD.md`
 
-## 17) 2026-02-15 WO007 Verification Update (Automated)
+## 17) 2026-02-15 WO049 Verification Update (Automated)
 
-- Converted WO007 manual verification points into Playwright guardrails:
+- Converted WO049 manual verification points into Playwright guardrails:
   - `apps/web/e2e/mint-stage-visual-guardrails.spec.ts`
     - `vfx=off` stage-layer suppression with playable board
     - `prefers-reduced-motion` -> `data-vfx=off`

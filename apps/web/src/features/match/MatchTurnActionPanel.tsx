@@ -1,5 +1,11 @@
 import React from "react";
 
+const CELL_COORDS = ["A1", "B1", "C1", "A2", "B2", "C2", "A3", "B3", "C3"] as const;
+
+function cellCoord(cell: number): string {
+  return CELL_COORDS[cell] ?? String(cell);
+}
+
 export function MatchTurnActionPanel(input: {
   isRpg: boolean;
   isStageFocusRoute: boolean;
@@ -40,9 +46,16 @@ export function MatchTurnActionPanel(input: {
       <div className="grid gap-1">
         <div
           className={isRpg ? "text-[10px] uppercase tracking-wider" : "text-[11px] text-slate-600"}
-          style={isRpg ? { fontFamily: "'Cinzel', serif", color: "var(--rpg-text-dim, #8A7E6B)" } : undefined}
+          style={
+            isRpg
+              ? {
+                  fontFamily: "'Cinzel', serif",
+                  color: "var(--rpg-text-dim, #8A7E6B)",
+                }
+              : undefined
+          }
         >
-          警戒マーク (残り {currentWarnRemaining})
+          警戒マーク（残り{currentWarnRemaining}）
         </div>
         <select
           className={["input", isStageFocusRoute ? "h-10 min-w-[180px]" : ""].join(" ").trim()}
@@ -52,41 +65,55 @@ export function MatchTurnActionPanel(input: {
             onChangeDraftWarningMarkCell(value === "" ? null : Number(value));
           }}
           disabled={isBoardFull || isAiTurn || currentWarnRemaining <= 0}
-          aria-label="警戒マークを置くマス"
+          aria-label="警戒マークの配置先"
         >
           <option value="">なし</option>
           {availableCells
             .filter((cell) => cell !== draftCell)
             .map((cell) => (
-              <option key={cell} value={String(cell)}>{cell + 1}番のマス</option>
+              <option key={cell} value={String(cell)}>
+                {cellCoord(cell)}
+              </option>
             ))}
         </select>
       </div>
 
       <div className="flex flex-wrap items-center gap-2">
         <button
-          className={isRpg ? "rpg-result__btn rpg-result__btn--primary" : ["btn btn-primary", isStageFocusRoute ? "h-10 px-4" : ""].join(" ").trim()}
+          className={
+            isRpg
+              ? "rpg-result__btn rpg-result__btn--primary"
+              : ["btn btn-primary", isStageFocusRoute ? "h-10 px-4" : ""].join(" ").trim()
+          }
           onClick={onCommitMove}
           disabled={!canCommit}
-          aria-label="この手を確定"
+          aria-label="手を確定"
         >
-          この手を確定
+          確定
         </button>
         <button
-          className={isRpg ? "rpg-result__btn" : ["btn", isStageFocusRoute ? "h-10 px-4" : ""].join(" ").trim()}
+          className={
+            isRpg
+              ? "rpg-result__btn"
+              : ["btn", isStageFocusRoute ? "h-10 px-4" : ""].join(" ").trim()
+          }
           onClick={onUndoMove}
           disabled={!canUndo}
-          aria-label="1手戻す"
+          aria-label="1手取り消し"
         >
-          1手戻す
+          取り消し
         </button>
         {showAiMoveAction ? (
           <button
-            className={isRpg ? "rpg-result__btn rpg-result__btn--primary" : ["btn btn-primary", isStageFocusRoute ? "h-10 px-4" : ""].join(" ").trim()}
+            className={
+              isRpg
+                ? "rpg-result__btn rpg-result__btn--primary"
+                : ["btn btn-primary", isStageFocusRoute ? "h-10 px-4" : ""].join(" ").trim()
+            }
             onClick={onAiMove}
-            aria-label="Nyano AIの手を進める"
+            aria-label="Nyano AIの手"
           >
-            Nyanoの手を進める
+            Nyanoの手
           </button>
         ) : null}
       </div>

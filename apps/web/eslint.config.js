@@ -25,9 +25,11 @@ export default [
       "react-hooks/rules-of-hooks": "error",
       "react-hooks/exhaustive-deps": "warn",
       "react-refresh/only-export-components": ["warn", { allowConstantExport: true }],
-      "@typescript-eslint/no-explicit-any": "off",
+      // Surface `any` escapes as warnings so new code stays typed
+      // (existing usages are tracked debt; do not let this list grow).
+      "@typescript-eslint/no-explicit-any": "warn",
       "@typescript-eslint/no-unused-vars": ["warn", { argsIgnorePattern: "^_", varsIgnorePattern: "^_" }],
-      "no-constant-condition": "off",
+      "no-constant-condition": ["error", { checkLoops: false }],
     },
   },
 ];

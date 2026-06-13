@@ -14,7 +14,7 @@
 - 状態を一目で理解できる粒度で提示し（プログレッシブ開示/チャンキング）
 - 選択肢を減らして決断を早くする（Hick's law）
 
-この方針はアップロードいただいたUI分析のフレームに沿っています。fileciteturn1file0
+この方針はアップロードいただいたUI分析のフレームに沿っています。
 
 ## Manual test checklist
 - /match（host: stream=1） + /stream + /overlay を同時に開く

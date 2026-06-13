@@ -13,7 +13,7 @@
 ## Why
 nyano-warudo 側の Puzzle Show トリガーは `POST /v1/snapshots` が最短ルート。  
 Triad League 側で “送れる・再現できる・サンプルを切れる” 状態を先に固めることで、  
-配信の現場で詰まりにくい土台になります。fileciteturn1file0
+配信の現場で詰まりにくい土台になります。
 
 ## Manual test checklist
 - `pnpm -C apps/web dev` → `/stream`

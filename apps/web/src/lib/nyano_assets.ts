@@ -12,7 +12,6 @@
 /** @deprecated PNG removed — all local images now WebP only */
 export const NYANO_IMAGE_PNG_URL = "/nyano.webp";
 export const NYANO_IMAGE_WEBP_URL = "/nyano.webp";
-export const NYANO_MINI_IMAGE_URL = "/nyano/mini-nyano.png";
 
 /** Original immutable source (reference / fallback) */
 export const NYANO_IMAGE_ARWEAVE_URL =

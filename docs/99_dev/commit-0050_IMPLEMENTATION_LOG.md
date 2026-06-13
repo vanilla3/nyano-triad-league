@@ -18,7 +18,7 @@ nyano-warudo 側で Puzzle Show のトリガーにするには、Triad League �
 運用上は「視聴者が迷わない短い型」と「配信者が事故らないUI」が鍵なので、
 - 送信は Stream Studio に集約し
 - content は prompt/JSON の両方を用意し
-- フォーマットは正規表現で拾いやすい形に寄せました。fileciteturn1file0
+- フォーマットは正規表現で拾いやすい形に寄せました。
 
 ## Manual test checklist
 - /stream を開く → Nyano Warudo Bridge に baseUrl を設定

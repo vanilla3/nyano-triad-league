@@ -1,4 +1,4 @@
-﻿export type ReplayMode = "auto" | "v1" | "v2" | "compare";
+export type ReplayMode = "auto" | "v1" | "v2" | "compare";
 
 export function parseReplayMode(v: string | null): ReplayMode {
   if (v === "auto" || v === "v1" || v === "v2" || v === "compare") return v;

@@ -1,11 +1,14 @@
 import React from "react";
 
+import { CardBrowserMint } from "@/components/CardBrowserMint";
 import { CardMini } from "@/components/CardMini";
 import { CopyField } from "@/components/CopyField";
 import { useToast } from "@/components/Toast";
 import { errorMessage } from "@/lib/errorMessage";
 import { writeClipboardText } from "@/lib/clipboard";
 import { stringifyWithBigInt } from "@/lib/json";
+import { fetchGameIndex, type GameIndexV1 } from "@/lib/nyano/gameIndex";
+import { CARD_TIER_THRESHOLDS } from "@/lib/nyano/cardTier";
 import {
   clearUserRpcOverride,
   fetchMintedTokenIds,
@@ -66,6 +69,32 @@ export function NyanoPage() {
     >
     | null
   >(null);
+
+  // Card codex (zukan): browse every card offline via the bundled game index.
+  const [gameIndex, setGameIndex] = React.useState<GameIndexV1 | null>(null);
+  const [indexLoading, setIndexLoading] = React.useState(true);
+
+  React.useEffect(() => {
+    let cancelled = false;
+    fetchGameIndex()
+      .then((idx) => {
+        if (cancelled) return;
+        setGameIndex(idx);
+        setIndexLoading(false);
+      })
+      .catch(() => {
+        if (cancelled) return;
+        setIndexLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const indexCardCount = React.useMemo(
+    () => (gameIndex ? Object.keys(gameIndex.tokens).length : 0),
+    [gameIndex],
+  );
 
   const toast = useToast();
 
@@ -172,6 +201,40 @@ export function NyanoPage() {
 
   return (
     <div className="grid gap-6">
+      {/* ── Card Codex (図鑑) — offline browse of every card ─────────── */}
+      <section className="card">
+        <div className="card-hd">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div>
+              <div className="text-base font-semibold">カード図鑑 (Card Codex) 📖</div>
+              <div className="text-xs text-slate-500">
+                全カードの性能をオフラインで閲覧できます（ウォレット・RPC 不要）。クリックで詳細プレビュー、フィルターで絞り込み。
+              </div>
+            </div>
+            {gameIndex ? (
+              <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500">
+                <span className="badge badge-nyano">{indexCardCount} 枚収録</span>
+                <span title={`エッジ合計 ${CARD_TIER_THRESHOLDS.s} 以上`} className="badge">S: {CARD_TIER_THRESHOLDS.s}+</span>
+                <span title={`エッジ合計 ${CARD_TIER_THRESHOLDS.a} 以上`} className="badge">A: {CARD_TIER_THRESHOLDS.a}+</span>
+                <span title={`エッジ合計 ${CARD_TIER_THRESHOLDS.b} 以上`} className="badge">B: {CARD_TIER_THRESHOLDS.b}+</span>
+              </div>
+            ) : null}
+          </div>
+        </div>
+        <div className="card-bd">
+          {indexLoading ? (
+            <div className="callout callout-muted text-xs">game index を読み込み中…</div>
+          ) : gameIndex ? (
+            <CardBrowserMint index={gameIndex} />
+          ) : (
+            <div className="callout callout-warn text-xs">
+              game index が見つかりません。<code>/game/index.v1.json</code> を配置すると、ここに全カードが表示されます（<code>pnpm build:game-index</code> で生成できます）。
+            </div>
+          )}
+        </div>
+      </section>
+
+      {/* ── On-chain inspector ────────────────────────────────────────── */}
       <section className="card">
         <div className="card-hd">
           <div className="flex flex-wrap items-center justify-between gap-2">

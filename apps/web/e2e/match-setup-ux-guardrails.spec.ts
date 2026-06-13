@@ -6,18 +6,20 @@ test.describe("Match Setup UX guardrails", () => {
     await expect(page.getByTestId("match-setup-panel")).toBeVisible({ timeout: 15_000 });
 
     const summary = page.getByTestId("match-setup-summary-line");
-    await expect(summary).toContainText("v2 shadow+tactics");
+    await expect(summary).toContainText("v2 シャドウ+戦術");
     await expect(summary).toContainText("Nyano AI");
-    await expect(summary).toContainText("先攻: manual");
+    await expect(summary).toContainText("先手: manual");
     await expect(summary).toContainText("盤面: mint");
 
     await page.getByTestId("match-setup-opponent-pvp").click();
     await expect.poll(() => new URL(page.url()).searchParams.get("opp")).toBe("pvp");
-    await expect(summary).toContainText("対戦相手: プレイヤー");
+    await expect(summary).toContainText("対戦相手: 対人");
 
-    await page.getByTestId("match-setup-ruleset").selectOption("classic_order");
+    await page.getByTestId("mint-ruleset-family-classic").click();
+    await expect.poll(() => new URL(page.url()).searchParams.get("rk")).toBe("classic_plus_same");
+    await page.getByTestId("mint-ruleset-preset-classic_order").click();
     await expect.poll(() => new URL(page.url()).searchParams.get("rk")).toBe("classic_order");
-    await expect(summary).toContainText("classic order");
+    await expect(summary).toContainText("クラシック Order");
 
     await page.getByTestId("match-setup-board-ui").selectOption("engine");
     await expect.poll(() => new URL(page.url()).searchParams.get("ui")).toBe("engine");
@@ -25,7 +27,7 @@ test.describe("Match Setup UX guardrails", () => {
 
     await page.getByTestId("match-setup-first-player-mode").selectOption("mutual");
     await expect.poll(() => new URL(page.url()).searchParams.get("fpm")).toBe("mutual");
-    await expect(summary).toContainText("先攻: mutual");
+    await expect(summary).toContainText("先手: mutual");
   });
 
   test("advanced setup auto-opens for non-manual first-player mode and keeps ccap in URL", async ({ page }) => {

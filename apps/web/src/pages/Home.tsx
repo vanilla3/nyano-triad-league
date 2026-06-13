@@ -31,13 +31,11 @@ import { MintIcon } from "@/components/mint/icons/MintIcon";
 import { appendThemeToPath, resolveAppTheme } from "@/lib/theme";
 import { isDebugMode } from "@/lib/debug";
 
-const NYANO_BATTLE_TOKEN_URL = "/assets/gen/nyano_battle_token_256_v1.webp";
-
 const DIFFICULTIES = [
-  { key: "easy", label: "ゆるめ", labelJa: "はじめて" },
-  { key: "normal", label: "おすすめ", labelJa: "ふつう" },
-  { key: "hard", label: "読み合い", labelJa: "つよい" },
-  { key: "expert", label: "真剣勝負", labelJa: "めっちゃつよい" },
+  { key: "easy", label: "Easy", labelJa: "はじめて" },
+  { key: "normal", label: "Normal", labelJa: "ふつう" },
+  { key: "hard", label: "Hard", labelJa: "つよい" },
+  { key: "expert", label: "Expert", labelJa: "めっちゃつよい" },
 ] as const;
 
 type DifficultyKey = (typeof DIFFICULTIES)[number]["key"];
@@ -48,18 +46,6 @@ type MenuItem = {
   subtitle: string;
   icon: "arena" | "decks" | "replay" | "stream";
 };
-
-const HOME_BOARD_CELLS = [
-  { label: "7", tone: "mint" },
-  { label: "4", tone: "sky" },
-  { label: "A", tone: "empty" },
-  { label: "2", tone: "peach" },
-  { label: "9", tone: "hero" },
-  { label: "5", tone: "empty" },
-  { label: "K", tone: "sky" },
-  { label: "3", tone: "empty" },
-  { label: "8", tone: "mint" },
-] as const;
 
 function formatSecondsFromMs(ms: number | null): string {
   if (ms === null) return "--";
@@ -103,10 +89,10 @@ export function HomePage() {
 
   const menuItems = React.useMemo<MenuItem[]>(
     () => [
-      { to: themed("/arena"), title: "アリーナ", subtitle: "AIとすぐ対戦", icon: "arena" },
-      { to: themed("/decks"), title: "デッキ", subtitle: "カードを組む", icon: "decks" },
-      { to: themed("/replay"), title: "リプレイ", subtitle: "名勝負を見る", icon: "replay" },
-      { to: themed("/stream"), title: "配信", subtitle: "みんなで遊ぶ", icon: "stream" },
+      { to: themed("/arena"), title: "アリーナ", subtitle: "対戦モードへ", icon: "arena" },
+      { to: themed("/decks"), title: "デッキ", subtitle: "デッキ編集", icon: "decks" },
+      { to: themed("/replay"), title: "リプレイ", subtitle: "対戦を振り返る", icon: "replay" },
+      { to: themed("/stream"), title: "配信", subtitle: "配信ツールへ", icon: "stream" },
     ],
     [themed],
   );
@@ -209,66 +195,10 @@ export function HomePage() {
   return (
     <div className="mint-home-screen">
       <section className="mint-home-hero">
-        <div className="mint-home-hero__copy">
-          <div className="mint-home-kicker">
-            <MintIcon name="sparkle" size={16} />
-            <span>今日のロビー</span>
-          </div>
-          <MintTitleText as="h2" className="mint-home-title">
-            Nyano Triad League
-          </MintTitleText>
-          <p className="mint-home-subtitle">
-            ふわっとかわいく、でも一手は熱く。3×3の盤面をカードで取り合おう。
-          </p>
-          <div className="mint-home-hero__actions">
-            <MintPressable to={quickPlayUrl} tone="primary" onClick={handleQuickPlayStart}>
-              <MintIcon name="match" size={18} />
-              <span>バトル開始</span>
-            </MintPressable>
-            <MintPressable tone="soft" onClick={openQuickGuide}>
-              <MintIcon name="rules" size={18} />
-              <span>遊び方を見る</span>
-            </MintPressable>
-          </div>
-          <div className="mint-home-hero__stats" aria-label="Game highlights">
-            <span>3×3 盤面</span>
-            <span>9ターン決着</span>
-            <span>ゲストOK</span>
-          </div>
-        </div>
-
-        <div className="mint-home-battle-card" aria-label="Nyano battle board preview">
-          <div className="mint-home-battle-card__top">
-            <span className="mint-home-battle-card__opponent">
-              <img
-                className="mint-home-battle-card__opponent-token"
-                src={NYANO_BATTLE_TOKEN_URL}
-                alt=""
-                width={58}
-                height={58}
-              />
-              <span>
-                <strong>VS NYANO AI</strong>
-                <small>盤面待機中</small>
-              </span>
-            </span>
-            <span className="mint-home-battle-card__ready">READY</span>
-          </div>
-          <div className="mint-home-board-preview" aria-hidden="true">
-            {HOME_BOARD_CELLS.map((cell, index) => (
-              <span
-                key={`${cell.label}-${index}`}
-                className={`mint-home-board-cell mint-home-board-cell--${cell.tone}`}
-              >
-                {cell.label}
-              </span>
-            ))}
-          </div>
-          <div className="mint-home-battle-card__footer">
-            <span className="mint-home-battle-card__status-dot" aria-hidden="true" />
-            <span>先攻を選んで、9ターン勝負へ</span>
-          </div>
-        </div>
+        <MintTitleText as="h2" className="mint-home-title">
+          Nyano Triad League
+        </MintTitleText>
+        <p className="mint-home-subtitle">デッキを選んで、すぐに対戦を始めよう</p>
       </section>
 
       <section className="mint-home-menu-grid mint-stagger-enter" aria-label="Main menu">
@@ -286,7 +216,7 @@ export function HomePage() {
       <section className="mint-home-quickplay">
         <GlassPanel variant="panel" className="mint-home-quickplay__panel">
           <div className="mint-home-quickplay__head">
-            <MintLabel>今日の対戦</MintLabel>
+            <MintLabel>クイック対戦</MintLabel>
             <div className="mint-home-quickplay__difficulty">
               {DIFFICULTIES.map((item) => (
                 <button
@@ -311,11 +241,11 @@ export function HomePage() {
             </MintPressable>
             <MintPressable to={themed("/arena")} tone="soft">
               <MintIcon name="arena" size={18} />
-              <span>アリーナを見る</span>
+              <span>Arenaへ</span>
             </MintPressable>
             <MintPressable to={quickPlaySetupUrl} tone="ghost">
               <MintIcon name="rules" size={18} />
-              <span>ルールを選ぶ</span>
+              <span>ルール変更</span>
             </MintPressable>
           </div>
         </GlassPanel>
@@ -324,45 +254,45 @@ export function HomePage() {
       <section className="mint-home-onboarding">
         <div className="mint-home-onboarding__heading">
           <MintTitleText as="h3" className="mint-home-onboarding__title">
-            遊び方はかんたん
+            最短2ステップで対戦開始
           </MintTitleText>
         </div>
         <p className="mint-home-onboarding__note">
-          まずはゲストでOK。カードを置いて、辺の数字で相手カードをひっくり返そう。
+          ゲスト対戦は 2 までで開始できます。3 は慣れてきたら進める任意ステップです。
         </p>
 
         <div className="mint-home-onboarding__grid">
           <GlassPanel variant="card" className="mint-home-step">
             <div className="mint-home-step__index">1</div>
-            <MintTitleText as="h3" className="mint-home-step__title">ルールをちら見</MintTitleText>
+            <MintTitleText as="h3" className="mint-home-step__title">ルールを知る</MintTitleText>
             <MintPressable tone="soft" onClick={openQuickGuide}>
-              1分で確認
+              ルールを開く
             </MintPressable>
           </GlassPanel>
 
           <GlassPanel variant="card" className="mint-home-step">
             <div className="mint-home-step__index">2</div>
-            <MintTitleText as="h3" className="mint-home-step__title">ゲストで初バトル</MintTitleText>
+            <MintTitleText as="h3" className="mint-home-step__title">ゲストで対戦</MintTitleText>
             <MintPressable to={quickPlayUrl} tone="primary" onClick={handleQuickPlayStart}>
-              バトル開始
+              今すぐ対戦
             </MintPressable>
           </GlassPanel>
 
           <GlassPanel variant="card" className="mint-home-step">
             <div className="mint-home-step__index">3</div>
-            <MintTitleText as="h3" className="mint-home-step__title">勝ち筋を試す</MintTitleText>
+            <MintTitleText as="h3" className="mint-home-step__title">慣れたら最初の手を確定</MintTitleText>
             <MintPressable to={quickCommitUrl} tone="soft">
-              もう一戦へ
+              Matchを開く
             </MintPressable>
           </GlassPanel>
         </div>
 
         <div className="mint-home-onboarding__footer">
           <MintPressable to={themed("/start")} tone="soft">
-            はじめてガイドへ
+            1分スタート画面へ
           </MintPressable>
           {onboardingAllDone ? (
-            <span className="mint-home-onboarding__done">準備完了。好きなモードでバトルを始めよう。</span>
+            <span className="mint-home-onboarding__done">遊ぶ準備が整いました。好きなモードを選んで始めましょう。</span>
           ) : null}
         </div>
       </section>
@@ -370,11 +300,11 @@ export function HomePage() {
       <section className="mint-home-infobar">
         <GlassPanel variant="pill" className="mint-home-pill">
           <MintIcon name="events" size={14} />
-          <span>短く遊べて、最後の一手まで逆転あり</span>
+          <span>まずはゲスト対戦でルールを覚えよう</span>
         </GlassPanel>
         <GlassPanel variant="pill" className="mint-home-pill">
           <MintIcon name="sparkle" size={14} />
-          <span>デッキとアリーナでお気に入りの勝ち筋を見つけよう</span>
+          <span>Decks と Arena で自分の戦い方を見つけよう</span>
         </GlassPanel>
       </section>
 

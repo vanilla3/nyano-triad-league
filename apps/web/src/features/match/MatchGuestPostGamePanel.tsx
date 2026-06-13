@@ -30,84 +30,93 @@ export function MatchGuestPostGamePanel(input: {
     qrCode,
   } = input;
   if (!isVisible) return null;
+
   const actionButtonClassName = isRpg ? "btn text-xs" : "btn text-xs mint-pressable mint-hit";
-  const primaryActionButtonClassName = isRpg ? "btn btn-primary text-xs" : "btn btn-primary text-xs mint-pressable mint-hit";
+  const primaryActionButtonClassName = isRpg
+    ? "btn btn-primary text-xs"
+    : "btn btn-primary text-xs mint-pressable mint-hit";
   const shareButtonClassName = isRpg ? actionButtonClassName : `${actionButtonClassName} mint-share-action__btn`;
-  const shareStatusClassName = !isRpg
-    ? [
-      "mint-share-actions__status",
-      canFinalize ? "mint-share-actions__ready" : "mint-share-actions__hint",
-    ].join(" ")
-    : "";
-  const shareStatusMessage = canFinalize
-    ? "Best shot: capture the victory panel now, then share."
-    : "Share and replay unlock after turn 9.";
-  const shareRowClassName = [
-    "flex flex-wrap gap-2",
-    !isRpg ? "mint-share-actions__row" : "",
-    !isRpg && canFinalize ? "mint-share-actions__row--ready" : "",
-  ].filter(Boolean).join(" ");
 
   return (
-    <div className={["grid gap-2 rounded-lg border border-nyano-200 bg-nyano-50 p-3", isStageFocusRoute ? "stage-focus-side-panel" : ""].filter(Boolean).join(" ")}>
-      <div className="text-sm font-medium text-nyano-800">Enjoyed this guest deck?</div>
+    <div
+      className={
+        [
+          "grid gap-2 rounded-lg border border-nyano-200 bg-nyano-50 p-3",
+          isStageFocusRoute ? "stage-focus-side-panel" : "",
+        ]
+          .filter(Boolean)
+          .join(" ")
+      }
+    >
+      <div className="text-sm font-medium text-nyano-800">このゲストデッキ、気に入りましたか？</div>
       <div className="flex flex-wrap gap-2">
-        <Link className={`${primaryActionButtonClassName} no-underline`} to="/decks">Save this deck</Link>
+        <Link className={`${primaryActionButtonClassName} no-underline`} to="/decks">
+          このデッキを保存
+        </Link>
         <button className={primaryActionButtonClassName} onClick={onRematch}>
-          Rematch with this deck
+          このデッキで再戦
         </button>
         <button className={actionButtonClassName} onClick={onLoadNewGuestDeck}>
-          Load new guest deck
+          別のゲストデッキにする
         </button>
-        <button
-          className={actionButtonClassName}
-          onClick={onSaveGuestDeck}
-          disabled={guestDeckSaved}
-        >
-          {guestDeckSaved ? "Saved" : "Save deck"}
+        <button className={actionButtonClassName} onClick={onSaveGuestDeck} disabled={guestDeckSaved}>
+          {guestDeckSaved ? "保存済み" : "保存"}
         </button>
       </div>
-      <div className={["grid gap-2 border-t border-nyano-200 pt-2", !isRpg ? "mint-share-actions" : ""].filter(Boolean).join(" ")}>
-        <div className={shareRowClassName}>
+
+      <div
+        className={
+          ["grid gap-2 border-t border-nyano-200 pt-2", !isRpg ? "mint-share-actions" : ""]
+            .filter(Boolean)
+            .join(" ")
+        }
+      >
+        <div className={["flex flex-wrap gap-2", !isRpg ? "mint-share-actions__row" : ""].filter(Boolean).join(" ")}>
           <button
             className={shareButtonClassName}
             onClick={onCopyShareUrl}
             disabled={!canFinalize}
-            aria-label="Share URL"
-            title="Share URL"
+            aria-label="共有URLをコピー"
+            title="共有URLをコピー"
           >
-            Share URL
+            共有URL
           </button>
           <button
             className={shareButtonClassName}
             onClick={onCopyShareTemplate}
             disabled={!canFinalize}
-            aria-label="Share template"
-            title="Share template"
+            aria-label="共有テンプレをコピー"
+            title="共有テンプレをコピー"
           >
-            Share template
+            テンプレ
           </button>
           <button
             className={shareButtonClassName}
             onClick={onOpenReplay}
             disabled={!canFinalize}
-            aria-label="Open replay"
-            title="Open replay"
+            aria-label="リプレイを開く"
+            title="リプレイを開く"
           >
-            Open replay
+            リプレイ
           </button>
         </div>
-        {!isRpg ? (
-          <div className={shareStatusClassName} role="status" aria-live="polite">
-            {shareStatusMessage}
+
+        {!isRpg && !canFinalize ? (
+          <div className="mint-share-actions__hint" role="status" aria-live="polite">
+            共有とリプレイは9ターン終了後に解放されます。
           </div>
         ) : null}
+
+        {!isRpg && canFinalize ? (
+          <div className="mint-share-actions__ready" role="note">
+            まずリザルトをスクショ → 次に共有すると気持ちいいです。
+          </div>
+        ) : null}
+
         {canFinalize ? (
           <details className="text-xs">
-            <summary className="cursor-pointer text-sky-600 hover:text-sky-700 font-medium">QR Code</summary>
-            <div className="mt-2 flex justify-center">
-              {qrCode}
-            </div>
+            <summary className="cursor-pointer text-sky-600 hover:text-sky-700 font-medium">QRコード</summary>
+            <div className="mt-2 flex justify-center">{qrCode}</div>
           </details>
         ) : null}
       </div>

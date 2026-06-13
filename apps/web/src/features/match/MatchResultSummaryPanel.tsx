@@ -20,12 +20,28 @@ export function MatchResultSummaryPanel(input: {
         className={
           isRpg
             ? "rounded-lg p-3 text-xs"
-            : ["rounded-lg border border-slate-200 bg-white p-3 text-xs text-slate-700", isStageFocusRoute ? "stage-focus-side-panel" : ""].filter(Boolean).join(" ")
+            : [
+                "rounded-lg border border-slate-200 bg-white p-3 text-xs text-slate-700",
+                isStageFocusRoute ? "stage-focus-side-panel" : "",
+              ]
+                .filter(Boolean)
+                .join(" ")
         }
-        style={isRpg ? { background: "rgba(0,0,0,0.4)", color: "#F5F0E1", border: "1px solid rgba(201,168,76,0.2)" } : undefined}
+        style={
+          isRpg
+            ? {
+                background: "rgba(0,0,0,0.4)",
+                color: "#F5F0E1",
+                border: "1px solid rgba(201,168,76,0.2)",
+              }
+            : undefined
+        }
       >
-        <div>Winner: <span className="font-medium">{result.winner}</span> (tiles A/B = {result.tilesA}/{result.tilesB})</div>
-        <div className="font-mono mt-1 truncate">Match ID: {result.matchId}</div>
+        <div>
+          勝者：<span className="font-medium">{result.winner}</span>
+          <span className="ml-1">（A/B = {result.tilesA}/{result.tilesB}）</span>
+        </div>
+        <div className="font-mono mt-1 truncate">matchId: {result.matchId}</div>
       </div>
     );
   }
@@ -35,11 +51,20 @@ export function MatchResultSummaryPanel(input: {
       className={
         isRpg
           ? "rounded-lg p-3 text-xs"
-          : ["rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600", isStageFocusRoute ? "stage-focus-side-panel stage-focus-side-panel--muted" : ""].filter(Boolean).join(" ")
+          : [
+              "rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600",
+              isStageFocusRoute ? "stage-focus-side-panel stage-focus-side-panel--muted" : "",
+            ]
+              .filter(Boolean)
+              .join(" ")
       }
-      style={isRpg ? { background: "rgba(0,0,0,0.3)", color: "var(--rpg-text-dim, #8A7E6B)" } : undefined}
+      style={
+        isRpg
+          ? { background: "rgba(0,0,0,0.3)", color: "var(--rpg-text-dim, #8A7E6B)" }
+          : undefined
+      }
     >
-      Result is shown after turn 9.
+      リザルトは9ターン終了後に表示されます。
     </div>
   );
 }

@@ -20,22 +20,21 @@ async function pickFirstCard(page: Page): Promise<void> {
     return;
   }
 
-  const handOption = page.getByRole("option", { name: /^Card 1:/ }).first();
+  const handOption = page.getByRole("option", { name: /^カード1（/ }).first();
   if ((await handOption.count()) > 0 && await handOption.isVisible().catch(() => false)) {
     await handOption.click({ force: true });
   }
 }
 
 async function commitMove(page: Page): Promise<void> {
-  const labels = [
-    "Quick commit move",
-    "Commit move from focus hand dock",
-    "Commit move from focus toolbar",
-    "Commit move",
-  ] as const;
+  const candidates = [
+    page.locator('.mint-match-quick-commit button[aria-label="手を確定"]').first(),
+    page.locator('.mint-focus-hand-dock button[aria-label="手を確定"]').first(),
+    page.getByRole("button", { name: "Commit move from focus toolbar", exact: true }).first(),
+    page.getByRole("button", { name: "手を確定", exact: true }).first(),
+  ];
 
-  for (const label of labels) {
-    const button = page.getByRole("button", { name: label, exact: true }).first();
+  for (const button of candidates) {
     if ((await button.count()) === 0) continue;
     const enabled = await button.isEnabled().catch(() => false);
     if (!enabled) continue;

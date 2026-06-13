@@ -44,44 +44,44 @@ export function describeRulesetKey(rulesetKey: RulesetKey): string {
 }
 
 export function describeRulesetKeyDisplay(rulesetKey: RulesetKey): string {
-  const en = describeRulesetKey(rulesetKey);
   switch (rulesetKey) {
     case "v1":
-      return `v1 コア+戦術 (${en})`;
+      return "v1 コア+戦術";
     case "v2":
-      return `v2 シャドウ+戦術 (${en})`;
+      return "v2 シャドウ+戦術";
     case "full":
-      return `full 拡張ルール (${en})`;
+      return "full 拡張ルール";
     case "classic_plus_same":
-      return `クラシック Plus+Same (${en})`;
+      return "クラシック Plus+Same";
     case "classic_custom":
-      return `クラシック カスタム (${en})`;
+      return "クラシック カスタム";
     case "classic_plus":
-      return `クラシック Plus (${en})`;
+      return "クラシック Plus";
     case "classic_same":
-      return `クラシック Same (${en})`;
+      return "クラシック Same";
     case "classic_reverse":
-      return `クラシック Reverse (${en})`;
+      return "クラシック Reverse";
     case "classic_ace_killer":
-      return `クラシック Ace Killer (${en})`;
+      return "クラシック Ace Killer";
     case "classic_type_ascend":
-      return `クラシック Type Ascend (${en})`;
+      return "クラシック Type Ascend";
     case "classic_type_descend":
-      return `クラシック Type Descend (${en})`;
+      return "クラシック Type Descend";
     case "classic_order":
-      return `クラシック Order (${en})`;
+      return "クラシック Order";
     case "classic_chaos":
-      return `クラシック Chaos (${en})`;
+      return "クラシック Chaos";
     case "classic_swap":
-      return `クラシック Swap (${en})`;
+      return "クラシック Swap";
     case "classic_all_open":
-      return `クラシック All Open (${en})`;
+      return "クラシック All Open";
     case "classic_three_open":
-      return `クラシック Three Open (${en})`;
+      return "クラシック Three Open";
     default:
-      return en;
+      return describeRulesetKey(rulesetKey);
   }
 }
+
 
 function describeBoardUi(ui: MatchSetupBoardUi): string {
   if (ui === "engine") return "engine";
@@ -116,27 +116,27 @@ export function buildMatchSetupSummaryLine(input: {
   firstPlayerMode: FirstPlayerResolutionMode;
   ui: MatchSetupBoardUi;
 }): string {
-  const deckA = input.deckAName ? `デッキA: ${input.deckAName}` : "デッキA: 未設定 (Deck A: unset)";
+  const deckA = input.deckAName ? `デッキA: ${input.deckAName}` : "デッキA: 未設定";
   const deckB = input.isEvent
-    ? "デッキB: イベント固定 (Deck B: event fixed)"
+    ? "デッキB: イベント固定"
     : input.deckBName
       ? `デッキB: ${input.deckBName}`
-      : "デッキB: 未設定 (Deck B: unset)";
+      : "デッキB: 未設定";
   const opponent = input.opponentMode === "vs_nyano_ai"
     ? "対戦相手: Nyano AI"
-    : "対戦相手: 対人 (Human vs Human)";
+    : "対戦相手: 対人";
   const rulesetSummary = input.rulesetKey === "classic_custom"
     ? input.classicRuleTags && input.classicRuleTags.length > 0
-      ? `classic custom (${input.classicRuleTags.join("+")})`
-      : "classic custom (none)"
-    : describeRulesetKey(input.rulesetKey);
+      ? `クラシック カスタム (${input.classicRuleTags.join("+")})`
+      : "クラシック カスタム (未選択)"
+    : describeRulesetKeyDisplay(input.rulesetKey);
   return [
     deckA,
     deckB,
     `ルール: ${rulesetSummary}`,
     opponent,
-    `先手: first=${describeFirstPlayerMode(input.firstPlayerMode)}`,
-    `盤面: board=${describeBoardUi(input.ui)}`,
+    `先手: ${describeFirstPlayerMode(input.firstPlayerMode)}`,
+    `盤面: ${describeBoardUi(input.ui)}`,
   ].join(" / ");
 }
 

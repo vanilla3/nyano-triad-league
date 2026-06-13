@@ -204,7 +204,7 @@ describe("formatSeasonProgressMarkdown", () => {
     );
     const md = formatSeasonProgressMarkdown(progress);
     expect(md).toContain("### Local season progress (provisional)");
-    expect(md).toContain("- Tier: ルーキー");
+    expect(md).toContain("- Tier: Rookie");
     expect(md).toContain("| # | Event | Points | Source | W/L | Win rate | Clear |");
     expect(md).toContain("| 1 | Event A |");
   });

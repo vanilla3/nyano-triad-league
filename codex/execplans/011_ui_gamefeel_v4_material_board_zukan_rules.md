@@ -114,7 +114,7 @@ Nyano Triad League の UI を「Webアプリ」から「モバイルゲーム」
 
 ### Milestone B: Mint Material System v4（ボタン/ピル/チップ/パネル）
 
-- 対象 Work Order: WO-028
+- 対象 Work Order: WO-052
 
 受け入れ基準:
 
@@ -124,7 +124,7 @@ Nyano Triad League の UI を「Webアプリ」から「モバイルゲーム」
 
 ### Milestone C: 盤面を「トレイ + スロット」にする
 
-- 対象 Work Order: WO-029
+- 対象 Work Order: WO-053
 
 受け入れ基準:
 
@@ -134,7 +134,7 @@ Nyano Triad League の UI を「Webアプリ」から「モバイルゲーム」
 
 ### Milestone D: 図鑑/Deck Builder を Mint トーンに統一
 
-- 対象 Work Order: WO-030
+- 対象 Work Order: WO-054
 
 受け入れ基準:
 
@@ -193,9 +193,9 @@ Nyano Triad League の UI を「Webアプリ」から「モバイルゲーム」
 ## 9) Progress
 
 - [x] A: Classic 追加ルール UI（WO-025〜027）
-- [x] B: Mint Material v4（WO-028）
-- [x] C: Board tray / slots（WO-029）
-- [x] D: 図鑑 Mint 化（WO-030）
+- [x] B: Mint Material v4（WO-052）
+- [x] C: Board tray / slots（WO-053）
+- [x] D: 図鑑 Mint 化（WO-054）
 - [x] E: Asset generation/integration（WO-031）
 
 ---
@@ -216,5 +216,5 @@ Nyano Triad League の UI を「Webアプリ」から「モバイルゲーム」
 
 ## 12) Outcome / Retrospective
 
-- WO028-031 の主要実装は完了。Mint材質/盤面/図鑑トーン統一と、任意アセット統合の基盤を揃えた。
+- WO052-054 を含む主要実装は完了。Mint材質/盤面/図鑑トーン統一と、任意アセット統合の基盤を揃えた。
 - 必須の `test` / `typecheck` / `build` は通過。E2E は環境制約（`spawn EPERM`）で継続課題。

@@ -7,7 +7,12 @@
  * NOTE: queryKey must include config to re-fire when gameIndex loads.
  * This was the root cause of NFT images not displaying (Sprint 29 fix).
  */
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
+
+// The dynamic imports below pull in heavy transitive modules (./hooks -> ./sdk -> viem).
+// Under parallel suite load the first import can exceed the default 5s test timeout,
+// so give this file a larger budget. Assertions are unchanged.
+vi.setConfig({ testTimeout: 30_000 });
 
 describe("useNyanoTokenMetadata", () => {
   it("exports useNyanoTokenMetadata function", async () => {

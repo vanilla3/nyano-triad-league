@@ -11,7 +11,7 @@
 ## Why
 nyano-warudo 側が「受ける」準備をしていても、Triad League 側が “実物をすぐ出せない” と詰まります。  
 エクスポートをUIに出すことで、現場（配信準備）での摩擦を減らします。  
-これはフロー効率とエラー防止の設計に沿っています。fileciteturn1file0
+これはフロー効率とエラー防止の設計に沿っています。
 
 ## Manual test checklist
 - pnpm -C apps/web dev → /stream

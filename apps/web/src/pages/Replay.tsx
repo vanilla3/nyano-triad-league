@@ -2,9 +2,15 @@ import React from "react";
 import { useToast } from "@/components/Toast";
 import { Disclosure } from "@/components/Disclosure";
 import { Link, useLocation, useNavigate, useSearchParams } from "react-router-dom";
+import { GlassPanel } from "@/components/mint/GlassPanel";
+import { MintPageGuide } from "@/components/mint/MintPageGuide";
+import { MintPressable } from "@/components/mint/MintPressable";
+import { MintIcon, type MintIconName } from "@/components/mint/icons/MintIcon";
 
 import type { BoardCell, CardData, MatchResultWithHistory, RulesetConfig, TranscriptV1, TurnSummary } from "@nyano/triad-engine";
 import {
+  computeRulesetId,
+  DEFAULT_RULESET_CONFIG_V2,
   resolveClassicOpenCardIndices,
   resolveClassicSwapIndices,
   simulateMatchV1WithHistory,
@@ -48,7 +54,7 @@ import { parseReplayPayload } from "@/lib/replay_bundle";
 import { annotateReplayMoves } from "@/lib/ai/replay_annotations";
 import { assessBoardAdvantage, type BoardAdvantage } from "@/lib/ai/board_advantage";
 import { AdvantageBadge } from "@/components/AdvantageBadge";
-import { resolveRulesetById } from "@/lib/ruleset_registry";
+import { resolveRuleset, resolveRulesetById } from "@/lib/ruleset_registry";
 import { writeClipboardText } from "@/lib/clipboard";
 import { appAbsoluteUrl, appPath, buildReplayShareUrl } from "@/lib/appUrl";
 import { computeStageBoardSizing, shouldShowStageSecondaryControls } from "@/lib/stage_layout";
@@ -72,6 +78,9 @@ import {
   replayStepStatusText,
   type ReplayPhaseInfo,
 } from "@/lib/replay_timeline";
+import { MINT_PAGE_GUIDES } from "@/lib/mint_page_guides";
+import { appendThemeToPath, resolveAppTheme } from "@/lib/theme";
+import { decodeClassicRulesMask, listClassicRuleTags, normalizeClassicRulesConfig } from "@/lib/classic_rules_param";
 
 type Mode = "auto" | "v1" | "v2" | "compare";
 
@@ -83,6 +92,8 @@ type SimState =
       cards: Map<bigint, CardData>;
       owners: Map<bigint, `0x${string}`>;
       currentRulesetLabel: string;
+      resolvedRuleset: RulesetConfig | null;
+      rulesetIdMismatchWarning: string | null;
       current: MatchResultWithHistory;
       v1: MatchResultWithHistory;
       v2: MatchResultWithHistory;
@@ -111,6 +122,13 @@ function turnPlayer(firstPlayer: 0 | 1, turnIndex: number): 0 | 1 {
 function parseMode(v: string | null): Mode {
   if (v === "auto" || v === "v1" || v === "v2" || v === "compare") return v;
   return "auto";
+}
+
+function replayModeDisplay(mode: Mode): string {
+  if (mode === "auto") return "自動 (auto)";
+  if (mode === "v1") return "エンジン v1 (engine v1)";
+  if (mode === "v2") return "エンジン v2 (engine v2)";
+  return "比較 (compare)";
 }
 
 type ReplayBoardUi = "classic" | "rpg" | "engine";
@@ -213,30 +231,36 @@ function buildNyanoReactionInput(res: MatchResultWithHistory, step: number): Nya
 }
 
 function rulesetLabelFromConfig(cfg: RulesetConfig): string {
-  if (cfg === ONCHAIN_CORE_TACTICS_SHADOW_RULESET_CONFIG_V2) return "エンジン v2（警戒無効）";
-  return "エンジン v1（コア+タクティクス）";
+  if (cfg === ONCHAIN_CORE_TACTICS_SHADOW_RULESET_CONFIG_V2) return "エンジン v2（shadow: warning無視）";
+  return "エンジン v1（core+tactics）";
 }
 
 function rulesetLabelFromRegistryConfig(cfg: RulesetConfig): string {
   if (cfg.version === 2) {
-    const c = cfg.classic;
-    const tags = [
-      c.order && "order",
-      c.chaos && "chaos",
-      c.swap && "swap",
-      c.reverse && "reverse",
-      c.aceKiller && "aceKiller",
-      c.plus && "plus",
-      c.same && "same",
-      c.typeAscend && "typeAscend",
-      c.typeDescend && "typeDescend",
-      c.allOpen && "allOpen",
-      c.threeOpen && "threeOpen",
-    ].filter(Boolean) as string[];
-    if (tags.length > 0) return `ルール登録表（クラシック: ${tags.join(", ")}）`;
-    return "ルール登録表（v2）";
+    const tags = listClassicRuleTags(cfg.classic);
+    if (tags.length > 0) return `rulesetId登録（classic: ${tags.join(", ")}）`;
+    return "rulesetId登録（v2）";
   }
-  return "ルール登録表（v1）";
+  return "rulesetId登録（v1）";
+}
+
+function rulesetLabelFromUrlFallback(cfg: RulesetConfig): string {
+  if (cfg.version !== 2) return "URL fallback（v1）";
+  const tags = listClassicRuleTags(cfg.classic);
+  if (tags.length === 0) return "URL fallback（classic custom: なし）";
+  return `URL fallback（classic: ${tags.join(", ")}）`;
+}
+
+function resolveReplayRulesetFromParams(rulesetKeyParam: string | null, classicMaskParam: string | null): RulesetConfig | null {
+  if (!rulesetKeyParam) return null;
+  if (rulesetKeyParam === "classic_custom") {
+    const classic = normalizeClassicRulesConfig(decodeClassicRulesMask(classicMaskParam));
+    return {
+      ...DEFAULT_RULESET_CONFIG_V2,
+      classic: { ...classic },
+    };
+  }
+  return resolveRuleset(rulesetKeyParam);
 }
 
 function pickDefaultMode(rulesetId: string): Mode {
@@ -259,20 +283,15 @@ function formatClassicOpenSlots(indices: readonly number[]): string {
   return indices.map((idx) => String(idx + 1)).join(", ");
 }
 
-function eventStatusLabel(status: string | null): string {
-  if (status === "always") return "常設";
-  if (status === "active") return "開催中";
-  if (status === "upcoming") return "近日開催";
-  if (status === "ended") return "終了";
-  return status ?? "不明";
-}
-
 const HIGHLIGHT_KIND_ORDER: ReplayHighlightKind[] = ["big_flip", "chain", "combo", "warning"];
 
 export function ReplayPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
+  const appTheme = resolveAppTheme(searchParams);
+  const isMintTheme = appTheme === "mint";
+  const themed = React.useCallback((path: string) => appendThemeToPath(path, appTheme), [appTheme]);
   const uiMode = parseReplayBoardUi((searchParams.get("ui") || "").toLowerCase());
   const uiParam = uiMode === "classic" ? undefined : uiMode;
   const matchUi = toMatchBoardUi(uiMode);
@@ -289,6 +308,15 @@ export function ReplayPage() {
     const query = next.toString();
     return query ? `/replay-stage?${query}` : "/replay-stage";
   }, [searchParams]);
+  const replayQuickActions = React.useMemo<Array<{ to: string; label: string; subtitle: string; icon: MintIconName }>>(
+    () => [
+      { to: themed("/match?ui=mint"), label: "対戦 (Match)", subtitle: "新しい対戦を開始", icon: "match" },
+      { to: themed("/events"), label: "イベント (Events)", subtitle: "シーズン挑戦", icon: "events" },
+      { to: themed("/stream"), label: "配信 (Stream)", subtitle: "配信ツール", icon: "stream" },
+      { to: themed(stageReplayUrl), label: "Pixiステージ", subtitle: "集中表示", icon: "replay" },
+    ],
+    [stageReplayUrl, themed],
+  );
   const isReplayStageRoute = /\/replay-stage$/.test(location.pathname);
   const isStageFocus = isEngineFocus && isReplayStageRoute;
   const stageViewportRef = React.useRef<HTMLDivElement>(null);
@@ -348,7 +376,7 @@ export function ReplayPage() {
   const [text, setText] = React.useState<string>(initialZ ? "" : initialTextFromT);
 
   const [loading, setLoading] = React.useState(false);
-  const [sim, setSim] = React.useState<SimState>({ ok: false, error: "対戦ログJSONを貼り付けて読み込んでください。" });
+  const [sim, setSim] = React.useState<SimState>({ ok: false, error: "transcript JSON を貼り付けて読み込んでください。" });
 
   const [step, setStep] = React.useState<number>(initialStep);
   const [isPlaying, setIsPlaying] = React.useState<boolean>(false);
@@ -415,7 +443,7 @@ export function ReplayPage() {
   const handleEngineRendererInitError = React.useCallback((message: string) => {
     setEngineRendererFailed(true);
     setEngineRendererError(message);
-    toast.warn("Pixi描画を使えません", "Mint盤面表示に切り替えました");
+    toast.warn("Pixi renderer unavailable", "Switched to Mint fallback board");
   }, [toast]);
 
   const handleRetryEngineRenderer = React.useCallback(() => {
@@ -522,7 +550,7 @@ export function ReplayPage() {
       await copy(v);
       toast.success("コピーしました", label);
     } catch (e: unknown) {
-      toast.error("コピーに失敗しました", errorMessage(e));
+      toast.error("コピー失敗", errorMessage(e));
     }
   };
 
@@ -537,7 +565,7 @@ export function ReplayPage() {
       if (!target) return;
       await target.requestFullscreen();
     } catch (e: unknown) {
-      toast.warn("Fullscreen", errorMessage(e));
+      toast.warn("全画面表示", errorMessage(e));
     }
   }, [isStageFocus, toast]);
 
@@ -566,13 +594,15 @@ export function ReplayPage() {
   }, [searchParams, setSearchParams, isReplayStageRoute, navigate]);
 
   const toggleStageFullscreenWithFeedback = React.useCallback(() => {
-    pushStageActionFeedback(isStageFullscreen ? "Exit fullscreen" : "Enter fullscreen");
+    pushStageActionFeedback(isStageFullscreen ? "全画面を終了" : "全画面を開始");
     playReplaySfx("card_place");
     void toggleStageFullscreen();
   }, [isStageFullscreen, playReplaySfx, pushStageActionFeedback, toggleStageFullscreen]);
 
   const toggleStageTransportWithFeedback = React.useCallback(() => {
-    pushStageActionFeedback(showStageTransport ? "Controls hidden" : "Controls shown");
+    pushStageActionFeedback(
+      showStageTransport ? "操作を隠しました (Controls hidden)" : "操作を表示しました (Controls shown)",
+    );
     playReplaySfx("card_place");
     toggleStageTransport();
   }, [playReplaySfx, pushStageActionFeedback, showStageTransport, toggleStageTransport]);
@@ -581,7 +611,7 @@ export function ReplayPage() {
     setShowStageSetup((prev) => {
       const next = !prev;
       if (isStageFocus) {
-        pushStageActionFeedback(next ? "設定を表示しました" : "設定を隠しました");
+        pushStageActionFeedback(next ? "Setup shown" : "Setup hidden");
         playReplaySfx("card_place");
       }
       return next;
@@ -592,7 +622,7 @@ export function ReplayPage() {
     setShowStagePanels((prev) => {
       const next = !prev;
       if (isStageFocus) {
-        pushStageActionFeedback(next ? "タイムラインを表示しました" : "タイムラインを隠しました");
+        pushStageActionFeedback(next ? "タイムラインを表示" : "タイムラインを非表示");
         playReplaySfx("card_place");
       }
       return next;
@@ -600,7 +630,7 @@ export function ReplayPage() {
   }, [isStageFocus, playReplaySfx, pushStageActionFeedback]);
 
   const exitFocusModeWithFeedback = React.useCallback(() => {
-    pushStageActionFeedback("集中表示を終了します", "warn");
+    pushStageActionFeedback("フォーカスを終了します", "warn");
     setFocusMode(false);
   }, [pushStageActionFeedback, setFocusMode]);
 
@@ -627,9 +657,9 @@ export function ReplayPage() {
             mode: "replay",
             eventId: event?.id ?? (eventId || undefined),
             eventTitle: event?.title,
-            error: sim.error || "リプレイが読み込まれていません",
+            error: sim.error || "リプレイが未読込です",
           });
-          if (!opts?.silent) toast.warn("オーバーレイ", "リプレイの準備ができていません");
+          if (!opts?.silent) toast.warn("Overlay", "リプレイが未準備です");
           return;
         }
 
@@ -724,7 +754,7 @@ protocolV1: {
           },
         });
 
-        if (!opts?.silent) toast.success("オーバーレイ", "OBSオーバーレイへ送信しました");
+        if (!opts?.silent) toast.success("Overlay", "OBS overlay へ送信しました");
       } catch (e: unknown) {
         publishOverlayState({
           version: 1,
@@ -734,7 +764,7 @@ protocolV1: {
           eventTitle: event?.title,
           error: errorMessage(e),
         });
-        if (!opts?.silent) toast.error("オーバーレイ", errorMessage(e));
+        if (!opts?.silent) toast.error("Overlay", errorMessage(e));
       }
     },
     [sim, step, event?.id, event?.title, eventId, toast]
@@ -761,16 +791,25 @@ protocolV1: {
     setVerifyStatus("idle");
     try {
       const inputText = (override?.text ?? text).trim();
-      if (!inputText) throw new Error("対戦ログJSONが空です");
+      if (!inputText) throw new Error("transcript JSON が空です");
 
       const parsed = parseReplayPayload(inputText);
       const transcript = parsed.transcript;
 
       // Determine preferred mode from rulesetId if mode=auto.
       const mode0 = override?.mode ?? mode;
+      const fallbackRulesetFromParams = resolveReplayRulesetFromParams(
+        searchParams.get("rk"),
+        searchParams.get("cr"),
+      );
       const rulesetById = resolveRulesetById(transcript.header.rulesetId);
-      const useRegistryRuleset = mode0 === "auto" && rulesetById !== null;
+      const resolvedReplayRuleset = rulesetById ?? fallbackRulesetFromParams;
+      const useResolvedRuleset = mode0 === "auto" && resolvedReplayRuleset !== null;
       const effectiveMode: Mode = mode0 === "auto" ? pickDefaultMode(transcript.header.rulesetId) : mode0;
+      const rulesetIdMismatchWarning = !rulesetById && fallbackRulesetFromParams
+        && computeRulesetId(fallbackRulesetFromParams).toLowerCase() !== transcript.header.rulesetId.toLowerCase()
+        ? "URL の classic 設定が transcript rulesetId と一致しません。URL fallback ルールで再生しています。"
+        : null;
 
       // v2: use embedded card data (no network calls needed)
       // v1: resolve via game index first (fast/cached), RPC fallback for missing
@@ -792,7 +831,7 @@ protocolV1: {
         if (cards.size < unique.size) {
           const missing = [...unique].filter((id) => !cards.has(BigInt(id)));
           throw new Error(
-            `Could not resolve ${missing.length} card(s): ${missing.slice(0, 5).join(", ")}${missing.length > 5 ? "…" : ""}. Check your network connection.`,
+            `${missing.length}枚のカードを解決できませんでした: ${missing.slice(0, 5).join(", ")}${missing.length > 5 ? "…" : ""}。ネットワーク接続を確認してください。`,
           );
         }
       }
@@ -800,27 +839,42 @@ protocolV1: {
       // Always compute both (cheap compared to RPC reads)
       const v1 = simulateMatchV1WithHistory(transcript, cards, ONCHAIN_CORE_TACTICS_RULESET_CONFIG_V1);
       const v2 = simulateMatchV1WithHistory(transcript, cards, ONCHAIN_CORE_TACTICS_SHADOW_RULESET_CONFIG_V2);
-      const byId = rulesetById ? simulateMatchV1WithHistory(transcript, cards, rulesetById) : null;
+      const byResolvedRuleset = resolvedReplayRuleset
+        ? simulateMatchV1WithHistory(transcript, cards, resolvedReplayRuleset)
+        : null;
 
       let current: MatchResultWithHistory = v1;
       let label = rulesetLabelFromConfig(ONCHAIN_CORE_TACTICS_RULESET_CONFIG_V1);
 
-      if (useRegistryRuleset && byId) {
-        current = byId;
-        label = rulesetLabelFromRegistryConfig(rulesetById!);
+      if (useResolvedRuleset && byResolvedRuleset && resolvedReplayRuleset) {
+        current = byResolvedRuleset;
+        label = rulesetById
+          ? rulesetLabelFromRegistryConfig(rulesetById)
+          : rulesetLabelFromUrlFallback(resolvedReplayRuleset);
       } else if (effectiveMode === "v2") {
         current = v2;
         label = rulesetLabelFromConfig(ONCHAIN_CORE_TACTICS_SHADOW_RULESET_CONFIG_V2);
       } else if (effectiveMode === "compare") {
         // pick one as "current" for right-side panels; keep label explicit
         current = v1;
-        label = "compare v1 vs v2";
+        label = "比較表示 v1 vs v2";
       } else if (effectiveMode === "v1") {
         current = v1;
         label = rulesetLabelFromConfig(ONCHAIN_CORE_TACTICS_RULESET_CONFIG_V1);
       }
 
-      setSim({ ok: true, transcript, cards, owners, currentRulesetLabel: label, current, v1, v2 });
+      setSim({
+        ok: true,
+        transcript,
+        cards,
+        owners,
+        currentRulesetLabel: label,
+        resolvedRuleset: resolvedReplayRuleset,
+        rulesetIdMismatchWarning,
+        current,
+        v1,
+        v2,
+      });
 
       const stepMax = current.boardHistory.length - 1;
       const startStep = clampInt(override?.step ?? 0, 0, stepMax);
@@ -900,7 +954,7 @@ protocolV1: {
   const stepStatusText = replayStepStatusText(step);
   const replayClassicSwap = React.useMemo(() => {
     if (!sim.ok) return null;
-    const ruleset = resolveRulesetById(sim.transcript.header.rulesetId);
+    const ruleset = sim.resolvedRuleset;
     if (!ruleset) return null;
     return resolveClassicSwapIndices({
       ruleset,
@@ -909,7 +963,7 @@ protocolV1: {
   }, [sim]);
   const replayClassicOpen = React.useMemo(() => {
     if (!sim.ok) return null;
-    const ruleset = resolveRulesetById(sim.transcript.header.rulesetId);
+    const ruleset = sim.resolvedRuleset;
     if (!ruleset) return null;
     return resolveClassicOpenCardIndices({
       ruleset,
@@ -975,7 +1029,7 @@ protocolV1: {
     setStep((s) => Math.max(0, s - 1));
     playReplaySfx("flip");
     if (isStageFocus) {
-      pushStageActionFeedback("Step back");
+      pushStageActionFeedback("1手戻る");
     }
   }, [isStageFocus, playReplaySfx, pushStageActionFeedback]);
 
@@ -985,7 +1039,7 @@ protocolV1: {
     setIsPlaying(nextIsPlaying);
     playReplaySfx(nextIsPlaying ? "card_place" : "flip");
     if (isStageFocus) {
-      pushStageActionFeedback(nextIsPlaying ? "Playback started" : "Playback paused", nextIsPlaying ? "success" : "info");
+      pushStageActionFeedback(nextIsPlaying ? "再生開始" : "再生停止", nextIsPlaying ? "success" : "info");
     }
   }, [canPlay, isPlaying, isStageFocus, playReplaySfx, pushStageActionFeedback]);
 
@@ -994,7 +1048,7 @@ protocolV1: {
     setStep((s) => Math.min(stepMax, s + 1));
     playReplaySfx("flip");
     if (isStageFocus) {
-      pushStageActionFeedback("Step forward");
+      pushStageActionFeedback("1手進む");
     }
   }, [isStageFocus, playReplaySfx, pushStageActionFeedback, stepMax]);
 
@@ -1003,7 +1057,7 @@ protocolV1: {
     setStep(stepMax);
     playReplaySfx("card_place");
     if (isStageFocus) {
-      pushStageActionFeedback("Jumped to end");
+      pushStageActionFeedback("末尾へ移動");
     }
   }, [isStageFocus, playReplaySfx, pushStageActionFeedback, stepMax]);
 
@@ -1012,7 +1066,7 @@ protocolV1: {
     jumpToPrevHighlight();
     playReplaySfx("chain_flip");
     if (isStageFocus) {
-      pushStageActionFeedback("Previous highlight", "success");
+      pushStageActionFeedback("前の見どころへ移動", "success");
     }
   }, [highlights.length, isStageFocus, jumpToPrevHighlight, playReplaySfx, pushStageActionFeedback]);
 
@@ -1021,7 +1075,7 @@ protocolV1: {
     jumpToNextHighlight();
     playReplaySfx("chain_flip");
     if (isStageFocus) {
-      pushStageActionFeedback("Next highlight", "success");
+      pushStageActionFeedback("次の見どころへ移動", "success");
     }
   }, [highlights.length, isStageFocus, jumpToNextHighlight, playReplaySfx, pushStageActionFeedback]);
 
@@ -1124,7 +1178,12 @@ protocolV1: {
     return () => window.clearInterval(timer);
   }, [isPlaying, playbackSpeed, stepMax, sim.ok, canPlay]);
 
-  const compare = sim.ok && (mode === "compare" || (mode === "auto" && shouldAutoCompareByRulesetId(sim.transcript.header.rulesetId)));
+  const compare = sim.ok && (
+    mode === "compare"
+    || (mode === "auto"
+      && sim.resolvedRuleset === null
+      && shouldAutoCompareByRulesetId(sim.transcript.header.rulesetId))
+  );
   const diverged = sim.ok ? !boardEquals(sim.v1.boardHistory[step], sim.v2.boardHistory[step]) : false;
   const replayNyanoReactionInput = React.useMemo(
     () => (sim.ok ? buildNyanoReactionInput(sim.current, step) : null),
@@ -1223,7 +1282,7 @@ protocolV1: {
                 <ScoreBar board={boardNow} moveCount={step} maxMoves={9} winner={res.winner} />
                 {boardAdvantages[step] && (
                   <div className="mt-1 flex items-center gap-1.5">
-                    <span className="text-[10px] text-slate-400">優勢</span>
+                    <span className="text-[10px] text-slate-400">盤面評価</span>
                     <AdvantageBadge advantage={boardAdvantages[step]} size="sm" showScore />
                   </div>
                 )}
@@ -1243,7 +1302,7 @@ protocolV1: {
         {isEngine && !compare && engineRendererFailed ? (
           <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900">
             <span title={engineRendererError ?? undefined}>
-              Pixi描画を使えないため、Mint盤面で表示しています。
+              Pixi renderer が利用できないため、Mint fallback board を表示しています。Pixi renderer is unavailable.
             </span>
             <button
               type="button"
@@ -1251,7 +1310,7 @@ protocolV1: {
               onClick={handleRetryEngineRenderer}
               aria-label="Retry Pixi renderer in replay"
             >
-              Pixiを再試行
+              Pixi 再試行
             </button>
           </div>
         ) : null}
@@ -1282,6 +1341,7 @@ protocolV1: {
                 currentPlayer={replayCurrentPlayer}
                 showCoordinates
                 showActionPrompt
+                className="mint-board-view mint-board-view--replay"
                 gamePhase={step >= 9 ? "game_over" : "select_cell"}
               />
             </DuelStageMint>
@@ -1294,6 +1354,18 @@ protocolV1: {
               showCoordinates
               showCandles
               showParticles
+            />
+          ) : isMintTheme ? (
+            <BoardViewMint
+              board={boardNow}
+              selectedCell={focusCell}
+              placedCell={placedCell}
+              flippedCells={flippedCells}
+              currentPlayer={replayCurrentPlayer}
+              showCoordinates
+              showActionPrompt
+              className="mint-board-view mint-board-view--replay"
+              gamePhase={step >= 9 ? "game_over" : "select_cell"}
             />
           ) : (
             <BoardView
@@ -1320,7 +1392,7 @@ protocolV1: {
   
   const buildCanonicalReplayLink = (): string => {
     const trimmed = text.trim() || (sim.ok ? stringifyWithBigInt(sim.transcript) : "");
-    if (!trimmed) throw new Error("対戦ログJSONが空です");
+    if (!trimmed) throw new Error("transcript JSON が空です");
 
     const z = tryGzipCompressUtf8ToBase64Url(trimmed);
     return buildReplayShareUrl({
@@ -1329,16 +1401,18 @@ protocolV1: {
       pointsDeltaA: pointsDeltaA ?? undefined,
       mode: "auto",
       ui: uiParam,
+      rulesetKey: searchParams.get("rk") ?? undefined,
+      classicMask: searchParams.get("cr") ?? undefined,
       step: 9,
       absolute: true,
     });
   };
 
   const saveToMyAttempts = async () => {
-    if (!eventId) throw new Error("イベントIDがありません");
-    if (!sim.ok) throw new Error("リプレイの準備ができていません");
+    if (!eventId) throw new Error("eventId がありません");
+    if (!sim.ok) throw new Error("replay が未準備です");
     if (sim.current.winner !== 0 && sim.current.winner !== 1) {
-      throw new Error("引き分けの対戦はイベント挑戦記録として保存できません");
+      throw new Error("引き分けは event attempts の対象外です");
     }
 
     const replayUrl = buildCanonicalReplayLink();
@@ -1369,7 +1443,7 @@ protocolV1: {
   const buildShareLink = (): string => {
     // Use sim transcript when text state is empty (e.g., loaded via ?z= share link)
     const trimmed = text.trim() || (sim.ok ? stringifyWithBigInt(sim.transcript) : "");
-    if (!trimmed) throw new Error("対戦ログJSONが空です。対戦ログを貼るか、共有リンクを先に読み込んでください");
+    if (!trimmed) throw new Error("transcript JSON が空です。先に transcript を貼り付けるか、共有リンクを読み込んでください。");
 
     const z = tryGzipCompressUtf8ToBase64Url(trimmed);
     return buildReplayShareUrl({
@@ -1378,42 +1452,93 @@ protocolV1: {
       pointsDeltaA: pointsDeltaA ?? undefined,
       mode,
       ui: uiParam,
+      rulesetKey: searchParams.get("rk") ?? undefined,
+      classicMask: searchParams.get("cr") ?? undefined,
       step,
       absolute: true,
     });
   };
   const showReplaySetupPanel = !isStageFocus || !sim.ok || showStageSetup;
+  const replayPageClassName = [
+    "replay-page",
+    isStageFocus
+      ? "stage-focus-root replay-page--stage-focus"
+      : isEngineFocus
+        ? "grid gap-4 replay-page--focus"
+        : "grid gap-6 replay-page--standard",
+  ].join(" ");
 
   return (
     <div
       ref={stageViewportRef}
-      className={
-        isStageFocus
-          ? "stage-focus-root"
-          : isEngineFocus
-            ? "grid gap-4"
-            : "grid gap-6"
-      }
+      className={replayPageClassName}
     >
+      {isMintTheme && !isStageFocus ? (
+        <section className="mint-replay-quicknav" aria-label="Replay quick navigation">
+          {replayQuickActions.map((action) => (
+            <GlassPanel key={action.label} variant="card" className="mint-replay-quicknav__card">
+              <MintPressable to={action.to} className="mint-replay-quicknav__action" fullWidth>
+                <MintIcon name={action.icon} size={18} />
+                <span className="mint-replay-quicknav__label">{action.label}</span>
+                <span className="mint-replay-quicknav__sub">{action.subtitle}</span>
+              </MintPressable>
+            </GlassPanel>
+          ))}
+        </section>
+      ) : null}
+      {isMintTheme && !isStageFocus ? (
+        <section className="mint-replay-summary" aria-label="Replay overview">
+          <GlassPanel variant="pill" className="mint-replay-summary__item">
+            <span className="mint-replay-summary__label">状態</span>
+            <span className="mint-replay-summary__value">{sim.ok ? "読み込み済み" : "リプレイ待機"}</span>
+          </GlassPanel>
+          <GlassPanel variant="pill" className="mint-replay-summary__item">
+            <span className="mint-replay-summary__label">進行</span>
+            <span className="mint-replay-summary__value">{step}/{stepMax}</span>
+          </GlassPanel>
+          <GlassPanel variant="pill" className="mint-replay-summary__item">
+            <span className="mint-replay-summary__label">見どころ</span>
+            <span className="mint-replay-summary__value">{highlights.length}</span>
+          </GlassPanel>
+          <GlassPanel variant="pill" className="mint-replay-summary__item">
+            <span className="mint-replay-summary__label">検証</span>
+            <span className="mint-replay-summary__value">
+              {verifyStatus === "ok" ? "検証OK" : verifyStatus === "mismatch" ? "不一致" : "未検証"}
+            </span>
+          </GlassPanel>
+          <GlassPanel variant="pill" className="mint-replay-summary__item mint-replay-summary__item--wide">
+            <span className="mint-replay-summary__label">モード</span>
+            <span className="mint-replay-summary__value">{replayModeDisplay(mode)} | {phaseInfo.label} | {isPlaying ? "再生中" : "停止中"}</span>
+          </GlassPanel>
+          <GlassPanel variant="pill" className="mint-replay-summary__item mint-replay-summary__item--wide">
+            <span className="mint-replay-summary__label">手順状態</span>
+            <span className="mint-replay-summary__value">{stepStatusText}</span>
+          </GlassPanel>
+        </section>
+      ) : null}
+      {isMintTheme && !isStageFocus ? (
+        <MintPageGuide spec={MINT_PAGE_GUIDES.replay} className="mint-replay-guide" />
+      ) : null}
+
       {isEngineFocus ? (
         <section
           className={[
+            "replay-page__focus-toolbar",
             "rounded-2xl border px-3 py-2",
             isStageFocus ? "stage-focus-toolbar" : "",
           ].filter(Boolean).join(" ")}
           aria-label={isStageFocus ? "Replay focus toolbar" : "Engine replay toolbar"}
-          style={{ background: "var(--mint-surface, #fff)", borderColor: "var(--mint-accent-muted, #A7F3D0)" }}
         >
           <div className="flex flex-wrap items-center justify-between gap-2">
-            <div className="text-xs font-semibold" style={{ color: "var(--mint-text-secondary, #4B5563)" }}>
-              Pixi集中表示 ・ {step}/{stepMax}手
+            <div className="replay-page__focus-label text-xs font-semibold">
+              Pixiフォーカス · 手順 {step}/{stepMax}
             </div>
             <div className="flex flex-wrap items-center gap-2">
               {showStageToolbarTransport ? (
                 <div className="stage-focus-toolbar-actions stage-focus-toolbar-actions--replay">
                   <span className="stage-focus-toolbar-status">{stepStatusText} · {phaseInfo.label}</span>
                   <span className="stage-focus-toolbar-hint" aria-label="Replay focus toolbar hint">
-                    ショートカット: ← → Space [ ] ・ F/C/S/D/Esc
+                    キー操作: ← → space [ ] · F/C/S/D/Esc
                   </span>
                   <button
                     className="btn btn-sm"
@@ -1421,7 +1546,7 @@ protocolV1: {
                     disabled={!canStepBack}
                     aria-label="Replay start from focus toolbar"
                   >
-                    最初
+                    先頭
                   </button>
                   <button
                     className="btn btn-sm"
@@ -1437,7 +1562,7 @@ protocolV1: {
                     disabled={!canPlay}
                     aria-label={isPlaying ? "Pause replay from focus toolbar" : "Play replay from focus toolbar"}
                   >
-                    {isPlaying ? "一時停止" : "再生"}
+                    {isPlaying ? "停止" : "再生"}
                   </button>
                   <button
                     className="btn btn-sm"
@@ -1453,7 +1578,7 @@ protocolV1: {
                     disabled={!canStepForward}
                     aria-label="Replay end from focus toolbar"
                   >
-                    最後
+                    末尾
                   </button>
                   <button
                     className="btn btn-sm"
@@ -1461,7 +1586,7 @@ protocolV1: {
                     disabled={highlights.length === 0}
                     aria-label="Previous highlight from focus toolbar"
                   >
-                    前へ hl
+                    前の見どころ
                   </button>
                   <button
                     className="btn btn-sm"
@@ -1469,7 +1594,7 @@ protocolV1: {
                     disabled={highlights.length === 0}
                     aria-label="Next highlight from focus toolbar"
                   >
-                    次へ hl
+                    次の見どころ
                   </button>
                   <span className="stage-focus-toolbar-hint" aria-label="Replay highlight status in focus toolbar">
                     {focusToolbarHighlightStatus}
@@ -1502,13 +1627,13 @@ protocolV1: {
                   aria-live="polite"
                   aria-label="Replay focus action feedback"
                 >
-                  {stageActionFeedback || "Ready"}
+                  {stageActionFeedback || "準備完了"}
                 </span>
               ) : null}
               {isStageFocus ? (
                 <>
                   <label className="stage-focus-toolbar-speed">
-                    演出
+                    vfx
                     <select
                       className="stage-focus-toolbar-speed-select"
                       value={vfxPreference}
@@ -1536,10 +1661,10 @@ protocolV1: {
                     </button>
                   ) : null}
                   <button className="btn btn-sm" onClick={toggleStageFullscreenWithFeedback}>
-                    {isStageFullscreen ? "全画面を終了" : "全画面"}
+                    {isStageFullscreen ? "全画面解除" : "全画面"}
                   </button>
                   <button className="btn btn-sm" onClick={toggleStageTransportWithFeedback}>
-                    {showStageTransport ? "操作を隠す" : "操作を表示"}
+                    {showStageTransport ? "操作を隠す (Hide controls)" : "操作を表示 (Show controls)"}
                   </button>
                   <button className="btn btn-sm" onClick={toggleStageSetupWithFeedback}>
                     {showStageSetup ? "設定を隠す" : "設定を表示"}
@@ -1547,11 +1672,11 @@ protocolV1: {
                 </>
               ) : null}
               <button className="btn btn-sm" onClick={exitFocusModeWithFeedback}>
-                集中表示を終了
+                フォーカス終了
               </button>
               {sim.ok ? (
-                <button className="btn btn-sm" onClick={() => copyWithToast("共有リンク", buildShareLink())}>
-                  共有リンクをコピー
+                <button className="btn btn-sm" onClick={() => copyWithToast("共有URL", buildShareLink())}>
+                  共有URLコピー
                 </button>
               ) : null}
             </div>
@@ -1560,18 +1685,18 @@ protocolV1: {
       ) : null}
 
       {!isEngineFocus && eventId ? (
-        <section className="card">
+        <section className="card replay-page__event-card">
           <div className="card-hd flex flex-wrap items-center justify-between gap-2">
             <div className="grid gap-1">
               <div className="text-base font-semibold">イベントリプレイ</div>
               <div className="text-xs text-slate-500">
                 {event ? (
                   <>
-                    <span className="font-medium">{event.title}</span> | 状態: <span className="font-medium">{eventStatusLabel(eventStatus)}</span> | {formatEventPeriod(event)}
+                    <span className="font-medium">{event.title}</span> | 状態: <span className="font-medium">{eventStatus}</span> | {formatEventPeriod(event)}
                   </>
                 ) : (
                   <>
-                    イベントID: <span className="font-mono">{eventId}</span>（未登録）
+                    eventId: <span className="font-mono">{eventId}</span>（不明）
                   </>
                 )}
               </div>
@@ -1579,11 +1704,11 @@ protocolV1: {
 
             <div className="flex flex-wrap items-center gap-2">
               <Link className="btn no-underline" to="/events">
-                イベントへ
+                イベント一覧
               </Link>
               {event ? (
                 <Link className="btn btn-primary no-underline" to={`/match?event=${encodeURIComponent(event.id)}&ui=${matchUi}`}>
-                  もう一度挑戦
+                  再挑戦
                 </Link>
               ) : null}
             </div>
@@ -1594,15 +1719,15 @@ protocolV1: {
               <p>{event.description}</p>
               {pointsDeltaA !== null ? (
                 <div className="rounded-lg border border-sky-200 bg-sky-50 px-3 py-2 text-xs text-sky-800">
-                  URLから確定ポイント差分を読み込みました: <span className="font-mono">{pointsDeltaA}</span>
+                  URL から確定 pointsDeltaA を検出: <span className="font-mono">{pointsDeltaA}</span>
                 </div>
               ) : (
                 <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600">
-                  pointsDeltaA は未設定です。このリプレイはローカルの仮シーズンポイントとして集計されます。
+                  pointsDeltaA は未設定です。このリプレイはローカルの仮シーズンポイントで集計されます。
                 </div>
               )}
               <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-700">
-                NyanoデッキのトークンID: <span className="font-mono">{event.nyanoDeckTokenIds.join(", ")}</span>
+                Nyanoデッキ tokenIds: <span className="font-mono">{event.nyanoDeckTokenIds.join(", ")}</span>
               </div>
             </div>
           ) : null}
@@ -1610,53 +1735,53 @@ protocolV1: {
       ) : null}
 
       {showReplaySetupPanel && (
-      <section className="card">
+      <section className="card replay-page__setup-card">
         <div className="card-hd">
-          <div className="text-base font-semibold">対戦ログからリプレイ</div>
+          <div className="text-base font-semibold">リプレイ読込 (Replay from transcript)</div>
           <div className="text-xs text-slate-500">
-            対戦ログJSONを貼り付けると、オンチェーンカード情報を使って読み取り専用で再生できます。<span className="font-mono">?z=...</span> や <span className="font-mono">?t=...</span> の共有リンクにも対応し、<span className="font-mono">?ui=engine</span> / <span className="font-mono">?ui=rpg</span> で盤面表示を切り替えられます。
+            transcript JSON を貼り付けると、on-chain カード情報（読み取り専用）でリプレイできます。共有リンク <span className="font-mono">?z=...</span> / <span className="font-mono">?t=...</span> も利用でき、盤面UIは <span className="font-mono">?ui=engine</span> / <span className="font-mono">?ui=rpg</span> で切り替えられます。
           </div>
         </div>
 
         <div className="card-bd grid gap-4">
           <div className="grid gap-2">
             <div className="flex flex-wrap items-center justify-between gap-2">
-              <div className="text-xs font-medium text-slate-600">対戦ログJSON</div>
+              <div className="text-xs font-medium text-slate-600">Transcript JSON（対局ログ）</div>
 
               <div className="flex flex-wrap items-center gap-2 text-xs text-slate-600">
-                <span>検証モード</span>
+                <span>モード</span>
                 <select className="select w-48" value={mode} onChange={(e) => setMode(parseMode(e.target.value))}>
-                  <option value="auto">自動（ルール登録表 / 公式）</option>
-                  <option value="v1">エンジン v1</option>
-                  <option value="v2">エンジン v2</option>
+                  <option value="auto">自動（登録済み rulesetId / official）</option>
+                  <option value="v1">エンジン v1 (engine v1)</option>
+                  <option value="v2">エンジン v2 (engine v2)</option>
                   <option value="compare">比較</option>
                 </select>
-                <span>盤面表示</span>
+                <span>盤面UI</span>
                 <select
                   className="select w-40"
                   value={uiMode}
                   onChange={(e) => setReplayBoardUi(parseReplayBoardUi(e.target.value))}
                 >
-                  <option value="classic">クラシック</option>
-                  <option value="rpg">RPG風</option>
-                  <option value="engine">Pixi演出</option>
+                  <option value="classic">クラシック (classic)</option>
+                  <option value="rpg">RPG (rpg)</option>
+                  <option value="engine">エンジン (engine / pixi)</option>
                 </select>
                 {isEngine && compare ? (
-                  <span className="text-[11px] text-slate-500">比較モードではクラシック盤面で表示します。</span>
+                  <span className="text-[11px] text-slate-500">比較モードでは classic 盤面を表示します。</span>
                 ) : null}
                 {isEngine && !isEngineFocus ? (
                   <div className="flex flex-wrap items-center gap-2">
                     <button className="btn btn-sm" onClick={() => setFocusMode(true)}>
-                      Pixi集中表示へ
+                      Pixiフォーカスへ
                     </button>
                     <Link className="btn btn-sm no-underline" to={stageReplayUrl}>
-                      ステージページを開く
+                      Stageページを開く
                     </Link>
                   </div>
                 ) : null}
 
                 <button className="btn btn-primary" onClick={() => load()} disabled={loading}>
-                  {loading ? "読み込み中..." : "読み込んで再生"}
+                  {loading ? "読み込み中..." : "読み込む (Load replay)"}
                 </button>
 
                 <button
@@ -1665,14 +1790,14 @@ protocolV1: {
                     void (async () => {
                       try {
                         const link = buildShareLink();
-                        await copyWithToast("共有リンク", link);
+                        await copyWithToast("共有URL", link);
                       } catch (e: unknown) {
                         setSim({ ok: false, error: errorMessage(e) });
                       }
                     })();
                   }}
                 >
-                  共有リンクをコピー
+                  共有URLをコピー
                 </button>
 
                 {eventId ? (
@@ -1686,7 +1811,7 @@ protocolV1: {
                           (async () => {
                             try {
                               await saveToMyAttempts();
-                              toast.success("保存しました", "私の足跡に追加しました");
+                              toast.success("保存しました", "My Attempts に追加しました");
                             } catch (e: unknown) {
                               setSim({ ok: false, error: errorMessage(e) });
                             }
@@ -1708,14 +1833,14 @@ protocolV1: {
               rows={10}
               value={text}
               onChange={(e) => setText(e.target.value)}
-              placeholder="Playgroundの対戦ログJSONを貼るか、共有リンクを開いてください。"
+              placeholder="Playground の transcript JSON を貼り付けるか、共有リンクを開いてください。"
             />
 
             <div className="mt-3">
-              <Disclosure title={<span>配信用ツール（オーバーレイ）</span>}>
-                <div className="grid gap-3">
+              <Disclosure title={<span>配信連携ツール（オーバーレイ連携）(Streamer tools / Overlay)</span>}>
+                <div className="grid grid-cols-1 gap-3">
                   <div className="text-xs text-slate-600">
-                    <span className="font-mono">{overlayPath}</span> を開いてからリプレイの手順を動かすと、オーバーレイの盤面も同期されます。
+                    <span className="font-mono">{overlayPath}</span> を開くと、リプレイの <span className="font-mono">手順 (step)</span> 移動とオーバーレイスナップショットが同期されます。
                   </div>
 
                   <div className="flex flex-wrap items-center gap-2">
@@ -1725,11 +1850,11 @@ protocolV1: {
                         checked={broadcastOverlay}
                         onChange={(e) => setBroadcastOverlayWithUrl(e.target.checked)}
                       />
-                      オーバーレイへ同期する
+                      オーバーレイへ送信（手順同期）
                     </label>
 
                     <button className="btn btn-sm" onClick={() => pushOverlay()}>
-                      現在の盤面を送る
+                      スナップショット送信
                     </button>
 
                     <a
@@ -1738,21 +1863,21 @@ protocolV1: {
                       target="_blank"
                       rel="noreferrer noopener"
                     >
-                      オーバーレイを開く
+                      オーバーレイを開く (Open Overlay)
                     </a>
 
                     <button
                       className="btn btn-sm"
                       onClick={() => {
-                        void copyWithToast("オーバーレイURL", overlayUrl);
+                        void copyWithToast("overlay URL", overlayUrl);
                       }}
                     >
-                      オーバーレイURLをコピー
+                      Overlay URLをコピー
                     </button>
                   </div>
 
                   <div className="text-[11px] text-slate-500">
-                    ヒント: <span className="font-mono">{replayBroadcastPath}</span> を開くと、最初からオーバーレイ同期を有効にできます。
+                    ヒント: <span className="font-mono">{replayBroadcastPath}</span> を開くと手順同期ONで開始できます。
                   </div>
                 </div>
               </Disclosure>
@@ -1762,11 +1887,11 @@ protocolV1: {
 
             {!sim.ok && sim.error ? (
               <div className="rounded-lg border border-rose-200 bg-rose-50 p-3 text-sm text-rose-800">
-                <div className="font-medium">エラー: {sim.error}</div>
+                <div className="font-medium">エラー / Error: {sim.error}</div>
                 <div className="mt-1 text-xs text-rose-700">
                   {hasSharePayload
-                    ? "この共有リンクは壊れているか、情報が足りない可能性があります。再読み込みするか、共有パラメータを消して対戦ログJSONを貼り直してください。"
-                    : "対戦ログJSONを確認して、もう一度読み込んでください。"}
+                    ? "共有リンクが無効または不完全の可能性があります。再読込するか、共有パラメータを消して transcript JSON を貼り付けてください。"
+                    : "transcript JSON を確認して再読込してください。"}
                 </div>
                 <div className="mt-2 flex flex-wrap items-center gap-2">
                   <button
@@ -1788,7 +1913,7 @@ protocolV1: {
                     }}
                     disabled={loading}
                   >
-                    {loading ? "再読み込み中..." : "もう一度読み込む"}
+                    {loading ? "再試行中... (Retrying...)" : "再試行 (Retry load)"}
                   </button>
                   {hasSharePayload ? (
                     <button
@@ -1796,10 +1921,10 @@ protocolV1: {
                       onClick={() => {
                         const next = stripReplayShareParams(searchParams);
                         setSearchParams(next, { replace: true });
-                        setSim({ ok: false, error: "対戦ログJSONを貼り付けて読み込んでください。" });
+                        setSim({ ok: false, error: "transcript JSON を貼り付けて読み込んでください。" });
                       }}
                     >
-                      共有パラメータを消す
+                      共有パラメータをクリア (Clear share params)
                     </button>
                   ) : null}
                   <Link className="btn btn-sm no-underline" to="/">
@@ -1811,8 +1936,8 @@ protocolV1: {
 
             <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500">
               <span className="kbd">Left</span>/<span className="kbd">Right</span> 手順移動
-              <span className="kbd">Space</span> 再生/一時停止
-              <span className="kbd">Home</span>/<span className="kbd">End</span> 最初/最後へ
+              <span className="kbd">Space</span> 再生/停止
+              <span className="kbd">Home</span>/<span className="kbd">End</span> 先頭/末尾
             </div>
           </div>
         </div>
@@ -1820,13 +1945,13 @@ protocolV1: {
       )}
 
       {isEngineFocus && !sim.ok ? (
-        <section className="rounded-2xl border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">
+        <section className="replay-page__focus-empty rounded-2xl border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">
           <div className="flex flex-wrap items-center justify-between gap-2">
-            <div>Pixi集中表示にはリプレイの読み込みが必要です。先に対戦ログを読み込むか、集中表示を終了してください。</div>
+            <div>Pixiフォーカスはリプレイ読込後に利用できます。先に transcript を読み込むか、フォーカスを終了してください。(Pixi focus needs a loaded replay)</div>
             <div className="flex flex-wrap items-center gap-2">
-              <button className="btn btn-sm" onClick={() => setFocusMode(false)}>集中表示を終了</button>
+              <button className="btn btn-sm" onClick={() => setFocusMode(false)}>フォーカス終了</button>
               <button className="btn btn-sm btn-primary" onClick={() => load()} disabled={loading}>
-                {loading ? "読み込み中..." : "リプレイを読み込む"}
+                {loading ? "読み込み中..." : "再読込"}
               </button>
             </div>
           </div>
@@ -1836,7 +1961,7 @@ protocolV1: {
       {sim.ok ? (
         <>
           {step >= 9 ? (
-            <section className="animate-banner-enter">
+            <section className="animate-banner-enter replay-page__result-banner">
               <div className="relative overflow-hidden rounded-2xl border-2 border-surface-200 bg-white shadow-soft">
                 {sim.current.winner !== null ? (
                   <div
@@ -1857,26 +1982,26 @@ protocolV1: {
                   />
                   <div className="flex flex-wrap items-center justify-between gap-2 border-t border-surface-100 bg-surface-50/80 px-4 py-3">
                     <div className="text-xs text-slate-600">
-                      <span className="font-medium">決着</span> | {step}/{stepMax}手
+                      <span className="font-medium">完了</span> | 手順 {step}/{stepMax}
                     </div>
                     <div className="flex flex-wrap items-center gap-2">
                       <button
                         className="btn btn-sm"
-                        onClick={() => copyWithToast("対戦ID", sim.current.matchId)}
+                        onClick={() => copyWithToast("matchId", sim.current.matchId)}
                       >
-                        対戦IDをコピー
+                        matchIdをコピー
                       </button>
                       <button
                         className={`btn btn-sm ${verifyStatus === "ok" ? "border-emerald-400 bg-emerald-50 text-emerald-700" : verifyStatus === "mismatch" ? "btn-danger" : ""}`}
                         onClick={handleVerify}
                       >
-                        {verifyStatus === "ok" ? "検証OK" : verifyStatus === "mismatch" ? "不一致" : "検証"}
+                        {verifyStatus === "ok" ? "検証OK" : verifyStatus === "mismatch" ? "不一致!" : "検証"}
                       </button>
                       <button
                         className="btn btn-sm"
-                        onClick={() => copyWithToast("対戦ログ", stringifyWithBigInt(sim.transcript))}
+                        onClick={() => copyWithToast("transcript", stringifyWithBigInt(sim.transcript))}
                       >
-                        対戦ログをコピー
+                        対局ログをコピー (Transcript)
                       </button>
                       <button
                         className="btn btn-sm btn-primary"
@@ -1884,9 +2009,9 @@ protocolV1: {
                           void (async () => {
                             try {
                               const link = buildShareLink();
-                              await copyWithToast("共有リンク", link);
+                              await copyWithToast("共有URL", link);
                             } catch (e: unknown) {
-                              toast.error("共有に失敗しました", errorMessage(e));
+                              toast.error("共有失敗", errorMessage(e));
                             }
                           })();
                         }}
@@ -1901,7 +2026,7 @@ protocolV1: {
                             (async () => {
                               try {
                                 await saveToMyAttempts();
-                                toast.success("保存しました", "私の足跡に追加しました");
+                                toast.success("保存しました", "My Attempts に追加しました");
                               } catch (e: unknown) {
                                 setSim({ ok: false, error: errorMessage(e) });
                               }
@@ -1919,13 +2044,12 @@ protocolV1: {
           ) : null}
 
           <section
-            className={
-              isEngineFocus
-                ? "grid gap-4"
-                : "grid gap-6 lg:grid-cols-2"
-            }
+            className={[
+              "replay-page__main",
+              isEngineFocus ? "grid gap-4" : "grid gap-6 lg:grid-cols-2",
+            ].join(" ")}
           >
-            <div className="card">
+            <div className="card replay-page__board-card">
               <div className="card-hd replay-header-grid">
                 <div className="flex items-center gap-3">
                   <div className="text-base font-semibold">リプレイ</div>
@@ -1940,7 +2064,7 @@ protocolV1: {
                         diverged ? "border-amber-300 bg-amber-50 text-amber-800" : "border-slate-200 bg-slate-50 text-slate-600",
                       ].join(" ")}
                     >
-                      {diverged ? "diverged" : "same"}
+                      {diverged ? "差分あり" : "一致"}
                     </span>
                   ) : null}
                 </div>
@@ -1953,9 +2077,9 @@ protocolV1: {
                         setStep(0);
                       }}
                       disabled={!canStepBack}
-                      title="Jump to start"
+                      title="先頭へ移動"
                     >
-                      最初
+                      先頭
                     </button>
                     <button
                       className={replayTransportButtonClass}
@@ -1973,10 +2097,10 @@ protocolV1: {
                       className={replayTransportPrimaryButtonClass}
                       onClick={() => setIsPlaying((p) => !p)}
                       disabled={!canPlay}
-                      title="Auto play"
+                      title="自動再生"
                       aria-label={isPlaying ? "Pause replay" : "Play replay"}
                     >
-                      {isPlaying ? "一時停止" : "再生"}
+                      {isPlaying ? "停止" : "再生"}
                     </button>
 
                     <button
@@ -1998,9 +2122,9 @@ protocolV1: {
                         setStep(stepMax);
                       }}
                       disabled={!canStepForward}
-                      title="Jump to end"
+                      title="末尾へ移動"
                     >
-                      最後
+                      末尾
                     </button>
 
                     <label className="replay-speed">
@@ -2028,19 +2152,19 @@ protocolV1: {
                       isStageFocus ? "stage-focus-side-panel stage-focus-side-panel--muted" : "",
                     ].filter(Boolean).join(" ")}
                   >
-                    盤面集中表示のため、リプレイ操作は隠れています。
+                    board focus 中はリプレイ操作を非表示にしています。(Replay controls are hidden for board focus.)
                   </div>
                 )}
               </div>
 
               <div className={["card-bd grid gap-4", isStageFocus ? "stage-focus-arena-inner stage-focus-replay-shell" : ""].filter(Boolean).join(" ")}>
                 <div className="sr-only" aria-live="polite">
-                  {`${stepStatusText}. ${phaseInfo.label} phase. Progress ${stepProgress} percent.`}
+                  {`${stepStatusText}。${phaseInfo.label}フェーズ。進行率 ${stepProgress} パーセント。`}
                 </div>
                 {compare ? (
                   <div className="grid gap-6 md:grid-cols-2">
-                    {renderReplay("エンジン v1", sim.v1)}
-                    {renderReplay("エンジン v2", sim.v2)}
+                    {renderReplay("engine v1", sim.v1)}
+                    {renderReplay("engine v2", sim.v2)}
                   </div>
                 ) : (
                   renderReplay(sim.currentRulesetLabel, sim.current)
@@ -2049,7 +2173,7 @@ protocolV1: {
                 {isStageFocus ? (
                   <div className="flex justify-end">
                     <button className={replayTransportButtonClass} onClick={toggleStagePanelsWithFeedback}>
-                      {showStagePanels ? "タイムラインを隠す" : "タイムラインを表示"}
+                      {showStagePanels ? "タイムライン/詳細を隠す" : "タイムライン/詳細を表示"}
                     </button>
                   </div>
                 ) : null}
@@ -2059,7 +2183,7 @@ protocolV1: {
                     <div className={["replay-timeline-shell", isStageFocus ? "stage-focus-side-panel stage-focus-side-panel--timeline" : ""].filter(Boolean).join(" ")}>
                       <div className="replay-timeline-head">
                         <div className="flex flex-wrap items-center gap-2">
-                          <span className="replay-step-pill">{step === 0 ? "初期盤面" : `${step}手目のあと`}</span>
+                          <span className="replay-step-pill">{step === 0 ? "初期盤面" : `${step}手目の後`}</span>
                           <span className={`replay-phase replay-phase--${phaseInfo.tone}`}>{phaseInfo.label}</span>
                           <span className="text-xs text-slate-500">
                             {step}/{stepMax} | {stepProgress}%
@@ -2071,9 +2195,9 @@ protocolV1: {
                               className={replayTransportButtonClass}
                               onClick={jumpToPrevHighlight}
                               disabled={highlights.length === 0}
-                              title="Previous highlight ([)"
+                              title="前の見どころ ([)"
                             >
-                              前へ
+                              前
                             </button>
                             <span className="replay-highlight-index">
                               {currentHighlightIdx >= 0
@@ -2084,9 +2208,9 @@ protocolV1: {
                               className={replayTransportButtonClass}
                               onClick={jumpToNextHighlight}
                               disabled={highlights.length === 0}
-                              title="Next highlight (])"
+                              title="次の見どころ (])"
                             >
-                              次へ
+                              次
                             </button>
                           </div>
                         ) : null}
@@ -2112,8 +2236,8 @@ protocolV1: {
                             className="replay-highlight-marker"
                             data-kind={highlight.kind}
                             style={{ left: `${(highlight.step / stepMax) * 100}%` }}
-                            title={`Turn ${highlight.step}: ${highlight.label}`}
-                            aria-label={`Jump to turn ${highlight.step} (${replayHighlightKindLabel(highlight.kind)})`}
+                            title={`${highlight.step}手目: ${highlight.label}`}
+                            aria-label={`${highlight.step}手目へ移動 (${replayHighlightKindLabel(highlight.kind)})`}
                             onClick={() => { setIsPlaying(false); setStep(highlight.step); }}
                           />
                         ))}
@@ -2137,15 +2261,15 @@ protocolV1: {
                           })}
                         </div>
                       ) : (
-                        <div className="text-xs text-slate-500">まだ見どころはありません。</div>
+                        <div className="text-xs text-slate-500">まだ戦術ハイライトはありません。</div>
                       )}
                       <div className="text-[11px] text-slate-500">
-                        キーボード: <span className="font-mono">[</span>/<span className="font-mono">]</span>で見どころ移動、<span className="font-mono">Space</span>で再生/一時停止。
+                        キー操作: <span className="font-mono">[</span>/<span className="font-mono">]</span> で見どころ移動、<span className="font-mono">Space</span> で再生/停止。
                       </div>
 
                       {activeHighlights.length > 0 ? (
                         <div className="replay-highlight-callout">
-                          <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">いまの見どころ</div>
+                          <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">現在の注目ポイント</div>
                           <div className="mt-1 flex flex-wrap gap-1.5">
                             {activeHighlights.map((highlight, i) => (
                               <span
@@ -2164,61 +2288,69 @@ protocolV1: {
                     <div className={["rounded-lg border border-slate-200 bg-white p-3 text-sm", isStageFocus ? "stage-focus-side-panel" : ""].filter(Boolean).join(" ")}>
                       <div className="flex flex-wrap items-center justify-between gap-2">
                         <div className="font-medium">
-                          勝者: {formatReplayWinnerLabel(sim.current.winner)} | 盤面 A:{sim.current.tiles.A} / B:{sim.current.tiles.B}
+                          現在の勝者: {formatReplayWinnerLabel(sim.current.winner)} | タイル A:{sim.current.tiles.A} / B:{sim.current.tiles.B}
                         </div>
-                        <div className="text-xs text-slate-500">同点判定: {sim.current.tieBreak}</div>
+                        <div className="text-xs text-slate-500">タイブレーク: {sim.current.tieBreak}</div>
                       </div>
 
-                      <div className="mt-2 grid gap-2 text-xs text-slate-600">
-                        <div>
-                          <span className="font-medium">ルールID</span>: <code>{sim.transcript.header.rulesetId}</code>
+                      <div className="mt-2 grid min-w-0 gap-2 text-xs text-slate-600">
+                        <div className="min-w-0">
+                          <span className="font-medium">rulesetId</span>: <code className="font-mono break-all">{sim.transcript.header.rulesetId}</code>
                         </div>
+                        {sim.rulesetIdMismatchWarning ? (
+                          <div
+                            className="rounded-md border border-amber-300 bg-amber-50 px-2 py-1 text-[11px] font-medium text-amber-800"
+                            data-testid="replay-ruleset-mismatch-warning"
+                          >
+                            {sim.rulesetIdMismatchWarning}
+                          </div>
+                        ) : null}
                         {replayClassicSwap ? (
                           <div>
-                            <span className="font-medium">クラシックスワップ</span>: A{replayClassicSwap.aIndex + 1} ↔ B{replayClassicSwap.bIndex + 1}
+                            <span className="font-medium">classic swap（入替）</span>: A{replayClassicSwap.aIndex + 1} ↔ B{replayClassicSwap.bIndex + 1}
                           </div>
                         ) : null}
                         {replayClassicOpen ? (
                           <div>
-                            <span className="font-medium">クラシックオープン</span>: {replayClassicOpen.mode === "all_open"
+                            <span className="font-medium">classic open（公開）</span>: {replayClassicOpen.mode === "all_open"
                               ? "全カード公開"
                               : `A[${formatClassicOpenSlots(replayClassicOpen.playerA)}] / B[${formatClassicOpenSlots(replayClassicOpen.playerB)}]`}
                           </div>
                         ) : null}
-                        <div className="flex items-center gap-2">
-                          <span className="font-medium">対戦ID</span>: <code>{sim.current.matchId}</code>
-                          {verifyStatus === "ok" && <span className="text-emerald-600 font-semibold" title="リプレイ検証済み">検証OK</span>}
+                        <div className="flex min-w-0 flex-wrap items-center gap-2">
+                          <span className="font-medium">matchId</span>: <code className="font-mono break-all">{sim.current.matchId}</code>
+                          {verifyStatus === "ok" && <span className="text-emerald-600 font-semibold" title="リプレイ検証OK">検証OK</span>}
                           {verifyStatus === "mismatch" && <span className="text-red-600 font-semibold" title="リプレイ不一致">不一致</span>}
                         </div>
                       </div>
 
                       <div className="mt-3 flex flex-wrap items-center gap-2">
-                        <button className="btn" onClick={() => copyWithToast("対戦ログ", stringifyWithBigInt(sim.transcript))}>
-                          対戦ログJSONをコピー
+                        <button className="btn" onClick={() => copyWithToast("transcript", stringifyWithBigInt(sim.transcript))}>
+                          対局ログJSONをコピー (transcript JSON)
                         </button>
-                        <button className="btn" onClick={() => copyWithToast("結果", stringifyWithBigInt(sim.current))}>
-                          結果JSONをコピー
+                        <button className="btn" onClick={() => copyWithToast("result", stringifyWithBigInt(sim.current))}>
+                          結果JSONをコピー (result JSON)
                         </button>
                         <button
                           className={`btn ${verifyStatus === "ok" ? "border-emerald-400 bg-emerald-50 text-emerald-700" : verifyStatus === "mismatch" ? "btn-danger" : ""}`}
                           onClick={handleVerify}
                         >
-                          {verifyStatus === "ok" ? "検証OK" : verifyStatus === "mismatch" ? "不一致" : "リプレイを検証"}
+                          {verifyStatus === "ok" ? "検証OK" : verifyStatus === "mismatch" ? "不一致!" : "リプレイ検証"}
                         </button>
                       </div>
 
                       <div className="mt-3">
-                        <Disclosure title={<span>生JSONを表示（確認用）</span>}>
-                          <div className="grid gap-3">
-                            <div>
-                              <div className="text-xs font-medium text-slate-600">対戦ログ</div>
-                              <pre className="mt-1 overflow-x-auto rounded-xl border border-slate-200 bg-white/70 p-3 text-xs">
+                        <Disclosure title={<span>詳細JSONを表示</span>}>
+                          <div className="grid grid-cols-1 gap-3">
+                            <div className="min-w-0">
+                              <div className="text-xs font-medium text-slate-600">対局ログ (transcript)</div>
+                              <pre className="mt-1 w-full max-w-full overflow-x-auto rounded-xl border border-slate-200 bg-white/70 p-3 text-xs">
                                 {stringifyWithBigInt(sim.transcript)}
                               </pre>
                             </div>
-                            <div>
-                              <div className="text-xs font-medium text-slate-600">結果</div>
-                              <pre className="mt-1 overflow-x-auto rounded-xl border border-slate-200 bg-white/70 p-3 text-xs">
+                            <div className="min-w-0">
+                              <div className="text-xs font-medium text-slate-600">結果 (result)</div>
+                              <pre className="mt-1 w-full max-w-full overflow-x-auto rounded-xl border border-slate-200 bg-white/70 p-3 text-xs">
                                 {stringifyWithBigInt(sim.current)}
                               </pre>
                             </div>
@@ -2232,10 +2364,10 @@ protocolV1: {
             </div>
 
             {!isEngineFocus && (
-            <div className="card">
+            <div className="card replay-page__turnlog-card">
               <div className="card-hd">
-                <div className="text-base font-semibold">手順ログ</div>
-                <div className="text-xs text-slate-500">手をクリックすると、その場面へ移動します。</div>
+                <div className="text-base font-semibold">ターンログ</div>
+                <div className="text-xs text-slate-500">ターンをクリックすると、その手順へ移動します。</div>
               </div>
               <div className="card-bd replay-turnlog-body">
                 <TurnLog
@@ -2252,10 +2384,10 @@ protocolV1: {
           </section>
 
           {!isEngineFocus && (
-          <section className="card">
+          <section className="card replay-page__deck-card">
             <div className="card-hd">
               <div className="text-base font-semibold">デッキ確認</div>
-              <div className="text-xs text-slate-500">オンチェーン情報から読み込んだデッキカードを確認できます。</div>
+              <div className="text-xs text-slate-500">on-chain データから読み込んだ読み取り専用デッキです。</div>
               {replayClassicOpen?.mode === "three_open" ? (
                 <label className="mt-2 inline-flex items-center gap-2 text-xs text-slate-600">
                   <input
@@ -2270,12 +2402,12 @@ protocolV1: {
 
             <div className="card-bd grid gap-6 md:grid-cols-2">
               <div className="grid gap-2">
-                <div className="text-xs font-medium text-slate-600">A側デッキ</div>
+                <div className="text-xs font-medium text-slate-600">プレイヤーA デッキ</div>
                 {replayClassicOpen ? (
                   <div className="text-[11px] text-slate-500">
                     {replayClassicOpen.mode === "all_open"
-                      ? "オープンルール: 全カード公開"
-                      : `オープンルール: ${formatClassicOpenSlots(replayClassicOpen.playerA)}番スロットを公開`}
+                      ? "Openルール: 全カード公開"
+                      : `Openルール: スロット ${formatClassicOpenSlots(replayClassicOpen.playerA)} を公開`}
                   </div>
                 ) : null}
                 <div className="deck-preview-grid grid grid-cols-3 gap-2 sm:grid-cols-5">
@@ -2291,12 +2423,12 @@ protocolV1: {
               </div>
 
               <div className="grid gap-2">
-                <div className="text-xs font-medium text-slate-600">B側デッキ</div>
+                <div className="text-xs font-medium text-slate-600">プレイヤーB デッキ</div>
                 {replayClassicOpen ? (
                   <div className="text-[11px] text-slate-500">
                     {replayClassicOpen.mode === "all_open"
-                      ? "オープンルール: 全カード公開"
-                      : `オープンルール: ${formatClassicOpenSlots(replayClassicOpen.playerB)}番スロットを公開`}
+                      ? "Openルール: 全カード公開"
+                      : `Openルール: スロット ${formatClassicOpenSlots(replayClassicOpen.playerB)} を公開`}
                   </div>
                 ) : null}
                 <div className="deck-preview-grid grid grid-cols-3 gap-2 sm:grid-cols-5">
@@ -2313,10 +2445,10 @@ protocolV1: {
 
               <div className="md:col-span-2 grid gap-2 text-xs text-slate-600">
                 <div className="rounded-lg border border-slate-200 bg-white p-3">
-                  <div className="font-medium text-slate-700">所有者（読み取り専用）</div>
+                  <div className="font-medium text-slate-700">所有者一覧（読み取り専用）</div>
                   {shouldMaskReplayDeckSlots ? (
                     <div className="mt-2 text-[11px] text-slate-500">
-                      Three Openで非公開です。「非公開スロットを表示」を有効にすると、全スロットの所有者を確認できます。
+                      Three Open により非表示です。「非公開スロットを表示」をONにすると所有者対応を確認できます。
                     </div>
                   ) : (
                     <div className="mt-2 grid max-h-56 gap-1 overflow-auto font-mono">
@@ -2337,4 +2469,3 @@ protocolV1: {
     </div>
   );
 }
-

@@ -1,4 +1,9 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
+
+// Dynamic-import export-integrity checks can exceed the 5s default under
+// full-suite parallel load (vite transform contention). Same fix as
+// useNyanoTokenMetadata.test.ts.
+vi.setConfig({ testTimeout: 30_000 });
 
 /* ═══════════════════════════════════════════════════════════════════
    Engine Overlay Integration — Sprint 51

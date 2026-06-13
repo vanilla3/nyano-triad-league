@@ -118,7 +118,7 @@ describe("features/match/matchStageActionCallbacks", () => {
       doAiMove,
     });
     expect(events).toEqual([
-      { type: "feedback", value: "Nyanoの手を進めます", tone: undefined },
+      { type: "feedback", value: "Nyano move requested", tone: undefined },
       { type: "sfx", value: "card_place" },
     ]);
     expect(doAiMove).toHaveBeenCalledTimes(1);

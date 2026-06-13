@@ -34,13 +34,13 @@ export function replayStepProgress(step: number, stepMax: number): number {
 }
 
 export function replayStepStatusText(step: number): string {
-  return step <= 0 ? "初期盤面" : `${step}手目のあと`;
+  return step <= 0 ? "初期盤面" : `${step}手目の後`;
 }
 
 export function replayPhaseInfo(step: number, stepMax: number): ReplayPhaseInfo {
   const clamped = clampReplayStep(step, stepMax);
   if (clamped <= 0) return { label: "準備", tone: "setup" };
-  if (stepMax <= 0 || clamped >= stepMax) return { label: "決着", tone: "final" };
+  if (stepMax <= 0 || clamped >= stepMax) return { label: "終局", tone: "final" };
 
   const progress = clamped / stepMax;
   if (progress <= 1 / 3) return { label: "序盤", tone: "opening" };

@@ -26,7 +26,7 @@ describe("features/match/MatchHandCompactHintPanel", () => {
     const spans = collectElementChildren(tree.props.children).filter((child) => child.type === "span");
     expect(spans).toHaveLength(1);
     const summaryText = React.Children.toArray(spans[0]?.props.children).join("");
-    expect(summaryText).toContain("3");
-    expect(summaryText).toContain("7");
+    expect(summaryText).toContain("カード3");
+    expect(summaryText).toContain("マスB3");
   });
 });

@@ -32,6 +32,14 @@ pnpm -C apps/web typecheck
 pnpm -C apps/web build
 ```
 
+全体の静的チェック（推奨）:
+```bash
+# 文字化け/制御文字/混入BOMなど
+pnpm lint:text
+# モーション定義漏れ（animate-*）
+pnpm lint:motion
+```
+
 手元で動作確認:
 ```bash
 pnpm -C apps/web dev
@@ -43,6 +51,15 @@ pnpm -C apps/web dev
 
 - ルーティング: `src/main.tsx`
 - レイアウト/ナビ: `src/App.tsx`
+
+Styles / Motion:
+
+目視QA（開発用）:
+- `http://localhost:5173/motions?dev=1` で主要アニメの再生/切替（VFX tier / reduced motion）を確認
+
+- Global base: `src/styles.css`
+- Shared motion utilities (legacy補完): `src/motions.css`
+- Theme layers: `src/mint-theme/mint-theme.css` / `src/rpg-theme/rpg-theme.css`
 
 Pages:
 - Match: `src/pages/Match.tsx`

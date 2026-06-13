@@ -9,13 +9,13 @@ import { test, expect } from "@playwright/test";
 test.describe("Decks → Match flow", () => {
   test("can create a deck and navigate to match", async ({ page }) => {
     // 1. Navigate to /decks
-    await page.goto("/decks");
-    await expect(page.getByText("Deck Studio")).toBeVisible({ timeout: 10_000 });
+    await page.goto("/decks?theme=mint");
+    await expect(page.getByText("Deck Builder")).toBeVisible({ timeout: 10_000 });
 
     // 2. Enter deck name + 5 tokenIds → Save
     await page.getByPlaceholder("My Deck").fill("E2E Test Deck");
     await page.getByPlaceholder(/例:/).fill("1, 2, 3, 4, 5");
-    await page.getByRole("button", { name: "Save deck" }).click();
+    await page.getByRole("button", { name: "Save Deck" }).first().click();
 
     // 3. Verify deck appears in saved list (scope to main to avoid toast match)
     const main = page.getByRole("main");
@@ -31,15 +31,15 @@ test.describe("Decks → Match flow", () => {
   });
 
   test("deck edit and delete work", async ({ page }) => {
-    await page.goto("/decks");
-    await expect(page.getByText("Deck Studio")).toBeVisible({ timeout: 10_000 });
+    await page.goto("/decks?theme=mint");
+    await expect(page.getByText("Deck Builder")).toBeVisible({ timeout: 10_000 });
 
     const main = page.getByRole("main");
 
     // Create a deck
     await page.getByPlaceholder("My Deck").fill("Delete Me Deck");
     await page.getByPlaceholder(/例:/).fill("10, 20, 30, 40, 50");
-    await page.getByRole("button", { name: "Save deck" }).click();
+    await page.getByRole("button", { name: "Save Deck" }).first().click();
 
     await expect(main.getByText("Delete Me Deck")).toBeVisible({ timeout: 5_000 });
 
@@ -54,13 +54,13 @@ test.describe("Decks → Match flow", () => {
   });
 
   test("deck validation shows error for invalid input", async ({ page }) => {
-    await page.goto("/decks");
-    await expect(page.getByText("Deck Studio")).toBeVisible({ timeout: 10_000 });
+    await page.goto("/decks?theme=mint");
+    await expect(page.getByText("Deck Builder")).toBeVisible({ timeout: 10_000 });
 
     // Try to save with only 3 tokenIds
     await page.getByPlaceholder("My Deck").fill("Bad Deck");
     await page.getByPlaceholder(/例:/).fill("1, 2, 3");
-    await page.getByRole("button", { name: "Save deck" }).click();
+    await page.getByRole("button", { name: "Save Deck" }).first().click();
 
     // Should show validation error
     await expect(page.getByText("tokenId は 5 つ必要です")).toBeVisible({ timeout: 3_000 });

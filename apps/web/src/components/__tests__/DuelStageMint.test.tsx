@@ -2,37 +2,29 @@ import React from "react";
 import { describe, expect, it } from "vitest";
 import { DuelStageMint } from "../DuelStageMint";
 
-describe("DuelStageMint", () => {
-  it("exports DuelStageMint component", async () => {
-    const mod = await import("../DuelStageMint");
-    expect(mod.DuelStageMint).toBeDefined();
-    expect(typeof mod.DuelStageMint).toBe("function");
+function hasChildWithClass(node: React.ReactElement, className: string): boolean {
+  const children = React.Children.toArray(node.props.children);
+  return children.some((child) => {
+    if (!React.isValidElement(child)) return false;
+    const props = child.props as { className?: string };
+    return typeof props.className === "string" && props.className.split(/\s+/).includes(className);
   });
+}
 
-  it("applies impact/burst classes and renders stage layers", () => {
-    const tree = DuelStageMint({
+describe("DuelStageMint", () => {
+  it("applies burst level class and renders burst particle layer", () => {
+    const node = DuelStageMint({
+      children: <div data-testid="child">child</div>,
       impact: "high",
       impactBurst: true,
-      className: "extra-stage",
-      children: "board",
+      impactBurstLevel: "hard",
     });
 
-    expect(tree.type).toBe("div");
-    expect(tree.props.className).toContain("mint-stage");
-    expect(tree.props.className).toContain("mint-stage--impact-high");
-    expect(tree.props.className).toContain("mint-stage--impact-burst");
-    expect(tree.props.className).toContain("extra-stage");
-
-    const children = React.Children.toArray(tree.props.children) as React.ReactElement[];
-    const classNames = children
-      .map((child) => (child.props as { className?: string }).className)
-      .filter((v): v is string => typeof v === "string");
-
-    expect(classNames.some((c) => c.includes("mint-stage__rim"))).toBe(true);
-    expect(classNames.some((c) => c.includes("mint-stage__atmo"))).toBe(true);
-    expect(classNames.some((c) => c.includes("mint-stage__holo"))).toBe(true);
-    expect(classNames.some((c) => c.includes("mint-stage__glow--top"))).toBe(true);
-    expect(classNames.some((c) => c.includes("mint-stage__glow--bottom"))).toBe(true);
-    expect(classNames.some((c) => c.includes("mint-stage__board"))).toBe(true);
+    expect(node.type).toBe("div");
+    expect(node.props.className).toContain("mint-stage");
+    expect(node.props.className).toContain("mint-stage--impact-high");
+    expect(node.props.className).toContain("mint-stage--impact-burst");
+    expect(node.props.className).toContain("mint-stage--burst-hard");
+    expect(hasChildWithClass(node, "mint-stage__burst-particles")).toBe(true);
   });
 });

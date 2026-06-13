@@ -73,7 +73,7 @@ test.describe("Main flow guardrail", () => {
     await disableGuestTutorial(page);
 
     await page.goto("/");
-    const arenaLink = page.locator('a[href="/arena"]').first();
+    const arenaLink = page.locator('a[href^="/arena"]').first();
     await expect(arenaLink).toBeVisible({ timeout: 10_000 });
     await arenaLink.click();
 
@@ -84,10 +84,10 @@ test.describe("Main flow guardrail", () => {
 
     await expect(page).toHaveURL(/\/match/);
     await dismissGuestTutorialIfPresent(page);
-    await expect(page.getByText("Guest Quick Play")).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByText("ゲスト クイック対戦")).toBeVisible({ timeout: 15_000 });
 
-    const shareButton = page.getByRole("button", { name: "Share URL", exact: true }).first();
-    const replayButton = page.getByRole("button", { name: "Replay", exact: true }).first();
+    const shareButton = page.getByRole("button", { name: "共有URLをコピー", exact: true }).first();
+    const replayButton = page.getByRole("button", { name: "リプレイを開く", exact: true }).first();
     await expect(shareButton).toBeDisabled();
     await expect(replayButton).toBeDisabled();
 
@@ -95,7 +95,7 @@ test.describe("Main flow guardrail", () => {
     await page.goto(`/replay?z=${zParam}&step=9&ui=mint`);
 
     await expect(page.getByText("Replay from transcript")).toBeVisible({ timeout: 10_000 });
-    await expect(page.getByText(/Left\/Right step/).first()).toBeVisible();
+    await expect(page.getByText(/Left\/Right 手順移動/).first()).toBeVisible();
     await expect
       .poll(() => {
         const url = new URL(page.url());

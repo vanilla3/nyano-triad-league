@@ -119,7 +119,7 @@ function BoardCell({
   };
 
   const baseClasses = [
-    "relative rounded-2xl border-2 motion-cell",
+    "relative rounded-2xl border-2 transition-all duration-200",
     "flex items-center justify-center",
     sizeClasses[size],
     hasCard ? "bg-white" : "bg-surface-100",
@@ -131,14 +131,14 @@ function BoardCell({
   if (!hasCard) baseClasses.push("border-surface-200");
 
   if (isSelectable && !hasCard) {
-    baseClasses.push("cursor-pointer motion-cell--interactive motion-magnet hover:border-nyano-400 hover:bg-nyano-50");
+    baseClasses.push("cursor-pointer hover:border-nyano-400 hover:bg-nyano-50");
   } else {
     baseClasses.push("cursor-default");
   }
 
-  if (isPlaced) baseClasses.push("ring-4 ring-flip/40 shadow-flip motion-place");
+  if (isPlaced) baseClasses.push("ring-4 ring-flip/40 shadow-flip animate-cell-place");
   if (isFlipped) {
-    baseClasses.push("ring-4 ring-chain/40 shadow-chain motion-flip motion-impact animate-flip-glow");
+    baseClasses.push("ring-4 ring-chain/40 shadow-chain animate-cell-flip animate-flip-glow");
     if (flipDelayClass) baseClasses.push(flipDelayClass);
   }
 
@@ -354,7 +354,7 @@ export function BoardReplayViewer({
       <BoardView board={board} placedCell={placedCell} flippedCells={flippedCells} size="md" />
 
       <div className="flex items-center gap-3">
-        <span className="text-xs font-mono text-surface-500">Step</span>
+        <span className="text-xs font-mono text-surface-500">手順</span>
         <input
           type="range"
           min={0}

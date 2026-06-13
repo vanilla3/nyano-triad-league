@@ -14,7 +14,7 @@ NOTES:
 param(
   [string]$Model = "gpt-5.3-codex",
   [string]$BaseBranch = "main",
-  [ValidateSet("on-request","never","untrusted")]
+  [ValidateSet("untrusted","on-request","never")]
   [string]$ApprovalMode = "on-request",
   [switch]$CreatePR,
   [string]$WorkOrderDir = "codex/work_orders",
@@ -70,9 +70,14 @@ function Git-CleanCheck() {
 }
 
 function Git-CheckoutBase([string]$base) {
-  git fetch origin | Out-Null
-  git checkout $base | Out-Null
-  git pull --ff-only origin $base | Out-Null
+  if ($script:HasOriginRemote) {
+    git fetch origin | Out-Null
+    git checkout $base | Out-Null
+    git pull --ff-only origin $base | Out-Null
+  } else {
+    Write-Host "NOTE: git remote 'origin' not found. Skipping fetch/pull/push steps."
+    git checkout $base | Out-Null
+  }
 }
 
 function Git-NewBranch([string]$branch) {
@@ -88,8 +93,24 @@ function Run-Codex([string]$workOrderPath, [string]$id, [string]$title, [string]
   $wo = Parse-WorkOrderHeader $workOrderPath
   $raw = $wo.Raw
 
+  $pushBlock = @"
+5) Commit:
+   - git add -A
+   - git commit -m \"WO-$id: $title\"
+   - (No git remote 'origin' found; skip push/PR and leave the branch locally.)
+"@
+
+  if ($script:HasOriginRemote) {
+    $pushBlock = @"
+5) Commit and push:
+   - git add -A
+   - git commit -m \"WO-$id: $title\"
+   - git push -u origin HEAD
+"@
+  }
+
   $prBlock = "6) PR creation is optional; skip if 'gh' is not available."
-  if ($CreatePR -and (Has-GH)) {
+  if ($CreatePR -and (Has-GH) -and $script:HasOriginRemote) {
     $prBlock = @"
 6) If GitHub CLI is available, open a PR:
    - gh pr create --title "WO-${id}: $title" --body "Implements Work Order $id." --base $BaseBranch --head $branch
@@ -115,10 +136,7 @@ STEPS (in order):
    - pnpm -C apps/web test
    - pnpm -C apps/web e2e (only if relevant to your changes)
 4) Show git status and summarize the diff (high level).
-5) Commit and push:
-   - git add -A
-   - git commit -m "WO-${id}: $title"
-   - git push -u origin HEAD
+$pushBlock
 $prBlock
 
 ---- WORK ORDER ----
@@ -132,6 +150,14 @@ $raw
 # ---------- main ----------
 Assert-Command "git"
 Assert-Command "codex"
+
+$script:HasOriginRemote = $false
+try {
+  git remote get-url origin | Out-Null
+  $script:HasOriginRemote = $true
+} catch {
+  $script:HasOriginRemote = $false
+}
 
 if (-not (Test-Path $RulesFile)) {
   Write-Host "WARNING: rules file not found at $RulesFile. git push may prompt/deny depending on your setup."

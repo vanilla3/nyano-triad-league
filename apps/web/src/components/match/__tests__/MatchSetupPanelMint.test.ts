@@ -3,9 +3,10 @@ import { describe, expect, it } from "vitest";
 import {
   buildMatchSetupSummaryLine,
   describeFirstPlayerMode,
+  describeRulesetKeyDisplay,
   describeRulesetKey,
   shouldOpenAdvancedSetup,
-} from "../MatchSetupPanelMint.summary";
+} from "../MatchSetupPanelMint.helpers";
 
 describe("MatchSetupPanelMint helpers", () => {
   it("builds setup summary line with event deck wording", () => {
@@ -19,11 +20,11 @@ describe("MatchSetupPanelMint helpers", () => {
       ui: "mint",
     });
 
-    expect(line).toContain("デッキA: Starter A");
+    expect(line).toContain("Starter A");
     expect(line).toContain("デッキB: イベント固定");
-    expect(line).toContain("v2 shadow+tactics");
-    expect(line).toContain("対戦相手: Nyano AI");
-    expect(line).toContain("先攻: manual");
+    expect(line).toContain("v2 シャドウ+戦術");
+    expect(line).toContain("Nyano AI");
+    expect(line).toContain("先手: manual");
     expect(line).toContain("盤面: mint");
   });
 
@@ -36,6 +37,9 @@ describe("MatchSetupPanelMint helpers", () => {
 
   it("keeps stable labels for ruleset and first-player mode", () => {
     expect(describeRulesetKey("classic_three_open")).toBe("classic three open");
+    expect(describeRulesetKey("classic_reverse")).toBe("classic reverse");
+    expect(describeRulesetKeyDisplay("classic_reverse")).toContain("クラシック");
+    expect(describeRulesetKeyDisplay("classic_reverse")).toContain("Reverse");
     expect(describeFirstPlayerMode("committed_mutual_choice")).toBe("committed mutual");
   });
 });

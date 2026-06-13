@@ -55,11 +55,11 @@ export const DEFAULT_SEASON_SCORING_RULE: SeasonScoringRule = {
 };
 
 export const DEFAULT_SEASON_REWARD_TIERS: SeasonRewardTier[] = [
-  { id: "rookie", label: "ルーキー", minPoints: 0, rewardHint: "リプレイバッジ: はじめての足跡" },
-  { id: "bronze", label: "ブロンズ", minPoints: 12, rewardHint: "オーバーレイ称号: ブロンズチャレンジャー" },
-  { id: "silver", label: "シルバー", minPoints: 28, rewardHint: "オーバーレイフレーム: シルバーストリーク" },
-  { id: "gold", label: "ゴールド", minPoints: 50, rewardHint: "リプレイスタンプ: ゴールデンファング" },
-  { id: "legend", label: "レジェンド", minPoints: 80, rewardHint: "シーズン紋章: ニャノの伝説" },
+  { id: "rookie", label: "Rookie", minPoints: 0, rewardHint: "Replay badge: First Pawprints" },
+  { id: "bronze", label: "Bronze", minPoints: 12, rewardHint: "Overlay title: Bronze Challenger" },
+  { id: "silver", label: "Silver", minPoints: 28, rewardHint: "Overlay frame: Silver Streak" },
+  { id: "gold", label: "Gold", minPoints: 50, rewardHint: "Replay stamp: Golden Fang" },
+  { id: "legend", label: "Legend", minPoints: 80, rewardHint: "Season crest: Legend of Nyano" },
 ];
 
 function clamp01(v: number): number {

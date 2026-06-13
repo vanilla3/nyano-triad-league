@@ -36,6 +36,14 @@ pnpm build:web
 pnpm release:check
 ```
 
+### Codex handoff（自走前チェック）
+```bash
+pnpm codex:doctor
+pnpm lint:text
+pnpm lint:motion
+pnpm handoff:check
+```
+
 ### フロント
 ```bash
 pnpm -C apps/web dev

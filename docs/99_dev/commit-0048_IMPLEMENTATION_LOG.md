@@ -12,7 +12,7 @@
 ## Why
 配信（Twitch/OBS）は「理解できる＝盛り上がる」が直結します。  
 flip×N だけでは説明が難しい場面があるため、まずは **最小の“根拠”** を出せるようにしました。  
-詳細は配信者だけが見えるように **段階的開示**（controls=1）にしています。fileciteturn1file0
+詳細は配信者だけが見えるように **段階的開示**（controls=1）にしています。
 
 ## Manual test checklist
 - pnpm -C packages/triad-engine test

@@ -4,6 +4,17 @@ import { CardNyanoDuel } from "./CardNyanoDuel";
 import { CardPreviewPanel } from "./CardPreviewPanel";
 import { useCardPreview } from "@/hooks/useCardPreview";
 
+/* ═══════════════════════════════════════════════════════════════════════════
+   HAND DISPLAY MINT — Nintendo-level UX Hand (NIN-UX-022)
+
+   Features:
+   - Horizontal card row with touch-friendly sizing
+   - Selected card lifts up with visual feedback
+   - Mobile confirm flow: tap → preview → confirm (NIN-UX-022)
+   - Used cards greyed out and shrunk
+   - Fully compatible with HandDisplayRPGProps interface
+   ═══════════════════════════════════════════════════════════════════════════ */
+
 export interface HandDisplayMintProps {
   cards: CardData[];
   owner: PlayerIndex;
@@ -31,24 +42,31 @@ export function HandDisplayMint({
   onCardDragEnd,
 }: HandDisplayMintProps) {
   const preview = useCardPreview();
-  const handClassName = [
-    "mint-hand",
-    selectedIndex !== null && "mint-hand--has-selection",
-  ].filter(Boolean).join(" ");
+  const hasSelection = selectedIndex !== null;
+  const ownerLabel = owner === 0 ? "A" : "B";
 
   return (
-    <div className={handClassName} role="listbox" aria-label={`プレイヤー${owner === 0 ? "A" : "B"}の手札`}>
+    <div
+      className={["mint-hand", hasSelection && "mint-hand--has-selection"].filter(Boolean).join(" ")}
+      role="listbox"
+      aria-label={`プレイヤー${ownerLabel}の手札`}
+      data-owner={ownerLabel}
+      data-has-selection={hasSelection ? "1" : "0"}
+    >
       {cards.map((card, idx) => {
         const isUsed = usedIndices.has(idx);
         const isSelected = selectedIndex === idx;
-        const isForced = forcedIndex === idx;
-        const isDisabled = isUsed || disabled;
+        const isForcedMismatch = forcedIndex !== null && idx !== forcedIndex;
+        const isDisabled = isUsed || disabled || isForcedMismatch;
+
+        // Avoid double-dimming: when a selection exists, the container already
+        // de-emphasizes other cards. Keep the card art mostly crisp.
+        const cardVisualClass = hasSelection && !isSelected ? "opacity-95" : "";
 
         const classes = [
           "mint-hand-card",
           owner === 0 ? "mint-hand-card--a" : "mint-hand-card--b",
           isSelected && "mint-hand-card--selected",
-          isForced && "mint-hand-card--selected",
           isUsed && "mint-hand-card--used",
           enableDragDrop && !isDisabled && "mint-hand-card--draggable",
         ].filter(Boolean).join(" ");
@@ -61,7 +79,7 @@ export function HandDisplayMint({
             role="option"
             aria-selected={isSelected}
             aria-disabled={isDisabled}
-            aria-label={`Card ${idx + 1}: edges ${card.edges.up}/${card.edges.right}/${card.edges.down}/${card.edges.left}${isUsed ? " (used)" : ""}`}
+            aria-label={`カード${idx + 1}（上${card.edges.up} 右${card.edges.right} 下${card.edges.down} 左${card.edges.left}）${isUsed ? "（使用済み）" : ""}`}
             className={classes}
             disabled={isDisabled}
             draggable={enableDragDrop && !isDisabled}
@@ -88,6 +106,7 @@ export function HandDisplayMint({
             onTouchMove={lp?.onTouchMove}
             onContextMenu={lp?.onContextMenu}
           >
+            {/* Slot number badge */}
             <div
               className={[
                 "mint-hand-card__slot",
@@ -97,20 +116,23 @@ export function HandDisplayMint({
               {idx + 1}
             </div>
 
-            <CardNyanoDuel card={card} owner={owner} className={!isSelected ? "opacity-80" : ""} />
+            {/* Card content */}
+            <CardNyanoDuel card={card} owner={owner} className={cardVisualClass} />
 
+            {/* Used overlay */}
             {isUsed && (
               <div
                 className="absolute inset-0 flex items-center justify-center rounded-xl"
                 style={{ background: "rgba(255,255,255,0.5)" }}
               >
-                <span className="mint-hand-card__used-label">使用済み</span>
+                <span className="text-lg text-surface-400">✓</span>
               </div>
             )}
           </button>
         );
       })}
 
+      {/* Card preview popover (PREV-0501) */}
       {preview.state.visible && preview.state.card && preview.state.anchorRect && (
         <CardPreviewPanel
           card={preview.state.card}

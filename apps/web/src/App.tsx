@@ -35,7 +35,7 @@ const NavGroup = (props: { title: string; children: React.ReactNode }) => {
 };
 
 const APP_CHROME_TABS = [
-  { to: "/", label: "ロビー", icon: "start", exact: true },
+  { to: "/", label: "ホーム", icon: "start", exact: true },
   { to: "/arena", label: "アリーナ", icon: "arena" },
   { to: "/decks", label: "デッキ", icon: "decks" },
   { to: "/events", label: "イベント", icon: "events" },
@@ -73,9 +73,9 @@ export function AppLayout() {
 
   const mintFooterLinks = React.useMemo(
     () => [
-      { to: appendThemeToPath("/playground", theme), label: "練習場" },
+      { to: appendThemeToPath("/playground", theme), label: "プレイグラウンド" },
       { to: appendThemeToPath("/nyano", theme), label: "カード図鑑" },
-      { to: appendThemeToPath("/rulesets", theme), label: "ルール確認" },
+      { to: appendThemeToPath("/rulesets", theme), label: "ルールセット" },
     ],
     [theme],
   );

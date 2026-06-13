@@ -6,6 +6,7 @@ import { CardMini } from "@/components/CardMini";
 import { CardPreviewPanel } from "@/components/CardPreviewPanel";
 import { MintPressable } from "@/components/mint/MintPressable";
 import { useCardPreview } from "@/hooks/useCardPreview";
+import { resolveCardTier } from "@/lib/nyano/cardTier";
 
 const HAND_OPTIONS: { value: JankenHand | -1; label: string }[] = [
   { value: -1, label: "すべて" },
@@ -200,23 +201,33 @@ export function CardBrowserMint({
       ) : (
         <>
           <div className="mint-card-browser__grid">
-            {visibleResults.map((result) => {
+            {visibleResults.map((result, displayIndex) => {
               const card = cardDataMap.get(BigInt(result.tokenId));
               if (!card) return null;
               const handlers = inspect.longPressHandlers(card, 0);
+              const tier = resolveCardTier(result.edgeSum);
               return (
                 <button
                   key={result.tokenId}
                   className="mint-card-browser__card"
-                  onClick={() => onSelect?.(result.tokenId)}
-                  title={`#${result.tokenId} · edge=${result.edgeSum} · ${handToText(result.params.hand)}`}
+                  data-tier={tier.tier}
+                  style={{ "--mint-browse-i": Math.min(displayIndex, 23) } as React.CSSProperties}
+                  onClick={(event) => {
+                    if (onSelect) onSelect(result.tokenId);
+                    else inspect.showImmediate(card, 0, event.currentTarget);
+                  }}
+                  title={`#${result.tokenId} · edge=${result.edgeSum} · ${handToText(result.params.hand)} · ${tier.label}ランク（${tier.labelJa}）`}
                   onTouchStart={handlers.onTouchStart}
                   onTouchEnd={handlers.onTouchEnd}
                   onTouchMove={handlers.onTouchMove}
                   onContextMenu={handlers.onContextMenu}
                 >
                   <CardMini card={card} owner={0} subtle />
+                  <span className={`mint-card-browser__tier mint-card-browser__tier--${tier.tier}`} aria-hidden="true">
+                    {tier.label}
+                  </span>
                   <span className="mint-card-browser__token">#{result.tokenId}</span>
+                  <span className="mint-card-browser__shine" aria-hidden="true" />
                 </button>
               );
             })}

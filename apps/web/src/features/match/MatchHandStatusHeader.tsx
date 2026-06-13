@@ -1,5 +1,6 @@
 import React from "react";
 import type { PlayerIndex } from "@nyano/triad-engine";
+import { cellIndexToCoord } from "@/lib/triad_viewer_command";
 
 export function MatchHandStatusHeader(input: {
   isMintUi: boolean;
@@ -20,6 +21,9 @@ export function MatchHandStatusHeader(input: {
     classicForcedRuleLabel,
   } = input;
 
+  const playerLabel = currentPlayer === 0 ? "プレイヤーA" : "プレイヤーB";
+  const cellLabel = typeof draftCell === "number" ? cellIndexToCoord(draftCell) : null;
+
   return (
     <div
       className={
@@ -29,12 +33,16 @@ export function MatchHandStatusHeader(input: {
       }
       style={isRpg ? { fontFamily: "'Cinzel', serif", color: "var(--rpg-text-gold, #E8D48B)" } : undefined}
     >
-      {currentPlayer === 0 ? "Player A" : "Player B"} turn
-      {draftCell !== null && <span className={isRpg ? "" : " text-slate-400"}> | Cell {draftCell} selected</span>}
-      {isHandDragging && <span className={isRpg ? "" : " text-cyan-500"}> | Dragging to board</span>}
+      {playerLabel}の番
+      {cellLabel && (
+        <span className={isRpg ? "" : " text-slate-400"}>
+          {" "}| 選択マス {cellLabel}
+        </span>
+      )}
+      {isHandDragging && <span className={isRpg ? "" : " text-cyan-500"}> | 盤面へドラッグ中</span>}
       {isMintUi && classicForcedCardIndex !== null && (
         <span className="mint-order-lock-badge ml-2" role="status" aria-live="polite">
-          Forced slot ({classicForcedRuleLabel ?? "FIX"}): {classicForcedCardIndex + 1}
+          強制スロット（{classicForcedRuleLabel ?? "FIX"}）: {classicForcedCardIndex + 1}
         </span>
       )}
     </div>

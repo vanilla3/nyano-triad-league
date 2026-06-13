@@ -8,64 +8,58 @@ export function MatchShareActionsRow(input: {
   onCopyShareUrl: () => void;
   onOpenReplay: () => void;
 }): React.ReactElement {
-  const {
-    isRpg,
-    simOk,
-    canFinalize,
-    onCopyTranscriptJson,
-    onCopyShareUrl,
-    onOpenReplay,
-  } = input;
+  const { isRpg, simOk, canFinalize, onCopyTranscriptJson, onCopyShareUrl, onOpenReplay } = input;
+
   const baseButtonClassName = isRpg ? "rpg-result__btn" : "btn";
-  const buttonClassName = isRpg ? baseButtonClassName : `${baseButtonClassName} mint-pressable mint-hit mint-share-action__btn`;
-  const shareStatusClassName = !isRpg
-    ? [
-      "mint-share-actions__status",
-      canFinalize ? "mint-share-actions__ready" : "mint-share-actions__hint",
-    ].join(" ")
-    : "";
-  const shareStatusMessage = canFinalize
-    ? "Best shot: capture the result panel now, then tap Share URL."
-    : "Share and replay unlock after turn 9.";
-  const shareRowClassName = [
-    "flex flex-wrap items-center gap-2",
-    !isRpg ? "mint-share-actions__row" : "",
-    !isRpg && canFinalize ? "mint-share-actions__row--ready" : "",
-  ].filter(Boolean).join(" ");
+  const buttonClassName = isRpg
+    ? baseButtonClassName
+    : `${baseButtonClassName} mint-pressable mint-hit mint-share-action__btn`;
+
   return (
     <div className={["grid gap-2", !isRpg ? "mint-share-actions" : ""].filter(Boolean).join(" ")}>
-      <div className={shareRowClassName}>
+      <div
+        className={["flex flex-wrap items-center gap-2", !isRpg ? "mint-share-actions__row" : ""]
+          .filter(Boolean)
+          .join(" ")}
+      >
         <button
           className={buttonClassName}
           onClick={onCopyTranscriptJson}
           disabled={!simOk}
-          aria-label="Copy transcript JSON"
-          title="Copy transcript JSON"
+          aria-label="対戦ログJSONをコピー"
+          title="対戦ログJSONをコピー"
         >
-          Copy JSON
+          JSONコピー
         </button>
         <button
           className={buttonClassName}
           onClick={onCopyShareUrl}
           disabled={!canFinalize}
-          aria-label="Share URL"
-          title="Share URL"
+          aria-label="共有URLをコピー"
+          title="共有URLをコピー"
         >
-          Share URL
+          共有URL
         </button>
         <button
           className={buttonClassName}
           onClick={onOpenReplay}
           disabled={!canFinalize}
-          aria-label="Open replay"
-          title="Open replay"
+          aria-label="リプレイを開く"
+          title="リプレイを開く"
         >
-          Open replay
+          リプレイ
         </button>
       </div>
-      {!isRpg ? (
-        <div className={shareStatusClassName} role="status" aria-live="polite">
-          {shareStatusMessage}
+
+      {!isRpg && !canFinalize ? (
+        <div className="mint-share-actions__hint" role="status" aria-live="polite">
+          共有とリプレイは9ターン終了後に解放されます。
+        </div>
+      ) : null}
+
+      {!isRpg && canFinalize ? (
+        <div className="mint-share-actions__ready" role="note">
+          まずリザルトをスクショ → 次に「共有URL」をタップすると気持ちいいです。
         </div>
       ) : null}
     </div>

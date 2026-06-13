@@ -4,7 +4,12 @@
  * Tests for the CardBrowser component.
  * Validates module exports, internal constants, and component contract.
  */
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
+
+// Dynamic-import export-integrity checks can exceed the 5s default under
+// full-suite parallel load (vite transform contention). Same fix as
+// useNyanoTokenMetadata.test.ts.
+vi.setConfig({ testTimeout: 30_000 });
 
 describe("CardBrowser", () => {
   it("exports CardBrowser component", async () => {

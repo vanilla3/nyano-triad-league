@@ -32,7 +32,8 @@ type Props = {
 };
 
 /**
- * First-battle tutorial shown once per browser.
+ * 初回ゲスト対戦で表示するミニチュートリアル（3ステップ）。
+ * localStorageに保存し、基本的には一度だけ表示されます。
  */
 export function MiniTutorial({ onDismiss }: Props) {
   const [visible, setVisible] = React.useState(() => !isTutorialSeen());
@@ -46,31 +47,32 @@ export function MiniTutorial({ onDismiss }: Props) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 p-4 backdrop-blur-sm">
-      <div className="mint-tutorial-modal w-full max-w-md rounded-2xl border border-surface-200 bg-white p-6 shadow-lg">
-        <div className="text-lg font-bold text-surface-900">はじめての3ステップ</div>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+      <div className="w-full max-w-md rounded-2xl border border-surface-200 bg-white p-6 shadow-lg">
+        <div className="text-lg font-bold text-surface-900">トライアドの遊び方（3ステップ）</div>
 
         <div className="mt-4 grid gap-3">
-          <Step n={1} title="マスを選ぶ" desc="3x3盤面の空いているマスをタップします。" />
-          <Step n={2} title="カードを選ぶ" desc="手札5枚から、そのマスに置くカードを選びます。" />
-          <Step n={3} title="この手を確定" desc="確定すると手番が進み、強い辺で隣の相手カードをひっくり返します。" />
+          <Step n={1} title="マスを選ぶ" desc="3×3の空きマスをタップして、配置先を決めます。" />
+          <Step n={2} title="カードを選ぶ" desc="手札（5枚）から、出すカードを選びます。" />
+          <Step
+            n={3}
+            title="確定"
+            desc="「確定」を押して手を決めます。辺の数字が高いと、隣の相手カードを奪取します。"
+          />
         </div>
 
         <div className="mt-2 text-xs text-surface-500">
-          同じ数字でぶつかった時は、ジャンケン相性で勝負が決まります。
+          ヒント：辺の数字が同じときは、じゃんけん（グー／チョキ／パー）で決着します。
         </div>
 
-        <button
-          className="btn btn-primary mt-4 w-full"
-          onClick={dismiss}
-        >
-          バトルへ進む
+        <button className="btn btn-primary mt-4 w-full" onClick={dismiss}>
+          わかった！
         </button>
         <button
-          className="mt-2 w-full text-center text-xs text-surface-400 underline hover:text-surface-600"
+          className="mt-2 w-full text-center text-xs text-surface-400 hover:text-surface-600 underline"
           onClick={dismiss}
         >
-          今はスキップ
+          スキップ
         </button>
       </div>
     </div>

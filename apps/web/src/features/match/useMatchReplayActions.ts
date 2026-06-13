@@ -3,6 +3,7 @@ import type { CardData, TranscriptV1 } from "@nyano/triad-engine";
 import type { RulesetKey } from "@/lib/ruleset_registry";
 import { tryNativeShare, type NativeShareResult } from "@/lib/webShare";
 import { buildMatchReplayLink, buildMatchShareTemplateMessage } from "@/features/match/matchShareLinks";
+import { buildMatchXShareText, openXShareIntent } from "@/lib/share_x";
 
 type MatchReplayToast = {
   warn: (title: string, message: string) => void;
@@ -30,6 +31,7 @@ type CreateMatchReplayActionsDeps = {
   buildShareTemplateMessage?: typeof buildMatchShareTemplateMessage;
   shareUrlWithNative?: (url: string) => Promise<NativeShareResult>;
   shareTemplateWithNative?: (message: string, url: string) => Promise<NativeShareResult>;
+  openXIntent?: (text: string, url: string) => boolean;
 };
 
 type MatchReplayActions = {
@@ -37,6 +39,7 @@ type MatchReplayActions = {
   copyShareUrl: () => Promise<void>;
   openReplay: () => Promise<void>;
   copyShareTemplate: () => Promise<void>;
+  shareToX: () => Promise<void>;
 };
 
 export function createMatchReplayActions(
@@ -61,6 +64,7 @@ export function createMatchReplayActions(
         title: "Nyano Triad League",
         text: message,
       }));
+  const openXIntent = deps?.openXIntent ?? openXShareIntent;
 
   const buildReplayUrl = (absolute?: boolean): string | null =>
     buildReplayLink({
@@ -96,7 +100,7 @@ export function createMatchReplayActions(
       }
 
       await input.copyToClipboard(url);
-      input.toast.success("Copied", "Share URL copied to clipboard.");
+      input.toast.success("Copied", "共有URLをコピーしました。");
     } catch (error: unknown) {
       input.toast.error("Share failed", input.resolveErrorMessage(error));
     }
@@ -114,6 +118,27 @@ export function createMatchReplayActions(
       input.navigate(url);
     } catch (error: unknown) {
       input.toast.error("Open replay failed", input.resolveErrorMessage(error));
+    }
+  };
+
+  const shareToX = async () => {
+    input.setError(null);
+    try {
+      const url = buildReplayUrl(true);
+      if (!url) {
+        input.toast.warn("Replay", "Match result is not ready yet. Play to turn 9 first.");
+        return;
+      }
+      const opened = openXIntent(buildMatchXShareText(), url);
+      if (opened) {
+        input.toast.success("X", "Xの投稿画面を開きました。");
+        return;
+      }
+      // Popup blocked: fall back to copying the share template.
+      await input.copyToClipboard(`${buildMatchXShareText()}\n${url}`);
+      input.toast.success("Copied", "ポップアップがブロックされたため、投稿文をコピーしました。");
+    } catch (error: unknown) {
+      input.toast.error("Share failed", input.resolveErrorMessage(error));
     }
   };
 
@@ -140,7 +165,7 @@ export function createMatchReplayActions(
       }
 
       await input.copyToClipboard(message);
-      input.toast.success("Copied", "Share template copied to clipboard.");
+      input.toast.success("Copied", "共有テンプレをコピーしました。");
     } catch (error: unknown) {
       input.toast.error("Share failed", input.resolveErrorMessage(error));
     }
@@ -151,6 +176,7 @@ export function createMatchReplayActions(
     copyShareUrl,
     openReplay,
     copyShareTemplate,
+    shareToX,
   };
 }
 
