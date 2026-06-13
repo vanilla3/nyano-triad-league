@@ -45,6 +45,7 @@ pnpm dev:web   # → http://localhost:5173
 
 ## Docs
 
+- 🗺️ コードベース・オンボーディング（新規開発者はまずここ）: `docs/00_overview/Nyano_Triad_League_CODEBASE_ONBOARDING_v1_ja.md`
 - Design Document v2（Deep Strategy Edition）: `docs/01_design/Nyano_Triad_League_Design_Document_v2.docx`
 - Protocol specs（トランスクリプト/ルールセット/イベント）: `docs/02_protocol/`
 - Autonomy roadmap（自律運営までの道筋）: `docs/03_autonomy/`
