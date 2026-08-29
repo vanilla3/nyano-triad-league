@@ -703,3 +703,4 @@
 - [ ] 次: contracts のデプロイスクリプト（`forge script`）整備 — Phase C（許可不要レジストリ公開）の前提。
 - [ ] 次: i18n 基盤（日→英トグル）導入。コミュニティ拡大の最大ボトルネック。
 - [ ] 次: 本 TODO の旧セクション（`?` 置換で破損）を IMPLEMENTATION_LOG から再構築。
+- [x] 2026-08-30 CSS-CATALOG-LAYOUT: Home / Start / CardBrowser に named container query、対称 Grid、CTA 下端揃え、短見出しの balanced wrap、true-hover 制御を採用。760px Home は縦 1,642px→1,168px、1100px Start は1列→3列となり、既存 URL・状態・プロトコル・依存関係は不変。

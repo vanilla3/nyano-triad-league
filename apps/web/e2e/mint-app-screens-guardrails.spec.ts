@@ -77,6 +77,44 @@ async function assertNoHorizontalOverflow(page: Page, maxPx = 2): Promise<void> 
   ).toBeLessThanOrEqual(maxPx);
 }
 
+async function gridColumnCount(page: Page, selector: string): Promise<number> {
+  return page.locator(selector).evaluate((element) => {
+    const columns = window.getComputedStyle(element).gridTemplateColumns;
+    return columns.split(/\s+/).filter(Boolean).length;
+  });
+}
+
+async function assertCenteredOrphan(page: Page, selector: string): Promise<void> {
+  const geometry = await page.locator(selector).evaluate((grid) => {
+    const items = Array.from(grid.children);
+    const first = items.at(0)?.getBoundingClientRect();
+    const last = items.at(-1)?.getBoundingClientRect();
+    const bounds = grid.getBoundingClientRect();
+
+    if (!first || !last) throw new Error(`Expected grid items in ${grid.className}`);
+
+    return {
+      centerDelta: Math.abs(last.left + last.width / 2 - (bounds.left + bounds.width / 2)),
+      widthDelta: Math.abs(last.width - first.width),
+    };
+  });
+
+  expect(geometry.centerDelta).toBeLessThanOrEqual(1);
+  expect(geometry.widthDelta).toBeLessThanOrEqual(1);
+}
+
+async function assertActionBaselines(page: Page, cardSelector: string): Promise<void> {
+  const bottoms = await page.locator(cardSelector).evaluateAll((cards) =>
+    cards.map((card) => {
+      const action = card.querySelector<HTMLElement>(":scope > a, :scope > button");
+      if (!action) throw new Error(`Expected a direct action in ${card.className}`);
+      return action.getBoundingClientRect().bottom;
+    }),
+  );
+
+  expect(Math.max(...bottoms) - Math.min(...bottoms)).toBeLessThanOrEqual(1);
+}
+
 test.describe("Mint app screen guardrails", () => {
   test.beforeEach(async ({ page }) => {
     await page.emulateMedia({ reducedMotion: "reduce" });
@@ -140,6 +178,75 @@ test.describe("Mint app screen guardrails", () => {
 
     await page.goto("/decks?theme=mint");
     await expect(page.locator(".mint-decks-summary")).toBeVisible({ timeout: 10_000 });
+  });
+
+  test("Home uses calm 1/2/4-column component breakpoints", async ({ page }) => {
+    const cases = [
+      { width: 390, menuColumns: 1, onboardingColumns: 1 },
+      { width: 760, menuColumns: 2, onboardingColumns: 2 },
+      { width: 1200, menuColumns: 4, onboardingColumns: 3 },
+    ];
+
+    for (const viewport of cases) {
+      await page.setViewportSize({ width: viewport.width, height: 900 });
+      await page.goto("/?theme=mint");
+      await expect(page.locator(".mint-home-menu-grid")).toBeVisible({ timeout: 10_000 });
+
+      expect(await gridColumnCount(page, ".mint-home-menu-grid")).toBe(viewport.menuColumns);
+      expect(await gridColumnCount(page, ".mint-home-onboarding__grid")).toBe(viewport.onboardingColumns);
+      await assertNoHorizontalOverflow(page);
+
+      if (viewport.width === 760) {
+        await assertCenteredOrphan(page, ".mint-home-onboarding__grid");
+      }
+
+      if (viewport.width === 1200) {
+        await assertActionBaselines(page, ".mint-home-step");
+      }
+    }
+  });
+
+  test("Start uses centered 1/2/3-column journey steps", async ({ page }) => {
+    const cases = [
+      { width: 390, columns: 1 },
+      { width: 760, columns: 2 },
+      { width: 1100, columns: 3 },
+    ];
+
+    for (const viewport of cases) {
+      await page.setViewportSize({ width: viewport.width, height: 900 });
+      await page.goto("/start?theme=mint");
+      await expect(page.locator(".mint-start-grid")).toBeVisible({ timeout: 10_000 });
+
+      expect(await gridColumnCount(page, ".mint-start-grid")).toBe(viewport.columns);
+      await assertNoHorizontalOverflow(page);
+
+      if (viewport.width === 760) {
+        await assertCenteredOrphan(page, ".mint-start-grid");
+      }
+
+      if (viewport.width === 1100) {
+        await assertActionBaselines(page, ".mint-start-card");
+      }
+    }
+  });
+
+  test("CardBrowser responds to its own width in Nyano and Decks", async ({ page }) => {
+    await page.setViewportSize({ width: 1200, height: 900 });
+
+    await page.goto("/nyano?theme=mint");
+    await expect(page.locator(".mint-card-browser")).toBeVisible({ timeout: 15_000 });
+    const nyanoWidth = await page.locator(".mint-card-browser").evaluate((element) => element.getBoundingClientRect().width);
+    expect(nyanoWidth).toBeGreaterThanOrEqual(640);
+    expect(await gridColumnCount(page, ".mint-card-browser__filters")).toBe(3);
+    await assertNoHorizontalOverflow(page);
+
+    await page.goto("/decks?theme=mint");
+    await expect(page.locator(".mint-card-browser")).toBeVisible({ timeout: 15_000 });
+    const decksWidth = await page.locator(".mint-card-browser").evaluate((element) => element.getBoundingClientRect().width);
+    expect(decksWidth).toBeLessThan(640);
+    expect(await gridColumnCount(page, ".mint-card-browser__filters")).toBe(1);
+    await assertNoHorizontalOverflow(page);
   });
 
   test("Decks filter preset keeps URL sync via df param", async ({ page }) => {
