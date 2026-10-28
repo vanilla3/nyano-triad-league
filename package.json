@@ -2,7 +2,7 @@
   "name": "nyano-triad-league",
   "private": true,
   "license": "MIT",
-  "packageManager": "pnpm@9.0.0",
+  "packageManager": "pnpm@9.15.9",
   "workspaces": [
     "packages/*",
     "apps/*"
@@ -24,6 +24,6 @@
     "codex:index": "node codex/scripts/generate_work_order_index.mjs"
   },
   "devDependencies": {
-    "sharp": "^0.34.5"
+    "sharp": "^0.35.5"
   }
 }
